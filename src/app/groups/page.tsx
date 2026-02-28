@@ -1,18 +1,19 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useMyGroups, useDiscoverGroups, useGroupSearch } from '@/hooks/useGroups'
+
 import GroupCard from '@/components/groups/GroupCard'
+import GroupCreateModal from '@/components/groups/GroupCreateModal'
 import { Search, Plus } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 
 type Tab = 'my-groups' | 'discover'
 
 export default function GroupsPage() {
-  const router = useRouter()
   const [tab, setTab] = useState<Tab>('my-groups')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
 
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
@@ -31,7 +32,7 @@ export default function GroupsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-slate-800">Groups</h1>
         <button
-          onClick={() => router.push('/groups/create')}
+          onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 orchid-gradient text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
@@ -97,6 +98,10 @@ export default function GroupsPage() {
           </p>
         </div>
       )}
+      {/* Create Group Modal */}
+      <AnimatePresence>
+        {showCreate && <GroupCreateModal onClose={() => setShowCreate(false)} />}
+      </AnimatePresence>
     </div>
   )
 }

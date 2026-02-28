@@ -10,6 +10,7 @@ import {
   subscribeToReadReceipts,
   subscribeToMessageEdits,
   subscribeToMessageDeletes,
+  subscribeToPinUpdates,
   editMessage,
   deleteMessage,
   toggleReaction,
@@ -18,12 +19,17 @@ import {
   replyToMessage,
   forwardMessage,
   sendMediaMessage,
+  pinMessage,
+  unpinMessage,
+  getPinnedMessage,
   Message as BackendMessage,
   ReactionUpdate,
   TypingEvent,
   ReadReceiptEvent,
   MessageEditedEvent,
   MessageDeletedEvent,
+  PinUpdateEvent,
+  PinnedMessage,
 } from '@/services/messageService'
 
 // ---------------------------------------------------------------------------
@@ -104,6 +110,7 @@ export function useChat(conversationId: string | null | undefined, currentUserId
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
+  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
 
   const lastTypingSentRef = useRef(0)
 
@@ -133,6 +140,31 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     }
     load()
     return () => { cancelled = true }
+  }, [conversationId])
+
+  // ---- Load pinned message ----
+  useEffect(() => {
+    if (!conversationId) return
+    let cancelled = false
+    getPinnedMessage(conversationId).then(pinned => {
+      if (!cancelled) setPinnedMessage(pinned)
+    })
+    return () => { cancelled = true }
+  }, [conversationId])
+
+  // ---- Pin update subscription ----
+  useEffect(() => {
+    if (!conversationId) return
+    const unsub = subscribeToPinUpdates((evt: PinUpdateEvent) => {
+      if (evt.conversation_id !== conversationId) return
+      if (evt.action === 'unpin') {
+        setPinnedMessage(null)
+      } else {
+        // Refetch pinned message to get full data
+        getPinnedMessage(conversationId).then(pinned => setPinnedMessage(pinned))
+      }
+    })
+    return unsub
   }, [conversationId])
 
   // ---- Real-time message subscription ----
@@ -382,6 +414,31 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     setContextMenu(null)
   }, [])
 
+  // ---- Pin handler ----
+  const handlePinMessage = useCallback(async (msgId: string) => {
+    if (!conversationId) return
+    try {
+      await pinMessage(conversationId, msgId)
+      // Refetch pinned message
+      const pinned = await getPinnedMessage(conversationId)
+      setPinnedMessage(pinned)
+    } catch (err) {
+      console.error('[useChat] pin failed:', err)
+    }
+    setContextMenu(null)
+  }, [conversationId])
+
+  // ---- Unpin handler ----
+  const handleUnpinMessage = useCallback(async () => {
+    if (!conversationId) return
+    try {
+      await unpinMessage(conversationId)
+      setPinnedMessage(null)
+    } catch (err) {
+      console.error('[useChat] unpin failed:', err)
+    }
+  }, [conversationId])
+
   // ---- Forward handler ----
   const handleForward = useCallback(async (targetConvId: string, msg: ChatMessage) => {
     try {
@@ -439,6 +496,7 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     typingUsers,
     readReceipts,
     lastSentMsgId,
+    pinnedMessage,
     setInput,
     setEditText,
     setEditingMsgId,
@@ -454,6 +512,8 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     handleForward,
     handleContextMenu,
     handleSendMedia,
+    handlePinMessage,
+    handleUnpinMessage,
     findMessage,
   }
 }

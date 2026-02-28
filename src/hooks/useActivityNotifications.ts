@@ -16,6 +16,8 @@ export interface ActivityNotification {
     deep_link?: string     // e.g. "/post/{id}?focusComment={cid}" or "/u/{userId}"
     is_read: boolean
     created_at: string
+    bucket?: number        // partition key used for targeted read/delete operations
+    ts?: string            // timestamp key used for targeted read/delete operations
 }
 
 interface NotificationsResponse {
@@ -201,4 +203,72 @@ export function useActorProfiles(actorIds: string[]) {
     }, [actorIds.join(",")])
 
     return profiles
+}
+
+// ---------- Unread count ----------
+
+export function useUnreadCount() {
+    return useQuery({
+        queryKey: ["unread-count"],
+        queryFn: async () => {
+            const res = await api.get<{ data: { count: number } }>("/v1/notifications/unread-count")
+            return res.data.data
+        },
+        refetchInterval: 30000,
+    })
+}
+
+// ---------- Mark all notifications as read ----------
+
+export function useMarkAllRead() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async () => {
+            await api.patch("/v1/notifications/read-all")
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["activity-notifications"] })
+            qc.invalidateQueries({ queryKey: ["unread-count"] })
+        },
+    })
+}
+
+// ---------- Delete a single notification ----------
+
+export function useDeleteNotification() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ bucket, ts }: { bucket: number; ts: string }) => {
+            await api.delete(`/v1/notifications/${bucket}/${ts}`)
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["activity-notifications"] })
+            qc.invalidateQueries({ queryKey: ["unread-count"] })
+        },
+    })
+}
+
+// ---------- Notification preferences ----------
+
+export function useNotificationPreferences() {
+    return useQuery({
+        queryKey: ["notification-preferences"],
+        queryFn: async () => {
+            const res = await api.get<{ data: unknown }>("/v1/notifications/preferences")
+            return res.data.data
+        },
+    })
+}
+
+export function useUpdateNotificationPreferences() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async (body: unknown) => {
+            const res = await api.patch<{ data: unknown }>("/v1/notifications/preferences", body)
+            return res.data.data
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["notification-preferences"] })
+        },
+    })
 }

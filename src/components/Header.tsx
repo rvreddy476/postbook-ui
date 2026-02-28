@@ -13,6 +13,9 @@ import {
   useActivityNotifications,
   useNotificationStream,
   useActorProfiles,
+  useUnreadCount,
+  useMarkAllRead,
+  useDeleteNotification,
   type ActivityNotification,
 } from '@/hooks/useActivityNotifications';
 import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
@@ -49,7 +52,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const { totalUnread } = useNotifications();
   const { data: activityData } = useActivityNotifications(20);
   const activityNotifs = activityData?.items ?? [];
-  const unreadNotifCount = activityNotifs.filter(n => !n.is_read).length;
+  const { data: unreadData } = useUnreadCount();
+  const unreadNotifCount = unreadData?.count ?? activityNotifs.filter(n => !n.is_read).length;
+  const markAllRead = useMarkAllRead();
+  const deleteNotification = useDeleteNotification();
 
   const toast = useGlobalToast();
   const acceptFriend = useAcceptFriendRequest();
@@ -343,8 +349,20 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 transition={{ duration: 0.15, ease: "circOut" }}
                 className="absolute right-0 mt-3 w-[340px] bg-white/95 backdrop-blur-3xl rounded-[1.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] border border-slate-200/50 overflow-hidden z-[1000]"
               >
-                <div className="p-4 border-b border-slate-100/60">
+                <div className="p-4 border-b border-slate-100/60 flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notifications</h3>
+                  {unreadNotifCount > 0 && (
+                    <button
+                      onClick={() => markAllRead.mutate()}
+                      disabled={markAllRead.isPending}
+                      className="flex items-center gap-1 text-[9px] font-black text-violet-500 hover:text-violet-700 uppercase tracking-widest transition-colors disabled:opacity-50"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Mark all as read
+                    </button>
+                  )}
                 </div>
 
                 <div className="max-h-[400px] overflow-y-auto">
@@ -364,7 +382,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       return (
                         <div
                           key={notif.notification_id}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-violet-50/30' : ''}`}
+                          className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-violet-50/30' : ''}`}
                         >
                           {/* Avatar — click to go to profile */}
                           <button
@@ -445,10 +463,26 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             )}
                           </div>
 
-                          {/* Unread dot */}
-                          {!notif.is_read && (
-                            <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-3" />
-                          )}
+                          {/* Unread dot + delete button */}
+                          <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
+                            {!notif.is_read && (
+                              <div className="w-2 h-2 rounded-full bg-violet-500" />
+                            )}
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (notif.bucket != null && notif.ts != null) {
+                                  deleteNotification.mutate({ bucket: notif.bucket, ts: notif.ts });
+                                }
+                              }}
+                              className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                              title="Delete notification"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       );
                     })

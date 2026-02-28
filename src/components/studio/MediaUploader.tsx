@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useRef, useCallback, useState } from 'react';
-import { Camera, Video, X, Plus } from 'lucide-react';
+import { Camera, Video, X, Plus, FileText } from 'lucide-react';
 
 interface MediaUploaderProps {
   files: File[];
   onChange: (files: File[]) => void;
   isVideo: boolean;
   accentColor: string;
+  altTexts?: Record<number, string>;
+  onAltTextChange?: (index: number, value: string) => void;
 }
 
-const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo, accentColor }) => {
+const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo, accentColor, altTexts = {}, onAltTextChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -90,36 +92,55 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
     <div className="space-y-2 animate-fadeIn">
       <div className={`grid gap-2 ${files.length === 1 ? '' : 'grid-cols-2'}`}>
         {files.map((f, i) => (
-          <div
-            key={i}
-            className="relative group rounded-xl overflow-hidden border"
-            style={{ background: '#FAFAFA', borderColor: '#F0E6DC', aspectRatio: files.length === 1 ? '16/9' : '4/3' }}
-          >
-            {f.type?.startsWith('video') ? (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: '#FAFAFA' }}>
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
-                  style={{ background: '#FAF5F0' }}
-                >
-                  <Video className="w-5 h-5" style={{ color: accentColor }} />
-                </div>
-                <span className="text-[10px] max-w-[80%] truncate" style={{ color: '#6B4F3E' }}>{f.name}</span>
-                <span
-                  className="text-[9px] px-2 py-0.5 rounded-full"
-                  style={{ background: '#FAF5F0', color: accentColor }}
-                >
-                  {(f.size / 1048576).toFixed(1)} MB
-                </span>
-              </div>
-            ) : (
-              <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
-            )}
-            <button
-              onClick={() => removeFile(i)}
-              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500"
+          <div key={i} className="space-y-1.5">
+            <div
+              className="relative group rounded-xl overflow-hidden border"
+              style={{ background: '#FAFAFA', borderColor: '#F0E6DC', aspectRatio: files.length === 1 ? '16/9' : '4/3' }}
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
+              {f.type?.startsWith('video') ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: '#FAFAFA' }}>
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ background: '#FAF5F0' }}
+                  >
+                    <Video className="w-5 h-5" style={{ color: accentColor }} />
+                  </div>
+                  <span className="text-[10px] max-w-[80%] truncate" style={{ color: '#6B4F3E' }}>{f.name}</span>
+                  <span
+                    className="text-[9px] px-2 py-0.5 rounded-full"
+                    style={{ background: '#FAF5F0', color: accentColor }}
+                  >
+                    {(f.size / 1048576).toFixed(1)} MB
+                  </span>
+                </div>
+              ) : (
+                <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+              )}
+              <button
+                onClick={() => removeFile(i)}
+                className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {/* Alt-text input for images */}
+            {!f.type?.startsWith('video') && onAltTextChange && (
+              <div
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border"
+                style={{ borderColor: '#F0E6DC', background: '#FAFAFA' }}
+              >
+                <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#C4B5A6' }} />
+                <input
+                  type="text"
+                  value={altTexts[i] ?? ''}
+                  onChange={(e) => onAltTextChange(i, e.target.value)}
+                  placeholder="Describe this image (alt text)"
+                  maxLength={1000}
+                  className="flex-1 bg-transparent text-[11px] placeholder:text-[#D4C4B0] focus:outline-none"
+                  style={{ color: '#3C2415' }}
+                />
+              </div>
+            )}
           </div>
         ))}
         {!isVideo && files.length < maxFiles && (

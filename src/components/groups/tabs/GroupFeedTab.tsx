@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import CreatePortal from '@/components/CreatePortal'
-import { useGroupFeed } from '@/hooks/useGroups'
+import { useGroupFeed, useGroupMembers } from '@/hooks/useGroups'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus, FileText } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
-import type { GroupPost } from '@/types/groups'
+import type { GroupPost, GroupMember } from '@/types/groups'
 
 interface GroupFeedTabProps {
   groupId: string
@@ -28,16 +28,22 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString()
 }
 
-function GroupPostCard({ post }: { post: GroupPost }) {
+function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<string, GroupMember> }) {
+  const member = memberMap.get(post.author_id)
+  const name = member?.display_name || member?.username || `User ${post.author_id.slice(0, 6)}`
+  const avatarSrc = member?.avatar_media_id
+    ? `/v1/media/${member.avatar_media_id}/serve`
+    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id.slice(0, 8)}`
+
   return (
     <Link href={`/post/${post.post_id}`}>
       <div className="bg-white rounded-xl border border-slate-100 p-4 hover:border-violet-200 hover:shadow-sm transition-all">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-violet-50 rounded-lg">
-            <FileText className="w-4 h-4 text-violet-500" />
+          <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+            <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-700 truncate">Post by {post.author_id.slice(0, 8)}...</p>
+            <p className="text-sm font-bold text-slate-700 truncate">{name}</p>
             <p className="text-[10px] text-slate-400">{timeAgo(post.created_at)}</p>
           </div>
         </div>
@@ -49,6 +55,13 @@ function GroupPostCard({ post }: { post: GroupPost }) {
 export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
   const [showCreate, setShowCreate] = useState(false)
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeed(groupId)
+  const { data: members } = useGroupMembers(groupId)
+
+  const memberMap = useMemo(() => {
+    const map = new Map<string, GroupMember>()
+    members?.forEach((m) => map.set(m.user_id, m))
+    return map
+  }, [members])
 
   const posts = data?.pages.flatMap((page) => page.data) ?? []
 
@@ -92,7 +105,7 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       ) : (
         <div className="space-y-3">
           {posts.map((post) => (
-            <GroupPostCard key={post.post_id} post={post} />
+            <GroupPostCard key={post.post_id} post={post} memberMap={memberMap} />
           ))}
         </div>
       )}

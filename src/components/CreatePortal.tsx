@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useCreatePost } from '@/hooks/useFeedPosts';
 import { useCreateGroupPost } from '@/hooks/useGroups';
-import { uploadMedia } from '@/lib/mediaUpload';
+import { uploadMedia, updateMediaAltText } from '@/lib/mediaUpload';
 import { motion } from 'framer-motion';
 import {
   X,
@@ -41,6 +41,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [location, setLocation] = useState('');
   const [mood, setMood] = useState<string | null>(null);
   const [poll, setPoll] = useState<PollState>({ options: ['', ''], duration: '1d', allowMultiple: false });
+  const [altTexts, setAltTexts] = useState<Record<number, string>>({});
 
   // UI toggles
   const [showLocation, setShowLocation] = useState(false);
@@ -80,6 +81,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     setText('');
     setTags([]);
     setError(null);
+    setAltTexts({});
   }, [type]);
 
   // Auto-resize textarea
@@ -127,6 +129,17 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           })
         );
         mediaIds = uploaded;
+
+        // Set alt text for each uploaded media that has one
+        await Promise.all(
+          uploaded.map((mediaId, index) => {
+            const alt = altTexts[index]?.trim();
+            if (alt) {
+              return updateMediaAltText(mediaId, alt);
+            }
+            return Promise.resolve();
+          })
+        );
       }
 
       let contentType = 'post';
@@ -336,6 +349,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               onChange={setFiles}
               isVideo={type === 'video'}
               accentColor={pt.color}
+              altTexts={altTexts}
+              onAltTextChange={(index, value) =>
+                setAltTexts((prev) => ({ ...prev, [index]: value }))
+              }
             />
           </div>
         )}

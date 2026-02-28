@@ -52,6 +52,13 @@ export interface MessageDeletedEvent {
   msg_id: string;
 }
 
+export interface PinUpdateEvent {
+  conversation_id: string;
+  message_id: string | null;
+  pinned_by: string | null;
+  action: 'pin' | 'unpin';
+}
+
 // Backend returns msg_id, normalize to id for frontend use.
 const normalizeMessage = (raw: Record<string, any>): Message => ({
   id: (raw.msg_id || raw.id || raw.message_id) as string,
@@ -87,6 +94,7 @@ const readReceiptListeners = new Set<(e: ReadReceiptEvent) => void>();
 const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
+const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
 
 export interface CallSignal {
   type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy';
@@ -239,6 +247,14 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
       } else if (data.type === 'post_update') {
         const update: PostInteractionUpdate = data.payload;
         postUpdateListeners.forEach(cb => cb(update));
+      } else if (data.type === 'pin_update') {
+        const evt: PinUpdateEvent = {
+          conversation_id: data.payload.conversation_id,
+          message_id: data.payload.message_id || null,
+          pinned_by: data.payload.pinned_by || null,
+          action: data.payload.action || (data.payload.message_id ? 'pin' : 'unpin'),
+        };
+        pinUpdateListeners.forEach(cb => cb(evt));
       }
     };
 
@@ -429,6 +445,11 @@ export const subscribeToMessageDeletes = (cb: (e: MessageDeletedEvent) => void) 
   return () => { messageDeletedListeners.delete(cb); };
 };
 
+export const subscribeToPinUpdates = (cb: (e: PinUpdateEvent) => void) => {
+  pinUpdateListeners.add(cb);
+  return () => { pinUpdateListeners.delete(cb); };
+};
+
 export const sendSignaling = (data: object) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(data));
@@ -448,6 +469,47 @@ export const subscribeToFeedUpdates = (cb: (f: FeedUpdate) => void) => {
 export const subscribeToPostUpdates = (cb: (u: PostInteractionUpdate) => void) => {
   postUpdateListeners.add(cb);
   return () => { postUpdateListeners.delete(cb); };
+};
+
+// ---------------------------------------------------------------------------
+// Pin Message API
+// ---------------------------------------------------------------------------
+
+export interface PinnedMessage {
+  conversation_id: string;
+  message_id: string;
+  pinned_by: string;
+  pinned_at: string;
+  message?: Message;
+}
+
+export const pinMessage = async (conversationId: string, messageId: string) => {
+  return chatClient.request(`/conversations/${conversationId}/pin/${messageId}`, {
+    method: 'POST',
+  });
+};
+
+export const unpinMessage = async (conversationId: string) => {
+  return chatClient.request(`/conversations/${conversationId}/pin`, {
+    method: 'DELETE',
+  });
+};
+
+export const getPinnedMessage = async (conversationId: string): Promise<PinnedMessage | null> => {
+  try {
+    const json = await chatClient.request(`/conversations/${conversationId}/pin`);
+    const raw = json.data || json;
+    if (!raw || !raw.message_id) return null;
+    return {
+      conversation_id: raw.conversation_id || conversationId,
+      message_id: raw.message_id || raw.msg_id,
+      pinned_by: raw.pinned_by,
+      pinned_at: raw.pinned_at,
+      message: raw.message ? normalizeMessage(raw.message) : undefined,
+    };
+  } catch {
+    return null;
+  }
 };
 
 // Post room subscription — subscribe to per-post real-time updates via WS gateway

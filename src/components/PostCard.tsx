@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
-import { useToggleLike } from '@/hooks/usePostReaction';
+import { useToggleLike, useToggleReaction } from '@/hooks/usePostReaction';
+import ReactionPicker from '@/components/ReactionPicker';
+import Link from 'next/link';
 import { useToggleBookmark, useTogglePin } from '@/hooks/usePostActions';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
@@ -61,6 +63,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const { data: profile } = useMyProfile();
   const likeMutation = useToggleLike();
+  const reactionMutation = useToggleReaction();
   const bookmarkMutation = useToggleBookmark();
   const togglePinMutation = useTogglePin();
   const castVoteMutation = useCastVote();
@@ -76,6 +79,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const toggleLike = () => {
     // The optimistic UI is now handled centrally by useToggleLike's onMutate
     likeMutation.mutate(post.id);
+  };
+
+  const handleReaction = (reactionType: string) => {
+    reactionMutation.mutate({ postId: post.id, reactionType });
   };
 
   const handleBookmark = () => {
@@ -245,10 +252,38 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
-      {/* Post Text */}
+      {/* Post Text with clickable hashtags and @mentions */}
       {post.text && (
         <div className={`px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
-          <p className="text-[15px] text-gray-800 leading-relaxed whitespace-pre-wrap">{post.text}</p>
+          <p className="text-[15px] text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {post.text.split(/(#\w+|@\w+)/g).map((part, i) => {
+              if (part.startsWith('#')) {
+                const tag = part.slice(1);
+                return (
+                  <Link key={i} href={`/hashtag/${tag}`} className="text-blue-500 hover:text-blue-700 font-medium">
+                    {part}
+                  </Link>
+                );
+              }
+              if (part.startsWith('@')) {
+                const username = part.slice(1);
+                return (
+                  <Link key={i} href={`/u/${username}`} className="text-blue-500 hover:text-blue-700 font-medium">
+                    {part}
+                  </Link>
+                );
+              }
+              return part;
+            })}
+          </p>
+        </div>
+      )}
+
+      {/* Location name */}
+      {post.location_name && !post.location && (
+        <div className="px-4 pb-2 flex items-center gap-1 text-xs text-gray-400">
+          <MapPin className="w-3 h-3" />
+          <span>{post.location_name}</span>
         </div>
       )}
 
@@ -455,18 +490,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         ) : (
           <div className={`mx-4 mb-3 p-1.5 flex items-center justify-between border border-gray-100 bg-gray-50/50 rounded-2xl ${hasMedia && !isReel ? 'mt-3' : ''}`}>
             {!post.no_likes && (
-              <button
-                onClick={toggleLike}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[13px] font-bold ${liked
-                  ? 'bg-rose-50 text-rose-600 shadow-sm border border-rose-100'
-                  : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border hover:border-gray-100 border border-transparent'
-                  }`}
-              >
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full ${liked ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-md shadow-rose-500/20' : ''}`}>
-                  <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-                </div>
-                <span>{likesCount > 0 ? `${likesCount} Love${likesCount !== 1 ? 's' : ''}` : 'Love'}</span>
-              </button>
+              <div className="flex-1 flex items-center justify-center">
+                <ReactionPicker
+                  currentReaction={typeof post.viewer_reaction === 'string' ? post.viewer_reaction : (post.viewer_reaction ? 'like' : null)}
+                  onReact={handleReaction}
+                />
+                {likesCount > 0 && (
+                  <span className={`text-[13px] font-bold ml-1 ${liked ? 'text-rose-600' : 'text-gray-500'}`}>
+                    {likesCount}
+                  </span>
+                )}
+              </div>
             )}
 
             {!post.no_comments && (

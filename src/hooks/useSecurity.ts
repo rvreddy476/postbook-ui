@@ -23,6 +23,14 @@ export interface Session {
     expires_at: string
 }
 
+export interface TrustedDevice {
+    id: string
+    fingerprint: string
+    device_name: string
+    last_used: string
+    created_at: string
+}
+
 /* ------------------------------------------------------------------ */
 /*  2FA Hooks                                                          */
 /* ------------------------------------------------------------------ */
@@ -136,6 +144,170 @@ export function useLogoutAll() {
         },
         onError: (error) => {
             console.error("[SecuritySettings]", "Failed to logout all sessions", error)
+        },
+    })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Trusted Devices Hooks                                              */
+/* ------------------------------------------------------------------ */
+
+export function useTrustedDevices() {
+    return useQuery({
+        queryKey: ["trusted-devices"],
+        queryFn: async (): Promise<TrustedDevice[]> => {
+            const res = await api.get<{ data: TrustedDevice[] }>("/v1/auth/trusted-devices")
+            return res.data.data ?? []
+        },
+        staleTime: 30 * 1000,
+    })
+}
+
+export function useRemoveTrustedDevice() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (deviceId: string): Promise<{ status: string }> => {
+            console.info("[SecuritySettings]", `Removing trusted device ${deviceId}`)
+            const res = await api.delete<{ data: { status: string } }>(`/v1/auth/trusted-devices/${deviceId}`)
+            return res.data.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["trusted-devices"] })
+        },
+        onError: (error) => {
+            console.error("[SecuritySettings]", "Failed to remove trusted device", error)
+        },
+    })
+}
+
+export function useTrustDevice() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            fingerprint,
+            device_name,
+        }: {
+            fingerprint: string
+            device_name: string
+        }): Promise<{ status: string }> => {
+            console.info("[SecuritySettings]", "Trusting current device")
+            const res = await api.post<{ data: { status: string } }>("/v1/auth/trust-device", {
+                fingerprint,
+                device_name,
+            })
+            return res.data.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["trusted-devices"] })
+        },
+        onError: (error) => {
+            console.error("[SecuritySettings]", "Failed to trust device", error)
+        },
+    })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Password Reset Hooks                                               */
+/* ------------------------------------------------------------------ */
+
+export function useForgotPassword() {
+    return useMutation({
+        mutationFn: async (identifier: string): Promise<{ message: string }> => {
+            console.info("[Auth]", "Requesting password reset")
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/forgot-password", {
+                identifier,
+            })
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to request password reset", error)
+        },
+    })
+}
+
+export function useResetPassword() {
+    return useMutation({
+        mutationFn: async ({
+            identifier,
+            code,
+            new_password,
+        }: {
+            identifier: string
+            code: string
+            new_password: string
+        }): Promise<{ message: string }> => {
+            console.info("[Auth]", "Resetting password")
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/reset-password", {
+                identifier,
+                code,
+                new_password,
+            })
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to reset password", error)
+        },
+    })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Verification Hooks                                                 */
+/* ------------------------------------------------------------------ */
+
+export function useVerifyEmail() {
+    return useMutation({
+        mutationFn: async (code: string): Promise<{ message: string }> => {
+            console.info("[Auth]", "Verifying email")
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/verify-email", { code })
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to verify email", error)
+        },
+    })
+}
+
+export function useVerifyPhone() {
+    return useMutation({
+        mutationFn: async (code: string): Promise<{ message: string }> => {
+            console.info("[Auth]", "Verifying phone")
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/verify-phone", { code })
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to verify phone", error)
+        },
+    })
+}
+
+export function useResendVerification() {
+    return useMutation({
+        mutationFn: async (type: "email" | "phone"): Promise<{ message: string }> => {
+            console.info("[Auth]", `Resending ${type} verification`)
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/resend-verification", { type })
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to resend verification", error)
+        },
+    })
+}
+
+/* ------------------------------------------------------------------ */
+/*  Account Deletion Hook                                              */
+/* ------------------------------------------------------------------ */
+
+export function useDeleteAccount() {
+    return useMutation({
+        mutationFn: async (): Promise<{ message: string }> => {
+            console.info("[Auth]", "Deleting account")
+            const res = await api.delete<{ data: { message: string } }>("/v1/auth/account")
+            return res.data.data
+        },
+        onError: (error) => {
+            console.error("[Auth]", "Failed to delete account", error)
         },
     })
 }

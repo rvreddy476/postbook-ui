@@ -18,6 +18,11 @@ interface CreatePostPayload {
     activity?: string | null
     activity_detail?: string | null
     location?: string | null
+    location_name?: string | null
+    location_lat?: number | null
+    location_lng?: number | null
+    post_type?: string
+    app_origin?: string
     no_comments?: boolean
     no_likes?: boolean
     poll?: {

@@ -177,8 +177,67 @@ export interface PostDetail {
     counts?: { likes: number; comments: number; shares?: number }
     viewer_reaction?: string | null
     location?: string | null
+    location_name?: string | null
+    location_lat?: number | null
+    location_lng?: number | null
+    hashtags?: string[]
+    mentions?: string[]
+    post_type?: string
+    app_origin?: string
     is_bookmarked?: boolean
     poll?: PollData | null
+}
+
+// --- Stories ---
+
+export interface Story {
+    id: string
+    author_id: string
+    media_url: string
+    media_type: "image" | "video"
+    caption: string
+    visibility: "public" | "followers" | "close_friends"
+    view_count: number
+    expires_at: string
+    is_highlight: boolean
+    highlight_group?: string | null
+    created_at: string
+}
+
+// --- Multi-Reactions ---
+
+export type ReactionType = "like" | "love" | "haha" | "wow" | "sad" | "angry"
+
+export interface ReactionCounts {
+    like: number
+    love: number
+    haha: number
+    wow: number
+    sad: number
+    angry: number
+    total: number
+}
+
+export interface ReactionToggleResult {
+    reaction_type: string
+    is_set: boolean
+    counts: ReactionCounts
+}
+
+// --- Saved Items ---
+
+export interface SavedItem {
+    id: string
+    user_id: string
+    target_type: string
+    target_id: string
+    collection_name: string
+    created_at: string
+}
+
+export interface SavedCollection {
+    name: string
+    count: number
 }
 
 // --- About ---
@@ -247,6 +306,140 @@ export interface LifeEventData {
     title: string
     description?: string
     date?: string
+}
+
+// --- Channels ---
+
+export interface ChannelLink {
+    id: string
+    channel_id: string
+    title: string
+    url: string
+    icon?: string
+    sort_order: number
+}
+
+export interface ChannelMilestone {
+    id: string
+    channel_id: string
+    title: string
+    description?: string
+    reached_at: string
+    subscriber_count?: number
+}
+
+export interface Channel {
+    id: string
+    owner_id: string
+    handle: string
+    name: string
+    description?: string
+    avatar_media_id?: string
+    banner_media_id?: string
+    category?: string
+    subscriber_count: number
+    is_verified: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface ChannelDetail extends Channel {
+    links: ChannelLink[]
+    milestones: ChannelMilestone[]
+}
+
+// --- Business Pages ---
+
+export interface BusinessPage {
+    id: string
+    owner_id: string
+    handle: string
+    name: string
+    description?: string
+    category?: string
+    avatar_media_id?: string
+    cover_media_id?: string
+    phone?: string
+    email?: string
+    website?: string
+    address?: string
+    city?: string
+    state?: string
+    country?: string
+    zip_code?: string
+    latitude?: number
+    longitude?: number
+    hours?: Record<string, { open: string; close: string }>
+    average_rating: number
+    review_count: number
+    is_verified: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface BusinessReview {
+    id: string
+    page_id: string
+    author_id: string
+    author_display_name?: string
+    author_avatar_media_id?: string
+    rating: number
+    review_text: string
+    created_at: string
+    updated_at: string
+}
+
+// --- Reputation & Endorsements ---
+
+export interface SkillEndorsementSummary {
+    skill_tag: string
+    count: number
+    recent_endorsers: string[]
+}
+
+export interface UserReputation {
+    user_id: string
+    reputation: number
+    endorsement_summary: SkillEndorsementSummary[]
+}
+
+export interface Endorsement {
+    id: string
+    endorser_id: string
+    endorsee_id: string
+    skill_tag: string
+    message?: string
+    endorser_display_name?: string
+    endorser_avatar_media_id?: string
+    created_at: string
+}
+
+// --- Status / Mood ---
+
+export interface StatusMood {
+    status_text: string
+    status_emoji: string
+    expires_at?: string | null
+}
+
+// --- Compatibility ---
+
+export interface CompatibilityScore {
+    user_id: string
+    target_user_id: string
+    compatibility_score: number
+}
+
+// --- Link Analytics ---
+
+export interface LinkAnalytics {
+    link_id: string
+    platform: string
+    total_clicks: number
+    clicks_today: number
+    clicks_this_week: number
+    clicks_this_month: number
+    top_referrers: { referrer: string; count: number }[]
 }
 
 // Badge flag constants (bitmask)

@@ -59,3 +59,16 @@ export async function uploadMedia(
 
     return media_id
 }
+
+/**
+ * Update the alt text for an already-uploaded media item.
+ * Calls PATCH /v1/media/:mediaId/alt-text
+ */
+export async function updateMediaAltText(
+    mediaId: string,
+    altText: string
+): Promise<void> {
+    await api.patch(`/v1/media/${mediaId}/alt-text`, {
+        alt_text: altText,
+    })
+}

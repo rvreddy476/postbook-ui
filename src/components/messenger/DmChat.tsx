@@ -12,6 +12,7 @@ import {
   subscribeToReadReceipts,
   subscribeToMessageEdits,
   subscribeToMessageDeletes,
+  subscribeToPinUpdates,
   editMessage,
   deleteMessage,
   toggleReaction,
@@ -20,12 +21,17 @@ import {
   replyToMessage,
   forwardMessage,
   sendMediaMessage,
+  pinMessage,
+  unpinMessage,
+  getPinnedMessage,
   Message as BackendMessage,
   ReactionUpdate,
   TypingEvent,
   ReadReceiptEvent,
   MessageEditedEvent,
   MessageDeletedEvent,
+  PinUpdateEvent,
+  PinnedMessage,
 } from '@/services/messageService'
 import { getSession } from '@/services/authService'
 
@@ -135,6 +141,8 @@ export default function DmChat({
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
+  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
+  const [attachHover, setAttachHover] = useState(false)
 
   const convIdRef = useRef<string | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -181,6 +189,11 @@ export default function DmChat({
             const lastMsg = displayed[displayed.length - 1]
             markConversationRead(conversationId, lastMsg.id).catch(() => {})
           }
+
+          // Load pinned message
+          getPinnedMessage(conversationId).then(pinned => {
+            if (!cancelled) setPinnedMessage(pinned)
+          }).catch(() => {})
         }
       } catch (err) {
         console.error('[DmChat] init failed:', err)
@@ -313,6 +326,19 @@ export default function DmChat({
           return { ...m, reactions }
         })
       )
+    })
+    return unsub
+  }, [])
+
+  // ---- Pin update subscription ----
+  useEffect(() => {
+    const unsub = subscribeToPinUpdates((evt: PinUpdateEvent) => {
+      if (evt.conversation_id !== convIdRef.current) return
+      if (evt.action === 'unpin') {
+        setPinnedMessage(null)
+      } else if (convIdRef.current) {
+        getPinnedMessage(convIdRef.current).then(pinned => setPinnedMessage(pinned))
+      }
     })
     return unsub
   }, [])
@@ -463,6 +489,40 @@ export default function DmChat({
     setReplyingTo(msg)
     setContextMenu(null)
     inputRef.current?.focus()
+  }, [])
+
+  // ---- Pin handler ----
+  const handlePinMessage = useCallback(async (msgId: string) => {
+    if (!convIdRef.current) return
+    try {
+      await pinMessage(convIdRef.current, msgId)
+      const pinned = await getPinnedMessage(convIdRef.current)
+      setPinnedMessage(pinned)
+    } catch (err) {
+      console.error('[DmChat] pin failed:', err)
+    }
+    setContextMenu(null)
+  }, [])
+
+  // ---- Unpin handler ----
+  const handleUnpinMessage = useCallback(async () => {
+    if (!convIdRef.current) return
+    try {
+      await unpinMessage(convIdRef.current)
+      setPinnedMessage(null)
+    } catch (err) {
+      console.error('[DmChat] unpin failed:', err)
+    }
+  }, [])
+
+  // ---- Scroll to message ----
+  const scrollToMessage = useCallback((msgId: string) => {
+    const el = document.getElementById(`msg-${msgId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.style.background = 'rgba(99,102,241,0.15)'
+      setTimeout(() => { el.style.background = '' }, 1500)
+    }
   }, [])
 
   // ---- Context menu ----
@@ -620,6 +680,58 @@ export default function DmChat({
         ))}
       </div>
 
+      {/* ---- Pinned message banner ---- */}
+      {pinnedMessage && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '8px 16px',
+            background: 'rgba(99,102,241,0.06)',
+            borderBottom: '1px solid rgba(99,102,241,0.12)',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+          onClick={() => scrollToMessage(pinnedMessage.message_id)}
+        >
+          {/* Pin icon */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <line x1="12" y1="17" x2="12" y2="22" />
+            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+          </svg>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Pinned Message
+            </div>
+            <div style={{ fontSize: 12, color: '#D1D5DB', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {pinnedMessage.message?.text || 'Click to view'}
+            </div>
+          </div>
+          {/* Unpin button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleUnpinMessage() }}
+            title="Unpin message"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#6B7280',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: '2px 6px',
+              borderRadius: 6,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ---- Messages area ---- */}
       <div
         style={{
@@ -664,6 +776,35 @@ export default function DmChat({
 
         {!loading &&
           messages.map((msg, i) => {
+            // ---- System message styling ----
+            if (msg.type === 'system') {
+              return (
+                <div
+                  key={msg.id}
+                  id={`msg-${msg.id}`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '8px 0',
+                    transition: 'background 0.3s',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: '#6B7280',
+                      background: 'rgba(255,255,255,0.04)',
+                      padding: '4px 14px',
+                      borderRadius: 12,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {msg.text || 'System message'}
+                  </span>
+                </div>
+              )
+            }
+
             const isMe = msg.senderId === myId
             const groupStart = isGroupStart(i)
             const groupEnd = isGroupEnd(i)
@@ -672,6 +813,7 @@ export default function DmChat({
             return (
               <div
                 key={msg.id}
+                id={`msg-${msg.id}`}
                 style={{
                   display: 'flex',
                   flexDirection: isMe ? 'row-reverse' : 'row',
@@ -679,6 +821,7 @@ export default function DmChat({
                   gap: 8,
                   marginTop: groupStart ? 10 : 1,
                   animation: 'fadeSlide 0.2s ease',
+                  transition: 'background 0.3s',
                 }}
                 onContextMenu={(e) => handleContextMenu(e, msg)}
               >
@@ -899,6 +1042,16 @@ export default function DmChat({
               if (msg) handleReply(msg)
             }}
           />
+          <ContextMenuItem
+            label={pinnedMessage?.message_id === contextMenu.messageId ? 'Unpin' : 'Pin'}
+            onClick={() => {
+              if (pinnedMessage?.message_id === contextMenu.messageId) {
+                handleUnpinMessage()
+              } else {
+                handlePinMessage(contextMenu.messageId)
+              }
+            }}
+          />
           {contextMenu.senderId === myId && (
             <>
               <ContextMenuItem
@@ -1056,8 +1209,35 @@ export default function DmChat({
               flexShrink: 0,
               transition: 'background 0.15s',
             }}
+            title="Upload media"
           >
             ＋
+          </button>
+
+          {/* Paperclip attachment button */}
+          <button
+            onMouseEnter={() => setAttachHover(true)}
+            onMouseLeave={() => setAttachHover(false)}
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach file"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              border: 'none',
+              background: attachHover ? 'rgba(255,255,255,0.1)' : 'transparent',
+              color: attachHover ? '#A5B4FC' : '#6B7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: 'all 0.15s',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
           </button>
           <input
             ref={fileInputRef}
