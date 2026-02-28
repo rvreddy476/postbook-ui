@@ -1,0 +1,165 @@
+import { User } from '@/types';
+import { AuthRepository } from '@/services/auth/AuthRepository';
+import { AuthSessionStore } from '@/services/auth/AuthSessionStore';
+import { ApiGender } from '@/services/auth/types';
+import { createAuthStrategy } from '@/services/auth/strategyFactory';
+import { HttpClientError } from '@/services/core/httpClient';
+
+interface RegisterPayload {
+  firstName: string;
+  lastName: string;
+  gender: 'Male' | 'Female' | 'Others';
+  dob: string;
+  loginId: string;
+  password: string;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
+
+const authRepository = new AuthRepository(createAuthStrategy(), new AuthSessionStore());
+
+const mapGender = (gender: RegisterPayload['gender']): ApiGender => {
+  switch (gender) {
+    case 'Male':
+      return 'male';
+    case 'Female':
+      return 'female';
+    case 'Others':
+    default:
+      return 'others';
+  }
+};
+
+const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
+
+const isEmail = (value: string) => /.+@.+\..+/.test(value);
+
+const toErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof HttpClientError) {
+    if (error.requestId) {
+      console.error(`[Auth] Request ${error.requestId} failed: ${error.message}`, error.details);
+      return `${error.message} (Request: ${error.requestId})`;
+    }
+    return error.message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+};
+
+export const registerUser = async ({
+  firstName,
+  lastName,
+  gender,
+  dob,
+  loginId,
+  password,
+}: RegisterPayload): Promise<{ success: boolean; error?: string; user?: User }> => {
+  const identifier = normalizeIdentifier(loginId);
+
+  if (!firstName.trim() || !lastName.trim() || !identifier || !password.trim() || !dob) {
+    return { success: false, error: 'Please fill all required fields.' };
+  }
+
+  const email = isEmail(identifier) ? identifier : '';
+  const phone = isEmail(identifier) ? '' : identifier;
+
+  try {
+    const user = await authRepository.register({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      gender: mapGender(gender),
+      dob,
+      email,
+      phone,
+      password,
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    console.error('[Auth] Registration failed:', error);
+    return { success: false, error: toErrorMessage(error, 'Registration failed.') };
+  }
+};
+
+export const loginUser = async (
+  loginId: string,
+  password: string
+): Promise<{
+  success: boolean;
+  requires2FA?: boolean;
+  pendingToken?: string;
+  userId?: string;
+  error?: string;
+  user?: User;
+}> => {
+  const identifier = normalizeIdentifier(loginId);
+
+  if (!identifier || !password.trim()) {
+    return { success: false, error: 'Identifier and password are required.' };
+  }
+
+  try {
+    const loginResult = await authRepository.login({
+      identifier,
+      password,
+      deviceId: 'web-1',
+      platform: 'web',
+    });
+
+    if (loginResult.requires2FA) {
+      return {
+        success: true,
+        requires2FA: true,
+        pendingToken: loginResult.pendingToken,
+        userId: loginResult.userId,
+      };
+    }
+
+    return { success: true, user: loginResult.authResult?.user };
+  } catch (error) {
+    console.error('[Auth] Login failed:', error);
+    return { success: false, error: toErrorMessage(error, 'Authentication failed.') };
+  }
+};
+
+export const verify2FA = async (
+  userId: string,
+  code: string,
+  pendingToken: string
+): Promise<{ success: boolean; error?: string; user?: User }> => {
+  if (!userId || !code.trim() || !pendingToken) {
+    return { success: false, error: 'Verification code is required.' };
+  }
+
+  try {
+    const user = await authRepository.verify2FA(userId, code.trim(), pendingToken);
+    return { success: true, user };
+  } catch (error) {
+    console.error('[Auth] 2FA verification failed:', error);
+    return { success: false, error: toErrorMessage(error, 'Verification failed. Please try again.') };
+  }
+};
+
+export const getOAuthUrl = (provider: string): string => {
+  return `${API_BASE_URL}/v1/auth/oauth/${provider}`;
+};
+
+export const updateUser = (updatedUser: User) => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return;
+  }
+
+  localStorage.setItem('postbook_session', JSON.stringify(updatedUser));
+};
+
+export const logoutUser = () => {
+  authRepository.logout();
+};
+
+export const getSession = (): User | null => {
+  return authRepository.getSessionUser();
+};

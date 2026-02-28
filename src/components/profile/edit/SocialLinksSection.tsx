@@ -1,0 +1,229 @@
+"use client"
+
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Plus, Trash2, GripVertical, Loader2, ExternalLink, Pin, Link as LinkIcon, Save, X } from "lucide-react"
+import { useProfileLinks, useCreateProfileLink, useUpdateProfileLink, useDeleteProfileLink } from "@/hooks/useEditProfile"
+import type { ProfileLink } from "@/types/profile"
+import { motion, AnimatePresence } from "framer-motion"
+
+const ICON_OPTIONS = [
+    "website", "twitter", "instagram", "facebook", "linkedin",
+    "github", "youtube", "tiktok", "discord", "telegram",
+    "spotify", "twitch", "reddit", "email", "other",
+]
+
+const inputBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm appearance-none cursor-pointer"
+
+export function SocialLinksSection() {
+    const { data: links, isLoading } = useProfileLinks()
+    const createLink = useCreateProfileLink()
+    const updateLink = useUpdateProfileLink()
+    const deleteLink = useDeleteProfileLink()
+
+    const [showAddForm, setShowAddForm] = useState(false)
+    const [newLink, setNewLink] = useState({ title: "", url: "", icon: "website" })
+
+    const handleCreate = async () => {
+        if (!newLink.title.trim() || !newLink.url.trim()) return
+        await createLink.mutateAsync({
+            title: newLink.title,
+            url: newLink.url,
+            icon: newLink.icon,
+            sort_order: (links?.length ?? 0),
+        })
+        setNewLink({ title: "", url: "", icon: "website" })
+        setShowAddForm(false)
+    }
+
+    if (isLoading) return (
+        <div className="space-y-4">
+            {[1, 2].map(i => <div key={i} className="h-20 bg-slate-50 animate-pulse rounded-[1.5rem]" />)}
+        </div>
+    )
+
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Social Links</label>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Links to your other websites</p>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddForm(true)}
+                    disabled={showAddForm}
+                    className="h-10 px-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-900 shadow-sm"
+                >
+                    <Plus className="w-3.5 h-3.5 mr-2" />
+                    Add New Link
+                </Button>
+            </div>
+
+            <div className="space-y-4">
+                <AnimatePresence>
+                    {showAddForm && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100 shadow-inner space-y-4"
+                        >
+                            <div className="grid grid-cols-[140px_1fr] gap-4">
+                                <select
+                                    value={newLink.icon}
+                                    onChange={(e) => setNewLink((p) => ({ ...p, icon: e.target.value }))}
+                                    className={selectBase}
+                                >
+                                    {ICON_OPTIONS.map((p) => (
+                                        <option key={p} value={p}>
+                                            {p.charAt(0).toUpperCase() + p.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <Input
+                                    value={newLink.title}
+                                    onChange={(e) => setNewLink((p) => ({ ...p, title: e.target.value }))}
+                                    placeholder="Link name (e.g. Portfolio)"
+                                    className={inputBase}
+                                />
+                            </div>
+                            <Input
+                                value={newLink.url}
+                                onChange={(e) => setNewLink((p) => ({ ...p, url: e.target.value }))}
+                                placeholder="https://..."
+                                className={inputBase}
+                            />
+                            <div className="flex gap-2 justify-end pt-2">
+                                <Button variant="ghost" className="h-10 px-6 rounded-xl text-slate-500 font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
+                                    Cancel
+                                </Button>
+                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-600/20">
+                                    {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Link"}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {(!links || links.length === 0) && !showAddForm && (
+                    <div className="p-20 text-center bg-slate-50/50 border border-slate-100 border-dashed rounded-[2.5rem]">
+                        <LinkIcon className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No links added to your profile yet.</p>
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    {links?.map((link) => (
+                        <LinkRow
+                            key={link.id}
+                            link={link}
+                            onUpdate={(link, field) => updateLink.mutate({ id: link.id, title: link.title, url: link.url, ...field })}
+                            onDelete={(id) => deleteLink.mutate(id)}
+                            isUpdating={updateLink.isPending}
+                            isDeleting={deleteLink.isPending}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function LinkRow({
+    link,
+    onUpdate,
+    onDelete,
+    isDeleting,
+}: {
+    link: ProfileLink
+    onUpdate: (link: ProfileLink, field: Partial<Pick<ProfileLink, "title" | "url" | "icon" | "is_pinned">>) => void
+    onDelete: (linkId: string) => void
+    isUpdating: boolean
+    isDeleting: boolean
+}) {
+    const [editing, setEditing] = useState(false)
+    const [title, setTitle] = useState(link.title)
+    const [url, setUrl] = useState(link.url)
+
+    const handleSave = () => {
+        if (title !== link.title || url !== link.url) {
+            onUpdate(link, { title, url })
+        }
+        setEditing(false)
+    }
+
+    if (editing) {
+        return (
+            <div className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-xl space-y-4">
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={inputBase} />
+                <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputBase} />
+                <div className="flex gap-2 justify-end pt-2">
+                    <Button variant="ghost" className="h-10 px-6 rounded-xl text-slate-400 font-bold uppercase tracking-widest text-[10px]" onClick={() => setEditing(false)}>Cancel</Button>
+                    <Button size="sm" className="h-10 px-8 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[10px]" onClick={handleSave}>
+                        Update
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <motion.div
+            layout
+            className="flex items-center gap-6 p-5 rounded-[1.5rem] bg-white border border-slate-100 group hover:shadow-2xl transition-all duration-500"
+        >
+            <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                    {link.icon?.slice(0, 3) || "HUB"}
+                </span>
+            </div>
+
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-slate-900 uppercase tracking-tight truncate">{link.title}</span>
+                    {link.is_pinned && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
+                </div>
+                <div className="flex items-center gap-3 mt-1.5 font-bold uppercase tracking-[0.05em]">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-400 hover:text-blue-600 truncate flex items-center gap-1.5 transition-colors">
+                        <ExternalLink className="w-3 h-3" />
+                        {link.url}
+                    </a>
+                    {link.click_count > 0 && (
+                        <span className="text-[9px] text-slate-300 ml-auto">{link.click_count} Clicks</span>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => onUpdate(link, { is_pinned: !link.is_pinned })}
+                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600"}`}
+                >
+                    <Pin className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setEditing(true)}
+                    className="p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
+                >
+                    <LinkIcon className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => onDelete(link.id)}
+                    disabled={isDeleting}
+                    className="p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </motion.button>
+            </div>
+        </motion.div>
+    )
+}
