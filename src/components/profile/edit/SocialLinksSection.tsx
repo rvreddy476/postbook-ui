@@ -9,8 +9,7 @@ import type { ProfileLink } from "@/types/profile"
 import { motion, AnimatePresence } from "framer-motion"
 
 const ICON_OPTIONS = [
-    "website", "twitter", "instagram", "facebook", "linkedin",
-    "github", "youtube", "tiktok", "discord", "telegram",
+    "website", "linkedin", "github", "discord", "telegram",
     "spotify", "twitch", "reddit", "email", "other",
 ]
 
