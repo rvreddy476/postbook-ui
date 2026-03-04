@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { Suspense, useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Search, X, Loader2, Users, FileText, LayoutGrid, CheckCircle } from "lucide-react"
-import { useUniversalSearch, SearchType } from "@/hooks/useSearch"
+import { useUniversalSearch, useAutocomplete, SearchType } from "@/hooks/useSearch"
 import type { PostDetail } from "@/types/profile"
 import PostCard from "@/components/PostCard"
 
@@ -150,7 +150,7 @@ function HintState() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function SearchPage() {
+function SearchPageContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get("q") ?? ""
@@ -158,7 +158,9 @@ export default function SearchPage() {
 
     const [inputValue, setInputValue] = useState(initialQuery)
     const [activeType, setActiveType] = useState<SearchType>(initialType)
+    const [showDropdown, setShowDropdown] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+    const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     // Sync URL when query or type changes (debounced)
     useEffect(() => {
@@ -172,12 +174,22 @@ export default function SearchPage() {
         return () => clearTimeout(timer)
     }, [inputValue, activeType, router])
 
+    // Cleanup blur timer on unmount
+    useEffect(() => {
+        return () => {
+            if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+        }
+    }, [])
+
     const { data, isLoading, isFetching } = useUniversalSearch(inputValue, activeType)
+    const { data: autocompleteResults } = useAutocomplete(inputValue)
 
     const profiles = data?.profiles ?? []
     const posts = data?.posts ?? []
     const hasResults = profiles.length > 0 || posts.length > 0
     const queryTooShort = inputValue.length < 2
+
+    const hasAutocomplete = showDropdown && inputValue.length >= 1 && (autocompleteResults?.length ?? 0) > 0
 
     const handleTabChange = (type: SearchType) => {
         setActiveType(type)
@@ -185,17 +197,41 @@ export default function SearchPage() {
 
     const handleClear = () => {
         setInputValue("")
+        setShowDropdown(false)
         inputRef.current?.focus()
     }
+
+    const handleInputFocus = () => {
+        if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+        setShowDropdown(true)
+    }
+
+    const handleInputBlur = () => {
+        blurTimerRef.current = setTimeout(() => {
+            setShowDropdown(false)
+        }, 150)
+    }
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Escape") {
+            setShowDropdown(false)
+            inputRef.current?.blur()
+        }
+    }
+
+    const handleAutocompleteClick = useCallback((username: string) => {
+        setShowDropdown(false)
+        router.push(`/u/${username}`)
+    }, [router])
 
     return (
         <div className="min-h-screen bg-[#fcfaff]">
             {/* Sticky header with search input and tabs */}
             <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-0">
-                    {/* Search input */}
+                    {/* Search input with autocomplete dropdown */}
                     <div className="relative flex items-center mb-4">
-                        <div className="absolute left-4 text-gray-400 pointer-events-none">
+                        <div className="absolute left-4 text-gray-400 pointer-events-none z-10">
                             {isLoading || isFetching ? (
                                 <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
                             ) : (
@@ -206,7 +242,13 @@ export default function SearchPage() {
                             ref={inputRef}
                             type="text"
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            onChange={(e) => {
+                                setInputValue(e.target.value)
+                                setShowDropdown(true)
+                            }}
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
+                            onKeyDown={handleInputKeyDown}
                             placeholder="Search people, posts, hashtags..."
                             autoFocus
                             className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all"
@@ -214,11 +256,33 @@ export default function SearchPage() {
                         {inputValue && (
                             <button
                                 onClick={handleClear}
-                                className="absolute right-4 text-gray-400 hover:text-gray-700 transition-colors"
+                                className="absolute right-4 text-gray-400 hover:text-gray-700 transition-colors z-10"
                                 aria-label="Clear search"
                             >
                                 <X className="w-5 h-5" />
                             </button>
+                        )}
+
+                        {/* Autocomplete dropdown */}
+                        {hasAutocomplete && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-gray-100">
+                                {autocompleteResults!.map((user) => (
+                                    <button
+                                        key={user.user_id}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => handleAutocompleteClick(user.username)}
+                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-violet-50 transition-colors text-left"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
+                                            {(user.display_name || user.username).charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-gray-900 truncate">{user.display_name}</p>
+                                            <p className="text-xs text-gray-400 truncate">@{user.username}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -296,5 +360,21 @@ export default function SearchPage() {
                 )}
             </main>
         </div>
+    )
+}
+
+function SearchPageFallback() {
+    return (
+        <div className="min-h-screen bg-[#fcfaff] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+        </div>
+    )
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={<SearchPageFallback />}>
+            <SearchPageContent />
+        </Suspense>
     )
 }

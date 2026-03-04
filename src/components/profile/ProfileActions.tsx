@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import type { Relationship } from "@/types/profile"
-import { UserCheck, UserPlus, MessageSquare, Settings, Share2, Clock, Users, MoreHorizontal, Shield, ShieldOff, UserMinus, Lock } from "lucide-react"
+import { UserCheck, UserPlus, MessageSquare, Settings, Share2, Clock, Users, MoreHorizontal, Shield, ShieldOff, UserMinus, Lock, VolumeX, Volume2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface ProfileActionsProps {
@@ -11,6 +11,7 @@ interface ProfileActionsProps {
     relationship: Relationship | null
     username?: string
     displayName?: string
+    isMuted?: boolean
     onFollow: () => void
     onUnfollow: () => void
     onSendCircleRequest: () => void
@@ -22,6 +23,8 @@ interface ProfileActionsProps {
     onMessage?: () => void
     onBlock?: () => void
     onUnblock?: () => void
+    onMute?: () => void
+    onUnmute?: () => void
 }
 
 export function ProfileActions({
@@ -29,6 +32,7 @@ export function ProfileActions({
     relationship,
     username,
     displayName,
+    isMuted = false,
     onFollow,
     onUnfollow,
     onSendCircleRequest,
@@ -40,6 +44,8 @@ export function ProfileActions({
     onMessage,
     onBlock,
     onUnblock,
+    onMute,
+    onUnmute,
 }: ProfileActionsProps) {
     const [menuOpen, setMenuOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
@@ -118,6 +124,19 @@ export function ProfileActions({
             icon: <Users className="h-4 w-4" />,
             onClick: () => { setMenuOpen(false); onRemoveFromCircle() },
             destructive: true,
+        })
+    }
+    if (isMuted) {
+        menuItems.push({
+            label: `Unmute @${username}`,
+            icon: <Volume2 className="h-4 w-4" />,
+            onClick: () => { setMenuOpen(false); onUnmute?.() },
+        })
+    } else {
+        menuItems.push({
+            label: `Mute @${username}`,
+            icon: <VolumeX className="h-4 w-4" />,
+            onClick: () => { setMenuOpen(false); onMute?.() },
         })
     }
     menuItems.push({

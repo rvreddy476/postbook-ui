@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthUser } from "@/store/auth"
 import { useAggregatedProfile } from "@/hooks/useAggregatedProfile"
@@ -15,6 +15,8 @@ import { ActivityTab } from "./tabs/ActivityTab"
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
 import { useSendFriendRequest, useAcceptFriendRequest, useRejectFriendRequest, useCancelFriendRequest, useRemoveFriend } from "@/hooks/useConnections"
 import { useBlockUser, useUnblockUser } from "@/hooks/useBlocking"
+import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
+import { useToast } from "@/components/ui/toast"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import type { UserProfile, ProfileTab, AppPlatform } from "@/types/profile"
 
@@ -30,6 +32,9 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
     const [blockDialogOpen, setBlockDialogOpen] = useState(false)
     const [unblockDialogOpen, setUnblockDialogOpen] = useState(false)
     const [removeCircleDialogOpen, setRemoveCircleDialogOpen] = useState(false)
+    const [isMuted, setIsMuted] = useState(false)
+
+    const { toast, ToastContainer } = useToast()
 
     const { data, isLoading } = useAggregatedProfile(username)
 
@@ -91,21 +96,32 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
     const blockMutation = useBlockUser()
     const unblockMutation = useUnblockUser()
 
+    // Mute mutations
+    const muteMutation = useMuteUser()
+    const unmuteMutation = useUnmuteUser()
+
+    // Hydrate isMuted from sessionStorage once the profile id is known
+    useEffect(() => {
+        if (!profile?.id) return
+        const stored = sessionStorage.getItem(`muted_${profile.id}`)
+        setIsMuted(stored === "true")
+    }, [profile?.id])
+
     // Follow handlers
     const handleFollow = useCallback(() => {
         if (!profile) return
-        followMutation.mutate(profile.username)
+        followMutation.mutate(profile.username || profile.id)
     }, [profile, followMutation])
 
     const handleUnfollow = useCallback(() => {
         if (!profile) return
-        unfollowMutation.mutate(profile.username)
+        unfollowMutation.mutate(profile.username || profile.id)
     }, [profile, unfollowMutation])
 
     // Circle handlers
     const handleSendCircleRequest = useCallback(() => {
         if (!profile) return
-        sendCircleRequest.mutate(profile.username)
+        sendCircleRequest.mutate(profile.username || profile.id)
     }, [profile, sendCircleRequest])
 
     const handleAcceptCircleRequest = useCallback(() => {
@@ -129,7 +145,7 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
 
     const handleConfirmRemoveFromCircle = useCallback(() => {
         if (!profile) return
-        removeFromCircle.mutate(profile.username, {
+        removeFromCircle.mutate(profile.username || profile.id, {
             onSuccess: () => {
                 setRemoveCircleDialogOpen(false)
             },
@@ -163,6 +179,29 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
         })
     }, [profile, unblockMutation])
 
+    // Mute handlers
+    const handleMute = useCallback(() => {
+        if (!profile) return
+        muteMutation.mutate({ muted_id: profile.id }, {
+            onSuccess: () => {
+                setIsMuted(true)
+                sessionStorage.setItem(`muted_${profile.id}`, "true")
+                toast({ type: "success", title: `@${profile.username} muted` })
+            },
+        })
+    }, [profile, muteMutation, toast])
+
+    const handleUnmute = useCallback(() => {
+        if (!profile) return
+        unmuteMutation.mutate({ muted_id: profile.id }, {
+            onSuccess: () => {
+                setIsMuted(false)
+                sessionStorage.removeItem(`muted_${profile.id}`)
+                toast({ type: "info", title: `@${profile.username} unmuted` })
+            },
+        })
+    }, [profile, unmuteMutation, toast])
+
     if (isLoading) {
         return (
             <div className="max-w-4xl mx-auto py-8 space-y-6">
@@ -192,6 +231,7 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
                 relationship={relationship}
                 isOwn={isOwn}
                 avatarUrl={avatarUrl}
+                isMuted={isMuted}
                 onFollow={handleFollow}
                 onUnfollow={handleUnfollow}
                 onSendCircleRequest={handleSendCircleRequest}
@@ -202,6 +242,8 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
                 onEditProfile={() => router.push("/settings/profile")}
                 onBlock={handleBlock}
                 onUnblock={handleUnblock}
+                onMute={handleMute}
+                onUnmute={handleUnmute}
             />
 
             <div className="px-4 space-y-6">
@@ -269,6 +311,8 @@ export function ProfilePage({ username, platform = "postboek" }: ProfilePageProp
                 destructive
                 loading={removeFromCircle.isPending}
             />
+
+            <ToastContainer />
         </div>
     )
 }

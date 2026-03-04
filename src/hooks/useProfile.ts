@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { UserProfile, UserLink, GraphCounts, ContentCounts, Relationship } from "@/types/profile"
+import type { UserProfile, UserLink, GraphCounts, ContentCounts, Relationship, UserProfileBatchResponse } from "@/types/profile"
 
 // Backend returns user_id, frontend expects id
 function normalizeProfile(raw: Record<string, unknown>): UserProfile {
@@ -71,5 +71,25 @@ export function useRelationship(viewerId: string | null, targetId: string | unde
         },
         staleTime: 60 * 1000,
         enabled: !!viewerId && !!targetId && viewerId !== targetId,
+    })
+}
+
+export function useBatchProfiles(userIds: string[]) {
+    const capped = userIds.slice(0, 100)
+    return useQuery({
+        queryKey: ["profiles", "batch", ...capped.slice().sort()],
+        queryFn: async () => {
+            const res = await api.post<UserProfileBatchResponse>("/v1/profiles/batch", {
+                user_ids: capped,
+            })
+            const map = new Map<string, UserProfile>()
+            for (const profile of res.data.profiles) {
+                const normalized = normalizeProfile(profile as unknown as Record<string, unknown>)
+                map.set(normalized.id, normalized)
+            }
+            return map
+        },
+        staleTime: 60_000,
+        enabled: capped.length > 0,
     })
 }

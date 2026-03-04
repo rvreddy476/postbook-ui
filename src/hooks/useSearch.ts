@@ -85,3 +85,24 @@ export function useSuggested() {
         },
     })
 }
+
+export interface AutocompleteUser {
+    user_id: string
+    username: string
+    display_name: string
+}
+
+export function useAutocomplete(query: string) {
+    return useQuery({
+        queryKey: ["search", "autocomplete", query],
+        queryFn: async () => {
+            const res = await api.get("/v1/search/autocomplete", {
+                params: { q: query, limit: 8 },
+            })
+            const results: AutocompleteUser[] = res.data.data || res.data || []
+            return results
+        },
+        enabled: query.length >= 1,
+        staleTime: 10_000,
+    })
+}

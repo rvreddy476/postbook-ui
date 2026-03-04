@@ -27,6 +27,9 @@ interface ProfileHeaderProps {
     onMessage?: () => void
     onBlock?: () => void
     onUnblock?: () => void
+    isMuted?: boolean
+    onMute?: () => void
+    onUnmute?: () => void
 }
 
 const badgeIcons: Record<string, typeof BadgeCheck> = {
@@ -35,7 +38,7 @@ const badgeIcons: Record<string, typeof BadgeCheck> = {
     business: Briefcase,
 }
 
-export function ProfileHeader({ profile, links, relationship, isOwn, avatarUrl, onFollow, onUnfollow, onSendCircleRequest, onAcceptCircleRequest, onDeclineCircleRequest, onCancelCircleRequest, onRemoveFromCircle, onEditProfile, onMessage, onBlock, onUnblock }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, links, relationship, isOwn, avatarUrl, onFollow, onUnfollow, onSendCircleRequest, onAcceptCircleRequest, onDeclineCircleRequest, onCancelCircleRequest, onRemoveFromCircle, onEditProfile, onMessage, onBlock, onUnblock, isMuted, onMute, onUnmute }: ProfileHeaderProps) {
     const qc = useQueryClient()
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
@@ -265,6 +268,7 @@ export function ProfileHeader({ profile, links, relationship, isOwn, avatarUrl, 
                                 relationship={relationship}
                                 username={profile.username}
                                 displayName={profile.display_name}
+                                isMuted={isMuted}
                                 onFollow={onFollow}
                                 onUnfollow={onUnfollow}
                                 onSendCircleRequest={onSendCircleRequest}
@@ -276,6 +280,8 @@ export function ProfileHeader({ profile, links, relationship, isOwn, avatarUrl, 
                                 onMessage={onMessage}
                                 onBlock={onBlock}
                                 onUnblock={onUnblock}
+                                onMute={onMute}
+                                onUnmute={onUnmute}
                             />
                         </div>
                     </div>

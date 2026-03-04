@@ -107,12 +107,22 @@ export interface Relationship {
     // Block
     blocked: boolean
     blocked_by: boolean
+    // Mute
+    is_muted?: boolean
     // Derived permissions (gated by circle)
     can_dm: boolean
     can_see_online: boolean
     can_add_to_group: boolean
     // Mutual circle count
     mutual_circle_count: number
+}
+
+export interface UserProfileBatchResponse {
+    profiles: UserProfile[]
+}
+
+export interface RelationshipBatchResponse {
+    relationships: Record<string, Relationship>
 }
 
 export interface FriendRequest {
@@ -123,6 +133,23 @@ export interface FriendRequest {
     updated_at: string
 }
 
+/**
+ * Backend content types for posts (matches post-service validation).
+ * - post: text/photo/article posts
+ * - poll: poll posts
+ * - reel: short videos (<=90s)
+ * - video: long-form videos (>90s)
+ */
+export const POST_CONTENT_TYPES = {
+    POST: "post",
+    POLL: "poll",
+    REEL: "reel",
+    VIDEO: "video",
+} as const
+
+export type PostContentType = (typeof POST_CONTENT_TYPES)[keyof typeof POST_CONTENT_TYPES]
+
+/** UI-level content filter (superset of PostContentType, includes "all" and "short" for display). */
 export type ContentType = "all" | "post" | "short" | "video" | "photo"
 export type AppPlatform = "postboek" | "posttube" | "postgram"
 export type ProfileTab = "creations" | "about" | "connections" | "pages" | "activity"
