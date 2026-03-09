@@ -73,11 +73,7 @@ function SidebarSkeleton() {
 
 function FeedPlaceholder({ friends }: { friends: User[] }) {
   const mockPosts = useMemo(() => {
-    const pool = friends.length > 0 ? friends.slice(0, 3) : [
-      { id: 'mock-1', name: 'Alex Johnson', avatar: '', isOnline: true },
-      { id: 'mock-2', name: 'Sam Rivera', avatar: '', isOnline: false },
-      { id: 'mock-3', name: 'Jordan Lee', avatar: '', isOnline: true },
-    ] as User[]
+    const pool = friends.slice(0, 3)
 
     const texts = [
       'Just finished a great book on system design. Highly recommend it to anyone building at scale!',

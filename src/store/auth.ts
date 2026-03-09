@@ -1,10 +1,9 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { AuthSessionStore } from "@/services/auth/AuthSessionStore"
 import type { User } from "@/types"
 
-const sessionStore = new AuthSessionStore()
+const SESSION_CHANGE_EVENT = "postbook:session-changed"
 
 // Cache the snapshot so useSyncExternalStore gets a stable reference.
 // Only update when the serialised value actually changes.
@@ -16,16 +15,31 @@ function readSnapshot(): User | null {
         ? localStorage.getItem("postbook_session")
         : null
     if (raw === cachedRaw) return cachedUser
-    cachedRaw = raw
-    cachedUser = raw ? (JSON.parse(raw) as User) : null
+    try {
+        cachedRaw = raw
+        cachedUser = raw ? (JSON.parse(raw) as User) : null
+    } catch {
+        try {
+            localStorage.removeItem("postbook_session")
+        } catch {
+            // ignore storage errors
+        }
+        cachedRaw = null
+        cachedUser = null
+    }
     return cachedUser
 }
 
 // Minimal auth store compatible with the profile system
 // Reads from the existing AuthSessionStore (localStorage)
 function subscribe(cb: () => void) {
-    window.addEventListener("storage", cb)
-    return () => window.removeEventListener("storage", cb)
+    const notify = () => cb()
+    window.addEventListener("storage", notify)
+    window.addEventListener(SESSION_CHANGE_EVENT, notify)
+    return () => {
+        window.removeEventListener("storage", notify)
+        window.removeEventListener(SESSION_CHANGE_EVENT, notify)
+    }
 }
 
 function getSnapshot() {

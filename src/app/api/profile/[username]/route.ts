@@ -105,9 +105,14 @@ export async function GET(
         relationship: relationship ?? null,
     }
 
+    const cacheControl = viewerId
+        ? "private, no-store"
+        : "public, s-maxage=10, stale-while-revalidate=30";
+
     return NextResponse.json({ data: result }, {
         headers: {
-            "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+            "Cache-Control": cacheControl,
+            "Vary": "X-User-Id, Authorization",
         },
     })
 }

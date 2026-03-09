@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { fetchCircleMembers } from '../services/userService';
-import { getSession } from '../services/authService';
-import { User } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { Globe, Lock, MessageCircle, Plus, Search, Users } from 'lucide-react';
+
+import GroupCreateModal from '@/components/groups/GroupCreateModal';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useMyGroups } from '@/hooks/useGroups';
-import type { Group } from '@/types/groups';
+import { getSession } from '@/services/authService';
+import { fetchCircleMembers } from '@/services/userService';
+import { User } from '@/types';
 
 interface ContactListProps {
   onContactClick: (contact: User) => void;
@@ -14,23 +17,33 @@ interface ContactListProps {
   onGroupClick?: (groupId: string) => void;
   activeGroupId?: string | null;
   onClearGroup?: () => void;
+  onCreateGroup?: (groupId: string) => void;
 }
 
 const ContactSkeleton = () => (
-  <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl animate-pulse opacity-40">
-    <div className="w-9 h-9 rounded-lg bg-slate-200 flex-shrink-0"></div>
+  <div className="flex items-center gap-3 rounded-2xl border border-slate-100/80 px-3 py-2.5">
+    <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
     <div className="flex-1 space-y-2">
-      <div className="h-2 w-20 bg-slate-200 rounded"></div>
-      <div className="h-1.5 w-12 bg-slate-100 rounded"></div>
+      <div className="h-2.5 w-24 animate-pulse rounded bg-slate-100" />
+      <div className="h-2 w-16 animate-pulse rounded bg-slate-50" />
     </div>
   </div>
 );
 
-const ContactList: React.FC<ContactListProps> = ({ onContactClick, activeChatIds = [], onGroupClick, activeGroupId, onClearGroup }) => {
+const ContactList: React.FC<ContactListProps> = ({
+  onContactClick,
+  activeChatIds = [],
+  onGroupClick,
+  activeGroupId,
+  onClearGroup,
+  onCreateGroup,
+}) => {
   const [contacts, setContacts] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [activeListTab, setActiveListTab] = useState<'friends' | 'groups'>('friends');
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+
   const { getUnreadCountForUser } = useNotifications();
   const { data: myGroups, isLoading: groupsLoading } = useMyGroups();
 
@@ -39,11 +52,14 @@ const ContactList: React.FC<ContactListProps> = ({ onContactClick, activeChatIds
       setIsLoading(true);
       try {
         const me = getSession();
-        if (!me) { setContacts([]); return; }
+        if (!me) {
+          setContacts([]);
+          return;
+        }
         const members = await fetchCircleMembers(me.id, 50);
         setContacts(members);
       } catch (err) {
-        console.error("Failed to load circle:", err);
+        console.error('Failed to load circle:', err);
       } finally {
         setIsLoading(false);
       }
@@ -51,68 +67,93 @@ const ContactList: React.FC<ContactListProps> = ({ onContactClick, activeChatIds
     loadCircle();
   }, []);
 
-  const filteredContacts = contacts.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+  const filteredContacts = useMemo(
+    () =>
+      contacts.filter((contact) =>
+        `${contact.name} ${contact.loginId ?? ''}`.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [contacts, search],
   );
 
-  const filteredGroups = (myGroups ?? []).filter(g =>
-    g.name.toLowerCase().includes(search.toLowerCase())
+  const filteredGroups = useMemo(
+    () => (myGroups ?? []).filter((group) => group.name.toLowerCase().includes(search.toLowerCase())),
+    [myGroups, search],
   );
+
+  const handleGroupCreated = (groupId: string) => {
+    setShowCreateGroupModal(false);
+    setActiveListTab('groups');
+    setSearch('');
+    if (onCreateGroup) {
+      onCreateGroup(groupId);
+      return;
+    }
+    onGroupClick?.(groupId);
+  };
+
+  const subtitle =
+    activeListTab === 'friends'
+      ? `${contacts.length} ${contacts.length === 1 ? 'friend' : 'friends'}`
+      : `${(myGroups ?? []).length} ${(myGroups ?? []).length === 1 ? 'group' : 'groups'}`;
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-100">
-      <div className="px-4 pt-5 pb-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-        {/* Header: Messages + New button */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[18px] font-bold text-slate-900 tracking-tight">Messages</h2>
-          <button className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          </button>
+    <div className="relative flex h-full flex-col bg-white">
+      <div className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-4 pb-3 pt-4 backdrop-blur-xl">
+        <div className="mb-3">
+          <div>
+            <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">Inbox</h2>
+            <p className="mt-0.5 text-[11px] font-medium text-slate-400">{subtitle}</p>
+          </div>
         </div>
 
-        {/* Friends / Groups Tab Switcher */}
-        <div className="flex items-center border-b border-slate-100 -mx-4 px-4">
-          <button
-            onClick={() => { setActiveListTab('friends'); onClearGroup?.(); }}
-            className={`flex-1 pb-2.5 text-[13px] font-semibold transition-all border-b-2 ${
-              activeListTab === 'friends'
-                ? 'text-blue-600 border-blue-500'
-                : 'text-slate-400 border-transparent hover:text-slate-600'
-            }`}
-          >
-            My Circle
-          </button>
-          <button
-            onClick={() => setActiveListTab('groups')}
-            className={`flex-1 pb-2.5 text-[13px] font-semibold transition-all border-b-2 ${
-              activeListTab === 'groups'
-                ? 'text-blue-600 border-blue-500'
-                : 'text-slate-400 border-transparent hover:text-slate-600'
-            }`}
-          >
-            Groups
-          </button>
+        <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="grid grid-cols-2 gap-1">
+            <button
+              onClick={() => {
+                setActiveListTab('friends');
+                onClearGroup?.();
+              }}
+              className={`rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                activeListTab === 'friends'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              My Circle
+            </button>
+            <button
+              onClick={() => setActiveListTab('groups')}
+              className={`rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                activeListTab === 'groups'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Group Chat
+            </button>
+          </div>
         </div>
 
-        {/* Search */}
-        <div className="relative group mt-3">
+        <div className="group relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500" />
           <input
             type="text"
-            placeholder={activeListTab === 'groups' ? 'Search groups...' : 'Search...'}
+            placeholder={activeListTab === 'groups' ? 'Search groups...' : 'Search friends...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-3 text-[12px] text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-200 transition-all placeholder:text-slate-400"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-blue-200 focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-2 py-4 space-y-1">
+      <div className="scrollbar-hide flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {activeListTab === 'friends' ? (
           <>
             {isLoading ? (
               <>
-                {[...Array(8)].map((_, i) => <ContactSkeleton key={i} />)}
+                {[...Array(8)].map((_, i) => (
+                  <ContactSkeleton key={`friend-skeleton-${i}`} />
+                ))}
               </>
             ) : (
               <>
@@ -123,40 +164,54 @@ const ContactList: React.FC<ContactListProps> = ({ onContactClick, activeChatIds
                     <button
                       key={contact.id}
                       onClick={() => onContactClick(contact)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative group ${isActive
-                        ? 'bg-violet-50 shadow-sm ring-1 ring-violet-100'
-                        : 'hover:bg-slate-50/80'
-                        }`}
+                      className={`w-full rounded-2xl border px-3 py-2.5 text-left transition ${
+                        isActive
+                          ? 'border-violet-200 bg-violet-50/70 shadow-sm'
+                          : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50'
+                      }`}
                     >
-                      <div className="relative flex-shrink-0">
-                        <div className={`w-9 h-9 rounded-lg overflow-hidden border transition-all ${isActive ? 'border-violet-500 shadow-md' : 'border-white shadow-sm'}`}>
-                          <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover" />
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-shrink-0">
+                          <div
+                            className={`h-10 w-10 overflow-hidden rounded-xl border ${
+                              isActive ? 'border-violet-200' : 'border-slate-200'
+                            }`}
+                          >
+                            <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" />
+                          </div>
+                          {contact.isOnline && (
+                            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                          )}
                         </div>
-                        {contact.isOnline && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`truncate text-[12px] font-semibold ${
+                              isActive ? 'text-violet-700' : 'text-slate-900'
+                            }`}
+                          >
+                            {contact.name}
+                          </p>
+                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                            {contact.isOnline ? 'Online' : 'Offline'}
+                          </p>
+                        </div>
+
+                        {unreadCount > 0 && (
+                          <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
                         )}
                       </div>
-                      <div className="text-left flex-1 min-w-0">
-                        <h4 className={`text-[11px] font-black italic tracking-tight truncate ${isActive ? 'orchid-text-gradient' : 'text-slate-900'}`}>
-                          {contact.name}
-                        </h4>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                          {contact.isOnline ? 'Online' : 'Offline'}
-                        </p>
-                      </div>
-                      {unreadCount > 0 && (
-                        <div className="ml-auto min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-rose-500 text-white text-[9px] font-black rounded-full shadow-sm flex-shrink-0">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </div>
-                      )}
                     </button>
                   );
                 })}
 
                 {filteredContacts.length === 0 && (
-                  <div className="py-12 text-center opacity-40">
-                    <p className="text-[9px] font-black uppercase tracking-widest italic">
-                      {search ? 'None found' : 'No circle members yet'}
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
+                    <MessageCircle className="mx-auto mb-2 h-5 w-5 text-slate-300" />
+                    <p className="text-[12px] font-medium text-slate-500">
+                      {search ? 'No matching friends' : 'No circle members yet'}
                     </p>
                   </div>
                 )}
@@ -167,63 +222,100 @@ const ContactList: React.FC<ContactListProps> = ({ onContactClick, activeChatIds
           <>
             {groupsLoading ? (
               <>
-                {[...Array(5)].map((_, i) => <ContactSkeleton key={i} />)}
+                {[...Array(6)].map((_, i) => (
+                  <ContactSkeleton key={`group-skeleton-${i}`} />
+                ))}
               </>
             ) : (
               <>
                 {filteredGroups.map((group) => {
                   const isActive = activeGroupId === group.id;
-                  const avatarSrc = group.avatar_media_id
-                    ? `/v1/media/${group.avatar_media_id}/serve`
-                    : null;
+                  const avatarSrc = group.avatar_media_id ? `/v1/media/${group.avatar_media_id}/serve` : null;
                   return (
                     <button
                       key={group.id}
                       onClick={() => onGroupClick?.(group.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all relative ${
+                      className={`w-full rounded-2xl border px-3 py-2.5 text-left transition ${
                         isActive
-                          ? 'bg-blue-50/60 border-l-2 border-l-blue-500'
-                          : 'hover:bg-slate-50 border-l-2 border-l-transparent'
+                          ? 'border-blue-200 bg-blue-50/70 shadow-sm'
+                          : 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="relative flex-shrink-0">
-                        <div className="w-11 h-11 rounded-xl overflow-hidden shadow-sm border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                           {avatarSrc ? (
-                            <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
+                            <img src={avatarSrc} alt={group.name} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-600 text-[14px] font-bold">
+                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600">
                               {group.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
-                      </div>
-                      <div className="text-left flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className={`text-[13px] font-semibold truncate ${
-                            isActive ? 'text-blue-700' : 'text-slate-900'
-                          }`}>
-                            {group.name}
-                          </h4>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p
+                              className={`truncate text-[13px] font-semibold ${
+                                isActive ? 'text-blue-700' : 'text-slate-900'
+                              }`}
+                            >
+                              {group.name}
+                            </p>
+                            <span className="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                              {group.visibility}
+                            </span>
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                            <span className="inline-flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {group.member_count} members
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              {group.visibility === 'private' ? (
+                                <Lock className="h-3 w-3" />
+                              ) : (
+                                <Globe className="h-3 w-3" />
+                              )}
+                              {group.visibility}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                          {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-                        </p>
                       </div>
                     </button>
                   );
                 })}
 
                 {filteredGroups.length === 0 && (
-                  <div className="py-12 text-center opacity-40">
-                    <p className="text-[9px] font-black uppercase tracking-widest italic">No groups found</p>
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
+                    <Users className="mx-auto mb-2 h-5 w-5 text-slate-300" />
+                    <p className="text-[12px] font-medium text-slate-500">
+                      {search ? 'No matching groups' : 'No groups yet'}
+                    </p>
                   </div>
                 )}
               </>
             )}
+            <button
+              onClick={() => setShowCreateGroupModal(true)}
+              className="mt-1 w-full rounded-2xl border border-dashed border-blue-200 bg-blue-50/60 px-3 py-3 text-[12px] font-semibold text-blue-700 transition hover:bg-blue-100"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                Create Group
+              </span>
+            </button>
           </>
         )}
       </div>
 
+      <AnimatePresence>
+        {showCreateGroupModal && (
+          <GroupCreateModal
+            onClose={() => setShowCreateGroupModal(false)}
+            onCreated={handleGroupCreated}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

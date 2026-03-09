@@ -21,7 +21,7 @@ interface ReactionPickerProps {
 
 const ReactionPicker: React.FC<ReactionPickerProps> = ({ currentReaction, onReact, disabled, compact }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const handleMouseEnter = () => {

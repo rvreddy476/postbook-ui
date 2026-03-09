@@ -8,9 +8,10 @@ import { motion } from 'framer-motion'
 
 interface GroupCreateModalProps {
   onClose: () => void
+  onCreated?: (groupId: string) => void
 }
 
-export default function GroupCreateModal({ onClose }: GroupCreateModalProps) {
+export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModalProps) {
   const router = useRouter()
   const createGroup = useCreateGroup()
 
@@ -29,6 +30,10 @@ export default function GroupCreateModal({ onClose }: GroupCreateModalProps) {
         visibility,
       })
       onClose()
+      if (onCreated) {
+        onCreated(group.id)
+        return
+      }
       router.push(`/groups/${group.id}`)
     } catch {
       // Error handled by React Query

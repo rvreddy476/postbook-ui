@@ -12,11 +12,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
     { label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', href: '/' },
-    { label: 'TV', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+    { label: 'TV', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', href: '/posttube', newTab: true },
     { label: 'Reels', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z' },
 
-    { label: 'Friends', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', href: '/circle' },
-    { label: 'Groups', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', href: '/groups' },
+    { label: 'My Circle', icon: 'M18 18.72a9.094 9.094 0 003.741-2.461m0 0A9 9 0 0012 3a9 9 0 00-9.741 13.259m0 0A9.094 9.094 0 006 18.72m12 0a8.966 8.966 0 01-6 2.28 8.966 8.966 0 01-6-2.28m12 0a5.97 5.97 0 00-6-2.28 5.97 5.97 0 00-6 2.28M15 9a3 3 0 11-6 0 3 3 0 016 0z', href: '/circle' },
     { label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', href: '/profile' }
   ];
 
@@ -48,7 +47,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 
         if (item.href) {
           return (
-            <Link key={item.label} href={item.href} title={item.label}>
+            <Link
+              key={item.label}
+              href={item.href}
+              title={item.label}
+              target={(item as { newTab?: boolean }).newTab ? "_blank" : undefined}
+              rel={(item as { newTab?: boolean }).newTab ? "noopener noreferrer" : undefined}
+            >
               {IconContent}
             </Link>
           );

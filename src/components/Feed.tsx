@@ -39,13 +39,11 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   const isMyPostsTab = activeTab === 'my_posts';
   const feedMode = TAB_TO_FEED_MODE[activeTab] ?? 'chronological';
 
-  // Only fetch home feed when NOT on My Posts tab — backend filters out own posts via exclude_self
   const homeFeed = useHomeFeed(feedMode, {
     excludeSelf: true,
     enabled: !isMyPostsTab,
   });
 
-  // Only fetch profile posts when ON My Posts tab
   const myPostsFeed = useProfilePosts(
     isMyPostsTab ? currentUserId : undefined,
     'all',
@@ -128,39 +126,48 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   ];
 
   return (
-    <div className="space-y-3 w-full animate-fadeIn max-w-[680px] mx-auto pb-32 px-4 sm:px-0">
+    <div className="mx-auto w-full max-w-[860px] animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      {/* Stories Row */}
-      <StoriesRow onCreateClick={onCreateClick} />
+      <div className="mb-4">
+        <StoriesRow onCreateClick={onCreateClick} />
+      </div>
 
-      {/* Feed Tab Toggle */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex">
-          {tabs.map((tab) => (
+      <div className="sticky top-2 z-20 mb-4 rounded-2xl border border-slate-200/70 bg-white/90 p-2 shadow-sm backdrop-blur-xl">
+        <div className="flex items-center gap-2">
+          <div className="grid flex-1 grid-cols-3 gap-1.5 rounded-xl bg-slate-50 p-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`relative rounded-lg px-3 py-2.5 text-[12px] font-semibold transition ${
+                  activeTab === tab.key
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.key && (
+                  <motion.div
+                    layoutId="feed-tab-indicator"
+                    className="absolute inset-x-4 -bottom-0.5 h-[2px] rounded-full bg-blue-600"
+                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          {onCreateClick && (
             <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`flex-1 py-3.5 text-[13px] font-semibold text-center transition-all relative ${
-                activeTab === tab.key
-                  ? 'text-blue-600'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
-              }`}
+              onClick={onCreateClick}
+              className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-[12px] font-semibold text-blue-700 transition hover:bg-blue-100"
             >
-              {tab.label}
-              {activeTab === tab.key && (
-                <motion.div
-                  layoutId="feed-tab-indicator"
-                  className="absolute bottom-0 left-3 right-3 h-[3px] bg-blue-600 rounded-t-full"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
+              Create
             </button>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* New Posts Banner */}
       <AnimatePresence>
         {newPostCount > 0 && !isMyPostsTab && (
           <motion.button
@@ -169,28 +176,27 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             onClick={handleLoadNewPosts}
-            className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-[0.99] transition-all cursor-pointer shadow-sm shadow-blue-500/20"
+            className="mb-4 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99]"
           >
-            {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} — tap to see
+            {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Post Stream */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {isLoading && (
           <div className="flex justify-center py-20">
-            <div className="w-9 h-9 border-[3px] border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+            <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-blue-100 border-t-blue-600" />
           </div>
         )}
 
         {!isLoading && posts.length === 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 text-center py-20 space-y-2">
-            <h3 className="text-base font-semibold text-gray-300">
-              {isMyPostsTab ? 'You haven\'t posted anything yet' : 'No posts yet'}
+          <div className="rounded-2xl border border-slate-200 bg-white py-20 text-center">
+            <h3 className="text-base font-semibold text-slate-400">
+              {isMyPostsTab ? "You haven't posted anything yet" : 'No posts yet'}
             </h3>
-            <p className="text-sm text-gray-400">
-              {isMyPostsTab ? 'Share something with your circle!' : 'Follow people to see their posts here'}
+            <p className="mt-1 text-sm text-slate-400">
+              {isMyPostsTab ? 'Share something with your circle.' : 'Follow people to see their posts here.'}
             </p>
           </div>
         )}
@@ -200,11 +206,11 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
         ))}
 
         {hasNextPage && (
-          <div className="flex justify-center py-4">
+          <div className="flex justify-center py-2">
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="px-6 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
+              className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load More'}
             </button>

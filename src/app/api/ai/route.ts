@@ -1,5 +1,48 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+
+type GeminiPart = {
+    text?: string;
+    inlineData?: {
+        data?: string;
+        mimeType?: string;
+    };
+};
+
+type GeminiResponse = {
+    candidates?: Array<{
+        content?: {
+            parts?: GeminiPart[];
+        };
+    }>;
+};
+
+async function callGemini(apiKey: string, model: string, body: Record<string, unknown>): Promise<GeminiResponse> {
+    const res = await fetch(`${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+        const errorBody = await res.text();
+        throw new Error(`Gemini API error (${res.status}): ${errorBody}`);
+    }
+
+    return (await res.json()) as GeminiResponse;
+}
+
+function extractText(result: GeminiResponse): string {
+    const parts = result.candidates?.[0]?.content?.parts ?? [];
+    return parts
+        .map((part) => part.text)
+        .filter((text): text is string => Boolean(text))
+        .join("\n")
+        .trim();
+}
 
 export async function POST(req: Request) {
     try {
@@ -10,22 +53,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing Gemini API Key on server" }, { status: 500 });
         }
 
-        const ai = new GoogleGenAI({ apiKey });
-
         if (action === "generateText") {
-            const result = await ai.models.generateContent({
+            const result = await callGemini(apiKey, "gemini-2.0-flash", {
                 model: "gemini-2.0-flash",
-                contents: payload.prompt,
+                contents: [{ role: "user", parts: [{ text: payload.prompt }] }],
             });
-            const text = result.text ?? "";
+            const text = extractText(result);
             return NextResponse.json({ text });
         }
 
         if (action === "generateImage") {
-            const result = await ai.models.generateContent({
+            const result = await callGemini(apiKey, "gemini-2.0-flash", {
                 model: "gemini-2.0-flash",
                 contents: [{ role: "user", parts: [{ text: payload.prompt }] }],
-                config: {
+                generationConfig: {
                     maxOutputTokens: 2048,
                 },
             });

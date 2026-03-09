@@ -30,7 +30,7 @@ const PostBoekApp: React.FC = () => {
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeChats, setActiveChats] = useState<User[]>([]);
-  const [isContactListOpen, setIsContactListOpen] = useState(false);
+  const [isContactListOpen, setIsContactListOpen] = useState(true);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [groupRefreshKey, setGroupRefreshKey] = useState(0);
 
@@ -45,16 +45,28 @@ const PostBoekApp: React.FC = () => {
       router.push('/circle');
       return;
     }
+    if (tab === 'Reels') {
+      router.push('/reels');
+      return;
+    }
     setActiveTab(tab);
   }, [currentUser, router]);
 
   const handleGroupClick = useCallback((groupId: string) => {
     setActiveGroupId(groupId);
+    setIsContactListOpen(true);
     setGroupRefreshKey(k => k + 1);
   }, []);
 
   const handleClearGroup = useCallback(() => {
     setActiveGroupId(null);
+  }, []);
+
+  const handleCreateGroupFromChat = useCallback((groupId: string) => {
+    setActiveTab('Home');
+    setIsContactListOpen(true);
+    setActiveGroupId(groupId);
+    setGroupRefreshKey(k => k + 1);
   }, []);
 
   useEffect(() => {
@@ -80,7 +92,7 @@ const PostBoekApp: React.FC = () => {
   const handleContactClick = useCallback((contact: User | { id: string; name: string; avatar: string }) => {
     const user: User = 'isOnline' in contact
       ? contact as User
-      : { id: contact.id, name: contact.name, avatar: contact.avatar, isOnline: true };
+      : { id: contact.id, name: contact.name, avatar: contact.avatar, isOnline: false };
 
     setActiveChats((prev) => {
       if (prev.find((c) => c.id === user.id)) {
@@ -107,7 +119,7 @@ const PostBoekApp: React.FC = () => {
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="h-full w-full"
         >
-          <GroupPanel groupId={activeGroupId} />
+          <GroupPanel groupId={activeGroupId} onCreateGroup={handleCreateGroupFromChat} />
         </motion.div>
       );
     }
@@ -153,7 +165,7 @@ const PostBoekApp: React.FC = () => {
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
-    <div className="h-screen min-h-screen overflow-hidden bg-[#fcfaff] font-sans selection:bg-rose-100 selection:text-rose-900">
+    <div className="h-screen min-h-screen overflow-hidden bg-gradient-to-b from-[#fcfaff] to-[#f8f7ff] font-sans selection:bg-rose-100 selection:text-rose-900">
       <Header
         currentUser={currentUser}
         activeTab={activeTab}
@@ -169,7 +181,7 @@ const PostBoekApp: React.FC = () => {
         </aside>
 
         <aside
-          className={`${isReelsMode ? 'hidden xl:flex' : 'hidden lg:flex'} z-[90] w-[220px] flex-col border-r border-slate-100 bg-white shadow-sm relative`}
+          className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] w-[280px] flex-col border-r border-slate-100 bg-white/90 shadow-sm relative backdrop-blur-xl`}
         >
           <AnimatePresence mode="wait">
             {isContactListOpen ? (
@@ -181,7 +193,7 @@ const PostBoekApp: React.FC = () => {
                 transition={{ duration: 0.2 }}
                 className="h-full w-full"
               >
-                <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} />
+                <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} />
               </motion.div>
             ) : (
               <motion.div
@@ -206,20 +218,20 @@ const PostBoekApp: React.FC = () => {
               ? 'snap-y snap-mandatory scroll-smooth p-0'
               : isGroupMode
                 ? 'p-0 overflow-hidden'
-                : 'scrollbar-hide px-4 pb-28 pt-6 sm:px-6 md:pb-8 lg:px-12 lg:pt-8'
+                : 'scrollbar-hide px-3 pb-28 pt-4 sm:px-4 md:pb-8 lg:px-6 lg:pt-6 xl:px-10'
           }`}
         >
           <div className={`mx-auto ${
             isReelsMode || isGroupMode
               ? 'h-full max-w-none w-full'
-              : 'max-w-[800px]'
+              : 'max-w-[960px]'
           }`}>
             {renderContent()}
           </div>
         </main>
 
         {!isReelsMode && !isGroupMode && (
-          <aside className="hidden w-[320px] flex-col overflow-y-auto border-l border-slate-100 bg-white/30 p-6 backdrop-blur-xl xl:flex">
+          <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-slate-100 bg-white/50 p-5 backdrop-blur-2xl xl:flex">
             <RightPanel onContactClick={handleContactClick} />
           </aside>
         )}
@@ -239,7 +251,7 @@ const PostBoekApp: React.FC = () => {
       </AnimatePresence>
       <MobileBottomNav activeTab={activeTab} onChange={handleNavChange} />
 
-      <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:right-[20px] md:gap-4 xl:right-[340px]">
+      <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
         <AnimatePresence>
           {activeChats.map((chat) => (
             <motion.div
@@ -247,7 +259,7 @@ const PostBoekApp: React.FC = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="pointer-events-auto h-[420px] w-[290px] transition-all sm:h-[450px] sm:w-[320px]"
+              className="pointer-events-auto h-[460px] w-[320px] transition-all sm:h-[500px] sm:w-[360px]"
             >
               <ChatWindow contact={chat} onClose={() => closeChat(chat.id)} />
             </motion.div>

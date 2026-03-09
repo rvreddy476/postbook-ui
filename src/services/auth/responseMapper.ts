@@ -82,9 +82,10 @@ export const mapAuthResponse = (payload: unknown, fallbackIdentifier: string): A
   const firstName = getString(userSource, ['first_name', 'firstName']);
   const lastName = getString(userSource, ['last_name', 'lastName']);
   const fullName = getString(userSource, ['name', 'full_name', 'fullName']) ?? [firstName, lastName].filter(Boolean).join(' ').trim();
-  const userId =
-    getString(userSource, ['id', 'user_id', 'userId', 'uuid']) ??
-    (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `u_${Date.now()}`);
+  const userId = getString(userSource, ['id', 'user_id', 'userId', 'uuid']);
+  if (!userId) {
+    throw new Error('Authentication response missing user id.');
+  }
   const email = getString(userSource, ['email']);
   const phone = getString(userSource, ['phone']);
   const avatar =
@@ -100,7 +101,7 @@ export const mapAuthResponse = (payload: unknown, fallbackIdentifier: string): A
     gender: toDisplayGender(getString(userSource, ['gender'])),
     dob: getString(userSource, ['dob', 'date_of_birth', 'birth_date', 'birthDate']),
     avatar,
-    isOnline: true,
+    isOnline: false,
     joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
   };
 

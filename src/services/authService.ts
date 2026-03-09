@@ -14,7 +14,8 @@ interface RegisterPayload {
   password: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+const DEVICE_ID_KEY = 'postbook_device_id';
 
 const authRepository = new AuthRepository(createAuthStrategy(), new AuthSessionStore());
 
@@ -33,6 +34,29 @@ const mapGender = (gender: RegisterPayload['gender']): ApiGender => {
 const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
 
 const isEmail = (value: string) => /.+@.+\..+/.test(value);
+
+const getDeviceId = () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'web-server';
+  }
+
+  try {
+    const existing = localStorage.getItem(DEVICE_ID_KEY);
+    if (existing && existing.trim()) {
+      return existing;
+    }
+
+    const generated =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `web_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+    localStorage.setItem(DEVICE_ID_KEY, generated);
+    return generated;
+  } catch {
+    return 'web-fallback';
+  }
+};
 
 const toErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof HttpClientError) {
@@ -106,7 +130,7 @@ export const loginUser = async (
     const loginResult = await authRepository.login({
       identifier,
       password,
-      deviceId: 'web-1',
+      deviceId: getDeviceId(),
       platform: 'web',
     });
 
@@ -153,7 +177,12 @@ export const updateUser = (updatedUser: User) => {
     return;
   }
 
-  localStorage.setItem('postbook_session', JSON.stringify(updatedUser));
+  try {
+    localStorage.setItem('postbook_session', JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event('postbook:session-changed'));
+  } catch {
+    // Ignore storage quota/corruption errors. Session update is best-effort.
+  }
 };
 
 export const logoutUser = () => {

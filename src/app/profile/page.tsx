@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Header from '@/components/Header';
+import MinimalHeader from '@/components/MinimalHeader';
+import Sidebar from '@/components/Sidebar';
 import { ProfilePage } from '@/components/profile/ProfilePage';
-import { getSession } from '@/services/authService';
-import { User } from '@/types';
+import { getSession, logoutUser } from '@/services/authService';
+import { User, NavItem } from '@/types';
 import { useRouter } from 'next/navigation';
 
 export default function ProfileRoute() {
@@ -26,24 +27,34 @@ export default function ProfileRoute() {
         return <div className="min-h-screen bg-[#fcfaff]" />;
     }
 
+    const handleLogout = () => {
+        logoutUser();
+        router.push('/login');
+    };
+
+    const handleSetActiveTab = (tab: NavItem) => {
+        if (tab === 'Reels') router.push('/?tab=reels');
+        else if (tab === 'TV') router.push('/?tab=tv');
+        else router.push('/');
+    };
+
     return (
         <div className="min-h-screen bg-[#fcfaff] font-sans selection:bg-rose-100 selection:text-rose-900">
-            <Header
-                currentUser={currentUser}
-                activeTab="Profile"
-                setActiveTab={() => { }}
-                onCreateClick={() => { }}
-                onLogout={() => {
-                    window.location.href = '/';
-                }}
-                onToggleContactList={() => { }}
-            />
+            <MinimalHeader currentUser={currentUser} onLogout={handleLogout} />
 
-            <main className="pt-24 pb-12 overflow-y-auto h-screen scrollbar-hide">
-                <div className="max-w-5xl mx-auto">
-                    <ProfilePage username={currentUser.id} platform="postboek" />
+            <div className="flex pt-16">
+                {/* Left Sidebar */}
+                <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-[90]">
+                    <Sidebar activeTab="Profile" setActiveTab={handleSetActiveTab} />
                 </div>
-            </main>
+
+                {/* Main Content */}
+                <main className="flex-1 md:ml-[72px] pb-12 overflow-y-auto h-screen scrollbar-hide">
+                    <div className="max-w-5xl mx-auto">
+                        <ProfilePage username={currentUser.id} platform="postboek" />
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }

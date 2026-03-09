@@ -366,6 +366,7 @@ export interface Channel {
     category?: string
     subscriber_count: number
     is_verified: boolean
+    is_default?: boolean
     created_at: string
     updated_at: string
 }
@@ -373,6 +374,30 @@ export interface Channel {
 export interface ChannelDetail extends Channel {
     links: ChannelLink[]
     milestones: ChannelMilestone[]
+    language?: string
+    location?: string
+    watermark_media_id?: string
+    theme_color?: string
+    settings?: ChannelSettings
+}
+
+export interface ChannelSettings {
+    comments_mode: "everyone" | "followers" | "none"
+    allow_remix: boolean
+    allow_download: boolean
+    blocked_words: string[]
+}
+
+export interface HandleCheckResult {
+    available: boolean
+    suggestion?: string
+    reason?: string
+}
+
+export interface HandleChangeRequest {
+    new_handle: string
+    confirmation_checked: boolean
+    cooldown_notice_seen: boolean
 }
 
 // --- Business Pages ---

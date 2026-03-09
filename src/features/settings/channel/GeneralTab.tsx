@@ -1,0 +1,364 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, Check, Loader2, X } from "lucide-react";
+import { useMyChannels } from "@/hooks/useChannels";
+import { useUpdateChannel } from "@/hooks/useChannels";
+import { useCheckHandle, useChangeHandle } from "@/hooks/useChannelSettings";
+
+const CATEGORIES = [
+  "Technology", "Education", "Comedy", "Gaming", "Music", "Lifestyle",
+  "Sports", "News", "Travel", "Food", "Fashion", "Fitness",
+  "Science", "Art", "Entertainment", "Business", "Health", "Other",
+];
+
+const LANGUAGES = [
+  "English", "Hindi", "Spanish", "French", "German", "Portuguese",
+  "Japanese", "Korean", "Chinese", "Arabic", "Russian", "Dutch",
+  "Italian", "Turkish", "Indonesian", "Thai", "Vietnamese", "Other",
+];
+
+function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-[14px] font-bold text-slate-900">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+export function GeneralTab() {
+  const { data: channels } = useMyChannels();
+  const channel = channels?.[0];
+  const updateMutation = useUpdateChannel();
+  const checkHandle = useCheckHandle();
+  const changeHandle = useChangeHandle();
+
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [category, setCategory] = useState("");
+  const [language, setLanguage] = useState("English");
+  const [location, setLocation] = useState("");
+  const [saved, setSaved] = useState(false);
+
+  // Handle change modal
+  const [handleModalOpen, setHandleModalOpen] = useState(false);
+  const [newHandle, setNewHandle] = useState("");
+  const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
+  const [handleConfirmed, setHandleConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (channel) {
+      setName(channel.name || "");
+      setBio(channel.description || "");
+      setCategory(channel.category || "");
+    }
+  }, [channel]);
+
+  const handleSave = useCallback(async () => {
+    if (!channel) return;
+    await updateMutation.mutateAsync({
+      id: channel.id,
+      name,
+      description: bio,
+      category,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }, [channel, name, bio, category, updateMutation]);
+
+  const [handleReason, setHandleReason] = useState<string | null>(null);
+
+  const handleCheckAvailability = useCallback(async () => {
+    if (!newHandle || newHandle.length < 3) return;
+    const result = await checkHandle.mutateAsync(newHandle);
+    setHandleAvailable(result.available);
+    setHandleReason(result.reason ?? null);
+  }, [newHandle, checkHandle]);
+
+  const handleConfirmChange = useCallback(async () => {
+    if (!handleAvailable || !handleConfirmed) return;
+    await changeHandle.mutateAsync(newHandle);
+    setHandleModalOpen(false);
+    setNewHandle("");
+    setHandleAvailable(null);
+    setHandleConfirmed(false);
+  }, [handleAvailable, handleConfirmed, newHandle, changeHandle]);
+
+  return (
+    <div className="space-y-6">
+      {/* Channel Name + Handle */}
+      <SettingsCard title="Channel Identity">
+        <div className="space-y-5">
+          {/* Channel Name */}
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+              Channel Name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={50}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              placeholder="My Awesome Channel"
+            />
+            <p className="mt-1 text-[11px] text-slate-400">{name.length}/50 characters</p>
+          </div>
+
+          {/* Handle */}
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+              Handle
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-3">
+                <span className="text-[13px] text-slate-400">@</span>
+                <span className="ml-0.5 text-[13px] font-medium text-slate-700">
+                  {channel?.handle || "—"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHandleModalOpen(true)}
+                className="shrink-0 rounded-xl bg-slate-100 px-4 py-2.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Bio */}
+      <SettingsCard title="About">
+        <div>
+          <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+            Bio / Description
+          </label>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            maxLength={500}
+            rows={4}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 resize-none"
+            placeholder="Tell viewers about your channel..."
+          />
+          <p className="mt-1 text-[11px] text-slate-400">{bio.length}/500 characters</p>
+        </div>
+      </SettingsCard>
+
+      {/* Category + Language + Location */}
+      <SettingsCard title="Details">
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+              Category / Topic
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+            >
+              <option value="">Select category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+              Language
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="col-span-2">
+            <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+              Location (optional)
+            </label>
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              placeholder="e.g. Mumbai, India"
+            />
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Save */}
+      <div className="flex items-center justify-end gap-3">
+        <AnimatePresence>
+          {saved ? (
+            <motion.span
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-600"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Saved
+            </motion.span>
+          ) : null}
+        </AnimatePresence>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+          className="rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50"
+        >
+          {updateMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Save Changes"
+          )}
+        </button>
+      </div>
+
+      {/* Handle Change Modal */}
+      <AnimatePresence>
+        {handleModalOpen ? (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-[440px] rounded-2xl bg-white shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <h3 className="text-[15px] font-bold text-slate-900">Change Handle</h3>
+                <button
+                  type="button"
+                  onClick={() => { setHandleModalOpen(false); setNewHandle(""); setHandleAvailable(null); setHandleConfirmed(false); }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                {/* Warning */}
+                <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                  <div className="text-[12px] leading-relaxed text-amber-800">
+                    <p className="font-bold">This affects all platforms</p>
+                    <p className="mt-0.5">
+                      Changing your handle updates all links and @mentions across
+                      Postbook, Postgram, and Posttube. Old links will redirect for 30 days.
+                    </p>
+                    <p className="mt-1.5 font-medium">
+                      You can change your handle once every 30 days.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Handle rules */}
+                <div className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-[11px] font-semibold text-slate-500 mb-1">Handle rules:</p>
+                  <ul className="space-y-0.5 text-[11px] text-slate-400">
+                    <li>3-24 characters, lowercase a-z, 0-9, underscore</li>
+                    <li>Cannot start or end with underscore</li>
+                    <li>No consecutive underscores</li>
+                    <li>Cannot contain reserved words</li>
+                  </ul>
+                </div>
+
+                {/* New handle input */}
+                <div>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                    New Handle
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-slate-400">
+                        @
+                      </span>
+                      <input
+                        value={newHandle}
+                        onChange={(e) => {
+                          setNewHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""));
+                          setHandleAvailable(null);
+                        }}
+                        maxLength={24}
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-7 pr-3 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                        placeholder="new_handle"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCheckAvailability}
+                      disabled={newHandle.length < 3 || checkHandle.isPending}
+                      className="shrink-0 rounded-xl bg-slate-100 px-4 py-2 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-40"
+                    >
+                      {checkHandle.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "Check"
+                      )}
+                    </button>
+                  </div>
+
+                  {handleAvailable !== null ? (
+                    <p className={`mt-1.5 text-[12px] font-medium ${handleAvailable ? "text-emerald-600" : "text-rose-500"}`}>
+                      {handleAvailable
+                        ? `@${newHandle} is available`
+                        : handleReason || `@${newHandle} is taken`}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Confirmation checkbox */}
+                {handleAvailable ? (
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={handleConfirmed}
+                      onChange={(e) => setHandleConfirmed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <span className="text-[12px] leading-relaxed text-slate-600">
+                      I understand this change syncs across all platforms and I won&apos;t be able
+                      to change it again for 30 days.
+                    </span>
+                  </label>
+                ) : null}
+              </div>
+
+              <div className="border-t border-slate-100 px-6 py-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setHandleModalOpen(false); setNewHandle(""); setHandleAvailable(null); setHandleConfirmed(false); }}
+                  className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-slate-500 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmChange}
+                  disabled={!handleAvailable || !handleConfirmed || changeHandle.isPending}
+                  className="rounded-xl bg-violet-600 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-40"
+                >
+                  {changeHandle.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Confirm Change"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}

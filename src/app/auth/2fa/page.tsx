@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { verify2FA } from '@/services/authService';
 
-export default function TwoFAPage() {
+function TwoFAPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -165,5 +165,21 @@ export default function TwoFAPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function TwoFAPageFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-[#D4A574]" />
+    </div>
+  );
+}
+
+export default function TwoFAPage() {
+  return (
+    <Suspense fallback={<TwoFAPageFallback />}>
+      <TwoFAPageContent />
+    </Suspense>
   );
 }

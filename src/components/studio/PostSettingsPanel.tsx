@@ -11,6 +11,7 @@ interface PostSettingsPanelProps {
   onToggleLikes: () => void;
   onTogglePinned: () => void;
   accentColor: string;
+  isDarkMode?: boolean;
 }
 
 const SETTINGS = [
@@ -23,6 +24,7 @@ const PostSettingsPanel: React.FC<PostSettingsPanelProps> = ({
   noComments, noLikes, pinned,
   onToggleComments, onToggleLikes, onTogglePinned,
   accentColor,
+  isDarkMode = false,
 }) => {
   const states: Record<string, boolean> = { noComments, noLikes, pinned };
   const togglers: Record<string, () => void> = {
@@ -42,18 +44,18 @@ const PostSettingsPanel: React.FC<PostSettingsPanelProps> = ({
             onClick={togglers[s.key]}
             className="flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all duration-300 text-left"
             style={{
-              background: on ? '#FAF5F0' : '#FFFFFF',
-              borderColor: on ? `${accentColor}30` : '#F0E6DC',
+              background: on ? `${accentColor}1F` : (isDarkMode ? '#10182D' : '#F8FAFC'),
+              borderColor: on ? `${accentColor}50` : (isDarkMode ? 'rgba(148,163,184,0.2)' : '#E2E8F0'),
             }}
           >
             <Icon
               className="w-4 h-4 shrink-0"
-              style={{ color: on ? accentColor : '#C4B5A6' }}
+              style={{ color: on ? accentColor : (isDarkMode ? '#94A3B8' : '#64748B') }}
             />
             <div className="flex-1 min-w-0">
               <p
                 className="text-[10px] font-semibold truncate"
-                style={{ color: on ? accentColor : '#A08070' }}
+                style={{ color: on ? (isDarkMode ? '#F8FAFC' : '#0F172A') : (isDarkMode ? '#CBD5E1' : '#334155') }}
               >
                 {s.label}
               </p>
@@ -61,7 +63,7 @@ const PostSettingsPanel: React.FC<PostSettingsPanelProps> = ({
             <div
               className="w-7 h-4 rounded-full flex items-center transition-all duration-300 px-[2px] shrink-0"
               style={{
-                background: on ? accentColor : '#D4C4B0',
+                background: on ? accentColor : (isDarkMode ? '#334155' : '#CBD5E1'),
                 justifyContent: on ? 'flex-end' : 'flex-start',
               }}
             >

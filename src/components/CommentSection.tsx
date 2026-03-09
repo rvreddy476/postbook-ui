@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useComments, useAddComment, useCreateReply, useDeleteComment, useEditComment, useToggleCommentLike, useToggleCommentDislike } from '@/hooks/usePostComments';
 import { useCommentsAround } from '@/hooks/useCommentsAround';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
-import { ThumbsUp, ThumbsDown, MoreHorizontal, Smile, Trash2, Pencil } from 'lucide-react';
+import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
+import { ThumbsUp, ThumbsDown, Smile, Trash2, Pencil, Send, MessageCircle, Flag, X, Check } from 'lucide-react';
 import type { CommentItem } from '@/types/profile';
 import data from '@emoji-mart/data';
 
@@ -47,20 +48,129 @@ function timeAgo(dateStr: string): string {
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return 'just now';
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m`;
+  if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
+  if (diffHr < 24) return `${diffHr}h ago`;
   const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)}w ago`;
   return new Date(dateStr).toLocaleDateString();
 }
 
 function canEdit(createdAt: string): boolean {
   const created = new Date(createdAt).getTime();
-  return Date.now() - created < 15 * 60 * 1000; // 15 minutes
+  return Date.now() - created < 15 * 60 * 1000;
 }
 
-// --- Reply Component (flat style, indented) ---
+/* ── Report Dialog ─────────────────────────────────────────── */
+
+function ReportDialog({
+  open,
+  onClose,
+  targetType,
+  targetId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  targetType: 'comment' | 'post' | 'reel' | 'video';
+  targetId: string;
+}) {
+  const [selectedReason, setSelectedReason] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const reportMutation = useSubmitReport();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) { setSelectedReason(''); setDescription(''); setSubmitted(false); }
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) onClose();
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const handleSubmit = async () => {
+    if (!selectedReason) return;
+    await reportMutation.mutateAsync({
+      targetType,
+      targetId,
+      reason: selectedReason as Parameters<typeof reportMutation.mutateAsync>[0]['reason'],
+      description,
+    });
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div ref={dialogRef} className="w-[340px] rounded-2xl bg-white p-6 shadow-2xl text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
+            <Check className="h-6 w-6 text-green-600" />
+          </div>
+          <h3 className="text-[15px] font-bold text-slate-900">Report Submitted</h3>
+          <p className="mt-1 text-[13px] text-slate-500">Thanks for helping keep our community safe. Our team will review this shortly.</p>
+          <button onClick={onClose}
+            className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-slate-800">
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div ref={dialogRef} className="w-[380px] rounded-2xl bg-white shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+          <h3 className="text-[14px] font-bold text-slate-900">Report</h3>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-[12px] text-slate-500 mb-3">Why are you reporting this {targetType}?</p>
+          <div className="space-y-1.5">
+            {REPORT_REASONS.map((r) => (
+              <button key={r.value} onClick={() => setSelectedReason(r.value)}
+                className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
+                  selectedReason === r.value
+                    ? 'bg-slate-900 text-white font-medium'
+                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                }`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          {selectedReason === 'other' && (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell us more..."
+              rows={2}
+              className="mt-3 w-full rounded-xl bg-slate-50 px-3.5 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none ring-1 ring-slate-200 focus:ring-slate-400 transition resize-none"
+            />
+          )}
+        </div>
+        <div className="border-t border-slate-100 px-5 py-3">
+          <button onClick={handleSubmit}
+            disabled={!selectedReason || reportMutation.isPending}
+            className="w-full rounded-full bg-red-600 py-2.5 text-[13px] font-semibold text-white transition hover:bg-red-700 disabled:opacity-40">
+            {reportMutation.isPending ? 'Submitting...' : 'Submit Report'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Reply Component ───────────────────────────────────────── */
+
 const ReplyItem: React.FC<{
   reply: CommentItem;
   postId: string;
@@ -71,8 +181,7 @@ const ReplyItem: React.FC<{
 }> = ({ reply, postId, myId, myName, myAvatar }) => {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(reply.body || reply.text || '');
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const deleteMutation = useDeleteComment();
   const editMutation = useEditComment();
@@ -87,113 +196,84 @@ const ReplyItem: React.FC<{
   const [localLiked, setLocalLiked] = useState(false);
   const [localDisliked, setLocalDisliked] = useState(false);
 
-  // Close menu on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
-    };
-    if (showMenu) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showMenu]);
-
   const handleLike = () => {
-    if (localLiked) {
-      setLocalLiked(false);
-      setLocalLikes(c => Math.max(0, c - 1));
-    } else {
-      if (localDisliked) {
-        setLocalDisliked(false);
-        setLocalDislikes(c => Math.max(0, c - 1));
-      }
-      setLocalLiked(true);
-      setLocalLikes(c => c + 1);
+    if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
+    else {
+      if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
+      setLocalLiked(true); setLocalLikes(c => c + 1);
     }
     likeMutation.mutate({ commentId: reply.id, postId });
   };
 
   const handleDislike = () => {
-    if (localDisliked) {
-      setLocalDisliked(false);
-      setLocalDislikes(c => Math.max(0, c - 1));
-    } else {
-      if (localLiked) {
-        setLocalLiked(false);
-        setLocalLikes(c => Math.max(0, c - 1));
-      }
-      setLocalDisliked(true);
-      setLocalDislikes(c => c + 1);
+    if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
+    else {
+      if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
+      setLocalDisliked(true); setLocalDislikes(c => c + 1);
     }
     dislikeMutation.mutate({ commentId: reply.id, postId });
   };
 
   return (
-    <div className="flex gap-3 ml-12 py-2">
-      <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-        <img src={author.avatar} alt="" className="w-full h-full object-cover" />
+    <div className="ml-10 mt-1.5 py-1.5">
+      {/* Header: avatar + name + time */}
+      <div className="flex items-center gap-2">
+        <img src={author.avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+        <span className="text-[12px] font-semibold text-slate-800">@{author.name}</span>
+        <span className="text-[11px] text-slate-400">{timeAgo(reply.created_at)}</span>
       </div>
-      <div className="flex-1 min-w-0">
-        {editing ? (
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            if (!editText.trim() || editMutation.isPending) return;
-            await editMutation.mutateAsync({ commentId: reply.id, body: editText.trim(), postId });
-            setEditing(false);
-          }} className="space-y-2">
-            <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-sm text-gray-800 py-1" autoFocus />
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setEditing(false)} className="text-sm text-gray-600 font-medium px-3 py-1">Cancel</button>
-              <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-                className="text-sm font-medium px-3 py-1 bg-blue-600 text-white rounded-full disabled:opacity-50">Save</button>
-            </div>
-          </form>
-        ) : (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-semibold text-gray-900">@{author.name}</span>
-              <span className="text-xs text-gray-500">&middot; {timeAgo(reply.created_at)}</span>
-            </div>
-            <p className="text-sm text-gray-800 mt-0.5">{replyBody}</p>
-            <div className="flex items-center gap-1 mt-1.5">
-              <button onClick={handleLike} className="p-1.5 rounded-full hover:bg-gray-100">
-                <ThumbsUp className={`w-3.5 h-3.5 ${localLiked ? 'fill-[#F2284D] text-[#F2284D]' : 'text-gray-600'}`} />
-              </button>
-              {localLikes > 0 && <span className="text-xs text-gray-600 mr-1">{localLikes}</span>}
-              <button onClick={handleDislike} className="p-1.5 rounded-full hover:bg-gray-100">
-                <ThumbsDown className={`w-3.5 h-3.5 ${localDisliked ? 'fill-gray-700 text-gray-700' : 'text-gray-600'}`} />
-              </button>
-              {localDislikes > 0 && <span className="text-xs text-gray-600 mr-1">{localDislikes}</span>}
 
-              {isOwn && (
-                <div className="relative ml-auto" ref={menuRef}>
-                  <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100">
-                    <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                  </button>
-                  {showMenu && (
-                    <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px]">
-                      {canEdit(reply.created_at) && (
-                        <button onClick={() => { setEditing(true); setEditText(replyBody); setShowMenu(false); }}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </button>
-                      )}
-                      <button onClick={() => { if (confirm('Delete this reply?')) deleteMutation.mutate({ commentId: reply.id, postId }); setShowMenu(false); }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-gray-50">
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      {/* Body */}
+      {editing ? (
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          if (!editText.trim() || editMutation.isPending) return;
+          await editMutation.mutateAsync({ commentId: reply.id, body: editText.trim(), postId });
+          setEditing(false);
+        }} className="mt-1 ml-7 space-y-2">
+          <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
+            className="w-full rounded-xl bg-slate-50 px-3 py-1.5 text-[13px] text-slate-800 outline-none ring-1 ring-slate-200 focus:ring-slate-400 transition" autoFocus />
+          <div className="flex justify-end gap-1.5">
+            <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-slate-500 font-medium px-2.5 py-1 rounded-full hover:bg-slate-100 transition">Cancel</button>
+            <button type="submit" disabled={editMutation.isPending || !editText.trim()}
+              className="text-[11px] font-semibold px-2.5 py-1 bg-slate-900 text-white rounded-full disabled:opacity-40">Save</button>
+          </div>
+        </form>
+      ) : (
+        <p className="text-[13px] text-slate-700 mt-0.5 ml-7 leading-relaxed">{replyBody}</p>
+      )}
+
+      {/* Actions */}
+      {!editing && (
+        <div className="flex items-center gap-3 mt-1 ml-7">
+          <button onClick={handleLike} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+            <ThumbsUp className={`w-3 h-3 ${localLiked ? 'fill-slate-800 text-slate-800' : ''}`} />
+            {localLikes > 0 && <span className="text-[11px]">{localLikes}</span>}
+          </button>
+          <button onClick={handleDislike} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+            <ThumbsDown className={`w-3 h-3 ${localDisliked ? 'fill-slate-800 text-slate-800' : ''}`} />
+            {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
+          </button>
+          {isOwn && canEdit(reply.created_at) && (
+            <button onClick={() => { setEditing(true); setEditText(replyBody); }} className="text-[11px] text-slate-500 hover:text-slate-800 transition">Edit</button>
+          )}
+          {isOwn && (
+            <button onClick={() => { if (confirm('Delete this reply?')) deleteMutation.mutate({ commentId: reply.id, postId }); }}
+              className="text-[11px] text-slate-500 hover:text-red-600 transition">Delete</button>
+          )}
+          {!isOwn && (
+            <button onClick={() => setReportOpen(true)} className="text-[11px] text-slate-500 hover:text-red-600 transition">Report</button>
+          )}
+        </div>
+      )}
+
+      <ReportDialog open={reportOpen} onClose={() => setReportOpen(false)} targetType="comment" targetId={reply.id} />
     </div>
   );
 };
 
-// --- Single Comment Component ---
+/* ── Single Comment Component ──────────────────────────────── */
+
 const SingleComment: React.FC<{
   comment: CommentItem;
   postId: string;
@@ -208,9 +288,8 @@ const SingleComment: React.FC<{
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(comment.body || comment.text || '');
   const [localReply, setLocalReply] = useState<CommentItem | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const emojiRef = useRef<HTMLDivElement>(null);
 
   const replyMutation = useCreateReply();
@@ -230,42 +309,28 @@ const SingleComment: React.FC<{
   const canReply = isPostOwner && !comment.is_reply && !visibleReply && comment.reply_count === 0;
   const commentBody = comment.body || comment.text || '';
 
-  // Close menu/emoji on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
       if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
     };
-    if (showMenu || showEmojiPicker) document.addEventListener('mousedown', handler);
+    if (showEmojiPicker) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showMenu, showEmojiPicker]);
+  }, [showEmojiPicker]);
 
   const handleLike = () => {
-    if (localLiked) {
-      setLocalLiked(false);
-      setLocalLikes(c => Math.max(0, c - 1));
-    } else {
-      if (localDisliked) {
-        setLocalDisliked(false);
-        setLocalDislikes(c => Math.max(0, c - 1));
-      }
-      setLocalLiked(true);
-      setLocalLikes(c => c + 1);
+    if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
+    else {
+      if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
+      setLocalLiked(true); setLocalLikes(c => c + 1);
     }
     likeMutation.mutate({ commentId: comment.id, postId });
   };
 
   const handleDislike = () => {
-    if (localDisliked) {
-      setLocalDisliked(false);
-      setLocalDislikes(c => Math.max(0, c - 1));
-    } else {
-      if (localLiked) {
-        setLocalLiked(false);
-        setLocalLikes(c => Math.max(0, c - 1));
-      }
-      setLocalDisliked(true);
-      setLocalDislikes(c => c + 1);
+    if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
+    else {
+      if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
+      setLocalDisliked(true); setLocalDislikes(c => c + 1);
     }
     dislikeMutation.mutate({ commentId: comment.id, postId });
   };
@@ -280,13 +345,7 @@ const SingleComment: React.FC<{
       setShowReplyInput(false);
       setShowEmojiPicker(false);
     } catch {
-      // Keep the input open on error so user can retry
-    }
-  };
-
-  const handleDelete = () => {
-    if (confirm('Delete this comment?')) {
-      deleteMutation.mutate({ commentId: comment.id, postId });
+      // Keep input open for retry
     }
   };
 
@@ -303,120 +362,127 @@ const SingleComment: React.FC<{
   };
 
   return (
-    <div id={`comment-${comment.id}`} className={`py-3 ${isFocused ? 'bg-blue-50 rounded-lg px-2 ring-2 ring-blue-200' : ''}`}>
-      <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-          <img src={author.avatar} alt="" className="w-full h-full object-cover" />
-        </div>
-        <div className="flex-1 min-w-0">
-          {editing ? (
-            <form onSubmit={handleEdit} className="space-y-2">
-              <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
-                className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-sm text-gray-800 py-1" autoFocus />
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setEditing(false)} className="text-sm text-gray-600 font-medium px-3 py-1">Cancel</button>
-                <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-                  className="text-sm font-medium px-3 py-1 bg-blue-600 text-white rounded-full disabled:opacity-50">Save</button>
-              </div>
-            </form>
-          ) : (
-            <>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-semibold text-gray-900">@{author.name}</span>
-                <span className="text-xs text-gray-500">&middot; {timeAgo(comment.created_at)}</span>
-              </div>
-              <p className="text-sm text-gray-800 mt-0.5">{commentBody}</p>
+    <div
+      id={`comment-${comment.id}`}
+      className={`px-4 py-3 transition-colors duration-300 ${
+        isFocused ? 'bg-blue-50/50' : ''
+      }`}
+    >
+      {/* Header row: small avatar + name + time + 3-dot */}
+      <div className="flex items-center gap-2">
+        <img src={author.avatar} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+        <span className="text-[12px] font-semibold text-slate-800">@{author.name}</span>
+        <span className="text-[11px] text-slate-400">{timeAgo(comment.created_at)}</span>
+      </div>
 
-              {/* Action bar */}
-              <div className="flex items-center gap-1 mt-1.5">
-                <button onClick={handleLike} className="p-1.5 rounded-full hover:bg-gray-100">
-                  <ThumbsUp className={`w-4 h-4 ${localLiked ? 'fill-[#F2284D] text-[#F2284D]' : 'text-gray-600'}`} />
+      {/* Comment body */}
+      <div className="mt-1 ml-8">
+        {editing ? (
+          <form onSubmit={handleEdit} className="space-y-2">
+            <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
+              className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] text-slate-800 outline-none ring-1 ring-slate-200 focus:ring-slate-400 transition" autoFocus />
+            <div className="flex justify-end gap-1.5">
+              <button type="button" onClick={() => setEditing(false)} className="text-[12px] text-slate-500 font-medium px-3 py-1 rounded-full hover:bg-slate-100 transition">Cancel</button>
+              <button type="submit" disabled={editMutation.isPending || !editText.trim()}
+                className="text-[12px] font-semibold px-3 py-1 bg-slate-900 text-white rounded-full disabled:opacity-40 transition hover:bg-slate-800">Save</button>
+            </div>
+          </form>
+        ) : (
+          <p className="text-[13px] text-slate-800 leading-relaxed">{commentBody}</p>
+        )}
+
+        {/* Action bar: Like  Dislike  Reply  Report  |  Edit  Delete */}
+        {!editing && (
+          <div className="flex items-center gap-3.5 mt-2">
+            <button onClick={handleLike} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+              <ThumbsUp className={`w-3.5 h-3.5 ${localLiked ? 'fill-slate-800 text-slate-800' : ''}`} />
+              {localLikes > 0 && <span className="text-[11px]">{localLikes}</span>}
+            </button>
+
+            <button onClick={handleDislike} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition">
+              <ThumbsDown className={`w-3.5 h-3.5 ${localDisliked ? 'fill-slate-800 text-slate-800' : ''}`} />
+              {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
+            </button>
+
+            {canReply && (
+              <button onClick={() => setShowReplyInput(!showReplyInput)}
+                className="text-[12px] font-semibold text-slate-500 hover:text-slate-800 transition">
+                Reply
+              </button>
+            )}
+
+            {!isOwn && (
+              <button onClick={() => setReportOpen(true)}
+                className="flex items-center gap-1 text-[12px] text-slate-400 hover:text-red-600 transition">
+                <Flag className="w-3 h-3" />
+                <span>Report</span>
+              </button>
+            )}
+
+            {isOwn && canEdit(comment.created_at) && (
+              <button onClick={() => { setEditing(true); setEditText(commentBody); }}
+                className="flex items-center gap-1 text-[12px] text-slate-400 hover:text-slate-700 transition">
+                <Pencil className="w-3 h-3" /> Edit
+              </button>
+            )}
+
+            {isOwn && (
+              <button onClick={() => { if (confirm('Delete this comment?')) deleteMutation.mutate({ commentId: comment.id, postId }); }}
+                className="flex items-center gap-1 text-[12px] text-slate-400 hover:text-red-600 transition">
+                <Trash2 className="w-3 h-3" /> Delete
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Reply input */}
+        {showReplyInput && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2">
+              <div className="relative" ref={emojiRef}>
+                <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-1.5 rounded-full hover:bg-slate-100 transition">
+                  <Smile className="w-4 h-4 text-slate-400" />
                 </button>
-                {localLikes > 0 && <span className="text-xs text-gray-600 mr-1">{localLikes}</span>}
-
-                <button onClick={handleDislike} className="p-1.5 rounded-full hover:bg-gray-100">
-                  <ThumbsDown className={`w-4 h-4 ${localDisliked ? 'fill-gray-700 text-gray-700' : 'text-gray-600'}`} />
-                </button>
-                {localDislikes > 0 && <span className="text-xs text-gray-600 mr-1">{localDislikes}</span>}
-
-                {canReply && (
-                  <button onClick={() => setShowReplyInput(!showReplyInput)}
-                    className="text-xs font-semibold text-gray-600 hover:text-gray-900 ml-2 px-3 py-1 rounded-full hover:bg-gray-100">
-                    Reply
-                  </button>
-                )}
-
-                {isOwn && (
-                  <div className="relative ml-auto" ref={menuRef}>
-                    <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100">
-                      <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                    </button>
-                    {showMenu && (
-                      <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px]">
-                        {canEdit(comment.created_at) && (
-                          <button onClick={() => { setEditing(true); setEditText(commentBody); setShowMenu(false); }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                            <Pencil className="w-3.5 h-3.5" /> Edit
-                          </button>
-                        )}
-                        <button onClick={() => { handleDelete(); setShowMenu(false); }}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-gray-50">
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
-                      </div>
-                    )}
+                {showEmojiPicker && (
+                  <div className="absolute bottom-10 left-0 z-20">
+                    <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-2xl shadow-xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-slate-600 rounded-full animate-spin" /></div>}>
+                      <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
+                    </Suspense>
                   </div>
                 )}
               </div>
-            </>
-          )}
-
-          {/* Reply input (post owner only) */}
-          {showReplyInput && (
-            <div className="mt-3 relative">
-              <div className="flex items-center gap-2">
-                <div className="relative" ref={emojiRef}>
-                  <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-1.5 rounded-full hover:bg-gray-100">
-                    <Smile className="w-4 h-4 text-gray-500" />
-                  </button>
-                  {showEmojiPicker && (
-                    <div className="absolute bottom-10 left-0 z-20">
-                      <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-lg shadow-lg flex items-center justify-center"><div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>}>
-                        <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
-                      </Suspense>
-                    </div>
-                  )}
-                </div>
-                <form onSubmit={handleReply} className="flex-1">
-                  <input type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Add a reply..." autoFocus
-                    className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-sm text-gray-800 py-1 placeholder:text-gray-400" />
-                </form>
-              </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <button type="button" onClick={() => { setShowReplyInput(false); setReplyText(''); setShowEmojiPicker(false); }}
-                  className="text-sm text-gray-600 font-medium px-3 py-1">Cancel</button>
-                <button onClick={handleReply} disabled={!replyText.trim() || replyMutation.isPending}
-                  className="text-sm font-medium px-3 py-1 bg-blue-600 text-white rounded-full disabled:opacity-50">Reply</button>
-              </div>
+              <form onSubmit={handleReply} className="flex-1">
+                <input type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Reply..."
+                  autoFocus
+                  className="w-full rounded-full bg-slate-50 px-4 py-2 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none ring-1 ring-slate-200 focus:ring-slate-400 transition" />
+              </form>
+              <button onClick={handleReply} disabled={!replyText.trim() || replyMutation.isPending}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white disabled:opacity-40 transition hover:bg-slate-800">
+                <Send className="w-3.5 h-3.5" />
+              </button>
             </div>
-          )}
-        </div>
+            <button type="button" onClick={() => { setShowReplyInput(false); setReplyText(''); setShowEmojiPicker(false); }}
+              className="mt-1.5 ml-10 text-[11px] text-slate-400 hover:text-slate-600 transition">Cancel</button>
+          </div>
+        )}
       </div>
 
       {/* Inline reply */}
       {visibleReply && (
         <ReplyItem reply={visibleReply} postId={postId} postAuthorId={postAuthorId} myId={myId} myName={myName} myAvatar={myAvatar} />
       )}
+
+      <ReportDialog open={reportOpen} onClose={() => setReportOpen(false)} targetType="comment" targetId={comment.id} />
     </div>
   );
 };
 
-// --- Main CommentSection ---
+/* ── Main CommentSection ───────────────────────────────────── */
+
 const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = '', commentsCount, alwaysExpanded = false, focusCommentId }) => {
   const [isExpanded, setIsExpanded] = useState(alwaysExpanded || !!focusCommentId);
   const [commentText, setCommentText] = useState('');
-  const [showButtons, setShowButtons] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [highlightId, setHighlightId] = useState<string | undefined>(focusCommentId);
   const scrolledRef = useRef(false);
@@ -425,7 +491,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
 
   const { data: profile } = useMyProfile();
 
-  // Use "around" query when deep-linking to a specific comment, else normal paginated query
   const { data: aroundComments, isLoading: aroundLoading } = useCommentsAround(
     focusCommentId ? postId : undefined,
     focusCommentId,
@@ -444,7 +509,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     ? `/v1/media/${profile.avatar_media_id}/serve`
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User';
 
-  // Close emoji picker on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
@@ -453,7 +517,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     return () => document.removeEventListener('mousedown', handler);
   }, [showEmojiPicker]);
 
-  // Scroll to focused comment after comments load
   useEffect(() => {
     if (!focusCommentId || !comments?.length || scrolledRef.current) return;
 
@@ -474,15 +537,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     if (!commentText.trim() || addComment.isPending) return;
     await addComment.mutateAsync({ postId, text: commentText.trim() });
     setCommentText('');
-    setShowButtons(false);
     setShowEmojiPicker(false);
-  };
-
-  const handleCancel = () => {
-    setCommentText('');
-    setShowButtons(false);
-    setShowEmojiPicker(false);
-    inputRef.current?.blur();
   };
 
   const handleEmojiSelect = (emoji: { native: string }) => {
@@ -493,10 +548,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
 
   if (!isExpanded && !alwaysExpanded && !focusCommentId) {
     return (
-      <div className="px-6 pb-4">
+      <div className="px-5 pb-4">
         {commentsCount > 0 && (
           <button onClick={() => setIsExpanded(true)}
-            className="text-[13px] font-semibold text-gray-500 hover:text-gray-900">
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-400 hover:text-slate-700 transition">
+            <MessageCircle className="w-3.5 h-3.5" />
             View all {commentsCount} comments
           </button>
         )}
@@ -505,55 +561,23 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   }
 
   return (
-    <div className="border-t border-gray-100 bg-white">
-      {/* Comment input */}
-      <div className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="relative" ref={emojiRef}>
-            <button type="button" onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowButtons(true); }}
-              className="p-1.5 rounded-full hover:bg-gray-100">
-              <Smile className="w-5 h-5 text-gray-500" />
-            </button>
-            {showEmojiPicker && (
-              <div className="absolute top-10 left-0 z-20">
-                <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-lg shadow-lg flex items-center justify-center"><div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>}>
-                  <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
-                </Suspense>
-              </div>
-            )}
-          </div>
-          <form onSubmit={handleSubmit} className="flex-1">
-            <input
-              ref={inputRef}
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onFocus={() => setShowButtons(true)}
-              placeholder="Add a comment..."
-              className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-sm text-gray-800 py-1.5 placeholder:text-gray-400"
-            />
-          </form>
-        </div>
-        {showButtons && (
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={handleCancel}
-              className="text-sm text-gray-600 font-medium px-3 py-1.5">Cancel</button>
-            <button onClick={handleSubmit} disabled={!commentText.trim() || addComment.isPending}
-              className="text-sm font-medium px-4 py-1.5 bg-blue-600 text-white rounded-full disabled:opacity-50">Comment</button>
-          </div>
-        )}
-      </div>
-
-      {/* Comments list */}
-      <div className="px-6 max-h-[400px] overflow-y-auto divide-y divide-gray-100">
+    <div className="flex flex-col h-full bg-white">
+      {/* Comments list — scrollable */}
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-50">
         {isLoading && (
-          <div className="flex justify-center py-4">
-            <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="flex justify-center py-8">
+            <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-600 rounded-full animate-spin" />
           </div>
         )}
 
         {!isLoading && comments && comments.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">No comments yet. Be the first!</p>
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+              <MessageCircle className="w-5 h-5 text-slate-300" />
+            </div>
+            <p className="text-[13px] font-medium text-slate-400">No comments yet</p>
+            <p className="text-[12px] text-slate-300 mt-0.5">Be the first to share your thoughts</p>
+          </div>
         )}
 
         {comments?.map((comment: CommentItem) => (
@@ -568,6 +592,48 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
             isFocused={highlightId === comment.id}
           />
         ))}
+      </div>
+
+      {/* Sticky bottom input */}
+      <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+          <form onSubmit={handleSubmit} className="relative flex flex-1 items-center">
+            <div className="relative" ref={emojiRef}>
+              <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-1.5 rounded-full hover:bg-slate-100 transition mr-1">
+                <Smile className="w-[18px] h-[18px] text-slate-400" />
+              </button>
+              {showEmojiPicker && (
+                <div className="absolute bottom-12 left-0 z-20">
+                  <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-2xl shadow-xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-slate-600 rounded-full animate-spin" /></div>}>
+                    <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
+                  </Suspense>
+                </div>
+              )}
+            </div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1 rounded-full bg-[#F5F5F7] px-4 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none ring-1 ring-transparent focus:ring-slate-200 focus:bg-white transition"
+            />
+            <button
+              type="submit"
+              disabled={!commentText.trim() || addComment.isPending}
+              className={`ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                commentText.trim()
+                  ? 'bg-slate-900 text-white shadow-sm hover:bg-slate-800 scale-100'
+                  : 'bg-slate-100 text-slate-300 scale-95'
+              }`}
+              aria-label="Post comment"
+            >
+              <Send className="w-4 h-4 -ml-0.5" />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

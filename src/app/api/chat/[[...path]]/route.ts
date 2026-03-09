@@ -1,10 +1,65 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const CHAT_BACKEND_URL = 'http://localhost:8092/v1/chat';
-const CHAT_SECRET = 'dev_secret_change_me';
+const CHAT_BACKEND_URL = process.env.CHAT_BACKEND_URL || 'http://localhost:8092/v1/chat';
+const AUTH_SERVICE_URL =
+    process.env.AUTH_SERVICE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:8081';
+const CHAT_SECRET =
+    process.env.CHAT_PROXY_SIGNING_SECRET ??
+    (process.env.NODE_ENV === 'development' ? 'dev_secret_change_me' : '');
 
 type RouteParams = { params: Promise<{ path?: string[] }> };
+
+const pickString = (source: Record<string, unknown> | null, keys: string[]) => {
+    if (!source) return null;
+    for (const key of keys) {
+        const value = source[key];
+        if (typeof value === 'string' && value.trim()) {
+            return value.trim();
+        }
+    }
+    return null;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+    if (!value || typeof value !== 'object') return null;
+    return value as Record<string, unknown>;
+};
+
+const extractUserId = (payload: unknown): string | null => {
+    const root = asRecord(payload);
+    if (!root) return null;
+    const data = asRecord(root.data);
+    const user = asRecord(data?.user) ?? asRecord(root.user);
+    return (
+        pickString(user, ['id', 'user_id', 'userId']) ??
+        pickString(data, ['id', 'user_id', 'userId']) ??
+        pickString(root, ['id', 'user_id', 'userId'])
+    );
+};
+
+async function resolveAuthenticatedUserId(req: Request): Promise<string | null> {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) return null;
+
+    try {
+        const res = await fetch(`${AUTH_SERVICE_URL}/v1/auth/me`, {
+            method: 'GET',
+            headers: {
+                Authorization: authHeader,
+                Accept: 'application/json',
+            },
+            cache: 'no-store',
+        });
+        if (!res.ok) return null;
+        const payload = await res.json().catch(() => null);
+        return extractUserId(payload);
+    } catch {
+        return null;
+    }
+}
 
 export async function GET(req: Request, { params }: RouteParams) {
     return handleRequest(req, await params);
@@ -29,6 +84,14 @@ export async function DELETE(req: Request, { params }: RouteParams) {
 async function handleRequest(req: Request, params: { path?: string[] }) {
     const pathParts = params.path || [];
     const fullPath = pathParts.join('/');
+    const url = new URL(req.url);
+
+    if (!CHAT_SECRET) {
+        return NextResponse.json(
+            { error: 'Missing chat proxy signing secret configuration' },
+            { status: 500 },
+        );
+    }
 
     const signToken = (uid: string) => {
         const payload = {
@@ -42,35 +105,36 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
         return `${headerEncoded}.${payloadEncoded}.${sig}`;
     };
 
-    // Special endpoint to get a token for WS
-    if (fullPath === 'token') {
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
-        if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
-        return NextResponse.json({ token: signToken(userId) });
-    }
+    const headerUserId = req.headers.get('x-user-id')?.trim() || null;
+    const queryUserId = url.searchParams.get('userId')?.trim() || null;
+    const requestedUserId = headerUserId ?? (fullPath === 'token' ? queryUserId : null);
 
-    // Extract userId from Authorization header or custom header to re-sign
-    const authHeader = req.headers.get('Authorization');
-    let userId = req.headers.get('X-User-Id');
-
-    if (!userId && authHeader?.startsWith('Bearer ')) {
-        try {
-            const token = authHeader.split(' ')[1];
-            const payloadBase64 = token.split('.')[1];
-            const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString());
-            userId = payload.sub || payload.user_id;
-        } catch (e) {
-            console.error("[ChatProxy] Token decode failed", e);
-        }
-    }
-
-    if (!userId) {
+    if (!requestedUserId) {
         return NextResponse.json({ error: 'Unauthorized: No User ID found in session' }, { status: 401 });
     }
 
-    const chatToken = signToken(userId);
-    const backendUrl = `${CHAT_BACKEND_URL}/${fullPath}${new URL(req.url).search}`;
+    const authenticatedUserId = await resolveAuthenticatedUserId(req);
+    if (!authenticatedUserId) {
+        if (process.env.NODE_ENV === 'production') {
+            return NextResponse.json({ error: 'Unauthorized: invalid access token' }, { status: 401 });
+        }
+        console.warn('[ChatProxy] Development fallback: proceeding without verified auth token');
+    } else if (authenticatedUserId !== requestedUserId) {
+        return NextResponse.json(
+            { error: 'Forbidden: user identity mismatch' },
+            { status: 403 },
+        );
+    }
+
+    const effectiveUserId = authenticatedUserId ?? requestedUserId;
+    const chatToken = signToken(effectiveUserId);
+
+    // Special endpoint to get a token for WS
+    if (fullPath === 'token') {
+        return NextResponse.json({ token: chatToken });
+    }
+
+    const backendUrl = `${CHAT_BACKEND_URL}/${fullPath}${url.search}`;
 
     try {
         const body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)
@@ -83,6 +147,7 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
             method: req.method,
             headers: {
                 'Authorization': `Bearer ${chatToken}`,
+                'X-User-Id': effectiveUserId,
                 'Content-Type': 'application/json',
                 'Idempotency-Key': idempotencyKey,
             },

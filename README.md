@@ -31,7 +31,20 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8081
 NEXT_PUBLIC_AUTH_REGISTER_PATH=/v1/auth/register
 NEXT_PUBLIC_AUTH_LOGIN_PATH=/v1/auth/login
 NEXT_PUBLIC_AUTH_STRATEGY=remote
+
+# Server routes (Next.js API handlers)
+AUTH_SERVICE_URL=http://localhost:8081
+CHAT_BACKEND_URL=http://localhost:8092/v1/chat
+CHAT_PROXY_SIGNING_SECRET=replace_with_strong_secret
 ```
+
+## Auth/chat runtime notes
+
+- `CHAT_PROXY_SIGNING_SECRET` is required in production. If it is missing, `/api/chat/*` rejects requests.
+- The web client now persists a per-browser device id in localStorage as `postbook_device_id` and sends it during login.
+- Auth/session data is stored in localStorage keys:
+  - `postbook_session`
+  - `postbook_auth_tokens`
 
 ## Run locally
 

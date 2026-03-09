@@ -15,10 +15,12 @@ import {
   useActorProfiles,
   useUnreadCount,
   useMarkAllRead,
+  useMarkNotificationRead,
   useDeleteNotification,
   type ActivityNotification,
 } from '@/hooks/useActivityNotifications';
 import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
+import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { playNotificationSound } from '@/hooks/useNotificationSound';
 import { useGlobalToast } from '@/contexts/ToastContext';
 
@@ -55,12 +57,18 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const { data: unreadData } = useUnreadCount();
   const unreadNotifCount = unreadData?.count ?? activityNotifs.filter(n => !n.is_read).length;
   const markAllRead = useMarkAllRead();
+  const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
 
   const toast = useGlobalToast();
   const acceptFriend = useAcceptFriendRequest();
   const rejectFriend = useRejectFriendRequest();
   const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
+
+  // Notification popup state
+  const [popupPostId, setPopupPostId] = useState<string | null>(null);
+  const [popupFocusCommentId, setPopupFocusCommentId] = useState<string | undefined>();
+  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
 
   // Actor profiles for display names
   const actorIds = activityNotifs.map(n => n.actor_user_id);
@@ -144,6 +152,52 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     const days = Math.floor(hrs / 24);
     if (days < 7) return `${days}d ago`;
     return `${Math.floor(days / 7)}w ago`;
+  };
+
+  // Parse deep_link like "/post/{postId}?focusComment={commentId}"
+  const parseDeepLink = (link: string): { postId?: string; commentId?: string } => {
+    const match = link.match(/^\/post\/([^?/]+)/);
+    if (!match) return {};
+    const postId = match[1];
+    const urlParams = new URLSearchParams(link.split('?')[1] || '');
+    return { postId, commentId: urlParams.get('focusComment') || undefined };
+  };
+
+  const isPostNotification = (type: string) =>
+    ['comment', 'reaction', 'comment_reaction'].includes(type);
+
+  const handleNotificationClick = (notif: ActivityNotification) => {
+    const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+
+    // Mark as read
+    if (!notif.is_read && notif.bucket != null && notif.ts != null) {
+      markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
+    }
+
+    // Start dismiss animation
+    setDismissingIds(prev => new Set(prev).add(notif.notification_id));
+    setTimeout(() => {
+      setDismissingIds(prev => {
+        const next = new Set(prev);
+        next.delete(notif.notification_id);
+        return next;
+      });
+    }, 300);
+
+    if (isPostNotification(notif.type) && notif.deep_link) {
+      // Open popup for post-related notifications
+      const { postId, commentId } = parseDeepLink(notif.deep_link);
+      if (postId) {
+        setPopupPostId(postId);
+        setPopupFocusCommentId(commentId);
+        setIsNotifOpen(false);
+      }
+    } else {
+      // Navigate for user-related notifications (follow, friend_request, etc.)
+      const target = notif.deep_link || `/u/${actorUsername || notif.actor_user_id}`;
+      router.push(target);
+      setIsNotifOpen(false);
+    }
   };
 
   // Search results dropdown (shared between desktop and mobile)
@@ -291,19 +345,21 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <span className="absolute -bottom-10 bg-slate-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Reels</span>
         </button>
 
-        {/* 4. TV */}
-        <button
-          onClick={() => setActiveTab('TV')}
-          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl border transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'TV' ? 'bg-indigo-50 border-indigo-100 text-indigo-600 shadow-inner' : 'bg-white border-slate-100 text-slate-600 hover:shadow-md shadow-sm'}`}
+        {/* 4. TV — opens PostTube in new tab */}
+        <Link
+          href="/posttube"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative flex items-center justify-center w-10 h-10 rounded-xl border transition-all duration-300 hover:scale-110 active:scale-95 bg-white border-slate-100 text-slate-600 hover:shadow-md shadow-sm"
           title="TV"
         >
-          <div className={`w-5 h-5 ${activeTab === 'TV' ? 'text-indigo-600' : 'group-hover:text-indigo-500'}`}>
+          <div className="w-5 h-5 group-hover:text-indigo-500">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
           <span className="absolute -bottom-10 bg-slate-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">TV</span>
-        </button>
+        </Link>
 
         {/* 5. Events */}
         <button
@@ -372,120 +428,120 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No notifications yet</p>
                     </div>
                   ) : (
-                    activityNotifs.map(notif => {
-                      const isHandled = handledIds.has(notif.notification_id);
-                      const isFriendReq = notif.type === 'friend_request' && !isHandled;
-                      const actorName = getActorName(notif.actor_user_id);
-                      const actorAvatar = getActorAvatar(notif.actor_user_id);
-                      const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+                    <AnimatePresence initial={false}>
+                      {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
+                        const isHandled = handledIds.has(notif.notification_id);
+                        const isFriendReq = notif.type === 'friend_request' && !isHandled;
+                        const actorName = getActorName(notif.actor_user_id);
+                        const actorAvatar = getActorAvatar(notif.actor_user_id);
+                        const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
 
-                      return (
-                        <div
-                          key={notif.notification_id}
-                          className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-violet-50/30' : ''}`}
-                        >
-                          {/* Avatar — click to go to profile */}
-                          <button
-                            onClick={() => {
-                              router.push(`/u/${actorUsername || notif.actor_user_id}`);
-                              setIsNotifOpen(false);
-                            }}
-                            className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0 mt-0.5 shadow-sm"
+                        return (
+                          <motion.div
+                            key={notif.notification_id}
+                            layout
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-violet-50/30' : ''}`}
                           >
-                            <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
-                          </button>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
+                            {/* Avatar — click to go to profile */}
                             <button
                               onClick={() => {
-                                // Navigate using deep_link if available, otherwise fallback to profile
-                                const target = notif.deep_link || `/u/${actorUsername || notif.actor_user_id}`;
-                                router.push(target);
+                                router.push(`/u/${actorUsername || notif.actor_user_id}`);
                                 setIsNotifOpen(false);
                               }}
-                              className="text-left w-full"
+                              className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0 mt-0.5 shadow-sm"
                             >
-                              <p className="text-[11px] font-bold text-slate-700 leading-snug">
-                                <span className="font-black text-slate-900">{actorName}</span>
-                                {' '}
-                                {notif.type === 'friend_request' && 'sent you a friend request'}
-                                {notif.type === 'friend_accepted' && 'accepted your friend request'}
-                                {notif.type === 'follow' && 'started following you'}
-                                {notif.type === 'reaction' && 'reacted to your post'}
-                                {notif.type === 'comment_reaction' && 'liked your comment'}
-                                {notif.type === 'comment' && 'commented on your post'}
-                              </p>
-                              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                                {formatTimeAgo(notif.created_at)}
-                              </p>
+                              <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                             </button>
 
-                            {/* Accept / Reject buttons for friend requests */}
-                            {isFriendReq && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <button
-                                  onClick={() => {
-                                    const username = actorUsername || notif.actor_user_id;
-                                    acceptFriend.mutate(username, {
-                                      onSuccess: () => {
-                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                        toast({ type: 'success', title: 'Friend request accepted' });
-                                      },
-                                    });
-                                  }}
-                                  disabled={acceptFriend.isPending}
-                                  className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider orchid-gradient text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
-                                >
-                                  Accept
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    const username = actorUsername || notif.actor_user_id;
-                                    rejectFriend.mutate(username, {
-                                      onSuccess: () => {
-                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                        toast({ type: 'info', title: 'Friend request declined' });
-                                      },
-                                    });
-                                  }}
-                                  disabled={rejectFriend.isPending}
-                                  className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-95 transition-all"
-                                >
-                                  Decline
-                                </button>
-                              </div>
-                            )}
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <button
+                                onClick={() => handleNotificationClick(notif)}
+                                className="text-left w-full"
+                              >
+                                <p className="text-[11px] font-bold text-slate-700 leading-snug">
+                                  <span className="font-black text-slate-900">{actorName}</span>
+                                  {' '}
+                                  {notif.type === 'friend_request' && 'sent you a friend request'}
+                                  {notif.type === 'friend_accepted' && 'accepted your friend request'}
+                                  {notif.type === 'follow' && 'started following you'}
+                                  {notif.type === 'reaction' && 'reacted to your post'}
+                                  {notif.type === 'comment_reaction' && 'liked your comment'}
+                                  {notif.type === 'comment' && 'commented on your post'}
+                                </p>
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                  {formatTimeAgo(notif.created_at)}
+                                </p>
+                              </button>
 
-                            {/* Show "Accepted" / "Declined" after handling */}
-                            {notif.type === 'friend_request' && isHandled && (
-                              <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1.5">Responded</p>
-                            )}
-                          </div>
+                              {/* Accept / Reject buttons for friend requests */}
+                              {isFriendReq && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <button
+                                    onClick={() => {
+                                      const username = actorUsername || notif.actor_user_id;
+                                      acceptFriend.mutate(username, {
+                                        onSuccess: () => {
+                                          setHandledIds(prev => new Set(prev).add(notif.notification_id));
+                                          toast({ type: 'success', title: 'Friend request accepted' });
+                                        },
+                                      });
+                                    }}
+                                    disabled={acceptFriend.isPending}
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider orchid-gradient text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const username = actorUsername || notif.actor_user_id;
+                                      rejectFriend.mutate(username, {
+                                        onSuccess: () => {
+                                          setHandledIds(prev => new Set(prev).add(notif.notification_id));
+                                          toast({ type: 'info', title: 'Friend request declined' });
+                                        },
+                                      });
+                                    }}
+                                    disabled={rejectFriend.isPending}
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-95 transition-all"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              )}
 
-                          {/* Unread dot + delete button */}
-                          <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
-                            {!notif.is_read && (
-                              <div className="w-2 h-2 rounded-full bg-violet-500" />
-                            )}
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                if (notif.bucket != null && notif.ts != null) {
-                                  deleteNotification.mutate({ bucket: notif.bucket, ts: notif.ts });
-                                }
-                              }}
-                              className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
-                              title="Delete notification"
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
+                              {/* Show "Accepted" / "Declined" after handling */}
+                              {notif.type === 'friend_request' && isHandled && (
+                                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1.5">Responded</p>
+                              )}
+                            </div>
+
+                            {/* Unread dot + delete button */}
+                            <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
+                              {!notif.is_read && (
+                                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                              )}
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  if (notif.bucket != null && notif.ts != null) {
+                                    deleteNotification.mutate({ bucket: notif.bucket, ts: notif.ts });
+                                  }
+                                }}
+                                className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                title="Delete notification"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                   )}
                 </div>
               </motion.div>
@@ -620,6 +676,14 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Notification Post Popup */}
+      {popupPostId && (
+        <NotificationPostPopup
+          postId={popupPostId}
+          focusCommentId={popupFocusCommentId}
+          onClose={() => { setPopupPostId(null); setPopupFocusCommentId(undefined); }}
+        />
+      )}
     </header>
   );
 };

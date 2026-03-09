@@ -21,7 +21,7 @@ interface Verify2FAApiResponse {
   [key: string]: unknown;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 const REGISTER_PATH = process.env.NEXT_PUBLIC_AUTH_REGISTER_PATH ?? '/v1/auth/register';
 const LOGIN_PATH = process.env.NEXT_PUBLIC_AUTH_LOGIN_PATH ?? '/v1/auth/login';
 const VERIFY_2FA_PATH = '/v1/auth/2fa/verify';

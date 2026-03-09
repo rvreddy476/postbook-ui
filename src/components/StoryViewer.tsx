@@ -32,7 +32,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     const [storyIndex, setStoryIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
-    const intervalRef = useRef<ReturnType<typeof setInterval>>();
+    const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
     const viewStory = useViewStory();
     const deleteStory = useDeleteStory();

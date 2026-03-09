@@ -4,7 +4,9 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:8081"
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null)
-    const refreshToken = body?.refreshToken
+    const refreshToken = typeof body?.refreshToken === "string"
+        ? body.refreshToken.trim()
+        : ""
 
     if (!refreshToken) {
         return NextResponse.json(
@@ -13,12 +15,14 @@ export async function POST(req: NextRequest) {
         )
     }
 
+    const encodedRefreshToken = encodeURIComponent(refreshToken)
+
     // Call auth service with refresh token as a cookie (that's what it expects)
     const upstream = await fetch(`${AUTH_SERVICE_URL}/v1/auth/refresh`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Cookie": `refresh_token=${refreshToken}`,
+            "Cookie": `refresh_token=${encodedRefreshToken}`,
         },
     })
 

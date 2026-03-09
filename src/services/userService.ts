@@ -32,7 +32,7 @@ const mapProfileToUser = (p: ProfileItem): User => {
         name: p.display_name || p.username || 'User',
         username: p.username,
         avatar,
-        isOnline: true,
+        isOnline: false,
         bio: p.bio,
     };
 };

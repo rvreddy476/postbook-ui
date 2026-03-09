@@ -3,6 +3,7 @@ import { AuthResult } from '@/services/auth/types';
 
 const SESSION_KEY = 'postbook_session';
 const TOKEN_KEY = 'postbook_auth_tokens';
+const SESSION_CHANGE_EVENT = 'postbook:session-changed';
 
 interface TokenRecord {
   accessToken?: string;
@@ -11,6 +12,13 @@ interface TokenRecord {
 }
 
 const canUseStorage = () => typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+
+const emitSessionChange = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));
+};
 
 export class AuthSessionStore {
   save(result: AuthResult) {
@@ -26,6 +34,7 @@ export class AuthSessionStore {
       updatedAt: Date.now(),
     };
     localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenRecord));
+    emitSessionChange();
   }
 
   getUser(): User | null {
@@ -38,7 +47,12 @@ export class AuthSessionStore {
       return null;
     }
 
-    return JSON.parse(session) as User;
+    try {
+      return JSON.parse(session) as User;
+    } catch {
+      this.clear();
+      return null;
+    }
   }
 
   clear() {
@@ -48,5 +62,6 @@ export class AuthSessionStore {
 
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    emitSessionChange();
   }
 }

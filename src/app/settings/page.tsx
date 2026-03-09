@@ -11,6 +11,7 @@ import {
     Loader2,
     ChevronRight,
     Settings,
+    Tv,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -198,6 +199,12 @@ export default function SettingsPage() {
                         icon={<Bell className="h-4 w-4 text-slate-500" />}
                         label="Notifications"
                         description="Email, push, and quiet hours preferences"
+                    />
+                    <SettingsLink
+                        href="/settings/channel"
+                        icon={<Tv className="h-4 w-4 text-slate-500" />}
+                        label="Channel Settings"
+                        description="Postgram & Posttube channel, handle, branding, and links"
                     />
                 </div>
             </SectionCard>

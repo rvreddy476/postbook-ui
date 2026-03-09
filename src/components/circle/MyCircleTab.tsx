@@ -5,6 +5,7 @@ import { useAuthUser } from '@/store/auth'
 import { useFriends, useRemoveFriend } from '@/hooks/useConnections'
 import CircleUserCard from './CircleUserCard'
 import { useRouter } from 'next/navigation'
+import { Search, Users } from 'lucide-react'
 
 function formatDate(dateStr?: string): string {
     if (!dateStr) return ''
@@ -41,57 +42,62 @@ const MyCircleTab: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="space-y-3">
-                <div className="h-10 w-full rounded-xl bg-slate-100 animate-pulse" />
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-50 animate-pulse">
-                        <div className="h-12 w-12 rounded-full bg-slate-200" />
-                        <div className="flex-1 space-y-2">
-                            <div className="h-3 w-24 rounded bg-slate-200" />
-                            <div className="h-2 w-16 rounded bg-slate-100" />
+            <div className="space-y-4">
+                <div className="h-11 w-full rounded-xl bg-slate-100/50 animate-pulse" />
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                            <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
+                            <div className="flex flex-col items-center -mt-10 px-4 pb-5">
+                                <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
+                                <div className="mt-3 w-24 h-3.5 rounded bg-slate-200" />
+                                <div className="mt-1 w-16 h-2.5 rounded bg-slate-100" />
+                                <div className="mt-4 w-full flex justify-center gap-2">
+                                    <div className="h-9 w-20 rounded-xl bg-slate-100" />
+                                    <div className="h-9 w-20 rounded-xl bg-slate-100" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         )
     }
 
     if (friends.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <svg className="h-16 w-16 text-slate-200 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                </svg>
-                <p className="text-sm font-bold text-slate-400">Your circle is empty</p>
-                <p className="text-xs text-slate-300 mt-1">Add friends to get started!</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-5 shadow-sm">
+                    <Users className="w-12 h-12 text-violet-300" />
+                </div>
+                <p className="text-base font-bold text-slate-500">Your circle is empty</p>
+                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">Discover new people and send connection requests to build your circle!</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-5">
             <div className="flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    {friends.length} in your circle
+                    <span className="text-violet-600 text-sm mr-1">{friends.length}</span> in your circle
                 </p>
             </div>
 
             {friends.length > 5 && (
                 <div className="relative">
-                    <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                    </svg>
+                    <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
                     <input
                         type="text"
                         placeholder="Search your circle..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 transition-all"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 transition-all"
                     />
                 </div>
             )}
 
-            <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((friend) => {
                     const isRemoved = removedIds.has(friend.user_id)
                     const username = friend.username ?? friend.user_id
@@ -105,33 +111,33 @@ const MyCircleTab: React.FC = () => {
                             subtitle={friend.friend_since ? `Friends since ${formatDate(friend.friend_since)}` : undefined}
                             actions={
                                 isRemoved ? (
-                                    <span className="text-xs font-bold text-slate-400">Removed</span>
+                                    <span className="text-xs font-bold text-emerald-500">Removed</span>
                                 ) : confirmRemove === friend.user_id ? (
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleRemove(username, friend.user_id)}
-                                            className="rounded-lg bg-red-500 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-red-600 transition-colors"
+                                            className="rounded-xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-2 text-[11px] font-bold text-white hover:opacity-90 transition-all shadow-sm shadow-red-500/20"
                                         >
                                             Confirm
                                         </button>
                                         <button
                                             onClick={() => setConfirmRemove(null)}
-                                            className="rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+                                            className="rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-500 hover:bg-slate-200 transition-colors"
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 w-full">
                                         <button
                                             onClick={() => router.push(`/u/${username}`)}
-                                            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                                            className="flex-1 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2.5 text-[11px] font-bold text-white hover:opacity-90 transition-all shadow-sm shadow-violet-500/20"
                                         >
-                                            View
+                                            View Profile
                                         </button>
                                         <button
                                             onClick={() => setConfirmRemove(friend.user_id)}
-                                            className="rounded-xl border border-red-100 bg-white px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-50 transition-all"
+                                            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-bold text-slate-400 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
                                         >
                                             Remove
                                         </button>
@@ -142,9 +148,11 @@ const MyCircleTab: React.FC = () => {
                     )
                 })}
                 {filtered.length === 0 && search && (
-                    <p className="py-8 text-center text-sm text-slate-400">
-                        No friends matching &ldquo;{search}&rdquo;
-                    </p>
+                    <div className="col-span-full py-12 text-center">
+                        <p className="text-sm text-slate-400">
+                            No friends matching &ldquo;{search}&rdquo;
+                        </p>
+                    </div>
                 )}
             </div>
         </div>

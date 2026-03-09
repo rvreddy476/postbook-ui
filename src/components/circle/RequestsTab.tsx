@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { usePendingFriendRequests, useAcceptFriendRequest, useRejectFriendRequest, FriendRequestEntry } from '@/hooks/useConnections'
 import CircleUserCard from './CircleUserCard'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Inbox } from 'lucide-react'
 
 function timeAgo(dateStr: string): string {
     const now = Date.now()
@@ -39,17 +40,17 @@ const RequestsTab: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-50 animate-pulse">
-                        <div className="h-12 w-12 rounded-full bg-slate-200" />
-                        <div className="flex-1 space-y-2">
-                            <div className="h-3 w-24 rounded bg-slate-200" />
-                            <div className="h-2 w-16 rounded bg-slate-100" />
-                        </div>
-                        <div className="flex gap-2">
-                            <div className="h-8 w-16 rounded-xl bg-slate-200" />
-                            <div className="h-8 w-16 rounded-xl bg-slate-100" />
+                    <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                        <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
+                        <div className="flex flex-col items-center -mt-10 px-4 pb-5">
+                            <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
+                            <div className="mt-3 w-24 h-3.5 rounded bg-slate-200" />
+                            <div className="mt-4 flex gap-2">
+                                <div className="h-9 w-20 rounded-xl bg-slate-200" />
+                                <div className="h-9 w-20 rounded-xl bg-slate-100" />
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -59,63 +60,65 @@ const RequestsTab: React.FC = () => {
 
     if (requests.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <svg className="h-16 w-16 text-slate-200 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-                <p className="text-sm font-bold text-slate-400">No pending requests</p>
-                <p className="text-xs text-slate-300 mt-1">When someone sends you a circle request, it will appear here</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center mb-5 shadow-sm">
+                    <Inbox className="w-12 h-12 text-emerald-300" />
+                </div>
+                <p className="text-base font-bold text-slate-500">No pending requests</p>
+                <p className="text-sm text-slate-400 mt-1.5">When someone sends you a circle request, it will appear here</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                {requests.length} pending request{requests.length !== 1 ? 's' : ''}
+                <span className="text-emerald-600 text-sm mr-1">{requests.length}</span> pending request{requests.length !== 1 ? 's' : ''}
             </p>
-            <AnimatePresence>
-                {requests.map((req) => {
-                    const isHandled = handledIds.has(req.user_id)
-                    return (
-                        <motion.div
-                            key={req.user_id}
-                            layout
-                            initial={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <CircleUserCard
-                                userId={req.user_id}
-                                displayName={req.display_name}
-                                username={req.username}
-                                avatarMediaId={req.avatar_media_id}
-                                subtitle={req.created_at ? timeAgo(req.created_at) : undefined}
-                                actions={
-                                    isHandled ? (
-                                        <span className="text-xs font-bold text-slate-400">Responded</span>
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={() => handleAccept(req.friendship_id, req.user_id)}
-                                                className="rounded-xl orchid-gradient px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition-all"
-                                            >
-                                                Accept
-                                            </button>
-                                            <button
-                                                onClick={() => handleDecline(req.friendship_id, req.user_id)}
-                                                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all"
-                                            >
-                                                Decline
-                                            </button>
-                                        </>
-                                    )
-                                }
-                            />
-                        </motion.div>
-                    )
-                })}
-            </AnimatePresence>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                    {requests.map((req) => {
+                        const isHandled = handledIds.has(req.user_id)
+                        return (
+                            <motion.div
+                                key={req.user_id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                            >
+                                <CircleUserCard
+                                    userId={req.user_id}
+                                    displayName={req.display_name}
+                                    username={req.username}
+                                    avatarMediaId={req.avatar_media_id}
+                                    subtitle={req.created_at ? timeAgo(req.created_at) : undefined}
+                                    actions={
+                                        isHandled ? (
+                                            <span className="text-xs font-bold text-emerald-500">Responded</span>
+                                        ) : (
+                                            <div className="flex items-center gap-2 w-full">
+                                                <button
+                                                    onClick={() => handleAccept(req.friendship_id, req.user_id)}
+                                                    className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2.5 text-[11px] font-bold text-white hover:opacity-90 transition-all shadow-sm shadow-emerald-500/20"
+                                                >
+                                                    Accept
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDecline(req.friendship_id, req.user_id)}
+                                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                                                >
+                                                    Decline
+                                                </button>
+                                            </div>
+                                        )
+                                    }
+                                />
+                            </motion.div>
+                        )
+                    })}
+                </AnimatePresence>
+            </div>
         </div>
     )
 }

@@ -79,12 +79,16 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   created_at: raw.created_at as string,
 });
 
-const WS_BASE = 'ws://localhost:8093/v1/ws/connect';
+const WS_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080').replace(/^http/, 'ws') + '/v1/ws/connect';
 const API_BASE = '/api/chat';
 const SESSION_KEY = 'postbook_session';
+const TOKEN_KEY = 'postbook_auth_tokens';
 
 let socket: WebSocket | null = null;
 let chatChannel: BroadcastChannel | null = null;
+let wsRetryCount = 0;
+const WS_MAX_RETRIES = 5;
+const WS_BASE_DELAY = 3000; // 3s, 6s, 12s, 24s, 48s
 const localListeners = new Set<(m: Message) => void>();
 const reactionListeners = new Set<(r: ReactionUpdate) => void>();
 const callSignalListeners = new Set<(signal: CallSignal) => void>();
@@ -131,6 +135,18 @@ const getSessionUser = () => {
   return session ? JSON.parse(session) as User : null;
 };
 
+const getAccessToken = () => {
+  if (!canUseBrowserApis()) return null;
+  try {
+    const raw = localStorage.getItem(TOKEN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { accessToken?: string };
+    return parsed.accessToken ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const getChannel = () => {
   if (!canUseBrowserApis() || typeof BroadcastChannel === 'undefined') {
     return null;
@@ -141,24 +157,62 @@ const getChannel = () => {
   return chatChannel;
 };
 
+const getErrorMessage = (payload: unknown, fallback: string) => {
+  if (!payload || typeof payload !== 'object') return fallback;
+  const source = payload as Record<string, unknown>;
+
+  const error = source.error;
+  if (typeof error === 'string' && error.trim()) return error;
+  if (error && typeof error === 'object') {
+    const nestedMessage = (error as Record<string, unknown>).message;
+    if (typeof nestedMessage === 'string' && nestedMessage.trim()) return nestedMessage;
+  }
+
+  const message = source.message;
+  if (typeof message === 'string' && message.trim()) return message;
+  return fallback;
+};
+
+const parseResponsePayload = async (res: Response): Promise<unknown> => {
+  if (res.status === 204 || res.status === 205) return {};
+
+  const contentType = res.headers.get('content-type')?.toLowerCase() ?? '';
+  if (contentType.includes('application/json')) {
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
+  }
+
+  const text = await res.text();
+  return text ? { message: text } : {};
+};
+
 /**
  * Chat API Client using Proxy
  */
 const chatClient = {
-  async request(path: string, options: RequestInit = {}) {
+  async request<TResponse = any>(path: string, options: RequestInit = {}) {
     const user = getSessionUser();
+    const accessToken = getAccessToken();
     const headers = new Headers(options.headers);
     if (user) {
       headers.set('X-User-Id', user.id);
     }
-    headers.set('Content-Type', 'application/json');
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+    if (options.body !== undefined && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
 
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-    const json = await res.json();
+    const payload = await parseResponsePayload(res);
     if (!res.ok) {
-      throw new Error(json.error?.message || json.error || 'Chat API request failed');
+      throw new Error(getErrorMessage(payload, `Chat API request failed (${res.status})`));
     }
-    return json;
+    return payload as TResponse;
   }
 };
 
@@ -173,8 +227,22 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
 
   try {
     // Fetch a signed chat token from the proxy
-    const tokenRes = await fetch(`${API_BASE}/token?userId=${user.id}`);
-    const { token } = await tokenRes.json();
+    const headers = new Headers({ 'X-User-Id': user.id });
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+    const tokenRes = await fetch(`${API_BASE}/token`, { headers });
+    const tokenPayload = await parseResponsePayload(tokenRes);
+    if (!tokenRes.ok) {
+      throw new Error(getErrorMessage(tokenPayload, 'Could not acquire chat token'));
+    }
+    const token =
+      tokenPayload &&
+      typeof tokenPayload === 'object' &&
+      typeof (tokenPayload as { token?: unknown }).token === 'string'
+        ? (tokenPayload as { token: string }).token
+        : null;
     if (!token) throw new Error("Could not acquire chat token");
 
     if (socket) socket.close();
@@ -258,9 +326,19 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
       }
     };
 
+    socket.onopen = () => {
+      wsRetryCount = 0; // reset on successful connection
+    };
+
     socket.onclose = () => {
-      console.log("Chat link severed. Reconnecting...");
-      setTimeout(() => connectToHub(onMsg), 5000);
+      if (wsRetryCount >= WS_MAX_RETRIES) {
+        console.warn(`Chat: gave up after ${WS_MAX_RETRIES} retries. Refresh the page to reconnect.`);
+        return;
+      }
+      const delay = WS_BASE_DELAY * Math.pow(2, wsRetryCount);
+      wsRetryCount++;
+      console.log(`Chat link severed. Retry ${wsRetryCount}/${WS_MAX_RETRIES} in ${delay / 1000}s...`);
+      setTimeout(() => connectToHub(onMsg), delay);
     };
   } catch (err) {
     console.error("Live link failed:", err);

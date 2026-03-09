@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useSentFriendRequests, useCancelFriendRequest } from '@/hooks/useConnections'
 import CircleUserCard from './CircleUserCard'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Send } from 'lucide-react'
 
 function timeAgo(dateStr: string): string {
     const now = Date.now()
@@ -33,15 +34,15 @@ const SentTab: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm border border-slate-50 animate-pulse">
-                        <div className="h-12 w-12 rounded-full bg-slate-200" />
-                        <div className="flex-1 space-y-2">
-                            <div className="h-3 w-24 rounded bg-slate-200" />
-                            <div className="h-2 w-16 rounded bg-slate-100" />
+                    <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                        <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
+                        <div className="flex flex-col items-center -mt-10 px-4 pb-5">
+                            <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
+                            <div className="mt-3 w-24 h-3.5 rounded bg-slate-200" />
+                            <div className="mt-4 h-9 w-20 rounded-xl bg-slate-100" />
                         </div>
-                        <div className="h-8 w-16 rounded-xl bg-slate-200" />
                     </div>
                 ))}
             </div>
@@ -50,55 +51,57 @@ const SentTab: React.FC = () => {
 
     if (requests.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <svg className="h-16 w-16 text-slate-200 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                </svg>
-                <p className="text-sm font-bold text-slate-400">No pending sent requests</p>
-                <p className="text-xs text-slate-300 mt-1">Requests you send will appear here until they are accepted</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-5 shadow-sm">
+                    <Send className="w-12 h-12 text-blue-300" />
+                </div>
+                <p className="text-base font-bold text-slate-500">No pending sent requests</p>
+                <p className="text-sm text-slate-400 mt-1.5">Requests you send will appear here until they are accepted</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                {requests.length} sent request{requests.length !== 1 ? 's' : ''}
+                <span className="text-blue-600 text-sm mr-1">{requests.length}</span> sent request{requests.length !== 1 ? 's' : ''}
             </p>
-            <AnimatePresence>
-                {requests.map((req) => {
-                    const isCancelled = cancelledIds.has(req.friendship_id)
-                    return (
-                        <motion.div
-                            key={req.friendship_id}
-                            layout
-                            initial={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <CircleUserCard
-                                userId={req.user_id}
-                                displayName={req.display_name}
-                                username={req.username}
-                                avatarMediaId={req.avatar_media_id}
-                                subtitle={req.created_at ? `Sent ${timeAgo(req.created_at)}` : undefined}
-                                actions={
-                                    isCancelled ? (
-                                        <span className="text-xs font-bold text-slate-400">Cancelled</span>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleCancel(req.friendship_id)}
-                                            className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-all"
-                                        >
-                                            Cancel
-                                        </button>
-                                    )
-                                }
-                            />
-                        </motion.div>
-                    )
-                })}
-            </AnimatePresence>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                    {requests.map((req) => {
+                        const isCancelled = cancelledIds.has(req.friendship_id)
+                        return (
+                            <motion.div
+                                key={req.friendship_id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                            >
+                                <CircleUserCard
+                                    userId={req.user_id}
+                                    displayName={req.display_name}
+                                    username={req.username}
+                                    avatarMediaId={req.avatar_media_id}
+                                    subtitle={req.created_at ? `Sent ${timeAgo(req.created_at)}` : undefined}
+                                    actions={
+                                        isCancelled ? (
+                                            <span className="text-xs font-bold text-slate-400">Cancelled</span>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleCancel(req.friendship_id)}
+                                                className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-[11px] font-bold text-red-500 hover:bg-red-50 hover:border-red-300 transition-all"
+                                            >
+                                                Cancel Request
+                                            </button>
+                                        )
+                                    }
+                                />
+                            </motion.div>
+                        )
+                    })}
+                </AnimatePresence>
+            </div>
         </div>
     )
 }

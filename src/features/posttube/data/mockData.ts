@@ -1,0 +1,77 @@
+import type { PostTubeVideo, PostTubeComment } from "../types";
+
+export const MOCK_VIDEO: PostTubeVideo = {
+  id: "vid_001",
+  title: "Building a Real-Time Feed with Go, Kafka & ScyllaDB",
+  description:
+    "In this video we walk through the architecture of a production-grade social feed. We cover event sourcing with Kafka, low-latency reads from ScyllaDB, and how to hydrate posts with author profiles in batch.\n\nTopics covered:\n- Kafka consumer groups\n- ScyllaDB partition design\n- Redis seen-set suppression\n- Batch profile hydration",
+  video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  thumbnail_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
+  channel_id: "ch_nova",
+  channel_name: "Nova Engineering",
+  channel_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=NovaEng",
+  channel_subscriber_count: 142_000,
+  view_count: 84_312,
+  like_count: 3_420,
+  dislike_count: 42,
+  comment_count: 187,
+  share_count: 512,
+  hashtags: ["golang", "kafka", "scylladb", "architecture"],
+  published_at: "2026-02-28T14:30:00Z",
+  duration_seconds: 924,
+  viewer_has_liked: false,
+  viewer_has_disliked: false,
+  viewer_has_saved: false,
+  viewer_has_subscribed: false,
+};
+
+export const MOCK_COMMENTS: PostTubeComment[] = [
+  {
+    id: "c1",
+    author_name: "Ari Vale",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=AriVale",
+    text: "This architecture is incredible. The seen-set suppression pattern is something I've been looking for!",
+    like_count: 24,
+    created_at: "2026-02-28T16:45:00Z",
+  },
+  {
+    id: "c2",
+    author_name: "Kian Vox",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=KianVox",
+    text: "Can you do a follow-up on how you handle the hot partition problem for viral content?",
+    like_count: 18,
+    created_at: "2026-02-28T17:12:00Z",
+  },
+  {
+    id: "c3",
+    author_name: "Luna Park",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=LunaPark",
+    text: "The batch hydration approach is brilliant. We switched from N+1 to batch and saw a 4x latency improvement.",
+    like_count: 31,
+    created_at: "2026-03-01T09:20:00Z",
+  },
+  {
+    id: "c4",
+    author_name: "Dev Patel",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=DevPatel",
+    text: "Great video! Would love to see how you handle the consumer lag monitoring.",
+    like_count: 7,
+    created_at: "2026-03-01T11:05:00Z",
+  },
+  {
+    id: "c5",
+    author_name: "Sam Chen",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=SamChen",
+    text: "Subscribed immediately. This is production-quality content.",
+    like_count: 12,
+    created_at: "2026-03-02T08:30:00Z",
+  },
+  {
+    id: "c6",
+    author_name: "Mira Song",
+    author_avatar_url: "https://api.dicebear.com/9.x/lorelei/svg?seed=MiraSong",
+    text: "What's the cost difference between ScyllaDB and DynamoDB for this kind of workload?",
+    like_count: 9,
+    created_at: "2026-03-03T14:15:00Z",
+  },
+];

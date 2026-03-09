@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence } from 'framer-motion'
 import { Avatar, getInitials, getGroupColor } from './shared'
 import CreatePortal from '@/components/CreatePortal'
+import GroupCreateModal from '@/components/groups/GroupCreateModal'
 import { useGroupDetails, useGroupMembers, useGroupFeed } from '@/hooks/useGroups'
 import { createGroupConversation, toggleReaction, updateConversation, leaveConversation, addMemberToConversation } from '@/services/messageService'
 import { getSession } from '@/services/authService'
@@ -22,6 +24,7 @@ interface GroupPanelProps {
   groupColor?: string
   groupAvatarUrl?: string | null
   onClose?: () => void
+  onCreateGroup?: (groupId: string) => void
 }
 
 type PanelMode = 'chat' | 'posts' | 'members'
@@ -742,7 +745,7 @@ function MembersView({
         className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
       >
         <Avatar
-          user={{ id: m.user_id, name, avatar: getInitials(name), isOnline: true }}
+          user={{ id: m.user_id, name, avatar: getInitials(name), isOnline: false }}
           size={38}
           showStatus
         />
@@ -816,6 +819,7 @@ export default function GroupPanel(props: GroupPanelProps) {
   const queryClient = useQueryClient()
   const [mode, setMode] = useState<PanelMode>('chat')
   const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
@@ -854,6 +858,14 @@ export default function GroupPanel(props: GroupPanelProps) {
   const memberCount = group?.member_count ?? members?.length ?? 0
   const onlineCount = members?.length ?? 0
   const postCount = group?.post_count ?? 0
+  const handleGroupCreated = (newGroupId: string) => {
+    setShowCreateGroupModal(false)
+    if (props.onCreateGroup) {
+      props.onCreateGroup(newGroupId)
+      return
+    }
+    router.push(`/groups/${newGroupId}`)
+  }
 
   return (
     <div className="w-full flex flex-col h-full bg-white font-sans border-l border-slate-100">
@@ -919,6 +931,21 @@ export default function GroupPanel(props: GroupPanelProps) {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowCreateGroupModal(true)}
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-[12px] font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+              title="Create a new group"
+            >
+              <Plus className="h-4 w-4" />
+              New Group
+            </button>
+            <button
+              onClick={() => setShowCreateGroupModal(true)}
+              className="w-9 h-9 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700 rounded-lg transition-colors lg:hidden"
+              title="Create a new group"
+            >
+              <Plus className="w-[18px] h-[18px]" />
+            </button>
             <button className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
               <Phone className="w-[18px] h-[18px]" />
             </button>
@@ -937,6 +964,13 @@ export default function GroupPanel(props: GroupPanelProps) {
               </button>
               {showMoreMenu && (
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50">
+                  <button
+                    onClick={() => { setShowCreateGroupModal(true); setShowMoreMenu(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 text-slate-400" />
+                    Create new group
+                  </button>
                   <button
                     onClick={() => { setEditingName(true); setNewGroupName(groupName); setShowMoreMenu(false) }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
@@ -978,6 +1012,15 @@ export default function GroupPanel(props: GroupPanelProps) {
       </div>
 
       {/* ── Edit name modal ── */}
+      <AnimatePresence>
+        {showCreateGroupModal && (
+          <GroupCreateModal
+            onClose={() => setShowCreateGroupModal(false)}
+            onCreated={handleGroupCreated}
+          />
+        )}
+      </AnimatePresence>
+
       {editingName && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-[360px] shadow-xl">

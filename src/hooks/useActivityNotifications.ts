@@ -143,6 +143,7 @@ export function useMarkNotificationRead() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["activity-notifications"] })
+            qc.invalidateQueries({ queryKey: ["unread-count"] })
         },
     })
 }

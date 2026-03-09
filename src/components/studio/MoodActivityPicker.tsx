@@ -27,9 +27,10 @@ interface MoodActivityPickerProps {
   onSelect: (mood: string) => void;
   onClose: () => void;
   accentColor: string;
+  isDarkMode?: boolean;
 }
 
-const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClose, accentColor }) => {
+const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClose, accentColor, isDarkMode = false }) => {
   const [tab, setTab] = useState<'feeling' | 'activity'>('feeling');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activityDetail, setActivityDetail] = useState('');
@@ -45,9 +46,9 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
   };
 
   return (
-    <div className="rounded-xl border overflow-hidden animate-fadeIn bg-white" style={{ borderColor: '#F0E6DC' }}>
+    <div className={`rounded-xl border overflow-hidden animate-fadeIn ${isDarkMode ? 'bg-[#0F172A] border-white/10' : 'bg-white border-slate-200'}`}>
       {/* Tabs */}
-      <div className="flex" style={{ borderBottom: '1px solid #F0E6DC' }}>
+      <div className={`flex border-b ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
         {(['feeling', 'activity'] as const).map((t) => (
           <button
             key={t}
@@ -55,13 +56,13 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
             className="flex-1 py-2.5 text-[11px] font-semibold transition-all border-b-2 capitalize"
             style={{
               borderColor: tab === t ? accentColor : 'transparent',
-              color: tab === t ? accentColor : '#C4B5A6',
+              color: tab === t ? accentColor : '#94A3B8',
             }}
           >
             {t}
           </button>
         ))}
-        <button onClick={onClose} className="px-3 text-[#C4B5A6] hover:text-[#7B5B3A] transition-colors">
+        <button onClick={onClose} className={`px-3 text-slate-400 transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -69,11 +70,11 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
       {/* Content */}
       <div className="p-3">
         {tab === 'feeling' ? (
-          <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-sm" style={{ color: '#C4B5A6' }}>Loading...</div>}>
+          <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-sm text-slate-400">Loading...</div>}>
             <EmojiPicker
               data={data}
               onEmojiSelect={handleEmojiSelect}
-              theme="light"
+              theme={isDarkMode ? 'dark' : 'light'}
               previewPosition="none"
               skinTonePosition="none"
               perLine={8}
@@ -85,11 +86,11 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setSelectedActivity(null); setActivityDetail(''); }}
-                className="text-[#C4B5A6] hover:text-[#3C2415] transition-colors"
+                className={`text-slate-400 transition-colors ${isDarkMode ? 'hover:text-slate-100' : 'hover:text-slate-900'}`}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm" style={{ color: '#3C2415' }}>
+              <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
                 {selectedActivity.emoji} {selectedActivity.label}
               </span>
             </div>
@@ -98,8 +99,13 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
               onChange={(e) => setActivityDetail(e.target.value)}
               placeholder={selectedActivity.placeholder}
               autoFocus
-              className="w-full rounded-xl px-3 py-2.5 text-[13px] placeholder:text-[#D4C4B0] focus:outline-none focus:ring-1"
-              style={{ background: '#FAFAFA', border: '1px solid #F0E6DC', color: '#3C2415', '--tw-ring-color': `${accentColor}30` } as React.CSSProperties}
+              className={`w-full rounded-xl px-3 py-2.5 text-[13px] ${isDarkMode ? 'placeholder:text-slate-500' : 'placeholder:text-slate-400'} focus:outline-none focus:ring-1`}
+              style={{
+                background: isDarkMode ? '#10182D' : '#F8FAFC',
+                border: isDarkMode ? '1px solid rgba(148,163,184,0.2)' : '1px solid #E2E8F0',
+                color: isDarkMode ? '#E2E8F0' : '#0F172A',
+                '--tw-ring-color': `${accentColor}30`,
+              } as React.CSSProperties}
             />
             <button
               onClick={handleActivityDone}
@@ -118,10 +124,10 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
               <button
                 key={a.label}
                 onClick={() => setSelectedActivity(a)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left hover:bg-[#FAF5F0] transition-all"
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-blue-50'}`}
               >
                 <span className="text-base">{a.emoji}</span>
-                <span className="text-[11px] font-medium" style={{ color: '#3C2415' }}>{a.label}</span>
+                <span className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{a.label}</span>
               </button>
             ))}
           </div>
