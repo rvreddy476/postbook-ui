@@ -378,7 +378,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           off: 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/10',
         },
         time: {
-          on: 'border-violet-300/70 bg-violet-400/25 text-violet-100 ring-1 ring-violet-300/40 shadow-[0_8px_18px_rgba(167,139,250,0.23)]',
+          on: 'border-[#D8103F]/70 bg-[#D8103F]/25 text-[#D8103F]/10 ring-1 ring-[#D8103F]/40 shadow-[0_8px_18px_rgba(167,139,250,0.23)]',
           off: 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/10',
         },
         settings: {
@@ -404,7 +404,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           off: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
         },
         time: {
-          on: 'border-violet-300 bg-violet-100 text-violet-800 ring-1 ring-violet-300/60 shadow-sm',
+          on: 'border-[#D8103F]/30 bg-[#D8103F]/10 text-[#8a0a28] ring-1 ring-[#D8103F]/60 shadow-sm',
           off: 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
         },
         settings: {

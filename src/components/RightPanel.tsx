@@ -20,7 +20,7 @@ function getAccentFromId(userId: string): string {
     'from-blue-500 to-indigo-500',
     'from-emerald-500 to-teal-500',
     'from-rose-500 to-orange-500',
-    'from-violet-500 to-fuchsia-500',
+    'from-[#D8103F]/50 to-fuchsia-500',
   ];
   return styles[hash % styles.length];
 }

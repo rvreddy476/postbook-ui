@@ -6,6 +6,7 @@ import type { StudioFormState } from "../types";
 interface AudienceStepProps {
   form: StudioFormState;
   patch: (u: Partial<StudioFormState>) => void;
+  showErrors?: boolean;
 }
 
 export function AudienceStep({ form, patch }: AudienceStepProps) {

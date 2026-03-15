@@ -63,7 +63,7 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
           {/* Content */}
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-[#D8103F]/50 animate-spin" />
             </div>
           ) : isError || !post ? (
             <div className="flex-1 flex items-center justify-center py-20">

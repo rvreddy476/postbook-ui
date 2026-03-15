@@ -37,24 +37,14 @@ async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ pa
         body = await req.arrayBuffer()
     }
 
-    // For /serve endpoints, don't follow redirects — pass them to the browser
-    // so image bytes flow directly from MinIO to browser instead of through proxy.
-    const isServeRequest = path.includes("serve")
-
+    // For /serve endpoints, follow redirects so the proxy streams image bytes
+    // directly to the browser (avoids cross-origin redirect issues with MinIO).
     const upstream = await fetch(url.toString(), {
         method: req.method,
         headers,
         body,
-        redirect: isServeRequest ? "manual" : "follow",
+        redirect: "follow",
     })
-
-    // Pass redirect responses through to the browser
-    if (isServeRequest && (upstream.status === 301 || upstream.status === 302 || upstream.status === 307 || upstream.status === 308)) {
-        const location = upstream.headers.get("location")
-        if (location) {
-            return NextResponse.redirect(location, upstream.status as 301 | 302 | 307 | 308)
-        }
-    }
 
     if (!upstream.ok) {
         const errBody = await upstream.text()

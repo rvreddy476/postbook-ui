@@ -12,7 +12,7 @@ export const HOBBY_INTEREST_CATEGORIES: HobbyInterestCategory[] = [
     { id: "fitness", label: "Fitness", color: "bg-red-100 text-red-700 border-red-200" },
     { id: "photography", label: "Photography", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
     { id: "nature", label: "Nature", color: "bg-green-100 text-green-700 border-green-200" },
-    { id: "science", label: "Science", color: "bg-violet-100 text-violet-700 border-violet-200" },
+    { id: "science", label: "Science", color: "bg-[#D8103F]/10 text-[#b80d35] border-[#D8103F]/20" },
     { id: "fashion", label: "Fashion", color: "bg-rose-100 text-rose-700 border-rose-200" },
     { id: "film", label: "Film", color: "bg-slate-100 text-slate-700 border-slate-200" },
     { id: "writing", label: "Writing", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },

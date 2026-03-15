@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { Upload, FileVideo, X, Image as ImageIcon, Loader2, Music, Volume2 } from "lucide-react";
+import { Upload, FileVideo, X, Image as ImageIcon, Loader2, Music, Volume2, Film } from "lucide-react";
 import { SectionHeader, FieldLabel, TagChip, StudioInput, StudioTextarea, Collapsible } from "../primitives";
 import type { StudioFormState } from "../types";
 import { CONTENT_TYPE_META, type ContentType } from "../tokens";
@@ -12,7 +12,8 @@ interface ContentStepProps {
   selectFile: (f: File) => void;
   clearFile: () => void;
   uploadMutation: { mutate: () => void; isPending: boolean };
-  extractCoverMutation: { mutate: (ts: number) => void; isPending: boolean };
+  extractCoverPreview: { mutate: (ts: number) => void; isPending: boolean };
+  selectCustomCover: (f: File) => void;
   contentType: ContentType;
 }
 
@@ -31,10 +32,12 @@ export function ContentStep({
   selectFile,
   clearFile,
   uploadMutation,
-  extractCoverMutation,
+  extractCoverPreview,
+  selectCustomCover,
   contentType,
 }: ContentStepProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   const config = CONTENT_TYPE_META[contentType];
 
   const onDrop = useCallback(
@@ -178,35 +181,166 @@ export function ContentStep({
         )}
       </div>
 
-      {/* ── Cover Picker ── */}
+      {/* ── Cover Poster ── */}
       {form.videoPreviewUrl && contentType !== "podcast" && (
-        <Collapsible title="Cover Image" defaultOpen={false}>
-          <div className="space-y-3">
-            <p className="text-[12px] text-[#9E9E9E]">Choose a frame from your video as the cover image</p>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min={0}
-                max={(form.videoDurationSec ?? 30) * 1000}
-                step={100}
-                value={form.coverTimestampMs ?? 0}
-                onChange={(e) => patch({ coverTimestampMs: Number(e.target.value) })}
-                className="flex-1 accent-[#7C5CFC]"
-              />
-              <span className="text-[11px] font-mono text-[#6B6B6B] w-10 text-right">{fmtMs(form.coverTimestampMs ?? 0)}</span>
+        <Collapsible title="Cover Poster" defaultOpen>
+          <div className="space-y-4">
+            {/* Source toggle */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => patch({ coverSourceType: "video_frame" })}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-semibold transition-colors ${
+                  form.coverSourceType === "video_frame"
+                    ? "bg-[#7C5CFC] text-white"
+                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                }`}
+              >
+                <Film className="h-3.5 w-3.5" />
+                Frame from Video
+              </button>
+              <button
+                type="button"
+                onClick={() => patch({ coverSourceType: "custom_image" })}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-semibold transition-colors ${
+                  form.coverSourceType === "custom_image"
+                    ? "bg-[#7C5CFC] text-white"
+                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                }`}
+              >
+                <ImageIcon className="h-3.5 w-3.5" />
+                Upload Custom Image
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => extractCoverMutation.mutate(form.coverTimestampMs ?? 0)}
-              disabled={extractCoverMutation.isPending}
-              className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] disabled:opacity-40 transition-colors"
-            >
-              {extractCoverMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-              Extract Cover
-            </button>
-            {form.coverResult && (
-              <div className="mt-2 overflow-hidden rounded-xl border border-[#E8E6E1]" style={{ maxWidth: 160 }}>
-                <img src={form.coverResult.preview_url} alt="Cover" className="w-full object-cover" />
+
+            {/* Frame from Video mode */}
+            {form.coverSourceType === "video_frame" && (
+              <div className="space-y-3">
+                <p className="text-[12px] text-[#9E9E9E]">Enter exact time or use the slider to pick a frame</p>
+
+                {/* mm:ss:ms precise inputs */}
+                <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col items-center">
+                    <label className="text-[10px] text-[#9E9E9E] mb-1">Min</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={Math.floor((form.videoDurationSec ?? 0) / 60)}
+                      value={Math.floor((form.coverTimestampMs ?? 0) / 60000)}
+                      onChange={(e) => {
+                        const mins = Math.max(0, parseInt(e.target.value) || 0);
+                        const currentMs = form.coverTimestampMs ?? 0;
+                        const secs = Math.floor((currentMs % 60000) / 1000);
+                        const ms = currentMs % 1000;
+                        const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
+                        patch({ coverTimestampMs: newMs });
+                      }}
+                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                    />
+                  </div>
+                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">:</span>
+                  <div className="flex flex-col items-center">
+                    <label className="text-[10px] text-[#9E9E9E] mb-1">Sec</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={Math.floor(((form.coverTimestampMs ?? 0) % 60000) / 1000)}
+                      onChange={(e) => {
+                        const secs = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
+                        const currentMs = form.coverTimestampMs ?? 0;
+                        const mins = Math.floor(currentMs / 60000);
+                        const ms = currentMs % 1000;
+                        const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
+                        patch({ coverTimestampMs: newMs });
+                      }}
+                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                    />
+                  </div>
+                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">.</span>
+                  <div className="flex flex-col items-center">
+                    <label className="text-[10px] text-[#9E9E9E] mb-1">Ms</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={999}
+                      step={100}
+                      value={(form.coverTimestampMs ?? 0) % 1000}
+                      onChange={(e) => {
+                        const ms = Math.min(999, Math.max(0, parseInt(e.target.value) || 0));
+                        const currentMs = form.coverTimestampMs ?? 0;
+                        const base = currentMs - (currentMs % 1000);
+                        const newMs = Math.min(base + ms, (form.videoDurationSec ?? 0) * 1000);
+                        patch({ coverTimestampMs: newMs });
+                      }}
+                      className="w-16 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Validation message */}
+                {form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000 && (
+                  <p className="text-[11px] text-[#E8527A]">Timestamp exceeds video duration ({fmtMs(form.videoDurationSec * 1000)})</p>
+                )}
+
+                {/* Slider — secondary navigation synced with inputs */}
+                <input
+                  type="range"
+                  min={0}
+                  max={(form.videoDurationSec ?? 30) * 1000}
+                  step={100}
+                  value={form.coverTimestampMs ?? 0}
+                  onChange={(e) => patch({ coverTimestampMs: Number(e.target.value) })}
+                  className="w-full accent-[#7C5CFC]"
+                />
+
+                {/* Extract Preview — local only, no backend call */}
+                <button
+                  type="button"
+                  onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
+                  disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] disabled:opacity-40 transition-colors"
+                >
+                  {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                  Extract Preview
+                </button>
+
+                {/* Preview */}
+                {form.coverPreviewUrl && (
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[#E8E6E1]" style={{ maxWidth: 240 }}>
+                    <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
+                    <p className="bg-[#FAFAF8] px-2 py-1 text-[10px] text-[#9E9E9E] text-center">Preview only — uploaded at publish</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Custom Image Upload mode */}
+            {form.coverSourceType === "custom_image" && (
+              <div className="space-y-3">
+                <p className="text-[12px] text-[#9E9E9E]">Upload a custom cover image. Recommended: 1280x720 (16:9), JPEG/PNG/WebP.</p>
+                <button
+                  type="button"
+                  onClick={() => coverFileRef.current?.click()}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors"
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Choose Image
+                </button>
+                <input
+                  ref={coverFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) selectCustomCover(f); }}
+                  className="hidden"
+                />
+
+                {form.customCoverPreviewUrl && (
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[#E8E6E1]" style={{ maxWidth: 240 }}>
+                    <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
+                    <p className="bg-[#FAFAF8] px-2 py-1 text-[10px] text-[#9E9E9E] text-center">Preview only — uploaded at publish</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

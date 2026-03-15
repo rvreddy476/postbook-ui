@@ -86,7 +86,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
               placeholder="Search users..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400"
+              className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
             />
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                         isInvited
                           ? 'bg-emerald-50 text-emerald-600 cursor-default'
-                          : 'bg-violet-50 text-violet-600 hover:bg-violet-100'
+                          : 'bg-[#D8103F]/5 text-[#D8103F] hover:bg-[#D8103F]/10'
                       }`}
                     >
                       {isInvited ? (

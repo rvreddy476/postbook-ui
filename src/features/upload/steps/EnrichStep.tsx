@@ -6,6 +6,7 @@ import type { StudioFormState } from "../types";
 interface EnrichStepProps {
   form: StudioFormState;
   patch: (u: Partial<StudioFormState>) => void;
+  showErrors?: boolean;
 }
 
 const LANGUAGES = [

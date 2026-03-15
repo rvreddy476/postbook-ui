@@ -78,7 +78,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
             <button
               onClick={handleSave}
-              className="w-full py-6 bg-gradient-to-r from-blue-600 to-violet-700 text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              className="w-full py-6 bg-gradient-to-r from-blue-600 to-[#b80d35] text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               Synchronize Identity
             </button>
@@ -162,7 +162,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gradient-to-br from-blue-600 to-violet-700 rounded-[3rem] p-8 text-white shadow-2xl shadow-violet-500/20">
+          <div className="bg-gradient-to-br from-blue-600 to-[#b80d35] rounded-[3rem] p-8 text-white shadow-2xl shadow-[#D8103F]/20">
             <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Active Frequencies</h3>
             <div className="flex flex-wrap gap-2">
               {(user.hobbies || 'Design, AI, Code').split(',').map(h => (

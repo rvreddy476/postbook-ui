@@ -9,18 +9,17 @@ import {
   Share2,
   Bookmark,
   MoreHorizontal,
-  ChevronDown,
   ChevronUp,
+  MessageCircle,
   ListFilter,
 } from "lucide-react";
 import Link from "next/link";
 
-import { AppShell } from "@/features/reels/components/AppShell";
+import { PostTubeShell } from "./PostTubeShell";
 import { Avatar } from "@/components/LetterAvatar";
 import CommentSection from "@/components/CommentSection";
 import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
-import { MOCK_VIDEO } from "../data/mockData";
-import { postDetailToVideo, getCategoryFeed } from "../data/posttubeApi";
+import { postDetailToVideo, getCategoryFeed, resolveAuthor } from "../data/posttubeApi";
 import type { PostTubeVideo } from "../types";
 import api from "@/lib/api";
 import type { PostDetail } from "@/types/profile";
@@ -100,8 +99,16 @@ export function WatchPage({ videoId }: WatchPageProps) {
   const videoQuery = useQuery({
     queryKey: ["posttube", "video", videoId],
     queryFn: async () => {
-      const res = await api.get<{ data: PostDetail }>(`/v1/posts/${videoId}`);
-      return postDetailToVideo(res.data.data);
+      const res = await api.get<{ data: PostDetail & { video_metadata?: { trim_start_ms?: number; trim_end_ms?: number; duration_seconds?: number } } }>(`/v1/posts/${videoId}`);
+      const postData = res.data.data;
+      const authorInfo = await resolveAuthor(postData.author_id);
+      const mapped = postDetailToVideo(postData, authorInfo);
+      // Attach trim data for playback
+      return {
+        ...mapped,
+        _trimStartMs: postData.video_metadata?.trim_start_ms ?? 0,
+        _trimEndMs: postData.video_metadata?.trim_end_ms ?? undefined,
+      };
     },
     enabled: !!videoId,
     staleTime: 60_000,
@@ -114,7 +121,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
     staleTime: 2 * 60_000,
   });
 
-  const video: PostTubeVideo | null = videoQuery.data ?? (videoId ? null : MOCK_VIDEO);
+  const video: PostTubeVideo | null = videoQuery.data ?? null;
   const relatedVideos = (relatedQuery.data?.items ?? []).filter((v) => v.id !== videoId);
 
   const [liked, setLiked] = useState(false);
@@ -122,6 +129,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
   const [saved, setSaved] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -133,6 +141,30 @@ export function WatchPage({ videoId }: WatchPageProps) {
       setDisliked(video.viewer_has_disliked);
       setSaved(video.viewer_has_saved);
       setSubscribed(video.viewer_has_subscribed);
+    }
+  }, [video]);
+
+  // Trim-aware playback: seek to trim start and stop at trim end
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !video) return;
+    const trimStart = (video as unknown as Record<string, unknown>)._trimStartMs as number | undefined;
+    const trimEnd = (video as unknown as Record<string, unknown>)._trimEndMs as number | undefined;
+
+    if (trimStart && trimStart > 0) {
+      el.currentTime = trimStart / 1000;
+    }
+
+    if (trimEnd) {
+      const endSec = trimEnd / 1000;
+      const handleTimeUpdate = () => {
+        if (el.currentTime >= endSec) {
+          el.pause();
+          el.removeEventListener("timeupdate", handleTimeUpdate);
+        }
+      };
+      el.addEventListener("timeupdate", handleTimeUpdate);
+      return () => el.removeEventListener("timeupdate", handleTimeUpdate);
     }
   }, [video]);
 
@@ -148,25 +180,48 @@ export function WatchPage({ videoId }: WatchPageProps) {
 
   if (videoId && videoQuery.isLoading) {
     return (
-      <AppShell sectionLabel="PostTube">
-        <div className="flex h-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
+      <PostTubeShell>
+        <div className="h-full min-h-0 overflow-y-auto">
+          <div className="mx-auto max-w-[1280px] px-6 py-4">
+            {/* Show cover poster while loading if available via URL search param */}
+            <div className="relative overflow-hidden rounded-xl bg-black aspect-video">
+              <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-white/60" />
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div className="h-6 w-3/4 animate-pulse rounded bg-slate-100" />
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 animate-pulse rounded-full bg-slate-100" />
+                <div className="space-y-1.5">
+                  <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </AppShell>
+      </PostTubeShell>
     );
   }
 
   if (!video) {
     return (
-      <AppShell sectionLabel="PostTube">
+      <PostTubeShell>
         <div className="flex h-full flex-col items-center justify-center text-center">
-          <h2 className="text-[18px] font-bold text-slate-900">Video not found</h2>
-          <p className="mt-2 text-[13px] text-slate-500">This video may still be processing or has been removed.</p>
+          <h2 className="text-[18px] font-bold text-slate-900">
+            {videoId ? "Video not found" : "No video selected"}
+          </h2>
+          <p className="mt-2 text-[13px] text-slate-500">
+            {videoId
+              ? "This video may still be processing or has been removed."
+              : "Browse PostTube to find videos to watch."}
+          </p>
           <Link href="/posttube" className="mt-5 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-slate-800 transition-colors">
             Back to PostTube
           </Link>
         </div>
-      </AppShell>
+      </PostTubeShell>
     );
   }
 
@@ -177,7 +232,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
     : (descLines.slice(0, 3).join("\n").slice(0, 200) + "...");
 
   return (
-    <AppShell sectionLabel="PostTube">
+    <PostTubeShell>
       <div className="h-full min-h-0 overflow-y-auto">
         <div className="mx-auto flex max-w-[1280px] gap-6 px-6 py-4">
 
@@ -188,7 +243,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
             <div className="relative overflow-hidden rounded-xl bg-black aspect-video">
               <video
                 ref={videoRef}
-                src={video.video_url}
+                src={video.video_url || undefined}
                 poster={video.thumbnail_url || undefined}
                 className="h-full w-full object-contain"
                 controls
@@ -328,24 +383,42 @@ export function WatchPage({ videoId }: WatchPageProps) {
               )}
             </div>
 
-            {/* Comments */}
-            <div className="mt-6 mb-8">
-              <div className="flex items-center gap-6 mb-5">
-                <h3 className="text-[16px] font-bold text-slate-900">
-                  {fmtCount(video.comment_count)} Comments
-                </h3>
-                <button type="button" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600 hover:text-slate-800 transition-colors">
-                  <ListFilter className="h-4 w-4" />
-                  Sort by
-                </button>
-              </div>
-              <CommentSection
-                postId={video.id}
-                postAuthorId={video.channel_id}
-                commentsCount={video.comment_count}
-                alwaysExpanded
-              />
+            {/* Comments toggle button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setCommentsOpen((p) => !p)}
+                className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold transition-colors ${
+                  commentsOpen
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <MessageCircle className="h-[18px] w-[18px]" />
+                {fmtCount(video.comment_count)} Comments
+              </button>
             </div>
+
+            {/* Comments section (collapsed by default) */}
+            {commentsOpen && (
+              <div className="mt-4 mb-8">
+                <div className="flex items-center gap-6 mb-4">
+                  <h3 className="text-[16px] font-bold text-slate-900">
+                    {fmtCount(video.comment_count)} Comments
+                  </h3>
+                  <button type="button" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600 hover:text-slate-800 transition-colors">
+                    <ListFilter className="h-4 w-4" />
+                    Sort by
+                  </button>
+                </div>
+                <CommentSection
+                  postId={video.id}
+                  postAuthorId={video.channel_id}
+                  commentsCount={video.comment_count}
+                  alwaysExpanded
+                />
+              </div>
+            )}
           </div>
 
           {/* ═══ RIGHT SIDEBAR — Related Videos ═══ */}
@@ -422,6 +495,6 @@ export function WatchPage({ videoId }: WatchPageProps) {
           </div>
         </div>
       )}
-    </AppShell>
+    </PostTubeShell>
   );
 }

@@ -82,9 +82,8 @@ export interface GraphCounts {
 
 export interface ContentCounts {
     post: number
-    short: number
+    reel: number
     video: number
-    photo: number
     total: number
 }
 
@@ -149,10 +148,10 @@ export const POST_CONTENT_TYPES = {
 
 export type PostContentType = (typeof POST_CONTENT_TYPES)[keyof typeof POST_CONTENT_TYPES]
 
-/** UI-level content filter (superset of PostContentType, includes "all" and "short" for display). */
-export type ContentType = "all" | "post" | "short" | "video" | "photo"
+/** UI-level content filter — values must match backend content_type column values. */
+export type ContentType = "all" | "post" | "reel" | "video" | "photo"
 export type AppPlatform = "postboek" | "posttube" | "postgram"
-export type ProfileTab = "creations" | "about" | "connections" | "pages" | "activity"
+export type ProfileTab = "posts" | "media" | "about" | "connections" | "videos" | "flicks" | "stashed"
 
 export interface PollOption {
     id: string
@@ -201,6 +200,7 @@ export interface PostDetail {
     created_at: string
     updated_at: string
     media?: { media_id: string; kind: string }[]
+    cover_media_id?: string
     counts?: { likes: number; comments: number; shares?: number }
     viewer_reaction?: string | null
     location?: string | null
@@ -213,6 +213,17 @@ export interface PostDetail {
     app_origin?: string
     is_bookmarked?: boolean
     poll?: PollData | null
+    embed_ref?: Record<string, unknown> | null
+    title?: string
+    video_metadata?: {
+        duration_seconds: number
+        width?: number
+        height?: number
+        thumbnail_url?: string
+        playback_url?: string
+        upload_status: string
+        final_category: string
+    }
 }
 
 // --- Stories ---
@@ -492,6 +503,73 @@ export interface LinkAnalytics {
     clicks_this_week: number
     clicks_this_month: number
     top_referrers: { referrer: string; count: number }[]
+}
+
+// --- Module Profiles (Cross-Post v3) ---
+
+export type ModuleName = "postbook" | "posttube" | "postgram"
+
+export interface ModuleProfile {
+    id: string
+    user_id: string
+    module: ModuleName
+    use_global_identity: boolean
+    name_override?: string | null
+    avatar_override_url?: string | null
+    banner_url?: string | null
+    watermark_url?: string | null
+    links: unknown[]
+    defaults: Record<string, unknown>
+    created_at: string
+    updated_at: string
+}
+
+export interface UpsertModuleProfileParams {
+    use_global_identity?: boolean
+    name_override?: string | null
+    avatar_override_url?: string | null
+    banner_url?: string | null
+    watermark_url?: string | null
+    links?: unknown[]
+    defaults?: Record<string, unknown>
+}
+
+export interface CrosspostLink {
+    id: string
+    source_module: string
+    source_post_id: string
+    target_module: string
+    target_post_id: string
+    created_at: string
+    deleted_at?: string | null
+}
+
+export interface UploadDetail {
+    id: string
+    author_id: string
+    text: string
+    content_type: string
+    title?: string
+    cover_media_id?: string
+    created_at: string
+    updated_at: string
+    media?: { media_id: string; kind: string }[]
+    counts?: { likes: number; comments: number; shares?: number }
+    video_metadata?: {
+        duration_seconds: number
+        width?: number
+        height?: number
+        thumbnail_url?: string
+        playback_url?: string
+        upload_status: string
+        final_category: string
+    }
+}
+
+export interface UploadCounts {
+    videos: number
+    flicks: number
+    posts: number
 }
 
 // Badge flag constants (bitmask)

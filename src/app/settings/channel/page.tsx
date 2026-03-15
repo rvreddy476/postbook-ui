@@ -50,14 +50,14 @@ export default function ChannelSettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
                     isActive
-                      ? "bg-violet-50 text-violet-700"
+                      ? "bg-[#D8103F]/5 text-[#b80d35]"
                       : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                   }`}
                 >
                   <tab.icon
                     className={`h-4 w-4 ${
                       isActive
-                        ? "text-violet-600"
+                        ? "text-[#D8103F]"
                         : "text-slate-400 group-hover:text-slate-500"
                     }`}
                   />

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, Bookmark, LogOut } from "lucide-react";
 import { Avatar } from "@/components/LetterAvatar";
@@ -31,8 +32,16 @@ export function ProfileDropdown() {
     }
   }, [open, handleClickOutside]);
 
+  const pathname = usePathname();
+  const isPosttube = pathname?.startsWith("/posttube") || pathname?.startsWith("/reels");
+
   const menuItems = [
-    { label: "Profile", href: "/profile", icon: User, hoverColor: "group-hover:bg-violet-50 group-hover:text-violet-600" },
+    {
+      label: isPosttube ? "My Channel" : "Profile",
+      href: isPosttube ? "/posttube/channel" : "/profile",
+      icon: User,
+      hoverColor: "group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F]",
+    },
     { label: "Channel Settings", href: "/settings/channel", icon: Settings, hoverColor: "group-hover:bg-blue-50 group-hover:text-blue-600" },
     { label: "Saved", href: "/saved", icon: Bookmark, hoverColor: "group-hover:bg-amber-50 group-hover:text-amber-600" },
   ];
@@ -42,7 +51,7 @@ export function ProfileDropdown() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-violet-500/10"
+        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-[#D8103F]/10"
       >
         <Avatar
           src={avatarUrl}

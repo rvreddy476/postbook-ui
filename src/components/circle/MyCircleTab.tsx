@@ -67,8 +67,8 @@ const MyCircleTab: React.FC = () => {
     if (friends.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center mb-5 shadow-sm">
-                    <Users className="w-12 h-12 text-violet-300" />
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 flex items-center justify-center mb-5 shadow-sm">
+                    <Users className="w-12 h-12 text-[#D8103F]/30" />
                 </div>
                 <p className="text-base font-bold text-slate-500">Your circle is empty</p>
                 <p className="text-sm text-slate-400 mt-1.5 max-w-xs">Discover new people and send connection requests to build your circle!</p>
@@ -80,7 +80,7 @@ const MyCircleTab: React.FC = () => {
         <div className="space-y-5">
             <div className="flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    <span className="text-violet-600 text-sm mr-1">{friends.length}</span> in your circle
+                    <span className="text-[#D8103F] text-sm mr-1">{friends.length}</span> in your circle
                 </p>
             </div>
 
@@ -92,7 +92,7 @@ const MyCircleTab: React.FC = () => {
                         placeholder="Search your circle..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100 transition-all"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                     />
                 </div>
             )}
@@ -131,7 +131,7 @@ const MyCircleTab: React.FC = () => {
                                     <div className="flex items-center gap-2 w-full">
                                         <button
                                             onClick={() => router.push(`/u/${username}`)}
-                                            className="flex-1 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2.5 text-[11px] font-bold text-white hover:opacity-90 transition-all shadow-sm shadow-violet-500/20"
+                                            className="flex-1 rounded-xl bg-gradient-to-r from-[#D8103F]/50 to-fuchsia-500 px-4 py-2.5 text-[11px] font-bold text-white hover:opacity-90 transition-all shadow-sm shadow-[#D8103F]/20"
                                         >
                                             View Profile
                                         </button>

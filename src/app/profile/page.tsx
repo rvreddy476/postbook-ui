@@ -50,9 +50,7 @@ export default function ProfileRoute() {
 
                 {/* Main Content */}
                 <main className="flex-1 md:ml-[72px] pb-12 overflow-y-auto h-screen scrollbar-hide">
-                    <div className="max-w-5xl mx-auto">
-                        <ProfilePage username={currentUser.id} platform="postboek" />
-                    </div>
+                    <ProfilePage username={currentUser.id} />
                 </main>
             </div>
         </div>

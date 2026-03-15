@@ -4,7 +4,10 @@ import React, { useState, useMemo } from 'react'
 import CreatePortal from '@/components/CreatePortal'
 import { useGroupFeed, useGroupMembers } from '@/hooks/useGroups'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import {
+  Plus, Heart, MessageCircle, Repeat2, Bookmark, Pin,
+  Crown, ShieldCheck, Wrench, MoreHorizontal, Image as ImageIcon
+} from 'lucide-react'
 import Link from 'next/link'
 import type { GroupPost, GroupMember } from '@/types/groups'
 
@@ -20,34 +23,117 @@ function timeAgo(dateStr: string): string {
   const diffSec = Math.floor(diffMs / 1000)
   if (diffSec < 60) return 'just now'
   const diffMin = Math.floor(diffSec / 60)
-  if (diffMin < 60) return `${diffMin}m ago`
+  if (diffMin < 60) return `${diffMin}m`
   const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}h ago`
+  if (diffHr < 24) return `${diffHr}h`
   const diffDay = Math.floor(diffHr / 24)
-  if (diffDay < 30) return `${diffDay}d ago`
-  return new Date(dateStr).toLocaleDateString()
+  if (diffDay < 7) return `${diffDay}d`
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)}w`
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function RoleBadge({ role }: { role: string }) {
+  if (role === 'owner' || role === 'admin') {
+    return (
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 rounded-md">
+        <Crown className="w-2.5 h-2.5" />{role === 'owner' ? 'Owner' : 'Admin'}
+      </span>
+    )
+  }
+  if (role === 'moderator') {
+    return (
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 rounded-md">
+        <Wrench className="w-2.5 h-2.5" />Mod
+      </span>
+    )
+  }
+  return null
 }
 
 function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<string, GroupMember> }) {
   const member = memberMap.get(post.author_id)
-  const name = member?.display_name || member?.username || `User ${post.author_id.slice(0, 6)}`
+  const name = member?.display_name || member?.username || `User ${post.author_id.slice(0, 8)}`
+  const username = member?.username ? `@${member.username}` : null
   const avatarSrc = member?.avatar_media_id
     ? `/v1/media/${member.avatar_media_id}/serve`
-    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id.slice(0, 8)}`
+    : null
+  const role = member?.role || 'member'
 
   return (
-    <Link href={`/post/${post.post_id}`}>
-      <div className="bg-white rounded-xl border border-slate-100 p-4 hover:border-violet-200 hover:shadow-sm transition-all">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
-            <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
+    <Link href={`/post/${post.post_id}`} className="block">
+      <motion.article
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all"
+      >
+        {/* Author Row */}
+        <div className="flex items-center gap-3 p-4 pb-0">
+          <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 ring-2 ring-white shadow-sm">
+            {avatarSrc ? (
+              <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-sm font-bold text-white">
+                {name.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-700 truncate">{name}</p>
-            <p className="text-[10px] text-slate-400">{timeAgo(post.created_at)}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-sm font-bold text-slate-800 truncate">{name}</span>
+              <RoleBadge role={role} />
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              {username && <span className="font-medium">{username}</span>}
+              {username && <span>·</span>}
+              <span>{timeAgo(post.created_at)}</span>
+            </div>
           </div>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            className="p-1.5 text-slate-300 hover:text-slate-500 rounded-lg hover:bg-slate-50 transition-all"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+
+        {/* Content placeholder — in a real implementation this would show post body/media */}
+        <div className="px-4 py-3">
+          <div className="h-2.5 w-full bg-slate-50 rounded-full mb-2" />
+          <div className="h-2.5 w-3/4 bg-slate-50 rounded-full" />
+        </div>
+
+        {/* Engagement Rail */}
+        <div className="flex items-center border-t border-slate-50 px-2">
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-rose-500 hover:bg-rose-50/50 rounded-lg transition-all"
+          >
+            <Heart className="w-4 h-4" />
+            <span className="hidden sm:inline">Spark</span>
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-blue-500 hover:bg-blue-50/50 rounded-lg transition-all"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Comment</span>
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-emerald-500 hover:bg-emerald-50/50 rounded-lg transition-all"
+          >
+            <Repeat2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Echo</span>
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-amber-500 hover:bg-amber-50/50 rounded-lg transition-all"
+          >
+            <Bookmark className="w-4 h-4" />
+            <span className="hidden sm:inline">Stash</span>
+          </button>
+        </div>
+      </motion.article>
     </Link>
   )
 }
@@ -66,15 +152,17 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
   const posts = data?.pages.flatMap((page) => page.data) ?? []
 
   return (
-    <div className="space-y-4 max-w-[640px] mx-auto">
-      {/* Create Post Button */}
+    <div className="space-y-4">
+      {/* Compose Box */}
       {isMember && (
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-400 hover:border-violet-300 hover:text-violet-500 transition-all"
+          className="w-full flex items-center gap-3 px-5 py-4 bg-white border border-slate-100 rounded-xl text-sm text-slate-400 hover:border-[#D8103F]/20 hover:shadow-sm transition-all group"
         >
-          <Plus className="w-4 h-4" />
-          Write something to the group...
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center group-hover:from-[#D8103F]/10 group-hover:to-[#D8103F]/5 transition-all">
+            <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#D8103F] transition-colors" />
+          </div>
+          <span className="group-hover:text-slate-500 transition-colors">Write something to the group...</span>
         </button>
       )}
 
@@ -95,12 +183,30 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
 
       {/* Posts */}
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-500 rounded-full animate-spin" />
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 space-y-3 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-100" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-28 bg-slate-100 rounded" />
+                  <div className="h-2.5 w-16 bg-slate-50 rounded" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-2.5 w-full bg-slate-50 rounded-full" />
+                <div className="h-2.5 w-2/3 bg-slate-50 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-slate-400 text-sm">No posts yet. Be the first to share something!</p>
+        <div className="text-center py-20">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+            <MessageCircle className="w-7 h-7 text-slate-200" />
+          </div>
+          <p className="text-sm font-semibold text-slate-400">No posts yet</p>
+          <p className="text-xs text-slate-300 mt-1">Be the first to share something with the group!</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -112,13 +218,13 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
 
       {/* Load More */}
       {hasNextPage && (
-        <div className="flex justify-center pt-4 pb-8">
+        <div className="flex justify-center pt-2 pb-4">
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-8 py-3 bg-white rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-violet-600 hover:shadow-lg transition-all border border-slate-100 disabled:opacity-50"
+            className="px-6 py-2.5 bg-white rounded-xl font-bold text-xs text-slate-500 hover:text-[#D8103F] hover:shadow-md transition-all border border-slate-100 disabled:opacity-50"
           >
-            {isFetchingNextPage ? 'Loading...' : 'Load More'}
+            {isFetchingNextPage ? 'Loading...' : 'Load more posts'}
           </button>
         </div>
       )}

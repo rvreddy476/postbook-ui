@@ -94,7 +94,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
       {/* PostTube.in Navigation */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 w-full max-w-screen-2xl mx-auto">
         <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setSelectedVideo(null)}>
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-400/20 group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-[#b80d35] text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-400/20 group-hover:scale-110 transition-transform">
             <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M10 8l6 4-6 4V8z"/><path d="M2 7v10a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/></svg>
           </div>
           <div>
@@ -115,7 +115,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="bg-gradient-to-r from-indigo-600 to-violet-700 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-400/20 hover:scale-105 active:scale-95 transition-all">
+          <button className="bg-gradient-to-r from-indigo-600 to-[#b80d35] text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-400/20 hover:scale-105 active:scale-95 transition-all">
             Channel Creator
           </button>
         </div>
@@ -147,7 +147,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                     <button 
                       onClick={() => setIsSubscribed(!isSubscribed)}
                       className={`ml-4 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                        isSubscribed ? 'bg-slate-100 text-slate-500' : 'bg-gradient-to-r from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-400/20'
+                        isSubscribed ? 'bg-slate-100 text-slate-500' : 'bg-gradient-to-r from-indigo-600 to-[#b80d35] text-white shadow-xl shadow-indigo-400/20'
                       }`}
                     >
                       {isSubscribed ? 'Synchronized' : 'Subscribe'}
@@ -221,7 +221,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                 onClick={() => setActiveCategory(cat)}
                 className={`flex-shrink-0 px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${
                   activeCategory === cat 
-                  ? 'bg-gradient-to-r from-indigo-600 to-violet-700 text-white shadow-xl shadow-indigo-400/20 scale-105' 
+                  ? 'bg-gradient-to-r from-indigo-600 to-[#b80d35] text-white shadow-xl shadow-indigo-400/20 scale-105' 
                   : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50 hover:text-slate-600'
                 }`}
               >

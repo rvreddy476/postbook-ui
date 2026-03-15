@@ -12,6 +12,7 @@ import {
   Clock,
   Heart,
   Settings,
+  FolderOpen,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -91,6 +92,12 @@ export function IconSideNav() {
 
       <div className="my-2 h-px w-8 bg-slate-100" />
 
+      <NavIcon
+        href="/posttube/uploads"
+        icon={<FolderOpen className="h-[18px] w-[18px]" />}
+        label="My Uploads"
+        active={pathname === "/posttube/uploads"}
+      />
       <NavIcon
         href="/reels/create"
         icon={<Upload className="h-[18px] w-[18px]" />}

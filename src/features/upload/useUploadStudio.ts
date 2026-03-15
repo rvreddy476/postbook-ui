@@ -9,12 +9,11 @@ import {
   updateDraft,
   publishDraft,
   createReel,
-  extractCoverFrame,
   getProcessingStatus,
+  uploadCoverDataUrl,
 } from "@/features/reels/data/reelsApi";
-import type { CoverFrameResult } from "@/features/reels/types";
 
-import { STEP_SCHEMAS, type ContentType, type StepId } from "./tokens";
+import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
 import { type StudioFormState, INITIAL_FORM_STATE } from "./types";
 
 /* ── Constants ─────────────────────────────────────────── */
@@ -31,7 +30,24 @@ function extractHashtags(text: string): string[] {
   return [...new Set(matches.map((t) => t.toLowerCase()))].slice(0, MAX_HASHTAGS);
 }
 
-function extractFrameClientSide(videoUrl: string, timestampMs: number): Promise<CoverFrameResult> {
+/**
+ * Classify video per spec v2.1:
+ * - Flick: duration ≤ 180s AND (portrait OR square)
+ * - LongVideo: duration > 180s (any orientation) OR landscape (any duration)
+ */
+export function classifyVideo(
+  durationSec: number | null,
+  width: number | null,
+  height: number | null,
+): "flick" | "long_video" {
+  if (durationSec == null) return "long_video";
+  const isLandscape = (width ?? 0) > (height ?? 0);
+  if (durationSec <= 180 && !isLandscape) return "flick";
+  return "long_video";
+}
+
+/** Extract a single frame from a local video as a JPEG data URL. Client-side only. */
+function extractFrameClientSide(videoUrl: string, timestampMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.crossOrigin = "anonymous";
@@ -50,7 +66,7 @@ function extractFrameClientSide(videoUrl: string, timestampMs: number): Promise<
           const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
           video.removeAttribute("src");
           video.load();
-          resolve({ cover_media_id: `local-cover-${timestampMs}`, object_key: "", preview_url: dataUrl });
+          resolve(dataUrl);
         } catch (err) { reject(err); }
       });
     };
@@ -95,12 +111,33 @@ export function useUploadStudio(contentType: ContentType) {
       video.src = previewUrl;
       video.onloadedmetadata = () => {
         const dur = video.duration;
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
         video.removeAttribute("src");
         video.load();
+
+        // Enforce max duration (12 hours for long, 3 min for flicks)
+        const meta = CONTENT_TYPE_META[contentType];
+        const maxDur = meta.maxDuration;
+
+        if (Math.round(dur) > maxDur) {
+          URL.revokeObjectURL(previewUrl);
+          const maxMin = Math.floor(maxDur / 60);
+          const isFlick = contentType === "reel" || contentType === "short";
+          patch({
+            uploadError: isFlick
+              ? `Flicks must be ${maxMin} minutes or less. This video is ${Math.ceil(dur / 60)} minutes. Upload it as a Video instead.`
+              : `Maximum duration is ${maxMin} minutes for ${meta.label}.`,
+          });
+          return;
+        }
+
         patch({
           videoFile: file,
           videoPreviewUrl: previewUrl,
           videoDurationSec: Math.round(dur),
+          videoWidth: vw || null,
+          videoHeight: vh || null,
           uploadError: null,
           coverTimestampMs: Math.round((dur / 2) * 1000),
         });
@@ -187,62 +224,89 @@ export function useUploadStudio(contentType: ContentType) {
     };
   }, [form.mediaId, form.processingReady, patch]);
 
-  /* ── Cover frame extraction ──────────────────────── */
+  /* ── Cover poster — local-only preview extraction ── */
 
-  const extractCoverMutation = useMutation({
+  const extractCoverPreview = useMutation({
     mutationFn: async (timestampMs: number) => {
-      if (form.videoPreviewUrl) {
-        try { return await extractFrameClientSide(form.videoPreviewUrl, timestampMs); } catch { /* fall through */ }
-      }
-      if (form.mediaId) {
-        return await extractCoverFrame({ mediaId: form.mediaId, timestampMs });
-      }
-      throw new Error("No video available");
+      if (!form.videoPreviewUrl) throw new Error("No video available");
+      return extractFrameClientSide(form.videoPreviewUrl, timestampMs);
     },
-    onSuccess: (result) => patch({ coverResult: result }),
+    onSuccess: (dataUrl) => patch({ coverPreviewUrl: dataUrl, coverResult: null }),
   });
+
+  /* ── Custom cover image selection (local-only) ──── */
+
+  const selectCustomCover = useCallback(
+    (file: File) => {
+      const allowed = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowed.includes(file.type)) {
+        patch({ uploadError: "Cover image must be JPEG, PNG, or WebP." });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        patch({ uploadError: "Cover image must be under 10 MB." });
+        return;
+      }
+      const previewUrl = URL.createObjectURL(file);
+      patch({
+        coverSourceType: "custom_image",
+        customCoverFile: file,
+        customCoverPreviewUrl: previewUrl,
+        coverPreviewUrl: null,
+        coverResult: null,
+        uploadError: null,
+      });
+    },
+    [patch],
+  );
 
   /* ── Save draft ──────────────────────────────────── */
 
+  /** Save draft. Optional coverMediaIdOverride is used at publish time
+   *  when the cover was just uploaded and form state hasn't caught up yet. */
+  const saveDraftWithCover = useCallback(async (coverMediaIdOverride?: string) => {
+    if (!form.draftId) return;
+    const hashtags = extractHashtags(form.caption);
+    patch({ hashtags });
+    const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
+    try {
+      await updateDraft(form.draftId, {
+        title: form.title || undefined,
+        caption: form.caption,
+        hashtags,
+        tags: form.tags.length > 0 ? form.tags : undefined,
+        visibility: form.visibility,
+        category: form.category || undefined,
+        language: form.language,
+        content_type: classified,
+        original_audio_volume: form.originalAudioVolume,
+        overlay_audio_volume: form.overlayAudioVolume,
+        cover_media_id: coverMediaIdOverride ?? form.coverResult?.cover_media_id,
+        cross_post_postbook: form.crossPostPostbook,
+        cross_post_posttube: form.crossPostPosttube,
+        publish_to_feed: form.publishToFeed,
+        is_made_for_kids: form.isMadeForKids,
+        paid_promotion: form.paidPromotion,
+        altered_content: form.alteredContent,
+        auto_chapters: form.autoChapters,
+        featured_places: form.featuredPlaces,
+        auto_concepts: form.autoConcepts,
+        license: form.license,
+        allow_embedding: form.allowEmbedding,
+        remix_setting: form.remixSetting,
+        likes_enabled: form.likesEnabled,
+        comments_enabled: form.commentsEnabled,
+        comment_moderation: form.commentModeration,
+        comment_access: form.commentAccess,
+        recording_date: form.recordingDate || undefined,
+        recording_location: form.recordingLocation || undefined,
+        schedule_at: form.scheduleAt ?? undefined,
+      });
+    } catch { /* silently continue */ }
+  }, [form, patch]);
+
   const saveDraftMutation = useMutation({
-    mutationFn: async () => {
-      if (!form.draftId) return;
-      const hashtags = extractHashtags(form.caption);
-      patch({ hashtags });
-      try {
-        await updateDraft(form.draftId, {
-          title: form.title || undefined,
-          caption: form.caption,
-          hashtags,
-          tags: form.tags.length > 0 ? form.tags : undefined,
-          visibility: form.visibility,
-          category: form.category || undefined,
-          language: form.language,
-          original_audio_volume: form.originalAudioVolume,
-          overlay_audio_volume: form.overlayAudioVolume,
-          cover_media_id: form.coverResult?.cover_media_id,
-          cross_post_postbook: form.crossPostPostbook,
-          cross_post_posttube: form.crossPostPosttube,
-          publish_to_feed: form.publishToFeed,
-          is_made_for_kids: form.isMadeForKids,
-          paid_promotion: form.paidPromotion,
-          altered_content: form.alteredContent,
-          auto_chapters: form.autoChapters,
-          featured_places: form.featuredPlaces,
-          auto_concepts: form.autoConcepts,
-          license: form.license,
-          allow_embedding: form.allowEmbedding,
-          remix_setting: form.remixSetting,
-          likes_enabled: form.likesEnabled,
-          comments_enabled: form.commentsEnabled,
-          comment_moderation: form.commentModeration,
-          comment_access: form.commentAccess,
-          recording_date: form.recordingDate || undefined,
-          recording_location: form.recordingLocation || undefined,
-          schedule_at: form.scheduleAt ?? undefined,
-        });
-      } catch { /* silently continue */ }
-    },
+    mutationFn: () => saveDraftWithCover(),
   });
 
   /* ── Publish ─────────────────────────────────────── */
@@ -251,22 +315,37 @@ export function useUploadStudio(contentType: ContentType) {
     mutationFn: async () => {
       if (!form.mediaId) throw new Error("No media uploaded");
 
+      // Upload cover ONCE at publish time — no orphaned media
+      let coverMediaId: string | undefined;
+
+      if (form.coverSourceType === "custom_image" && form.customCoverFile) {
+        coverMediaId = await uploadMedia(form.customCoverFile);
+      } else if (form.coverSourceType === "video_frame" && form.coverPreviewUrl) {
+        coverMediaId = await uploadCoverDataUrl(form.coverPreviewUrl);
+      }
+
+      // Draft path: save cover_media_id directly, then publish
       if (form.draftId) {
         try {
-          await saveDraftMutation.mutateAsync();
+          await saveDraftWithCover(coverMediaId);
           return await publishDraft(
             form.draftId,
             form.scheduleAt ? { schedule_at: form.scheduleAt } : undefined,
           );
-        } catch { /* fall through */ }
+        } catch { /* fall through to direct create */ }
       }
 
+      // Direct create path (no draft)
       const hashtags = extractHashtags(form.caption);
+      const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
       return createReel({
         text: form.caption,
         mediaIds: [form.mediaId],
         visibility: form.visibility,
         hashtags,
+        cover_media_id: coverMediaId,
+        content_type: classified,
+        publish_to_feed: form.publishToFeed,
       });
     },
     onSuccess: (reel) => {
@@ -320,7 +399,8 @@ export function useUploadStudio(contentType: ContentType) {
     selectFile,
     clearFile,
     uploadMutation,
-    extractCoverMutation,
+    extractCoverPreview,
+    selectCustomCover,
     saveDraftMutation,
     publishMutation,
     goToStep,

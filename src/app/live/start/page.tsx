@@ -88,12 +88,12 @@ export default function LiveStartPage() {
               <div className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">Title <span className="text-rose-400">*</span></label>
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100" placeholder="What are you streaming?" />
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10" placeholder="What are you streaming?" />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">Category</label>
                   <div className="relative">
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100">
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10">
                       <option value="">Select category</option>
                       {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>

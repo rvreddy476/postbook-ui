@@ -119,7 +119,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                 : "bg-blue-50 text-blue-600 border-blue-100"
                         }`}
                     >
-                        {metrics.content_type === "reel" ? "Reel" : "Long Video"}
+                        {metrics.content_type === "reel" ? "Flick" : "Video"}
                     </span>
                 </div>
                 <button

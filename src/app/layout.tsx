@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Outfit, Playfair_Display } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-plus-jakarta-sans',
+  variable: '--font-outfit',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
@@ -50,7 +55,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} bg-[#fcfaff] text-slate-950 antialiased`}>
+      <body className={`${outfit.variable} ${playfair.variable} bg-[#fcfaff] text-slate-950 antialiased`}>
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 opacity-40 bg-[radial-gradient(at_0%_0%,_rgba(124,58,237,0.15)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(219,39,119,0.15)_0px,_transparent_50%)]"></div>
           <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-fuchsia-100/30 blur-[120px]"></div>

@@ -11,6 +11,7 @@ import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
+import EmbedCard from '@/components/EmbedCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
@@ -140,6 +141,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const hasVoted = pollData?.viewer_votes && pollData.viewer_votes.length > 0;
   const pollEnded = pollData?.has_ended;
   const showResults = hasVoted || pollEnded;
+  const isEmbed = post.content_type === 'video_embed' || post.content_type === 'flick_embed';
+
+  if (isEmbed) {
+    return <EmbedCard post={post} />;
+  }
 
   return (
     <article

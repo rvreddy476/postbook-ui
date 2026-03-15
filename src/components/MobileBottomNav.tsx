@@ -27,7 +27,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange }
               <button
                 type="button"
                 onClick={() => onChange(item.label)}
-                className={`flex w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition-all ${isActive ? 'bg-violet-50 text-violet-600' : 'text-slate-400'
+                className={`flex w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition-all ${isActive ? 'bg-[#D8103F]/5 text-[#D8103F]' : 'text-slate-400'
                   }`}
                 aria-label={item.label}
               >

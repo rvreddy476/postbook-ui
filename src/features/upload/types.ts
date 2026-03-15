@@ -22,6 +22,8 @@ export interface StudioFormState {
   videoFile: File | null;
   videoPreviewUrl: string | null;
   videoDurationSec: number | null;
+  videoWidth: number | null;
+  videoHeight: number | null;
 
   /* ── Upload progress ────────────── */
   mediaId: string | null;
@@ -37,8 +39,13 @@ export interface StudioFormState {
   tags: string[];
   hashtagInput: string;
 
-  /* ── Cover ──────────────────────── */
+  /* ── Cover Poster ────────────────── */
+  coverSourceType: "video_frame" | "custom_image";
   coverTimestampMs: number | null;
+  coverPreviewUrl: string | null;
+  customCoverFile: File | null;
+  customCoverPreviewUrl: string | null;
+  /** @deprecated kept for backward compat during transition; not used for new uploads */
   coverResult: CoverFrameResult | null;
 
   /* ── Audio ──────────────────────── */
@@ -94,6 +101,8 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   videoFile: null,
   videoPreviewUrl: null,
   videoDurationSec: null,
+  videoWidth: null,
+  videoHeight: null,
   mediaId: null,
   draftId: null,
   uploadProgress: 0,
@@ -104,7 +113,11 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   hashtags: [],
   tags: [],
   hashtagInput: "",
+  coverSourceType: "video_frame",
   coverTimestampMs: null,
+  coverPreviewUrl: null,
+  customCoverFile: null,
+  customCoverPreviewUrl: null,
   coverResult: null,
   audioTrack: null,
   audioStartMs: 0,

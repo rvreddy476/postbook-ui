@@ -1,15 +1,47 @@
-import { useQuery } from "@tanstack/react-query";
-import { getCategoryFeed, type FeedCategory } from "../data/posttubeApi";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  getHomeFeed,
+  getFlicksFeed,
+  getLongVideosFeed,
+} from "../data/posttubeApi";
 
 /**
- * Fetches a single category feed. Each category is an independent query —
- * React Query deduplicates and caches automatically.
+ * Single API call on mount — fetches all videos (longVideos + flicks) from /v1/feed/home.
+ * Backend classifies and splits; frontend only renders.
  */
-export function useCategoryFeed(category: FeedCategory, limit = 12) {
+export function useHomeFeed(limit = 30) {
   return useQuery({
-    queryKey: ["posttube", "feed", category],
-    queryFn: () => getCategoryFeed(category, { limit }),
-    staleTime: 2 * 60 * 1000, // 2 min
+    queryKey: ["feed", "home"],
+    queryFn: () => getHomeFeed({ limit }),
+    staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Infinite query for flicks — disabled by default, only fires when user clicks "Load more".
+ */
+export function useFlicksFeed(limit = 20, enabled = false) {
+  return useInfiniteQuery({
+    queryKey: ["feed", "flicks"],
+    queryFn: ({ pageParam }) => getFlicksFeed({ cursor: pageParam, limit }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor,
+    staleTime: 2 * 60 * 1000,
+    enabled,
+  });
+}
+
+/**
+ * Infinite query for long videos — disabled by default, only fires when user clicks "Load more".
+ */
+export function useLongVideosFeed(limit = 20, enabled = false) {
+  return useInfiniteQuery({
+    queryKey: ["feed", "longVideos"],
+    queryFn: ({ pageParam }) => getLongVideosFeed({ cursor: pageParam, limit }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor,
+    staleTime: 2 * 60 * 1000,
+    enabled,
   });
 }

@@ -25,35 +25,35 @@ export interface ToastData {
 const iconMap: Record<ToastType, React.ReactNode> = {
     success: <CheckCircle className="h-5 w-5 text-emerald-600" />,
     error: <XCircle className="h-5 w-5 text-rose-600" />,
-    info: <Info className="h-5 w-5 text-violet-600" />,
+    info: <Info className="h-5 w-5 text-[#D8103F]" />,
     warning: <AlertTriangle className="h-5 w-5 text-amber-600" />,
 }
 
 const containerStyles: Record<ToastType, string> = {
     success: "border-emerald-200 bg-emerald-50",
     error: "border-rose-200 bg-rose-50",
-    info: "border-violet-200 bg-violet-50",
+    info: "border-[#D8103F]/20 bg-[#D8103F]/5",
     warning: "border-amber-200 bg-amber-50",
 }
 
 const titleStyles: Record<ToastType, string> = {
     success: "text-emerald-800",
     error: "text-rose-800",
-    info: "text-violet-800",
+    info: "text-[#8a0a28]",
     warning: "text-amber-800",
 }
 
 const descStyles: Record<ToastType, string> = {
     success: "text-emerald-700",
     error: "text-rose-700",
-    info: "text-violet-700",
+    info: "text-[#b80d35]",
     warning: "text-amber-700",
 }
 
 const progressStyles: Record<ToastType, string> = {
     success: "bg-emerald-400",
     error: "bg-rose-400",
-    info: "bg-violet-400",
+    info: "bg-[#D8103F]/50",
     warning: "bg-amber-400",
 }
 

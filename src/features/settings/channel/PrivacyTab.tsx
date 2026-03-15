@@ -12,7 +12,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "bg-violet-600" : "bg-slate-200"}`}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
     >
       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enabled ? "left-[22px]" : "left-0.5"}`} />
     </button>
@@ -79,7 +79,7 @@ export function PrivacyTab() {
                 onClick={() => setCommentsMode(mode)}
                 className={`rounded-xl px-4 py-2 text-[12px] font-semibold transition-all ${
                   commentsMode === mode
-                    ? "bg-violet-600 text-white shadow-sm"
+                    ? "bg-[#D8103F] text-white shadow-sm"
                     : "bg-slate-50 text-slate-500 hover:bg-slate-100"
                 }`}
               >
@@ -103,7 +103,7 @@ export function PrivacyTab() {
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBlockedWord(); } }}
               placeholder="Add a word..."
-              className="h-9 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              className="h-9 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
             />
             <button
               type="button"
@@ -176,7 +176,7 @@ export function PrivacyTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50"
+          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

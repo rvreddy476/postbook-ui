@@ -76,9 +76,9 @@ export function MonetizationTab() {
       </div>
 
       {/* Info */}
-      <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-6">
-        <h3 className="text-[13px] font-bold text-violet-900">Coming Soon</h3>
-        <p className="mt-1 text-[12px] leading-relaxed text-violet-700">
+      <div className="rounded-2xl border border-[#D8103F]/10 bg-[#D8103F]/50 p-6">
+        <h3 className="text-[13px] font-bold text-[#6b081f]">Coming Soon</h3>
+        <p className="mt-1 text-[12px] leading-relaxed text-[#b80d35]">
           Monetization features including Super Boosts, channel memberships, and ad revenue
           sharing are currently in development. Keep creating great content to meet the
           eligibility requirements!

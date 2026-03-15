@@ -34,9 +34,10 @@ function avatarUrl(_authorId: string): string {
 
 export function postDetailToReel(post: PostDetail): Reel {
   const videoMedia = post.media?.find((m) => m.kind === "video");
-  // Only use an actual image as thumbnail; using the video media ID as a poster
-  // returns a video file from /serve which can't render as an image poster.
   const thumbnailMedia = post.media?.find((m) => m.kind === "image");
+
+  // Cover image priority: explicit cover_media_id > image in media array > empty
+  const thumbnailId = post.cover_media_id || thumbnailMedia?.media_id;
 
   return {
     reel_id: post.id,
@@ -44,7 +45,7 @@ export function postDetailToReel(post: PostDetail): Reel {
     author_name: post.author_id,
     author_avatar_url: avatarUrl(post.author_id),
     video_url: videoMedia ? mediaUrl(videoMedia.media_id) : "",
-    thumbnail_url: thumbnailMedia ? mediaUrl(thumbnailMedia.media_id) : "",
+    thumbnail_url: thumbnailId ? mediaUrl(thumbnailId) : "",
     caption: post.text || "",
     hashtags: post.hashtags ?? [],
     like_count: post.counts?.likes ?? 0,
@@ -273,6 +274,14 @@ export async function uploadMedia(
   return init.media_id;
 }
 
+/** Upload a data URL (e.g. canvas-extracted cover frame) as an image and return the media ID. */
+export async function uploadCoverDataUrl(dataUrl: string): Promise<string> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
+  return uploadMedia(file);
+}
+
 /* ═══════════════════════════════════════════════════════════
    PROCESSING STATUS (poll after upload)
    ═══════════════════════════════════════════════════════════ */
@@ -417,6 +426,7 @@ export async function updateDraft(
     recording_date: string;
     recording_location: string;
     schedule_at: string;
+    content_type: string;
   }>
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);
@@ -466,16 +476,24 @@ export interface CreateReelInput {
   mediaIds: string[];
   visibility?: ReelVisibility;
   hashtags?: string[];
+  cover_media_id?: string;
+  content_type?: string;
+  publish_to_feed?: boolean;
 }
 
 export async function createReel(input: CreateReelInput): Promise<Reel> {
-  const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", {
+  const body: Record<string, unknown> = {
     text: input.text,
     visibility: input.visibility ?? "public",
-    content_type: "video",
+    content_type: input.content_type ?? "video",
     media_ids: input.mediaIds,
-    post_type: "reel",
+    post_type: "video",
     app_origin: "postboek-web",
-  });
+    publish_to_feed: input.publish_to_feed ?? true,
+  };
+  if (input.cover_media_id) {
+    body.cover_media_id = input.cover_media_id;
+  }
+  const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", body);
   return postDetailToReel(res.data.data);
 }

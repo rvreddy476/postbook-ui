@@ -1,61 +1,121 @@
 "use client"
 
-import type { ProfileTab, AppPlatform } from "@/types/profile"
+import { useRef, useEffect, useState } from "react"
+import type { ProfileTab } from "@/types/profile"
 import { motion } from "framer-motion"
+import {
+    FileText,
+    User,
+    Video,
+    Film,
+    Bookmark,
+    CircleDot,
+} from "lucide-react"
 
 interface ProfileTabsProps {
     activeTab: ProfileTab
     onTabChange: (tab: ProfileTab) => void
-    platform: AppPlatform
+    isOwn: boolean
+    hasVideos: boolean
+    hasFlicks: boolean
+    hasMedia: boolean
+    isSticky?: boolean
 }
 
-const allTabs: { key: ProfileTab; label: string; platforms?: AppPlatform[]; icon: string }[] = [
-    { key: "creations", label: "Creations", icon: "💎" },
-    { key: "about", label: "Identity", icon: "🆔" },
-    { key: "connections", label: "Network", icon: "🌐" },
-    { key: "pages", label: "Nexus", platforms: ["postboek"], icon: "🏢" },
-    { key: "activity", label: "Echoes", icon: "📡" },
+const tabDefinitions: {
+    key: ProfileTab
+    label: string
+    icon: typeof FileText
+    selfOnly?: boolean
+    requiresContent?: boolean
+}[] = [
+    { key: "about", label: "About", icon: User },
+    { key: "connections", label: "My Circle", icon: CircleDot },
+    { key: "posts", label: "Posts", icon: FileText },
+    { key: "videos", label: "Videos", icon: Video, requiresContent: true },
+    { key: "flicks", label: "Flicks", icon: Film, requiresContent: true },
+    { key: "stashed", label: "Stash", icon: Bookmark, selfOnly: true },
 ]
 
-export function ProfileTabs({ activeTab, onTabChange, platform }: ProfileTabsProps) {
-    const tabs = allTabs.filter(
-        (tab) => !tab.platforms || tab.platforms.includes(platform)
-    )
+export function ProfileTabs({
+    activeTab,
+    onTabChange,
+    isOwn,
+    hasVideos,
+    hasFlicks,
+    hasMedia,
+    isSticky = false,
+}: ProfileTabsProps) {
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
+
+    const visibleTabs = tabDefinitions.filter((tab) => {
+        if (tab.selfOnly && !isOwn) return false
+        if (tab.key === "videos" && !hasVideos) return false
+        if (tab.key === "flicks" && !hasFlicks) return false
+        if (tab.key === "media" && !hasMedia) return false
+        return true
+    })
+
+    useEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        const check = () => {
+            setCanScrollLeft(el.scrollLeft > 2)
+            setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2)
+        }
+        check()
+        el.addEventListener("scroll", check, { passive: true })
+        return () => el.removeEventListener("scroll", check)
+    }, [visibleTabs.length])
 
     return (
-        <div className="flex bg-white/40 backdrop-blur-3xl p-2 rounded-[2.5rem] border border-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
-            {tabs.map((tab) => {
-                const isActive = activeTab === tab.key;
-                return (
-                    <button
-                        key={tab.key}
-                        onClick={() => onTabChange(tab.key)}
-                        className={`flex-1 relative flex items-center justify-center gap-2 py-4 px-4 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 group ${isActive ? "text-slate-950" : "text-slate-400 hover:text-slate-600"
-                            }`}
-                    >
-                        {isActive && (
-                            <motion.div
-                                layoutId="active-tab-glow"
-                                className="absolute inset-0 bg-white shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),0_4px_10px_-3px_rgba(0,0,0,0.02)] border border-slate-100/50 rounded-[1.8rem]"
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            />
-                        )}
+        <div className="py-1 border-b border-[#DED9D1]/60">
+            <div className="relative">
+                {canScrollLeft && (
+                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                )}
+                {canScrollRight && (
+                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                )}
 
-                        <span className={`relative z-10 transition-transform duration-300 ${isActive ? "scale-105" : "group-hover:scale-110"}`}>
-                            {tab.icon}
-                        </span>
-                        <span className="relative z-10 hidden sm:block">{tab.label}</span>
+                <div
+                    ref={scrollRef}
+                    className="flex overflow-x-auto scrollbar-hide gap-0.5"
+                >
+                    {visibleTabs.map((tab) => {
+                        const isActive = activeTab === tab.key
+                        const Icon = tab.icon
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => onTabChange(tab.key)}
+                                className={`relative flex items-center gap-2 px-5 py-3.5 text-xs font-bold uppercase tracking-[0.15em] whitespace-nowrap transition-colors duration-200 ${
+                                    isActive
+                                        ? "text-[#D8103F]"
+                                        : "text-zinc-400 hover:text-zinc-600"
+                                }`}
+                            >
+                                <Icon className="w-4 h-4" />
+                                <span>{tab.label}</span>
 
-                        {isActive && (
-                            <motion.div
-                                layoutId="active-dot"
-                                className="absolute -bottom-1 w-1 h-1 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]"
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            />
-                        )}
-                    </button>
-                );
-            })}
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="profile-tab-indicator"
+                                        className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#D8103F] rounded-full"
+                                        transition={{
+                                            type: "spring",
+                                            bounce: 0.2,
+                                            duration: 0.5,
+                                        }}
+                                    />
+                                )}
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
         </div>
     )
 }

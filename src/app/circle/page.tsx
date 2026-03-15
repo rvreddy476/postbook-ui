@@ -18,7 +18,7 @@ import { NavItem, User } from '@/types'
 type CircleTab = 'my-circle' | 'discover' | 'requests' | 'sent'
 
 const tabs: { key: CircleTab; label: string; icon: typeof Users; gradient: string; activeGlow: string }[] = [
-    { key: 'my-circle', label: 'My Circle', icon: Users, gradient: 'from-violet-500 to-fuchsia-500', activeGlow: 'shadow-violet-500/25' },
+    { key: 'my-circle', label: 'My Circle', icon: Users, gradient: 'from-[#D8103F]/50 to-fuchsia-500', activeGlow: 'shadow-[#D8103F]/25' },
     { key: 'discover', label: 'Discover', icon: Sparkles, gradient: 'from-amber-500 to-orange-500', activeGlow: 'shadow-amber-500/25' },
     { key: 'requests', label: 'Requests', icon: Inbox, gradient: 'from-emerald-500 to-teal-500', activeGlow: 'shadow-emerald-500/25' },
     { key: 'sent', label: 'Sent', icon: Send, gradient: 'from-blue-500 to-indigo-500', activeGlow: 'shadow-blue-500/25' },
@@ -90,7 +90,7 @@ export default function CirclePage() {
                     <div className="max-w-4xl mx-auto px-4 pt-8">
                         {/* Page Header */}
                         <div className="flex items-center gap-4 mb-8">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
                                 <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>

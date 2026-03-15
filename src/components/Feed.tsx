@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PostCard from './PostCard';
 import StoriesRow from './StoriesRow';
 import { useHomeFeed, useSaveFeedPreference } from '@/hooks/useFeedPosts';
-import { useProfilePosts } from '@/hooks/useProfilePosts';
 import type { FeedMode } from '@/hooks/useFeedPosts';
 import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messageService';
 import { getSession } from '@/services/authService';
@@ -14,12 +13,7 @@ import type { PostDetail } from '@/types/profile';
 
 const FEED_MODE_KEY = 'postbook_feed_mode';
 
-type FeedTab = 'for_you' | 'my_circle' | 'my_posts';
-
-const TAB_TO_FEED_MODE: Record<string, FeedMode> = {
-  for_you: 'ranked',
-  my_circle: 'chronological',
-};
+type FeedTab = 'for_you' | 'my_circle' | 'following';
 
 interface FeedProps {
   onCreateClick?: () => void;
@@ -29,27 +23,23 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   const [activeTab, setActiveTab] = useState<FeedTab>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(FEED_MODE_KEY);
-      if (saved === 'ranked') return 'for_you';
-      if (saved === 'chronological') return 'my_circle';
+      // if (saved === 'for_you') return 'for_you'; // TODO: enable when user base is heavy
+      if (saved === 'my_circle') return 'my_circle';
+      if (saved === 'following') return 'following';
     }
-    return 'my_circle';
+    return 'following';
   });
 
   const currentUserId = getSession()?.id;
-  const isMyPostsTab = activeTab === 'my_posts';
-  const feedMode = TAB_TO_FEED_MODE[activeTab] ?? 'chronological';
+  const feedMode: FeedMode = activeTab === 'for_you' ? 'ranked' : 'chronological';
+  const circleOnly = activeTab === 'my_circle';
 
   const homeFeed = useHomeFeed(feedMode, {
     excludeSelf: true,
-    enabled: !isMyPostsTab,
+    circleOnly,
   });
 
-  const myPostsFeed = useProfilePosts(
-    isMyPostsTab ? currentUserId : undefined,
-    'all',
-  );
-
-  const activeData = isMyPostsTab ? myPostsFeed : homeFeed;
+  const activeData = homeFeed;
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = activeData;
 
   const queryClient = useQueryClient();
@@ -110,39 +100,36 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     (tab: FeedTab) => {
       setActiveTab(tab);
       setNewPostCount(0);
-      if (tab !== 'my_posts') {
-        const mode = TAB_TO_FEED_MODE[tab];
-        localStorage.setItem(FEED_MODE_KEY, mode);
-        savePref.mutate(mode);
-      }
+      localStorage.setItem(FEED_MODE_KEY, tab);
+      const mode: FeedMode = tab === 'for_you' ? 'ranked' : 'chronological';
+      savePref.mutate(mode);
     },
     [savePref],
   );
 
   const tabs: { key: FeedTab; label: string }[] = [
-    { key: 'for_you', label: 'For You' },
+    // { key: 'for_you', label: 'For You' }, // TODO: enable when user base is heavy
     { key: 'my_circle', label: 'My Circle' },
-    { key: 'my_posts', label: 'My Posts' },
+    { key: 'following', label: 'Following' },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[860px] animate-fadeIn pb-32">
+    <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      <div className="mb-4">
+      {/* TODO: enable Stories + Tabs when user base is heavy
+      <div className="sticky top-0 z-20 space-y-1.5 pb-1 bg-slate-50/95 backdrop-blur-xl">
         <StoriesRow onCreateClick={onCreateClick} />
-      </div>
 
-      <div className="sticky top-2 z-20 mb-4 rounded-2xl border border-slate-200/70 bg-white/90 p-2 shadow-sm backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          <div className="grid flex-1 grid-cols-3 gap-1.5 rounded-xl bg-slate-50 p-1">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-2 shadow-sm">
+          <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-slate-50 p-1">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
                 className={`relative rounded-lg px-3 py-2.5 text-[12px] font-semibold transition ${
                   activeTab === tab.key
-                    ? 'bg-white text-blue-700 shadow-sm'
+                    ? 'bg-white text-[#D8103F] shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -150,26 +137,19 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                 {activeTab === tab.key && (
                   <motion.div
                     layoutId="feed-tab-indicator"
-                    className="absolute inset-x-4 -bottom-0.5 h-[2px] rounded-full bg-blue-600"
+                    className="absolute inset-x-4 -bottom-0.5 h-[2px] rounded-full bg-[#D8103F]"
                     transition={{ type: 'spring', stiffness: 420, damping: 30 }}
                   />
                 )}
               </button>
             ))}
           </div>
-          {onCreateClick && (
-            <button
-              onClick={onCreateClick}
-              className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-[12px] font-semibold text-blue-700 transition hover:bg-blue-100"
-            >
-              Create
-            </button>
-          )}
         </div>
       </div>
+      */}
 
       <AnimatePresence>
-        {newPostCount > 0 && !isMyPostsTab && (
+        {newPostCount > 0 && (
           <motion.button
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -192,11 +172,9 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
 
         {!isLoading && posts.length === 0 && (
           <div className="rounded-2xl border border-slate-200 bg-white py-20 text-center">
-            <h3 className="text-base font-semibold text-slate-400">
-              {isMyPostsTab ? "You haven't posted anything yet" : 'No posts yet'}
-            </h3>
+            <h3 className="text-base font-semibold text-slate-400">No posts yet</h3>
             <p className="mt-1 text-sm text-slate-400">
-              {isMyPostsTab ? 'Share something with your circle.' : 'Follow people to see their posts here.'}
+              Follow people to see their posts here.
             </p>
           </div>
         )}

@@ -46,7 +46,7 @@ function ConnectionUserAvatar({ user, size = "md" }: { user: Pick<ConnectionUser
     }
 
     return (
-        <div className={`${sizeClasses} rounded-full bg-violet-100 flex items-center justify-center font-bold text-violet-600`}>
+        <div className={`${sizeClasses} rounded-full bg-[#D8103F]/10 flex items-center justify-center font-bold text-[#D8103F]`}>
             {getInitials(user.display_name)}
         </div>
     )
@@ -56,7 +56,7 @@ function ConnectionUserCard({ user }: { user: ConnectionUser }) {
     return (
         <a
             href={`/u/${user.username}`}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-violet-50/50 transition-colors border border-transparent hover:border-violet-100"
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#D8103F]/50 transition-colors border border-transparent hover:border-[#D8103F]/10"
         >
             <ConnectionUserAvatar user={user} />
             <div className="flex-1 min-w-0">
@@ -124,8 +124,8 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                         onClick={() => setActiveType(tab.key)}
                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                             activeType === tab.key
-                                ? "bg-violet-600 text-white shadow-sm"
-                                : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+                                ? "bg-[#D8103F] text-white shadow-sm"
+                                : "bg-[#D8103F]/5 text-[#b80d35] hover:bg-[#D8103F]/10"
                         }`}
                     >
                         {tab.label} ({tab.count})
@@ -149,7 +149,7 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                     {isLoading ? (
                         <div className="space-y-3">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-14 bg-violet-50/50 rounded-xl animate-pulse" />
+                                <div key={i} className="h-14 bg-[#D8103F]/50 rounded-xl animate-pulse" />
                             ))}
                         </div>
                     ) : users.length === 0 ? (
@@ -195,7 +195,7 @@ function PendingRequestsList() {
             {requests.map((req) => (
                 <div
                     key={req.user_id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-violet-50/50 border border-violet-100"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#D8103F]/50 border border-[#D8103F]/10"
                 >
                     <ConnectionUserAvatar user={req} size="md" />
                     <div className="flex-1 min-w-0">
@@ -241,7 +241,7 @@ function BlockedUsersList() {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-violet-50/50 rounded-xl animate-pulse" />
+                    <div key={i} className="h-14 bg-[#D8103F]/50 rounded-xl animate-pulse" />
                 ))}
             </div>
         )

@@ -12,6 +12,7 @@ import {
     ChevronRight,
     Settings,
     Tv,
+    Globe,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -39,11 +40,11 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-white border border-violet-100 shadow-sm"
+            className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D8103F]/5">
                         {icon}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -75,16 +76,16 @@ function SettingsLink({
     return (
         <Link
             href={href}
-            className="flex items-center gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-violet-50 group"
+            className="flex items-center gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-[#D8103F]/5 group"
         >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 group-hover:bg-violet-100 transition-colors">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 group-hover:bg-[#D8103F]/10 transition-colors">
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900">{label}</p>
                 <p className="text-xs text-slate-500 truncate">{description}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-violet-500 transition-colors shrink-0" />
+            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#D8103F]/50 transition-colors shrink-0" />
         </Link>
     )
 }
@@ -130,7 +131,7 @@ function DataExportSection() {
                     size="sm"
                     onClick={handleDownload}
                     disabled={isDownloading}
-                    className="shrink-0 border-violet-300 text-violet-700 hover:bg-violet-50"
+                    className="shrink-0 border-[#D8103F]/30 text-[#b80d35] hover:bg-[#D8103F]/5"
                 >
                     {isDownloading ? (
                         <>
@@ -163,8 +164,8 @@ export default function SettingsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-3"
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100">
-                    <Settings className="h-5 w-5 text-violet-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8103F]/10">
+                    <Settings className="h-5 w-5 text-[#D8103F]" />
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Account Settings</h1>
@@ -176,7 +177,7 @@ export default function SettingsPage() {
             {/*  Navigation Links                                   */}
             {/* ------------------------------------------------- */}
             <SectionCard
-                icon={<User className="h-6 w-6 text-violet-500" />}
+                icon={<User className="h-6 w-6 text-[#D8103F]/50" />}
                 title="Account"
                 description="Update your profile information and appearance."
                 delay={0.05}
@@ -206,6 +207,12 @@ export default function SettingsPage() {
                         label="Channel Settings"
                         description="Postgram & Posttube channel, handle, branding, and links"
                     />
+                    <SettingsLink
+                        href="/settings/modules"
+                        icon={<Globe className="h-4 w-4 text-slate-500" />}
+                        label="Module Profiles"
+                        description="Per-module identity overrides, handle changes, and cross-post settings"
+                    />
                 </div>
             </SectionCard>
 
@@ -213,7 +220,7 @@ export default function SettingsPage() {
             {/*  Privacy & Data                                     */}
             {/* ------------------------------------------------- */}
             <SectionCard
-                icon={<Download className="h-6 w-6 text-violet-500" />}
+                icon={<Download className="h-6 w-6 text-[#D8103F]/50" />}
                 title="Privacy & Data"
                 description="Control your data and exercise your GDPR rights."
                 delay={0.1}

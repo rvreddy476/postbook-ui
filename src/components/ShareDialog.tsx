@@ -137,7 +137,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
                 disabled={shareMutation.isPending}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 transition-colors text-left group/item"
               >
-                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                <div className="w-10 h-10 rounded-xl bg-[#D8103F]/5 flex items-center justify-center text-[#D8103F]">
                   <Quote className="w-5 h-5" />
                 </div>
                 <div>
@@ -169,7 +169,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
                 placeholder="Add your thoughts..."
                 rows={3}
                 maxLength={500}
-                className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm text-slate-800 border border-slate-100 outline-none focus:border-violet-300 resize-none placeholder:text-slate-400"
+                className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm text-slate-800 border border-slate-100 outline-none focus:border-[#D8103F]/30 resize-none placeholder:text-slate-400"
                 autoFocus
               />
               <div className="flex items-center justify-between">
@@ -183,7 +183,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
                 <button
                   type="submit"
                   disabled={!quoteText.trim() || shareMutation.isPending}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#D8103F] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#b80d35] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Share

@@ -4,6 +4,7 @@ export interface PostTubeVideo {
   description: string;
   video_url: string;
   thumbnail_url: string;
+  content_type?: string;
   channel_id: string;
   channel_name: string;
   channel_avatar_url: string;
@@ -20,6 +21,12 @@ export interface PostTubeVideo {
   viewer_has_disliked: boolean;
   viewer_has_saved: boolean;
   viewer_has_subscribed: boolean;
+  /** Tiny 360p 3–5s loop for hover preview (optional, falls back to video_url) */
+  preview_url?: string;
+  /** Best-moment start offset in ms for hover preview */
+  highlight_start_ms?: number;
+  /** Best-moment end offset in ms for hover preview */
+  highlight_end_ms?: number;
 }
 
 export interface PostTubeComment {
@@ -29,4 +36,46 @@ export interface PostTubeComment {
   text: string;
   like_count: number;
   created_at: string;
+}
+
+/** VideoFeedItem matches the backend DTO for video content in feed responses. */
+export interface VideoFeedItem {
+  id: string;
+  title: string;
+  durationSeconds: number;
+  effectiveDurationSeconds: number;
+  finalCategory: "flick" | "long_video";
+  thumbnailUrl: string;
+  playbackUrl: string;
+  creatorName: string;
+  creatorAvatarUrl: string;
+  publishedAt: string;
+  viewCount: number;
+  sparkCount: number;
+  echoCount: number;
+  stashCount: number;
+  trimStartMs: number;
+  trimEndMs?: number;
+}
+
+/** Feed page with cursor pagination */
+export interface FeedPage<T = PostTubeVideo> {
+  items: T[];
+  next_cursor?: string;
+}
+
+/** Video metadata from backend */
+export interface VideoMetadataDTO {
+  duration_seconds: number;
+  effective_duration_seconds: number;
+  width?: number;
+  height?: number;
+  orientation: string;
+  computed_category: string;
+  final_category: string;
+  upload_status: string;
+  thumbnail_url?: string;
+  playback_url?: string;
+  trim_start_ms: number;
+  trim_end_ms?: number;
 }

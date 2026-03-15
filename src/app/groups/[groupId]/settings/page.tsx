@@ -46,7 +46,7 @@ export default function GroupSettingsPage() {
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h2 className="text-xl font-bold text-slate-700">Access Denied</h2>
         <p className="text-slate-400 mt-2 text-sm">Only group admins can access settings.</p>
-        <button onClick={() => router.back()} className="mt-4 text-violet-600 text-sm font-bold hover:underline">Go Back</button>
+        <button onClick={() => router.back()} className="mt-4 text-[#D8103F] text-sm font-bold hover:underline">Go Back</button>
       </div>
     )
   }
@@ -84,7 +84,7 @@ export default function GroupSettingsPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30"
               maxLength={100}
               required
             />
@@ -95,7 +95,7 @@ export default function GroupSettingsPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -108,20 +108,20 @@ export default function GroupSettingsPage() {
                 type="button"
                 onClick={() => setVisibility('public')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'public' ? 'border-violet-400 bg-violet-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                  visibility === 'public' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-violet-500' : 'text-slate-400'}`} />
+                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-[#D8103F]/50' : 'text-slate-400'}`} />
                 <span className="text-sm font-bold text-slate-700">Public</span>
               </button>
               <button
                 type="button"
                 onClick={() => setVisibility('private')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'private' ? 'border-violet-400 bg-violet-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                  visibility === 'private' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-violet-500' : 'text-slate-400'}`} />
+                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-[#D8103F]/50' : 'text-slate-400'}`} />
                 <span className="text-sm font-bold text-slate-700">Private</span>
               </button>
             </div>

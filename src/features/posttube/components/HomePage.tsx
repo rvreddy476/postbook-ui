@@ -1,166 +1,338 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Flame, Clock, Radio, Sparkles, TrendingUp, Users } from "lucide-react";
+import { useRef, useState, useCallback } from "react";
+import { Upload, Play, ChevronLeft, ChevronRight, Zap, Eye, Sparkles, Tv2 } from "lucide-react";
 import Link from "next/link";
-import { AppShell } from "@/features/reels/components/AppShell";
-import { HeroSection, HeroSkeleton } from "./HeroSection";
-import { VideoRow, VideoRowSkeleton } from "./VideoRow";
-import { useCategoryFeed } from "../hooks/usePosttubeHome";
+import { PostTubeShell } from "./PostTubeShell";
+import { VideoCard } from "./VideoCard";
+import {
+  useHomeFeed,
+  useFlicksFeed,
+  useLongVideosFeed,
+} from "../hooks/usePosttubeHome";
+import type { PostTubeVideo } from "../types";
 
 const FILTER_CHIPS = [
-  { label: "All", value: "all" },
-  { label: "Gaming", value: "gaming" },
-  { label: "Music", value: "music" },
-  { label: "Tech", value: "tech" },
-  { label: "Comedy", value: "comedy" },
-  { label: "Education", value: "education" },
-  { label: "News", value: "news" },
-  { label: "Sports", value: "sports" },
-  { label: "Cooking", value: "cooking" },
-  { label: "Travel", value: "travel" },
+  { label: "All", value: "all", icon: null },
+  { label: "Gaming", value: "gaming", icon: null },
+  { label: "Music", value: "music", icon: null },
+  { label: "Tech", value: "tech", icon: null },
+  { label: "Comedy", value: "comedy", icon: null },
+  { label: "Education", value: "education", icon: null },
+  { label: "News", value: "news", icon: null },
+  { label: "Sports", value: "sports", icon: null },
+  { label: "Cooking", value: "cooking", icon: null },
+  { label: "Travel", value: "travel", icon: null },
 ] as const;
+
+/* ── Shimmer Skeleton ─────────────────────────────────── */
+
+function VideoGridSkeleton({ count = 12 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="animate-pulse rounded-2xl bg-white dark:bg-[#1C1A28] p-3">
+          <div className="rounded-2xl bg-gradient-to-br from-[#EEEDF5] to-[#E3E1EE] dark:from-[#2A2740] dark:to-[#221F32]" style={{ aspectRatio: "16/9" }} />
+          <div className="mt-3.5 flex gap-3">
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-[#EEEDF5] dark:bg-[#2A2740]" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="h-4 w-full rounded-lg bg-[#EEEDF5] dark:bg-[#2A2740]" />
+              <div className="h-3.5 w-3/4 rounded-lg bg-[#EEEDF5] dark:bg-[#2A2740]" />
+              <div className="h-3 w-1/2 rounded-lg bg-[#F0EEFF] dark:bg-[#221F32]" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Flick thumbnail with fallback ────────────────────── */
+
+function FlickImg({ src, videoUrl }: { src: string; videoUrl: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed && videoUrl) {
+    return (
+      <video
+        src={videoUrl}
+        muted
+        preload="metadata"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt=""
+      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/* ── Flicks Horizontal Row ────────────────────────────── */
+
+function FlicksRow({ videos }: { videos: PostTubeVideo[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  const scroll = useCallback((dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -360 : 360, behavior: "smooth" });
+  }, []);
+
+  if (videos.length === 0) return null;
+
+  return (
+    <section className="pb-3">
+      {/* Section header */}
+      <div className="mb-5 flex items-center gap-3 px-1">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C5CFC] to-[#A78BFA] shadow-[0_2px_8px_-2px_rgba(124,92,252,0.3)]">
+          <Zap className="h-4 w-4 text-white" />
+        </div>
+        <div>
+          <h2 className="text-[17px] font-bold text-[#0F0D15] dark:text-[#EEEDF5]">Flicks</h2>
+          <p className="text-[11px] text-[#B0ADBE] dark:text-[#6B6980] -mt-0.5">Quick bites, big moments</p>
+        </div>
+      </div>
+
+      <div className="group/row relative">
+        {/* Scroll arrows */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            className="absolute -left-2 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-2xl bg-white dark:bg-[#2A2740] shadow-[0_4px_20px_-4px_rgba(15,13,21,0.15)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)] border border-[#EEEDF5] dark:border-[#3A3650] text-[#7C5CFC] opacity-0 transition-all group-hover/row:opacity-100 hover:scale-105"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            className="absolute -right-2 top-[42%] z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-2xl bg-white dark:bg-[#2A2740] shadow-[0_4px_20px_-4px_rgba(15,13,21,0.15)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)] border border-[#EEEDF5] dark:border-[#3A3650] text-[#7C5CFC] opacity-0 transition-all group-hover/row:opacity-100 hover:scale-105"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+
+        <div
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="flex gap-4 overflow-x-auto scroll-smooth"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {videos.map((v) => (
+            <Link
+              key={v.id}
+              href={`/reels?reelId=${v.id}`}
+              className="group shrink-0 w-[180px]"
+            >
+              <div className="relative overflow-hidden rounded-2xl bg-[#1A1430] aspect-[9/16] shadow-[0_4px_24px_-6px_rgba(15,13,21,0.2)] dark:shadow-[0_4px_24px_-6px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:shadow-[0_8px_32px_-6px_rgba(124,92,252,0.25)] group-hover:-translate-y-1">
+                {/* Placeholder */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#2D2640] via-[#1A1430] to-[#0F0D15]">
+                  <Zap className="h-8 w-8 text-[#7C5CFC]/30" />
+                </div>
+                {/* Video first-frame fallback */}
+                {v.video_url && !v.thumbnail_url && (
+                  <video
+                    src={v.video_url}
+                    muted
+                    preload="metadata"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                )}
+                {/* Thumbnail */}
+                {v.thumbnail_url && (
+                  <FlickImg src={v.thumbnail_url} videoUrl={v.video_url} />
+                )}
+
+                {/* View badge */}
+                {v.view_count > 0 && (
+                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-xl bg-[#0F0D15]/60 px-2 py-1 backdrop-blur-md">
+                    <Eye className="h-2.5 w-2.5 text-[#F59E0B]" />
+                    <span className="text-[9px] font-bold text-white/90">
+                      {v.view_count >= 1_000_000
+                        ? `${(v.view_count / 1_000_000).toFixed(1)}M`
+                        : v.view_count >= 1_000
+                          ? `${(v.view_count / 1_000).toFixed(1)}K`
+                          : v.view_count}
+                    </span>
+                  </div>
+                )}
+
+                {/* Hover play */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-[#0F0D15]/15" />
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/95 shadow-lg backdrop-blur-xl">
+                    <Play className="ml-0.5 h-5 w-5 fill-[#7C5CFC] text-[#7C5CFC]" />
+                  </div>
+                </div>
+
+                {/* Bottom gradient + meta */}
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0F0D15]/80 via-[#0F0D15]/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="line-clamp-2 text-[12px] font-semibold text-white leading-tight drop-shadow-md">
+                    {v.title}
+                  </p>
+                  {v.channel_name && (
+                    <p className="mt-1 text-[10px] text-white/60 truncate font-medium">
+                      {v.channel_name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Home Page ──────────────────────────────────────── */
 
 export function HomePage() {
   const [activeChip, setActiveChip] = useState("all");
 
-  // Parallel category fetches — each is an independent React Query
-  const trending = useCategoryFeed("trending", 12);
-  const continueWatching = useCategoryFeed("continue_watching", 8);
-  const live = useCategoryFeed("live", 8);
-  const recommended = useCategoryFeed("recommended", 12);
-  const recent = useCategoryFeed("recent", 12);
-  const popular = useCategoryFeed("popular", 12);
+  const homeFeed = useHomeFeed();
 
-  // Hero uses trending data
-  const heroVideos = trending.data?.items ?? [];
-  const heroFeatured = heroVideos[0];
-  const heroSecondary = heroVideos.slice(1, 4);
+  const [moreVideosEnabled, setMoreVideosEnabled] = useState(false);
+  const [moreFlicksEnabled, setMoreFlicksEnabled] = useState(false);
+  const longVideosFeed = useLongVideosFeed(20, moreVideosEnabled);
+  const flicksFeed = useFlicksFeed(20, moreFlicksEnabled);
+
+  let flicks: PostTubeVideo[] = homeFeed.data?.flicks ?? [];
+  let longVideos: PostTubeVideo[] = homeFeed.data?.longVideos ?? [];
+
+  if (flicksFeed.data?.pages) {
+    const extraFlicks = flicksFeed.data.pages.flatMap((p) => p.items);
+    const flickIds = new Set(flicks.map((v) => v.id));
+    flicks = [...flicks, ...extraFlicks.filter((v) => !flickIds.has(v.id))];
+  }
+  if (longVideosFeed.data?.pages) {
+    const extraVideos = longVideosFeed.data.pages.flatMap((p) => p.items);
+    const videoIds = new Set(longVideos.map((v) => v.id));
+    longVideos = [...longVideos, ...extraVideos.filter((v) => !videoIds.has(v.id))];
+  }
+
+  const isLoading = homeFeed.isLoading;
+  const hasContent = flicks.length > 0 || longVideos.length > 0;
 
   return (
-    <AppShell sectionLabel="PostTube">
-      <div className="mx-auto max-w-[1200px] px-6 py-5 space-y-8">
-            {/* Filter chips */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-              {FILTER_CHIPS.map((chip) => (
-                <button
-                  key={chip.value}
-                  type="button"
-                  onClick={() => setActiveChip(chip.value)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-medium transition-all ${
-                    activeChip === chip.value
-                      ? "bg-slate-900 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
+    <PostTubeShell>
+      <div className="mx-auto max-w-[1400px] px-6 py-6 space-y-7">
+        {/* Filter chips */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {FILTER_CHIPS.map((chip) => (
+            <button
+              key={chip.value}
+              type="button"
+              onClick={() => setActiveChip(chip.value)}
+              className={`shrink-0 rounded-xl px-4 py-2 text-[12px] font-semibold transition-all duration-200 ${
+                activeChip === chip.value
+                  ? "bg-gradient-to-r from-[#7C5CFC] to-[#5B3FD4] text-white shadow-[0_2px_12px_-3px_rgba(124,92,252,0.4)]"
+                  : "bg-[#F0EEFF] dark:bg-[#2A2740] text-[#6B5FC7] dark:text-[#A78BFA] hover:bg-[#E8E3FF] dark:hover:bg-[#3A3650] hover:shadow-sm"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
 
-            {/* Hero */}
-            {trending.isLoading ? (
-              <HeroSkeleton />
-            ) : heroFeatured ? (
-              <HeroSection featured={heroFeatured} secondary={heroSecondary} />
-            ) : null}
+        {isLoading ? (
+          <VideoGridSkeleton />
+        ) : hasContent ? (
+          <>
+            {/* Flicks */}
+            {flicks.length > 0 && <FlicksRow videos={flicks} />}
 
-            {/* Continue Watching */}
-            {continueWatching.isLoading ? (
-              <VideoRowSkeleton count={3} />
-            ) : (continueWatching.data?.items.length ?? 0) > 0 ? (
-              <VideoRow
-                title="Continue Watching"
-                icon={<Clock className="h-4.5 w-4.5 text-blue-500" />}
-                videos={continueWatching.data!.items}
-                variant="wide"
-              />
-            ) : null}
-
-            {/* Trending */}
-            {trending.isLoading ? (
-              <VideoRowSkeleton />
-            ) : (trending.data?.items.length ?? 0) > 4 ? (
-              <VideoRow
-                title="Trending Now"
-                icon={<Flame className="h-4.5 w-4.5 text-orange-500" />}
-                videos={trending.data!.items.slice(4)} // skip hero items
-                badge="Hot"
-                badgeColor="bg-orange-50 text-orange-500"
-              />
-            ) : null}
-
-            {/* Live */}
-            {live.isLoading ? (
-              <VideoRowSkeleton count={3} />
-            ) : (live.data?.items.length ?? 0) > 0 ? (
-              <VideoRow
-                title="Live Now"
-                icon={<Radio className="h-4.5 w-4.5 text-red-500" />}
-                videos={live.data!.items}
-                badge="Live"
-                badgeColor="bg-red-50 text-red-500"
-              />
-            ) : null}
-
-            {/* Recommended */}
-            {recommended.isLoading ? (
-              <VideoRowSkeleton />
-            ) : (recommended.data?.items.length ?? 0) > 0 ? (
-              <VideoRow
-                title="Recommended For You"
-                icon={<Sparkles className="h-4.5 w-4.5 text-violet-500" />}
-                videos={recommended.data!.items}
-              />
-            ) : null}
-
-            {/* Recently Uploaded */}
-            {recent.isLoading ? (
-              <VideoRowSkeleton />
-            ) : (recent.data?.items.length ?? 0) > 0 ? (
-              <VideoRow
-                title="Recently Uploaded"
-                icon={<TrendingUp className="h-4.5 w-4.5 text-emerald-500" />}
-                videos={recent.data!.items}
-              />
-            ) : null}
-
-            {/* Popular */}
-            {popular.isLoading ? (
-              <VideoRowSkeleton />
-            ) : (popular.data?.items.length ?? 0) > 0 ? (
-              <VideoRow
-                title="Popular on PostTube"
-                icon={<Users className="h-4.5 w-4.5 text-sky-500" />}
-                videos={popular.data!.items}
-              />
-            ) : null}
-
-            {/* Empty state */}
-            {!trending.isLoading && heroVideos.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-50">
-                  <svg className="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                  </svg>
+            {/* Videos grid */}
+            {longVideos.length > 0 && (
+              <section>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-6">
+                  {longVideos.map((v) => (
+                    <VideoCard key={v.id} video={v} />
+                  ))}
                 </div>
-                <h3 className="mt-5 text-[16px] font-bold text-slate-900">No videos yet</h3>
-                <p className="mt-1.5 text-[13px] text-slate-500 max-w-[320px]">
-                  Be the first to upload content. Share your stories with the world.
-                </p>
-                <Link
-                  href="/posttube/upload"
-                  className="mt-5 flex items-center gap-1.5 rounded-full bg-violet-600 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700"
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload Video
-                </Link>
-              </div>
+                {(longVideosFeed.hasNextPage || !moreVideosEnabled) && longVideos.length >= 6 && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!moreVideosEnabled) setMoreVideosEnabled(true);
+                        else longVideosFeed.fetchNextPage();
+                      }}
+                      disabled={longVideosFeed.isFetchingNextPage}
+                      className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-white dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-[#7C5CFC] shadow-sm transition-all hover:border-[#7C5CFC]/20 hover:shadow-[0_4px_16px_-4px_rgba(124,92,252,0.15)] disabled:opacity-50"
+                    >
+                      <Sparkles className="h-4 w-4 text-[#F59E0B] transition-transform group-hover:rotate-12" />
+                      {longVideosFeed.isFetchingNextPage ? "Loading..." : "Discover more"}
+                    </button>
+                  </div>
+                )}
+              </section>
             )}
 
-            {/* Bottom spacer */}
-            <div className="h-8" />
+            {/* Load more flicks */}
+            {(flicksFeed.hasNextPage || !moreFlicksEnabled) && flicks.length >= 6 && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!moreFlicksEnabled) setMoreFlicksEnabled(true);
+                    else flicksFeed.fetchNextPage();
+                  }}
+                  disabled={flicksFeed.isFetchingNextPage}
+                  className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-white dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-[#7C5CFC] shadow-sm transition-all hover:border-[#7C5CFC]/20 hover:shadow-[0_4px_16px_-4px_rgba(124,92,252,0.15)] disabled:opacity-50"
+                >
+                  <Zap className="h-4 w-4 text-[#F59E0B]" />
+                  {flicksFeed.isFetchingNextPage ? "Loading..." : "More flicks"}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-28 text-center">
+            <div className="relative">
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-[#F0EEFF] to-[#E8E3FF] dark:from-[#2A2740] dark:to-[#221F32]">
+                <Tv2 className="h-10 w-10 text-[#7C5CFC]" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.4)]">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <h3 className="mt-7 text-[18px] font-bold text-[#0F0D15] dark:text-[#EEEDF5]">Your stage awaits</h3>
+            <p className="mt-2 text-[13px] text-[#8B8B9E] dark:text-[#6B6980] max-w-[340px] leading-relaxed">
+              Be the first to share something amazing. Upload a video and start building your audience.
+            </p>
+            <Link
+              href="/posttube/upload"
+              className="mt-6 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#7C5CFC] to-[#5B3FD4] px-6 py-3 text-[13px] font-bold text-white shadow-[0_4px_16px_-4px_rgba(124,92,252,0.4)] transition-all hover:shadow-[0_6px_24px_-4px_rgba(124,92,252,0.5)] hover:-translate-y-0.5"
+            >
+              <Upload className="h-4 w-4" />
+              Upload Video
+            </Link>
+          </div>
+        )}
+
+        <div className="h-6" />
       </div>
-    </AppShell>
+    </PostTubeShell>
   );
 }

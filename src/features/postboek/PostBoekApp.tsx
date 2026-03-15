@@ -30,7 +30,7 @@ const PostBoekApp: React.FC = () => {
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeChats, setActiveChats] = useState<User[]>([]);
-  const [isContactListOpen, setIsContactListOpen] = useState(true);
+  const [isContactListOpen, setIsContactListOpen] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [groupRefreshKey, setGroupRefreshKey] = useState(0);
 
@@ -54,6 +54,7 @@ const PostBoekApp: React.FC = () => {
 
   const handleGroupClick = useCallback((groupId: string) => {
     setActiveGroupId(groupId);
+    setActiveChats([]); // Close individual chat windows when a group is opened
     setIsContactListOpen(true);
     setGroupRefreshKey(k => k + 1);
   }, []);
@@ -66,6 +67,7 @@ const PostBoekApp: React.FC = () => {
     setActiveTab('Home');
     setIsContactListOpen(true);
     setActiveGroupId(groupId);
+    setActiveChats([]); // Close individual chat windows when a group is created/opened
     setGroupRefreshKey(k => k + 1);
   }, []);
 
@@ -80,7 +82,7 @@ const PostBoekApp: React.FC = () => {
 
   const handleLogout = () => {
     logoutUser();
-    try { localStorage.removeItem('postbook_unread_state'); } catch {}
+    try { localStorage.removeItem('postbook_unread_state'); } catch { }
     setCurrentUser(null);
     setActiveChats([]);
     setActiveTab('Home');
@@ -165,110 +167,109 @@ const PostBoekApp: React.FC = () => {
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
-    <div className="h-screen min-h-screen overflow-hidden bg-gradient-to-b from-[#fcfaff] to-[#f8f7ff] font-sans selection:bg-rose-100 selection:text-rose-900">
-      <Header
-        currentUser={currentUser}
-        activeTab={activeTab}
-        setActiveTab={handleNavChange}
-        onCreateClick={() => setIsCreateOpen(true)}
-        onLogout={handleLogout}
-        onToggleContactList={() => setIsContactListOpen(!isContactListOpen)}
-      />
+      <div className="h-screen min-h-screen overflow-hidden bg-gradient-to-b from-[#fcfaff] to-[#f8f7ff] font-sans selection:bg-rose-100 selection:text-rose-900">
+        <Header
+          currentUser={currentUser}
+          activeTab={activeTab}
+          setActiveTab={handleNavChange}
+          onCreateClick={() => setIsCreateOpen(true)}
+          onLogout={handleLogout}
+          onToggleContactList={() => setIsContactListOpen(!isContactListOpen)}
+        />
 
-      <div className="relative flex h-full flex-1 overflow-hidden pt-20">
-        <aside className="hidden md:flex">
-          <Sidebar activeTab={activeTab} setActiveTab={handleNavChange} />
-        </aside>
+        <div className="relative flex h-full flex-1 overflow-hidden pt-20">
+          <aside className="hidden md:flex">
+            <Sidebar activeTab={activeTab} setActiveTab={handleNavChange} />
+          </aside>
 
-        <aside
-          className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] w-[280px] flex-col border-r border-slate-100 bg-white/90 shadow-sm relative backdrop-blur-xl`}
-        >
-          <AnimatePresence mode="wait">
-            {isContactListOpen ? (
-              <motion.div
-                key="contacts-open"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="h-full w-full"
-              >
-                <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="contacts-closed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="h-full w-full flex items-center justify-center bg-slate-50/30"
-              >
-                <div className="transform -rotate-90 whitespace-nowrap opacity-20 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></div>
-                  <span className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-900 italic">Contacts</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </aside>
+          <aside
+            className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] ${isContactListOpen ? 'w-[280px]' : 'w-[48px]'} flex-col border-r border-slate-100 bg-white/90 shadow-sm relative backdrop-blur-xl transition-all duration-300`}
+          >
+            <AnimatePresence mode="wait">
+              {isContactListOpen ? (
+                <motion.div
+                  key="contacts-open"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-full w-full"
+                >
+                  <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} onClose={() => setIsContactListOpen(false)} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="contacts-closed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full w-full flex items-center justify-center bg-slate-50/30 cursor-pointer hover:bg-slate-100/50 transition-colors"
+                  onClick={() => setIsContactListOpen(true)}
+                >
+                  <div className="transform -rotate-90 whitespace-nowrap opacity-40 hover:opacity-80 transition-opacity flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#D8103F]/50 animate-pulse"></div>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-800">Open Chat</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </aside>
 
-        <main
-          className={`relative flex-1 overflow-y-auto bg-slate-50/5 ${
-            isReelsMode
+          <main
+            className={`relative flex-1 overflow-y-auto bg-slate-50/5 ${isReelsMode
               ? 'snap-y snap-mandatory scroll-smooth p-0'
               : isGroupMode
                 ? 'p-0 overflow-hidden'
-                : 'scrollbar-hide px-3 pb-28 pt-4 sm:px-4 md:pb-8 lg:px-6 lg:pt-6 xl:px-10'
-          }`}
-        >
-          <div className={`mx-auto ${
-            isReelsMode || isGroupMode
-              ? 'h-full max-w-none w-full'
-              : 'max-w-[960px]'
-          }`}>
-            {renderContent()}
-          </div>
-        </main>
-
-        {!isReelsMode && !isGroupMode && (
-          <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-slate-100 bg-white/50 p-5 backdrop-blur-2xl xl:flex">
-            <RightPanel onContactClick={handleContactClick} />
-          </aside>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {isCreateOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                : 'scrollbar-hide px-2 pb-28 pt-1 sm:px-3 md:pb-8 lg:px-3 lg:pt-1 xl:px-4'
+              }`}
           >
-            <CreatePortal onClose={() => setIsCreateOpen(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <MobileBottomNav activeTab={activeTab} onChange={handleNavChange} />
+            <div className={`mx-auto ${isReelsMode || isGroupMode
+              ? 'h-full max-w-none w-full'
+              : 'w-full'
+              }`}>
+              {renderContent()}
+            </div>
+          </main>
 
-      <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
+          {!isReelsMode && !isGroupMode && (
+            <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-slate-100 bg-white/50 p-5 backdrop-blur-2xl xl:flex">
+              <RightPanel onContactClick={handleContactClick} />
+            </aside>
+          )}
+        </div>
+
         <AnimatePresence>
-          {activeChats.map((chat) => (
+          {isCreateOpen && (
             <motion.div
-              key={chat.id}
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="pointer-events-auto h-[460px] w-[320px] transition-all sm:h-[500px] sm:w-[360px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
             >
-              <ChatWindow contact={chat} onClose={() => closeChat(chat.id)} />
+              <CreatePortal onClose={() => setIsCreateOpen(false)} />
             </motion.div>
-          ))}
+          )}
         </AnimatePresence>
-      </div>
+        <MobileBottomNav activeTab={activeTab} onChange={handleNavChange} />
 
-      <CallOverlay />
-    </div>
+        <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
+          <AnimatePresence>
+            {activeChats.map((chat) => (
+              <motion.div
+                key={chat.id}
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                className="pointer-events-auto transition-all"
+              >
+                <ChatWindow contact={chat} onClose={() => closeChat(chat.id)} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        <CallOverlay />
+      </div>
     </NotificationProvider>
   );
 };

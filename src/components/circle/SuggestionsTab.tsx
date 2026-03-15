@@ -56,7 +56,7 @@ const SuggestionsTab: React.FC = () => {
                 {dismissedIds.size > 0 && (
                     <button
                         onClick={() => setDismissedIds(new Set())}
-                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors"
+                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-[#D8103F] bg-[#D8103F]/5 hover:bg-[#D8103F]/10 transition-colors"
                     >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Show dismissed suggestions
@@ -76,7 +76,7 @@ const SuggestionsTab: React.FC = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[#D8103F] bg-[#D8103F]/5 hover:bg-[#D8103F]/10 transition-colors disabled:opacity-50"
                 >
                     <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                     Refresh

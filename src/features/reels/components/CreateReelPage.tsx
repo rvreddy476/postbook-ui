@@ -1127,7 +1127,7 @@ function StepDetails({
         </Section>
 
         {/* Remixing */}
-        <Section title="Shorts remixing" icon={Film}>
+        <Section title="Flicks remixing" icon={Film}>
           <p className="mb-3 text-[12px] text-slate-400">
             Choose how others can remix your content.
           </p>
@@ -1247,25 +1247,26 @@ function StepDetails({
 
         {/* Cross-post */}
         <Section title="Cross-post" icon={Send} defaultOpen>
-          <div className="space-y-2">
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
-              <input
-                type="checkbox"
-                checked={state.crossPostPostbook}
-                onChange={(e) => patch({ crossPostPostbook: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 accent-slate-900"
+          <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
+            <div>
+              <span className="text-[13px] font-medium text-slate-700">Publish to Postbook</span>
+              <p className="text-[11px] text-slate-400">Share as a post on your Postbook feed</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={state.crossPostPostbook}
+              onClick={() => patch({ crossPostPostbook: !state.crossPostPostbook })}
+              className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
+                state.crossPostPostbook ? "bg-[#E8527A]" : "bg-[#D1D1D1]"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  state.crossPostPostbook ? "translate-x-[26px]" : "translate-x-[3px]"
+                }`}
               />
-              <span className="text-[13px] font-medium text-slate-700">Share to Postbook feed</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
-              <input
-                type="checkbox"
-                checked={state.crossPostPosttube}
-                onChange={(e) => patch({ crossPostPosttube: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 accent-slate-900"
-              />
-              <span className="text-[13px] font-medium text-slate-700">Share as PostTube Short</span>
-            </label>
+            </button>
           </div>
         </Section>
 
@@ -1496,21 +1497,12 @@ function StepReview({
           )}
 
           {/* Cross-post */}
-          {(state.crossPostPostbook || state.crossPostPosttube) && (
+          {state.crossPostPostbook && (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Cross-post</p>
-              <div className="flex gap-2">
-                {state.crossPostPostbook && (
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
-                    Postbook Feed
-                  </span>
-                )}
-                {state.crossPostPosttube && (
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
-                    PostTube Shorts
-                  </span>
-                )}
-              </div>
+              <span className="rounded-full bg-[#E8527A]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#E8527A]">
+                Postbook Feed
+              </span>
             </div>
           )}
 

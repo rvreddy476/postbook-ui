@@ -41,7 +41,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-violet-900 to-slate-900" />
+            <div className="h-full w-full bg-gradient-to-br from-[#6b081f] to-slate-900" />
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

@@ -109,7 +109,7 @@ export function CommentsList({
               <article
                 className={`rounded-2xl px-3.5 py-3 transition-all duration-300 ${
                   highlight
-                    ? "bg-violet-50 shadow-[0_0_0_1px_rgba(124,58,237,0.15),0_0_20px_rgba(124,58,237,0.08)]"
+                    ? "bg-[#D8103F]/5 shadow-[0_0_0_1px_rgba(124,58,237,0.15),0_0_20px_rgba(124,58,237,0.08)]"
                     : "hover:bg-slate-50"
                 }`}
               >

@@ -811,6 +811,7 @@ function MembersView({
 const MODE_TABS: { mode: PanelMode; icon: React.FC<any>; label: string }[] = [
   { mode: 'chat', icon: MessageSquare, label: 'Chat' },
   { mode: 'posts', icon: FileText, label: 'Posts' },
+  { mode: 'members', icon: Users, label: 'Members' },
 ]
 
 export default function GroupPanel(props: GroupPanelProps) {

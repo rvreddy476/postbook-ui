@@ -23,7 +23,7 @@ export default function MessengerPage() {
   }, [router])
 
   if (!loaded || !currentUser) {
-    return <div style={{ height: '100vh', background: '#0d0d1a' }} />
+    return <div className="h-screen bg-slate-50" />
   }
 
   return (

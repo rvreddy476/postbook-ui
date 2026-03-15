@@ -23,12 +23,12 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
         2: "from-slate-400 to-slate-500",
         3: "from-amber-600 to-amber-700",
     }
-    const gradientClass = rankColors[rank] ?? "from-violet-500 to-fuchsia-500"
+    const gradientClass = rankColors[rank] ?? "from-[#D8103F]/50 to-fuchsia-500"
 
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.tag}`)}
-            className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-violet-100 transition-all duration-200 text-left w-full"
+            className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 text-left w-full"
         >
             {/* Rank badge */}
             <div
@@ -39,7 +39,7 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
 
             {/* Tag info */}
             <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-bold text-gray-900 group-hover:text-violet-700 transition-colors truncate">
+                <p className="text-[15px] font-bold text-gray-900 group-hover:text-[#b80d35] transition-colors truncate">
                     #{item.tag}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -56,7 +56,7 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
             </div>
 
             {/* Arrow */}
-            <div className="flex-shrink-0 text-gray-300 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all duration-200">
+            <div className="flex-shrink-0 text-gray-300 group-hover:text-[#D8103F]/50 group-hover:translate-x-0.5 transition-all duration-200">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -77,12 +77,12 @@ function HashtagCard({ item }: HashtagCardProps) {
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.tag}`)}
-            className="group flex flex-col items-center justify-center gap-2 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-violet-100 hover:bg-violet-50/30 transition-all duration-200 aspect-square"
+            className="group flex flex-col items-center justify-center gap-2 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 hover:bg-[#D8103F]/30 transition-all duration-200 aspect-square"
         >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20 group-hover:scale-105 transition-transform duration-200">
                 <Hash className="w-6 h-6 text-white" />
             </div>
-            <p className="text-sm font-bold text-gray-900 group-hover:text-violet-700 transition-colors truncate max-w-full px-1">
+            <p className="text-sm font-bold text-gray-900 group-hover:text-[#b80d35] transition-colors truncate max-w-full px-1">
                 {item.tag}
             </p>
             <p className="text-xs text-gray-400 font-medium">
@@ -110,7 +110,7 @@ function SectionHeader({
     return (
         <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/20">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20">
                     {icon}
                 </div>
                 <div>
@@ -192,7 +192,7 @@ export default function DiscoverPage() {
             {/* Page header */}
             <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/20">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20">
                         <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -201,7 +201,7 @@ export default function DiscoverPage() {
                     </div>
                     <Link
                         href="/search"
-                        className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold text-gray-600 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-700 transition-all"
+                        className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold text-gray-600 hover:bg-[#D8103F]/5 hover:border-[#D8103F]/20 hover:text-[#b80d35] transition-all"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8" />
@@ -231,8 +231,8 @@ export default function DiscoverPage() {
 
                     {!trendingLoading && !trendingError && hashtags.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 flex items-center justify-center">
-                                <Hash className="w-7 h-7 text-violet-300" />
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                                <Hash className="w-7 h-7 text-[#D8103F]/30" />
                             </div>
                             <p className="text-sm font-semibold text-gray-500">No trending topics right now</p>
                         </div>
@@ -260,7 +260,7 @@ export default function DiscoverPage() {
                         <div className="mt-4 text-center">
                             <Link
                                 href="/search?type=all"
-                                className="inline-flex items-center gap-2 text-sm font-bold text-violet-600 hover:text-violet-800 transition-colors"
+                                className="inline-flex items-center gap-2 text-sm font-bold text-[#D8103F] hover:text-[#8a0a28] transition-colors"
                             >
                                 <Hash className="w-4 h-4" />
                                 Explore all hashtags
@@ -288,8 +288,8 @@ export default function DiscoverPage() {
 
                     {!suggestedLoading && !suggestedError && suggestedPosts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 flex items-center justify-center">
-                                <Sparkles className="w-7 h-7 text-violet-300" />
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                                <Sparkles className="w-7 h-7 text-[#D8103F]/30" />
                             </div>
                             <p className="text-sm font-semibold text-gray-500">No suggestions yet — explore more to get started</p>
                         </div>
@@ -305,7 +305,7 @@ export default function DiscoverPage() {
 
                     {suggestedLoading && (
                         <div className="flex justify-center py-4">
-                            <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+                            <Loader2 className="w-6 h-6 text-[#D8103F]/50 animate-spin" />
                         </div>
                     )}
                 </section>

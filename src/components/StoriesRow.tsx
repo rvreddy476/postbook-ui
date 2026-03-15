@@ -108,22 +108,22 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 py-2">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
           {/* Create Story */}
           <button
             onClick={handleCreateClick}
-            className="flex flex-col items-center gap-2 flex-shrink-0 group"
+            className="flex flex-col items-center gap-1 flex-shrink-0 group"
           >
             <div className="relative">
-              <div className="w-[60px] h-[60px] rounded-full overflow-hidden ring-2 ring-gray-200 group-hover:ring-blue-300 transition-all">
+              <div className="w-[48px] h-[48px] rounded-full overflow-hidden ring-2 ring-gray-200 group-hover:ring-blue-300 transition-all">
                 <img src={myAvatar} alt="" className="w-full h-full object-cover" />
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-[22px] h-[22px] bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center border-[2.5px] border-white shadow-sm">
-                <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+              <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
               </div>
             </div>
-            <span className="text-[11px] text-gray-500 font-semibold w-16 text-center truncate">
+            <span className="text-[10px] text-gray-500 font-semibold w-14 text-center truncate">
               Your story
             </span>
           </button>
@@ -137,11 +137,11 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
               <button
                 key={group.authorId}
                 onClick={() => handleFriendClick(index)}
-                className="flex flex-col items-center gap-2 flex-shrink-0 group"
+                className="flex flex-col items-center gap-1 flex-shrink-0 group"
               >
                 <div
                   className={[
-                    'w-[60px] h-[60px] rounded-full overflow-hidden ring-[2.5px] ring-offset-2 group-hover:scale-105 transition-all duration-200',
+                    'w-[48px] h-[48px] rounded-full overflow-hidden ring-[2.5px] ring-offset-1 group-hover:scale-105 transition-all duration-200',
                     ringColor,
                     unviewed ? 'animate-pulse' : 'opacity-70',
                   ].join(' ')}
@@ -152,7 +152,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <span className="text-[11px] text-gray-500 font-medium w-16 text-center truncate">
+                <span className="text-[10px] text-gray-500 font-medium w-14 text-center truncate">
                   {group.authorName}
                 </span>
               </button>

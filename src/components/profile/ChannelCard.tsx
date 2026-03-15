@@ -15,7 +15,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
 
     return (
         <Link
-            href={`/channel/${channel.handle}`}
+            href={`/posttube/channel/${channel.handle}`}
             className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
         >
             {/* Avatar */}

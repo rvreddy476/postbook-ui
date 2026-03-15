@@ -101,7 +101,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-bold text-violet-600 hover:text-violet-700 transition-colors"
+              className="text-xs font-bold text-[#D8103F] hover:text-[#b80d35] transition-colors"
             >
               Change Photo
             </button>
@@ -121,7 +121,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
               placeholder="Enter group name"
             />
           </div>
@@ -133,7 +133,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
               placeholder="What's this group about?"
             />
           </div>

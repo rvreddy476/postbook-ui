@@ -101,12 +101,23 @@ const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
 
 export interface CallSignal {
-  type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy';
+  type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy'
+    | 'call_ring' | 'call_accept' | 'call_reject'
+    | 'call_join' | 'call_leave' | 'call_mute_toggle' | 'call_video_toggle'
+    | 'call_screen_share_start' | 'call_screen_share_stop'
+    | 'call_hand_raise' | 'call_hand_lower'
+    | 'call_participant_joined' | 'call_participant_left'
+    | 'call_participant_muted' | 'call_participant_unmuted' | 'call_participant_removed'
+    | 'call_state_change' | 'call_quality_report'
+    | 'call_upgrade_request' | 'call_upgrade_accept' | 'call_upgrade_reject'
+    | 'call_recording_started' | 'call_recording_stopped';
   sender_id: string;
-  target_user_id: string;
+  target_user_id?: string;
+  call_id?: string;
   call_type?: 'audio' | 'video';
   sdp?: string;
   candidate?: RTCIceCandidateInit;
+  [key: string]: unknown;
 }
 
 export interface FeedUpdate {
@@ -268,7 +279,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         onMsg(msg);
         localListeners.forEach(cb => cb(msg));
         getChannel()?.postMessage(msg);
-      } else if (['call_offer', 'call_answer', 'ice_candidate', 'call_end', 'call_decline', 'call_busy'].includes(data.type)) {
+      } else if (data.type?.startsWith('call_') || data.type === 'ice_candidate') {
         const signal: CallSignal = data as CallSignal;
         callSignalListeners.forEach(cb => cb(signal));
       } else if (data.type === 'reaction' || data.type === 'reaction_update') {
@@ -597,4 +608,30 @@ export const subscribeToPostRoom = (postId: string) => {
 
 export const unsubscribeFromPostRoom = (postId: string) => {
   sendSignaling({ type: 'unsubscribe_post', post_id: postId });
+};
+
+// Call room subscription — subscribe to per-call real-time updates via WS gateway
+export const subscribeToCallRoom = (callId: string) => {
+  sendSignaling({ type: 'subscribe_call', call_id: callId });
+};
+
+export const unsubscribeFromCallRoom = (callId: string) => {
+  sendSignaling({ type: 'unsubscribe_call', call_id: callId });
+};
+
+// ---------------------------------------------------------------------------
+// Presence API
+// ---------------------------------------------------------------------------
+
+export const fetchPresence = async (userIds: string[]): Promise<Record<string, boolean>> => {
+  if (userIds.length === 0) return {};
+  try {
+    const json = await chatClient.request<{ data: Record<string, boolean> }>('/presence', {
+      method: 'POST',
+      body: JSON.stringify({ user_ids: userIds }),
+    });
+    return json.data ?? json;
+  } catch {
+    return {};
+  }
 };

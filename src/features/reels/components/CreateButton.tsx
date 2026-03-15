@@ -3,48 +3,48 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Plus, Film, Clapperboard, Radio, Mic, PenSquare } from "lucide-react";
+import { Sparkles, Plus, Film, Clapperboard, Radio, Mic, PenSquare, Zap } from "lucide-react";
 
 const CREATE_OPTIONS = [
   {
     label: "Video",
-    description: "Upload a full-length video to Posttube",
+    description: "Upload a video to PostTube",
     href: "/posttube/upload?type=long",
     icon: Film,
-    color: "from-violet-500 to-indigo-500",
-    hoverBg: "hover:bg-violet-50",
+    gradient: "from-[#7C5CFC] to-[#5B3FD4]",
+    hoverBg: "hover:bg-[#F0EEFF]",
   },
   {
     label: "Flick / Clip",
     description: "Short vertical video with music & effects",
     href: "/posttube/upload?type=short",
     icon: Clapperboard,
-    color: "from-fuchsia-500 to-pink-500",
-    hoverBg: "hover:bg-fuchsia-50",
+    gradient: "from-[#A78BFA] to-[#7C3AED]",
+    hoverBg: "hover:bg-[#F5F0FF]",
   },
   {
     label: "Live",
     description: "Go live and interact with your audience",
     href: "/live/start",
     icon: Radio,
-    color: "from-rose-500 to-red-500",
-    hoverBg: "hover:bg-rose-50",
+    gradient: "from-[#F59E0B] to-[#D97706]",
+    hoverBg: "hover:bg-[#FFF8EB]",
   },
   {
     label: "Podcast",
     description: "Record or upload a podcast episode",
     href: "/posttube/upload?type=podcast",
     icon: Mic,
-    color: "from-amber-500 to-orange-500",
-    hoverBg: "hover:bg-amber-50",
+    gradient: "from-[#6366F1] to-[#4338CA]",
+    hoverBg: "hover:bg-[#EEEEFF]",
   },
   {
     label: "Create Post",
     description: "Share text, photos, or a quick update",
     href: "/create/post",
     icon: PenSquare,
-    color: "from-blue-500 to-cyan-500",
-    hoverBg: "hover:bg-blue-50",
+    gradient: "from-[#06B6D4] to-[#0891B2]",
+    hoverBg: "hover:bg-[#ECFEFF]",
   },
 ] as const;
 
@@ -74,11 +74,13 @@ export function CreateButton() {
         whileTap={{ scale: 0.95 }}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="group relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-md transition-shadow hover:shadow-lg"
+        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] text-white shadow-[0_4px_12px_-2px_rgba(124,92,252,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(124,92,252,0.5)]"
         aria-label="Create"
       >
         <Sparkles className="h-[17px] w-[17px]" />
-        <Plus className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-white text-violet-600 shadow-sm" strokeWidth={3} />
+        <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] ring-2 ring-white">
+          <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+        </div>
       </motion.button>
 
       {/* Dropdown */}
@@ -89,10 +91,11 @@ export function CreateButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-slate-200/60 bg-white/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl z-[100]"
+            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-white/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-[100]"
           >
-            <div className="px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <div className="px-3 py-2 flex items-center gap-2">
+              <Zap className="h-3 w-3 text-[#F59E0B]" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#B0ADBE]">
                 Create New
               </p>
             </div>
@@ -105,14 +108,14 @@ export function CreateButton() {
                   setOpen(false);
                   router.push(option.href);
                 }}
-                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${option.hoverBg}`}
+                className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${option.hoverBg}`}
               >
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${option.color} text-white shadow-sm`}>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${option.gradient} text-white shadow-sm`}>
                   <option.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-semibold text-slate-900">{option.label}</p>
-                  <p className="text-[11px] text-slate-400">{option.description}</p>
+                  <p className="text-[13px] font-semibold text-[#0F0D15] group-hover:text-[#7C5CFC] transition-colors">{option.label}</p>
+                  <p className="text-[11px] text-[#B0ADBE]">{option.description}</p>
                 </div>
               </button>
             ))}

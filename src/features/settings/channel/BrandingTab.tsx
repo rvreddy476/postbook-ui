@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Image, Stamp, Check, Loader2 } from "lucide-react";
 import { Avatar } from "@/components/LetterAvatar";
 import { useMyChannels, useUpdateChannel } from "@/hooks/useChannels";
+import { uploadMedia } from "@/lib/mediaUpload";
 
 interface UploadFieldProps {
   label: string;
@@ -28,7 +29,7 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
       <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">{label}</label>
       <p className="mb-3 text-[11px] text-slate-400">{description}</p>
       <div
-        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-violet-300 hover:bg-violet-50/30"
+        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
         style={{ aspectRatio: aspectRatio || "auto", minHeight: aspectRatio ? undefined : "120px" }}
       >
         {currentUrl ? (
@@ -36,7 +37,7 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
         ) : (
           <div className="flex flex-col items-center gap-2 p-6">
             {icon}
-            <span className="text-[11px] font-medium text-slate-400 group-hover:text-violet-500">
+            <span className="text-[11px] font-medium text-slate-400 group-hover:text-[#D8103F]/50">
               Click to upload
             </span>
             <span className="text-[10px] text-slate-300">{hint}</span>
@@ -44,7 +45,7 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
         )}
         {uploading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80">
-            <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+            <Loader2 className="h-5 w-5 animate-spin text-[#D8103F]/50" />
           </div>
         ) : null}
         <input
@@ -66,24 +67,45 @@ export function BrandingTab() {
   const [themeColor, setThemeColor] = useState("#7C3AED");
   const [watermarkEnabled, setWatermarkEnabled] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const avatarUrl = channel?.avatar_media_id
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${channel.avatar_media_id}/serve`
+    ? `${baseUrl}/v1/media/${channel.avatar_media_id}/serve`
     : undefined;
   const bannerUrl = channel?.banner_media_id
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${channel.banner_media_id}/serve`
+    ? `${baseUrl}/v1/media/${channel.banner_media_id}/serve`
     : undefined;
 
-  const handleAvatarUpload = useCallback((_file: File) => {
-    // TODO: POST /v1/channel/me/avatar/init-upload → presigned URL → upload → update channel
-  }, []);
+  const handleAvatarUpload = useCallback(async (file: File) => {
+    if (!channel) return;
+    setAvatarUploading(true);
+    try {
+      const mediaId = await uploadMedia(file, "image", "avatar");
+      await updateMutation.mutateAsync({ id: channel.id, avatar_media_id: mediaId });
+    } catch {
+      // Upload or update failed
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [channel, updateMutation]);
 
-  const handleBannerUpload = useCallback((_file: File) => {
-    // TODO: POST /v1/channel/me/banner/init-upload
-  }, []);
+  const handleBannerUpload = useCallback(async (file: File) => {
+    if (!channel) return;
+    setBannerUploading(true);
+    try {
+      const mediaId = await uploadMedia(file, "image", "cover");
+      await updateMutation.mutateAsync({ id: channel.id, banner_media_id: mediaId });
+    } catch {
+      // Upload or update failed
+    } finally {
+      setBannerUploading(false);
+    }
+  }, [channel, updateMutation]);
 
-  const handleWatermarkUpload = useCallback((_file: File) => {
-    // TODO: POST /v1/channel/me/watermark/init-upload
+  const handleWatermarkUpload = useCallback(async (_file: File) => {
+    // Watermark is a future feature
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -107,11 +129,16 @@ export function BrandingTab() {
               size="xl"
               className="border-4 border-white shadow-lg ring-1 ring-slate-100"
             />
-            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-violet-600 text-white shadow-md transition-transform hover:scale-110">
-              <Camera className="h-3.5 w-3.5" />
+            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[#D8103F] text-white shadow-md transition-transform hover:scale-110">
+              {avatarUploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Camera className="h-3.5 w-3.5" />
+              )}
               <input
                 type="file"
                 accept="image/*"
+                disabled={avatarUploading}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleAvatarUpload(file);
@@ -139,6 +166,7 @@ export function BrandingTab() {
           icon={<Image className="h-6 w-6 text-slate-300" />}
           currentUrl={bannerUrl}
           onUpload={handleBannerUpload}
+          uploading={bannerUploading}
           aspectRatio="16/5"
         />
       </div>
@@ -154,7 +182,7 @@ export function BrandingTab() {
           <button
             type="button"
             onClick={() => setWatermarkEnabled(!watermarkEnabled)}
-            className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+            className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
           >
             <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
           </button>
@@ -192,7 +220,7 @@ export function BrandingTab() {
         <h2 className="mb-5 text-[14px] font-bold text-slate-900">Preview</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200">
           {/* Mini banner */}
-          <div className="h-20 bg-gradient-to-r from-violet-100 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
+          <div className="h-20 bg-gradient-to-r from-[#D8103F]/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
             {bannerUrl ? <img src={bannerUrl} alt="" className="h-full w-full object-cover" /> : null}
           </div>
           {/* Mini profile */}
@@ -232,7 +260,7 @@ export function BrandingTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50"
+          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

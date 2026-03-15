@@ -52,15 +52,19 @@ export function useFeedPosts(userId: string | undefined) {
 
 export type FeedMode = "ranked" | "chronological"
 
-export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { excludeSelf?: boolean; enabled?: boolean }) {
+export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { excludeSelf?: boolean; circleOnly?: boolean; enabled?: boolean }) {
     const excludeSelf = options?.excludeSelf ?? false
+    const circleOnly = options?.circleOnly ?? false
     const enabled = options?.enabled ?? true
     return useInfiniteQuery({
-        queryKey: ["home-feed", feedMode, excludeSelf],
+        queryKey: ["home-feed", feedMode, excludeSelf, circleOnly],
         queryFn: async ({ pageParam }) => {
             const params: Record<string, string> = { limit: "20", feed_mode: feedMode }
             if (excludeSelf) {
                 params.exclude_self = "true"
+            }
+            if (circleOnly) {
+                params.circle_only = "true"
             }
             if (pageParam) {
                 params.cursor = pageParam as string

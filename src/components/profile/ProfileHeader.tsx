@@ -1,12 +1,35 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { UserProfile, UserLink, Relationship } from "@/types/profile"
+import type { UserProfile, UserLink, Relationship, ContentCounts, GraphCounts, Channel } from "@/types/profile"
 import { getBadges } from "@/types/profile"
-import { ProfileActions } from "./ProfileActions"
-import { BadgeCheck, Briefcase, Sparkles, MapPin, ExternalLink, Camera, Loader2, Image } from "lucide-react"
+import {
+    BadgeCheck,
+    Briefcase,
+    Sparkles,
+    MapPin,
+    Globe,
+    Calendar,
+    Camera,
+    Loader2,
+    ImageIcon,
+    FileText,
+    Users,
+    UserPlus,
+    Heart,
+    Settings,
+    MessageSquare,
+    CheckCircle2,
+    ExternalLink,
+    Eye,
+    Lock,
+    Film,
+    Clapperboard,
+    Play,
+} from "lucide-react"
 import { motion } from "framer-motion"
+import Link from "next/link"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
 
@@ -16,6 +39,11 @@ interface ProfileHeaderProps {
     relationship: Relationship | null
     isOwn: boolean
     avatarUrl?: string
+    coverUrl?: string
+    isMuted?: boolean
+    graphCounts: GraphCounts
+    contentCounts: ContentCounts
+    channel: Channel | null
     onFollow: () => void
     onUnfollow: () => void
     onSendCircleRequest: () => void
@@ -27,266 +55,476 @@ interface ProfileHeaderProps {
     onMessage?: () => void
     onBlock?: () => void
     onUnblock?: () => void
-    isMuted?: boolean
     onMute?: () => void
     onUnmute?: () => void
+    onUploadError?: (message: string) => void
 }
 
-const badgeIcons: Record<string, typeof BadgeCheck> = {
-    verified: BadgeCheck,
-    creator: Sparkles,
-    business: Briefcase,
+const badgeConfig: Record<string, { icon: typeof BadgeCheck; color: string; bg: string }> = {
+    verified: { icon: BadgeCheck, color: "text-teal-600", bg: "bg-teal-50 border-teal-100" },
+    creator: { icon: Sparkles, color: "text-[#D8103F]", bg: "bg-[#D8103F]/10 border-[#D8103F]/20" },
+    business: { icon: Briefcase, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
 }
 
-export function ProfileHeader({ profile, links, relationship, isOwn, avatarUrl, onFollow, onUnfollow, onSendCircleRequest, onAcceptCircleRequest, onDeclineCircleRequest, onCancelCircleRequest, onRemoveFromCircle, onEditProfile, onMessage, onBlock, onUnblock, isMuted, onMute, onUnmute }: ProfileHeaderProps) {
+function formatJoinDate(dateStr: string): string {
+    const d = new Date(dateStr)
+    return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
+}
+
+function formatCount(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+    return n.toString()
+}
+
+export function ProfileHeader({
+    profile,
+    links,
+    relationship,
+    isOwn,
+    avatarUrl,
+    coverUrl,
+    isMuted,
+    graphCounts,
+    contentCounts,
+    channel,
+    onFollow,
+    onUnfollow,
+    onSendCircleRequest,
+    onAcceptCircleRequest,
+    onDeclineCircleRequest,
+    onCancelCircleRequest,
+    onRemoveFromCircle,
+    onEditProfile,
+    onMessage,
+    onBlock,
+    onUnblock,
+    onMute,
+    onUnmute,
+    onUploadError,
+}: ProfileHeaderProps) {
     const qc = useQueryClient()
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
 
     const badges = getBadges(profile.badge_flags)
-    const resolvedAvatar = avatarUrl ?? (profile.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : null)
+    const [avatarFails, setAvatarFails] = useState(0)
+    const [coverFails, setCoverFails] = useState(0)
+
+    useEffect(() => { setAvatarFails(0) }, [profile.avatar_media_id])
+    useEffect(() => { setCoverFails(0) }, [profile.cover_media_id])
+
+    const avatarSources = [
+        profile.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : null,
+        avatarUrl ?? null,
+    ].filter(Boolean)
+    const coverSources = [
+        profile.cover_media_id ? `/v1/media/${profile.cover_media_id}/serve` : null,
+        coverUrl ?? null,
+    ].filter(Boolean)
+
+    const resolvedAvatar = avatarSources[avatarFails] ?? null
+    const resolvedCover = coverSources[coverFails] ?? null
+    const followsYou = relationship?.followed_by ?? false
+    const isFollowing = relationship?.following ?? false
+    const inCircle = relationship?.in_circle ?? false
+    const canDM = relationship?.can_dm ?? false
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, field }: { file: File; field: "avatar_media_id" | "cover_media_id" }) => {
             const mediaId = await uploadMedia(file, "image", field === "avatar_media_id" ? "avatar" : "cover")
-
-            const endpoint = field === "avatar_media_id"
-                ? "/v1/profiles/me/avatar"
-                : "/v1/profiles/me/cover"
+            const endpoint = field === "avatar_media_id" ? "/v1/profiles/me/avatar" : "/v1/profiles/me/cover"
             await api.put(endpoint, { media_id: mediaId })
             return { field, mediaId }
         },
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
+            if (variables.field === "avatar_media_id") setAvatarFails(0)
+            if (variables.field === "cover_media_id") setCoverFails(0)
             qc.invalidateQueries({ queryKey: ["profile"] })
             qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        }
+            qc.invalidateQueries({ queryKey: ["my-profile"] })
+        },
+        onError: (error: Error) => {
+            const msg = error.message?.includes("401")
+                ? "Session expired. Please log in again."
+                : `Upload failed: ${error.message}`
+            onUploadError?.(msg)
+        },
     })
 
-    const handleFileSelect = useCallback((field: "avatar_media_id" | "cover_media_id") => (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            uploadMutation.mutate({ file, field })
-        }
-    }, [uploadMutation])
+    const handleFileSelect = useCallback(
+        (field: "avatar_media_id" | "cover_media_id") => (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0]
+            if (file) uploadMutation.mutate({ file, field })
+        },
+        [uploadMutation]
+    )
 
     return (
-        <section className="relative w-full">
-            <input
-                type="file"
-                ref={avatarInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileSelect("avatar_media_id")}
-            />
-            <input
-                type="file"
-                ref={coverInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileSelect("cover_media_id")}
-            />
+        <div className="w-full bg-white border-b border-black/5">
+            {/* Hidden file inputs */}
+            <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("avatar_media_id")} />
+            <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
 
-            {/* Prismatic Cover Section */}
-            <div className="h-64 md:h-80 relative overflow-hidden rounded-b-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] group/cover">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-fuchsia-500/10 to-blue-600/20 animate-pulse" />
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-
-                {profile.cover_media_id ? (
+            {/* 1. Cover Photo — half-height hero */}
+            <div className="relative h-[320px] w-full overflow-hidden">
+                {resolvedCover ? (
                     <img
-                        src={`/v1/media/${profile.cover_media_id}/serve`}
+                        src={resolvedCover}
                         alt=""
                         className="w-full h-full object-cover"
+                        onError={() => setCoverFails((n) => n + 1)}
                     />
                 ) : (
-                    <div className="w-full h-full orchid-gradient opacity-80" />
+                    <div className="w-full h-full bg-gradient-to-br from-slate-100 via-[#D8103F]/5 to-teal-50" />
                 )}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/10" />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
-
-                {/* Stylish Cover Edit Trigger */}
-                {isOwn && (
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => coverInputRef.current?.click()}
-                        className="absolute bottom-6 right-8 z-30 p-3 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-full text-white shadow-2xl transition-all duration-300 hover:bg-white/20"
-                    >
-                        {uploadMutation.isPending && uploadMutation.variables?.field === "cover_media_id" ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <Image className="w-5 h-5" />
-                        )}
-                    </motion.button>
-                )}
+                {/* Cover actions */}
+                <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                    {isOwn && (
+                        <>
+                            <button
+                                onClick={() => coverInputRef.current?.click()}
+                                className="flex items-center gap-2 px-3.5 py-2 bg-black/30 backdrop-blur-md text-white text-xs font-semibold rounded-xl hover:bg-black/50 transition-all border border-white/10"
+                            >
+                                {uploadMutation.isPending && uploadMutation.variables?.field === "cover_media_id" ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                )}
+                                <span className="hidden sm:inline">Edit cover</span>
+                            </button>
+                            <button className="flex items-center gap-2 px-3.5 py-2 bg-black/30 backdrop-blur-md text-white text-xs font-semibold rounded-xl hover:bg-black/50 transition-all border border-white/10">
+                                <Eye className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Public</span>
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
-            {/* Content Layer */}
-            <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-20">
-                <div className="flex flex-col md:flex-row items-center md:items-end gap-8">
-                    {/* Squircle Avatar with Elite Framing */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="relative group/avatar"
-                    >
-                        <div className="absolute -inset-1 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-blue-500 rounded-[3rem] blur opacity-20 group-hover/avatar:opacity-40 transition duration-1000 group-hover/avatar:duration-200" />
-                        <div className="relative h-44 w-44 rounded-[3.2rem] bg-white p-2 shadow-2xl overflow-hidden ring-1 ring-white/50">
-                            <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-slate-100 relative">
-                                {resolvedAvatar ? (
-                                    <img
-                                        src={resolvedAvatar}
-                                        alt={profile.display_name}
-                                        className="w-full h-full object-cover group-hover/avatar:scale-110 transition-transform duration-700"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-4xl font-black text-slate-300">
-                                        {profile.display_name.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+            {/* 2. Three-column grid: Profile Pic | Intro | Social Graph */}
+            <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 lg:gap-10 -mt-16 pb-8 items-end">
 
-                                {uploadMutation.isPending && uploadMutation.variables?.field === "avatar_media_id" && (
-                                    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-                                        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-                                    </div>
-                                )}
-                            </div>
+                    {/* Left: Profile Picture */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative group justify-self-center md:justify-self-start"
+                    >
+                        <div className="h-44 w-44 rounded-3xl overflow-hidden border-[6px] border-white shadow-2xl bg-zinc-100 relative">
+                            {resolvedAvatar ? (
+                                <img
+                                    src={resolvedAvatar}
+                                    alt={profile.display_name}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setAvatarFails((n) => n + 1)}
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 uppercase">
+                                    {(profile.display_name || "?").charAt(0)}
+                                </div>
+                            )}
+
+                            {uploadMutation.isPending && uploadMutation.variables?.field === "avatar_media_id" && (
+                                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                                    <Loader2 className="w-7 h-7 animate-spin text-[#D8103F]" />
+                                </div>
+                            )}
                         </div>
 
-                        {/* Prismatic Avatar Edit Trigger */}
-                        {isOwn && (
-                            <motion.button
-                                whileHover={{ scale: 1.1, rotate: 5 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => avatarInputRef.current?.click()}
-                                className="absolute -bottom-2 -right-2 z-30 p-2.5 bg-white border border-slate-100 rounded-2xl shadow-xl text-slate-600 hover:text-violet-600 transition-colors group/edit-btn overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/10 via-fuchsia-500/10 to-blue-500/10 opacity-0 group-hover/edit-btn:opacity-100 transition-opacity" />
-                                <Camera className="w-5 h-5 relative z-10" />
-                            </motion.button>
+                        {/* Verified badge */}
+                        {profile.is_verified && (
+                            <div className="absolute -bottom-1.5 -right-1.5 bg-black text-white p-2 rounded-xl shadow-lg z-10">
+                                <CheckCircle2 size={18} fill="white" className="text-black" />
+                            </div>
                         )}
 
-                        {!isOwn && profile.is_verified && (
-                            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full border-4 border-white shadow-lg animate-pulse" />
+                        {/* Camera overlay for own profile */}
+                        {isOwn && (
+                            <button
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all rounded-3xl cursor-pointer"
+                            >
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl">
+                                    <Camera className="w-5 h-5 text-slate-800" />
+                                </div>
+                            </button>
                         )}
                     </motion.div>
 
-                    {/* Elite Identity Info */}
-                    <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-6 pb-4 w-full px-2">
-                        <div className="text-center md:text-left space-y-2">
-                            <div className="flex items-center gap-3 justify-center md:justify-start">
-                                <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase italic drop-shadow-sm">
-                                    {profile.display_name}
-                                </h1>
-                                <div className="flex gap-1.5">
-                                    {badges.map((badge) => {
-                                        const Icon = badgeIcons[badge]
-                                        return Icon ? (
-                                            <div key={badge} className="p-1 px-2.5 rounded-full bg-violet-50 border border-violet-100/50 shadow-sm flex items-center gap-1.5">
-                                                <Icon className="h-3.5 w-3.5 text-violet-600" />
-                                                <span className="text-[8px] font-black text-violet-600 uppercase tracking-widest">{badge}</span>
-                                            </div>
-                                        ) : null
-                                    })}
-                                </div>
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2">
-                                {profile.username && (
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] bg-slate-100 px-3 py-1 rounded-lg">
-                                        @{profile.username}
+                    {/* Middle: Intro */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.05 }}
+                        className="space-y-2 text-center md:text-left pt-2"
+                    >
+                        {/* Name + badges */}
+                        <div className="flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
+                            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+                                {profile.display_name}
+                            </h1>
+                            {badges.map((badge) => {
+                                const cfg = badgeConfig[badge]
+                                if (!cfg) return null
+                                const Icon = cfg.icon
+                                return (
+                                    <span
+                                        key={badge}
+                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${cfg.bg} ${cfg.color}`}
+                                    >
+                                        <Icon className="h-3 w-3" />
+                                        {badge}
                                     </span>
-                                )}
-                                {profile.pronouns && (
-                                    <span className="text-[10px] font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
-                                        {profile.pronouns}
-                                    </span>
-                                )}
-                                {profile.profession && (
-                                    <div className="flex items-center gap-1.5 text-slate-500">
-                                        <Briefcase className="w-3.5 h-3.5" />
-                                        <span className="text-xs font-bold italic">{profile.profession}</span>
-                                    </div>
-                                )}
-                                {profile.location && (
-                                    <div className="flex items-center gap-1.5 text-slate-400">
-                                        <MapPin className="w-3.5 h-3.5" />
-                                        <span className="text-xs font-bold">{profile.location}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Status */}
-                            {profile.status_text && (
-                                <div className="flex items-center gap-2 mt-1">
-                                    {profile.status_emoji && <span className="text-sm">{profile.status_emoji}</span>}
-                                    <span className="text-xs font-medium text-slate-500 italic">{profile.status_text}</span>
-                                </div>
+                                )
+                            })}
+                            {!isOwn && followsYou && (
+                                <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                    Follows you
+                                </span>
                             )}
+                        </div>
 
-                            {profile.bio && (
-                                <p className="text-slate-600 font-medium italic max-w-lg mt-4 leading-relaxed bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white shadow-sm">
-                                    &ldquo;{profile.bio}&rdquo;
-                                </p>
+                        {/* Handle */}
+                        <p className="text-zinc-400 font-medium tracking-wide text-sm">@{profile.username}</p>
+
+                        {/* Meta chips */}
+                        <div className="flex items-center gap-4 pt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 justify-center md:justify-start flex-wrap">
+                            {profile.profession && (
+                                <span className="flex items-center gap-1.5">
+                                    <Briefcase size={12} />
+                                    {profile.profession}
+                                </span>
                             )}
-
-                            {/* CTA Button */}
-                            {profile.cta_label && profile.cta_url && (
+                            {profile.location && (
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin size={12} />
+                                    {profile.location}
+                                </span>
+                            )}
+                            {profile.website && (
                                 <a
-                                    href={profile.cta_url}
+                                    href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 mt-3 px-5 py-2 rounded-xl bg-violet-600 text-white text-xs font-black uppercase tracking-widest shadow-lg hover:bg-violet-700 transition-colors"
+                                    className="flex items-center gap-1.5 text-teal-500 hover:text-teal-600 transition-colors"
                                 >
-                                    {profile.cta_label}
-                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    <Globe size={12} />
+                                    {profile.website.replace(/^https?:\/\//, "")}
                                 </a>
                             )}
-
-                            {links.length > 0 && (
-                                <div className="flex gap-4 mt-4 justify-center md:justify-start flex-wrap">
-                                    {links.map((link) => (
-                                        <a
-                                            key={link.platform}
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all"
-                                        >
-                                            <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-violet-500 transition-colors" />
-                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">
-                                                {link.display_label || link.platform}
-                                            </span>
-                                        </a>
-                                    ))}
-                                </div>
+                            {profile.created_at && (
+                                <span className="flex items-center gap-1.5">
+                                    <Calendar size={12} />
+                                    {formatJoinDate(profile.created_at)}
+                                </span>
                             )}
                         </div>
 
-                        <div className="shrink-0 flex items-center">
-                            <ProfileActions
-                                isOwn={isOwn}
-                                relationship={relationship}
-                                username={profile.username}
-                                displayName={profile.display_name}
-                                isMuted={isMuted}
-                                onFollow={onFollow}
-                                onUnfollow={onUnfollow}
-                                onSendCircleRequest={onSendCircleRequest}
-                                onAcceptCircleRequest={onAcceptCircleRequest}
-                                onDeclineCircleRequest={onDeclineCircleRequest}
-                                onCancelCircleRequest={onCancelCircleRequest}
-                                onRemoveFromCircle={onRemoveFromCircle}
-                                onEditProfile={onEditProfile}
-                                onMessage={onMessage}
-                                onBlock={onBlock}
-                                onUnblock={onUnblock}
-                                onMute={onMute}
-                                onUnmute={onUnmute}
-                            />
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 pt-2 justify-center md:justify-start flex-wrap">
+                            {isOwn ? (
+                                <>
+                                    <button
+                                        onClick={onEditProfile}
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors shadow-lg"
+                                    >
+                                        <Settings className="w-3.5 h-3.5" />
+                                        Edit Profile
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={isFollowing ? onUnfollow : onFollow}
+                                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
+                                            isFollowing
+                                                ? "bg-white border-2 border-[#D8103F]/30 text-[#D8103F] hover:bg-[#D8103F]/5"
+                                                : "bg-[#D8103F] text-white hover:bg-[#b80d35]"
+                                        }`}
+                                    >
+                                        {isFollowing ? (
+                                            <><Heart className="w-3.5 h-3.5" fill="currentColor" /> Following</>
+                                        ) : (
+                                            <><UserPlus className="w-3.5 h-3.5" /> Follow</>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={canDM ? onMessage : undefined}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 transition-all ${
+                                            canDM
+                                                ? "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                                                : "border-slate-100 text-slate-300 cursor-not-allowed"
+                                        }`}
+                                        title={canDM ? "Send message" : "Add to Circle to message"}
+                                    >
+                                        {!canDM && <Lock className="w-3 h-3" />}
+                                        <MessageSquare className="w-3.5 h-3.5" />
+                                        Message
+                                    </button>
+                                </>
+                            )}
                         </div>
+                    </motion.div>
+
+                    {/* Right: Stats cards */}
+                    <div className="hidden md:flex flex-col gap-3 self-end mb-1">
+                        {/* Postbook Stats */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="flex justify-between items-center bg-zinc-50/80 backdrop-blur-sm p-5 rounded-2xl border border-black/5 gap-1"
+                        >
+                            {[
+                                { icon: FileText, label: "Posts", value: contentCounts.total, key: "posts" },
+                                { icon: Heart, label: "Followers", value: graphCounts.follower_count, key: "followers" },
+                                { icon: UserPlus, label: "Following", value: graphCounts.following_count, key: "following" },
+                                { icon: Users, label: "Friends", value: graphCounts.friend_count, key: "friends" },
+                            ].map((stat, i) => (
+                                <div key={stat.key} className="flex items-center">
+                                    {i > 0 && <div className="h-8 w-px bg-black/5 mx-3" />}
+                                    <div className="text-center px-2">
+                                        <div className="flex items-center justify-center gap-1.5 text-zinc-400 mb-1">
+                                            <stat.icon size={13} />
+                                            <span className="text-[8px] font-bold uppercase tracking-[0.2em]">{stat.label}</span>
+                                        </div>
+                                        <p className="text-lg font-black text-slate-900 tracking-tight">
+                                            {formatCount(stat.value)}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </motion.div>
+
+                        {/* PostTube Channel Stats */}
+                        {channel && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.15 }}
+                                className="flex items-center bg-zinc-900 p-4 rounded-2xl border border-zinc-800 gap-1"
+                            >
+                                <div className="flex items-center gap-4 flex-1">
+                                    {[
+                                        { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs" },
+                                        { icon: Film, label: "Videos", value: contentCounts.video, key: "videos" },
+                                        { icon: Clapperboard, label: "Flicks", value: contentCounts.reel, key: "flicks" },
+                                    ].map((stat, i) => (
+                                        <div key={stat.key} className="flex items-center">
+                                            {i > 0 && <div className="h-7 w-px bg-zinc-700 mx-2" />}
+                                            <div className="text-center px-2">
+                                                <div className="flex items-center justify-center gap-1.5 text-zinc-500 mb-1">
+                                                    <stat.icon size={12} />
+                                                    <span className="text-[7px] font-bold uppercase tracking-[0.2em]">{stat.label}</span>
+                                                </div>
+                                                <p className="text-base font-black text-white tracking-tight">
+                                                    {formatCount(stat.value)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Link
+                                    href={`/posttube/channel/${channel.handle}`}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-[9px] font-black uppercase tracking-[0.15em] hover:bg-[#b80d35] transition-all shadow-lg shadow-[#D8103F]/30 shrink-0 ml-2"
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    View Channel
+                                </Link>
+                            </motion.div>
+                        )}
                     </div>
                 </div>
+
+                {/* Mobile: Social Graph (stacked below on small screens) */}
+                <div className="md:hidden space-y-3 mb-6 -mt-2">
+                    <div className="flex justify-between items-center bg-zinc-50/80 p-4 rounded-2xl border border-black/5">
+                        {[
+                            { icon: FileText, label: "Posts", value: contentCounts.total },
+                            { icon: Heart, label: "Followers", value: graphCounts.follower_count },
+                            { icon: UserPlus, label: "Following", value: graphCounts.following_count },
+                            { icon: Users, label: "Friends", value: graphCounts.friend_count },
+                        ].map((stat, i) => (
+                            <div key={stat.label} className="flex items-center">
+                                {i > 0 && <div className="h-6 w-px bg-black/5 mx-1" />}
+                                <div className="text-center px-1.5">
+                                    <div className="flex items-center justify-center gap-1 text-zinc-400 mb-0.5">
+                                        <stat.icon size={11} />
+                                        <span className="text-[7px] font-bold uppercase tracking-widest">{stat.label}</span>
+                                    </div>
+                                    <p className="text-base font-black text-slate-900">{formatCount(stat.value)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Mobile: PostTube Channel Stats */}
+                    {channel && (
+                        <div className="flex items-center justify-between bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                            <div className="flex items-center gap-3">
+                                {[
+                                    { icon: Play, label: "Subs", value: channel.subscriber_count },
+                                    { icon: Film, label: "Videos", value: contentCounts.video },
+                                    { icon: Clapperboard, label: "Flicks", value: contentCounts.reel },
+                                ].map((stat, i) => (
+                                    <div key={stat.label} className="flex items-center">
+                                        {i > 0 && <div className="h-5 w-px bg-zinc-700 mx-1" />}
+                                        <div className="text-center px-1">
+                                            <div className="flex items-center justify-center gap-1 text-zinc-500 mb-0.5">
+                                                <stat.icon size={10} />
+                                                <span className="text-[7px] font-bold uppercase tracking-widest">{stat.label}</span>
+                                            </div>
+                                            <p className="text-sm font-black text-white">{formatCount(stat.value)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <Link
+                                href={`/posttube/channel/${channel.handle}`}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D8103F] text-white text-[8px] font-black uppercase tracking-wider"
+                            >
+                                <ExternalLink className="w-3 h-3" />
+                                Channel
+                            </Link>
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. Bio Row */}
+                {profile.bio && (
+                    <div className="py-6 border-t border-black/5">
+                        <div className="max-w-2xl">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-3">Biography</h3>
+                            <p className="text-xl sm:text-2xl font-serif-display italic leading-relaxed text-zinc-700">
+                                {profile.bio}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Social links row */}
+                {links.length > 0 && (
+                    <div className="flex gap-2 pb-4 flex-wrap">
+                        {links.map((link) => (
+                            <a
+                                key={link.platform}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-100 text-xs font-semibold text-zinc-500 hover:text-zinc-700 hover:border-zinc-200 hover:shadow-sm transition-all"
+                            >
+                                <ExternalLink className="w-3 h-3" />
+                                {link.display_label || link.platform}
+                            </a>
+                        ))}
+                    </div>
+                )}
             </div>
-        </section>
+        </div>
     )
 }

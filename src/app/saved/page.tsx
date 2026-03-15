@@ -57,7 +57,7 @@ function targetTypeIcon(type: string): React.ReactNode {
 
 function targetTypeBadgeColor(type: string): string {
     switch (type.toLowerCase()) {
-        case "post":    return "bg-violet-50 text-violet-600 border-violet-100"
+        case "post":    return "bg-[#D8103F]/5 text-[#D8103F] border-[#D8103F]/10"
         case "video":   return "bg-indigo-50 text-indigo-600 border-indigo-100"
         case "short":   return "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100"
         case "photo":   return "bg-rose-50 text-rose-600 border-rose-100"
@@ -99,7 +99,7 @@ function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
     const badgeColor = targetTypeBadgeColor(item.target_type)
 
     return (
-        <div className="group bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md hover:border-violet-100 transition-all duration-300">
+        <div className="group bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-300">
             <div className="flex items-start gap-4">
                 {/* Type icon */}
                 <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${badgeColor}`}>
@@ -187,7 +187,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 onClick={() => onSelect(undefined)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
                     activeCollection === undefined
-                        ? "bg-white text-violet-600 border-violet-200 shadow-sm shadow-violet-100"
+                        ? "bg-white text-[#D8103F] border-[#D8103F]/20 shadow-sm shadow-[#D8103F]/10"
                         : "bg-slate-50 text-slate-500 border-transparent hover:bg-white hover:text-slate-700 hover:border-slate-200"
                 }`}
             >
@@ -197,7 +197,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 All
                 {allCount > 0 && (
                     <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                        activeCollection === undefined ? "bg-violet-100 text-violet-600" : "bg-slate-200 text-slate-500"
+                        activeCollection === undefined ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-slate-500"
                     }`}>
                         {allCount}
                     </span>
@@ -211,7 +211,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                     onClick={() => onSelect(col.name)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
                         activeCollection === col.name
-                            ? "bg-white text-violet-600 border-violet-200 shadow-sm shadow-violet-100"
+                            ? "bg-white text-[#D8103F] border-[#D8103F]/20 shadow-sm shadow-[#D8103F]/10"
                             : "bg-slate-50 text-slate-500 border-transparent hover:bg-white hover:text-slate-700 hover:border-slate-200"
                     }`}
                 >
@@ -221,7 +221,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                     {col.name}
                     {col.count > 0 && (
                         <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                            activeCollection === col.name ? "bg-violet-100 text-violet-600" : "bg-slate-200 text-slate-500"
+                            activeCollection === col.name ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-slate-500"
                         }`}>
                             {col.count}
                         </span>
@@ -274,7 +274,7 @@ export default function SavedPage() {
                 {/* Page heading */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 orchid-gradient rounded-[0.8rem] flex items-center justify-center shadow-lg shadow-violet-500/20">
+                        <div className="w-10 h-10 orchid-gradient rounded-[0.8rem] flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
@@ -320,7 +320,7 @@ export default function SavedPage() {
                     </div>
                 ) : allItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <div className="w-16 h-16 rounded-2xl orchid-gradient flex items-center justify-center shadow-lg shadow-violet-500/20 opacity-30">
+                        <div className="w-16 h-16 rounded-2xl orchid-gradient flex items-center justify-center shadow-lg shadow-[#D8103F]/20 opacity-30">
                             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
@@ -364,11 +364,11 @@ export default function SavedPage() {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-600 hover:border-violet-200 hover:text-violet-600 hover:bg-violet-50 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-600 hover:border-[#D8103F]/20 hover:text-[#D8103F] hover:bg-[#D8103F]/5 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isFetchingNextPage ? (
                                         <>
-                                            <div className="w-3.5 h-3.5 border-2 border-violet-300 border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-3.5 h-3.5 border-2 border-[#D8103F]/30 border-t-transparent rounded-full animate-spin" />
                                             Loading...
                                         </>
                                     ) : (

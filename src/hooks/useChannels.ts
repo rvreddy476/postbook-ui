@@ -20,6 +20,18 @@ export function useMyChannels() {
     })
 }
 
+export function useUserChannels(userId: string | undefined) {
+    return useQuery({
+        queryKey: ["user-channels", userId],
+        queryFn: async () => {
+            const res = await api.get<ChannelsResponse>(`/v1/users/${userId}/channels`)
+            return res.data.data
+        },
+        enabled: !!userId,
+        staleTime: 60_000,
+    })
+}
+
 export function useChannel(handle: string | undefined) {
     return useQuery({
         queryKey: ["channel", handle],

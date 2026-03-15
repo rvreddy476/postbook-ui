@@ -12,9 +12,8 @@ interface AggregatedProfile {
         following_count: number
         friend_count: number
         post: number
-        short: number
+        reel: number
         video: number
-        photo: number
         total: number
     }
     relationship: Record<string, unknown> | null
@@ -72,7 +71,7 @@ export async function GET(
         fetchJSON<{ follower_count: number; following_count: number; friend_count: number }>(
             `${GRAPH_SERVICE_URL}/v1/graph/counts/${userId}`
         ),
-        fetchJSON<{ post: number; short: number; video: number; photo: number; total: number }>(
+        fetchJSON<Record<string, number>>(
             `${POST_SERVICE_URL}/v1/posts/by-author/${userId}/counts`
         ),
         // Relationship: use profile-service's new relationship endpoint
@@ -89,6 +88,8 @@ export async function GET(
     const profileFollowingCount = (profile.following_count as number) ?? 0
     const profileFriendCount = (profile.friend_count as number) ?? 0
 
+    // Backend returns content_type keys: "post", "reel", "video", "poll", "total"
+    // Map to frontend field names
     const result: AggregatedProfile = {
         profile,
         links: links ?? [],
@@ -97,9 +98,8 @@ export async function GET(
             following_count: graphCounts?.following_count ?? profileFollowingCount,
             friend_count: graphCounts?.friend_count ?? profileFriendCount,
             post: contentCounts?.post ?? 0,
-            short: contentCounts?.short ?? 0,
+            reel: contentCounts?.reel ?? 0,
             video: contentCounts?.video ?? 0,
-            photo: contentCounts?.photo ?? 0,
             total: contentCounts?.total ?? 0,
         },
         relationship: relationship ?? null,

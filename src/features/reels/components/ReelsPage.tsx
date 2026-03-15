@@ -213,6 +213,7 @@ export function ReelsPage() {
       if (url.searchParams.get("reelId") === activeReel.reel_id) return;
       url.searchParams.set("reelId", activeReel.reel_id);
       url.searchParams.delete("focusCommentId");
+      url.searchParams.delete("v");
       window.history.replaceState({}, "", url.toString());
     }, 400);
 

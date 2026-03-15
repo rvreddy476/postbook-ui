@@ -46,10 +46,10 @@ function ProfileCard({ profile }: ProfileCardProps) {
     return (
         <Link
             href={`/u/${profile.username}`}
-            className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-violet-100 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 group"
         >
             <div className="relative flex-shrink-0">
-                <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-violet-200 transition-all">
+                <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#D8103F]/20 transition-all">
                     <img src={avatar} alt={profile.display_name} className="w-full h-full object-cover" />
                 </div>
                 {profile.is_verified && (
@@ -60,7 +60,7 @@ function ProfileCard({ profile }: ProfileCardProps) {
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-[15px] font-bold text-gray-900 group-hover:text-violet-700 transition-colors truncate">
+                    <span className="text-[15px] font-bold text-gray-900 group-hover:text-[#b80d35] transition-colors truncate">
                         {profile.display_name}
                     </span>
                 </div>
@@ -72,7 +72,7 @@ function ProfileCard({ profile }: ProfileCardProps) {
                     {profile.follower_count.toLocaleString()} follower{profile.follower_count !== 1 ? "s" : ""}
                 </p>
             </div>
-            <div className="flex-shrink-0 text-gray-300 group-hover:text-violet-400 transition-colors">
+            <div className="flex-shrink-0 text-gray-300 group-hover:text-[#D8103F]/50 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -86,7 +86,7 @@ function ProfileCard({ profile }: ProfileCardProps) {
 function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: string; count?: number }) {
     return (
         <div className="flex items-center gap-2 mb-3">
-            <span className="text-violet-500">{icon}</span>
+            <span className="text-[#D8103F]/50">{icon}</span>
             <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">{label}</h2>
             {count !== undefined && (
                 <span className="ml-auto text-xs font-semibold text-gray-400">{count} result{count !== 1 ? "s" : ""}</span>
@@ -100,8 +100,8 @@ function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: 
 function EmptyState({ query }: { query: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 flex items-center justify-center">
-                <Search className="w-9 h-9 text-violet-300" />
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                <Search className="w-9 h-9 text-[#D8103F]/30" />
             </div>
             <div className="text-center max-w-xs">
                 <p className="text-base font-bold text-gray-900">No results for &ldquo;{query}&rdquo;</p>
@@ -137,7 +137,7 @@ function LoadingSkeleton() {
 function HintState() {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
                 <Search className="w-7 h-7 text-white" />
             </div>
             <div className="text-center">
@@ -233,7 +233,7 @@ function SearchPageContent() {
                     <div className="relative flex items-center mb-4">
                         <div className="absolute left-4 text-gray-400 pointer-events-none z-10">
                             {isLoading || isFetching ? (
-                                <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
+                                <Loader2 className="w-5 h-5 animate-spin text-[#D8103F]/50" />
                             ) : (
                                 <Search className="w-5 h-5" />
                             )}
@@ -251,7 +251,7 @@ function SearchPageContent() {
                             onKeyDown={handleInputKeyDown}
                             placeholder="Search people, posts, hashtags..."
                             autoFocus
-                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-300 focus:bg-white transition-all"
+                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/30 focus:bg-white transition-all"
                         />
                         {inputValue && (
                             <button
@@ -271,9 +271,9 @@ function SearchPageContent() {
                                         key={user.user_id}
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => handleAutocompleteClick(user.username)}
-                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-violet-50 transition-colors text-left"
+                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#D8103F]/5 transition-colors text-left"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
                                             {(user.display_name || user.username).charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -296,7 +296,7 @@ function SearchPageContent() {
                                     onClick={() => handleTabChange(tab.type)}
                                     className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all ${
                                         isActive
-                                            ? "border-violet-500 text-violet-600 bg-violet-50/60"
+                                            ? "border-[#D8103F]/50 text-[#D8103F] bg-[#D8103F]/60"
                                             : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                     }`}
                                 >
@@ -366,7 +366,7 @@ function SearchPageContent() {
 function SearchPageFallback() {
     return (
         <div className="min-h-screen bg-[#fcfaff] flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#D8103F]/50" />
         </div>
     )
 }

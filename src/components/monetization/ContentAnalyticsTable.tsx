@@ -173,7 +173,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
                                             : "bg-blue-50 text-blue-600 border-blue-100"
                                     }`}
                                 >
-                                    {item.content_type === "reel" ? "Reel" : "Long"}
+                                    {item.content_type === "reel" ? "Flick" : "Video"}
                                 </span>
                             </div>
 

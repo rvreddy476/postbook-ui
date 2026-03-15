@@ -3,12 +3,14 @@
 import React from "react"
 import { useParams } from "next/navigation"
 import { useChannel } from "@/hooks/useChannels"
+import { useMediaSlots, getSlotUrlWithFallback } from "@/hooks/useMediaSlots"
 import { BadgeCheck, Users, ExternalLink, Trophy, Loader2 } from "lucide-react"
 
 export default function ChannelProfilePage() {
     const params = useParams()
     const handle = params.handle as string
     const { data: channel, isLoading, error } = useChannel(handle)
+    const { data: slots } = useMediaSlots("channel", channel?.id)
 
     if (isLoading) {
         return (
@@ -29,13 +31,8 @@ export default function ChannelProfilePage() {
         )
     }
 
-    const avatarUrl = channel.avatar_media_id
-        ? `/v1/media/${channel.avatar_media_id}/serve`
-        : null
-
-    const bannerUrl = channel.banner_media_id
-        ? `/v1/media/${channel.banner_media_id}/serve`
-        : null
+    const avatarUrl = getSlotUrlWithFallback(slots, "avatar", channel.avatar_media_id) ?? null
+    const bannerUrl = getSlotUrlWithFallback(slots, "banner", channel.banner_media_id) ?? null
 
     return (
         <div className="min-h-screen bg-[#FAF5F0]">
@@ -67,7 +64,7 @@ export default function ChannelProfilePage() {
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#7B5B3A]">
-                                    {channel.name.charAt(0).toUpperCase()}
+                                    {(channel.name || channel.handle || "C").charAt(0).toUpperCase()}
                                 </div>
                             )}
                         </div>
@@ -77,7 +74,7 @@ export default function ChannelProfilePage() {
                     <div className="flex-1 text-center sm:text-left pb-2">
                         <div className="flex items-center gap-2 justify-center sm:justify-start">
                             <h1 className="text-2xl md:text-3xl font-bold text-[#3C2415]">
-                                {channel.name}
+                                {channel.name || channel.handle}
                             </h1>
                             {channel.is_verified && (
                                 <BadgeCheck className="w-5 h-5 text-[#D4A574]" />

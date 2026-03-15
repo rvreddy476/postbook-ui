@@ -7,7 +7,7 @@ import { LandingNavbar } from '@/components/landing/landing-navbar';
 
 export default function LandingPage() {
   return (
-    <div className="relative h-screen overflow-hidden bg-background font-sans text-foreground selection:bg-violet-200 selection:text-violet-900">
+    <div className="relative h-screen overflow-hidden bg-background font-sans text-foreground selection:bg-[#D8103F]/20 selection:text-[#6b081f]">
       <LandingBackground />
 
       <LandingNavbar />

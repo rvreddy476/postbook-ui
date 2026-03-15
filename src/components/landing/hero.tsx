@@ -17,7 +17,7 @@ export function LandingHero() {
       <div className="space-y-5 text-center lg:text-left">
         <h1 className="text-4xl font-black leading-[0.9] tracking-tighter text-slate-950 sm:text-5xl xl:text-6xl">
           Create. <br />
-          <span className="bg-gradient-to-r from-blue-500 via-violet-600 to-rose-500 bg-clip-text text-transparent">Connect. Explore.</span>
+          <span className="bg-gradient-to-r from-blue-500 via-[#D8103F] to-rose-500 bg-clip-text text-transparent">Connect. Explore.</span>
         </h1>
         <p className="mx-auto max-w-xl text-base font-medium leading-relaxed text-slate-500 lg:mx-0 lg:text-lg">
           The infinite network for the modern visionary. Experience a classic digital sanctuary designed for authentic

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Avatar, Btn, GRADS, MESSENGER_CSS, getGroupColor, getInitials, hashId } from './shared'
+import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
 import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
@@ -11,55 +11,23 @@ import { fetchConversations } from '@/services/messageService'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
+import {
+  Search, Users, MessageCircle, Plus, Settings, Hash,
+  Globe, Lock, Shield, ChevronRight, Send
+} from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
-/*  Skeleton loader for sidebar                                        */
+/*  Skeleton                                                           */
 /* ------------------------------------------------------------------ */
-
 function SidebarSkeleton() {
-  const rows = Array.from({ length: 6 })
   return (
-    <div style={{ padding: '4px 8px' }}>
-      {rows.map((_, i) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '8px 10px',
-            marginBottom: 2,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              background: 'rgba(255,255,255,0.06)',
-              animation: 'fadeSlide 1.2s ease-in-out infinite alternate',
-              flexShrink: 0,
-            }}
-          />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div
-              style={{
-                width: '60%',
-                height: 10,
-                borderRadius: 4,
-                background: 'rgba(255,255,255,0.06)',
-                animation: 'fadeSlide 1.2s ease-in-out infinite alternate',
-              }}
-            />
-            <div
-              style={{
-                width: '40%',
-                height: 8,
-                borderRadius: 4,
-                background: 'rgba(255,255,255,0.04)',
-                animation: 'fadeSlide 1.2s ease-in-out infinite alternate',
-              }}
-            />
+    <div className="space-y-1 px-3 py-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-24 bg-slate-100 rounded" />
+            <div className="h-2.5 w-16 bg-slate-50 rounded" />
           </div>
         </div>
       ))}
@@ -68,114 +36,18 @@ function SidebarSkeleton() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Feed placeholder (shown when no DM is selected)                    */
+/*  Empty state (shown when no DM is selected)                         */
 /* ------------------------------------------------------------------ */
-
-function FeedPlaceholder({ friends }: { friends: User[] }) {
-  const mockPosts = useMemo(() => {
-    const pool = friends.slice(0, 3)
-
-    const texts = [
-      'Just finished a great book on system design. Highly recommend it to anyone building at scale!',
-      'Beautiful sunset at the coast today. Sometimes you just need to unplug and enjoy nature.',
-      'Working on a new side project this weekend. Excited to share the results soon!',
-    ]
-    const times = ['2h ago', '4h ago', '6h ago']
-
-    return pool.map((u, i) => ({
-      user: u,
-      text: texts[i % texts.length],
-      time: times[i % times.length],
-      likes: Math.floor(Math.random() * 40) + 3,
-      comments: Math.floor(Math.random() * 12) + 1,
-    }))
-  }, [friends])
-
+function EmptyState() {
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '40px 24px',
-        overflowY: 'auto',
-      }}
-    >
-      <div style={{ color: '#6B7280', fontSize: 14, marginBottom: 28, fontWeight: 500 }}>
-        Select a conversation to start messaging
+    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50">
+      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/10 to-[#D8103F]/5 flex items-center justify-center mb-5">
+        <Send className="w-8 h-8 text-[#D8103F]/40" />
       </div>
-
-      <div style={{ width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {mockPosts.map((post, i) => {
-          const avatarUrl = post.user.avatar && (post.user.avatar.startsWith('http') || post.user.avatar.startsWith('/'))
-            ? post.user.avatar
-            : undefined
-          return (
-            <div
-              key={i}
-              style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 16,
-                padding: 18,
-              }}
-            >
-              {/* Post header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <Avatar
-                  user={post.user}
-                  size={36}
-                  showStatus
-                  avatarUrl={avatarUrl}
-                />
-                <div>
-                  <div style={{ color: '#E5E7EB', fontSize: 13, fontWeight: 600 }}>{post.user.name}</div>
-                  <div style={{ color: '#6B7280', fontSize: 10.5 }}>{post.time}</div>
-                </div>
-              </div>
-              {/* Post body */}
-              <div style={{ color: '#D1D5DB', fontSize: 13, lineHeight: '1.55', marginBottom: 14 }}>
-                {post.text}
-              </div>
-              {/* Post actions */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 20,
-                  borderTop: '1px solid rgba(255,255,255,0.05)',
-                  paddingTop: 10,
-                }}
-              >
-                {[
-                  { label: `Like (${post.likes})`, icon: '\u2661' },
-                  { label: `Comment (${post.comments})`, icon: '\uD83D\uDCAC' },
-                  { label: 'Share', icon: '\u2197' },
-                ].map((action) => (
-                  <button
-                    key={action.label}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#6B7280',
-                      fontSize: 11.5,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontFamily: 'inherit',
-                      padding: '4px 0',
-                    }}
-                  >
-                    <span style={{ fontSize: 13 }}>{action.icon}</span>
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <h3 className="text-lg font-bold text-slate-700 mb-1">Your Messages</h3>
+      <p className="text-sm text-slate-400 max-w-xs text-center">
+        Select a conversation to start messaging or pick a group to chat with your community.
+      </p>
     </div>
   )
 }
@@ -183,9 +55,7 @@ function FeedPlaceholder({ friends }: { friends: User[] }) {
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
-
 export default function PostbookMessenger() {
-  /* ---- state ---- */
   const [contactTab, setContactTab] = useState<'friends' | 'groups'>('friends')
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
@@ -196,23 +66,17 @@ export default function PostbookMessenger() {
   const [conversations, setConversations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  /* ---- hooks ---- */
   const currentUser = getSession()
   const { data: myGroups } = useMyGroups()
-  const { getUnreadCountForUser, totalUnread } = useNotifications()
+  const { getUnreadCountForUser } = useNotifications()
 
-  /* ---- effects ---- */
-
-  // Fetch users on mount
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
         const users = await fetchUsers(50, 0)
         if (cancelled) return
-        const filtered = currentUser
-          ? users.filter((u) => u.id !== currentUser.id)
-          : users
+        const filtered = currentUser ? users.filter((u) => u.id !== currentUser.id) : users
         setFriends(filtered)
       } catch (err) {
         console.error('Failed to fetch users:', err)
@@ -225,15 +89,13 @@ export default function PostbookMessenger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Fetch conversations on mount
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
         const result = await fetchConversations(50)
         if (cancelled) return
-        const convos = result.data ?? []
-        setConversations(convos)
+        setConversations(result.data ?? [])
       } catch (err) {
         console.error('Failed to fetch conversations:', err)
       }
@@ -241,8 +103,6 @@ export default function PostbookMessenger() {
     load()
     return () => { cancelled = true }
   }, [])
-
-  /* ---- helpers ---- */
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
@@ -252,43 +112,28 @@ export default function PostbookMessenger() {
   const getLastMessage = useCallback(
     (userId: string): { text: string; time: string; unread: number } | null => {
       const conv = conversations.find(
-        (c: any) =>
-          c.participants?.includes(userId) ||
-          c.other_user_id === userId
+        (c: any) => c.participants?.includes(userId) || c.other_user_id === userId
       )
       if (!conv) return null
-
       const lastMsg = conv.last_message ?? conv.lastMessage
       if (!lastMsg) return null
-
       const msgTime = lastMsg.created_at || lastMsg.ts || ''
       let timeDisplay = ''
       if (msgTime) {
         try {
           const d = new Date(msgTime)
           const now = new Date()
-          const diffMs = now.getTime() - d.getTime()
-          const diffMin = Math.floor(diffMs / 60000)
+          const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000)
           if (diffMin < 1) timeDisplay = 'now'
           else if (diffMin < 60) timeDisplay = `${diffMin}m`
           else if (diffMin < 1440) timeDisplay = `${Math.floor(diffMin / 60)}h`
           else timeDisplay = `${Math.floor(diffMin / 1440)}d`
-        } catch {
-          timeDisplay = ''
-        }
+        } catch { timeDisplay = '' }
       }
-
-      const unread = getUnreadCountForUser(userId)
-      return {
-        text: lastMsg.text || '(media)',
-        time: timeDisplay,
-        unread,
-      }
+      return { text: lastMsg.text || '(media)', time: timeDisplay, unread: getUnreadCountForUser(userId) }
     },
     [conversations, getUnreadCountForUser]
   )
-
-  /* ---- filtering & sorting ---- */
 
   const filteredFriends = useMemo(() => {
     let list = friends
@@ -296,14 +141,10 @@ export default function PostbookMessenger() {
       const q = search.toLowerCase()
       list = list.filter((f) => f.name.toLowerCase().includes(q))
     }
-    // sort: unread first, then online first
     return [...list].sort((a, b) => {
-      const aUnread = getUnreadCountForUser(a.id)
-      const bUnread = getUnreadCountForUser(b.id)
-      if (aUnread !== bUnread) return bUnread - aUnread
-      const aOnline = a.isOnline ? 1 : 0
-      const bOnline = b.isOnline ? 1 : 0
-      return bOnline - aOnline
+      const aU = getUnreadCountForUser(a.id), bU = getUnreadCountForUser(b.id)
+      if (aU !== bU) return bU - aU
+      return (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)
     })
   }, [friends, search, getUnreadCountForUser])
 
@@ -320,8 +161,6 @@ export default function PostbookMessenger() {
     () => (myGroups ?? []).find((g) => g.id === activeGroupId) ?? null,
     [myGroups, activeGroupId]
   )
-
-  /* ---- click handlers ---- */
 
   const handleFriendClick = useCallback((friend: User) => {
     setActiveDm(friend)
@@ -341,523 +180,280 @@ export default function PostbookMessenger() {
     setActiveGroupId(null)
   }, [])
 
-  /* ---- render ---- */
-
   const friendsUnreadTotal = useMemo(
     () => friends.reduce((sum, f) => sum + getUnreadCountForUser(f.id), 0),
     [friends, getUnreadCountForUser]
   )
 
-  // We don't have per-group unread yet, so groups badge uses 0
-  const groupsUnreadTotal = 0
-
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: MESSENGER_CSS }} />
-
-      <div
-        style={{
-          display: 'flex',
-          height: '100vh',
-          width: '100vw',
-          background: '#0d0d1a',
-          fontFamily: "'Outfit', sans-serif",
-          color: '#E5E7EB',
-          overflow: 'hidden',
-        }}
-      >
-        {/* ============================================================ */}
-        {/*  LEFT SIDEBAR                                                 */}
-        {/* ============================================================ */}
-        <div
-          style={{
-            width: 320,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            borderRight: '1px solid rgba(255,255,255,0.06)',
-            background: 'rgba(255,255,255,0.01)',
-          }}
-        >
-          {/* ---- Current user header ---- */}
-          <div
-            style={{
-              padding: '14px 16px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
+    <div className="flex h-screen w-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+      {/* ============================================================ */}
+      {/*  LEFT SIDEBAR                                                 */}
+      {/* ============================================================ */}
+      <div className="w-[340px] shrink-0 flex flex-col bg-white border-r border-slate-100">
+        {/* Current user header */}
+        <div className="px-5 pt-5 pb-3">
+          <div className="flex items-center gap-3 mb-4">
             {currentUser && (
               <>
                 <Avatar
                   user={currentUser}
-                  size={38}
+                  size={42}
                   showStatus
                   avatarUrl={
-                    currentUser.avatar &&
-                    (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('/'))
-                      ? currentUser.avatar
-                      : undefined
+                    currentUser.avatar && (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('/'))
+                      ? currentUser.avatar : undefined
                   }
                 />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13.5, color: '#E5E7EB' }}>
-                    {currentUser.name}
-                  </div>
-                  <div style={{ fontSize: 10.5, color: '#6B7280' }}>Active now</div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-[17px] font-bold text-slate-800 tracking-tight">Messenger</h1>
+                  <p className="text-[11px] text-slate-400 font-medium">{currentUser.name}</p>
                 </div>
+                <button className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                  <Settings className="w-4 h-4" />
+                </button>
               </>
             )}
           </div>
 
-          {/* ---- Search ---- */}
-          <div style={{ padding: '10px 14px', position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: 24,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: 14,
-                color: '#6B7280',
-                pointerEvents: 'none',
-              }}
-            >
-              {'\u2315'}
-            </span>
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 10px 9px 32px',
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(255,255,255,0.04)',
-                color: '#E5E7EB',
-                fontSize: 12.5,
-                fontFamily: 'inherit',
-                outline: 'none',
-              }}
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[13px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/10 focus:border-[#D8103F]/20 transition-all"
             />
           </div>
 
-          {/* ---- Tab switcher ---- */}
-          <div
-            style={{
-              padding: '0 14px 8px',
-              display: 'flex',
-              gap: 6,
-            }}
-          >
+          {/* Tab switcher */}
+          <div className="flex gap-1 p-1 bg-slate-50 rounded-xl border border-slate-100">
             {(['friends', 'groups'] as const).map((tab) => {
               const isActive = contactTab === tab
-              const badgeCount = tab === 'friends' ? friendsUnreadTotal : groupsUnreadTotal
-              const badgeBg = tab === 'friends' ? '#6366F1' : '#EC4899'
+              const badge = tab === 'friends' ? friendsUnreadTotal : 0
               return (
                 <button
                   key={tab}
                   onClick={() => setContactTab(tab)}
-                  style={{
-                    flex: 1,
-                    padding: '7px 0',
-                    borderRadius: 10,
-                    border: 'none',
-                    background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                    color: isActive ? '#E5E7EB' : '#6B7280',
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 5,
-                    transition: 'all 0.15s',
-                  }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-semibold transition-all ${
+                    isActive
+                      ? 'bg-white text-slate-800 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
                 >
-                  {tab === 'friends' ? 'Friends' : 'Groups'}
-                  {badgeCount > 0 && (
-                    <span
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        background: badgeBg,
-                        color: '#fff',
-                        borderRadius: 6,
-                        padding: '0 5px',
-                        lineHeight: '16px',
-                        minWidth: 16,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {badgeCount}
+                  {tab === 'friends' ? (
+                    <MessageCircle className="w-3.5 h-3.5" />
+                  ) : (
+                    <Users className="w-3.5 h-3.5" />
+                  )}
+                  {tab === 'friends' ? 'Messages' : 'Groups'}
+                  {badge > 0 && (
+                    <span className="text-[9px] font-bold bg-[#D8103F] text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                      {badge}
                     </span>
                   )}
                 </button>
               )
             })}
           </div>
+        </div>
 
-          {/* ---- Contact list ---- */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '4px 8px',
-            }}
-          >
-            {isLoading ? (
-              <SidebarSkeleton />
-            ) : contactTab === 'friends' ? (
-              /* ---- Friends list ---- */
-              filteredFriends.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#6B7280', fontSize: 12 }}>
-                  {search ? 'No friends match your search' : 'No friends found'}
-                </div>
-              ) : (
-                filteredFriends.map((friend) => {
+        {/* Contact list */}
+        <div className="flex-1 overflow-y-auto px-3 pb-3">
+          {isLoading ? (
+            <SidebarSkeleton />
+          ) : contactTab === 'friends' ? (
+            /* Friends list */
+            filteredFriends.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <MessageCircle className="w-10 h-10 text-slate-200 mb-2" />
+                <p className="text-[13px] font-medium text-slate-400">
+                  {search ? 'No friends match your search' : 'No conversations yet'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {filteredFriends.map((friend) => {
                   const isActive = activeDm?.id === friend.id
-                  const avatarUrl =
-                    friend.avatar &&
-                    (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
-                      ? friend.avatar
-                      : undefined
+                  const avatarUrl = friend.avatar && (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
+                    ? friend.avatar : undefined
                   const lastMsg = getLastMessage(friend.id)
                   const unread = getUnreadCountForUser(friend.id)
 
                   return (
-                    <div
+                    <button
                       key={friend.id}
                       onClick={() => handleFriendClick(friend)}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: 12,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        marginBottom: 2,
-                        transition: 'background 0.15s',
-                        background: isActive
-                          ? 'rgba(99,102,241,0.08)'
-                          : 'transparent',
-                        border: isActive
-                          ? '1px solid rgba(99,102,241,0.15)'
-                          : '1px solid transparent',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) e.currentTarget.style.background = 'transparent'
-                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                        isActive
+                          ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
+                          : 'hover:bg-slate-50 border border-transparent'
+                      }`}
                     >
-                      <Avatar user={friend} size={40} showStatus avatarUrl={avatarUrl} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: 600,
-                              color: '#E5E7EB',
-                              fontSize: 13,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
+                      <Avatar user={friend} size={42} showStatus avatarUrl={avatarUrl} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-[#D8103F]' : 'text-slate-800'}`}>
                             {friend.name}
                           </span>
                           {lastMsg?.time && (
-                            <span style={{ color: '#6B7280', fontSize: 10, flexShrink: 0, marginLeft: 6 }}>
-                              {lastMsg.time}
-                            </span>
+                            <span className="text-[10px] text-slate-300 shrink-0 ml-2">{lastMsg.time}</span>
                           )}
                         </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginTop: 2,
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: '#6B7280',
-                              fontSize: 11.5,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              flex: 1,
-                            }}
-                          >
+                        <div className="flex items-center justify-between mt-0.5">
+                          <span className="text-[12px] text-slate-400 truncate flex-1">
                             {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
-                            <span
-                              style={{
-                                background: '#6366F1',
-                                color: '#fff',
-                                borderRadius: 10,
-                                minWidth: 18,
-                                height: 18,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 10,
-                                fontWeight: 700,
-                                padding: '0 5px',
-                                flexShrink: 0,
-                                marginLeft: 6,
-                              }}
-                            >
+                            <span className="bg-[#D8103F] text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
                               {unread}
                             </span>
                           )}
                         </div>
                       </div>
-                    </div>
+                    </button>
                   )
-                })
-              )
-            ) : (
-              /* ---- Groups list ---- */
-              <>
-                {filteredGroups.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: '#6B7280', fontSize: 12 }}>
+                })}
+              </div>
+            )
+          ) : (
+            /* Groups list */
+            <>
+              {filteredGroups.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Users className="w-10 h-10 text-slate-200 mb-2" />
+                  <p className="text-[13px] font-medium text-slate-400">
                     {search ? 'No groups match your search' : 'No groups yet'}
-                  </div>
-                ) : (
-                  filteredGroups.map((group) => {
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {filteredGroups.map((group) => {
                     const isActive = activeGroupId === group.id
                     const groupColor = getGroupColor(group.id)
                     const groupAvatarUrl = group.avatar_media_id
                       ? `/v1/media/${group.avatar_media_id}/serve`
                       : null
+                    const privacy = group.privacy_level ?? 'public'
 
                     return (
-                      <div
+                      <button
                         key={group.id}
                         onClick={() => handleGroupClick(group.id)}
-                        style={{
-                          padding: '8px 10px',
-                          borderRadius: 12,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          marginBottom: 2,
-                          transition: 'background 0.15s',
-                          background: isActive
-                            ? 'rgba(99,102,241,0.08)'
-                            : 'transparent',
-                          border: isActive
-                            ? '1px solid rgba(99,102,241,0.15)'
-                            : '1px solid transparent',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive) e.currentTarget.style.background = 'transparent'
-                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                          isActive
+                            ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
+                            : 'hover:bg-slate-50 border border-transparent'
+                        }`}
                       >
-                        {/* Group icon */}
+                        {/* Group avatar */}
                         {groupAvatarUrl ? (
                           <img
                             src={groupAvatarUrl}
                             alt={group.name}
-                            style={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: 12,
-                              objectFit: 'cover',
-                              flexShrink: 0,
-                            }}
+                            className="w-[42px] h-[42px] rounded-xl object-cover shrink-0"
                           />
                         ) : (
                           <div
-                            style={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: 12,
-                              background: groupColor,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 16,
-                              fontWeight: 700,
-                              color: '#fff',
-                              flexShrink: 0,
-                            }}
+                            className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-white font-bold text-base shrink-0"
+                            style={{ background: groupColor }}
                           >
                             {group.name.charAt(0).toUpperCase()}
                           </div>
                         )}
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontWeight: 600,
-                                color: '#E5E7EB',
-                                fontSize: 13,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-[#D8103F]' : 'text-slate-800'}`}>
                               {group.name}
                             </span>
+                            {privacy === 'private' && <Lock className="w-3 h-3 text-slate-300 shrink-0" />}
+                            {privacy === 'restricted' && <Shield className="w-3 h-3 text-slate-300 shrink-0" />}
                           </div>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              marginTop: 2,
-                            }}
-                          >
-                            <span
-                              style={{
-                                color: '#6B7280',
-                                fontSize: 11.5,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                flex: 1,
-                              }}
-                            >
-                              {group.description
-                                ? group.description.length > 40
-                                  ? group.description.slice(0, 40) + '...'
-                                  : group.description
-                                : `${group.member_count} members`}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {group.member_count}
                             </span>
-                            <span
-                              style={{
-                                color: '#6B7280',
-                                fontSize: 10,
-                                flexShrink: 0,
-                                marginLeft: 6,
-                              }}
-                            >
-                              {group.member_count} members
-                            </span>
+                            {group.handle && (
+                              <span className="text-[11px] text-slate-300">@{group.handle}</span>
+                            )}
                           </div>
                         </div>
-                      </div>
+
+                        <ChevronRight className="w-4 h-4 text-slate-200 shrink-0" />
+                      </button>
                     )
-                  })
-                )}
-
-                {/* New Group button */}
-                <div style={{ marginTop: 8, padding: '0 2px' }}>
-                  <Btn variant="ghost" full size="sm" onClick={handleNewGroup}>
-                    {'\uFF0B'} New Group
-                  </Btn>
+                  })}
                 </div>
-              </>
-            )}
-          </div>
-        </div>
+              )}
 
-        {/* ============================================================ */}
-        {/*  MAIN CONTENT                                                  */}
-        {/* ============================================================ */}
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-            background: '#0d0d1a',
-          }}
-        >
-          {activeDm ? (
-            <DmChat
-              userId={activeDm.id}
-              userName={activeDm.name}
-              userAvatar={activeDm.avatar}
-              userOnline={activeDm.isOnline ?? false}
-              onBack={() => setActiveDm(null)}
-            />
-          ) : (
-            <FeedPlaceholder friends={friends} />
+              {/* New Group button */}
+              <button
+                onClick={handleNewGroup}
+                className="w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-200 text-[13px] font-semibold text-slate-400 hover:text-[#D8103F] hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Create Group
+              </button>
+            </>
           )}
         </div>
+      </div>
 
-        {/* ============================================================ */}
-        {/*  RIGHT PANEL (conditional)                                     */}
-        {/* ============================================================ */}
-        {activeGroupId && !showCreateGroup && selectedGroup && (
-          <GroupPanel
-            groupId={activeGroupId}
-            groupName={selectedGroup.name}
-            groupColor={getGroupColor(activeGroupId)}
-            groupAvatarUrl={
-              selectedGroup.avatar_media_id
-                ? `/v1/media/${selectedGroup.avatar_media_id}/serve`
-                : null
-            }
-            onClose={() => setActiveGroupId(null)}
+      {/* ============================================================ */}
+      {/*  MAIN CONTENT                                                  */}
+      {/* ============================================================ */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+        {activeDm ? (
+          <DmChat
+            userId={activeDm.id}
+            userName={activeDm.name}
+            userAvatar={activeDm.avatar}
+            userOnline={activeDm.isOnline ?? false}
+            onBack={() => setActiveDm(null)}
           />
-        )}
-
-        {showCreateGroup && (
-          <CreateGroupPanel
-            onClose={() => setShowCreateGroup(false)}
-            onCreated={() => {
-              setShowCreateGroup(false)
-              showToast('Group created! \uD83C\uDF89')
-            }}
-          />
+        ) : (
+          <EmptyState />
         )}
       </div>
 
       {/* ============================================================ */}
-      {/*  TOAST                                                         */}
+      {/*  RIGHT PANEL                                                   */}
       {/* ============================================================ */}
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '10px 24px',
-            borderRadius: 12,
-            background: '#6366F1',
-            color: '#fff',
-            fontSize: 13,
-            fontWeight: 600,
-            boxShadow: '0 4px 24px rgba(99,102,241,0.3)',
-            animation: 'fadeSlide 0.25s ease',
-            zIndex: 9999,
-            fontFamily: "'Outfit', sans-serif",
-            whiteSpace: 'nowrap',
+      {activeGroupId && !showCreateGroup && selectedGroup && (
+        <GroupPanel
+          groupId={activeGroupId}
+          groupName={selectedGroup.name}
+          groupColor={getGroupColor(activeGroupId)}
+          groupAvatarUrl={
+            selectedGroup.avatar_media_id
+              ? `/v1/media/${selectedGroup.avatar_media_id}/serve`
+              : null
+          }
+          onClose={() => setActiveGroupId(null)}
+        />
+      )}
+
+      {showCreateGroup && (
+        <CreateGroupPanel
+          onClose={() => setShowCreateGroup(false)}
+          onCreated={(groupId) => {
+            setShowCreateGroup(false)
+            setActiveGroupId(groupId)
+            showToast('Group created!')
           }}
-        >
+        />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 bg-slate-800 text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           {toast}
         </div>
       )}
-    </>
+    </div>
   )
 }

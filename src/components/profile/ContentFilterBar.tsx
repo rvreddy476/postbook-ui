@@ -10,22 +10,21 @@ interface ContentFilterBarProps {
 const filters: { key: ContentType; label: string }[] = [
     { key: "all", label: "All" },
     { key: "post", label: "Posts" },
-    { key: "short", label: "Shorts" },
+    { key: "reel", label: "Flicks" },
     { key: "video", label: "Videos" },
-    { key: "photo", label: "Photos" },
 ]
 
 export function ContentFilterBar({ activeFilter, onFilterChange }: ContentFilterBarProps) {
     return (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {filters.map((filter) => (
                 <button
                     key={filter.key}
                     onClick={() => onFilterChange(filter.key)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                         activeFilter === filter.key
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            ? "bg-slate-900 text-white shadow-sm"
+                            : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100"
                     }`}
                 >
                     {filter.label}

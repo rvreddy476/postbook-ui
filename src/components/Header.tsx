@@ -213,7 +213,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
       >
         {isSearching ? (
           <div className="px-4 py-6 flex flex-col items-center gap-2">
-            <div className="w-5 h-5 border-2 border-violet-300 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#D8103F]/30 border-t-transparent rounded-full animate-spin" />
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Searching...</span>
           </div>
         ) : searchResults.length === 0 ? (
@@ -254,7 +254,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3 sm:gap-4 cursor-pointer group"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 orchid-gradient rounded-[0.8rem] sm:rounded-[1rem] flex items-center justify-center shadow-xl shadow-violet-500/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 orchid-gradient rounded-[0.8rem] sm:rounded-[1rem] flex items-center justify-center shadow-xl shadow-[#D8103F]/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
               <span className="text-white font-black text-lg sm:text-xl tracking-tighter">PB</span>
             </div>
             <span className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tighter hidden xs:block italic">PostBoek.com</span>
@@ -271,9 +271,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-            className="w-full bg-slate-50/50 border border-slate-100/50 rounded-2xl py-3 px-12 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:ring-4 focus:ring-violet-500/5 focus:bg-white focus:border-violet-200 transition-all shadow-inner placeholder:text-slate-300 italic"
+            className="w-full bg-slate-50/50 border border-slate-100/50 rounded-2xl py-3 px-12 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:ring-4 focus:ring-[#D8103F]/5 focus:bg-white focus:border-[#D8103F]/20 transition-all shadow-inner placeholder:text-slate-300 italic"
           />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-violet-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-[#D8103F]/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {searchQuery && (
             <button
               onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
@@ -304,7 +304,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:scale-110 active:scale-95 transition-all duration-300"
           title="Create Post"
         >
-          <div className="w-5 h-5 text-slate-600 group-hover:text-violet-600 transition-colors">
+          <div className="w-5 h-5 text-slate-600 group-hover:text-[#D8103F] transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
@@ -411,7 +411,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                     <button
                       onClick={() => markAllRead.mutate()}
                       disabled={markAllRead.isPending}
-                      className="flex items-center gap-1 text-[9px] font-black text-violet-500 hover:text-violet-700 uppercase tracking-widest transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 text-[9px] font-black text-[#D8103F]/50 hover:text-[#b80d35] uppercase tracking-widest transition-colors disabled:opacity-50"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -442,7 +442,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             layout
                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-violet-50/30' : ''}`}
+                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-[#D8103F]/30' : ''}`}
                           >
                             {/* Avatar — click to go to profile */}
                             <button
@@ -521,7 +521,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             {/* Unread dot + delete button */}
                             <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
                               {!notif.is_read && (
-                                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                                <div className="w-2 h-2 rounded-full bg-[#D8103F]/50" />
                               )}
                               <button
                                 onClick={e => {
@@ -554,7 +554,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <div className="flex items-center gap-2">
             <Link href="/profile">
               <button
-                className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-xl hover:ring-4 hover:ring-violet-500/10 transition-all duration-500 hover:scale-105 active:scale-95 ${activeTab === 'Profile' ? 'border-violet-500 ring-4 ring-violet-500/20' : 'border-white'}`}
+                className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-xl hover:ring-4 hover:ring-[#D8103F]/10 transition-all duration-500 hover:scale-105 active:scale-95 ${activeTab === 'Profile' ? 'border-[#D8103F]/50 ring-4 ring-[#D8103F]/20' : 'border-white'}`}
               >
                 <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
               </button>
@@ -599,7 +599,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 <div className="space-y-0.5">
                   <Link href="/profile" onClick={() => setIsProfileOpen(false)}>
                     <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-violet-50 group-hover:text-violet-600 transition-colors">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F] transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -658,7 +658,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={e => handleSearchChange(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-12 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-violet-500/10 transition-all"
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-12 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-[#D8103F]/10 transition-all"
               />
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               {searchQuery && (

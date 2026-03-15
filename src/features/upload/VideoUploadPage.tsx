@@ -32,7 +32,7 @@ const TYPE_CONFIG: Record<
 > = {
   long:    { title: "Upload Video",        section: "Upload",  icon: Film,         acceptHint: "MP4, MOV, or WebM up to 10 GB",       accept: "video/*",                              aspect: "16/9" },
   short:   { title: "Upload Flick / Clip", section: "Upload",  icon: Clapperboard, acceptHint: "Vertical MP4 or MOV, up to 3 min",    accept: "video/*",                              aspect: "9/16" },
-  reel:    { title: "Create Reel",         section: "Reels",   icon: Sparkles,     acceptHint: "MP4, WebM, MOV — max 500 MB, 3 min",  accept: "video/mp4,video/webm,video/quicktime", aspect: "9/16" },
+  reel:    { title: "Create Flick",        section: "Flicks",  icon: Sparkles,     acceptHint: "MP4, WebM, MOV — max 500 MB, 3 min",  accept: "video/mp4,video/webm,video/quicktime", aspect: "9/16" },
   podcast: { title: "Upload Podcast",      section: "Podcast", icon: Mic,          acceptHint: "MP3, M4A, WAV, or MP4 up to 2 GB",    accept: "video/*,audio/*",                      aspect: "1/1" },
 };
 
@@ -207,8 +207,8 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
-              <config.icon className="h-5 w-5 text-violet-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8103F]/5">
+              <config.icon className="h-5 w-5 text-[#D8103F]" />
             </div>
             <div>
               <h1 className="text-[17px] font-bold text-slate-900">{config.title}</h1>
@@ -220,7 +220,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               type="button"
               onClick={handlePublish}
               disabled={publishing || !canPublish}
-              className="flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-40 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#b80d35] disabled:opacity-40 transition-all"
             >
               {publishing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publishing...</> : "Publish"}
             </button>
@@ -238,7 +238,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               <p className="mt-2 text-[13px] text-slate-500">Your content is being processed and will appear shortly.</p>
               <div className="mt-6 flex gap-3">
                 <Link href="/reels" className="rounded-xl bg-slate-100 px-5 py-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-200">Back to Feed</Link>
-                <button type="button" onClick={reset} className="rounded-xl bg-violet-600 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-violet-700">Upload Another</button>
+                <button type="button" onClick={reset} className="rounded-xl bg-[#D8103F] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#b80d35]">Upload Another</button>
               </div>
             </motion.div>
 
@@ -249,10 +249,10 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onDrop}
                 onClick={() => fileRef.current?.click()}
-                className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-24 transition-colors hover:border-violet-300 hover:bg-violet-50/30"
+                className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-24 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-violet-100 transition-colors">
-                  <Upload className="h-7 w-7 text-slate-400 group-hover:text-violet-500" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-[#D8103F]/10 transition-colors">
+                  <Upload className="h-7 w-7 text-slate-400 group-hover:text-[#D8103F]/50" />
                 </div>
                 <p className="mt-5 text-[15px] font-semibold text-slate-700">Drag & drop your file here</p>
                 <p className="mt-1.5 text-[13px] text-slate-400">or click to browse</p>
@@ -274,7 +274,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                     <h2 className="text-[13px] font-bold text-slate-800">File</h2>
                   </div>
                   <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                    <FileVideo className="h-4 w-4 shrink-0 text-violet-500" />
+                    <FileVideo className="h-4 w-4 shrink-0 text-[#D8103F]/50" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-medium text-slate-800">{file.name}</p>
                       <p className="text-[11px] text-slate-400">
@@ -282,7 +282,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         {duration != null && <> · {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}</>}
                       </p>
                     </div>
-                    <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-violet-600 hover:text-violet-700">Change</button>
+                    <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-[#D8103F] hover:text-[#b80d35]">Change</button>
                     <button type="button" onClick={clearFile} className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600">
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -310,7 +310,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setTitle(e.target.value)}
                         maxLength={100}
                         autoFocus
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                         placeholder="Add a title that describes your content"
                       />
                     </div>
@@ -326,7 +326,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setDescription(e.target.value)}
                         maxLength={5000}
                         rows={4}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 resize-none transition-all"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 resize-none transition-all"
                         placeholder="Tell viewers about your content. Use #hashtags and @mentions."
                       />
                     </div>
@@ -339,7 +339,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                           >
                             <option value="">Select category</option>
                             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -353,7 +353,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={visibility}
                             onChange={(e) => setVisibility(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                           >
                             {VISIBILITY_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
                           </select>
@@ -368,7 +368,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                       <input
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all"
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                         placeholder="tech, tutorial, vlog (comma-separated)"
                       />
                     </div>
@@ -413,7 +413,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
 
                   <div
                     onClick={() => posterRef.current?.click()}
-                    className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-violet-300 hover:bg-violet-50/30"
+                    className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
                     style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "180px" : "140px" }}
                   >
                     {posterPreview ? (
@@ -444,13 +444,13 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         <input
                           type="range" min={0} max={(duration ?? 30) * 1000} step={100}
                           value={posterTs ?? 0} onChange={(e) => setPosterTs(Number(e.target.value))}
-                          className="flex-1 accent-violet-600"
+                          className="flex-1 accent-[#D8103F]"
                         />
                         <span className="text-[11px] font-mono text-slate-500 w-9 text-right">{fmtMs(posterTs ?? 0)}</span>
                       </div>
                       <button
                         type="button" onClick={extractPoster} disabled={extracting}
-                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-[11px] font-semibold text-white hover:bg-violet-700 disabled:opacity-40 transition-all"
+                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#D8103F] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#b80d35] disabled:opacity-40 transition-all"
                       >
                         {extracting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
                         Extract Poster

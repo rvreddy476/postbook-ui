@@ -6,6 +6,7 @@ import type { StudioFormState } from "../types";
 interface EngageStepProps {
   form: StudioFormState;
   patch: (u: Partial<StudioFormState>) => void;
+  showErrors?: boolean;
 }
 
 export function EngageStep({ form, patch }: EngageStepProps) {

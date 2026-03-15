@@ -65,9 +65,9 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D8103F]/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                checked ? "bg-violet-500" : "bg-slate-200",
+                checked ? "bg-[#D8103F]/50" : "bg-slate-200",
             ].join(" ")}
         >
             <span
@@ -103,11 +103,11 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-white border border-violet-100 shadow-sm"
+            className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D8103F]/5">
                         {icon}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ function PageSkeleton() {
             {[0, 1, 2].map((i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-white border border-violet-100 shadow-sm p-6 space-y-4 animate-pulse"
+                    className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse"
                 >
                     <div className="flex items-center gap-4">
                         <div className="h-11 w-11 rounded-xl bg-slate-200" />
@@ -209,7 +209,7 @@ export default function NotificationPreferencesPage() {
             {/* Back link */}
             <Link
                 href="/settings"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 transition-colors hover:text-violet-800"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#D8103F] transition-colors hover:text-[#8a0a28]"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Settings
@@ -220,7 +220,7 @@ export default function NotificationPreferencesPage() {
                 <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-bold text-slate-900">Notification Preferences</h1>
                     {isSaving && (
-                        <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-600">
+                        <span className="rounded-full bg-[#D8103F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#D8103F]">
                             Saving...
                         </span>
                     )}
@@ -238,7 +238,7 @@ export default function NotificationPreferencesPage() {
                     {/*  Channels Section                                   */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<Bell className="h-6 w-6 text-violet-500" />}
+                        icon={<Bell className="h-6 w-6 text-[#D8103F]/50" />}
                         title="Notification Channels"
                         description="Choose which channels PostBook can use to reach you."
                         delay={0.05}
@@ -265,8 +265,8 @@ export default function NotificationPreferencesPage() {
                             {/* Push */}
                             <div className="flex items-center justify-between py-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50">
-                                        <Smartphone className="h-4 w-4 text-violet-500" />
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D8103F]/5">
+                                        <Smartphone className="h-4 w-4 text-[#D8103F]/50" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold text-slate-900">Push</p>
@@ -304,7 +304,7 @@ export default function NotificationPreferencesPage() {
                     {/*  Quiet Hours Section                                */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<Moon className="h-6 w-6 text-violet-500" />}
+                        icon={<Moon className="h-6 w-6 text-[#D8103F]/50" />}
                         title="Quiet Hours"
                         description="During quiet hours, notifications will be held and delivered after the period ends."
                         delay={0.1}
@@ -326,7 +326,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
                                         "text-sm font-medium text-slate-900 placeholder-slate-400",
-                                        "transition-colors focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-200",
+                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -347,7 +347,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
                                         "text-sm font-medium text-slate-900 placeholder-slate-400",
-                                        "transition-colors focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-200",
+                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -367,7 +367,7 @@ export default function NotificationPreferencesPage() {
                     {/*  Muted Types Section                                */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<VolumeX className="h-6 w-6 text-violet-500" />}
+                        icon={<VolumeX className="h-6 w-6 text-[#D8103F]/50" />}
                         title="Muted Notification Types"
                         description="Select which types of activity you do not want to be notified about."
                         delay={0.15}
@@ -394,8 +394,8 @@ export default function NotificationPreferencesPage() {
                                             onChange={(e) => handleMutedTypeToggle(value, e.target.checked)}
                                             className={[
                                                 "h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300",
-                                                "text-violet-500 accent-violet-500",
-                                                "focus:ring-2 focus:ring-violet-400 focus:ring-offset-1",
+                                                "text-[#D8103F]/50 accent-[#D8103F]/50",
+                                                "focus:ring-2 focus:ring-[#D8103F]/50 focus:ring-offset-1",
                                                 "disabled:cursor-not-allowed disabled:opacity-50",
                                             ].join(" ")}
                                         />

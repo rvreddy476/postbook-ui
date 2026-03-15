@@ -19,7 +19,10 @@ import {
 } from '../services/messageService';
 
 import { initiateCall } from '../services/callService';
+import { sendMediaMessage } from '../services/messageService';
+import { uploadMedia } from '@/lib/mediaUpload';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { Phone, Video, Send, Smile, MessageCircle, MoreHorizontal, Link2, Image, Mic, Camera, X, Minus, Maximize2, ArrowDownToLine } from 'lucide-react';
 import data from '@emoji-mart/data';
 const EmojiPicker = lazy(() => import('@emoji-mart/react'));
 
@@ -31,6 +34,8 @@ interface ChatWindowProps {
 interface DisplayMessage {
   id: string;
   text: string;
+  type: string;
+  media_id?: string;
   sender: 'me' | 'contact';
   time: string;
   bucket: string;
@@ -48,29 +53,34 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [hoveredMessage, setHoveredMessage] = useState<string | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const { markConversationAsViewed, unmarkConversationAsViewed, markConversationRead, registerConversationMapping } = useNotifications();
   const convIdRef = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const lastTypingSentRef = useRef<number>(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const myAvatar = currentUser?.avatar || '';
 
   const mapMessage = useCallback((m: BackendMessage): DisplayMessage => ({
     id: m.id,
     text: m.text || '',
+    type: m.type || 'text',
+    media_id: m.media_id,
     sender: m.sender_id === currentUser?.id ? 'me' : 'contact',
     bucket: m.bucket || '',
     ts: m.ts || m.created_at || '',
     conversationId: m.conversation_id,
     reactions: m.reactions || [],
-    time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
   }), [currentUser?.id]);
 
   const handleToggleReaction = async (msg: DisplayMessage, emoji: string) => {
     if (!currentUser || !convIdRef.current) return;
 
-    // Optimistic update
     setMessages(prev => prev.map(m => {
       if (m.id !== msg.id) return m;
       const reactions = [...m.reactions];
@@ -102,7 +112,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
     }
   };
 
-  // Close emoji picker when clicking outside
   useEffect(() => {
     if (!showEmojiPicker) return;
     const handler = (e: MouseEvent) => {
@@ -130,7 +139,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
         const history: BackendMessage[] = historyResult.data;
         setMessages(history.map(mapMessage).reverse());
 
-        // Mark conversation as read using the latest message timestamp
         if (history.length > 0) {
           const latestTs = history[0].created_at;
           markConversationRead(convId, latestTs);
@@ -238,196 +246,218 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
     setShowEmojiPicker(false);
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !convIdRef.current) return;
+    e.target.value = '';
+    try {
+      const mediaId = await uploadMedia(file, 'image');
+      const result = await sendMediaMessage(convIdRef.current, mediaId, 'image');
+      const displayMsg = mapMessage(result.data);
+      setMessages(prev => prev.some(m => m.id === displayMsg.id) ? prev : [...prev, displayMsg]);
+    } catch (err) {
+      console.error('Failed to send image:', err);
+    }
+  };
+
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-t-[2rem] border-x border-t border-slate-200/50 bg-white/90 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.15)] backdrop-blur-3xl transition-all duration-500">
-      {/* Header */}
-      <div className="relative flex items-center justify-between border-b border-slate-100/60 bg-white/40 p-5 backdrop-blur-xl">
+    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
+      {/* Chat Header */}
+      <header
+        className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-5 shadow-sm cursor-pointer"
+        onClick={() => setIsMinimized(!isMinimized)}
+      >
         <div className="flex items-center gap-3.5">
-          <div className="relative group">
-            <div className="w-10 h-10 rounded-2xl overflow-hidden ring-2 ring-white shadow-sm transition-transform duration-500 group-hover:scale-105 group-hover:rotate-3">
-              <img src={contact.avatar} className="w-full h-full object-cover" alt="" />
-            </div>
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-transparent transition-all hover:ring-slate-100">
+            <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" />
             {contact.isOnline && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-              </span>
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
             )}
           </div>
-          <div>
-            <h3 className="text-[13px] font-black text-slate-900 tracking-tight leading-none">{contact.name}</h3>
-            <p className="text-[9px] font-bold text-slate-400 mt-1.5 uppercase tracking-widest flex items-center gap-1.5">
-              <span className={`w-1 h-1 rounded-full ${contact.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-              {contact.isOnline ? 'Active Now' : 'Disconnected'}
+          <div className="flex flex-col">
+            <h3 className="text-[15px] font-extrabold tracking-tight text-slate-800">{contact.name}</h3>
+            <p className="text-[11px] font-semibold tracking-wide text-slate-400">
+              {contact.isOnline ? <span className="text-emerald-500">Active now</span> : 'Offline'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => initiateCall(contact, 'audio')}
-            className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition-all duration-300 shadow-sm border border-slate-100/50"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
-            </svg>
+        <div className="flex items-center gap-1.5 text-slate-400">
+          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-indigo-600 active:scale-95">
+            <Phone className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => initiateCall(contact, 'video')}
-            className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/50 text-slate-400 hover:bg-violet-50 hover:text-violet-500 transition-all duration-300 shadow-sm border border-slate-100/50"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
+          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-indigo-600 active:scale-95">
+            <Video className="h-4 w-4" />
           </button>
-          <button
-            onClick={onClose}
-            className="group flex items-center justify-center w-8 h-8 rounded-xl bg-white/50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all duration-300 shadow-sm border border-slate-100/50"
-          >
-            <svg className="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-slate-600 active:scale-95">
+            {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-red-500 active:scale-95">
+            <X className="h-4 w-4" />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="scrollbar-hide flex-1 space-y-1.5 overflow-y-auto bg-slate-50/20 px-5 py-4">
-        {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center space-y-4">
-            <div className="w-16 h-16 rounded-[2rem] bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center shadow-inner relative group overflow-hidden">
-              <div className="absolute inset-0 bg-violet-400/5 scale-0 group-hover:scale-150 transition-transform duration-1000 rounded-full" />
-              <svg className="w-8 h-8 text-violet-400 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-            <div className="text-center space-y-1">
-              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 italic">Ethereal Silence</p>
-              <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Transmit a pulse to begin</p>
-            </div>
-          </div>
-        )}
-
-        {messages.map((msg, idx) => {
-          const isMe = msg.sender === 'me';
-          const isLastInCluster = idx === messages.length - 1 || messages[idx + 1].sender !== msg.sender;
-          const showAvatar = isLastInCluster && !isMe;
-          const isHovered = hoveredMessage === msg.id;
-          const hasReactions = msg.reactions.length > 0;
-
-          return (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, x: isMe ? 10 : -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={`flex items-end gap-2 group relative ${isMe ? 'justify-end pl-10' : 'justify-start pr-10'} ${hasReactions ? 'mb-3' : ''}`}
-              onMouseEnter={() => setHoveredMessage(msg.id)}
-              onMouseLeave={() => setHoveredMessage(null)}
-            >
-              {!isMe && (
-                <div className="w-7 h-7 shrink-0 mb-1">
-                  {showAvatar && (
-                    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-full h-full rounded-[0.6rem] overflow-hidden shadow-sm border border-white ring-1 ring-slate-100">
-                      <img src={contact.avatar} className="w-full h-full object-cover" alt="" />
-                    </motion.div>
-                  )}
+      {!isMinimized && (
+        <>
+          {/* Messages Area */}
+          <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto bg-slate-50/30 p-5">
+            {messages.length === 0 && (
+              <div className="flex h-full flex-col items-center justify-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50">
+                  <MessageCircle className="h-8 w-8 text-indigo-500/70" />
                 </div>
-              )}
-
-              <div className={`flex flex-col gap-1 max-w-full relative ${isMe ? 'items-end' : 'items-start'}`}>
-                {/* Quick reaction bar on hover */}
-                <AnimatePresence>
-                  {isHovered && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.8, filter: 'blur(4px)' }}
-                      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, scale: 0.8, filter: 'blur(4px)' }}
-                      className={`absolute -top-10 z-20 flex gap-0.5 p-1 bg-white/90 backdrop-blur-xl rounded-full shadow-xl border border-slate-100/50 ${isMe ? 'right-0' : 'left-0'}`}
-                    >
-                      {QUICK_REACTIONS.map(e => (
-                        <button
-                          key={e}
-                          onClick={() => handleToggleReaction(msg, e)}
-                          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-full transition-all text-[14px] hover:scale-125 active:scale-90"
-                        >
-                          {e}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Message Bubble */}
-                <div className={`px-4 py-3 rounded-[1.3rem] text-[13px] font-medium leading-[1.6] transition-all duration-300 relative ${isMe
-                  ? 'orchid-gradient text-white rounded-br-none shadow-[0_8px_20px_-8px_rgba(124,58,237,0.3)]'
-                  : 'bg-white text-slate-800 rounded-bl-none border border-slate-200/40 shadow-sm hover:border-slate-300/60'
-                  }`}>
-                  {msg.text}
-
-                  {/* Reaction pills */}
-                  {hasReactions && (
-                    <div className={`absolute -bottom-3.5 flex gap-1 ${isMe ? 'right-1' : 'left-1'}`}>
-                      {msg.reactions.map(({ emoji, user_ids }) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(msg, emoji)}
-                          className={`flex items-center gap-1 px-2 py-0.5 bg-white/90 backdrop-blur-md rounded-full border shadow-sm text-[10px] font-black transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '') ? 'border-violet-200 bg-violet-50 text-violet-600' : 'border-slate-100 text-slate-500'}`}
-                        >
-                          <span>{emoji}</span>
-                          {user_ids.length > 1 && <span className="text-[8px]">{user_ids.length}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Timestamp */}
-                <div className={`flex items-center gap-2 px-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <span className="text-[8px] font-black tracking-widest text-slate-300 uppercase italic">{msg.time}</span>
-                  {isMe && <div className="w-1 h-1 bg-violet-300 rounded-full" />}
-                </div>
+                <p className="text-sm font-extrabold text-slate-700">Start a conversation</p>
+                <p className="mt-1 text-[12px] font-medium text-slate-400">Say hello to {contact.name}</p>
               </div>
-            </motion.div>
-          );
-        })}
+            )}
 
-        {isTyping && (
-          <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-9 py-2">
-            <div className="flex gap-1.5 bg-white/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-slate-100 shadow-sm">
-              {[0, 2, 4].map(d => (
-                <motion.span
-                  key={d}
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.6, delay: d * 0.1 }}
-                  className="w-1.5 h-1.5 bg-violet-400/40 rounded-full"
-                />
-              ))}
+            <div className="space-y-2">
+              {messages.map((msg) => {
+                const isMe = msg.sender === 'me';
+                const isHovered = hoveredMessage === msg.id;
+                const hasReactions = msg.reactions.length > 0;
+                const avatarUrl = isMe ? myAvatar : contact.avatar;
+
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="group/msg"
+                    onMouseEnter={() => setHoveredMessage(msg.id)}
+                    onMouseLeave={() => setHoveredMessage(null)}
+                  >
+                    <div className={`flex items-start gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                      {/* Avatar */}
+                      <div className="mt-1 h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
+                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+
+                      {/* Content */}
+                      <div className={`relative flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                        {/* Quick reactions on hover */}
+                        <AnimatePresence>
+                          {isHovered && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              className={`absolute -top-8 z-20 flex gap-0.5 rounded-full border border-slate-100 bg-white p-1 shadow-lg ${isMe ? 'right-0' : 'left-0'}`}
+                            >
+                              {QUICK_REACTIONS.map(e => (
+                                <button
+                                  key={e}
+                                  onClick={() => handleToggleReaction(msg, e)}
+                                  className="flex h-6 w-6 items-center justify-center rounded-full text-[13px] transition-all hover:scale-125 hover:bg-slate-50 active:scale-90"
+                                >
+                                  {e}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Message Bubble */}
+                        {msg.media_id ? (
+                          <div className={`group/media relative max-w-[220px] overflow-hidden rounded-2xl shadow-sm ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
+                            <img
+                              src={`/v1/media/${msg.media_id}/serve`}
+                              alt=""
+                              className="h-auto w-full object-cover"
+                              loading="lazy"
+                            />
+                            <a
+                              href={`/v1/media/${msg.media_id}/serve`}
+                              download
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/media:opacity-100 hover:bg-black/70"
+                              title="Download"
+                            >
+                              <ArrowDownToLine className="h-3.5 w-3.5" />
+                            </a>
+                            {msg.text && (
+                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-slate-100 bg-white text-slate-700'}`}>
+                                {msg.text}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className={`max-w-[220px] break-words rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-sm ${isMe
+                            ? 'rounded-tr-sm bg-indigo-600 text-white'
+                            : 'rounded-tl-sm border border-slate-100 bg-white text-slate-700'
+                            }`}>
+                            {msg.text}
+                          </div>
+                        )}
+
+                        {/* Time */}
+                        <span className="mt-0.5 px-1 text-[9px] text-slate-400">{msg.time}</span>
+
+                        {/* Reaction pills */}
+                        {hasReactions && (
+                          <div className={`mt-1 flex flex-wrap gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            {msg.reactions.map(({ emoji, user_ids }) => (
+                              <button
+                                key={emoji}
+                                onClick={() => handleToggleReaction(msg, emoji)}
+                                className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-sm transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '')
+                                  ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
+                                  : 'border border-slate-100 bg-white text-slate-500'
+                                  }`}
+                              >
+                                <span>{emoji}</span>
+                                {user_ids.length > 1 && <span className="text-[9px] opacity-70">{user_ids.length}</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          </motion.div>
-        )}
-      </div>
 
-      {/* Input area as a floating capsule */}
-      <div className="px-5 pb-5 pt-3 bg-gradient-to-t from-white/90 to-transparent backdrop-blur-sm">
-        <form onSubmit={handleSend} className="flex items-center gap-2 bg-white p-1.5 rounded-[2rem] border border-slate-200/60 shadow-[0_15px_35px_-12px_rgba(0,0,0,0.08)] focus-within:ring-4 focus-within:ring-violet-500/5 focus-within:border-violet-200 transition-all duration-300">
-          <div className="relative" ref={emojiPickerRef}>
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showEmojiPicker ? 'bg-violet-50 text-violet-600 shadow-inner' : 'bg-transparent text-slate-400 hover:bg-slate-50'}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </button>
+            {isTyping && (
+              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-5 flex items-start gap-3">
+                <div className="mt-1 h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
+                  <img src={contact.avatar} alt="" className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <div className="mb-1 px-1">
+                    <span className="text-[10px] font-bold text-slate-700">{contact.name}</span>
+                  </div>
+                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-slate-50 bg-white px-5 py-3.5 shadow-sm">
+                    {[0, 1, 2].map(d => (
+                      <motion.span
+                        key={d}
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay: d * 0.15 }}
+                        className="h-1.5 w-1.5 rounded-full bg-slate-300"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
 
-            <AnimatePresence>
-              {showEmojiPicker && (
+          {/* Emoji Picker — rendered outside footer so it's not clipped */}
+          <AnimatePresence>
+            {showEmojiPicker && (
+              <div ref={emojiPickerRef} className="absolute bottom-16 right-3 z-50">
                 <motion.div
-                  initial={{ opacity: 0, y: 15, scale: 0.9, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: 15, scale: 0.9, filter: 'blur(8px)' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="absolute bottom-full left-0 mb-4 z-50"
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 >
-                  <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-100 ring-1 ring-black/5">
-                    <Suspense fallback={<div className="w-[352px] h-[435px] bg-white flex items-center justify-center"><span className="text-slate-300 font-black text-[10px] uppercase tracking-widest animate-pulse">Initializing Interface...</span></div>}>
+                  <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-xl">
+                    <Suspense fallback={
+                      <div className="flex h-[435px] w-[352px] items-center justify-center bg-white">
+                        <span className="text-xs font-medium text-slate-300">Loading emojis...</span>
+                      </div>
+                    }>
                       <EmojiPicker
                         data={data}
                         onEmojiSelect={handleEmojiSelect}
@@ -440,37 +470,63 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                     </Suspense>
                   </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              </div>
+            )}
+          </AnimatePresence>
 
-          <div className="relative flex-1">
-            <input
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                const now = Date.now();
-                if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
-                  lastTypingSentRef.current = now;
-                  sendTypingIndicator(convIdRef.current).catch(() => {});
-                }
-              }}
-              placeholder="Transmit signal..."
-              className="w-full bg-transparent px-3 py-2 text-[13px] font-medium text-slate-900 outline-none placeholder:text-slate-300 italic"
-            />
-          </div>
+          {/* Input Area */}
+          <footer className="border-t border-slate-100 bg-white p-3">
+            <form onSubmit={handleSend} className="flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 ring-1 ring-slate-100 transition-all focus-within:ring-slate-200">
+                <input
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    const now = Date.now();
+                    if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
+                      lastTypingSentRef.current = now;
+                      sendTypingIndicator(convIdRef.current).catch(() => { });
+                    }
+                  }}
+                  placeholder="Write a message..."
+                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                />
+                <div className="flex items-center gap-1 text-slate-400">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-200 hover:text-slate-700 ${showEmojiPicker ? 'bg-slate-200 text-slate-700' : ''}`}
+                  >
+                    <Smile className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-200 hover:text-indigo-600"
+                  >
+                    <Image className="h-4 w-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                </div>
+              </div>
 
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="w-10 h-10 orchid-gradient text-white rounded-full flex items-center justify-center shadow-[0_8px_15px_-5px_rgba(219,39,119,0.3)] disabled:scale-95 disabled:grayscale disabled:opacity-40 transition-all hover:scale-105 active:scale-95 group"
-          >
-            <svg className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-            </svg>
-          </button>
-        </form>
-      </div>
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-all hover:bg-indigo-700 active:scale-90 disabled:opacity-30 disabled:shadow-none"
+              >
+                <Send className="h-4 w-4 -ml-0.5" />
+              </button>
+            </form>
+          </footer>
+        </>
+      )}
     </div>
   );
 };

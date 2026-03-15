@@ -78,7 +78,7 @@ export function LinksTab() {
             type="button"
             onClick={addLink}
             disabled={links.length >= 5}
-            className="flex items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2 text-[12px] font-semibold text-violet-600 transition-colors hover:bg-violet-100 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-xl bg-[#D8103F]/5 px-3 py-2 text-[12px] font-semibold text-[#D8103F] transition-colors hover:bg-[#D8103F]/10 disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Link
@@ -112,13 +112,13 @@ export function LinksTab() {
                         value={link.title}
                         onChange={(e) => updateLink(link.id, "title", e.target.value)}
                         placeholder="Link title"
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
                       />
                       <input
                         value={link.url}
                         onChange={(e) => updateLink(link.id, "url", e.target.value)}
                         placeholder="https://..."
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
                       />
                     </div>
                     <div className="flex shrink-0 gap-1 pt-1.5">
@@ -164,7 +164,7 @@ export function LinksTab() {
               </label>
               <input
                 placeholder={`${platform} URL`}
-                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
               />
             </div>
           ))}
@@ -190,7 +190,7 @@ export function LinksTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50"
+          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

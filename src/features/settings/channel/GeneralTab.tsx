@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, Check, Loader2, X } from "lucide-react";
-import { useMyChannels } from "@/hooks/useChannels";
-import { useUpdateChannel } from "@/hooks/useChannels";
+import { useMyChannels, useUpdateChannel } from "@/hooks/useChannels";
 import { useCheckHandle, useChangeHandle } from "@/hooks/useChannelSettings";
+import api from "@/lib/api";
+import { useMutation } from "@tanstack/react-query";
 
 const CATEGORIES = [
   "Technology", "Education", "Comedy", "Gaming", "Music", "Lifestyle",
@@ -29,14 +30,20 @@ function SettingsCard({ title, children }: { title: string; children: React.Reac
 }
 
 export function GeneralTab() {
-  const { data: channels } = useMyChannels();
+  const { data: channels, refetch: refetchChannels } = useMyChannels();
   const channel = channels?.[0];
   const updateMutation = useUpdateChannel();
   const checkHandle = useCheckHandle();
   const changeHandle = useChangeHandle();
+  const ensurePublisher = useMutation({
+    mutationFn: async () => {
+      await api.post("/v1/onboarding/ensure-publisher");
+      const { data } = await refetchChannels();
+      return data?.[0] ?? null;
+    },
+  });
 
   const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
   const [category, setCategory] = useState("");
   const [language, setLanguage] = useState("English");
   const [location, setLocation] = useState("");
@@ -51,7 +58,6 @@ export function GeneralTab() {
   useEffect(() => {
     if (channel) {
       setName(channel.name || "");
-      setBio(channel.description || "");
       setCategory(channel.category || "");
     }
   }, [channel]);
@@ -61,12 +67,12 @@ export function GeneralTab() {
     await updateMutation.mutateAsync({
       id: channel.id,
       name,
-      description: bio,
+      description: channel.description || "",
       category,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [channel, name, bio, category, updateMutation]);
+  }, [channel, name, category, updateMutation]);
 
   const [handleReason, setHandleReason] = useState<string | null>(null);
 
@@ -86,6 +92,35 @@ export function GeneralTab() {
     setHandleConfirmed(false);
   }, [handleAvailable, handleConfirmed, newHandle, changeHandle]);
 
+  if (!channel) {
+    return (
+      <div className="space-y-6">
+        <SettingsCard title="Channel Setup">
+          <div className="flex flex-col items-center py-8 text-center">
+            <p className="text-[13px] text-slate-600">You don&apos;t have a channel yet. Create one to manage your PostTube settings.</p>
+            <button
+              type="button"
+              onClick={() => ensurePublisher.mutate()}
+              disabled={ensurePublisher.isPending}
+              className="mt-4 rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#b80d35] disabled:opacity-50 transition-colors"
+            >
+              {ensurePublisher.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Create Channel"
+              )}
+            </button>
+            {ensurePublisher.isError && (
+              <p className="mt-3 text-[12px] text-rose-500">
+                Failed to create channel. Please try again.
+              </p>
+            )}
+          </div>
+        </SettingsCard>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Channel Name + Handle */}
@@ -100,7 +135,7 @@ export function GeneralTab() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
               placeholder="My Awesome Channel"
             />
             <p className="mt-1 text-[11px] text-slate-400">{name.length}/50 characters</p>
@@ -130,23 +165,6 @@ export function GeneralTab() {
         </div>
       </SettingsCard>
 
-      {/* Bio */}
-      <SettingsCard title="About">
-        <div>
-          <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">
-            Bio / Description
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            maxLength={500}
-            rows={4}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 resize-none"
-            placeholder="Tell viewers about your channel..."
-          />
-          <p className="mt-1 text-[11px] text-slate-400">{bio.length}/500 characters</p>
-        </div>
-      </SettingsCard>
 
       {/* Category + Language + Location */}
       <SettingsCard title="Details">
@@ -158,7 +176,7 @@ export function GeneralTab() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
             >
               <option value="">Select category</option>
               {CATEGORIES.map((c) => (
@@ -174,7 +192,7 @@ export function GeneralTab() {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
             >
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -189,7 +207,7 @@ export function GeneralTab() {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
               placeholder="e.g. Mumbai, India"
             />
           </div>
@@ -215,7 +233,7 @@ export function GeneralTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-violet-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50"
+          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -290,7 +308,7 @@ export function GeneralTab() {
                           setHandleAvailable(null);
                         }}
                         maxLength={24}
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-7 pr-3 text-[13px] text-slate-800 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-7 pr-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
                         placeholder="new_handle"
                       />
                     </div>
@@ -324,7 +342,7 @@ export function GeneralTab() {
                       type="checkbox"
                       checked={handleConfirmed}
                       onChange={(e) => setHandleConfirmed(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#D8103F] focus:ring-[#D8103F]/50"
                     />
                     <span className="text-[12px] leading-relaxed text-slate-600">
                       I understand this change syncs across all platforms and I won&apos;t be able
@@ -346,7 +364,7 @@ export function GeneralTab() {
                   type="button"
                   onClick={handleConfirmChange}
                   disabled={!handleAvailable || !handleConfirmed || changeHandle.isPending}
-                  className="rounded-xl bg-violet-600 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-violet-700 disabled:opacity-40"
+                  className="rounded-xl bg-[#D8103F] px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#b80d35] disabled:opacity-40"
                 >
                   {changeHandle.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

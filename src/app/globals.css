@@ -6,7 +6,7 @@
   --foreground-rgb: 15, 23, 42;
   --background-start-rgb: 252, 250, 255;
   --background-end-rgb: 255, 255, 255;
-  --prismatic-violet: #7c3aed;
+  --prismatic-violet: #D8103F;
   --prismatic-rose: #db2777;
 }
 
@@ -18,7 +18,7 @@ body {
 
 body {
   color: rgb(var(--foreground-rgb));
-  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
   background-color: #fcfaff;
 }
 
@@ -29,6 +29,10 @@ body {
 
   .text-foreground {
     color: rgb(var(--foreground-rgb));
+  }
+
+  .font-serif-display {
+    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
   }
 }
 
@@ -57,7 +61,7 @@ body {
 }
 
 .pb-landing-root {
-  @apply relative flex min-h-screen flex-col overflow-hidden bg-[#fcfaff] font-sans text-slate-900 selection:bg-violet-200 selection:text-violet-900;
+  @apply relative flex min-h-screen flex-col overflow-hidden bg-[#fcfaff] font-sans text-slate-900 selection:bg-[#D8103F]/20 selection:text-[#6b081f];
 }
 
 .pb-landing-bg {
@@ -73,7 +77,7 @@ body {
 }
 
 .pb-landing-blob--bottom-right {
-  @apply bottom-[-25%] right-[-15%] h-[70%] w-[70%] bg-violet-400/10 blur-[200px];
+  @apply bottom-[-25%] right-[-15%] h-[70%] w-[70%] bg-[#D8103F]/10 blur-[200px];
 }
 
 .pb-landing-blob--pulse {
@@ -93,7 +97,7 @@ body {
 }
 
 .pb-brand-icon {
-  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-700 shadow-2xl shadow-violet-500/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
+  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-[#b80d35] shadow-2xl shadow-[#D8103F]/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
 }
 
 .pb-brand-icon-svg {
@@ -109,7 +113,7 @@ body {
 }
 
 .pb-nav-login-link {
-  @apply text-xs font-bold uppercase tracking-[0.25em] text-slate-500 transition-all hover:text-violet-600;
+  @apply text-xs font-bold uppercase tracking-[0.25em] text-slate-500 transition-all hover:text-[#D8103F];
 }
 
 .pb-nav-signup-link {
@@ -137,7 +141,7 @@ body {
 }
 
 .pb-landing-title-gradient {
-  @apply bg-gradient-to-r from-blue-500 via-violet-600 to-rose-500 bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-blue-500 via-[#D8103F] to-rose-500 bg-clip-text text-transparent;
 }
 
 .pb-landing-subtitle {

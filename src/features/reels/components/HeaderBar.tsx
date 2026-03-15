@@ -42,7 +42,7 @@ export function HeaderBar({
             href="/"
             className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#D8103F] to-fuchsia-500 shadow-sm">
               <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 12h8l-4-8v16l4-8H4z" />
                 <path d="M12 12h8l-4-8v16l4-8h-8z" />

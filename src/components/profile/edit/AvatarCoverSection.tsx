@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { Camera, Loader2, Image } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -25,6 +25,8 @@ export function AvatarCoverSection({
 }: AvatarCoverSectionProps) {
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
+    const [avatarBroken, setAvatarBroken] = useState(false)
+    const [coverBroken, setCoverBroken] = useState(false)
 
     return (
         <div className="space-y-12">
@@ -49,11 +51,12 @@ export function AvatarCoverSection({
                     className="relative h-64 rounded-[2.5rem] overflow-hidden bg-slate-100 group cursor-pointer shadow-inner border border-slate-100"
                     onClick={() => coverInputRef.current?.click()}
                 >
-                    {coverMediaId ? (
+                    {coverMediaId && !coverBroken ? (
                         <img
                             src={`/v1/media/${coverMediaId}/serve`}
                             alt="Cover"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            onError={() => setCoverBroken(true)}
                         />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -116,11 +119,12 @@ export function AvatarCoverSection({
                         onClick={() => avatarInputRef.current?.click()}
                     >
                         <div className="w-full h-full rounded-[2rem] overflow-hidden bg-slate-50 relative">
-                            {avatarMediaId ? (
+                            {avatarMediaId && !avatarBroken ? (
                                 <img
                                     src={`/v1/media/${avatarMediaId}/serve`}
                                     alt={displayName}
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    onError={() => setAvatarBroken(true)}
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-4xl font-black text-slate-200 uppercase italic">
