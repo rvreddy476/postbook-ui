@@ -3,6 +3,7 @@
 import { useCallback } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useQuery } from "@tanstack/react-query"
 import {
     ArrowLeft,
     Bell,
@@ -11,11 +12,13 @@ import {
     MessageSquare,
     Moon,
     VolumeX,
+    BookOpen,
 } from "lucide-react"
 import {
     useNotificationPreferences,
     useUpdateNotificationPreferences,
 } from "@/hooks/useActivityNotifications"
+import api from "@/lib/api"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -147,6 +150,88 @@ function PageSkeleton() {
                 </div>
             ))}
         </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Notification Digests                                               */
+/* ------------------------------------------------------------------ */
+
+interface DigestItem {
+    id: string
+    period_type: "weekly" | "monthly"
+    start_date: string
+    end_date: string
+    stats: Record<string, number>
+}
+
+function DigestsSection() {
+    const { data: items = [], isLoading } = useQuery<DigestItem[]>({
+        queryKey: ["notification-digests"],
+        queryFn: () =>
+            api
+                .get("/v1/notifications/digests")
+                .then((r) => r.data?.data?.items ?? []),
+    })
+
+    return (
+        <SectionCard
+            icon={<BookOpen className="h-6 w-6 text-[#D8103F]/50" />}
+            title="Notification Digests"
+            description="Weekly and monthly summaries of your activity"
+            delay={0.2}
+        >
+            {isLoading ? (
+                <div className="space-y-3 animate-pulse">
+                    {[0, 1].map((i) => (
+                        <div key={i} className="h-16 rounded-xl bg-slate-100" />
+                    ))}
+                </div>
+            ) : items.length === 0 ? (
+                <p className="text-sm text-slate-500 py-2">
+                    No digests yet. Your first digest will appear after 7 days.
+                </p>
+            ) : (
+                <div className="divide-y divide-slate-100">
+                    {items.map((digest) => {
+                        const periodLabel =
+                            digest.period_type === "weekly" ? "Weekly" : "Monthly"
+                        const start = new Date(digest.start_date).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                        })
+                        const end = new Date(digest.end_date).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                        })
+                        const statEntries = Object.entries(digest.stats ?? {})
+                        return (
+                            <div key={digest.id} className="py-3 space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="rounded-full bg-[#D8103F]/10 px-2 py-0.5 text-xs font-semibold text-[#D8103F]">
+                                        {periodLabel}
+                                    </span>
+                                    <p className="text-xs text-slate-500">
+                                        {start} – {end}
+                                    </p>
+                                </div>
+                                {statEntries.length > 0 && (
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                        {statEntries.map(([key, val]) => (
+                                            <p key={key} className="text-xs text-slate-600">
+                                                <span className="font-semibold text-slate-900">{val}</span>{" "}
+                                                {key.replace(/_/g, " ")}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </SectionCard>
     )
 }
 
@@ -404,6 +489,11 @@ export default function NotificationPreferencesPage() {
                             })}
                         </div>
                     </SectionCard>
+
+                    {/* ------------------------------------------------- */}
+                    {/*  Digests Section                                    */}
+                    {/* ------------------------------------------------- */}
+                    <DigestsSection />
                 </>
             )}
         </div>

@@ -10,6 +10,7 @@ import {
     Film,
     Bookmark,
     CircleDot,
+    Briefcase,
 } from "lucide-react"
 
 interface ProfileTabsProps {
@@ -35,6 +36,7 @@ const tabDefinitions: {
     { key: "videos", label: "Videos", icon: Video, requiresContent: true },
     { key: "flicks", label: "Flicks", icon: Film, requiresContent: true },
     { key: "stashed", label: "Stash", icon: Bookmark, selfOnly: true },
+    { key: "portfolio", label: "Portfolio", icon: Briefcase },
 ]
 
 export function ProfileTabs({

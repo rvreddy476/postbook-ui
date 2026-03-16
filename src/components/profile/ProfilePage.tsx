@@ -32,13 +32,321 @@ import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
 import { useUserChannels } from "@/hooks/useChannels"
 import { useToast } from "@/components/ui/toast"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Film, Clapperboard, Sparkles, ExternalLink } from "lucide-react"
+import {
+    Film,
+    Clapperboard,
+    Sparkles,
+    ExternalLink,
+    Pin,
+    QrCode,
+    X,
+    Plus,
+    Loader2,
+} from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import type { UserProfile, ProfileTab } from "@/types/profile"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import api from "@/lib/api"
+import type { UserProfile, ProfileTab, ProfilePin, PortfolioItem, ProfileQRCode } from "@/types/profile"
 
 interface ProfilePageProps {
     username: string
+}
+
+// ── QR Code modal ─────────────────────────────────────────────────────────────
+function QRCodeModal({ onClose }: { onClose: () => void }) {
+    const { data: qr, isLoading } = useQuery<ProfileQRCode>({
+        queryKey: ["qr-code"],
+        queryFn: () =>
+            api.get("/v1/users/me/qr").then((r) => r.data?.data ?? r.data),
+    })
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = () => {
+        const urlToCopy = qr?.profile_url ?? qr?.qr_url ?? ""
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-900">Your Profile QR Code</h2>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                        <X className="w-4 h-4 text-slate-500" />
+                    </button>
+                </div>
+                <div className="p-6 space-y-4">
+                    {isLoading ? (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                        </div>
+                    ) : (
+                        <>
+                            {/* QR placeholder styled box */}
+                            <div className="border-4 border-slate-900 rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-white">
+                                <div className="grid grid-cols-5 gap-0.5">
+                                    {Array.from({ length: 25 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`w-7 h-7 rounded-sm ${
+                                                [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
+                                                    ? "bg-slate-900"
+                                                    : "bg-white"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="text-center space-y-1">
+                                <p className="text-xs font-semibold text-slate-500">Share Profile</p>
+                                {qr?.profile_url && (
+                                    <p className="text-[11px] text-slate-400 break-all font-mono bg-slate-50 rounded-lg px-3 py-1.5">
+                                        {qr.profile_url}
+                                    </p>
+                                )}
+                                {typeof qr?.scan_count === "number" && (
+                                    <p className="text-[11px] text-slate-400">
+                                        Scanned{" "}
+                                        <span className="font-bold text-slate-600">{qr.scan_count}</span>{" "}
+                                        {qr.scan_count === 1 ? "time" : "times"}
+                                    </p>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={handleCopy}
+                                className="w-full py-2.5 rounded-xl bg-[#D8103F] text-white text-xs font-bold hover:bg-[#b80d35] transition-colors"
+                            >
+                                {copied ? "Copied!" : "Copy Link"}
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ── Pinned Posts section ───────────────────────────────────────────────────────
+function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
+    const qc = useQueryClient()
+    const { data: pins = [] } = useQuery<ProfilePin[]>({
+        queryKey: ["pins", userId],
+        queryFn: () =>
+            api.get(`/v1/users/${userId}/pins`).then((r) => r.data?.data?.items ?? []),
+    })
+
+    const unpinMutation = useMutation({
+        mutationFn: (id: string) => api.delete(`/v1/users/me/pins/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["pins", userId] }),
+    })
+
+    if (pins.length === 0) return null
+
+    const CONTENT_TYPE_COLORS: Record<string, string> = {
+        post: "bg-blue-50 text-blue-600 border-blue-100",
+        video: "bg-[#D8103F]/10 text-[#D8103F] border-[#D8103F]/20",
+        reel: "bg-rose-50 text-rose-500 border-rose-100",
+    }
+
+    return (
+        <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+                <Pin className="w-3.5 h-3.5 text-[#D8103F]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Pinned</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {pins.map((pin) => (
+                    <div
+                        key={pin.id}
+                        className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-sm"
+                    >
+                        <Pin className="w-3 h-3 text-[#D8103F] shrink-0" />
+                        <span className="text-xs font-medium text-slate-700 max-w-[120px] truncate">
+                            {pin.content_id}
+                        </span>
+                        <span
+                            className={`text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
+                                CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-slate-50 text-slate-400 border-slate-100"
+                            }`}
+                        >
+                            {pin.content_type}
+                        </span>
+                        {isOwn && (
+                            <button
+                                onClick={() => unpinMutation.mutate(pin.id)}
+                                disabled={unpinMutation.isPending}
+                                className="ml-1 text-slate-300 hover:text-[#D8103F] transition-colors disabled:opacity-40"
+                                title="Unpin"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+// ── Profile tab content: Portfolio ────────────────────────────────────────────
+function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean }) {
+    const qc = useQueryClient()
+    const [showAdd, setShowAdd] = useState(false)
+    const [title, setTitle] = useState("")
+    const [description, setDescription] = useState("")
+    const [url, setUrl] = useState("")
+    const [itemType, setItemType] = useState("project")
+
+    const { data: items = [], isLoading } = useQuery<PortfolioItem[]>({
+        queryKey: ["portfolio", userId],
+        queryFn: () =>
+            api.get(`/v1/users/${userId}/portfolio`).then((r) => r.data?.data?.items ?? []),
+    })
+
+    const addMutation = useMutation({
+        mutationFn: () =>
+            api.post("/v1/users/me/portfolio", {
+                title,
+                description,
+                url,
+                item_type: itemType,
+                display_order: 0,
+            }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["portfolio", userId] })
+            setShowAdd(false)
+            setTitle("")
+            setDescription("")
+            setUrl("")
+            setItemType("project")
+        },
+    })
+
+    const ITEM_TYPE_COLORS: Record<string, string> = {
+        project: "bg-blue-50 text-blue-600 border-blue-100",
+        article: "bg-emerald-50 text-emerald-600 border-emerald-100",
+        video: "bg-[#D8103F]/10 text-[#D8103F] border-[#D8103F]/20",
+        design: "bg-violet-50 text-violet-600 border-violet-100",
+        other: "bg-slate-50 text-slate-500 border-slate-200",
+    }
+
+    return (
+        <div className="space-y-4">
+            {isOwn && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setShowAdd((v) => !v)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-xs font-bold hover:bg-[#b80d35] transition-colors"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Item
+                    </button>
+                </div>
+            )}
+
+            {isOwn && showAdd && (
+                <div className="border border-[#D8103F]/20 rounded-xl p-4 bg-[#D8103F]/5 space-y-3">
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">New Portfolio Item</p>
+                    <input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Title *"
+                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                    />
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Description"
+                        rows={2}
+                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 resize-none"
+                    />
+                    <input
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="URL (optional)"
+                        type="url"
+                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                    />
+                    <select
+                        value={itemType}
+                        onChange={(e) => setItemType(e.target.value)}
+                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 bg-white"
+                    >
+                        <option value="project">Project</option>
+                        <option value="article">Article</option>
+                        <option value="video">Video</option>
+                        <option value="design">Design</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <div className="flex gap-2 pt-1">
+                        <button
+                            onClick={() => addMutation.mutate()}
+                            disabled={!title.trim() || addMutation.isPending}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#b80d35] transition-colors"
+                        >
+                            {addMutation.isPending ? (
+                                <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
+                            ) : "Save"}
+                        </button>
+                        <button
+                            onClick={() => setShowAdd(false)}
+                            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isLoading ? (
+                <div className="flex justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+                </div>
+            ) : items.length === 0 ? (
+                <div className="py-16 text-center text-sm text-slate-400">No portfolio items yet</div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {items.map((item) => (
+                        <div
+                            key={item.id}
+                            className="border border-slate-100 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow space-y-2"
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-slate-900 line-clamp-1">{item.title}</p>
+                                <span
+                                    className={`shrink-0 text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
+                                        ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
+                                    }`}
+                                >
+                                    {item.item_type}
+                                </span>
+                            </div>
+                            {item.description && (
+                                <p className="text-xs text-slate-500 line-clamp-2">{item.description}</p>
+                            )}
+                            {item.url && (
+                                <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#D8103F] hover:underline"
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    View
+                                </a>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
 }
 
 export function ProfilePage({ username }: ProfilePageProps) {
@@ -50,6 +358,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const [removeCircleDialogOpen, setRemoveCircleDialogOpen] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
     const [isTabsSticky, setIsTabsSticky] = useState(false)
+    const [qrModalOpen, setQrModalOpen] = useState(false)
     const tabsSentinelRef = useRef<HTMLDivElement>(null)
 
     const { toast, ToastContainer } = useToast()
@@ -296,6 +605,19 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 onUploadError={(msg) => toast({ type: "error", title: msg })}
             />
 
+            {/* QR Code button (own profile only) */}
+            {isOwn && (
+                <div className="max-w-[1200px] mx-auto px-6 sm:px-8 pt-3 flex justify-end">
+                    <button
+                        onClick={() => setQrModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
+                    >
+                        <QrCode className="w-3.5 h-3.5" />
+                        QR Code
+                    </button>
+                </div>
+            )}
+
             {/* Sentinel for sticky tabs */}
             <div ref={tabsSentinelRef} className="h-0" />
 
@@ -322,6 +644,11 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
             {/* Main content: 70/30 split (or 100% if no creator content) */}
             <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mt-6">
+                {/* Pinned posts (shown above tabs content for all tab states) */}
+                {activeTab === "posts" && (
+                    <PinnedSection userId={profile.id} isOwn={isOwn} />
+                )}
+
                 <div className={`flex gap-6 ${hasCreatorContent ? "" : ""}`}>
                     {/* Main content — 70% or 100% */}
                     <div className={`min-w-0 ${hasCreatorContent ? "flex-[7]" : "flex-1"}`}>
@@ -344,6 +671,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                             <FlicksTab userId={profile.id} isOwn={isOwn} />
                         )}
                         {activeTab === "stashed" && <StashedTab userId={profile.id} />}
+                        {activeTab === "portfolio" && (
+                            <PortfolioTabContent userId={profile.id} isOwn={isOwn} />
+                        )}
                     </div>
 
                     {/* Right sidebar — Studio Stats (30%) — only if creator content exists */}
@@ -494,6 +824,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                     )}
                 </div>
             </div>
+
+            {/* QR Code modal */}
+            {qrModalOpen && <QRCodeModal onClose={() => setQrModalOpen(false)} />}
 
             {/* Confirmation Dialogs */}
             <ConfirmDialog

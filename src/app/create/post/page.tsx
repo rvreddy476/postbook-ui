@@ -14,10 +14,12 @@ import {
   Users,
   Loader2,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { Avatar } from "@/components/LetterAvatar";
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { AppShell } from "@/features/reels/components/AppShell";
+import api from "@/lib/api";
 
 const VISIBILITY = [
   { value: "public", label: "Public", icon: Globe },
@@ -35,6 +37,12 @@ export default function CreatePostPage() {
   const [location, setLocation] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+
+  // AI suggestions state
+  const [captionLoading, setCaptionLoading] = useState(false);
+  const [captionSuggestions, setCaptionSuggestions] = useState<string[]>([]);
+  const [hashtagLoading, setHashtagLoading] = useState(false);
+  const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
 
   const displayName = profile?.display_name || "User";
   const avatarUrl = profile?.avatar_media_id
@@ -65,6 +73,44 @@ export default function CreatePostPage() {
     setPublishing(false);
     setPublished(true);
   }, [content, images.length]);
+
+  const handleCaptionSuggestions = useCallback(async () => {
+    if (captionLoading) return;
+    setCaptionLoading(true);
+    setCaptionSuggestions([]);
+    try {
+      const res = await api.post("/v1/ai/caption-suggestions", {
+        ref_id: "new",
+        ref_type: "post",
+        context_text: content,
+      });
+      const captions: string[] = res.data?.data?.captions ?? res.data?.captions ?? [];
+      setCaptionSuggestions(captions);
+    } catch {
+      setCaptionSuggestions([]);
+    } finally {
+      setCaptionLoading(false);
+    }
+  }, [content, captionLoading]);
+
+  const handleHashtagSuggestions = useCallback(async () => {
+    if (hashtagLoading) return;
+    setHashtagLoading(true);
+    setHashtagSuggestions([]);
+    try {
+      const res = await api.post("/v1/ai/hashtag-suggestions", {
+        ref_id: "new",
+        ref_type: "post",
+        context_text: content,
+      });
+      const tags: string[] = res.data?.data?.hashtags ?? res.data?.hashtags ?? [];
+      setHashtagSuggestions(tags);
+    } catch {
+      setHashtagSuggestions([]);
+    } finally {
+      setHashtagLoading(false);
+    }
+  }, [content, hashtagLoading]);
 
   const visibilityOption = VISIBILITY.find((v) => v.value === visibility) || VISIBILITY[0];
   const VisIcon = visibilityOption.icon;
@@ -137,6 +183,88 @@ export default function CreatePostPage() {
                   className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-slate-800 placeholder:text-slate-300 outline-none"
                   placeholder="What's on your mind?"
                 />
+
+                {/* AI Suggestions */}
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCaptionSuggestions}
+                      disabled={captionLoading}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold border border-violet-200 text-violet-600 bg-violet-50 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                    >
+                      {captionLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      )}
+                      AI Captions
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleHashtagSuggestions}
+                      disabled={hashtagLoading}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                    >
+                      {hashtagLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Hash className="h-3.5 w-3.5" />
+                      )}
+                      # Hashtags
+                    </button>
+                    {(captionSuggestions.length > 0 || hashtagSuggestions.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => { setCaptionSuggestions([]); setHashtagSuggestions([]); }}
+                        className="ml-auto text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                      >
+                        <X className="h-3 w-3" /> Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Caption suggestions panel */}
+                  {captionSuggestions.length > 0 && (
+                    <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Suggested Captions</p>
+                      {captionSuggestions.map((caption, i) => (
+                        <div key={i} className="flex items-start gap-2 bg-white rounded-lg p-2.5 border border-violet-100">
+                          <p className="flex-1 text-[13px] text-slate-700 leading-relaxed">{caption}</p>
+                          <button
+                            type="button"
+                            onClick={() => { setContent(caption); setCaptionSuggestions([]); }}
+                            className="shrink-0 px-2.5 py-1 rounded-md bg-violet-600 text-white text-[11px] font-bold hover:bg-violet-700 transition-colors"
+                          >
+                            Use
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Hashtag suggestions panel */}
+                  {hashtagSuggestions.length > 0 && (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Suggested Hashtags</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {hashtagSuggestions.map((tag, i) => {
+                          const normalized = tag.startsWith("#") ? tag : `#${tag}`;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setContent((prev) => `${prev} ${normalized}`.trimStart())}
+                              className="px-2.5 py-1 rounded-full bg-white border border-blue-200 text-blue-600 text-[12px] font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                            >
+                              {normalized}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Images */}
                 {images.length > 0 ? (

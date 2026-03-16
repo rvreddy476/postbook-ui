@@ -151,7 +151,7 @@ export type PostContentType = (typeof POST_CONTENT_TYPES)[keyof typeof POST_CONT
 /** UI-level content filter — values must match backend content_type column values. */
 export type ContentType = "all" | "post" | "reel" | "video" | "photo"
 export type AppPlatform = "postboek" | "posttube" | "postgram"
-export type ProfileTab = "posts" | "media" | "about" | "connections" | "videos" | "flicks" | "stashed"
+export type ProfileTab = "posts" | "media" | "about" | "connections" | "videos" | "flicks" | "stashed" | "portfolio"
 
 export interface PollOption {
     id: string
@@ -583,4 +583,35 @@ export function getBadges(flags: number): string[] {
     if (flags & BADGE_CREATOR) badges.push("creator")
     if (flags & BADGE_BUSINESS) badges.push("business")
     return badges
+}
+
+export interface ProfilePin {
+    id: string
+    user_id: string
+    content_type: string
+    content_id: string
+    display_order: number
+    created_at: string
+}
+
+export interface PortfolioItem {
+    id: string
+    user_id: string
+    title: string
+    description?: string
+    url?: string
+    media_url?: string
+    item_type: string
+    display_order: number
+    created_at: string
+    updated_at: string
+}
+
+export interface ProfileQRCode {
+    id: string
+    user_id: string
+    qr_url: string
+    profile_url: string
+    scan_count: number
+    created_at: string
 }

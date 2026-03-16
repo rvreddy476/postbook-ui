@@ -3,16 +3,25 @@
 import React, { Suspense, useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search, X, Loader2, Users, FileText, LayoutGrid, CheckCircle } from "lucide-react"
+import {
+    Search, X, Loader2, Users, FileText, LayoutGrid, CheckCircle,
+    ShoppingBag, Calendar, MessageSquare, Clock, Bookmark, Trash2,
+} from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useUniversalSearch, useAutocomplete, SearchType } from "@/hooks/useSearch"
 import type { PostDetail } from "@/types/profile"
 import PostCard from "@/components/PostCard"
+import api from "@/lib/api"
+
+// ─── Extended tab types ───────────────────────────────────────────────────────
+
+type ExtendedSearchType = SearchType | "products" | "events" | "messages"
 
 // ─── Tab configuration ──────────────────────────────────────────────────────
 
 interface Tab {
     label: string
-    type: SearchType
+    type: ExtendedSearchType
     icon: React.ReactNode
 }
 
@@ -20,6 +29,9 @@ const TABS: Tab[] = [
     { label: "All", type: "all", icon: <LayoutGrid className="w-4 h-4" /> },
     { label: "People", type: "profiles", icon: <Users className="w-4 h-4" /> },
     { label: "Posts", type: "posts", icon: <FileText className="w-4 h-4" /> },
+    { label: "Products", type: "products", icon: <ShoppingBag className="w-4 h-4" /> },
+    { label: "Events", type: "events", icon: <Calendar className="w-4 h-4" /> },
+    { label: "Messages", type: "messages", icon: <MessageSquare className="w-4 h-4" /> },
 ]
 
 // ─── Profile result card ─────────────────────────────────────────────────────
@@ -148,19 +160,347 @@ function HintState() {
     )
 }
 
+// ─── Search history & saved searches panel ───────────────────────────────────
+
+interface SearchItem {
+    id?: string
+    query: string
+}
+
+function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) => void }) {
+    const queryClient = useQueryClient()
+
+    const { data: historyData } = useQuery<SearchItem[]>({
+        queryKey: ["search", "history"],
+        queryFn: () => api.get("/v1/search/history").then((r) => r.data?.data?.items ?? []),
+        staleTime: 30_000,
+    })
+
+    const { data: savedData } = useQuery<SearchItem[]>({
+        queryKey: ["search", "saved"],
+        queryFn: () => api.get("/v1/search/saved").then((r) => r.data?.data?.items ?? []),
+        staleTime: 30_000,
+    })
+
+    const deleteHistory = useMutation({
+        mutationFn: (query: string) => api.delete(`/v1/search/history`, { data: { query } }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["search", "history"] }),
+    })
+
+    const deleteSaved = useMutation({
+        mutationFn: (id: string) => api.delete(`/v1/search/saved/${id}`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["search", "saved"] }),
+    })
+
+    const recentItems = (historyData ?? []).slice(0, 5)
+    const savedItems = savedData ?? []
+
+    if (recentItems.length === 0 && savedItems.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
+                    <Search className="w-7 h-7 text-white" />
+                </div>
+                <div className="text-center">
+                    <p className="text-sm font-bold text-gray-700">Search PostBook</p>
+                    <p className="text-xs text-gray-400 mt-1">Your recent and saved searches will appear here</p>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6">
+            {recentItems.length > 0 && (
+                <section>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Clock className="w-4 h-4 text-[#D8103F]/50" />
+                        <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Recent Searches</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {recentItems.map((item, i) => (
+                            <div
+                                key={i}
+                                className="flex items-center gap-1.5 bg-gray-100 hover:bg-[#D8103F]/5 border border-gray-200 hover:border-[#D8103F]/20 rounded-full px-3 py-1.5 transition-all group"
+                            >
+                                <button
+                                    onClick={() => onSelectQuery(item.query)}
+                                    className="text-sm font-medium text-gray-700 group-hover:text-[#b80d35]"
+                                >
+                                    {item.query}
+                                </button>
+                                <button
+                                    onClick={() => deleteHistory.mutate(item.query)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors ml-0.5"
+                                    aria-label="Remove"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {savedItems.length > 0 && (
+                <section>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Bookmark className="w-4 h-4 text-[#D8103F]/50" />
+                        <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Saved Searches</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {savedItems.map((item, i) => (
+                            <div
+                                key={item.id ?? i}
+                                className="flex items-center gap-1.5 bg-[#D8103F]/5 hover:bg-[#D8103F]/10 border border-[#D8103F]/15 hover:border-[#D8103F]/30 rounded-full px-3 py-1.5 transition-all group"
+                            >
+                                <button
+                                    onClick={() => onSelectQuery(item.query)}
+                                    className="text-sm font-medium text-[#b80d35]"
+                                >
+                                    {item.query}
+                                </button>
+                                {item.id && (
+                                    <button
+                                        onClick={() => deleteSaved.mutate(item.id!)}
+                                        className="text-[#D8103F]/40 hover:text-red-600 transition-colors ml-0.5"
+                                        aria-label="Delete saved search"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+        </div>
+    )
+}
+
+// ─── Products tab ────────────────────────────────────────────────────────────
+
+interface Product {
+    id: string
+    name: string
+    description: string
+    price: number
+    currency: string
+    url?: string
+}
+
+function ProductsTab({ query }: { query: string }) {
+    const { data, isLoading, isFetching } = useQuery<Product[]>({
+        queryKey: ["search", "products", query],
+        queryFn: () =>
+            api.get("/v1/search/products", { params: { q: query, limit: 20 } }).then((r) => r.data?.data?.items ?? []),
+        enabled: query.length > 2,
+        staleTime: 60_000,
+    })
+
+    if (query.length <= 2) return <HintState />
+    if (isLoading || isFetching) return <LoadingSkeleton />
+
+    const items = data ?? []
+
+    if (items.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                    <ShoppingBag className="w-9 h-9 text-[#D8103F]/30" />
+                </div>
+                <p className="text-base font-bold text-gray-900">No products found for &ldquo;{query}&rdquo;</p>
+            </div>
+        )
+    }
+
+    const currencySymbol = (currency: string) => {
+        const map: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", INR: "₹", JPY: "¥" }
+        return map[currency] ?? currency + " "
+    }
+
+    return (
+        <div className="space-y-3">
+            <SectionHeading icon={<ShoppingBag className="w-4 h-4" />} label="Products" count={items.length} />
+            {items.map((product) => (
+                <div
+                    key={product.id}
+                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-6 h-6 text-[#D8103F]/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-gray-900 truncate">{product.name}</p>
+                        {product.description && (
+                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{product.description}</p>
+                        )}
+                        <p className="text-sm font-bold text-[#D8103F] mt-1.5">
+                            {currencySymbol(product.currency)}{product.price.toLocaleString()}
+                        </p>
+                    </div>
+                    {product.url && (
+                        <Link
+                            href={product.url}
+                            className="flex-shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-[#D8103F] rounded-lg hover:bg-[#b80d35] transition-colors"
+                        >
+                            View
+                        </Link>
+                    )}
+                </div>
+            ))}
+        </div>
+    )
+}
+
+// ─── Events tab ──────────────────────────────────────────────────────────────
+
+interface SearchEvent {
+    id: string
+    title: string
+    description: string
+    date: string
+    location?: string
+}
+
+function EventsTab({ query }: { query: string }) {
+    const { data, isLoading, isFetching } = useQuery<SearchEvent[]>({
+        queryKey: ["search", "events", query],
+        queryFn: () =>
+            api.get("/v1/search/events", { params: { q: query, limit: 20 } }).then((r) => r.data?.data?.items ?? []),
+        enabled: query.length > 2,
+        staleTime: 60_000,
+    })
+
+    if (query.length <= 2) return <HintState />
+    if (isLoading || isFetching) return <LoadingSkeleton />
+
+    const items = data ?? []
+
+    if (items.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                    <Calendar className="w-9 h-9 text-[#D8103F]/30" />
+                </div>
+                <p className="text-base font-bold text-gray-900">No events found for &ldquo;{query}&rdquo;</p>
+            </div>
+        )
+    }
+
+    const formatDate = (dateStr: string) => {
+        try {
+            return new Date(dateStr).toLocaleDateString(undefined, {
+                weekday: "short", year: "numeric", month: "short", day: "numeric",
+            })
+        } catch {
+            return dateStr
+        }
+    }
+
+    return (
+        <div className="space-y-3">
+            <SectionHeading icon={<Calendar className="w-4 h-4" />} label="Events" count={items.length} />
+            {items.map((event) => (
+                <div
+                    key={event.id}
+                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-6 h-6 text-[#D8103F]/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-gray-900 truncate">{event.title}</p>
+                        {event.description && (
+                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{event.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-[#D8103F]">{formatDate(event.date)}</span>
+                            {event.location && (
+                                <span className="text-xs text-gray-400">{event.location}</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+// ─── Messages tab ─────────────────────────────────────────────────────────────
+
+interface SearchMessage {
+    id: string
+    content: string
+    conversation_id?: string
+}
+
+function MessagesTab({ query }: { query: string }) {
+    const { data, isLoading, isFetching } = useQuery<SearchMessage[]>({
+        queryKey: ["search", "messages", query],
+        queryFn: () =>
+            api.get("/v1/search/messages", { params: { q: query, limit: 20 } }).then((r) => r.data?.data?.items ?? []),
+        enabled: query.length > 2,
+        staleTime: 60_000,
+    })
+
+    if (query.length <= 2) return <HintState />
+    if (isLoading || isFetching) return <LoadingSkeleton />
+
+    const items = data ?? []
+
+    if (items.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
+                    <MessageSquare className="w-9 h-9 text-[#D8103F]/30" />
+                </div>
+                <p className="text-base font-bold text-gray-900">No messages found for &ldquo;{query}&rdquo;</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-3">
+            <SectionHeading icon={<MessageSquare className="w-4 h-4" />} label="Messages" count={items.length} />
+            {items.map((msg) => (
+                <div
+                    key={msg.id}
+                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-5 h-5 text-[#D8103F]/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-700 line-clamp-2">{msg.content}</p>
+                    </div>
+                    <Link
+                        href="/messenger"
+                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-[#D8103F] border border-[#D8103F]/30 rounded-lg hover:bg-[#D8103F]/5 transition-colors whitespace-nowrap"
+                    >
+                        View Conversation
+                    </Link>
+                </div>
+            ))}
+        </div>
+    )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 function SearchPageContent() {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get("q") ?? ""
-    const initialType = (searchParams.get("type") as SearchType) ?? "all"
+    const initialType = (searchParams.get("type") as ExtendedSearchType) ?? "all"
 
     const [inputValue, setInputValue] = useState(initialQuery)
-    const [activeType, setActiveType] = useState<SearchType>(initialType)
+    const [activeType, setActiveType] = useState<ExtendedSearchType>(initialType)
     const [showDropdown, setShowDropdown] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
     const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const saveSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     // Sync URL when query or type changes (debounced)
     useEffect(() => {
@@ -174,6 +514,21 @@ function SearchPageContent() {
         return () => clearTimeout(timer)
     }, [inputValue, activeType, router])
 
+    // Auto-save search when query is long enough (debounced, fire-and-forget)
+    useEffect(() => {
+        if (saveSearchTimerRef.current) clearTimeout(saveSearchTimerRef.current)
+        if (inputValue.length >= 3) {
+            saveSearchTimerRef.current = setTimeout(() => {
+                api.post("/v1/search/saved", { query: inputValue, search_type: activeType }).catch(() => {
+                    // fire-and-forget — ignore errors
+                })
+            }, 1500)
+        }
+        return () => {
+            if (saveSearchTimerRef.current) clearTimeout(saveSearchTimerRef.current)
+        }
+    }, [inputValue, activeType])
+
     // Cleanup blur timer on unmount
     useEffect(() => {
         return () => {
@@ -181,17 +536,27 @@ function SearchPageContent() {
         }
     }, [])
 
-    const { data, isLoading, isFetching } = useUniversalSearch(inputValue, activeType)
+    // Only pass core SearchType values to the universal search hook
+    const coreSearchType: SearchType =
+        (["all", "profiles", "posts"].includes(activeType as string)
+            ? activeType
+            : "all") as SearchType
+
+    const { data, isLoading, isFetching } = useUniversalSearch(
+        inputValue,
+        coreSearchType,
+    )
     const { data: autocompleteResults } = useAutocomplete(inputValue)
 
     const profiles = data?.profiles ?? []
     const posts = data?.posts ?? []
     const hasResults = profiles.length > 0 || posts.length > 0
     const queryTooShort = inputValue.length < 2
+    const isExtendedTab = ["products", "events", "messages"].includes(activeType as string)
 
     const hasAutocomplete = showDropdown && inputValue.length >= 1 && (autocompleteResults?.length ?? 0) > 0
 
-    const handleTabChange = (type: SearchType) => {
+    const handleTabChange = (type: ExtendedSearchType) => {
         setActiveType(type)
     }
 
@@ -223,6 +588,12 @@ function SearchPageContent() {
         setShowDropdown(false)
         router.push(`/u/${username}`)
     }, [router])
+
+    const handleSelectQuery = useCallback((q: string) => {
+        setInputValue(q)
+        inputRef.current?.focus()
+        queryClient.invalidateQueries({ queryKey: ["search", "history"] })
+    }, [queryClient])
 
     return (
         <div className="min-h-screen bg-[#fcfaff]">
@@ -287,14 +658,14 @@ function SearchPageContent() {
                     </div>
 
                     {/* Tab bar */}
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
                         {TABS.map((tab) => {
                             const isActive = activeType === tab.type
                             return (
                                 <button
                                     key={tab.type}
                                     onClick={() => handleTabChange(tab.type)}
-                                    className={`flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all ${
+                                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
                                         isActive
                                             ? "border-[#D8103F]/50 text-[#D8103F] bg-[#D8103F]/60"
                                             : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -311,52 +682,73 @@ function SearchPageContent() {
 
             {/* Results area */}
             <main className="max-w-2xl mx-auto px-4 py-6">
-                {/* Too short hint */}
-                {queryTooShort && <HintState />}
-
-                {/* Loading */}
-                {!queryTooShort && (isLoading || isFetching) && !data && <LoadingSkeleton />}
-
-                {/* Empty state */}
-                {!queryTooShort && !isLoading && !isFetching && !hasResults && data && (
-                    <EmptyState query={inputValue} />
+                {/* Empty query — show history & saved panel */}
+                {inputValue.length === 0 && (
+                    <HistoryAndSavedPanel onSelectQuery={handleSelectQuery} />
                 )}
 
-                {/* Results */}
-                {!queryTooShort && hasResults && (
-                    <div className="space-y-8">
-                        {/* People section */}
-                        {profiles.length > 0 && (activeType === "all" || activeType === "profiles") && (
-                            <section>
-                                <SectionHeading
-                                    icon={<Users className="w-4 h-4" />}
-                                    label="People"
-                                    count={profiles.length}
-                                />
-                                <div className="space-y-3">
-                                    {profiles.map((profile) => (
-                                        <ProfileCard key={profile.id} profile={profile} />
-                                    ))}
-                                </div>
-                            </section>
+                {/* Extended tabs (products / events / messages) */}
+                {inputValue.length > 0 && activeType === "products" && (
+                    <ProductsTab query={inputValue} />
+                )}
+                {inputValue.length > 0 && activeType === "events" && (
+                    <EventsTab query={inputValue} />
+                )}
+                {inputValue.length > 0 && activeType === "messages" && (
+                    <MessagesTab query={inputValue} />
+                )}
+
+                {/* Core tabs (all / profiles / posts) */}
+                {inputValue.length > 0 && !isExtendedTab && (
+                    <>
+                        {/* Too short hint */}
+                        {queryTooShort && <HintState />}
+
+                        {/* Loading */}
+                        {!queryTooShort && (isLoading || isFetching) && !data && <LoadingSkeleton />}
+
+                        {/* Empty state */}
+                        {!queryTooShort && !isLoading && !isFetching && !hasResults && data && (
+                            <EmptyState query={inputValue} />
                         )}
 
-                        {/* Posts section */}
-                        {posts.length > 0 && (activeType === "all" || activeType === "posts") && (
-                            <section>
-                                <SectionHeading
-                                    icon={<FileText className="w-4 h-4" />}
-                                    label="Posts"
-                                    count={posts.length}
-                                />
-                                <div className="space-y-4">
-                                    {posts.map((post: PostDetail) => (
-                                        <PostCard key={post.id} post={post} />
-                                    ))}
-                                </div>
-                            </section>
+                        {/* Results */}
+                        {!queryTooShort && hasResults && (
+                            <div className="space-y-8">
+                                {/* People section */}
+                                {profiles.length > 0 && (activeType === "all" || activeType === "profiles") && (
+                                    <section>
+                                        <SectionHeading
+                                            icon={<Users className="w-4 h-4" />}
+                                            label="People"
+                                            count={profiles.length}
+                                        />
+                                        <div className="space-y-3">
+                                            {profiles.map((profile) => (
+                                                <ProfileCard key={profile.id} profile={profile} />
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                {/* Posts section */}
+                                {posts.length > 0 && (activeType === "all" || activeType === "posts") && (
+                                    <section>
+                                        <SectionHeading
+                                            icon={<FileText className="w-4 h-4" />}
+                                            label="Posts"
+                                            count={posts.length}
+                                        />
+                                        <div className="space-y-4">
+                                            {posts.map((post: PostDetail) => (
+                                                <PostCard key={post.id} post={post} />
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 )}
             </main>
         </div>

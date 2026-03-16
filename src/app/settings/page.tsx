@@ -13,6 +13,9 @@ import {
     Settings,
     Tv,
     Globe,
+    Clock,
+    BadgeCheck,
+    LayoutGrid,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -212,6 +215,24 @@ export default function SettingsPage() {
                         icon={<Globe className="h-4 w-4 text-slate-500" />}
                         label="Module Profiles"
                         description="Per-module identity overrides, handle changes, and cross-post settings"
+                    />
+                    <SettingsLink
+                        href="/settings/wellbeing"
+                        icon={<Clock className="h-4 w-4 text-slate-500" />}
+                        label="Digital Wellbeing"
+                        description="Screen time, focus mode & break reminders"
+                    />
+                    <SettingsLink
+                        href="/settings/verification"
+                        icon={<BadgeCheck className="h-4 w-4 text-slate-500" />}
+                        label="Get Verified"
+                        description="Apply for a verified badge"
+                    />
+                    <SettingsLink
+                        href="/apps"
+                        icon={<LayoutGrid className="h-4 w-4 text-slate-500" />}
+                        label="Mini Apps"
+                        description="Discover and manage mini apps"
                     />
                 </div>
             </SectionCard>
