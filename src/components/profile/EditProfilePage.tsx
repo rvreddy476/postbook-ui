@@ -42,8 +42,8 @@ function SectionSkeleton() {
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="space-y-3">
                         <div className="h-3 w-20 bg-slate-100 rounded-full" />
-                        <div className="h-2 w-32 bg-slate-50 rounded-full" />
-                        <div className="h-12 w-full bg-slate-50/50 rounded-2xl border border-slate-100" />
+                        <div className="h-2 w-32 bg-brand-secondary rounded-full" />
+                        <div className="h-12 w-full bg-brand-secondary/50 rounded-2xl border border-brand-divider" />
                     </div>
                 ))}
             </div>
@@ -147,16 +147,16 @@ export function EditProfilePage() {
         setTimeout(() => setSaved(false), 2000)
     }
 
-    if (!localUser) return <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest italic">Authorization Required</div>
+    if (!localUser) return <div className="p-20 text-center text-brand-text/60 font-bold uppercase tracking-widest italic">Authorization Required</div>
 
     if (profileLoading) return (
         <div className="max-w-6xl mx-auto py-12 px-6">
-            <div className="h-20 bg-slate-50 animate-pulse rounded-3xl mb-8" />
+            <div className="h-20 bg-brand-secondary animate-pulse rounded-3xl mb-8" />
             <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10">
                 <div className="space-y-4">
-                    {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-slate-50 animate-pulse rounded-2xl" />)}
+                    {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-brand-secondary animate-pulse rounded-2xl" />)}
                 </div>
-                <div className="h-[600px] bg-slate-50 animate-pulse rounded-[2.5rem]" />
+                <div className="h-[600px] bg-brand-secondary animate-pulse rounded-[2.5rem]" />
             </div>
         </div>
     )
@@ -170,15 +170,15 @@ export function EditProfilePage() {
                         whileHover={{ scale: 1.1, x: -5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => router.back()}
-                        className="p-4 bg-white shadow-xl border border-slate-100 rounded-[1.5rem] text-slate-600 hover:text-blue-600 transition-colors"
+                        className="p-4 bg-brand-card shadow-xl border border-brand-divider rounded-[1.5rem] text-brand-highlight hover:text-blue-600 transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </motion.button>
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
+                        <h1 className="text-4xl font-black text-brand-text tracking-tighter uppercase italic">
                             Edit <span className="text-blue-600">Profile</span>
                         </h1>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Manage your presence and details</p>
+                        <p className="text-xs font-bold text-brand-text/60 uppercase tracking-[0.3em] mt-1">Manage your presence and details</p>
                     </div>
                 </div>
 
@@ -228,18 +228,18 @@ export function EditProfilePage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`w-full group relative flex items-center gap-3 p-3 rounded-[1.25rem] transition-all duration-300 ${isActive
                                     ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20"
-                                    : "bg-white/50 hover:bg-white text-slate-500 border border-slate-100/50 hover:border-slate-200"
+                                    : "bg-brand-card/50 hover:bg-brand-card text-brand-highlight border border-brand-divider/50 hover:border-brand-divider"
                                     }`}
                             >
-                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-white/20" : "bg-slate-100 group-hover:bg-blue-50"}`}>
-                                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400 group-hover:text-blue-600"}`} />
+                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-slate-100 group-hover:bg-blue-50"}`}>
+                                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-brand-text/60 group-hover:text-blue-600"}`} />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-white" : "text-slate-900"}`}>{tab.label}</div>
+                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-white" : "text-brand-text"}`}>{tab.label}</div>
                                 </div>
                                 {isActive && (
                                     <motion.div layoutId="active-indicator" className="absolute right-3 text-white">
-                                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                                        <div className="w-1.5 h-1.5 bg-brand-card rounded-full" />
                                     </motion.div>
                                 )}
                             </button>
@@ -248,7 +248,7 @@ export function EditProfilePage() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="relative min-h-[600px] bg-white/40 backdrop-blur-3xl border border-white rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
+                <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-white rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/50 -z-10" />
 
                     <AnimatePresence mode="wait">

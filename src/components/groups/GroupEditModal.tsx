@@ -70,12 +70,12 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-xl overflow-hidden"
+        className="w-full max-w-md mx-4 bg-brand-card rounded-2xl shadow-xl overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
           <h2 className="text-lg font-black text-slate-800">Edit Group</h2>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} className="p-1 text-brand-text/60 hover:text-brand-highlight transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -116,24 +116,24 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
 
           {/* Name */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Group Name</label>
+            <label className="block text-xs font-bold text-brand-highlight uppercase tracking-wider mb-1.5">Group Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
               placeholder="Enter group name"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+            <label className="block text-xs font-bold text-brand-highlight uppercase tracking-wider mb-1.5">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
               placeholder="What's this group about?"
             />
           </div>
@@ -146,7 +146,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
+              className="flex-1 py-3 text-sm font-bold text-brand-highlight bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
             >
               Cancel
             </button>

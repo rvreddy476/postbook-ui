@@ -1,53 +1,46 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Image as ImageIcon, Smile, Hash } from 'lucide-react';
 import PostCard from './PostCard';
 import StoriesRow from './StoriesRow';
-import { useHomeFeed, useSaveFeedPreference } from '@/hooks/useFeedPosts';
-import type { FeedMode } from '@/hooks/useFeedPosts';
+import { useHomeFeed } from '@/hooks/useFeedPosts';
+import { useMyProfile } from '@/hooks/useEditProfile';
 import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messageService';
 import { getSession } from '@/services/authService';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PostDetail } from '@/types/profile';
 
-const FEED_MODE_KEY = 'postbook_feed_mode';
-
-type FeedTab = 'for_you' | 'my_circle' | 'following';
-
 interface FeedProps {
   onCreateClick?: () => void;
 }
 
 const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
-  const [activeTab, setActiveTab] = useState<FeedTab>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(FEED_MODE_KEY);
-      // if (saved === 'for_you') return 'for_you'; // TODO: enable when user base is heavy
-      if (saved === 'my_circle') return 'my_circle';
-      if (saved === 'following') return 'following';
-    }
-    return 'following';
-  });
-
   const currentUserId = getSession()?.id;
-  const feedMode: FeedMode = activeTab === 'for_you' ? 'ranked' : 'chronological';
-  const circleOnly = activeTab === 'my_circle';
+  const { data: profile } = useMyProfile();
+  const avatarSrc = profile?.avatar_media_id
+    ? `/v1/media/${profile.avatar_media_id}/serve`
+    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUserId ?? 'me'}`;
 
-  const homeFeed = useHomeFeed(feedMode, {
-    excludeSelf: true,
-    circleOnly,
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useHomeFeed('ranked', {
+    excludeSelf: false,
+    circleOnly: false,
   });
-
-  const activeData = homeFeed;
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = activeData;
 
   const queryClient = useQueryClient();
-  const savePref = useSaveFeedPreference();
   const [newPostCount, setNewPostCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const posts: PostDetail[] = data?.pages.flatMap((page) => page.data) ?? [];
+  const posts: PostDetail[] = (() => {
+    const all = data?.pages.flatMap((page: any) => page.data) ?? [];
+    const seen = new Set<string>();
+    return all.filter((p: PostDetail) => {
+      if (!p.id || seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+  })();
 
   useEffect(() => {
     return subscribeToFeedUpdates((update) => {
@@ -96,57 +89,38 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleTabChange = useCallback(
-    (tab: FeedTab) => {
-      setActiveTab(tab);
-      setNewPostCount(0);
-      localStorage.setItem(FEED_MODE_KEY, tab);
-      const mode: FeedMode = tab === 'for_you' ? 'ranked' : 'chronological';
-      savePref.mutate(mode);
-    },
-    [savePref],
-  );
-
-  const tabs: { key: FeedTab; label: string }[] = [
-    // { key: 'for_you', label: 'For You' }, // TODO: enable when user base is heavy
-    { key: 'my_circle', label: 'My Circle' },
-    { key: 'following', label: 'Following' },
-  ];
-
   return (
     <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      {/* TODO: enable Stories + Tabs when user base is heavy
-      <div className="sticky top-0 z-20 space-y-1.5 pb-1 bg-slate-50/95 backdrop-blur-xl">
-        <StoriesRow onCreateClick={onCreateClick} />
+      <StoriesRow onCreateClick={onCreateClick} />
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-2 shadow-sm">
-          <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-slate-50 p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`relative rounded-lg px-3 py-2.5 text-[12px] font-semibold transition ${
-                  activeTab === tab.key
-                    ? 'bg-white text-[#D8103F] shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {tab.label}
-                {activeTab === tab.key && (
-                  <motion.div
-                    layoutId="feed-tab-indicator"
-                    className="absolute inset-x-4 -bottom-0.5 h-[2px] rounded-full bg-[#D8103F]"
-                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
+      <div className="h-px w-full bg-brand-text/15 dark:bg-brand-text/20 mt-0 mb-4" />
+
+      {/* Inline Create Post */}
+      <div
+        className="bg-brand-card border border-brand-divider rounded-3xl p-5 shadow-sm mb-8 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={onCreateClick}
+      >
+        <div className="flex gap-4">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-brand-divider">
+            <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 space-y-4">
+            <p className="text-brand-text/40 text-lg font-light pt-2">What&apos;s on your mind?</p>
+            <div className="flex items-center justify-between pt-2 border-t border-brand-divider">
+              <div className="flex gap-4">
+                <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><ImageIcon size={20} strokeWidth={2.2} /></span>
+                <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><Smile size={20} strokeWidth={2.2} /></span>
+                <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><Hash size={20} strokeWidth={2.2} /></span>
+              </div>
+              <span className="px-6 py-2 bg-brand-accent text-brand-bg text-xs font-black tracking-widest uppercase rounded-full">
+                Post
+              </span>
+            </div>
           </div>
         </div>
       </div>
-      */}
 
       <AnimatePresence>
         {newPostCount > 0 && (
@@ -156,7 +130,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             onClick={handleLoadNewPosts}
-            className="mb-4 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99]"
+            className="mb-4 w-full rounded-2xl bg-brand-accent py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-sm transition hover:shadow-md active:scale-[0.99]"
           >
             {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
           </motion.button>
@@ -166,14 +140,14 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
       <div className="space-y-4">
         {isLoading && (
           <div className="flex justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-blue-100 border-t-blue-600" />
+            <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-brand-secondary border-t-brand-accent" />
           </div>
         )}
 
         {!isLoading && posts.length === 0 && (
-          <div className="rounded-2xl border border-slate-200 bg-white py-20 text-center">
-            <h3 className="text-base font-semibold text-slate-400">No posts yet</h3>
-            <p className="mt-1 text-sm text-slate-400">
+          <div className="rounded-2xl border border-brand-divider py-20 text-center">
+            <h3 className="text-base font-semibold text-brand-text/60">No posts yet</h3>
+            <p className="mt-1 text-sm text-brand-text/60">
               Follow people to see their posts here.
             </p>
           </div>
@@ -188,7 +162,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-xl border border-brand-divider px-6 py-2.5 text-sm font-semibold text-brand-text transition hover:bg-brand-secondary disabled:opacity-50"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load More'}
             </button>

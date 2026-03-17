@@ -120,7 +120,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-1 shadow-xl ring-4 ring-white shrink-0"
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-brand-card p-1 shadow-xl ring-4 ring-white shrink-0"
           >
             <div className="w-full h-full rounded-xl overflow-hidden bg-slate-100">
               {avatarSrc ? (
@@ -138,16 +138,16 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{group.name}</h1>
+                  <h1 className="text-xl sm:text-2xl font-black text-brand-text tracking-tight truncate">{group.name}</h1>
                   {roleBadge()}
                 </div>
 
                 {group.handle && (
-                  <p className="text-sm text-slate-400 font-medium mt-0.5">@{group.handle}</p>
+                  <p className="text-sm text-brand-text/60 font-medium mt-0.5">@{group.handle}</p>
                 )}
 
                 {group.description && (
-                  <p className="text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{group.description}</p>
+                  <p className="text-sm text-brand-highlight mt-1.5 line-clamp-2 leading-relaxed">{group.description}</p>
                 )}
 
                 {/* Badges + Stats */}
@@ -157,21 +157,21 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   </span>
 
                   {group.category && (
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[11px] font-semibold rounded-full">
+                    <span className="px-2 py-0.5 bg-slate-100 text-brand-highlight text-[11px] font-semibold rounded-full">
                       {group.category}
                     </span>
                   )}
 
                   <span className="text-slate-300">|</span>
 
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 text-xs text-brand-text/60">
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
-                      <b className="text-slate-600">{formatCount(group.member_count)}</b> members
+                      <b className="text-brand-highlight">{formatCount(group.member_count)}</b> members
                     </span>
                     <span className="flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5" />
-                      <b className="text-slate-600">{formatCount(group.post_count)}</b> posts
+                      <b className="text-brand-highlight">{formatCount(group.post_count)}</b> posts
                     </span>
                     <span className="hidden sm:flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
@@ -197,7 +197,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
 
                   <button
                     onClick={onOpenInvite}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
                   >
                     <UserPlus className="w-4 h-4" />
                     Invite
@@ -206,7 +206,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {group.chat_conversation_id && (
                     <button
                       onClick={() => router.push(`/chat?conversation=${group.chat_conversation_id}`)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Chat
@@ -216,7 +216,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {isAdmin && onEditProfile && (
                     <button
                       onClick={onEditProfile}
-                      className="p-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:border-slate-300 transition-all"
+                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-slate-300 transition-all"
                       title="Edit Group"
                     >
                       <Pencil className="w-4 h-4" />
@@ -226,7 +226,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {isAdmin && (
                     <button
                       onClick={() => router.push(`/groups/${group.id}/settings`)}
-                      className="p-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:border-slate-300 transition-all"
+                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-slate-300 transition-all"
                       title="Group Settings"
                     >
                       <Settings className="w-4 h-4" />
@@ -235,29 +235,29 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
 
                   {/* Overflow menu */}
                   <div className="relative group/overflow ml-auto">
-                    <button className="p-2 bg-white border border-slate-200 text-slate-400 rounded-xl hover:border-slate-300 transition-all">
+                    <button className="p-2 bg-brand-card border border-brand-divider text-brand-text/60 rounded-xl hover:border-slate-300 transition-all">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 hidden group-hover/overflow:block z-30">
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg py-1 hidden group-hover/overflow:block z-30">
+                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-highlight hover:bg-brand-secondary transition-colors">
                         <Share2 className="w-4 h-4" /> Share
                       </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-highlight hover:bg-brand-secondary transition-colors">
                         <Link2 className="w-4 h-4" /> Copy Link
                       </button>
-                      <hr className="my-1 border-slate-100" />
+                      <hr className="my-1 border-brand-divider" />
                       <button
                         onClick={handleLeave}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 transition-colors"
                       >
                         <LogOut className="w-4 h-4" /> Leave Group
                       </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:bg-slate-50 transition-colors">
+                      <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-text/60 hover:bg-brand-secondary transition-colors">
                         <Flag className="w-4 h-4" /> Report
                       </button>
                       {isOwner && (
                         <>
-                          <hr className="my-1 border-slate-100" />
+                          <hr className="my-1 border-brand-divider" />
                           <button
                             onClick={handleDelete}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors font-semibold"
@@ -279,7 +279,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {joinGroup.isPending ? 'Requesting...' : 'Request to Join'}
                 </button>
               ) : group.join_mode === 'invite_only' || group.privacy_level === 'private' ? (
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-slate-400 text-sm font-semibold rounded-xl">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-secondary text-brand-text/60 text-sm font-semibold rounded-xl">
                   <Lock className="w-4 h-4" />
                   Invite Only
                 </div>

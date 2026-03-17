@@ -22,7 +22,7 @@ export default function PostDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#fcfaff] flex items-center justify-center">
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
       </div>
     );
@@ -30,11 +30,11 @@ export default function PostDetailPage() {
 
   if (isError || !post) {
     return (
-      <div className="min-h-screen bg-[#fcfaff] flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center gap-4">
         <p className="text-lg font-black text-slate-300 uppercase tracking-widest italic">Post not found</p>
         <button
           onClick={() => router.back()}
-          className="px-6 py-3 bg-white rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:shadow-lg transition-all border border-slate-100"
+          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] uppercase tracking-widest text-brand-highlight hover:text-blue-600 hover:shadow-lg transition-all border border-brand-divider"
         >
           Go Back
         </button>
@@ -43,15 +43,15 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfaff] font-sans selection:bg-rose-100 selection:text-rose-900">
+    <div className="min-h-screen bg-brand-bg font-sans selection:bg-rose-100 selection:text-rose-900">
       {/* Top bar */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/40">
+      <div className="sticky top-0 z-50 bg-brand-card/80 backdrop-blur-xl border-b border-white/40">
         <div className="max-w-[640px] mx-auto px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => router.back()}
             className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
+            <ArrowLeft className="w-5 h-5 text-brand-highlight" />
           </button>
           <h1 className="text-sm font-black uppercase tracking-widest text-slate-700 italic">Post</h1>
         </div>

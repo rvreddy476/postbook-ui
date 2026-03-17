@@ -48,10 +48,10 @@ export function ChannelGate({ children }: ChannelGateProps) {
   // Loading channels query or auto-creating channel
   if (isLoading || ensurePublisher.isPending || needsChannel) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-white">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      <div className="flex h-screen flex-col items-center justify-center gap-3 bg-brand-card">
+        <Loader2 className="h-6 w-6 animate-spin text-brand-text/60" />
         {(ensurePublisher.isPending || needsChannel) && (
-          <p className="text-[13px] text-slate-400">Setting up your channel…</p>
+          <p className="text-[13px] text-brand-text/60">Setting up your channel…</p>
         )}
       </div>
     );
@@ -59,11 +59,11 @@ export function ChannelGate({ children }: ChannelGateProps) {
 
   // Error state
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-white">
+    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-brand-card">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
-        <Tv className="h-7 w-7 text-slate-400" />
+        <Tv className="h-7 w-7 text-brand-text/60" />
       </div>
-      <p className="text-[14px] text-slate-500">
+      <p className="text-[14px] text-brand-highlight">
         {ensurePublisher.isError
           ? "Could not set up your channel. Please try again."
           : isError

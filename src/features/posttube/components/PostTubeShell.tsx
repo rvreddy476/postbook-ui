@@ -77,7 +77,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[68px] border-b border-[#EEEDF5] dark:border-[#2A2740] bg-white/80 dark:bg-[#13111C]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 h-[68px] border-b border-[#EEEDF5] dark:border-[#2A2740] bg-brand-card/80 dark:bg-[#13111C]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-full max-w-[1440px] items-center px-6">
         {/* Left: PostTube Logo */}
         <div className="flex w-[200px] shrink-0 items-center">
@@ -107,7 +107,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 placeholder="Search videos, creators, topics..."
-                className="h-11 w-full rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-[#F8F7FC] dark:bg-[#1C1A28] pl-11 pr-4 text-[13px] text-[#0F0D15] dark:text-[#EEEDF5] placeholder:text-[#B0ADBE] dark:placeholder:text-[#6B6980] outline-none transition-all duration-300 focus:border-[#7C5CFC]/30 focus:bg-white dark:focus:bg-[#221F32]"
+                className="h-11 w-full rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-[#F8F7FC] dark:bg-[#1C1A28] pl-11 pr-4 text-[13px] text-[#0F0D15] dark:text-[#EEEDF5] placeholder:text-[#B0ADBE] dark:placeholder:text-[#6B6980] outline-none transition-all duration-300 focus:border-[#7C5CFC]/30 focus:bg-brand-card dark:focus:bg-[#221F32]"
               />
             </div>
           </form>

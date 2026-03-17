@@ -34,8 +34,8 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Cover Photo</label>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Recommended: 1500x500px</p>
+                        <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">Cover Photo</label>
+                        <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">Recommended: 1500x500px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -48,7 +48,7 @@ export function AvatarCoverSection({
                 </div>
 
                 <div
-                    className="relative h-64 rounded-[2.5rem] overflow-hidden bg-slate-100 group cursor-pointer shadow-inner border border-slate-100"
+                    className="relative h-64 rounded-[2.5rem] overflow-hidden bg-slate-100 group cursor-pointer shadow-inner border border-brand-divider"
                     onClick={() => coverInputRef.current?.click()}
                 >
                     {coverMediaId && !coverBroken ? (
@@ -69,14 +69,14 @@ export function AvatarCoverSection({
                     <div className="absolute bottom-6 right-6">
                         <AnimatePresence>
                             {isCoverUploading ? (
-                                <div className="p-4 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white">
+                                <div className="p-4 bg-brand-card/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white">
                                     <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
                                 </div>
                             ) : (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     whileHover={{ opacity: 1, scale: 1 }}
-                                    className="p-4 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all"
+                                    className="p-4 bg-brand-card/10 backdrop-blur-2xl border border-white/20 rounded-2xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all"
                                 >
                                     <Image className="w-6 h-6" />
                                 </motion.div>
@@ -100,8 +100,8 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Profile Picture</label>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Square, Min 400x400px</p>
+                        <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">Profile Picture</label>
+                        <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">Square, Min 400x400px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -115,10 +115,10 @@ export function AvatarCoverSection({
 
                 <div className="flex items-center gap-10">
                     <div
-                        className="relative h-32 w-32 rounded-[2.5rem] bg-white p-2 shadow-2xl ring-1 ring-slate-100 cursor-pointer group"
+                        className="relative h-32 w-32 rounded-[2.5rem] bg-brand-card p-2 shadow-2xl ring-1 ring-slate-100 cursor-pointer group"
                         onClick={() => avatarInputRef.current?.click()}
                     >
-                        <div className="w-full h-full rounded-[2rem] overflow-hidden bg-slate-50 relative">
+                        <div className="w-full h-full rounded-[2rem] overflow-hidden bg-brand-secondary relative">
                             {avatarMediaId && !avatarBroken ? (
                                 <img
                                     src={`/v1/media/${avatarMediaId}/serve`}
@@ -137,7 +137,7 @@ export function AvatarCoverSection({
                                     <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center"
+                                        className="absolute inset-0 bg-brand-card/80 backdrop-blur-sm flex items-center justify-center"
                                     >
                                         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                                     </motion.div>
@@ -146,16 +146,16 @@ export function AvatarCoverSection({
 
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-slate-900/5 transition-colors" />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="p-3 bg-white/40 backdrop-blur-md rounded-2xl border border-white shadow-xl">
-                                    <Camera className="w-6 h-6 text-slate-900" />
+                                <div className="p-3 bg-brand-card/40 backdrop-blur-md rounded-2xl border border-white shadow-xl">
+                                    <Camera className="w-6 h-6 text-brand-text" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-1">
-                        <p className="text-sm font-black uppercase tracking-widest text-slate-900">Your Profile Image</p>
-                        <p className="text-xs font-bold text-slate-400 max-w-[240px] leading-relaxed">
+                        <p className="text-sm font-black uppercase tracking-widest text-brand-text">Your Profile Image</p>
+                        <p className="text-xs font-bold text-brand-text/60 max-w-[240px] leading-relaxed">
                             This picture is visible to everyone on the platform.
                         </p>
                     </div>

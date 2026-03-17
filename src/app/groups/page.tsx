@@ -31,7 +31,7 @@ export default function GroupsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Groups</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Connect with communities that matter to you</p>
+          <p className="text-sm text-brand-text/60 mt-0.5">Connect with communities that matter to you</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -50,17 +50,17 @@ export default function GroupsPage() {
           placeholder="Search groups..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+          className="w-full pl-11 pr-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
         />
       </div>
 
       {/* Tabs */}
       {!searchQuery && (
-        <div className="flex items-center gap-0 border-b border-slate-100 mb-6 -mx-1">
+        <div className="flex items-center gap-0 border-b border-brand-divider mb-6 -mx-1">
           <button
             onClick={() => setTab('my-groups')}
             className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-colors ${
-              tab === 'my-groups' ? 'text-[#D8103F]' : 'text-slate-400 hover:text-slate-600'
+              tab === 'my-groups' ? 'text-[#D8103F]' : 'text-brand-text/60 hover:text-brand-highlight'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -72,7 +72,7 @@ export default function GroupsPage() {
           <button
             onClick={() => setTab('discover')}
             className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-colors ${
-              tab === 'discover' ? 'text-[#D8103F]' : 'text-slate-400 hover:text-slate-600'
+              tab === 'discover' ? 'text-[#D8103F]' : 'text-brand-text/60 hover:text-brand-highlight'
             }`}
           >
             <Compass className="w-4 h-4" />
@@ -88,13 +88,13 @@ export default function GroupsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+            <div key={i} className="bg-brand-card rounded-2xl border border-brand-divider overflow-hidden animate-pulse">
               <div className="h-28 bg-slate-100" />
               <div className="p-4 space-y-2">
                 <div className="w-12 h-12 rounded-xl bg-slate-100 -mt-7" />
                 <div className="h-4 w-32 bg-slate-100 rounded" />
-                <div className="h-3 w-48 bg-slate-50 rounded" />
-                <div className="h-3 w-24 bg-slate-50 rounded" />
+                <div className="h-3 w-48 bg-brand-secondary rounded" />
+                <div className="h-3 w-24 bg-brand-secondary rounded" />
               </div>
             </div>
           ))}
@@ -114,10 +114,10 @@ export default function GroupsPage() {
         </div>
       ) : (
         <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
             <Users className="w-8 h-8 text-slate-200" />
           </div>
-          <p className="text-sm font-semibold text-slate-400">
+          <p className="text-sm font-semibold text-brand-text/60">
             {searchQuery
               ? 'No groups found'
               : tab === 'my-groups'

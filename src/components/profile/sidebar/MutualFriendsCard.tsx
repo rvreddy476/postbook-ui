@@ -57,7 +57,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 animate-pulse">
+            <div className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider animate-pulse">
                 <div className="h-4 w-28 bg-slate-200 rounded mb-3" />
                 <div className="flex -space-x-2 mb-2">
                     {Array.from({ length: 4 }).map((_, i) => (
@@ -89,11 +89,11 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.05 }}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"
+            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
         >
             <div className="flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4 text-slate-400" />
-                <h3 className="text-sm font-bold text-slate-900">Mutual Friends</h3>
+                <Users className="h-4 w-4 text-brand-text/60" />
+                <h3 className="text-sm font-bold text-brand-text">Mutual Friends</h3>
             </div>
 
             <div className="flex -space-x-2 mb-2.5">
@@ -117,7 +117,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                 ))}
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">{summaryText}</p>
+            <p className="text-xs text-brand-highlight leading-relaxed">{summaryText}</p>
         </motion.div>
     )
 }

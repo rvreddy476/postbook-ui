@@ -64,10 +64,10 @@ export function CoverFrameSelector({
   const maxMs = Math.floor(durationSeconds * 1000);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-xl border border-brand-divider bg-brand-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Image className="h-4 w-4 text-slate-500" />
-        <h3 className="text-[14px] font-semibold text-slate-900">Cover Frame</h3>
+        <Image className="h-4 w-4 text-brand-highlight" />
+        <h3 className="text-[14px] font-semibold text-brand-text">Cover Frame</h3>
       </div>
 
       {/* Mode selector */}
@@ -80,7 +80,7 @@ export function CoverFrameSelector({
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
               mode === m
                 ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
             }`}
           >
             {m === "auto" && "Auto"}
@@ -116,7 +116,7 @@ export function CoverFrameSelector({
       {/* Mode-specific controls */}
       {mode === "scrub" && (
         <div className="space-y-2">
-          <label className="text-[12px] text-slate-500">
+          <label className="text-[12px] text-brand-highlight">
             Position: {(scrubMs / 1000).toFixed(1)}s
           </label>
           <input
@@ -141,7 +141,7 @@ export function CoverFrameSelector({
 
       {mode === "upload" && (
         <div>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-4 text-[13px] text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-600">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-divider py-4 text-[13px] text-brand-highlight transition-colors hover:border-slate-300 hover:text-brand-highlight">
             <Upload className="h-4 w-4" />
             Choose an image
             <input
@@ -155,7 +155,7 @@ export function CoverFrameSelector({
       )}
 
       {mode === "auto" && (
-        <p className="text-[12px] text-slate-400">
+        <p className="text-[12px] text-brand-text/60">
           Auto-generated from 25% of the video duration.
         </p>
       )}

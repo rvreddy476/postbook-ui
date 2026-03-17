@@ -60,7 +60,7 @@ function VideoThumbnail({
   return (
     <>
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2D2640] via-[#3D3560] to-[#1A1430]">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.08] backdrop-blur-sm">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/[0.08] backdrop-blur-sm">
           <Play className="h-7 w-7 text-white/30 ml-0.5" />
         </div>
       </div>
@@ -163,7 +163,7 @@ function SpotlightPreview({
           playing ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       />
-      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-white/20 dark:bg-white/10 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
+      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-brand-card/20 dark:bg-brand-card/10 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
         <div
           ref={barRef}
           className="h-full bg-gradient-to-r from-[#F97066] to-[#7C5CFC]"
@@ -222,7 +222,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
     return (
       <Link
         href={`/posttube/watch/${video.id}`}
-        className="spotlight-card group flex gap-3.5 rounded-2xl p-2.5 bg-white dark:bg-[#1C1A28] transition-all duration-300 hover:shadow-[0_8px_40px_-8px_rgba(124,92,252,0.2)]"
+        className="spotlight-card group flex gap-3.5 rounded-2xl p-2.5 bg-brand-card dark:bg-[#1C1A28] transition-all duration-300 hover:shadow-[0_8px_40px_-8px_rgba(124,92,252,0.2)]"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
@@ -251,7 +251,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   return (
     <Link
       href={`/posttube/watch/${video.id}`}
-      className="spotlight-card group flex flex-col rounded-2xl bg-white dark:bg-[#1C1A28] p-3 transition-all duration-300"
+      className="spotlight-card group flex flex-col rounded-2xl bg-brand-card dark:bg-[#1C1A28] p-3 transition-all duration-300"
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
       style={{
@@ -285,7 +285,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
 
         <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100"}`}>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D15]/40 via-transparent to-transparent" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white/95 dark:bg-white/90 shadow-[0_8px_32px_-8px_rgba(124,92,252,0.4)] backdrop-blur-xl">
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/95 dark:bg-brand-card/90 shadow-[0_8px_32px_-8px_rgba(124,92,252,0.4)] backdrop-blur-xl">
             <Play className="ml-0.5 h-6 w-6 fill-[#7C5CFC] text-[#7C5CFC]" />
           </div>
         </div>

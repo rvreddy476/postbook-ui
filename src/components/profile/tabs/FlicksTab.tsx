@@ -49,7 +49,7 @@ function FlickGridItem({ post, index }: { post: PostDetail; index: number }) {
                 />
             ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900">
-                    <Film className="h-10 w-10 text-slate-600" />
+                    <Film className="h-10 w-10 text-brand-highlight" />
                 </div>
             )}
 
@@ -122,13 +122,13 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
     if (flicks.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
                     <Film className="h-9 w-9 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-950 font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     {isOwn ? "Share your first Flick on Postgram" : "No Flicks yet"}
                 </h3>
-                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+                <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">
                     {isOwn
                         ? "Create short, engaging videos and grow your audience."
                         : "When Flicks are posted, they will appear here."}

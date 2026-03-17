@@ -99,6 +99,7 @@ const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
+const presenceListeners = new Set<(e: { user_id: string; online: boolean }) => void>();
 
 export interface CallSignal {
   type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy'
@@ -334,6 +335,9 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           action: data.payload.action || (data.payload.message_id ? 'pin' : 'unpin'),
         };
         pinUpdateListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'presence_update') {
+        const evt = { user_id: data.user_id as string, online: data.online as boolean };
+        presenceListeners.forEach(cb => cb(evt));
       }
     };
 
@@ -558,6 +562,11 @@ export const subscribeToFeedUpdates = (cb: (f: FeedUpdate) => void) => {
 export const subscribeToPostUpdates = (cb: (u: PostInteractionUpdate) => void) => {
   postUpdateListeners.add(cb);
   return () => { postUpdateListeners.delete(cb); };
+};
+
+export const subscribeToPresenceUpdates = (cb: (e: { user_id: string; online: boolean }) => void) => {
+  presenceListeners.add(cb);
+  return () => { presenceListeners.delete(cb); };
 };
 
 // ---------------------------------------------------------------------------

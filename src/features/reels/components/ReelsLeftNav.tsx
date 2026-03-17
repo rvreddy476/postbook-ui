@@ -31,12 +31,12 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
       className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
         active
           ? "bg-slate-900 text-white shadow-sm"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
     >
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
         active
-          ? "bg-white/15"
+          ? "bg-brand-card/15"
           : "bg-transparent group-hover:bg-slate-100"
       }`}>
         {icon}
@@ -44,7 +44,7 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
       <span className="flex-1 truncate">{label}</span>
       {typeof count === "number" && count > 0 ? (
         <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+          active ? "bg-brand-card/20 text-white" : "bg-slate-100 text-brand-highlight"
         }`}>
           {count > 99 ? "99+" : count}
         </span>
@@ -68,7 +68,7 @@ export function ReelsLeftNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#EDEDEF] bg-white py-5 px-3">
+    <aside className="flex h-full w-[220px] shrink-0 flex-col border-r border-[#EDEDEF] bg-brand-card py-5 px-3">
       {/* Create */}
       <div className="mb-3 px-1">
         <Link
@@ -148,7 +148,7 @@ export function ReelsLeftNav() {
               />
               <div className="flex-1 min-w-0">
                 <p className="truncate text-[12px] font-semibold text-slate-700">{creator.name}</p>
-                <p className="truncate text-[11px] text-slate-400">{creator.handle}</p>
+                <p className="truncate text-[11px] text-brand-text/60">{creator.handle}</p>
               </div>
             </div>
           ))}

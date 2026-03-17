@@ -448,13 +448,13 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   // Render
   // ========================================================================
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="flex flex-col h-full bg-brand-card relative">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md">
+      <div className="flex shrink-0 items-center justify-between border-b border-brand-divider bg-brand-card/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="group flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+            className="group flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           </button>
@@ -469,8 +469,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           </div>
 
           <div className="flex shrink-0 flex-col">
-            <h3 className="text-[16px] font-extrabold tracking-tight text-slate-800">{userName}</h3>
-            <p className={`text-[12px] font-semibold tracking-wide ${typingUsers.size > 0 ? 'text-indigo-500' : userOnline ? 'text-emerald-500' : 'text-slate-400'
+            <h3 className="text-[16px] font-extrabold tracking-tight text-brand-text">{userName}</h3>
+            <p className={`text-[12px] font-semibold tracking-wide ${typingUsers.size > 0 ? 'text-indigo-500' : userOnline ? 'text-emerald-500' : 'text-brand-text/60'
               }`}>
               {statusText}
             </p>
@@ -486,7 +486,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             <button
               key={i}
               title={btn.title}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-700 active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
             >
               {btn.icon}
             </button>
@@ -503,7 +503,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           <Pin className="w-4 h-4 text-amber-500 shrink-0 rotate-45" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Pinned Message</p>
-            <p className="text-[12px] text-slate-600 truncate">{pinnedMessage.message?.text || 'Click to view'}</p>
+            <p className="text-[12px] text-brand-highlight truncate">{pinnedMessage.message?.text || 'Click to view'}</p>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); handleUnpinMessage() }}
@@ -515,10 +515,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-0.5 bg-slate-50/50">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-0.5 bg-brand-secondary/50">
         {loading && (
           <div className="flex items-center justify-center flex-1 h-full">
-            <div className="flex items-center gap-2 text-slate-400 text-[13px]">
+            <div className="flex items-center gap-2 text-brand-text/60 text-[13px]">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading messages...
             </div>
@@ -535,7 +535,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           if (msg.type === 'system') {
             return (
               <div key={msg.id} id={`msg-${msg.id}`} className="flex justify-center py-3 transition-colors">
-                <span className="text-[11px] text-slate-400 bg-white px-4 py-1.5 rounded-full shadow-sm border border-slate-100 italic">
+                <span className="text-[11px] text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full shadow-sm border border-brand-divider italic">
                   {msg.text || 'System message'}
                 </span>
               </div>
@@ -569,12 +569,12 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
               <div className={`max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 {/* Forwarded label */}
                 {msg.forwardedFromId && !msg.isDeleted && (
-                  <p className="text-[10px] text-slate-400 italic mb-0.5">Forwarded</p>
+                  <p className="text-[10px] text-brand-text/60 italic mb-0.5">Forwarded</p>
                 )}
 
                 {/* Reply preview */}
                 {replyTarget && !msg.isDeleted && (
-                  <div className="text-[11px] text-slate-400 px-3 py-1.5 border-l-2 border-[#D8103F] bg-[#D8103F]/5 rounded-r-lg mb-0.5 max-w-full truncate">
+                  <div className="text-[11px] text-brand-text/60 px-3 py-1.5 border-l-2 border-[#D8103F] bg-[#D8103F]/5 rounded-r-lg mb-0.5 max-w-full truncate">
                     {replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text}
                   </div>
                 )}
@@ -582,10 +582,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                 {/* Message bubble */}
                 <div
                   className={`group/bubble relative max-w-full break-words px-4 py-2.5 text-[14px] leading-relaxed shadow-sm transition-all ${msg.isDeleted
-                      ? 'rounded-2xl bg-slate-50 text-slate-400 italic'
+                      ? 'rounded-2xl bg-brand-secondary text-brand-text/60 italic'
                       : isMe
                         ? `bg-indigo-600 text-white ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
-                        : `border border-slate-100 bg-white text-slate-700 ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
+                        : `border border-brand-divider bg-brand-card text-brand-text ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
                     }`}
                 >
                   {msg.isDeleted ? (
@@ -606,7 +606,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                 {/* Edited indicator */}
                 {msg.isEdited && !msg.isDeleted && (
-                  <p className="text-[10px] text-slate-300 mt-0.5">(edited)</p>
+                  <p className="text-[10px] text-brand-text/30 mt-0.5">(edited)</p>
                 )}
 
                 {/* Reactions */}
@@ -618,7 +618,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                         onClick={() => handleToggleReaction(msg.id, r.emoji)}
                         className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${r.user_ids.includes(myId)
                             ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
-                            : 'border border-slate-100 bg-white text-slate-600 hover:bg-slate-50'
+                            : 'border border-brand-divider bg-brand-card text-brand-highlight hover:bg-brand-secondary'
                           }`}
                       >
                         <span>{r.emoji}</span>
@@ -630,7 +630,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                 {/* Time + read receipt */}
                 {groupEnd && (
-                  <div className="mt-1.5 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-slate-400">
+                  <div className="mt-1.5 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-brand-text/60">
                     {msg.time}
                     {isMe && msg.id === lastSentMsgId && readReceipts.has(msg.id) && (
                       <span className="flex items-center gap-0.5 text-indigo-500">
@@ -651,17 +651,17 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       {/* Context Menu */}
       {contextMenu?.visible && (
         <div
-          className="fixed bg-white rounded-xl border border-slate-100 shadow-xl p-1.5 z-50 min-w-[180px]"
+          className="fixed bg-brand-card rounded-xl border border-brand-divider shadow-xl p-1.5 z-50 min-w-[180px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Quick emoji row */}
-          <div className="flex gap-1 px-1.5 py-1.5 border-b border-slate-50 mb-1">
+          <div className="flex gap-1 px-1.5 py-1.5 border-b border-brand-divider mb-1">
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => handleToggleReaction(contextMenu.messageId, emoji)}
-                className="text-lg px-1.5 py-0.5 rounded-md hover:bg-slate-50 transition-colors"
+                className="text-lg px-1.5 py-0.5 rounded-md hover:bg-brand-secondary transition-colors"
               >
                 {emoji}
               </button>
@@ -670,27 +670,27 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
           <button
             onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
           >
-            <Reply className="w-4 h-4 text-slate-400" /> Reply
+            <Reply className="w-4 h-4 text-brand-text/60" /> Reply
           </button>
           <button
             onClick={() => {
               if (pinnedMessage?.message_id === contextMenu.messageId) handleUnpinMessage()
               else handlePinMessage(contextMenu.messageId)
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
           >
-            <Pin className="w-4 h-4 text-slate-400" />
+            <Pin className="w-4 h-4 text-brand-text/60" />
             {pinnedMessage?.message_id === contextMenu.messageId ? 'Unpin' : 'Pin'}
           </button>
           {contextMenu.senderId === myId && (
             <>
               <button
                 onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
               >
-                <Pencil className="w-4 h-4 text-slate-400" /> Edit
+                <Pencil className="w-4 h-4 text-brand-text/60" /> Edit
               </button>
               <button
                 onClick={() => handleDelete(contextMenu.messageId)}
@@ -705,16 +705,16 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
       {/* Reply bar */}
       {replyingTo && (
-        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/80 px-6 py-3 backdrop-blur-md">
+        <div className="flex shrink-0 items-center justify-between border-t border-brand-divider bg-brand-secondary/80 px-6 py-3 backdrop-blur-md">
           <div className="flex flex-1 flex-col border-l-[3px] border-indigo-500 pl-3">
             <span className="text-[12px] font-bold text-indigo-600">
               Replying to {replyingTo.senderId === myId ? 'yourself' : userName}
             </span>
-            <span className="truncate text-[13px] text-slate-500">
+            <span className="truncate text-[13px] text-brand-highlight">
               {replyingTo.text}
             </span>
           </div>
-          <button onClick={() => setReplyingTo(null)} className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-600">
+          <button onClick={() => setReplyingTo(null)} className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary/80 hover:text-brand-highlight">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -722,28 +722,28 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
       {/* Edit bar */}
       {editingMsgId ? (
-        <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-6 py-4">
+        <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4">
           <input
             ref={editInputRef}
             value={editText}
             onChange={e => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Edit message..."
-            className="flex-1 rounded-2xl border border-transparent bg-slate-100 px-5 py-3 text-[14px] text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-slate-200 focus:bg-white focus:ring-4 focus:ring-slate-100/50"
+            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3 text-[14px] text-brand-text outline-none transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
           />
           <button onClick={handleSaveEdit} className="flex h-11 items-center justify-center rounded-2xl bg-indigo-600 px-6 font-bold text-white transition-all hover:bg-indigo-700 active:scale-95">
             Save
           </button>
-          <button onClick={() => { setEditingMsgId(null); setEditText('') }} className="flex h-11 items-center justify-center rounded-2xl bg-slate-100 px-5 font-bold text-slate-500 transition-all hover:bg-slate-200 active:scale-95">
+          <button onClick={() => { setEditingMsgId(null); setEditText('') }} className="flex h-11 items-center justify-center rounded-2xl bg-brand-secondary px-5 font-bold text-brand-highlight transition-all hover:bg-brand-secondary/80 active:scale-95">
             Cancel
           </button>
         </div>
       ) : (
         /* Input area */
-        <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-6 py-4">
+        <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+            className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
             title="Attach file"
           >
             <Paperclip className="h-5 w-5 transition-transform group-hover:scale-110 group-hover:text-indigo-500" />
@@ -757,7 +757,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Write a message..."
-            className="flex-1 rounded-2xl border border-transparent bg-slate-50 px-5 py-3.5 text-[14px] font-medium text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-slate-200 focus:bg-white focus:ring-4 focus:ring-slate-100/50"
+            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3.5 text-[14px] font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
           />
 
           <button
@@ -765,7 +765,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             disabled={!hasText}
             className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all duration-200 active:scale-90 ${hasText
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-600/40'
-                : 'bg-slate-100 text-slate-300'
+                : 'bg-brand-secondary text-brand-text/30'
               }`}
           >
             <Send className={`h-5 w-5 ${hasText ? '-ml-1' : ''}`} />

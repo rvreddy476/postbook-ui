@@ -20,7 +20,7 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.15 }}
-            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+            className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
         >
             {/* Teal gradient header */}
             <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-5 py-3">
@@ -33,11 +33,11 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
             <div className="p-5 space-y-3">
                 {contentCounts.video > 0 && (
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                            <Film className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center gap-2.5 text-sm text-brand-highlight">
+                            <Film className="h-4 w-4 text-brand-text/60" />
                             <span>Posttube Videos</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">
+                        <span className="text-sm font-semibold text-brand-text">
                             {contentCounts.video.toLocaleString()}
                         </span>
                     </div>
@@ -45,11 +45,11 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
 
                 {contentCounts.reel > 0 && (
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                            <Clapperboard className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center gap-2.5 text-sm text-brand-highlight">
+                            <Clapperboard className="h-4 w-4 text-brand-text/60" />
                             <span>Flicks</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">
+                        <span className="text-sm font-semibold text-brand-text">
                             {contentCounts.reel.toLocaleString()}
                         </span>
                     </div>
@@ -57,11 +57,11 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
 
                 {contentCounts.total > 0 && (
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm text-slate-600">
-                            <Sparkles className="h-4 w-4 text-slate-400" />
+                        <div className="flex items-center gap-2.5 text-sm text-brand-highlight">
+                            <Sparkles className="h-4 w-4 text-brand-text/60" />
                             <span>Total Sparks</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">
+                        <span className="text-sm font-semibold text-brand-text">
                             {contentCounts.total.toLocaleString()}
                         </span>
                     </div>

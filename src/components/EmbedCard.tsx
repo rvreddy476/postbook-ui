@@ -46,7 +46,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
     })()
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden hover:shadow-md transition-shadow">
             {/* Thumbnail area */}
             <Link href={watchUrl} className="block relative aspect-video bg-slate-100 group">
                 {thumbnailUrl ? (
@@ -67,7 +67,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
 
                 {/* Play overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-card/90 shadow-lg">
                         <Play className="h-5 w-5 text-[#D8103F] ml-0.5" />
                     </div>
                 </div>
@@ -92,12 +92,12 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     <div className="min-w-0 flex-1">
                         <Link
                             href={watchUrl}
-                            className="text-sm font-semibold text-slate-900 line-clamp-2 hover:text-[#D8103F] transition-colors"
+                            className="text-sm font-semibold text-brand-text line-clamp-2 hover:text-[#D8103F] transition-colors"
                         >
                             {embedRef?.title || post.text || "Untitled"}
                         </Link>
                         {embedRef?.channel_name && (
-                            <p className="text-xs text-slate-500 mt-0.5">{embedRef.channel_name}</p>
+                            <p className="text-xs text-brand-highlight mt-0.5">{embedRef.channel_name}</p>
                         )}
                     </div>
                     <Link
@@ -105,12 +105,12 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                         className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 hover:bg-[#D8103F]/10 transition-colors"
                         title="Open in PostTube"
                     >
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                        <ExternalLink className="h-3.5 w-3.5 text-brand-highlight" />
                     </Link>
                 </div>
 
                 {/* Stats */}
-                <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
+                <div className="mt-2 flex items-center gap-3 text-xs text-brand-text/60">
                     {embedRef?.view_count != null && (
                         <span className="flex items-center gap-1">
                             <Eye className="h-3 w-3" /> {fmtCount(embedRef.view_count)}

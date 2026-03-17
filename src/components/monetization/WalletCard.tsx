@@ -25,7 +25,7 @@ function formatAmount(amount: number, currency: string): string {
 
 function WalletCardSkeleton() {
     return (
-        <div className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm animate-pulse">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm animate-pulse">
             <div className="h-4 bg-[#F0E6DC] rounded-full w-24 mb-6" />
             <div className="grid grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
@@ -45,7 +45,7 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
             {/* Decorative accent */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#D4A574] via-[#7B5B3A] to-[#D4A574]" />
 

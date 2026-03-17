@@ -72,7 +72,7 @@ function SessionItem({
   isRevoking: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 transition-colors hover:bg-[#FAF5F0]">
+    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
         {getPlatformIcon(session.platform)}
       </div>
@@ -113,7 +113,7 @@ function SessionItem({
 
 function SessionSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-white px-4 py-3">
+    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
       <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="h-4 w-48 animate-pulse rounded bg-[#F0E6DC]" />
@@ -220,7 +220,7 @@ export default function SessionList({
             type="button"
             onClick={onLogoutAll}
             disabled={isLoggingOutAll}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-50 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-brand-card py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-50 disabled:opacity-50"
           >
             {isLoggingOutAll ? (
               <Loader2 className="h-4 w-4 animate-spin" />

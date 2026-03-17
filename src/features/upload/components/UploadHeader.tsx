@@ -36,7 +36,7 @@ export function UploadHeader({
   const badgeColor = TYPE_BADGE_COLORS[contentType];
 
   return (
-    <div className="flex items-center justify-between border-b border-[#E8E6E1] bg-white px-5 py-2.5">
+    <div className="flex items-center justify-between border-b border-[#E8E6E1] bg-brand-card px-5 py-2.5">
       {/* Left: Close + title + badge */}
       <div className="flex items-center gap-3">
         <Link

@@ -21,7 +21,7 @@ const STEP_ICONS: Record<StepId, typeof FileText> = {
 
 export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepClick }: HorizontalStepsProps) {
   return (
-    <div className="flex items-center gap-1 border-b border-[#E8E6E1] bg-white px-6 py-0">
+    <div className="flex items-center gap-1 border-b border-[#E8E6E1] bg-brand-card px-6 py-0">
       {steps.map((stepId, idx) => {
         const meta = STEP_META[stepId];
         const Icon = STEP_ICONS[stepId];

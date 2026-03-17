@@ -69,7 +69,7 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
               type="date"
               value={form.recordingDate}
               onChange={(e) => patch({ recordingDate: e.target.value })}
-              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
             />
           </div>
           <div>

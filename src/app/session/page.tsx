@@ -15,27 +15,27 @@ const workItems = [
 
 export default function SessionPage() {
   return (
-    <div className="min-h-screen bg-[#fcfaff]">
+    <div className="min-h-screen bg-brand-bg">
       <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-3xl border border-brand-divider bg-brand-card p-6 shadow-sm sm:p-8">
           <div className="mb-6 flex items-start gap-3">
             <div className="rounded-2xl bg-slate-900 p-2.5 text-white">
               <NotebookPen className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Session Notes</h1>
-              <p className="mt-1 text-sm text-slate-500">Persistent summary of what we changed in this cycle.</p>
+              <h1 className="text-xl font-bold tracking-tight text-brand-text sm:text-2xl">Session Notes</h1>
+              <p className="mt-1 text-sm text-brand-highlight">Persistent summary of what we changed in this cycle.</p>
             </div>
           </div>
 
-          <div className="mb-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
-            <CalendarDays className="h-4 w-4 text-slate-500" />
+          <div className="mb-6 flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-xs font-medium text-brand-highlight">
+            <CalendarDays className="h-4 w-4 text-brand-highlight" />
             Updated during current UI redesign session
           </div>
 
           <ul className="space-y-3">
             {workItems.map((item) => (
-              <li key={item} className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+              <li key={item} className="flex items-start gap-2.5 rounded-xl border border-brand-divider bg-brand-card px-3 py-2.5">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 <span className="text-sm leading-6 text-slate-700">{item}</span>
               </li>
@@ -45,9 +45,9 @@ export default function SessionPage() {
           <div className="mt-6 flex flex-wrap gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-brand-secondary"
             >
-              <FileCode2 className="h-4 w-4 text-slate-500" />
+              <FileCode2 className="h-4 w-4 text-brand-highlight" />
               Back To Feed
             </Link>
           </div>

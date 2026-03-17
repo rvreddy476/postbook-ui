@@ -52,15 +52,15 @@ function ModuleCard({
     const accent = colorMap[module.color] ?? colorMap.violet
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-5 transition-shadow hover:shadow-sm">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent}`}>
                         <Globe className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-slate-900">{module.label}</h3>
-                        <p className="text-xs text-slate-500">{module.description}</p>
+                        <h3 className="text-sm font-bold text-brand-text">{module.label}</h3>
+                        <p className="text-xs text-brand-highlight">{module.description}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -80,22 +80,22 @@ function ModuleCard({
             </div>
 
             {profile ? (
-                <div className="mt-4 space-y-2 text-xs text-slate-600">
+                <div className="mt-4 space-y-2 text-xs text-brand-highlight">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-500">Identity:</span>
+                        <span className="font-medium text-brand-highlight">Identity:</span>
                         <span>
                             {profile.use_global_identity ? "Global (shared)" : "Custom override"}
                         </span>
                     </div>
                     {profile.name_override && (
                         <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-500">Name:</span>
+                            <span className="font-medium text-brand-highlight">Name:</span>
                             <span>{profile.name_override}</span>
                         </div>
                     )}
                 </div>
             ) : (
-                <p className="mt-4 text-xs text-slate-400 italic">
+                <p className="mt-4 text-xs text-brand-text/60 italic">
                     No custom profile — using global identity
                 </p>
             )}
@@ -148,9 +148,9 @@ function ModuleEditForm({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-xl border border-[#D8103F]/20 bg-white p-6 shadow-sm"
+            className="rounded-xl border border-[#D8103F]/20 bg-brand-card p-6 shadow-sm"
         >
-            <h3 className="text-sm font-bold text-slate-900 capitalize mb-4">
+            <h3 className="text-sm font-bold text-brand-text capitalize mb-4">
                 Edit {module} Profile
             </h3>
 
@@ -164,7 +164,7 @@ function ModuleEditForm({
                     />
                     <div>
                         <p className="text-sm font-medium text-slate-700">Use global identity</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-brand-highlight">
                             Share the same name, avatar, and bio across all modules
                         </p>
                     </div>
@@ -178,7 +178,7 @@ function ModuleEditForm({
                         className="space-y-3"
                     >
                         <div>
-                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                            <label className="block text-xs font-semibold text-brand-highlight mb-1">
                                 Display Name Override
                             </label>
                             <input
@@ -186,14 +186,14 @@ function ModuleEditForm({
                                 value={nameOverride}
                                 onChange={(e) => setNameOverride(e.target.value)}
                                 placeholder="Custom display name for this module"
-                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                                className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
                             />
                         </div>
                     </motion.div>
                 )}
 
                 <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    <label className="block text-xs font-semibold text-brand-highlight mb-1">
                         Banner URL
                     </label>
                     <input
@@ -201,12 +201,12 @@ function ModuleEditForm({
                         value={bannerUrl}
                         onChange={(e) => setBannerUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    <label className="block text-xs font-semibold text-brand-highlight mb-1">
                         Watermark URL
                     </label>
                     <input
@@ -214,7 +214,7 @@ function ModuleEditForm({
                         value={watermarkUrl}
                         onChange={(e) => setWatermarkUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
                     />
                 </div>
             </div>
@@ -270,22 +270,22 @@ function HandleSection() {
     }
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-1">Change Handle</h3>
-            <p className="text-xs text-slate-500 mb-4">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-6">
+            <h3 className="text-sm font-bold text-brand-text mb-1">Change Handle</h3>
+            <p className="text-xs text-brand-highlight mb-4">
                 Your handle is your unique @username. Changes have a 30-day cooldown.
             </p>
 
             <div className="flex gap-2">
                 <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">@</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-brand-text/60">@</span>
                     <input
                         type="text"
                         value={newUsername}
                         onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                         placeholder="new_handle"
                         maxLength={30}
-                        className="w-full rounded-lg border border-slate-200 pl-8 pr-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider pl-8 pr-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
                     />
                 </div>
             </div>
@@ -297,7 +297,7 @@ function HandleSection() {
                     onChange={(e) => setConfirmChecked(e.target.checked)}
                     className="h-4 w-4 rounded border-slate-300 text-[#D8103F] focus:ring-[#D8103F]/50"
                 />
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-brand-highlight">
                     I understand this change has a 30-day cooldown
                 </span>
             </label>
@@ -331,19 +331,19 @@ function HandleSection() {
                         className="mt-4 overflow-hidden"
                     >
                         {historyLoading ? (
-                            <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                            <div className="flex items-center gap-2 text-xs text-brand-text/60 py-2">
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
                             </div>
                         ) : !history?.length ? (
-                            <p className="text-xs text-slate-400 italic py-2">No handle changes yet.</p>
+                            <p className="text-xs text-brand-text/60 italic py-2">No handle changes yet.</p>
                         ) : (
                             <div className="space-y-2">
                                 {history.map((entry, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-xs text-slate-600 rounded-lg bg-slate-50 px-3 py-2">
-                                        <span className="font-mono text-slate-400">@{entry.old_username}</span>
+                                    <div key={i} className="flex items-center gap-3 text-xs text-brand-highlight rounded-lg bg-brand-secondary px-3 py-2">
+                                        <span className="font-mono text-brand-text/60">@{entry.old_username}</span>
                                         <span className="text-slate-300">&rarr;</span>
                                         <span className="font-mono font-semibold">@{entry.new_username}</span>
-                                        <span className="ml-auto text-slate-400">
+                                        <span className="ml-auto text-brand-text/60">
                                             {new Date(entry.changed_at).toLocaleDateString()}
                                         </span>
                                     </div>
@@ -393,8 +393,8 @@ export default function ModuleProfilesPage() {
                     <ArrowLeft className="h-4 w-4 text-[#D8103F]" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Module Profiles</h1>
-                    <p className="text-sm text-slate-500">Customize your identity per platform module.</p>
+                    <h1 className="text-2xl font-bold text-brand-text">Module Profiles</h1>
+                    <p className="text-sm text-brand-highlight">Customize your identity per platform module.</p>
                 </div>
             </motion.div>
 

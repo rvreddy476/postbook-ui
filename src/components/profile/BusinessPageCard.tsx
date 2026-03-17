@@ -16,7 +16,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
     return (
         <Link
             href={`/page/${page.handle}`}
-            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
+            className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
         >
             {/* Avatar */}
             <div className="h-12 w-12 rounded-lg bg-[#F0E6DC] overflow-hidden flex-shrink-0">

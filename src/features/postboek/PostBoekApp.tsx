@@ -33,6 +33,7 @@ const PostBoekApp: React.FC = () => {
   const [isContactListOpen, setIsContactListOpen] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [groupRefreshKey, setGroupRefreshKey] = useState(0);
+  const [navExpanded, setNavExpanded] = useState(false);
 
   // Intercept Profile/Friends tabs — navigate to dedicated routes instead of rendering inline
   const handleNavChange = useCallback((tab: NavItem) => {
@@ -155,7 +156,7 @@ const PostBoekApp: React.FC = () => {
   };
 
   if (!isSessionLoaded) {
-    return <div className="min-h-screen bg-[#fcfaff]" aria-hidden="true" />;
+    return <div className="min-h-screen" aria-hidden="true" />;
   }
 
   if (!currentUser) {
@@ -167,7 +168,7 @@ const PostBoekApp: React.FC = () => {
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
-      <div className="h-screen min-h-screen overflow-hidden bg-gradient-to-b from-[#fcfaff] to-[#f8f7ff] font-sans selection:bg-rose-100 selection:text-rose-900">
+      <div className="h-screen min-h-screen overflow-hidden font-sans selection:bg-brand-accent selection:text-brand-bg">
         <Header
           currentUser={currentUser}
           activeTab={activeTab}
@@ -175,52 +176,28 @@ const PostBoekApp: React.FC = () => {
           onCreateClick={() => setIsCreateOpen(true)}
           onLogout={handleLogout}
           onToggleContactList={() => setIsContactListOpen(!isContactListOpen)}
+          navExpanded={navExpanded}
         />
 
-        <div className="relative flex h-full flex-1 overflow-hidden pt-20">
-          <aside className="hidden md:flex">
-            <Sidebar activeTab={activeTab} setActiveTab={handleNavChange} />
-          </aside>
+        {/* Fixed sidebar — renders itself as position:fixed */}
+        <Sidebar activeTab={activeTab} setActiveTab={handleNavChange} onChatClick={() => setIsContactListOpen(!isContactListOpen)} onNotificationsClick={() => {}} expanded={navExpanded} setExpanded={setNavExpanded} />
 
-          <aside
-            className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] ${isContactListOpen ? 'w-[280px]' : 'w-[48px]'} flex-col border-r border-slate-100 bg-white/90 shadow-sm relative backdrop-blur-xl transition-all duration-300`}
-          >
-            <AnimatePresence mode="wait">
-              {isContactListOpen ? (
-                <motion.div
-                  key="contacts-open"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="h-full w-full"
-                >
-                  <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} onClose={() => setIsContactListOpen(false)} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="contacts-closed"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-full w-full flex items-center justify-center bg-slate-50/30 cursor-pointer hover:bg-slate-100/50 transition-colors"
-                  onClick={() => setIsContactListOpen(true)}
-                >
-                  <div className="transform -rotate-90 whitespace-nowrap opacity-40 hover:opacity-80 transition-opacity flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#D8103F]/50 animate-pulse"></div>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-800">Open Chat</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </aside>
+        <div className={`relative flex h-full flex-1 overflow-hidden pt-20 transition-all duration-500 ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
+
+          {isContactListOpen && (
+            <aside
+              className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] w-[240px] flex-col border-r border-brand-divider relative transition-all duration-300`}
+            >
+              <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} onClose={() => setIsContactListOpen(false)} />
+            </aside>
+          )}
 
           <main
-            className={`relative flex-1 overflow-y-auto bg-slate-50/5 ${isReelsMode
+            className={`relative flex-1 overflow-y-auto ${isReelsMode
               ? 'snap-y snap-mandatory scroll-smooth p-0'
               : isGroupMode
                 ? 'p-0 overflow-hidden'
-                : 'scrollbar-hide px-2 pb-28 pt-1 sm:px-3 md:pb-8 lg:px-3 lg:pt-1 xl:px-4'
+                : 'scrollbar-hide px-2 pb-28 pt-4 sm:px-3 md:pb-8 lg:px-4 lg:pt-6'
               }`}
           >
             <div className={`mx-auto ${isReelsMode || isGroupMode
@@ -232,7 +209,7 @@ const PostBoekApp: React.FC = () => {
           </main>
 
           {!isReelsMode && !isGroupMode && (
-            <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-slate-100 bg-white/50 p-5 backdrop-blur-2xl xl:flex">
+            <aside className="hidden w-[300px] flex-col overflow-y-auto border-l border-brand-divider p-4 xl:flex">
               <RightPanel onContactClick={handleContactClick} />
             </aside>
           )}

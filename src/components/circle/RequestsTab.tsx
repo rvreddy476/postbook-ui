@@ -42,7 +42,7 @@ const RequestsTab: React.FC = () => {
         return (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                    <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider overflow-hidden animate-pulse">
                         <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
                         <div className="flex flex-col items-center -mt-10 px-4 pb-5">
                             <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
@@ -64,15 +64,15 @@ const RequestsTab: React.FC = () => {
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center mb-5 shadow-sm">
                     <Inbox className="w-12 h-12 text-emerald-300" />
                 </div>
-                <p className="text-base font-bold text-slate-500">No pending requests</p>
-                <p className="text-sm text-slate-400 mt-1.5">When someone sends you a circle request, it will appear here</p>
+                <p className="text-base font-bold text-brand-highlight">No pending requests</p>
+                <p className="text-sm text-brand-text/60 mt-1.5">When someone sends you a circle request, it will appear here</p>
             </div>
         )
     }
 
     return (
         <div className="space-y-5">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-brand-text/60">
                 <span className="text-emerald-600 text-sm mr-1">{requests.length}</span> pending request{requests.length !== 1 ? 's' : ''}
             </p>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,7 +106,7 @@ const RequestsTab: React.FC = () => {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDecline(req.friendship_id, req.user_id)}
-                                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                                                    className="flex-1 rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-[11px] font-bold text-brand-highlight hover:bg-brand-secondary transition-all"
                                                 >
                                                     Decline
                                                 </button>

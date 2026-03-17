@@ -114,7 +114,7 @@ export function ProfileActions({
                     variant="outline"
                     size="sm"
                     onClick={onEditProfile}
-                    className="rounded-xl border-slate-200 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
+                    className="rounded-xl border-brand-divider hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
                 >
                     <Settings className="mr-2 h-4 w-4" />
                     Edit Profile
@@ -291,7 +291,7 @@ export function ProfileActions({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-xl border-slate-200 text-sm font-semibold"
+                            className="rounded-xl border-brand-divider text-sm font-semibold"
                             onClick={onDeclineCircleRequest}
                         >
                             Decline
@@ -302,7 +302,7 @@ export function ProfileActions({
                         onClick={onSendCircleRequest}
                         variant="outline"
                         size="sm"
-                        className="rounded-xl border-slate-200 text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
+                        className="rounded-xl border-brand-divider text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
                     >
                         <UserPlus className="mr-1.5 h-4 w-4" />
                         Add Friend
@@ -317,7 +317,7 @@ export function ProfileActions({
                     onClick={canDM ? onMessage : undefined}
                     className={`rounded-xl text-sm font-semibold ${
                         canDM
-                            ? "border-slate-200 text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5"
+                            ? "border-brand-divider text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5"
                             : "opacity-40 cursor-not-allowed"
                     }`}
                     title={canDM ? "Send message" : "Add to Circle first"}
@@ -346,16 +346,16 @@ export function ProfileActions({
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                 transition={{ duration: 0.12 }}
-                                className="absolute right-0 top-full mt-1 z-50 w-64 rounded-xl bg-white border border-slate-100 shadow-lg py-1 overflow-hidden"
+                                className="absolute right-0 top-full mt-1 z-50 w-64 rounded-xl bg-brand-card border border-brand-divider shadow-lg py-1 overflow-hidden"
                             >
                                 {/* Tune header */}
-                                <div className="px-4 py-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                <div className="px-4 py-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-brand-text/60">
                                     <SlidersHorizontal className="w-3 h-3" />
                                     More Actions
                                 </div>
                                 {menuItems.map((item, i) => {
                                     if (item.divider) {
-                                        return <div key={i} className="my-1 border-t border-slate-100" />
+                                        return <div key={i} className="my-1 border-t border-brand-divider" />
                                     }
                                     return (
                                         <button
@@ -364,7 +364,7 @@ export function ProfileActions({
                                             className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
                                                 item.destructive
                                                     ? "text-red-600 hover:bg-red-50"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                    : "text-slate-700 hover:bg-brand-secondary"
                                             }`}
                                         >
                                             {item.icon}
@@ -379,7 +379,7 @@ export function ProfileActions({
             </div>
 
             {!canDM && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-brand-text/60">
                     Add {displayName || username} to your Circle to unlock messaging
                 </p>
             )}

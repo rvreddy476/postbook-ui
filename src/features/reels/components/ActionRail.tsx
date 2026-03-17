@@ -50,7 +50,7 @@ function RailButton({
         className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 ${
           active
             ? "bg-slate-900 text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-            : "bg-[#F5F5F7] text-slate-600 hover:bg-slate-200/70"
+            : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
         }`}
         aria-label={label}
       >
@@ -62,7 +62,7 @@ function RailButton({
         ) : null}
       </motion.button>
       {typeof count === "number" ? (
-        <span className="text-[11px] font-semibold tabular-nums text-slate-500">{formatCount(count)}</span>
+        <span className="text-[11px] font-semibold tabular-nums text-brand-highlight">{formatCount(count)}</span>
       ) : (
         <span className="h-[17px]" aria-hidden />
       )}

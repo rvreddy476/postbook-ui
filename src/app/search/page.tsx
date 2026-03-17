@@ -58,7 +58,7 @@ function ProfileCard({ profile }: ProfileCardProps) {
     return (
         <Link
             href={`/u/${profile.username}`}
-            className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 group"
         >
             <div className="relative flex-shrink-0">
                 <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#D8103F]/20 transition-all">
@@ -131,7 +131,7 @@ function LoadingSkeleton() {
     return (
         <div className="space-y-3 animate-pulse">
             {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100">
+                <div key={i} className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100">
                     <div className="w-14 h-14 rounded-full bg-gray-100 flex-shrink-0" />
                     <div className="flex-1 space-y-2">
                         <div className="h-4 bg-gray-100 rounded-lg w-1/3" />
@@ -325,7 +325,7 @@ function ProductsTab({ query }: { query: string }) {
             {items.map((product) => (
                 <div
                     key={product.id}
-                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
                 >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
                         <ShoppingBag className="w-6 h-6 text-[#D8103F]/50" />
@@ -404,7 +404,7 @@ function EventsTab({ query }: { query: string }) {
             {items.map((event) => (
                 <div
                     key={event.id}
-                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
                 >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
                         <Calendar className="w-6 h-6 text-[#D8103F]/50" />
@@ -466,7 +466,7 @@ function MessagesTab({ query }: { query: string }) {
             {items.map((msg) => (
                 <div
                     key={msg.id}
-                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
                 >
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
                         <MessageSquare className="w-5 h-5 text-[#D8103F]/50" />
@@ -596,9 +596,9 @@ function SearchPageContent() {
     }, [queryClient])
 
     return (
-        <div className="min-h-screen bg-[#fcfaff]">
+        <div className="min-h-screen bg-brand-bg">
             {/* Sticky header with search input and tabs */}
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-0">
                     {/* Search input with autocomplete dropdown */}
                     <div className="relative flex items-center mb-4">
@@ -622,7 +622,7 @@ function SearchPageContent() {
                             onKeyDown={handleInputKeyDown}
                             placeholder="Search people, posts, hashtags..."
                             autoFocus
-                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/30 focus:bg-white transition-all"
+                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/30 focus:bg-brand-card transition-all"
                         />
                         {inputValue && (
                             <button
@@ -636,7 +636,7 @@ function SearchPageContent() {
 
                         {/* Autocomplete dropdown */}
                         {hasAutocomplete && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-gray-100">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-gray-100">
                                 {autocompleteResults!.map((user) => (
                                     <button
                                         key={user.user_id}
@@ -757,7 +757,7 @@ function SearchPageContent() {
 
 function SearchPageFallback() {
     return (
-        <div className="min-h-screen bg-[#fcfaff] flex items-center justify-center">
+        <div className="min-h-screen bg-brand-bg flex items-center justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-[#D8103F]/50" />
         </div>
     )

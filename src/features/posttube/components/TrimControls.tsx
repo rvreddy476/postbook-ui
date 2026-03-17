@@ -79,13 +79,13 @@ export function TrimControls({
   }, []);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-xl border border-brand-divider bg-brand-card p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Scissors className="h-4 w-4 text-slate-500" />
-          <h3 className="text-[14px] font-semibold text-slate-900">Trim Video</h3>
+          <Scissors className="h-4 w-4 text-brand-highlight" />
+          <h3 className="text-[14px] font-semibold text-brand-text">Trim Video</h3>
         </div>
-        <div className="flex items-center gap-2 text-[12px] text-slate-500">
+        <div className="flex items-center gap-2 text-[12px] text-brand-highlight">
           {saving && <span className="text-blue-500">Saving...</span>}
           <span>Duration: {effectiveDuration}s</span>
         </div>
@@ -93,7 +93,7 @@ export function TrimControls({
 
       <div className="space-y-3">
         <div>
-          <label className="text-[12px] text-slate-500 mb-1 block">
+          <label className="text-[12px] text-brand-highlight mb-1 block">
             Start: {fmtTime(startMs)}
           </label>
           <input
@@ -108,7 +108,7 @@ export function TrimControls({
         </div>
 
         <div>
-          <label className="text-[12px] text-slate-500 mb-1 block">
+          <label className="text-[12px] text-brand-highlight mb-1 block">
             End: {fmtTime(endMs)}
           </label>
           <input

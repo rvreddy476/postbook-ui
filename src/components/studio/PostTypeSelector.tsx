@@ -27,7 +27,7 @@ interface PostTypeSelectorProps {
 
 const PostTypeSelector: React.FC<PostTypeSelectorProps> = ({ activeType, onSelect }) => {
   return (
-    <div className="relative flex border-b border-slate-200/90">
+    <div className="relative flex border-b border-brand-divider/90">
       {POST_TYPES.map((t) => {
         const isActive = activeType === t.id;
         return (

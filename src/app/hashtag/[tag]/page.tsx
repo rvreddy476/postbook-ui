@@ -48,9 +48,9 @@ export default function HashtagPage() {
     const totalCount = allPosts.length
 
     return (
-        <div className="min-h-screen bg-[#fcfaff]">
+        <div className="min-h-screen bg-brand-bg">
             {/* Page Header */}
-            <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-10 bg-brand-card/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20 flex-shrink-0">
                         <Hash className="w-5 h-5 text-white" />
@@ -137,7 +137,7 @@ export default function HashtagPage() {
                             <button
                                 onClick={() => fetchNextPage()}
                                 disabled={isFetchingNextPage}
-                                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-white border border-gray-200 text-sm font-bold text-gray-700 shadow-sm hover:shadow-md hover:border-[#D8103F]/20 hover:text-[#D8103F] active:scale-95 disabled:opacity-60 disabled:pointer-events-none transition-all duration-200"
+                                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-card border border-gray-200 text-sm font-bold text-gray-700 shadow-sm hover:shadow-md hover:border-[#D8103F]/20 hover:text-[#D8103F] active:scale-95 disabled:opacity-60 disabled:pointer-events-none transition-all duration-200"
                             >
                                 {isFetchingNextPage ? (
                                     <>

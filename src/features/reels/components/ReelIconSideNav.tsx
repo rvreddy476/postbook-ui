@@ -32,7 +32,7 @@ function NavIcon({ href, icon, label, active, newTab }: NavIconProps) {
       className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ${
         active
           ? "bg-slate-900 text-white shadow-sm"
-          : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          : "text-brand-highlight hover:bg-slate-100 hover:text-slate-800"
       }`}
       aria-label={label}
     >
@@ -50,7 +50,7 @@ export function ReelIconSideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-16 shrink-0 flex-col items-center border-r border-[#E8E8EE] bg-white py-4 gap-1">
+    <aside className="flex h-full w-16 shrink-0 flex-col items-center border-r border-[#E8E8EE] bg-brand-card py-4 gap-1">
       <NavIcon
         href="/"
         icon={<Home className="h-[18px] w-[18px]" />}

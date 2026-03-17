@@ -55,13 +55,13 @@ export function ChannelInfoPanel({
           name={video.channel_name}
           seed={video.channel_id || video.channel_name}
           size="md"
-          imgClassName="border-2 border-slate-100"
+          imgClassName="border-2 border-brand-divider"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-bold text-slate-900 leading-tight">
+          <p className="truncate text-[14px] font-bold text-brand-text leading-tight">
             {video.channel_name}
           </p>
-          <p className="text-[12px] text-slate-400">
+          <p className="text-[12px] text-brand-text/60">
             {formatCount(video.channel_subscriber_count)} subscribers
           </p>
         </div>
@@ -79,12 +79,12 @@ export function ChannelInfoPanel({
       </div>
 
       {/* 2. Video title */}
-      <h1 className="mt-5 text-[18px] font-bold leading-snug text-slate-900">
+      <h1 className="mt-5 text-[18px] font-bold leading-snug text-brand-text">
         {video.title}
       </h1>
 
       {/* 3. Views + time */}
-      <div className="mt-1.5 flex items-center gap-2 text-[12px] text-slate-400">
+      <div className="mt-1.5 flex items-center gap-2 text-[12px] text-brand-text/60">
         <span>{formatCount(video.view_count)} views</span>
         <span className="text-slate-200">·</span>
         <span>{timeAgo(video.published_at)}</span>
@@ -97,7 +97,7 @@ export function ChannelInfoPanel({
             <Link
               key={tag}
               href={`/hashtag/${tag}`}
-              className="rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100"
+              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-slate-100"
             >
               #{tag}
             </Link>
@@ -107,14 +107,14 @@ export function ChannelInfoPanel({
 
       {/* 5. Description */}
       <div className="mt-4">
-        <p className="whitespace-pre-line text-[13px] leading-[1.5] text-slate-600">
+        <p className="whitespace-pre-line text-[13px] leading-[1.5] text-brand-highlight">
           {displayText}
         </p>
         {isLong ? (
           <button
             type="button"
             onClick={() => setDescExpanded((prev) => !prev)}
-            className="mt-1 text-[12px] font-semibold text-slate-400 hover:text-slate-600 transition"
+            className="mt-1 text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition"
           >
             {descExpanded ? "Show less" : "Show more"}
           </button>

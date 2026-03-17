@@ -62,7 +62,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           className={`h-12 w-full rounded-xl border px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none transition-all ${
             titleError
               ? "border-[#E8527A] bg-[#E8527A]/5 focus:border-[#E8527A] focus:ring-2 focus:ring-[#E8527A]/10"
-              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10"
+              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10"
           }`}
         />
         {titleError && (
@@ -88,7 +88,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           className={`w-full rounded-xl border px-4 py-3 text-[13px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none resize-none transition-all ${
             captionOverflow
               ? "border-[#E8527A] bg-[#E8527A]/5 focus:border-[#E8527A] focus:ring-2 focus:ring-[#E8527A]/10"
-              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10"
+              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10"
           }`}
         />
         {captionOverflow && (
@@ -109,7 +109,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
               onChange={(e) => patch({ hashtagInput: e.target.value })}
               onKeyDown={handleHashtagKeyDown}
               placeholder="Type a hashtag and press Enter"
-              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
             />
           </div>
           <button

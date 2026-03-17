@@ -18,7 +18,7 @@ const roleConfig: Record<string, { label: string; icon: React.ReactNode; color: 
   owner: { label: 'Owner', icon: <Crown className="w-3 h-3" />, color: 'text-amber-600', bgColor: 'bg-amber-50 border-amber-100' },
   admin: { label: 'Admin', icon: <ShieldCheck className="w-3 h-3" />, color: 'text-violet-600', bgColor: 'bg-violet-50 border-violet-100' },
   moderator: { label: 'Mod', icon: <Wrench className="w-3 h-3" />, color: 'text-blue-600', bgColor: 'bg-blue-50 border-blue-100' },
-  member: { label: 'Member', icon: <Shield className="w-3 h-3" />, color: 'text-slate-500', bgColor: 'bg-slate-50 border-slate-100' },
+  member: { label: 'Member', icon: <Shield className="w-3 h-3" />, color: 'text-brand-highlight', bgColor: 'bg-brand-secondary border-brand-divider' },
 }
 
 function MemberCard({
@@ -48,7 +48,7 @@ function MemberCard({
       : canManage // admins/mods can manage mods and members
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:border-slate-200 transition-all group/card">
+    <div className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-brand-divider hover:border-brand-divider transition-all group/card">
       <Link href={`/profile/${member.username || member.user_id}`} className="shrink-0">
         <div className="w-11 h-11 rounded-xl overflow-hidden bg-slate-100">
           {avatarSrc ? (
@@ -69,7 +69,7 @@ function MemberCard({
         </Link>
         <div className="flex items-center gap-1.5 mt-0.5">
           {member.username && (
-            <span className="text-[11px] text-slate-400 font-medium">@{member.username}</span>
+            <span className="text-[11px] text-brand-text/60 font-medium">@{member.username}</span>
           )}
           <span className="text-slate-200">·</span>
           <span className="text-[11px] text-slate-300">
@@ -89,21 +89,21 @@ function MemberCard({
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 text-slate-300 hover:text-slate-500 rounded-lg hover:bg-slate-50 transition-all sm:opacity-0 sm:group-hover/card:opacity-100"
+            className="p-1.5 text-slate-300 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all sm:opacity-0 sm:group-hover/card:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-20">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-brand-card border border-brand-divider rounded-xl shadow-lg py-1 z-20">
                 {isAdmin && (
                   <>
                     {/* Promote / Demote options based on current role */}
                     {member.role === 'admin' && (
                       <button
                         onClick={() => { onRoleChange(member, 'member'); setShowMenu(false) }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-brand-highlight hover:bg-brand-secondary transition-colors"
                       >
                         <Shield className="w-3.5 h-3.5" />
                         Demote to Member
@@ -113,14 +113,14 @@ function MemberCard({
                       <>
                         <button
                           onClick={() => { onRoleChange(member, 'admin'); setShowMenu(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-brand-highlight hover:bg-brand-secondary transition-colors"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
                           Make Admin
                         </button>
                         <button
                           onClick={() => { onRoleChange(member, 'member'); setShowMenu(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-brand-highlight hover:bg-brand-secondary transition-colors"
                         >
                           <Shield className="w-3.5 h-3.5" />
                           Remove Mod
@@ -131,21 +131,21 @@ function MemberCard({
                       <>
                         <button
                           onClick={() => { onRoleChange(member, 'admin'); setShowMenu(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-brand-highlight hover:bg-brand-secondary transition-colors"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
                           Make Admin
                         </button>
                         <button
                           onClick={() => { onRoleChange(member, 'moderator'); setShowMenu(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-brand-highlight hover:bg-brand-secondary transition-colors"
                         >
                           <Wrench className="w-3.5 h-3.5" />
                           Make Moderator
                         </button>
                       </>
                     )}
-                    <hr className="my-1 border-slate-100" />
+                    <hr className="my-1 border-brand-divider" />
                   </>
                 )}
                 <button
@@ -219,15 +219,15 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-10 bg-slate-50 rounded-xl animate-pulse" />
+        <div className="h-10 bg-brand-secondary rounded-xl animate-pulse" />
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 animate-pulse">
+          <div key={i} className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-brand-divider animate-pulse">
             <div className="w-11 h-11 rounded-xl bg-slate-100" />
             <div className="flex-1 space-y-1.5">
               <div className="h-3.5 w-24 bg-slate-100 rounded" />
-              <div className="h-2.5 w-16 bg-slate-50 rounded" />
+              <div className="h-2.5 w-16 bg-brand-secondary rounded" />
             </div>
-            <div className="h-6 w-14 bg-slate-50 rounded-lg" />
+            <div className="h-6 w-14 bg-brand-secondary rounded-lg" />
           </div>
         ))}
       </div>
@@ -237,10 +237,10 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   if (!members || members.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="w-14 h-14 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
           <Shield className="w-7 h-7 text-slate-200" />
         </div>
-        <p className="text-sm font-semibold text-slate-400">No members found</p>
+        <p className="text-sm font-semibold text-brand-text/60">No members found</p>
       </div>
     )
   }
@@ -255,14 +255,14 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
           placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
         />
       </div>
 
       {/* Admins & Moderators Section */}
       {sections.adminsMods.length > 0 && (
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 px-1">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
             Admins & Moderators ({sections.adminsMods.length})
           </h3>
           <div className="space-y-2">
@@ -284,7 +284,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       {/* Members Section */}
       {sections.regularMembers.length > 0 && (
         <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 px-1">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
             Members ({sections.regularMembers.length})
           </h3>
           <div className="space-y-2">
@@ -305,7 +305,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
 
       {filtered.length === 0 && searchQuery && (
         <div className="text-center py-12">
-          <p className="text-sm text-slate-400">No members matching &ldquo;{searchQuery}&rdquo;</p>
+          <p className="text-sm text-brand-text/60">No members matching &ldquo;{searchQuery}&rdquo;</p>
         </div>
       )}
     </div>

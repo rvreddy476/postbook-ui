@@ -144,7 +144,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   visibility: "public",
   scheduleAt: null,
   category: "",
-  crossPostPostbook: true,
+  crossPostPostbook: false,
   crossPostPosttube: false,
   publishToFeed: true,
   processingReady: false,

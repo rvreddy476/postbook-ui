@@ -47,7 +47,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-md ring-2 ring-white/30">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-card/20 backdrop-blur-md ring-2 ring-white/30">
               <Play className="ml-1 h-7 w-7 text-white" fill="white" />
             </div>
           </div>
@@ -60,7 +60,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
               Featured
             </span>
             {featured.duration_seconds > 0 && (
-              <span className="flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90">
+              <span className="flex items-center gap-1 rounded-full bg-brand-card/15 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90">
                 <Clock className="h-2.5 w-2.5" />
                 {fmtDuration(featured.duration_seconds)}
               </span>

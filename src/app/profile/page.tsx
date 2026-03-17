@@ -24,7 +24,7 @@ export default function ProfileRoute() {
     }, [router]);
 
     if (!isSessionLoaded || !currentUser) {
-        return <div className="min-h-screen bg-[#fcfaff]" />;
+        return <div className="min-h-screen bg-brand-bg" />;
     }
 
     const handleLogout = () => {
@@ -39,7 +39,7 @@ export default function ProfileRoute() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fcfaff] font-sans selection:bg-rose-100 selection:text-rose-900">
+        <div className="min-h-screen bg-brand-bg font-sans selection:bg-rose-100 selection:text-rose-900">
             <MinimalHeader currentUser={currentUser} onLogout={handleLogout} />
 
             <div className="flex pt-16">

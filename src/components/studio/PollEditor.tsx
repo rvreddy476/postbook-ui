@@ -47,7 +47,7 @@ const PollEditor: React.FC<PollEditorProps> = ({ poll, onChange, accentColor, is
             value={opt}
             onChange={(e) => updateOption(i, e.target.value)}
             placeholder={`Option ${String.fromCharCode(65 + i)}`}
-            className="flex-1 rounded-xl px-3.5 py-2.5 text-[13px] placeholder:text-slate-500 focus:outline-none focus:ring-1 transition-all"
+            className="flex-1 rounded-xl px-3.5 py-2.5 text-[13px] placeholder:text-brand-highlight focus:outline-none focus:ring-1 transition-all"
             style={{
               background: isDarkMode ? '#10182D' : '#F8FAFC',
               border: isDarkMode ? '1px solid rgba(148,163,184,0.2)' : '1px solid #E2E8F0',
@@ -58,7 +58,7 @@ const PollEditor: React.FC<PollEditorProps> = ({ poll, onChange, accentColor, is
           {poll.options.length > 2 && (
             <button
               onClick={() => removeOption(i)}
-              className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+              className="text-brand-text/60 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -89,7 +89,7 @@ const PollEditor: React.FC<PollEditorProps> = ({ poll, onChange, accentColor, is
           <option value="3d">3 Days</option>
           <option value="7d">7 Days</option>
         </select>
-        <label className={`flex items-center gap-1.5 text-[10px] cursor-pointer ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+        <label className={`flex items-center gap-1.5 text-[10px] cursor-pointer ${isDarkMode ? 'text-slate-300' : 'text-brand-highlight'}`}>
           <input
             type="checkbox"
             checked={poll.allowMultiple}

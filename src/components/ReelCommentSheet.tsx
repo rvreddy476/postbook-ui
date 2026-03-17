@@ -141,12 +141,12 @@ const ReelCommentSheet: React.FC<ReelCommentSheetProps> = ({
           >
             {/* Handle + Header */}
             <div className="pt-3 pb-2 px-6">
-              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3" />
+              <div className="w-10 h-1 rounded-full bg-brand-card/20 mx-auto mb-3" />
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-white">
                   Comments {commentsCount > 0 && <span className="text-white/40 ml-1">{commentsCount}</span>}
                 </h3>
-                <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/10 transition-colors">
+                <button onClick={onClose} className="p-1.5 rounded-full hover:bg-brand-card/10 transition-colors">
                   <X className="w-4 h-4 text-white/60" />
                 </button>
               </div>
@@ -192,7 +192,7 @@ const ReelCommentSheet: React.FC<ReelCommentSheetProps> = ({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Add a comment..."
-                className="flex-1 bg-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:bg-white/15 transition-colors"
+                className="flex-1 bg-brand-card/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:bg-brand-card/15 transition-colors"
               />
               <button
                 type="submit"

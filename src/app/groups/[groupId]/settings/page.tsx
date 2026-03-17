@@ -45,7 +45,7 @@ export default function GroupSettingsPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h2 className="text-xl font-bold text-slate-700">Access Denied</h2>
-        <p className="text-slate-400 mt-2 text-sm">Only group admins can access settings.</p>
+        <p className="text-brand-text/60 mt-2 text-sm">Only group admins can access settings.</p>
         <button onClick={() => router.back()} className="mt-4 text-[#D8103F] text-sm font-bold hover:underline">Go Back</button>
       </div>
     )
@@ -69,7 +69,7 @@ export default function GroupSettingsPage() {
     <div className="max-w-2xl mx-auto px-4 pt-8 pb-12">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <button onClick={() => router.push(`/groups/${groupId}`)} className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-all">
+        <button onClick={() => router.push(`/groups/${groupId}`)} className="p-2 bg-slate-100 rounded-full text-brand-highlight hover:bg-slate-200 transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-2xl font-black text-slate-800">Group Settings</h1>
@@ -77,51 +77,51 @@ export default function GroupSettingsPage() {
 
       {/* Settings Form */}
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
+        <div className="bg-brand-card rounded-2xl border border-brand-divider p-6 space-y-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Group Name</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Group Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30"
               maxLength={100}
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none"
               rows={3}
               maxLength={500}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Visibility</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-3">Visibility</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setVisibility('public')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'public' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'
+                  visibility === 'public' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'
                 }`}
               >
-                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-[#D8103F]/50' : 'text-slate-400'}`} />
+                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-[#D8103F]/50' : 'text-brand-text/60'}`} />
                 <span className="text-sm font-bold text-slate-700">Public</span>
               </button>
               <button
                 type="button"
                 onClick={() => setVisibility('private')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'private' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'
+                  visibility === 'private' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'
                 }`}
               >
-                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-[#D8103F]/50' : 'text-slate-400'}`} />
+                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-[#D8103F]/50' : 'text-brand-text/60'}`} />
                 <span className="text-sm font-bold text-slate-700">Private</span>
               </button>
             </div>
@@ -139,9 +139,9 @@ export default function GroupSettingsPage() {
       </form>
 
       {/* Danger Zone */}
-      <div className="mt-8 bg-white rounded-2xl border border-rose-200 p-6">
+      <div className="mt-8 bg-brand-card rounded-2xl border border-rose-200 p-6">
         <h3 className="text-sm font-black uppercase tracking-wider text-rose-600 mb-2">Danger Zone</h3>
-        <p className="text-xs text-slate-400 mb-4">Deleting this group is permanent and cannot be undone. All posts, members, and data will be lost.</p>
+        <p className="text-xs text-brand-text/60 mb-4">Deleting this group is permanent and cannot be undone. All posts, members, and data will be lost.</p>
         <button
           onClick={handleDelete}
           disabled={deleteGroup.isPending}

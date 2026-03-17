@@ -40,17 +40,17 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
       {/* Header */}
       <div className="mb-3 flex items-center gap-2.5 px-1">
         {icon}
-        <h2 className="text-[16px] font-bold text-slate-900">{title}</h2>
+        <h2 className="text-[16px] font-bold text-brand-text">{title}</h2>
         {badge && (
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${badgeColor || "bg-slate-100 text-slate-500"}`}
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${badgeColor || "bg-slate-100 text-brand-highlight"}`}
           >
             {badge}
           </span>
         )}
         <button
           type="button"
-          className="ml-auto text-[12px] font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+          className="ml-auto text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition-colors"
         >
           See all
         </button>
@@ -63,7 +63,7 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
           <button
             type="button"
             onClick={() => scroll("left")}
-            className="absolute -left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-lg border border-slate-100 text-slate-600 opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-slate-50"
+            className="absolute -left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-brand-card shadow-lg border border-brand-divider text-brand-highlight opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-brand-secondary"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -74,7 +74,7 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
           <button
             type="button"
             onClick={() => scroll("right")}
-            className="absolute -right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-lg border border-slate-100 text-slate-600 opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-slate-50"
+            className="absolute -right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-brand-card shadow-lg border border-brand-divider text-brand-highlight opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-brand-secondary"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

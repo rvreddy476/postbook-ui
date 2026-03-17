@@ -60,7 +60,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10 animate-pulse">
+            <div className="bg-brand-card rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10 animate-pulse">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <div className="h-4 bg-[#F0E6DC] rounded-full w-32" />
@@ -83,7 +83,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
     if (!metrics) {
         return (
-            <div className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#7B5B3A]">Content Details</p>
                     <button
@@ -105,7 +105,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
     const chartHeight = 120
 
     return (
-        <div className="bg-white rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10">
+        <div className="bg-brand-card rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">

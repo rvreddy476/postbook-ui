@@ -70,7 +70,7 @@ export function Avatar({ user, size = 40, showStatus = false, avatarUrl }: Avata
       )}
       {showStatus && user.isOnline && (
         <div
-          className="absolute bottom-0 right-0 rounded-full bg-emerald-500 border-2 border-white"
+          className="absolute bottom-0 right-0 rounded-full bg-emerald-500 border-2 border-brand-bg"
           style={{ width: size * 0.28, height: size * 0.28 }}
         />
       )}
@@ -100,7 +100,7 @@ export function AvatarStack({ users, size = 28, max = 3 }: AvatarStackProps) {
       ))}
       {overflow > 0 && (
         <div
-          className="rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border-2 border-white"
+          className="rounded-full bg-slate-100 flex items-center justify-center text-brand-highlight font-bold border-2 border-white"
           style={{ marginLeft: -8, width: size, height: size, fontSize: Math.max(size * 0.32, 10) }}
         >
           +{overflow}

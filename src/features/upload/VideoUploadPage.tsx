@@ -93,7 +93,7 @@ function StepDot({ done }: { done: boolean }) {
       <Check className="h-3 w-3 text-white" strokeWidth={3} />
     </div>
   ) : (
-    <div className="h-5 w-5 rounded-full border-2 border-slate-200 shrink-0" />
+    <div className="h-5 w-5 rounded-full border-2 border-brand-divider shrink-0" />
   );
 }
 
@@ -211,8 +211,8 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               <config.icon className="h-5 w-5 text-[#D8103F]" />
             </div>
             <div>
-              <h1 className="text-[17px] font-bold text-slate-900">{config.title}</h1>
-              <p className="text-[12px] text-slate-400">Fill in the details below and publish</p>
+              <h1 className="text-[17px] font-bold text-brand-text">{config.title}</h1>
+              <p className="text-[12px] text-brand-text/60">Fill in the details below and publish</p>
             </div>
           </div>
           {file && !published && (
@@ -234,8 +234,8 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
                 <Check className="h-7 w-7 text-emerald-600" />
               </div>
-              <h2 className="mt-5 text-xl font-bold text-slate-900">Published!</h2>
-              <p className="mt-2 text-[13px] text-slate-500">Your content is being processed and will appear shortly.</p>
+              <h2 className="mt-5 text-xl font-bold text-brand-text">Published!</h2>
+              <p className="mt-2 text-[13px] text-brand-highlight">Your content is being processed and will appear shortly.</p>
               <div className="mt-6 flex gap-3">
                 <Link href="/reels" className="rounded-xl bg-slate-100 px-5 py-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-200">Back to Feed</Link>
                 <button type="button" onClick={reset} className="rounded-xl bg-[#D8103F] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#b80d35]">Upload Another</button>
@@ -249,13 +249,13 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onDrop}
                 onClick={() => fileRef.current?.click()}
-                className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-24 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
+                className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary/50 py-24 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-[#D8103F]/10 transition-colors">
-                  <Upload className="h-7 w-7 text-slate-400 group-hover:text-[#D8103F]/50" />
+                  <Upload className="h-7 w-7 text-brand-text/60 group-hover:text-[#D8103F]/50" />
                 </div>
                 <p className="mt-5 text-[15px] font-semibold text-slate-700">Drag & drop your file here</p>
-                <p className="mt-1.5 text-[13px] text-slate-400">or click to browse</p>
+                <p className="mt-1.5 text-[13px] text-brand-text/60">or click to browse</p>
                 <p className="mt-4 text-[11px] text-slate-300">{config.acceptHint}</p>
                 <input ref={fileRef} type="file" accept={config.accept} onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); }} className="hidden" />
               </div>
@@ -268,22 +268,22 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               {/* ─── LEFT: Details form ─── */}
               <div className="space-y-6">
                 {/* Section 1: File */}
-                <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
+                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
                     <StepDot done={true} />
                     <h2 className="text-[13px] font-bold text-slate-800">File</h2>
                   </div>
-                  <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
+                  <div className="flex items-center gap-3 rounded-xl bg-brand-secondary px-4 py-3">
                     <FileVideo className="h-4 w-4 shrink-0 text-[#D8103F]/50" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-medium text-slate-800">{file.name}</p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-brand-text/60">
                         {(file.size / (1024 * 1024)).toFixed(1)} MB
                         {duration != null && <> · {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}</>}
                       </p>
                     </div>
                     <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-[#D8103F] hover:text-[#b80d35]">Change</button>
-                    <button type="button" onClick={clearFile} className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+                    <button type="button" onClick={clearFile} className="flex h-6 w-6 items-center justify-center rounded-full text-brand-text/60 hover:bg-slate-200 hover:text-brand-highlight">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -291,11 +291,11 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 </section>
 
                 {/* Section 2: Details */}
-                <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
+                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-5">
                     <StepDot done={!!(title.trim() && category)} />
                     <h2 className="text-[13px] font-bold text-slate-800">Details</h2>
-                    <span className="text-[11px] text-slate-400">— required fields marked with *</span>
+                    <span className="text-[11px] text-brand-text/60">— required fields marked with *</span>
                   </div>
 
                   <div className="space-y-5">
@@ -310,7 +310,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setTitle(e.target.value)}
                         maxLength={100}
                         autoFocus
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
+                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                         placeholder="Add a title that describes your content"
                       />
                     </div>
@@ -326,7 +326,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setDescription(e.target.value)}
                         maxLength={5000}
                         rows={4}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 resize-none transition-all"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10 resize-none transition-all"
                         placeholder="Tell viewers about your content. Use #hashtags and @mentions."
                       />
                     </div>
@@ -339,12 +339,12 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                           >
                             <option value="">Select category</option>
                             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
-                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/60" />
                         </div>
                       </div>
                       <div>
@@ -353,11 +353,11 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={visibility}
                             onChange={(e) => setVisibility(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                           >
                             {VISIBILITY_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
                           </select>
-                          <VisIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <VisIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/60" />
                         </div>
                       </div>
                     </div>
@@ -368,7 +368,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                       <input
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
+                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                         placeholder="tech, tutorial, vlog (comma-separated)"
                       />
                     </div>
@@ -379,9 +379,9 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               {/* ─── RIGHT: Preview + Poster ─── */}
               <div className="space-y-5">
                 {/* Preview card */}
-                <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm">
-                  <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
-                  <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
+                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-sm">
+                  <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Preview</p>
+                  <div className="overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-sm">
                     <div
                       className="flex items-center justify-center bg-slate-100"
                       style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "180px" : "140px" }}
@@ -397,7 +397,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                     </div>
                     <div className="p-3">
                       <p className="truncate text-[12px] font-semibold text-slate-800">{title || "Untitled"}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-brand-text/60">
                         {category || "No category"} · {VISIBILITY_OPTIONS.find((v) => v.value === visibility)?.label ?? "Public"}
                       </p>
                     </div>
@@ -405,15 +405,15 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 </div>
 
                 {/* Poster */}
-                <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm">
+                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <StepDot done={!!posterPreview} />
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Poster</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Poster</p>
                   </div>
 
                   <div
                     onClick={() => posterRef.current?.click()}
-                    className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
+                    className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-brand-divider bg-brand-secondary transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
                     style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "180px" : "140px" }}
                   >
                     {posterPreview ? (
@@ -430,7 +430,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                     ) : (
                       <div className="flex flex-col items-center gap-2">
                         <ImageIcon className="h-5 w-5 text-slate-300" />
-                        <span className="text-[11px] font-medium text-slate-400">Click to upload poster</span>
+                        <span className="text-[11px] font-medium text-brand-text/60">Click to upload poster</span>
                       </div>
                     )}
                     <input ref={posterRef} type="file" accept="image/*" onChange={onPosterFile} className="hidden" />
@@ -438,15 +438,15 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
 
                   {/* Extract poster from video */}
                   {previewUrl && !isPodcast && (
-                    <div className="mt-3 rounded-xl bg-slate-50 p-3">
-                      <p className="mb-2 text-[11px] font-semibold text-slate-500">Extract from video</p>
+                    <div className="mt-3 rounded-xl bg-brand-secondary p-3">
+                      <p className="mb-2 text-[11px] font-semibold text-brand-highlight">Extract from video</p>
                       <div className="flex items-center gap-2">
                         <input
                           type="range" min={0} max={(duration ?? 30) * 1000} step={100}
                           value={posterTs ?? 0} onChange={(e) => setPosterTs(Number(e.target.value))}
                           className="flex-1 accent-[#D8103F]"
                         />
-                        <span className="text-[11px] font-mono text-slate-500 w-9 text-right">{fmtMs(posterTs ?? 0)}</span>
+                        <span className="text-[11px] font-mono text-brand-highlight w-9 text-right">{fmtMs(posterTs ?? 0)}</span>
                       </div>
                       <button
                         type="button" onClick={extractPoster} disabled={extracting}

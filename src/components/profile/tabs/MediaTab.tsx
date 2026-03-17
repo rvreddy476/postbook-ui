@@ -139,13 +139,13 @@ export function MediaTab({ userId }: MediaTabProps) {
     if (mediaPosts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
                     <Image className="h-9 w-9 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-950 font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     No photos or videos yet
                 </h3>
-                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+                <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">
                     When photos and videos are shared, they will appear here.
                 </p>
             </div>

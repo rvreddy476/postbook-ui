@@ -190,33 +190,21 @@ export async function getCategoryFeed(
 
 /* ── Separated Feed Endpoints ────────────────────────────── */
 
-/** Fetch the home feed which returns split long_videos and flicks arrays */
+/** Fetch the PostTube home feed: long videos + flicks via dedicated endpoints.
+ *  Never calls /v1/feed/home (which is Postbook's social feed). */
 export async function getHomeFeed(params?: {
   limit?: number;
 }): Promise<{ longVideos: PostTubeVideo[]; flicks: PostTubeVideo[] }> {
+  const limit = params?.limit ?? 20;
   try {
-    const res = await api.get<ApiResponse<PostDetail[]> & {
-      long_videos?: PostDetail[];
-      flicks?: PostDetail[];
-    }>("/v1/feed/home", {
-      params: { limit: String(params?.limit ?? 20) },
-    });
-
-    // Backend returns long_videos and flicks as separate arrays on first page
-    const longVideos = await hydratePosts(res.data.long_videos ?? []);
-    const flicks = await hydratePosts(res.data.flicks ?? []);
-
-    // Fallback: if backend doesn't provide split arrays, classify from main data
-    // Per spec v2.1: Flick = ≤180s AND (portrait/square); LongVideo = everything else
-    if (longVideos.length === 0 && flicks.length === 0) {
-      const allPosts = await hydratePosts(res.data.data ?? []);
-      return {
-        longVideos: allPosts.filter((v) => v.content_type !== "flick"),
-        flicks: allPosts.filter((v) => v.content_type === "flick"),
-      };
-    }
-
-    return { longVideos, flicks };
+    const [longVideosResult, flicksResult] = await Promise.all([
+      getLongVideosFeed({ limit }),
+      getFlicksFeed({ limit }),
+    ]);
+    return {
+      longVideos: longVideosResult.items,
+      flicks: flicksResult.items,
+    };
   } catch {
     return { longVideos: [], flicks: [] };
   }

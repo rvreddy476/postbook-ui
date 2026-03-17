@@ -44,16 +44,16 @@ export function ProfileStats({ graphCounts, contentCounts, onStatClick }: Profil
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.06 }}
                         onClick={() => onStatClick?.(stat.key)}
-                        className="group flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-200"
+                        className="group flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-brand-card border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-divider transition-all duration-200"
                     >
                         <div className={`p-1.5 rounded-xl ${stat.bgColor} transition-colors duration-200`}>
                             <Icon className={`w-4 h-4 ${stat.color}`} />
                         </div>
                         <div className="flex flex-col items-start leading-tight">
-                            <span className="text-base font-bold text-slate-900">
+                            <span className="text-base font-bold text-brand-text">
                                 {formatCount(stat.value)}
                             </span>
-                            <span className="text-[11px] font-medium text-slate-400 tracking-wide">
+                            <span className="text-[11px] font-medium text-brand-text/60 tracking-wide">
                                 {stat.label}
                             </span>
                         </div>

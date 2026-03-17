@@ -5,21 +5,21 @@ import Link from 'next/link';
 
 export function LandingNavbar() {
   return (
-    <nav className="fixed top-0 z-50 h-20 w-full border-b border-white/60 bg-white/40 px-4 backdrop-blur-2xl sm:px-8">
+    <nav className="fixed top-0 z-50 h-20 w-full border-b border-brand-divider px-4 backdrop-blur-2xl sm:px-8">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
         <Link href="/" className="group flex cursor-pointer items-center gap-3 sm:gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-[#b80d35] shadow-2xl shadow-[#D8103F]/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-accent shadow-lg transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12">
             <span className="text-white font-black text-lg sm:text-xl tracking-tighter">PB</span>
           </div>
-          <span className="text-2xl font-black tracking-tighter text-slate-950 sm:text-3xl">PostBoek.com</span>
+          <span className="text-2xl font-black tracking-tighter text-brand-text sm:text-3xl">PostBoek.com</span>
         </Link>
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500 transition-all hover:text-[#D8103F]">
+          <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Log In
           </Link>
           <Link
             href="/register"
-            className="rounded-2xl bg-slate-950 px-8 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:bg-black active:scale-95"
+            className="rounded-2xl bg-brand-accent px-8 py-3 text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-2xl transition-all hover:opacity-90 active:scale-95"
           >
             Sign Up
           </Link>

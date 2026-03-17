@@ -66,11 +66,11 @@ export function LinksTab() {
   return (
     <div className="space-y-6">
       {/* Custom Links */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-[14px] font-bold text-slate-900">Custom Links</h2>
-            <p className="mt-0.5 text-[11px] text-slate-400">
+            <h2 className="text-[14px] font-bold text-brand-text">Custom Links</h2>
+            <p className="mt-0.5 text-[11px] text-brand-text/60">
               Add up to 5 links shown on your channel page. Mark one as featured.
             </p>
           </div>
@@ -87,10 +87,10 @@ export function LinksTab() {
 
         {links.length === 0 ? (
           <div className="flex flex-col items-center py-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-secondary">
               <Plus className="h-5 w-5 text-slate-300" />
             </div>
-            <p className="mt-3 text-[13px] font-medium text-slate-400">No links added yet</p>
+            <p className="mt-3 text-[13px] font-medium text-brand-text/60">No links added yet</p>
             <p className="text-[11px] text-slate-300">Add links to your website, social profiles, or other content</p>
           </div>
         ) : (
@@ -105,20 +105,20 @@ export function LinksTab() {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+                  <div className="flex items-start gap-3 rounded-xl border border-brand-divider bg-brand-secondary/50 p-3">
                     <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-slate-300 cursor-grab" />
                     <div className="flex-1 space-y-2">
                       <input
                         value={link.title}
                         onChange={(e) => updateLink(link.id, "title", e.target.value)}
                         placeholder="Link title"
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
                       />
                       <input
                         value={link.url}
                         onChange={(e) => updateLink(link.id, "url", e.target.value)}
                         placeholder="https://..."
-                        className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
                       />
                     </div>
                     <div className="flex shrink-0 gap-1 pt-1.5">
@@ -128,7 +128,7 @@ export function LinksTab() {
                         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                           link.featured
                             ? "bg-amber-50 text-amber-500"
-                            : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                            : "text-slate-300 hover:bg-slate-100 hover:text-brand-highlight"
                         }`}
                         title="Set as featured link"
                       >
@@ -151,20 +151,20 @@ export function LinksTab() {
       </div>
 
       {/* Social Links */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-2 text-[14px] font-bold text-slate-900">Social Links</h2>
-        <p className="mb-5 text-[11px] text-slate-400">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-2 text-[14px] font-bold text-brand-text">Social Links</h2>
+        <p className="mb-5 text-[11px] text-brand-text/60">
           Optional quick links shown with social platform icons.
         </p>
         <div className="grid grid-cols-2 gap-4">
           {["Twitter / X", "Instagram", "YouTube", "Discord"].map((platform) => (
             <div key={platform}>
-              <label className="mb-1.5 block text-[11px] font-semibold text-slate-500">
+              <label className="mb-1.5 block text-[11px] font-semibold text-brand-highlight">
                 {platform}
               </label>
               <input
                 placeholder={`${platform} URL`}
-                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
+                className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
               />
             </div>
           ))}

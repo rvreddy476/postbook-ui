@@ -14,7 +14,7 @@ export const HOBBY_INTEREST_CATEGORIES: HobbyInterestCategory[] = [
     { id: "nature", label: "Nature", color: "bg-green-100 text-green-700 border-green-200" },
     { id: "science", label: "Science", color: "bg-[#D8103F]/10 text-[#b80d35] border-[#D8103F]/20" },
     { id: "fashion", label: "Fashion", color: "bg-rose-100 text-rose-700 border-rose-200" },
-    { id: "film", label: "Film", color: "bg-slate-100 text-slate-700 border-slate-200" },
+    { id: "film", label: "Film", color: "bg-slate-100 text-slate-700 border-brand-divider" },
     { id: "writing", label: "Writing", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
     { id: "volunteering", label: "Volunteering", color: "bg-lime-100 text-lime-700 border-lime-200" },
     { id: "diy", label: "DIY", color: "bg-stone-100 text-stone-700 border-stone-200" },
@@ -51,7 +51,7 @@ export const MAX_INTERESTS = 20
 export const MAX_LABEL_LENGTH = 50
 
 export function getCategoryColor(categoryId?: string): string {
-    if (!categoryId) return "bg-slate-100 text-slate-600 border-slate-200"
+    if (!categoryId) return "bg-slate-100 text-brand-highlight border-brand-divider"
     const cat = HOBBY_INTEREST_CATEGORIES.find(c => c.id === categoryId)
-    return cat?.color ?? "bg-slate-100 text-slate-600 border-slate-200"
+    return cat?.color ?? "bg-slate-100 text-brand-highlight border-brand-divider"
 }

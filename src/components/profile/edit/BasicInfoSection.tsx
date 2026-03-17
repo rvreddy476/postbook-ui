@@ -34,8 +34,8 @@ interface BasicInfoSectionProps {
     variant: SectionVariant
 }
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
 
 export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionProps) {
     const authUser = useAuthUser()
@@ -51,7 +51,7 @@ export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionPr
                         <Input
                             value={authUser?.loginId ?? ""}
                             disabled
-                            className={`${inputBase} bg-slate-50 text-slate-500 cursor-not-allowed`}
+                            className={`${inputBase} bg-brand-secondary text-brand-highlight cursor-not-allowed`}
                         />
                     </Field>
 
@@ -117,7 +117,7 @@ export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionPr
                         </Field>
                     </div>
 
-                    <div className="md:col-span-2 pt-6 border-t border-slate-100">
+                    <div className="md:col-span-2 pt-6 border-t border-brand-divider">
                         <SocialLinksSection />
                     </div>
                 </div>
@@ -175,8 +175,8 @@ function Field({ label, description, children }: { label: string; description?: 
     return (
         <div className="space-y-3">
             <div>
-                <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">{label}</label>
-                {description && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{description}</p>}
+                <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">{label}</label>
+                {description && <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">{description}</p>}
             </div>
             {children}
         </div>

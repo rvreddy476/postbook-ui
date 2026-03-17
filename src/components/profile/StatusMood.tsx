@@ -104,7 +104,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
     // Edit mode (modal-like inline form)
     return (
-        <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-lg p-4 w-full max-w-sm">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-lg p-4 w-full max-w-sm">
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-[#3C2415]">Set your status</h3>
                 <button

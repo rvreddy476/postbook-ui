@@ -23,7 +23,7 @@ export default function MessengerPage() {
   }, [router])
 
   if (!loaded || !currentUser) {
-    return <div className="h-screen bg-slate-50" />
+    return <div className="h-screen bg-brand-secondary" />
   }
 
   return (

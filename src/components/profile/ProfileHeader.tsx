@@ -161,7 +161,7 @@ export function ProfileHeader({
     )
 
     return (
-        <div className="w-full bg-white border-b border-black/5">
+        <div className="w-full bg-brand-card border-b border-black/5">
             {/* Hidden file inputs */}
             <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("avatar_media_id")} />
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
@@ -230,7 +230,7 @@ export function ProfileHeader({
                             )}
 
                             {uploadMutation.isPending && uploadMutation.variables?.field === "avatar_media_id" && (
-                                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                                <div className="absolute inset-0 bg-brand-card/70 backdrop-blur-sm flex items-center justify-center">
                                     <Loader2 className="w-7 h-7 animate-spin text-[#D8103F]" />
                                 </div>
                             )}
@@ -249,7 +249,7 @@ export function ProfileHeader({
                                 onClick={() => avatarInputRef.current?.click()}
                                 className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all rounded-3xl cursor-pointer"
                             >
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl">
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity p-3 bg-brand-card/80 backdrop-blur-md rounded-2xl shadow-xl">
                                     <Camera className="w-5 h-5 text-slate-800" />
                                 </div>
                             </button>
@@ -265,7 +265,7 @@ export function ProfileHeader({
                     >
                         {/* Name + badges */}
                         <div className="flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
-                            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+                            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-brand-text">
                                 {profile.display_name}
                             </h1>
                             {badges.map((badge) => {
@@ -283,7 +283,7 @@ export function ProfileHeader({
                                 )
                             })}
                             {!isOwn && followsYou && (
-                                <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                <span className="text-[9px] font-bold text-brand-text/60 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wider">
                                     Follows you
                                 </span>
                             )}
@@ -343,7 +343,7 @@ export function ProfileHeader({
                                         onClick={isFollowing ? onUnfollow : onFollow}
                                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
                                             isFollowing
-                                                ? "bg-white border-2 border-[#D8103F]/30 text-[#D8103F] hover:bg-[#D8103F]/5"
+                                                ? "bg-brand-card border-2 border-[#D8103F]/30 text-[#D8103F] hover:bg-[#D8103F]/5"
                                                 : "bg-[#D8103F] text-white hover:bg-[#b80d35]"
                                         }`}
                                     >
@@ -357,8 +357,8 @@ export function ProfileHeader({
                                         onClick={canDM ? onMessage : undefined}
                                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 transition-all ${
                                             canDM
-                                                ? "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
-                                                : "border-slate-100 text-slate-300 cursor-not-allowed"
+                                                ? "border-brand-divider text-slate-700 hover:border-slate-300 hover:bg-brand-secondary shadow-sm"
+                                                : "border-brand-divider text-slate-300 cursor-not-allowed"
                                         }`}
                                         title={canDM ? "Send message" : "Add to Circle to message"}
                                     >
@@ -393,7 +393,7 @@ export function ProfileHeader({
                                             <stat.icon size={13} />
                                             <span className="text-[8px] font-bold uppercase tracking-[0.2em]">{stat.label}</span>
                                         </div>
-                                        <p className="text-lg font-black text-slate-900 tracking-tight">
+                                        <p className="text-lg font-black text-brand-text tracking-tight">
                                             {formatCount(stat.value)}
                                         </p>
                                     </div>
@@ -457,7 +457,7 @@ export function ProfileHeader({
                                         <stat.icon size={11} />
                                         <span className="text-[7px] font-bold uppercase tracking-widest">{stat.label}</span>
                                     </div>
-                                    <p className="text-base font-black text-slate-900">{formatCount(stat.value)}</p>
+                                    <p className="text-base font-black text-brand-text">{formatCount(stat.value)}</p>
                                 </div>
                             </div>
                         ))}

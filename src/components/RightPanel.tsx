@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronRight, MessageCircle, Sparkles, UserPlus, X } from 'lucide-react';
 
 import { useAuthUser } from '@/store/auth';
-import { useFriendSuggestions, useHideSuggestion, useSendFriendRequest } from '@/hooks/useConnections';
+import { useFriendSuggestions, useSendFriendRequest } from '@/hooks/useConnections';
 import type { SuggestionUser } from '@/hooks/useConnections';
 import { User } from '../types';
 
@@ -14,33 +13,36 @@ interface RightPanelProps {
   onContactClick: (contact: User) => void;
 }
 
-function getAccentFromId(userId: string): string {
-  const hash = userId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const styles = [
-    'from-blue-500 to-indigo-500',
-    'from-emerald-500 to-teal-500',
-    'from-rose-500 to-orange-500',
-    'from-[#D8103F]/50 to-fuchsia-500',
-  ];
-  return styles[hash % styles.length];
+const AVATAR_COLORS = [
+  'bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500',
+  'bg-purple-500', 'bg-cyan-500', 'bg-pink-500', 'bg-indigo-500',
+  'bg-teal-500', 'bg-orange-500',
+];
+
+function getInitialColor(id: string): string {
+  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getInitial(name: string): string {
+  return (name?.charAt(0) || '?').toUpperCase();
+}
+
+function isCelebOrBrand(user: SuggestionUser): boolean {
+  // Celebrity/brand/business accounts come from trending bucket or have specific reason codes
+  return user.source_bucket === 'trending' || user.source_bucket === 'celebrity' ||
+    (user.reason_codes ?? []).some(r => r === 'POPULAR' || r === 'CELEBRITY' || r === 'BRAND');
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
   const router = useRouter();
   const authUser = useAuthUser();
-  const { data: suggestions, isLoading: suggestionsLoading } = useFriendSuggestions(authUser?.id, 6);
+  const { data: suggestions, isLoading } = useFriendSuggestions(authUser?.id, 6);
 
   const sendRequest = useSendFriendRequest();
-  const hideSuggestion = useHideSuggestion();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  const getAvatar = (user: SuggestionUser) =>
-    user.avatar_media_id
-      ? `/v1/media/${user.avatar_media_id}/serve`
-      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_id}`;
-
-  const handleAddFriend = async (user: SuggestionUser) => {
+  const handleAction = async (user: SuggestionUser) => {
     if (sentIds.has(user.user_id)) return;
     try {
       await sendRequest.mutateAsync(user.username || user.user_id);
@@ -50,139 +52,120 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
     }
   };
 
-  const handleDismiss = (userId: string) => {
-    setDismissedIds((prev) => new Set(prev).add(userId));
-    hideSuggestion.mutate({ candidateUserId: userId });
-  };
-
-  const openQuickChat = (user: SuggestionUser) => {
-    onContactClick({
-      id: user.user_id,
-      name: user.display_name,
-      avatar: getAvatar(user),
-      isOnline: false,
-    });
-  };
-
-  const visibleSuggestions = suggestions?.filter((user) => !dismissedIds.has(user.user_id)) ?? [];
+  const visibleSuggestions = suggestions ?? [];
 
   return (
-    <div className="space-y-5 pb-8">
-      {(suggestionsLoading || visibleSuggestions.length > 0) && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Suggestions</p>
-              <h3 className="mt-1 flex items-center gap-1.5 text-[15px] font-semibold text-slate-900">
-                <Sparkles className="h-4 w-4 text-blue-500" />
-                People To Follow
-              </h3>
-            </div>
-            <button
-              onClick={() => router.push('/circle')}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 transition hover:text-blue-700"
-            >
-              See all
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
+    <div className="space-y-8 sticky top-28 h-fit">
+      {/* Who to Follow / People you may know */}
+      {(isLoading || visibleSuggestions.length > 0) && (
+        <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
+          <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Who to follow</h5>
 
-          {suggestionsLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((row) => (
-                <div key={row} className="flex items-center gap-3 rounded-2xl border border-slate-100 px-3 py-2.5">
-                  <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-2.5 w-24 animate-pulse rounded bg-slate-100" />
-                    <div className="h-2 w-20 animate-pulse rounded bg-slate-50" />
+          {isLoading ? (
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-brand-secondary" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-20 rounded bg-brand-secondary" />
+                    <div className="h-2 w-16 rounded bg-brand-secondary" />
                   </div>
-                  <div className="h-8 w-8 animate-pulse rounded-lg bg-slate-100" />
                 </div>
               ))}
             </div>
           ) : (
-            <AnimatePresence mode="popLayout">
-              <div className="space-y-2">
-                {visibleSuggestions.map((user, index) => {
+            <div className="space-y-6">
+              <AnimatePresence>
+                {visibleSuggestions.map((user) => {
                   const isSent = sentIds.has(user.user_id);
+                  const hasAvatar = !!user.avatar_media_id;
+                  const avatarSrc = hasAvatar ? `/v1/media/${user.avatar_media_id}/serve` : null;
+                  const isCeleb = isCelebOrBrand(user);
+                  const actionLabel = isSent ? 'Sent' : isCeleb ? 'Follow' : 'Add Friend';
+
                   return (
                     <motion.div
                       key={user.user_id}
                       layout
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0, transition: { delay: index * 0.03 } }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       exit={{ opacity: 0, x: 8 }}
-                      className="group rounded-2xl border border-slate-100 bg-white px-3 py-3 transition hover:border-slate-200 hover:bg-slate-50/70"
+                      className="flex items-center justify-between group"
                     >
-                      <div className="flex items-start gap-3">
-                        <button
-                          onClick={() => router.push(`/u/${user.username || user.user_id}`)}
-                          className="relative h-11 w-11 overflow-hidden rounded-xl"
-                        >
-                          <img src={getAvatar(user)} alt={user.display_name} className="h-full w-full object-cover" />
-                          <span className={`pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br ${getAccentFromId(user.user_id)} opacity-20`} />
-                        </button>
-
-                        <button
-                          onClick={() => router.push(`/u/${user.username || user.user_id}`)}
-                          className="min-w-0 flex-1 text-left"
-                        >
-                          <p className="truncate text-[13px] font-semibold text-slate-900">{user.display_name}</p>
+                      <button
+                        onClick={() => router.push(`/u/${user.username || user.user_id}`)}
+                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                      >
+                        {/* Avatar: image or initial letter with random color */}
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider flex-shrink-0">
+                          {avatarSrc ? (
+                            <img src={avatarSrc} alt={user.display_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center text-white text-sm font-black ${getInitialColor(user.user_id)}`}>
+                              {getInitial(user.display_name)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors truncate">{user.display_name}</h6>
                           {user.username && (
-                            <p className="truncate text-[11px] text-slate-400">@{user.username}</p>
+                            <p className="text-[10px] text-brand-text/40 uppercase tracking-widest truncate">@{user.username}</p>
                           )}
-                          {user.explain_text && (
-                            <p className="mt-1 truncate text-[10px] font-medium text-blue-500">{user.explain_text}</p>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={() => handleDismiss(user.user_id)}
-                          className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-300 transition hover:bg-white hover:text-slate-500"
-                          title="Dismiss"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => handleAddFriend(user)}
-                          disabled={isSent || sendRequest.isPending}
-                          className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[11px] font-semibold transition ${
-                            isSent
-                              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                              : 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                          }`}
-                        >
-                          {isSent ? <Check className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                          {isSent ? 'Sent' : 'Add'}
-                        </button>
-                        <button
-                          onClick={() => openQuickChat(user)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          Message
-                        </button>
-                      </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleAction(user)}
+                        disabled={isSent}
+                        className={`text-[10px] font-black tracking-widest uppercase transition-colors flex-shrink-0 ml-3 whitespace-nowrap ${
+                          isSent
+                            ? 'text-brand-text/30'
+                            : 'text-brand-accent hover:text-brand-text'
+                        }`}
+                      >
+                        {actionLabel}
+                      </button>
                     </motion.div>
                   );
                 })}
-              </div>
-            </AnimatePresence>
+              </AnimatePresence>
+            </div>
           )}
-        </section>
+
+          <button
+            onClick={() => router.push('/circle')}
+            className="w-full mt-8 py-3 bg-brand-bg text-brand-text text-[10px] font-black tracking-widest uppercase rounded-xl hover:bg-brand-accent hover:text-brand-bg transition-all"
+          >
+            Show More
+          </button>
+        </div>
       )}
 
-      <div className="px-1 text-[10px] font-medium text-slate-400">
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
-          <a href="#" className="transition hover:text-slate-600">Privacy</a>
-          <a href="#" className="transition hover:text-slate-600">Terms</a>
-          <a href="#" className="transition hover:text-slate-600">Ads</a>
-          <span>PostBoek.com 2026</span>
+      {/* Trending Topics */}
+      <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
+        <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Trending Topics</h5>
+        <div className="space-y-4">
+          {[
+            { tag: '#Minimalism', posts: '12.4k' },
+            { tag: '#DigitalArt', posts: '8.2k' },
+            { tag: '#TechTrends', posts: '5.1k' },
+          ].map((trend) => (
+            <div key={trend.tag} className="group cursor-pointer">
+              <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors">{trend.tag}</h6>
+              <p className="text-[10px] text-brand-text/40 uppercase tracking-widest">{trend.posts} posts</p>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="px-6 text-[10px] text-brand-text/40 uppercase tracking-[0.2em] space-y-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <a href="#" className="hover:text-brand-accent transition-colors">About</a>
+          <a href="#" className="hover:text-brand-accent transition-colors">Privacy</a>
+          <a href="#" className="hover:text-brand-accent transition-colors">Terms</a>
+        </div>
+        <p>&copy; 2026 PostBoek.com</p>
+      </footer>
     </div>
   );
 };

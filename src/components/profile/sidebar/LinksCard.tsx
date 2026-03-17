@@ -51,9 +51,9 @@ export default function LinksCard({ links }: LinksCardProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.2 }}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"
+            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
         >
-            <h3 className="text-sm font-bold text-slate-900 mb-3">Links</h3>
+            <h3 className="text-sm font-bold text-brand-text mb-3">Links</h3>
 
             <div className="space-y-3">
                 {sortedLinks.map((link, idx) => (
@@ -65,12 +65,12 @@ export default function LinksCard({ links }: LinksCardProps) {
                         onClick={() => trackLinkClick(link.platform)}
                         className="flex items-center gap-2.5 group"
                     >
-                        <ExternalLink className="h-4 w-4 text-slate-400 shrink-0 group-hover:text-[#D8103F] transition-colors" />
+                        <ExternalLink className="h-4 w-4 text-brand-text/60 shrink-0 group-hover:text-[#D8103F] transition-colors" />
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-700 group-hover:text-[#D8103F] transition-colors">
                                 {link.display_label || formatPlatformName(link.platform)}
                             </p>
-                            <p className="text-xs text-slate-400 truncate">
+                            <p className="text-xs text-brand-text/60 truncate">
                                 {formatUrl(link.url)}
                             </p>
                         </div>

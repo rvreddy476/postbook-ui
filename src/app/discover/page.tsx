@@ -28,7 +28,7 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.tag}`)}
-            className="group flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 text-left w-full"
+            className="group flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 text-left w-full"
         >
             {/* Rank badge */}
             <div
@@ -77,7 +77,7 @@ function HashtagCard({ item }: HashtagCardProps) {
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.tag}`)}
-            className="group flex flex-col items-center justify-center gap-2 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 hover:bg-[#D8103F]/30 transition-all duration-200 aspect-square"
+            className="group flex flex-col items-center justify-center gap-2 p-5 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 hover:bg-[#D8103F]/30 transition-all duration-200 aspect-square"
         >
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20 group-hover:scale-105 transition-transform duration-200">
                 <Hash className="w-6 h-6 text-white" />
@@ -140,7 +140,7 @@ function TrendingSkeletons() {
     return (
         <div className="space-y-3 animate-pulse">
             {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100">
+                <div key={i} className="flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-gray-100">
                     <div className="w-9 h-9 rounded-xl bg-gray-100 flex-shrink-0" />
                     <div className="flex-1 space-y-1.5">
                         <div className="h-4 bg-gray-100 rounded-lg w-1/3" />
@@ -156,7 +156,7 @@ function SuggestedSkeletons() {
     return (
         <div className="space-y-4 animate-pulse">
             {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+                <div key={i} className="bg-brand-card rounded-xl border border-gray-100 p-4 space-y-3">
                     <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-full bg-gray-100" />
                         <div className="flex-1 space-y-1.5">
@@ -188,9 +188,9 @@ export default function DiscoverPage() {
     const moreHashtags = hashtags.slice(5)
 
     return (
-        <div className="min-h-screen bg-[#fcfaff]">
+        <div className="min-h-screen bg-brand-bg">
             {/* Page header */}
-            <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-10 bg-brand-card/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20">
                         <Sparkles className="w-5 h-5 text-white" />

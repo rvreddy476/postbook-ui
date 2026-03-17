@@ -124,7 +124,7 @@ export default function CreatePostPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
               <PenSquare className="h-5 w-5 text-blue-500" />
             </div>
-            <h1 className="text-[18px] font-bold text-slate-900">Create Post</h1>
+            <h1 className="text-[18px] font-bold text-brand-text">Create Post</h1>
           </div>
           {!published ? (
             <button
@@ -144,8 +144,8 @@ export default function CreatePostPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
                 <Check className="h-7 w-7 text-emerald-600" />
               </div>
-              <h2 className="mt-5 text-xl font-bold text-slate-900">Posted!</h2>
-              <p className="mt-2 text-[13px] text-slate-500">Your post is now live on your feed.</p>
+              <h2 className="mt-5 text-xl font-bold text-brand-text">Posted!</h2>
+              <p className="mt-2 text-[13px] text-brand-highlight">Your post is now live on your feed.</p>
               <div className="mt-6 flex gap-3">
                 <Link href="/" className="rounded-xl bg-slate-100 px-5 py-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-200">Go to Feed</Link>
                 <button type="button" onClick={() => { setPublished(false); setContent(""); setImages([]); }} className="rounded-xl bg-blue-600 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-blue-700">Create Another</button>
@@ -153,19 +153,19 @@ export default function CreatePostPage() {
             </motion.div>
           ) : (
             <motion.div key="form" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
                 {/* Author row */}
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar src={avatarUrl} name={displayName} seed={profile?.id} size="md" className="border-2 border-white shadow-sm" />
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-slate-900">{displayName}</p>
+                    <p className="text-[13px] font-bold text-brand-text">{displayName}</p>
                     <button
                       type="button"
                       onClick={() => {
                         const idx = VISIBILITY.findIndex((v) => v.value === visibility);
                         setVisibility(VISIBILITY[(idx + 1) % VISIBILITY.length].value);
                       }}
-                      className="flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-500 hover:bg-slate-100"
+                      className="flex items-center gap-1 rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-semibold text-brand-highlight hover:bg-slate-100"
                     >
                       <VisIcon className="h-3 w-3" />
                       {visibilityOption.label}
@@ -217,7 +217,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={() => { setCaptionSuggestions([]); setHashtagSuggestions([]); }}
-                        className="ml-auto text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                        className="ml-auto text-[11px] text-brand-text/60 hover:text-brand-highlight flex items-center gap-1"
                       >
                         <X className="h-3 w-3" /> Clear
                       </button>
@@ -229,7 +229,7 @@ export default function CreatePostPage() {
                     <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Suggested Captions</p>
                       {captionSuggestions.map((caption, i) => (
-                        <div key={i} className="flex items-start gap-2 bg-white rounded-lg p-2.5 border border-violet-100">
+                        <div key={i} className="flex items-start gap-2 bg-brand-card rounded-lg p-2.5 border border-violet-100">
                           <p className="flex-1 text-[13px] text-slate-700 leading-relaxed">{caption}</p>
                           <button
                             type="button"
@@ -255,7 +255,7 @@ export default function CreatePostPage() {
                               key={i}
                               type="button"
                               onClick={() => setContent((prev) => `${prev} ${normalized}`.trimStart())}
-                              className="px-2.5 py-1 rounded-full bg-white border border-blue-200 text-blue-600 text-[12px] font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                              className="px-2.5 py-1 rounded-full bg-brand-card border border-blue-200 text-blue-600 text-[12px] font-semibold hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
                             >
                               {normalized}
                             </button>
@@ -281,14 +281,14 @@ export default function CreatePostPage() {
                 ) : null}
 
                 {/* Actions */}
-                <div className="mt-4 flex items-center gap-1 border-t border-slate-100 pt-4">
-                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={images.length >= 4} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-40">
+                <div className="mt-4 flex items-center gap-1 border-t border-brand-divider pt-4">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={images.length >= 4} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary disabled:opacity-40">
                     <ImagePlus className="h-4 w-4 text-emerald-500" /> Photo
                   </button>
-                  <button type="button" onClick={() => { const loc = prompt("Enter location:"); if (loc) setLocation(loc); }} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-slate-500 hover:bg-slate-50">
+                  <button type="button" onClick={() => { const loc = prompt("Enter location:"); if (loc) setLocation(loc); }} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary">
                     <MapPin className="h-4 w-4 text-rose-500" /> Location
                   </button>
-                  <button type="button" onClick={() => setContent((prev) => prev + " #")} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-slate-500 hover:bg-slate-50">
+                  <button type="button" onClick={() => setContent((prev) => prev + " #")} className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary">
                     <Hash className="h-4 w-4 text-blue-500" /> Tag
                   </button>
                   <div className="flex-1" />
@@ -296,10 +296,10 @@ export default function CreatePostPage() {
                 </div>
 
                 {location ? (
-                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] text-brand-text/60">
                     <MapPin className="h-3 w-3" />
                     {location}
-                    <button type="button" onClick={() => setLocation("")} className="text-slate-300 hover:text-slate-500"><X className="h-3 w-3" /></button>
+                    <button type="button" onClick={() => setLocation("")} className="text-slate-300 hover:text-brand-highlight"><X className="h-3 w-3" /></button>
                   </div>
                 ) : null}
               </div>

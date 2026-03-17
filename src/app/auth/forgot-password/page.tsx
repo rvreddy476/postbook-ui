@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
       <div className="w-full max-w-md">
-        <div className="relative overflow-hidden rounded-[2rem] border border-[#F0E6DC] bg-white p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="relative overflow-hidden rounded-[2rem] border border-[#F0E6DC] bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             {/* Step 1: Enter email or phone */}
             {step === 'request' && (
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="you@example.com or 9876543210"
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                       required
                     />
                   </div>
@@ -239,7 +239,7 @@ export default function ForgotPasswordPage() {
                       onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="000000"
                       maxLength={6}
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                       required
                     />
                   </div>
@@ -255,7 +255,7 @@ export default function ForgotPasswordPage() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Min 8 characters"
-                        className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                        className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                         required
                         minLength={8}
                       />
@@ -281,7 +281,7 @@ export default function ForgotPasswordPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Re-enter password"
-                        className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                        className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                         required
                         minLength={8}
                       />

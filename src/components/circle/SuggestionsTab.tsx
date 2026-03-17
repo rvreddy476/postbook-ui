@@ -31,7 +31,7 @@ const SuggestionsTab: React.FC = () => {
         return (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                    <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider overflow-hidden animate-pulse">
                         <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
                         <div className="flex flex-col items-center -mt-10 px-4 pb-5">
                             <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
@@ -51,8 +51,8 @@ const SuggestionsTab: React.FC = () => {
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center mb-5 shadow-sm">
                     <Sparkles className="w-12 h-12 text-amber-300" />
                 </div>
-                <p className="text-base font-bold text-slate-500">No suggestions right now</p>
-                <p className="text-sm text-slate-400 mt-1.5">Check back later for new people to connect with</p>
+                <p className="text-base font-bold text-brand-highlight">No suggestions right now</p>
+                <p className="text-sm text-brand-text/60 mt-1.5">Check back later for new people to connect with</p>
                 {dismissedIds.size > 0 && (
                     <button
                         onClick={() => setDismissedIds(new Set())}
@@ -70,7 +70,7 @@ const SuggestionsTab: React.FC = () => {
         <div>
             {/* Header with count and refresh */}
             <div className="flex items-center justify-between mb-5">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-brand-text/60">
                     <span className="font-bold text-amber-600 text-sm mr-1">{visibleSuggestions.length}</span> people you may know
                 </p>
                 <button

@@ -42,11 +42,11 @@ export function CreationsTab({ userId, platform }: CreationsTabProps) {
 
             {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+                    <div className="h-14 w-14 rounded-2xl bg-brand-secondary flex items-center justify-center mb-4">
                         <Gem className="h-6 w-6 text-slate-300" />
                     </div>
-                    <h3 className="text-base font-semibold text-slate-900">No posts yet</h3>
-                    <p className="text-sm text-slate-400 mt-1 max-w-xs">
+                    <h3 className="text-base font-semibold text-brand-text">No posts yet</h3>
+                    <p className="text-sm text-brand-text/60 mt-1 max-w-xs">
                         Share your first moment with the world.
                     </p>
                 </div>

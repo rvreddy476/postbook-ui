@@ -75,11 +75,11 @@ function SidebarCard({ video }: { video: PostTubeVideo }) {
         )}
       </div>
       <div className="min-w-0 flex-1 py-0.5">
-        <h4 className="line-clamp-2 text-[13px] font-semibold leading-tight text-slate-900 group-hover:text-slate-700">
+        <h4 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-slate-700">
           {video.title}
         </h4>
-        <p className="mt-1 text-[11px] text-slate-500">{video.channel_name}</p>
-        <p className="text-[11px] text-slate-400">
+        <p className="mt-1 text-[11px] text-brand-highlight">{video.channel_name}</p>
+        <p className="text-[11px] text-brand-text/60">
           {fmtCount(video.view_count)} views · {timeAgo(video.published_at)}
         </p>
       </div>
@@ -209,10 +209,10 @@ export function WatchPage({ videoId }: WatchPageProps) {
     return (
       <PostTubeShell>
         <div className="flex h-full flex-col items-center justify-center text-center">
-          <h2 className="text-[18px] font-bold text-slate-900">
+          <h2 className="text-[18px] font-bold text-brand-text">
             {videoId ? "Video not found" : "No video selected"}
           </h2>
-          <p className="mt-2 text-[13px] text-slate-500">
+          <p className="mt-2 text-[13px] text-brand-highlight">
             {videoId
               ? "This video may still be processing or has been removed."
               : "Browse PostTube to find videos to watch."}
@@ -254,7 +254,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
             </div>
 
             {/* Title */}
-            <h1 className="mt-3 text-[20px] font-bold leading-snug text-slate-900">
+            <h1 className="mt-3 text-[20px] font-bold leading-snug text-brand-text">
               {video.title}
             </h1>
 
@@ -267,10 +267,10 @@ export function WatchPage({ videoId }: WatchPageProps) {
                 size="sm"
               />
               <div className="min-w-0 mr-1">
-                <p className="truncate text-[14px] font-bold text-slate-900 leading-tight">
+                <p className="truncate text-[14px] font-bold text-brand-text leading-tight">
                   {video.channel_name}
                 </p>
-                <p className="text-[12px] text-slate-400">
+                <p className="text-[12px] text-brand-text/60">
                   {fmtCount(video.channel_subscriber_count)} subscribers
                 </p>
               </div>
@@ -293,7 +293,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
                 <button
                   type="button"
                   onClick={toggleLike}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold border-r border-slate-200 transition-colors ${
+                  className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold border-r border-brand-divider transition-colors ${
                     liked ? "bg-slate-200" : "hover:bg-slate-200"
                   }`}
                 >
@@ -323,7 +323,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
                 type="button"
                 onClick={() => setSaved((p) => !p)}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
-                  saved ? "bg-slate-200 text-slate-900" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  saved ? "bg-slate-200 text-brand-text" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 <Bookmark className={`h-[18px] w-[18px] ${saved ? "fill-current" : ""}`} />
@@ -344,9 +344,9 @@ export function WatchPage({ videoId }: WatchPageProps) {
               className="mt-3 rounded-xl bg-slate-100 px-4 py-3 cursor-pointer hover:bg-slate-200/70 transition-colors"
               onClick={() => !descExpanded && setDescExpanded(true)}
             >
-              <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-900">
+              <div className="flex items-center gap-2 text-[13px] font-semibold text-brand-text">
                 <span>{fmtCount(video.view_count)} views</span>
-                <span className="text-slate-400">·</span>
+                <span className="text-brand-text/60">·</span>
                 <span>{timeAgo(video.published_at)}</span>
                 {video.hashtags.length > 0 && (
                   <span className="flex gap-1.5 ml-1">
@@ -372,7 +372,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setDescExpanded((p) => !p); }}
-                  className="mt-1 flex items-center gap-1 text-[13px] font-semibold text-slate-600 hover:text-slate-800 transition-colors"
+                  className="mt-1 flex items-center gap-1 text-[13px] font-semibold text-brand-highlight hover:text-slate-800 transition-colors"
                 >
                   {descExpanded ? (
                     <>Show less <ChevronUp className="h-3.5 w-3.5" /></>
@@ -403,10 +403,10 @@ export function WatchPage({ videoId }: WatchPageProps) {
             {commentsOpen && (
               <div className="mt-4 mb-8">
                 <div className="flex items-center gap-6 mb-4">
-                  <h3 className="text-[16px] font-bold text-slate-900">
+                  <h3 className="text-[16px] font-bold text-brand-text">
                     {fmtCount(video.comment_count)} Comments
                   </h3>
-                  <button type="button" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600 hover:text-slate-800 transition-colors">
+                  <button type="button" className="flex items-center gap-1.5 text-[13px] font-semibold text-brand-highlight hover:text-slate-800 transition-colors">
                     <ListFilter className="h-4 w-4" />
                     Sort by
                   </button>
@@ -438,7 +438,7 @@ export function WatchPage({ videoId }: WatchPageProps) {
               ) : relatedVideos.length > 0 ? (
                 relatedVideos.map((v) => <SidebarCard key={v.id} video={v} />)
               ) : (
-                <p className="text-[13px] text-slate-400 py-4">No related videos</p>
+                <p className="text-[13px] text-brand-text/60 py-4">No related videos</p>
               )}
             </div>
           </aside>
@@ -448,37 +448,37 @@ export function WatchPage({ videoId }: WatchPageProps) {
       {/* Report dialog */}
       {reportOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="w-[380px] rounded-2xl bg-white shadow-2xl overflow-hidden">
+          <div className="w-[380px] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
             {reportSubmitted ? (
               <div className="p-6 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
                   <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <h3 className="text-[15px] font-bold text-slate-900">Report Submitted</h3>
-                <p className="mt-1 text-[13px] text-slate-500">Our team will review this content shortly.</p>
+                <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
+                <p className="mt-1 text-[13px] text-brand-highlight">Our team will review this content shortly.</p>
                 <button onClick={() => setReportOpen(false)}
                   className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-slate-800">Done</button>
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-                  <h3 className="text-[14px] font-bold text-slate-900">Report Content</h3>
-                  <button onClick={() => setReportOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100">
+                <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3.5">
+                  <h3 className="text-[14px] font-bold text-brand-text">Report Content</h3>
+                  <button onClick={() => setReportOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-slate-100">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
                 <div className="px-5 py-4">
-                  <p className="text-[12px] text-slate-500 mb-3">Why are you reporting this?</p>
+                  <p className="text-[12px] text-brand-highlight mb-3">Why are you reporting this?</p>
                   <div className="space-y-1.5">
                     {REPORT_REASONS.map((r) => (
                       <button key={r.value} onClick={() => setReportReason(r.value)}
                         className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
-                          reportReason === r.value ? 'bg-slate-900 text-white font-medium' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                          reportReason === r.value ? 'bg-slate-900 text-white font-medium' : 'bg-brand-secondary text-slate-700 hover:bg-slate-100'
                         }`}>{r.label}</button>
                     ))}
                   </div>
                 </div>
-                <div className="border-t border-slate-100 px-5 py-3">
+                <div className="border-t border-brand-divider px-5 py-3">
                   <button
                     onClick={async () => {
                       if (!reportReason) return;

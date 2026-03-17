@@ -5,34 +5,48 @@ const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Space Grotesk', 'system-ui', 'sans-serif'],
+      },
       colors: {
         orchid: {
           violet: '#7c3aed',
           rose: '#db2777',
           bg: '#fcfaff',
         },
+        // Brand Semantic Tokens
+        brand: {
+          bg: 'rgb(var(--brand-bg) / <alpha-value>)',
+          text: 'rgb(var(--brand-text) / <alpha-value>)',
+          accent: 'rgb(var(--brand-accent) / <alpha-value>)',
+          secondary: 'rgb(var(--brand-secondary) / <alpha-value>)',
+          highlight: 'rgb(var(--brand-highlight) / <alpha-value>)',
+          divider: 'var(--brand-divider)',
+          card: 'rgb(var(--brand-card) / <alpha-value>)',
+        },
         // Semantic tokens for profile components (maps to orchid palette)
-        background: '#fcfaff',
-        foreground: '#0f172a',
+        background: 'rgb(var(--brand-bg) / <alpha-value>)',
+        foreground: 'rgb(var(--brand-text) / <alpha-value>)',
         primary: {
-          DEFAULT: '#7c3aed',
+          DEFAULT: 'rgb(var(--brand-accent) / <alpha-value>)',
           foreground: '#ffffff',
         },
         secondary: {
-          DEFAULT: '#f3e8ff',
-          foreground: '#6d28d9',
+          DEFAULT: 'rgb(var(--brand-secondary) / <alpha-value>)',
+          foreground: 'rgb(var(--brand-text) / <alpha-value>)',
         },
         muted: {
-          DEFAULT: '#f5f3ff',
-          foreground: '#64748b',
+          DEFAULT: 'rgb(var(--brand-secondary) / <alpha-value>)',
+          foreground: 'rgb(var(--brand-highlight) / <alpha-value>)',
         },
         destructive: {
           DEFAULT: '#ef4444',
           foreground: '#ffffff',
         },
-        border: '#e9d5ff',
-        input: '#e9d5ff',
-        ring: '#7c3aed',
+        border: 'var(--brand-divider)',
+        input: 'var(--brand-divider)',
+        ring: 'rgb(var(--brand-accent) / <alpha-value>)',
       },
     },
   },

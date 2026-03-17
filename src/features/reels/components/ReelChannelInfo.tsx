@@ -50,7 +50,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onPrev}
           disabled={!hasPrev}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-slate-500 transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous reel"
         >
           <ChevronUp className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onNext}
           disabled={!hasNext}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-slate-500 transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next reel"
         >
           <ChevronDown className="h-4 w-4" />
@@ -75,10 +75,10 @@ export function ReelChannelInfo({
           name={reel.author_name}
           seed={reel.author_id}
           size="md"
-          imgClassName="border-2 border-slate-100"
+          imgClassName="border-2 border-brand-divider"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-bold text-slate-900 leading-tight">
+          <p className="truncate text-[14px] font-bold text-brand-text leading-tight">
             @{reel.author_name}
           </p>
         </div>
@@ -97,14 +97,14 @@ export function ReelChannelInfo({
 
       {/* Caption */}
       <div className="mt-4">
-        <p className="whitespace-pre-line text-[13px] leading-[1.5] text-slate-600">
+        <p className="whitespace-pre-line text-[13px] leading-[1.5] text-brand-highlight">
           {displayText}
         </p>
         {isLong ? (
           <button
             type="button"
             onClick={() => setCaptionExpanded((prev) => !prev)}
-            className="mt-1 text-[12px] font-semibold text-slate-400 hover:text-slate-600 transition"
+            className="mt-1 text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition"
           >
             {captionExpanded ? "Show less" : "Show more"}
           </button>
@@ -113,7 +113,7 @@ export function ReelChannelInfo({
 
       {/* Views */}
       {typeof reel.view_count === "number" ? (
-        <div className="mt-1.5 text-[12px] text-slate-400">
+        <div className="mt-1.5 text-[12px] text-brand-text/60">
           {formatCount(reel.view_count)} views
         </div>
       ) : null}
@@ -125,7 +125,7 @@ export function ReelChannelInfo({
             <Link
               key={tag}
               href={`/hashtag/${tag}`}
-              className="rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-100"
+              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-slate-100"
             >
               #{tag}
             </Link>

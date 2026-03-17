@@ -59,10 +59,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
               )}
             </div>
             <div>
-              <p className={`text-[13px] font-medium ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+              <p className={`text-[13px] font-medium ${isDarkMode ? 'text-slate-100' : 'text-brand-text'}`}>
                 {isDragging ? 'Drop to upload' : isVideo ? 'Add your video' : 'Add photos'}
               </p>
-              <p className={`text-[11px] mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Drag here or click to browse</p>
+              <p className={`text-[11px] mt-1 ${isDarkMode ? 'text-brand-text/60' : 'text-brand-highlight'}`}>Drag here or click to browse</p>
             </div>
             <div className="flex gap-1.5 flex-wrap justify-center">
               {[formats, countLabel, limits].map((label, i) => (
@@ -137,14 +137,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
                   background: isDarkMode ? '#10182D' : '#F8FAFC',
                 }}
               >
-                <FileText className="w-3.5 h-3.5 flex-shrink-0 text-slate-400" />
+                <FileText className="w-3.5 h-3.5 flex-shrink-0 text-brand-text/60" />
                 <input
                   type="text"
                   value={altTexts[i] ?? ''}
                   onChange={(e) => onAltTextChange(i, e.target.value)}
                   placeholder="Describe this image (alt text)"
                   maxLength={1000}
-                  className={`flex-1 bg-transparent text-[11px] ${isDarkMode ? 'placeholder:text-slate-500' : 'placeholder:text-slate-400'} focus:outline-none`}
+                  className={`flex-1 bg-transparent text-[11px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-none`}
                   style={{ color: isDarkMode ? '#E2E8F0' : '#0F172A' }}
                 />
               </div>
@@ -155,12 +155,12 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
           <div
             onClick={() => fileInputRef.current?.click()}
             className={`rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all gap-1 ${
-              isDarkMode ? 'hover:bg-white/10' : 'hover:bg-blue-50'
+              isDarkMode ? 'hover:bg-brand-card/10' : 'hover:bg-blue-50'
             }`}
             style={{ aspectRatio: '4/3', borderColor: isDarkMode ? 'rgba(148,163,184,0.25)' : '#CBD5E1' }}
           >
-            <Plus className="w-5 h-5 text-slate-400" />
-            <span className={`text-[9px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Add more</span>
+            <Plus className="w-5 h-5 text-brand-text/60" />
+            <span className={`text-[9px] ${isDarkMode ? 'text-brand-text/60' : 'text-brand-highlight'}`}>Add more</span>
           </div>
         )}
       </div>

@@ -46,9 +46,9 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
   };
 
   return (
-    <div className={`rounded-xl border overflow-hidden animate-fadeIn ${isDarkMode ? 'bg-[#0F172A] border-white/10' : 'bg-white border-slate-200'}`}>
+    <div className={`rounded-xl border overflow-hidden animate-fadeIn ${isDarkMode ? 'bg-[#0F172A] border-white/10' : 'bg-brand-card border-brand-divider'}`}>
       {/* Tabs */}
-      <div className={`flex border-b ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
+      <div className={`flex border-b ${isDarkMode ? 'border-white/10' : 'border-brand-divider'}`}>
         {(['feeling', 'activity'] as const).map((t) => (
           <button
             key={t}
@@ -62,7 +62,7 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
             {t}
           </button>
         ))}
-        <button onClick={onClose} className={`px-3 text-slate-400 transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
+        <button onClick={onClose} className={`px-3 text-brand-text/60 transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -70,7 +70,7 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
       {/* Content */}
       <div className="p-3">
         {tab === 'feeling' ? (
-          <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-sm text-slate-400">Loading...</div>}>
+          <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-sm text-brand-text/60">Loading...</div>}>
             <EmojiPicker
               data={data}
               onEmojiSelect={handleEmojiSelect}
@@ -86,11 +86,11 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setSelectedActivity(null); setActivityDetail(''); }}
-                className={`text-slate-400 transition-colors ${isDarkMode ? 'hover:text-slate-100' : 'hover:text-slate-900'}`}
+                className={`text-brand-text/60 transition-colors ${isDarkMode ? 'hover:text-slate-100' : 'hover:text-brand-text'}`}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+              <span className={`text-sm ${isDarkMode ? 'text-slate-100' : 'text-brand-text'}`}>
                 {selectedActivity.emoji} {selectedActivity.label}
               </span>
             </div>
@@ -99,7 +99,7 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
               onChange={(e) => setActivityDetail(e.target.value)}
               placeholder={selectedActivity.placeholder}
               autoFocus
-              className={`w-full rounded-xl px-3 py-2.5 text-[13px] ${isDarkMode ? 'placeholder:text-slate-500' : 'placeholder:text-slate-400'} focus:outline-none focus:ring-1`}
+              className={`w-full rounded-xl px-3 py-2.5 text-[13px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-none focus:ring-1`}
               style={{
                 background: isDarkMode ? '#10182D' : '#F8FAFC',
                 border: isDarkMode ? '1px solid rgba(148,163,184,0.2)' : '1px solid #E2E8F0',
@@ -124,10 +124,10 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
               <button
                 key={a.label}
                 onClick={() => setSelectedActivity(a)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-blue-50'}`}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all ${isDarkMode ? 'hover:bg-brand-card/10' : 'hover:bg-blue-50'}`}
               >
                 <span className="text-base">{a.emoji}</span>
-                <span className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{a.label}</span>
+                <span className={`text-[11px] font-medium ${isDarkMode ? 'text-slate-100' : 'text-brand-text'}`}>{a.label}</span>
               </button>
             ))}
           </div>

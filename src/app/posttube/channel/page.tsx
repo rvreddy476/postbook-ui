@@ -71,7 +71,7 @@ function PostCard({ post, onDelete }: { post: PostDetail; onDelete: (id: string)
             {post.text || "Untitled"}
           </p>
         </Link>
-        <div className="mt-0.5 flex items-center gap-3 text-[11px] text-slate-400">
+        <div className="mt-0.5 flex items-center gap-3 text-[11px] text-brand-text/60">
           <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{fmtCount(post.counts?.likes ?? 0)}</span>
           <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{fmtCount(post.counts?.comments ?? 0)}</span>
         </div>
@@ -114,7 +114,7 @@ export default function MyChannelPage() {
 
   return (
     <AppShell sectionLabel="PostTube">
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-brand-card">
         {/* Banner */}
         <div className="relative h-40 bg-gradient-to-br from-[#D8103F] via-[#D8103F]/50 to-purple-400">
           {bannerUrl && (
@@ -134,13 +134,13 @@ export default function MyChannelPage() {
               className="h-24 w-24 rounded-full border-4 border-white shadow-lg"
             />
             <div className="flex-1 min-w-0 pb-2">
-              <h1 className="text-[22px] font-bold text-slate-900">
+              <h1 className="text-[22px] font-bold text-brand-text">
                 {profile?.display_name || "My Channel"}
               </h1>
               {profile?.username && (
-                <p className="text-[13px] text-slate-400">@{profile.username}</p>
+                <p className="text-[13px] text-brand-text/60">@{profile.username}</p>
               )}
-              <div className="mt-1 flex items-center gap-4 text-[12px] text-slate-500">
+              <div className="mt-1 flex items-center gap-4 text-[12px] text-brand-highlight">
                 <span><strong className="text-slate-700">{videos.length}</strong> videos</span>
                 <span><strong className="text-slate-700">{flicks.length}</strong> flicks</span>
               </div>
@@ -155,7 +155,7 @@ export default function MyChannelPage() {
               </Link>
               <Link
                 href="/settings/channel"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-divider text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
               >
                 <Settings className="h-4 w-4" />
               </Link>
@@ -163,7 +163,7 @@ export default function MyChannelPage() {
           </div>
 
           {/* Tabs */}
-          <div className="mt-6 flex items-center gap-1 border-b border-slate-100">
+          <div className="mt-6 flex items-center gap-1 border-b border-brand-divider">
             {([
               { id: "videos" as Tab, label: "Videos", icon: Video, count: videos.length },
               { id: "flicks" as Tab, label: "Flicks", icon: Film, count: flicks.length },
@@ -173,14 +173,14 @@ export default function MyChannelPage() {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={`relative flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold transition-colors ${
-                  tab === t.id ? "text-[#D8103F]" : "text-slate-400 hover:text-slate-600"
+                  tab === t.id ? "text-[#D8103F]" : "text-brand-text/60 hover:text-brand-highlight"
                 }`}
               >
                 <t.icon className="h-4 w-4" />
                 {t.label}
                 {t.count > 0 && (
                   <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-slate-400"
+                    tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-brand-text/60"
                   }`}>
                     {t.count}
                   </span>
@@ -196,11 +196,11 @@ export default function MyChannelPage() {
           <div className="py-6">
             {items.length === 0 && !query.isLoading ? (
               <div className="flex flex-col items-center py-16 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-secondary">
                   {tab === "videos" ? <Video className="h-7 w-7 text-slate-300" /> : <Film className="h-7 w-7 text-slate-300" />}
                 </div>
-                <p className="mt-4 text-[14px] font-semibold text-slate-600">No {tab} yet</p>
-                <p className="mt-1 text-[12px] text-slate-400">Upload your first {tab === "videos" ? "video" : "flick"} to get started</p>
+                <p className="mt-4 text-[14px] font-semibold text-brand-highlight">No {tab} yet</p>
+                <p className="mt-1 text-[12px] text-brand-text/60">Upload your first {tab === "videos" ? "video" : "flick"} to get started</p>
                 <Link
                   href={`/posttube/upload?type=${tab === "videos" ? "long" : "short"}`}
                   className="mt-4 rounded-xl bg-[#D8103F] px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-[#b80d35] transition-colors"
@@ -222,7 +222,7 @@ export default function MyChannelPage() {
                   type="button"
                   onClick={() => query.fetchNextPage()}
                   disabled={query.isFetchingNextPage}
-                  className="rounded-xl border border-slate-200 px-5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                  className="rounded-xl border border-brand-divider px-5 py-2 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary disabled:opacity-40 transition-colors"
                 >
                   {query.isFetchingNextPage ? "Loading..." : "Load more"}
                 </button>
@@ -240,28 +240,28 @@ export default function MyChannelPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-[400px] rounded-2xl bg-white shadow-2xl"
+              className="w-[400px] rounded-2xl bg-brand-card shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-                <h3 className="text-[15px] font-bold text-slate-900">Delete Video</h3>
+              <div className="flex items-center justify-between border-b border-brand-divider px-6 py-4">
+                <h3 className="text-[15px] font-bold text-brand-text">Delete Video</h3>
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(null)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-slate-100"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="px-6 py-5">
-                <p className="text-[13px] text-slate-600">
+                <p className="text-[13px] text-brand-highlight">
                   Are you sure you want to delete <strong className="text-slate-800">&ldquo;{deleteTarget.title}&rdquo;</strong>? This action cannot be undone.
                 </p>
               </div>
-              <div className="border-t border-slate-100 px-6 py-4 flex justify-end gap-3">
+              <div className="border-t border-brand-divider px-6 py-4 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(null)}
-                  className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-slate-500 hover:bg-slate-50"
+                  className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-brand-highlight hover:bg-brand-secondary"
                 >
                   Cancel
                 </button>

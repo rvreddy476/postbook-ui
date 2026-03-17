@@ -21,7 +21,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                     href="/monetization/payouts"
-                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
+                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
                 >
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20 group-hover:scale-105 transition-transform duration-200">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
 
                 <Link
                     href="/monetization/tiers"
-                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
+                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
                 >
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7B5B3A] to-[#3C2415] flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20 group-hover:scale-105 transition-transform duration-200">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -57,7 +57,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
             </div>
 
             {/* Earnings chart placeholder */}
-            <div className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-4 h-4 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
 
             {/* Tiers summary */}
             {dashboard?.tiers && dashboard.tiers.length > 0 && (
-                <div className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+                <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">

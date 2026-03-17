@@ -64,7 +64,7 @@ const TYPE_OPTIONS: {
 
 function PageSkeleton() {
     return (
-        <div className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse">
+        <div className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse">
             <div className="flex items-center gap-4">
                 <div className="h-11 w-11 rounded-xl bg-slate-200" />
                 <div className="flex-1 space-y-2">
@@ -127,13 +127,13 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
 
     return (
         <div className="space-y-5">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-brand-highlight">
                 Choose the category that best describes your account. Our team will review your
                 request and respond within 7–10 business days.
             </p>
 
             <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                <legend className="text-xs font-semibold text-brand-highlight uppercase tracking-wide">
                     Account type
                 </legend>
                 {TYPE_OPTIONS.map((opt) => (
@@ -143,7 +143,7 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
                             "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
                             selectedType === opt.value
                                 ? "border-[#D8103F]/40 bg-[#D8103F]/5"
-                                : "border-slate-200 bg-white hover:border-[#D8103F]/20",
+                                : "border-brand-divider bg-brand-card hover:border-[#D8103F]/20",
                         ].join(" ")}
                     >
                         <input
@@ -155,8 +155,8 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
                             className="mt-0.5 h-4 w-4 shrink-0 accent-[#D8103F]"
                         />
                         <div>
-                            <p className="text-sm font-semibold text-slate-900">{opt.label}</p>
-                            <p className="text-xs text-slate-500">{opt.description}</p>
+                            <p className="text-sm font-semibold text-brand-text">{opt.label}</p>
+                            <p className="text-xs text-brand-highlight">{opt.description}</p>
                         </div>
                     </label>
                 ))}
@@ -215,8 +215,8 @@ export default function VerificationPage() {
                     <BadgeCheck className="h-5 w-5 text-[#D8103F]" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Get Verified</h1>
-                    <p className="text-sm text-slate-500">
+                    <h1 className="text-2xl font-bold text-brand-text">Get Verified</h1>
+                    <p className="text-sm text-brand-highlight">
                         Apply for a verified badge on your profile
                     </p>
                 </div>
@@ -225,22 +225,22 @@ export default function VerificationPage() {
             {isLoading ? (
                 <PageSkeleton />
             ) : isError ? (
-                <p className="text-sm text-slate-500">Could not load verification status.</p>
+                <p className="text-sm text-brand-highlight">Could not load verification status.</p>
             ) : (
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm p-6"
+                    className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6"
                 >
                     {/* ---- Approved ---- */}
                     {request?.status === "approved" && (
                         <div className="flex flex-col items-center gap-4 py-6 text-center">
                             <CheckCircle2 className="h-14 w-14 text-emerald-500" />
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900">
+                                <h2 className="text-lg font-bold text-brand-text">
                                     Congratulations! You&apos;re verified
                                 </h2>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-brand-highlight">
                                     Your verified badge is now active on your profile.
                                 </p>
                             </div>
@@ -253,10 +253,10 @@ export default function VerificationPage() {
                         <div className="flex flex-col items-center gap-4 py-6 text-center">
                             <Clock className="h-14 w-14 text-yellow-500" />
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900">
+                                <h2 className="text-lg font-bold text-brand-text">
                                     Your request is under review
                                 </h2>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-brand-highlight">
                                     Submitted on{" "}
                                     {new Date(request.submitted_at).toLocaleDateString(undefined, {
                                         year: "numeric",
@@ -275,10 +275,10 @@ export default function VerificationPage() {
                         <div className="flex flex-col items-center gap-4 py-6 text-center">
                             <Clock className="h-14 w-14 text-yellow-500" />
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900">
+                                <h2 className="text-lg font-bold text-brand-text">
                                     Application submitted!
                                 </h2>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-brand-highlight">
                                     Your request is now under review. We will notify you when a
                                     decision has been made.
                                 </p>
@@ -293,18 +293,18 @@ export default function VerificationPage() {
                             <div className="flex items-center gap-3">
                                 <XCircle className="h-8 w-8 shrink-0 text-red-400" />
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900">
+                                    <h2 className="text-base font-bold text-brand-text">
                                         Request not approved
                                     </h2>
-                                    <p className="text-sm text-slate-500">
+                                    <p className="text-sm text-brand-highlight">
                                         Your previous application did not meet our verification
                                         criteria. You may apply again below.
                                     </p>
                                 </div>
                             </div>
                             <StatusBadge status="rejected" />
-                            <hr className="border-slate-100" />
-                            <h3 className="text-sm font-semibold text-slate-900">
+                            <hr className="border-brand-divider" />
+                            <h3 className="text-sm font-semibold text-brand-text">
                                 Resubmit application
                             </h3>
                             <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
@@ -317,16 +317,16 @@ export default function VerificationPage() {
                             <div className="flex items-center gap-3">
                                 <BadgeCheck className="h-8 w-8 shrink-0 text-[#D8103F]/60" />
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900">
+                                    <h2 className="text-base font-bold text-brand-text">
                                         Apply for verification
                                     </h2>
-                                    <p className="text-sm text-slate-500">
+                                    <p className="text-sm text-brand-highlight">
                                         A verified badge helps your followers know they are engaging
                                         with the real you.
                                     </p>
                                 </div>
                             </div>
-                            <hr className="border-slate-100" />
+                            <hr className="border-brand-divider" />
                             <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
                         </div>
                     )}

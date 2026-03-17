@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useFriends } from '@/hooks/useConnections';
 import { useStoriesFeed } from '@/hooks/useStories';
@@ -12,17 +12,6 @@ import StoryViewer from '@/components/StoryViewer';
 interface StoriesRowProps {
   onCreateClick?: () => void;
 }
-
-const RING_COLORS = [
-  'ring-blue-400',
-  'ring-pink-400',
-  'ring-emerald-400',
-  'ring-purple-400',
-  'ring-amber-400',
-  'ring-cyan-400',
-  'ring-rose-400',
-  'ring-indigo-400',
-];
 
 interface StoryGroup {
   authorId: string;
@@ -35,13 +24,13 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
   const [storyCreatorOpen, setStoryCreatorOpen] = useState(false);
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useMyProfile();
   const { data: friendsData } = useFriends(profile?.id, 20);
 
   const friends = friendsData?.items ?? [];
 
-  // Collect friend user IDs to fetch their stories
   const followedIds = useMemo(
     () => friends.map((f) => f.user_id),
     [friends]
@@ -50,15 +39,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
   const { data: storiesRaw } = useStoriesFeed(followedIds);
   const allStories: Story[] = storiesRaw ?? [];
 
-  // Build a lookup from user_id -> ConnectionUser for avatar/name resolution
-  const friendMap = useMemo(
-    () => new Map(friends.map((f) => [f.user_id, f])),
-    [friends]
-  );
-
-  // Group stories by author_id, preserving friend order
   const storyGroups: StoryGroup[] = useMemo(() => {
-    // Collect stories per author
     const grouped = new Map<string, Story[]>();
     for (const story of allStories) {
       const existing = grouped.get(story.author_id) ?? [];
@@ -66,7 +47,6 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
       grouped.set(story.author_id, existing);
     }
 
-    // Build groups in friend list order so the row order is deterministic
     const groups: StoryGroup[] = [];
     for (const friend of friends) {
       const stories = grouped.get(friend.user_id);
@@ -87,8 +67,6 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
     return groups;
   }, [allStories, friends]);
 
-  // An author has "unviewed" stories when at least one story has zero views
-  // (best approximation without per-viewer viewed state in the Story type)
   const hasUnviewed = (group: StoryGroup) =>
     group.stories.some((s) => s.view_count === 0);
 
@@ -106,60 +84,96 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
     onCreateClick?.();
   };
 
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth / 2 : scrollLeft + clientWidth / 2;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 py-2">
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
-          {/* Create Story */}
-          <button
-            onClick={handleCreateClick}
-            className="flex flex-col items-center gap-1 flex-shrink-0 group"
-          >
-            <div className="relative">
-              <div className="w-[48px] h-[48px] rounded-full overflow-hidden ring-2 ring-gray-200 group-hover:ring-blue-300 transition-all">
-                <img src={myAvatar} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-display font-black tracking-tighter text-brand-text">LATEST STORIES</h2>
+            <div className="h-px w-24 bg-brand-divider" />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => scroll('left')}
+              className="p-2 rounded-full border border-brand-divider text-brand-text/60 hover:text-brand-accent hover:border-brand-accent transition-all"
+            >
+              <ChevronLeft size={18} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="p-2 rounded-full border border-brand-divider text-brand-text/60 hover:text-brand-accent hover:border-brand-accent transition-all"
+            >
+              <ChevronRight size={18} strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto no-scrollbar scrollbar-hide pb-2"
+        >
+          {/* Add Story Card */}
+          <div className="flex-shrink-0 cursor-pointer group" onClick={handleCreateClick}>
+            <div className="relative w-24 h-36 rounded-2xl overflow-hidden border border-dashed border-brand-divider bg-brand-card transition-all duration-500 group-hover:shadow-[0_0_20px_rgba(48,47,44,0.1)] group-hover:border-brand-accent/50">
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 group-hover:bg-brand-accent/10 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-brand-accent text-brand-bg flex items-center justify-center shadow-lg">
+                  <Plus size={18} />
+                </div>
+                <span className="text-[10px] font-black tracking-widest uppercase text-brand-accent">Add</span>
               </div>
             </div>
-            <span className="text-[10px] text-gray-500 font-semibold w-14 text-center truncate">
-              Your story
-            </span>
-          </button>
+          </div>
 
-          {/* Friend Stories — only show friends who have active stories */}
+          {/* Story Cards */}
           {storyGroups.map((group, index) => {
-            const ringColor = RING_COLORS[index % RING_COLORS.length];
             const unviewed = hasUnviewed(group);
 
             return (
-              <button
+              <div
                 key={group.authorId}
+                className="flex-shrink-0 cursor-pointer group"
                 onClick={() => handleFriendClick(index)}
-                className="flex flex-col items-center gap-1 flex-shrink-0 group"
               >
-                <div
-                  className={[
-                    'w-[48px] h-[48px] rounded-full overflow-hidden ring-[2.5px] ring-offset-1 group-hover:scale-105 transition-all duration-200',
-                    ringColor,
-                    unviewed ? 'animate-pulse' : 'opacity-70',
-                  ].join(' ')}
-                >
+                <div className={`relative w-24 h-36 rounded-2xl overflow-hidden border transition-all duration-500
+                  ${unviewed ? 'border-brand-accent shadow-lg shadow-brand-accent/20' : 'border-brand-divider'}
+                  group-hover:shadow-[0_0_20px_rgba(48,47,44,0.1)] group-hover:border-brand-accent/50`}>
                   <img
                     src={group.authorAvatar}
                     alt={group.authorName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+
+                  {/* Avatar top-left */}
+                  <div className="absolute top-2 left-2 w-8 h-8 rounded-full border-2 border-brand-accent overflow-hidden shadow-lg z-10">
+                    <img src={group.authorAvatar} alt={group.authorName} className="w-full h-full object-cover" />
+                  </div>
+
+                  {/* Name bottom */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest truncate drop-shadow-md">{group.authorName}</p>
+                  </div>
+
+                  {/* Unseen dot */}
+                  {unviewed && (
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-brand-accent rounded-full shadow-[0_0_10px_#b6a6ca] z-10" />
+                  )}
                 </div>
-                <span className="text-[10px] text-gray-500 font-medium w-14 text-center truncate">
-                  {group.authorName}
-                </span>
-              </button>
+              </div>
             );
           })}
         </div>
-      </div>
+
+        <div className="h-px w-full bg-brand-divider/50" />
+      </section>
 
       {/* Story Creator modal */}
       <StoryCreator

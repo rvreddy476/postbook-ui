@@ -7,7 +7,7 @@ import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
-import { fetchConversations } from '@/services/messageService'
+import { fetchConversations, subscribeToPresenceUpdates } from '@/services/messageService'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
@@ -24,10 +24,10 @@ function SidebarSkeleton() {
     <div className="space-y-1 px-3 py-2">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 shrink-0" />
+          <div className="w-10 h-10 rounded-xl bg-brand-secondary shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-24 bg-slate-100 rounded" />
-            <div className="h-2.5 w-16 bg-slate-50 rounded" />
+            <div className="h-3 w-24 bg-brand-secondary rounded" />
+            <div className="h-2.5 w-16 bg-brand-secondary rounded" />
           </div>
         </div>
       ))}
@@ -40,12 +40,12 @@ function SidebarSkeleton() {
 /* ------------------------------------------------------------------ */
 function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50">
+    <div className="flex-1 flex flex-col items-center justify-center">
       <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/10 to-[#D8103F]/5 flex items-center justify-center mb-5">
         <Send className="w-8 h-8 text-[#D8103F]/40" />
       </div>
       <h3 className="text-lg font-bold text-slate-700 mb-1">Your Messages</h3>
-      <p className="text-sm text-slate-400 max-w-xs text-center">
+      <p className="text-sm text-brand-text/60 max-w-xs text-center">
         Select a conversation to start messaging or pick a group to chat with your community.
       </p>
     </div>
@@ -102,6 +102,15 @@ export default function PostbookMessenger() {
     }
     load()
     return () => { cancelled = true }
+  }, [])
+
+  // Real-time presence updates
+  useEffect(() => {
+    return subscribeToPresenceUpdates((evt) => {
+      setFriends(prev =>
+        prev.map(f => f.id === evt.user_id ? { ...f, isOnline: evt.online } : f)
+      )
+    })
   }, [])
 
   const showToast = useCallback((msg: string) => {
@@ -186,11 +195,11 @@ export default function PostbookMessenger() {
   )
 
   return (
-    <div className="flex h-screen w-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
+    <div className="flex h-screen w-screen font-sans text-brand-text overflow-hidden">
       {/* ============================================================ */}
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
-      <div className="w-[340px] shrink-0 flex flex-col bg-white border-r border-slate-100">
+      <div className="w-[340px] shrink-0 flex flex-col border-r border-brand-divider">
         {/* Current user header */}
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-center gap-3 mb-4">
@@ -207,9 +216,9 @@ export default function PostbookMessenger() {
                 />
                 <div className="flex-1 min-w-0">
                   <h1 className="text-[17px] font-bold text-slate-800 tracking-tight">Messenger</h1>
-                  <p className="text-[11px] text-slate-400 font-medium">{currentUser.name}</p>
+                  <p className="text-[11px] text-brand-text/60 font-medium">{currentUser.name}</p>
                 </div>
-                <button className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                <button className="w-8 h-8 rounded-lg bg-brand-secondary hover:bg-brand-secondary flex items-center justify-center text-brand-text/60 hover:text-brand-highlight transition-all">
                   <Settings className="w-4 h-4" />
                 </button>
               </>
@@ -224,12 +233,12 @@ export default function PostbookMessenger() {
               placeholder="Search conversations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[13px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/10 focus:border-[#D8103F]/20 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/10 focus:border-[#D8103F]/20 transition-all"
             />
           </div>
 
           {/* Tab switcher */}
-          <div className="flex gap-1 p-1 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="flex p-1 rounded-xl bg-brand-secondary">
             {(['friends', 'groups'] as const).map((tab) => {
               const isActive = contactTab === tab
               const badge = tab === 'friends' ? friendsUnreadTotal : 0
@@ -237,10 +246,10 @@ export default function PostbookMessenger() {
                 <button
                   key={tab}
                   onClick={() => setContactTab(tab)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-semibold transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest uppercase rounded-lg transition-all ${
                     isActive
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-600'
+                      ? 'bg-brand-accent text-brand-bg shadow-sm'
+                      : 'text-brand-text/60 hover:text-brand-text'
                   }`}
                 >
                   {tab === 'friends' ? (
@@ -269,7 +278,7 @@ export default function PostbookMessenger() {
             filteredFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <MessageCircle className="w-10 h-10 text-slate-200 mb-2" />
-                <p className="text-[13px] font-medium text-slate-400">
+                <p className="text-[13px] font-medium text-brand-text/60">
                   {search ? 'No friends match your search' : 'No conversations yet'}
                 </p>
               </div>
@@ -286,24 +295,24 @@ export default function PostbookMessenger() {
                     <button
                       key={friend.id}
                       onClick={() => handleFriendClick(friend)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all group ${
                         isActive
-                          ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
-                          : 'hover:bg-slate-50 border border-transparent'
+                          ? 'bg-brand-accent/5 border border-brand-divider'
+                          : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
                       }`}
                     >
                       <Avatar user={friend} size={42} showStatus avatarUrl={avatarUrl} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-[#D8103F]' : 'text-slate-800'}`}>
+                          <span className={`text-xs font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
                             {friend.name}
                           </span>
                           {lastMsg?.time && (
-                            <span className="text-[10px] text-slate-300 shrink-0 ml-2">{lastMsg.time}</span>
+                            <span className="text-[9px] text-brand-text/40 font-bold uppercase shrink-0 ml-2">{lastMsg.time}</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-[12px] text-slate-400 truncate flex-1">
+                          <span className="text-[10px] text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
                             {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
@@ -324,7 +333,7 @@ export default function PostbookMessenger() {
               {filteredGroups.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Users className="w-10 h-10 text-slate-200 mb-2" />
-                  <p className="text-[13px] font-medium text-slate-400">
+                  <p className="text-[13px] font-medium text-brand-text/60">
                     {search ? 'No groups match your search' : 'No groups yet'}
                   </p>
                 </div>
@@ -342,10 +351,10 @@ export default function PostbookMessenger() {
                       <button
                         key={group.id}
                         onClick={() => handleGroupClick(group.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                        className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all group ${
                           isActive
-                            ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
-                            : 'hover:bg-slate-50 border border-transparent'
+                            ? 'bg-brand-accent/5 border border-brand-divider'
+                            : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
                         }`}
                       >
                         {/* Group avatar */}
@@ -366,14 +375,14 @@ export default function PostbookMessenger() {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-[#D8103F]' : 'text-slate-800'}`}>
+                            <span className={`text-xs font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
                               {group.name}
                             </span>
                             {privacy === 'private' && <Lock className="w-3 h-3 text-slate-300 shrink-0" />}
                             {privacy === 'restricted' && <Shield className="w-3 h-3 text-slate-300 shrink-0" />}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                            <span className="text-[11px] text-brand-text/60 flex items-center gap-1">
                               <Users className="w-3 h-3" />
                               {group.member_count}
                             </span>
@@ -393,10 +402,10 @@ export default function PostbookMessenger() {
               {/* New Group button */}
               <button
                 onClick={handleNewGroup}
-                className="w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-200 text-[13px] font-semibold text-slate-400 hover:text-[#D8103F] hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 transition-all"
+                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest uppercase rounded-2xl bg-brand-accent text-brand-bg flex items-center justify-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
-                Create Group
+                New Group
               </button>
             </>
           )}
@@ -406,7 +415,7 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  MAIN CONTENT                                                  */}
       {/* ============================================================ */}
-      <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 bg-brand-secondary">
         {activeDm ? (
           <DmChat
             userId={activeDm.id}
@@ -450,7 +459,7 @@ export default function PostbookMessenger() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 bg-slate-800 text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 bg-brand-text text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           {toast}
         </div>
       )}

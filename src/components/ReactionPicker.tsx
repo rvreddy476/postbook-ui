@@ -83,7 +83,7 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({ currentReaction, onReac
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: 8 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                        className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-100 px-2 py-1.5 flex gap-0.5 z-50"
+                        className="absolute bottom-full left-0 mb-2 bg-brand-card rounded-full shadow-lg border border-gray-100 px-2 py-1.5 flex gap-0.5 z-50"
                     >
                         {REACTIONS.map((reaction) => (
                             <motion.button

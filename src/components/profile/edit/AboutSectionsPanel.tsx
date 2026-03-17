@@ -68,8 +68,8 @@ const SECTION_FIELDS: Record<AboutSection, FieldDef[]> = {
 
 const FAVORITE_CATEGORIES = [] as const
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
 
 // ─── Main Component ─────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
 
     if (isLoading) return (
         <div className="space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-50 animate-pulse rounded-2xl" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-brand-secondary animate-pulse rounded-2xl" />)}
         </div>
     )
 
@@ -99,8 +99,8 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
     return (
         <div className="space-y-4">
             <div className="mb-6">
-                <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">{label}</label>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{description}</p>
+                <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">{label}</label>
+                <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">{description}</p>
             </div>
 
             {/* Only render the requested section or all sections if none specified */}
@@ -115,17 +115,17 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                 const sectionLabel = filterType === 'work' ? "Professional Entries" : filterType === 'education' ? "Academic Entries" : label
 
                 return (
-                    <div key={key} className={`rounded-[1.5rem] border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-white border-blue-100 shadow-xl" : "bg-white border-slate-100"}`}>
+                    <div key={key} className={`rounded-[1.5rem] border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-brand-card border-blue-100 shadow-xl" : "bg-brand-card border-brand-divider"}`}>
                         <button
                             type="button"
                             onClick={() => setExpandedSection(isExpanded ? null : key)}
-                            className="w-full flex items-center justify-between px-6 py-5 hover:bg-slate-50 transition-colors"
+                            className="w-full flex items-center justify-between px-6 py-5 hover:bg-brand-secondary transition-colors"
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-blue-600 border-blue-500" : "bg-slate-100 border-slate-200"} border`}>
-                                    <Icon className={`w-4 h-4 ${isExpanded ? "text-white" : "text-slate-400"}`} />
+                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-blue-600 border-blue-500" : "bg-slate-100 border-brand-divider"} border`}>
+                                    <Icon className={`w-4 h-4 ${isExpanded ? "text-white" : "text-brand-text/60"}`} />
                                 </div>
-                                <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-slate-900" : "text-slate-500"}`}>{sectionLabel}</span>
+                                <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
                                 {items.length > 0 && (
                                     <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
                                         {items.length}
@@ -133,7 +133,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                                 )}
                             </div>
                             <div className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}>
-                                <ChevronDown className="w-4 h-4 text-slate-400" />
+                                <ChevronDown className="w-4 h-4 text-brand-text/60" />
                             </div>
                         </button>
 
@@ -143,7 +143,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: "auto", opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="px-6 pb-6 space-y-4 border-t border-slate-100 bg-slate-50/20"
+                                    className="px-6 pb-6 space-y-4 border-t border-brand-divider bg-brand-secondary/20"
                                 >
                                     <div className="space-y-4 pt-4">
                                         {items.map((item) => (
@@ -198,7 +198,7 @@ function AboutItemRow({
     const data = item.data as Record<string, unknown>
 
     return (
-        <div className="flex items-start justify-between p-5 rounded-[1.25rem] bg-white border border-slate-100 group shadow-sm">
+        <div className="flex items-start justify-between p-5 rounded-[1.25rem] bg-brand-card border border-brand-divider group shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 flex-1">
                 {fields.map((f) => {
                     const val = data[f.key]
@@ -237,8 +237,8 @@ function AboutItemRow({
                         const opt = f.options.find((o) => o.value === val)
                         return (
                             <div key={f.key}>
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{label}</span>
-                                <span className="text-[11px] font-black text-slate-900 uppercase italic tracking-tight">{opt?.label ?? String(val)}</span>
+                                <span className="text-[9px] font-black text-brand-text/60 uppercase tracking-widest block">{label}</span>
+                                <span className="text-[11px] font-black text-brand-text uppercase italic tracking-tight">{opt?.label ?? String(val)}</span>
                             </div>
                         )
                     }
@@ -246,8 +246,8 @@ function AboutItemRow({
                     // Default text/number/date
                     return (
                         <div key={f.key}>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{label}</span>
-                            <span className="text-[11px] font-black text-slate-900 uppercase italic tracking-tight">{String(val)}</span>
+                            <span className="text-[9px] font-black text-brand-text/60 uppercase tracking-widest block">{label}</span>
+                            <span className="text-[11px] font-black text-brand-text uppercase italic tracking-tight">{String(val)}</span>
                         </div>
                     )
                 })}
@@ -257,7 +257,7 @@ function AboutItemRow({
                 whileTap={{ scale: 0.9 }}
                 type="button"
                 onClick={onDelete}
-                className="p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-rose-500 hover:text-white transition-all ml-4 shrink-0"
+                className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all ml-4 shrink-0"
             >
                 <Trash2 className="w-4 h-4" />
             </motion.button>
@@ -328,7 +328,7 @@ function AddItemForm({
         <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6 p-8 rounded-[2rem] bg-white border border-blue-100 shadow-2xl mt-4 relative overflow-hidden"
+            className="space-y-6 p-8 rounded-[2rem] bg-brand-card border border-blue-100 shadow-2xl mt-4 relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-5">
                 <Sparkles className="w-20 h-20 text-blue-600" />
@@ -355,7 +355,7 @@ function AddItemForm({
 
                     const labelNode = (
                         <div className="mb-2">
-                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">{fieldLabel}</label>
+                            <label className="text-[10px] font-black text-brand-text uppercase tracking-[0.2em]">{fieldLabel}</label>
                         </div>
                     )
 
@@ -379,14 +379,14 @@ function AddItemForm({
 
                     if (f.type === "checkbox") {
                         return (
-                            <label key={f.key} className="flex items-center gap-4 cursor-pointer p-4 rounded-2xl bg-slate-50 border border-slate-100 group">
+                            <label key={f.key} className="flex items-center gap-4 cursor-pointer p-4 rounded-2xl bg-brand-secondary border border-brand-divider group">
                                 <input
                                     type="checkbox"
                                     checked={!!formData[f.key]}
                                     onChange={(e) => setField(f.key, e.target.checked)}
                                     className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500/20"
                                 />
-                                <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{fieldLabel}</span>
+                                <span className="text-[11px] font-black text-brand-text uppercase tracking-widest">{fieldLabel}</span>
                             </label>
                         )
                     }
@@ -407,7 +407,7 @@ function AddItemForm({
             </div>
 
             <div className="flex gap-4 justify-end pt-6 border-t border-slate-50">
-                <Button variant="ghost" className="h-12 px-8 rounded-2xl text-slate-400 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
+                <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
                     Cancel
                 </Button>
                 <Button className="h-12 px-10 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-600/20" onClick={handleSubmit} disabled={isAdding}>

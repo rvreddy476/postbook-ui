@@ -31,13 +31,13 @@ export default function LiveStartPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50">
             <Radio className="h-5 w-5 text-rose-500" />
           </div>
-          <h1 className="text-[18px] font-bold text-slate-900">Go Live</h1>
+          <h1 className="text-[18px] font-bold text-brand-text">Go Live</h1>
         </div>
 
         <div className="grid grid-cols-[1fr_320px] gap-8">
           {/* Left: Camera preview */}
           <div>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-black" style={{ aspectRatio: "16/9" }}>
+            <div className="overflow-hidden rounded-2xl border border-brand-divider bg-black" style={{ aspectRatio: "16/9" }}>
               <div className="flex h-full items-center justify-center">
                 {cameraOn ? (
                   <div className="flex flex-col items-center gap-3">
@@ -58,7 +58,7 @@ export default function LiveStartPage() {
                 type="button"
                 onClick={() => setCameraOn(!cameraOn)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
-                  cameraOn ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  cameraOn ? "bg-slate-900 text-white" : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
                 }`}
               >
                 <Video className="h-3.5 w-3.5" />
@@ -68,7 +68,7 @@ export default function LiveStartPage() {
                 type="button"
                 onClick={() => setChatEnabled(!chatEnabled)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
-                  chatEnabled ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  chatEnabled ? "bg-slate-900 text-white" : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
                 }`}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
@@ -82,30 +82,30 @@ export default function LiveStartPage() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm"
             >
-              <h2 className="mb-4 text-[14px] font-bold text-slate-900">Stream Details</h2>
+              <h2 className="mb-4 text-[14px] font-bold text-brand-text">Stream Details</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">Title <span className="text-rose-400">*</span></label>
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10" placeholder="What are you streaming?" />
+                  <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">Title <span className="text-rose-400">*</span></label>
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10" placeholder="What are you streaming?" />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">Category</label>
+                  <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">Category</label>
                   <div className="relative">
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 pr-8 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10">
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-3 pr-8 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10">
                       <option value="">Select category</option>
                       {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-brand-text/60" />
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-              <Users className="h-4 w-4 text-slate-400" />
-              <span className="text-[12px] text-slate-500">Your stream will be visible to all followers</span>
+            <div className="flex items-center gap-3 rounded-xl bg-brand-secondary px-4 py-3">
+              <Users className="h-4 w-4 text-brand-text/60" />
+              <span className="text-[12px] text-brand-highlight">Your stream will be visible to all followers</span>
             </div>
 
             <button
@@ -117,7 +117,7 @@ export default function LiveStartPage() {
               Go Live
             </button>
 
-            <p className="text-center text-[11px] text-slate-400">
+            <p className="text-center text-[11px] text-brand-text/60">
               By going live you agree to the community guidelines.
             </p>
           </div>

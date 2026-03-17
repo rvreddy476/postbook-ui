@@ -75,7 +75,7 @@ function ToggleSwitch({
         >
             <span
                 className={[
-                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md",
+                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-brand-card shadow-md",
                     "transform transition-transform duration-200 ease-in-out",
                     checked ? "translate-x-5" : "translate-x-0",
                 ].join(" ")}
@@ -106,7 +106,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm"
+            className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -114,8 +114,8 @@ function SectionCard({
                         {icon}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-                        <p className="mt-1 text-sm text-slate-500">{description}</p>
+                        <h2 className="text-lg font-bold text-brand-text">{title}</h2>
+                        <p className="mt-1 text-sm text-brand-highlight">{description}</p>
                     </div>
                 </div>
                 <div className="mt-5">{children}</div>
@@ -134,7 +134,7 @@ function PageSkeleton() {
             {[0, 1, 2].map((i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse"
+                    className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse"
                 >
                     <div className="flex items-center gap-4">
                         <div className="h-11 w-11 rounded-xl bg-slate-200" />
@@ -188,7 +188,7 @@ function DigestsSection() {
                     ))}
                 </div>
             ) : items.length === 0 ? (
-                <p className="text-sm text-slate-500 py-2">
+                <p className="text-sm text-brand-highlight py-2">
                     No digests yet. Your first digest will appear after 7 days.
                 </p>
             ) : (
@@ -212,15 +212,15 @@ function DigestsSection() {
                                     <span className="rounded-full bg-[#D8103F]/10 px-2 py-0.5 text-xs font-semibold text-[#D8103F]">
                                         {periodLabel}
                                     </span>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-brand-highlight">
                                         {start} – {end}
                                     </p>
                                 </div>
                                 {statEntries.length > 0 && (
                                     <div className="flex flex-wrap gap-x-4 gap-y-1">
                                         {statEntries.map(([key, val]) => (
-                                            <p key={key} className="text-xs text-slate-600">
-                                                <span className="font-semibold text-slate-900">{val}</span>{" "}
+                                            <p key={key} className="text-xs text-brand-highlight">
+                                                <span className="font-semibold text-brand-text">{val}</span>{" "}
                                                 {key.replace(/_/g, " ")}
                                             </p>
                                         ))}
@@ -303,14 +303,14 @@ export default function NotificationPreferencesPage() {
             {/* Page header */}
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold text-slate-900">Notification Preferences</h1>
+                    <h1 className="text-2xl font-bold text-brand-text">Notification Preferences</h1>
                     {isSaving && (
                         <span className="rounded-full bg-[#D8103F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#D8103F]">
                             Saving...
                         </span>
                     )}
                 </div>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-brand-highlight">
                     Control how and when PostBook notifies you. Changes are saved automatically.
                 </p>
             </div>
@@ -336,8 +336,8 @@ export default function NotificationPreferencesPage() {
                                         <Mail className="h-4 w-4 text-blue-500" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">Email</p>
-                                        <p className="text-xs text-slate-500">Notifications sent to your email address</p>
+                                        <p className="text-sm font-semibold text-brand-text">Email</p>
+                                        <p className="text-xs text-brand-highlight">Notifications sent to your email address</p>
                                     </div>
                                 </div>
                                 <ToggleSwitch
@@ -354,8 +354,8 @@ export default function NotificationPreferencesPage() {
                                         <Smartphone className="h-4 w-4 text-[#D8103F]/50" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">Push</p>
-                                        <p className="text-xs text-slate-500">Real-time push notifications on your devices</p>
+                                        <p className="text-sm font-semibold text-brand-text">Push</p>
+                                        <p className="text-xs text-brand-highlight">Real-time push notifications on your devices</p>
                                     </div>
                                 </div>
                                 <ToggleSwitch
@@ -372,8 +372,8 @@ export default function NotificationPreferencesPage() {
                                         <MessageSquare className="h-4 w-4 text-emerald-500" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">SMS</p>
-                                        <p className="text-xs text-slate-500">Text message alerts to your phone number</p>
+                                        <p className="text-sm font-semibold text-brand-text">SMS</p>
+                                        <p className="text-xs text-brand-highlight">Text message alerts to your phone number</p>
                                     </div>
                                 </div>
                                 <ToggleSwitch
@@ -398,7 +398,7 @@ export default function NotificationPreferencesPage() {
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="quiet-start"
-                                    className="block text-xs font-semibold text-slate-600"
+                                    className="block text-xs font-semibold text-brand-highlight"
                                 >
                                     Start time
                                 </label>
@@ -409,9 +409,9 @@ export default function NotificationPreferencesPage() {
                                     onChange={(e) => handleQuietHoursChange("quiet_hours_start", e.target.value)}
                                     disabled={isSaving}
                                     className={[
-                                        "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
-                                        "text-sm font-medium text-slate-900 placeholder-slate-400",
-                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
+                                        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
+                                        "text-sm font-medium text-brand-text placeholder-slate-400",
+                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -419,7 +419,7 @@ export default function NotificationPreferencesPage() {
                             <div className="space-y-1.5">
                                 <label
                                     htmlFor="quiet-end"
-                                    className="block text-xs font-semibold text-slate-600"
+                                    className="block text-xs font-semibold text-brand-highlight"
                                 >
                                     End time
                                 </label>
@@ -430,16 +430,16 @@ export default function NotificationPreferencesPage() {
                                     onChange={(e) => handleQuietHoursChange("quiet_hours_end", e.target.value)}
                                     disabled={isSaving}
                                     className={[
-                                        "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5",
-                                        "text-sm font-medium text-slate-900 placeholder-slate-400",
-                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
+                                        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
+                                        "text-sm font-medium text-brand-text placeholder-slate-400",
+                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
                             </div>
                         </div>
                         {prefs.quiet_hours_start && prefs.quiet_hours_end && (
-                            <p className="mt-3 text-xs text-slate-500">
+                            <p className="mt-3 text-xs text-brand-highlight">
                                 Notifications will be silenced from{" "}
                                 <span className="font-semibold text-slate-700">{prefs.quiet_hours_start}</span>
                                 {" "}to{" "}
@@ -468,8 +468,8 @@ export default function NotificationPreferencesPage() {
                                         className="flex cursor-pointer items-center justify-between gap-4 py-3 hover:opacity-80"
                                     >
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-900">{label}</p>
-                                            <p className="text-xs text-slate-500">{description}</p>
+                                            <p className="text-sm font-semibold text-brand-text">{label}</p>
+                                            <p className="text-xs text-brand-highlight">{description}</p>
                                         </div>
                                         <input
                                             id={checkboxId}

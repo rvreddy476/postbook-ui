@@ -16,7 +16,7 @@ const ComposeBar: React.FC<ComposeBarProps> = ({ onCreateClick }) => {
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.id ?? 'me'}`;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-brand-card rounded-lg shadow-sm border border-gray-200">
       {/* Main compose row */}
       <div className="flex items-center gap-3 p-3">
         <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">

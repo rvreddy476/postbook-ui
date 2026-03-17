@@ -43,7 +43,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-white border border-[#D8103F]/10 shadow-sm"
+            className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -51,8 +51,8 @@ function SectionCard({
                         {icon}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-                        <p className="mt-1 text-sm text-slate-500">{description}</p>
+                        <h2 className="text-lg font-bold text-brand-text">{title}</h2>
+                        <p className="mt-1 text-sm text-brand-highlight">{description}</p>
                     </div>
                 </div>
                 <div className="mt-5">{children}</div>
@@ -85,10 +85,10 @@ function SettingsLink({
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900">{label}</p>
-                <p className="text-xs text-slate-500 truncate">{description}</p>
+                <p className="text-sm font-semibold text-brand-text">{label}</p>
+                <p className="text-xs text-brand-highlight truncate">{description}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#D8103F]/50 transition-colors shrink-0" />
+            <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-[#D8103F]/50 transition-colors shrink-0" />
         </Link>
     )
 }
@@ -124,8 +124,8 @@ function DataExportSection() {
         <>
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className="text-sm font-semibold text-slate-900">Download My Data</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-sm font-semibold text-brand-text">Download My Data</p>
+                    <p className="text-xs text-brand-highlight mt-0.5">
                         Export a copy of your account data, posts, and activity as a JSON file.
                     </p>
                 </div>
@@ -171,8 +171,8 @@ export default function SettingsPage() {
                     <Settings className="h-5 w-5 text-[#D8103F]" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Account Settings</h1>
-                    <p className="text-sm text-slate-500">Manage your profile, security, and privacy preferences.</p>
+                    <h1 className="text-2xl font-bold text-brand-text">Account Settings</h1>
+                    <p className="text-sm text-brand-highlight">Manage your profile, security, and privacy preferences.</p>
                 </div>
             </motion.div>
 
@@ -188,49 +188,49 @@ export default function SettingsPage() {
                 <div className="divide-y divide-slate-100 -mx-2">
                     <SettingsLink
                         href="/settings/profile"
-                        icon={<User className="h-4 w-4 text-slate-500" />}
+                        icon={<User className="h-4 w-4 text-brand-highlight" />}
                         label="Edit Profile"
                         description="Display name, bio, avatar, and cover photo"
                     />
                     <SettingsLink
                         href="/settings/security"
-                        icon={<Shield className="h-4 w-4 text-slate-500" />}
+                        icon={<Shield className="h-4 w-4 text-brand-highlight" />}
                         label="Security"
                         description="Password, two-factor authentication, and sessions"
                     />
                     <SettingsLink
                         href="/settings/notifications"
-                        icon={<Bell className="h-4 w-4 text-slate-500" />}
+                        icon={<Bell className="h-4 w-4 text-brand-highlight" />}
                         label="Notifications"
                         description="Email, push, and quiet hours preferences"
                     />
                     <SettingsLink
                         href="/settings/channel"
-                        icon={<Tv className="h-4 w-4 text-slate-500" />}
+                        icon={<Tv className="h-4 w-4 text-brand-highlight" />}
                         label="Channel Settings"
                         description="Postgram & Posttube channel, handle, branding, and links"
                     />
                     <SettingsLink
                         href="/settings/modules"
-                        icon={<Globe className="h-4 w-4 text-slate-500" />}
+                        icon={<Globe className="h-4 w-4 text-brand-highlight" />}
                         label="Module Profiles"
                         description="Per-module identity overrides, handle changes, and cross-post settings"
                     />
                     <SettingsLink
                         href="/settings/wellbeing"
-                        icon={<Clock className="h-4 w-4 text-slate-500" />}
+                        icon={<Clock className="h-4 w-4 text-brand-highlight" />}
                         label="Digital Wellbeing"
                         description="Screen time, focus mode & break reminders"
                     />
                     <SettingsLink
                         href="/settings/verification"
-                        icon={<BadgeCheck className="h-4 w-4 text-slate-500" />}
+                        icon={<BadgeCheck className="h-4 w-4 text-brand-highlight" />}
                         label="Get Verified"
                         description="Apply for a verified badge"
                     />
                     <SettingsLink
                         href="/apps"
-                        icon={<LayoutGrid className="h-4 w-4 text-slate-500" />}
+                        icon={<LayoutGrid className="h-4 w-4 text-brand-highlight" />}
                         label="Mini Apps"
                         description="Discover and manage mini apps"
                     />

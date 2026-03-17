@@ -58,16 +58,16 @@ export function CommentsDrawer({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0.9 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 right-0 top-0 z-50 flex w-[420px] flex-col bg-white shadow-[-8px_0_40px_rgba(0,0,0,0.06)]"
+            className="fixed bottom-0 right-0 top-0 z-50 flex w-[420px] flex-col bg-brand-card shadow-[-8px_0_40px_rgba(0,0,0,0.06)]"
             data-comments-drawer="true"
           >
             {/* Header */}
-            <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <header className="flex items-center justify-between border-b border-brand-divider px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <MessageCircle className="h-4 w-4 text-slate-400" />
+                <MessageCircle className="h-4 w-4 text-brand-text/60" />
                 <h2 className="text-[14px] font-semibold text-slate-800">
                   Comments
-                  <span className="ml-1.5 text-[13px] font-normal text-slate-400">
+                  <span className="ml-1.5 text-[13px] font-normal text-brand-text/60">
                     {commentCount.toLocaleString()}
                   </span>
                 </h2>
@@ -75,7 +75,7 @@ export function CommentsDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary hover:text-brand-highlight"
                 aria-label="Close comments"
               >
                 <X className="h-4 w-4" />

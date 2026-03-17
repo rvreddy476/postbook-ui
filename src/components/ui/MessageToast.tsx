@@ -25,7 +25,7 @@ export function MessageToastContent({
     return (
         <button
             onClick={onClick}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50/50 transition-colors rounded-2xl"
+            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-brand-secondary/50 transition-colors rounded-2xl"
         >
             <div className="w-9 h-9 rounded-xl overflow-hidden border border-white shadow-sm flex-shrink-0">
                 <img
@@ -36,14 +36,14 @@ export function MessageToastContent({
             </div>
             <div className="min-w-0 flex-1 pr-6">
                 <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black text-slate-900 tracking-tight truncate">
+                    <span className="text-[11px] font-black text-brand-text tracking-tight truncate">
                         {senderName}
                     </span>
                     <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest flex-shrink-0">
                         {timestamp}
                     </span>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-snug mt-0.5 line-clamp-2">
+                <p className="text-[11px] text-brand-highlight leading-snug mt-0.5 line-clamp-2">
                     {truncated}
                 </p>
             </div>

@@ -57,7 +57,7 @@ function ToggleSwitch({
         >
             <span
                 className={[
-                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md",
+                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-brand-card shadow-md",
                     "transform transition-transform duration-200 ease-in-out",
                     checked ? "translate-x-5" : "translate-x-0",
                 ].join(" ")}
@@ -88,15 +88,15 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-neutral-100 dark:border-neutral-800"
+            className="bg-brand-card dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-neutral-100 dark:border-neutral-800"
         >
             <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D8103F]/5">
                     {icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{description}</p>
+                    <h2 className="text-lg font-bold text-brand-text">{title}</h2>
+                    <p className="mt-1 text-sm text-brand-highlight">{description}</p>
                 </div>
             </div>
             <div className="mt-5">{children}</div>
@@ -145,14 +145,14 @@ function ScreenTimeChart({ days }: { days: ScreenTimeDay[] }) {
                 const label = DAY_LABELS[new Date(day.date).getDay()] ?? DAY_LABELS[i % 7]
                 return (
                     <div key={day.date} className="flex flex-col items-center flex-1 gap-1">
-                        <span className="text-[10px] text-slate-400">{day.minutes}m</span>
+                        <span className="text-[10px] text-brand-text/60">{day.minutes}m</span>
                         <div className="w-full rounded-t-md bg-slate-100 relative" style={{ height: "60px" }}>
                             <div
                                 className="absolute bottom-0 left-0 right-0 rounded-t-md bg-[#D8103F]/70 transition-all"
                                 style={{ height: `${heightPct}%` }}
                             />
                         </div>
-                        <span className="text-[10px] text-slate-500">{label}</span>
+                        <span className="text-[10px] text-brand-highlight">{label}</span>
                     </div>
                 )
             })}
@@ -213,14 +213,14 @@ function DailyLimitCard() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Enable daily limit</p>
-                        <p className="text-xs text-slate-500">You will be reminded when you reach your limit</p>
+                        <p className="text-sm font-semibold text-brand-text">Enable daily limit</p>
+                        <p className="text-xs text-brand-highlight">You will be reminded when you reach your limit</p>
                     </div>
                     <ToggleSwitch checked={enabled} onChange={setEnabled} />
                 </div>
                 {enabled && (
                     <div className="space-y-1.5">
-                        <label htmlFor="daily-limit-minutes" className="block text-xs font-semibold text-slate-600">
+                        <label htmlFor="daily-limit-minutes" className="block text-xs font-semibold text-brand-highlight">
                             Limit (minutes per day)
                         </label>
                         <input
@@ -230,9 +230,9 @@ function DailyLimitCard() {
                             max={1440}
                             value={minutes}
                             onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            className="w-32 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                         />
-                        <p className="text-xs text-slate-400">Set 0 to disable the limit.</p>
+                        <p className="text-xs text-brand-text/60">Set 0 to disable the limit.</p>
                     </div>
                 )}
                 <button
@@ -281,14 +281,14 @@ function FocusModeCard() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Enable focus mode</p>
-                        <p className="text-xs text-slate-500">Notifications will be paused during this window</p>
+                        <p className="text-sm font-semibold text-brand-text">Enable focus mode</p>
+                        <p className="text-xs text-brand-highlight">Notifications will be paused during this window</p>
                     </div>
                     <ToggleSwitch checked={enabled} onChange={setEnabled} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label htmlFor="focus-start" className="block text-xs font-semibold text-slate-600">
+                        <label htmlFor="focus-start" className="block text-xs font-semibold text-brand-highlight">
                             Start time
                         </label>
                         <input
@@ -297,11 +297,11 @@ function FocusModeCard() {
                             placeholder="09:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <label htmlFor="focus-end" className="block text-xs font-semibold text-slate-600">
+                        <label htmlFor="focus-end" className="block text-xs font-semibold text-brand-highlight">
                             End time
                         </label>
                         <input
@@ -310,7 +310,7 @@ function FocusModeCard() {
                             placeholder="17:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                         />
                     </div>
                 </div>
@@ -360,14 +360,14 @@ function BedtimeModeCard() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Enable bedtime mode</p>
-                        <p className="text-xs text-slate-500">Notifications will be silenced during bedtime</p>
+                        <p className="text-sm font-semibold text-brand-text">Enable bedtime mode</p>
+                        <p className="text-xs text-brand-highlight">Notifications will be silenced during bedtime</p>
                     </div>
                     <ToggleSwitch checked={enabled} onChange={setEnabled} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label htmlFor="bed-start" className="block text-xs font-semibold text-slate-600">
+                        <label htmlFor="bed-start" className="block text-xs font-semibold text-brand-highlight">
                             Bedtime
                         </label>
                         <input
@@ -376,11 +376,11 @@ function BedtimeModeCard() {
                             placeholder="22:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <label htmlFor="bed-end" className="block text-xs font-semibold text-slate-600">
+                        <label htmlFor="bed-end" className="block text-xs font-semibold text-brand-highlight">
                             Wake time
                         </label>
                         <input
@@ -389,7 +389,7 @@ function BedtimeModeCard() {
                             placeholder="07:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                         />
                     </div>
                 </div>
@@ -437,20 +437,20 @@ function BreakRemindersCard() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">Enable break reminders</p>
-                        <p className="text-xs text-slate-500">You will be nudged to step away at the set interval</p>
+                        <p className="text-sm font-semibold text-brand-text">Enable break reminders</p>
+                        <p className="text-xs text-brand-highlight">You will be nudged to step away at the set interval</p>
                     </div>
                     <ToggleSwitch checked={enabled} onChange={setEnabled} />
                 </div>
                 <div className="space-y-1.5">
-                    <label htmlFor="break-interval" className="block text-xs font-semibold text-slate-600">
+                    <label htmlFor="break-interval" className="block text-xs font-semibold text-brand-highlight">
                         Remind every
                     </label>
                     <select
                         id="break-interval"
                         value={interval}
                         onChange={(e) => setInterval(parseInt(e.target.value, 10))}
-                        className="w-48 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#D8103F]/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
                     >
                         <option value={30}>30 minutes</option>
                         <option value={60}>60 minutes</option>
@@ -503,15 +503,15 @@ function ContentPreferencesCard() {
                 <div className="divide-y divide-slate-100">
                     <div className="flex items-center justify-between py-3">
                         <div>
-                            <p className="text-sm font-semibold text-slate-900">Hide like counts</p>
-                            <p className="text-xs text-slate-500">Like numbers will not be shown on posts</p>
+                            <p className="text-sm font-semibold text-brand-text">Hide like counts</p>
+                            <p className="text-xs text-brand-highlight">Like numbers will not be shown on posts</p>
                         </div>
                         <ToggleSwitch checked={hideLikes} onChange={setHideLikes} />
                     </div>
                     <div className="flex items-center justify-between py-3">
                         <div>
-                            <p className="text-sm font-semibold text-slate-900">Hide view counts</p>
-                            <p className="text-xs text-slate-500">View numbers will not be shown on posts</p>
+                            <p className="text-sm font-semibold text-brand-text">Hide view counts</p>
+                            <p className="text-xs text-brand-highlight">View numbers will not be shown on posts</p>
                         </div>
                         <ToggleSwitch checked={hideViews} onChange={setHideViews} />
                     </div>
@@ -550,12 +550,12 @@ function ScreenTimeCard() {
             {isLoading ? (
                 <ScreenTimeSkeleton />
             ) : isError || !data ? (
-                <p className="text-sm text-slate-500">Could not load settings.</p>
+                <p className="text-sm text-brand-highlight">Could not load settings.</p>
             ) : (
                 <div className="space-y-3">
                     <ScreenTimeChart days={data.days ?? []} />
                     <p className="text-sm text-slate-700">
-                        <span className="font-bold text-slate-900">{data.total_minutes ?? 0} min</span>{" "}
+                        <span className="font-bold text-brand-text">{data.total_minutes ?? 0} min</span>{" "}
                         total this week
                     </p>
                 </div>
@@ -586,8 +586,8 @@ export default function WellbeingPage() {
                     <Clock className="h-5 w-5 text-[#D8103F]" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Digital Wellbeing</h1>
-                    <p className="text-sm text-slate-500">
+                    <h1 className="text-2xl font-bold text-brand-text">Digital Wellbeing</h1>
+                    <p className="text-sm text-brand-highlight">
                         Manage your time and mental health on Postbook
                     </p>
                 </div>

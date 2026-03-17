@@ -36,7 +36,7 @@ export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProp
         className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
           open
             ? "bg-slate-900 text-white"
-            : "bg-[#F5F5F7] text-slate-500 hover:bg-slate-200/70"
+            : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
         }`}
         aria-label="More"
       >
@@ -53,7 +53,7 @@ export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 z-50 w-[220px] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+            className="absolute right-0 top-full mt-2 z-50 w-[220px] overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-lg"
           >
             <button
               type="button"
@@ -61,9 +61,9 @@ export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProp
                 onReport();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 transition hover:bg-brand-secondary"
             >
-              <Flag className="h-4 w-4 text-slate-400" />
+              <Flag className="h-4 w-4 text-brand-text/60" />
               Report
             </button>
             <button
@@ -72,9 +72,9 @@ export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProp
                 onFeedback();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 transition hover:bg-brand-secondary"
             >
-              <MessageSquareWarning className="h-4 w-4 text-slate-400" />
+              <MessageSquareWarning className="h-4 w-4 text-brand-text/60" />
               Send feedback
             </button>
             <div className="mx-3 my-1 h-px bg-slate-100" />

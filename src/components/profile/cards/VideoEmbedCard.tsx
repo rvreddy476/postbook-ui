@@ -40,7 +40,7 @@ export function VideoEmbedCard({ embedRef }: VideoEmbedCardProps) {
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="rounded-xl border border-slate-200 overflow-hidden bg-white"
+            className="rounded-xl border border-brand-divider overflow-hidden bg-brand-card"
         >
             {/* Thumbnail area — 16:9 */}
             <Link href={watchUrl} className="block relative aspect-video bg-slate-100 group">
@@ -74,20 +74,20 @@ export function VideoEmbedCard({ embedRef }: VideoEmbedCardProps) {
 
             {/* Info area */}
             <div className="px-4 py-3">
-                <p className="text-slate-950 text-sm font-semibold leading-snug line-clamp-1">
+                <p className="text-brand-text text-sm font-semibold leading-snug line-clamp-1">
                     {title}
                 </p>
 
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
                         {creatorName && (
-                            <span className="text-xs text-slate-500">{creatorName}</span>
+                            <span className="text-xs text-brand-highlight">{creatorName}</span>
                         )}
                         {creatorName && durationSeconds > 0 && (
                             <span className="text-slate-300 text-xs">·</span>
                         )}
                         {durationSeconds > 0 && (
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-brand-text/60">
                                 {formatDuration(durationSeconds)}
                             </span>
                         )}

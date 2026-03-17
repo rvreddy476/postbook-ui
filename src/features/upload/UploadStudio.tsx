@@ -119,7 +119,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             </p>
 
             {postUrl && (
-              <div className="mt-6 flex items-center gap-2 rounded-xl border border-[#E8E6E1] bg-white px-4 py-3 shadow-sm">
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-[#E8E6E1] bg-brand-card px-4 py-3 shadow-sm">
                 <span className="flex-1 truncate text-left text-[13px] text-[#6B6B6B] font-mono">{postUrl}</span>
                 <button
                   type="button"
@@ -135,7 +135,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-white px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-brand-card px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Go to {isLongVideo ? "PostTube" : "Flicks"}
@@ -282,7 +282,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <button
                     type="button"
                     onClick={() => { setAttemptedNext(false); prevStep(); }}
-                    className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-white px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-brand-card px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Back

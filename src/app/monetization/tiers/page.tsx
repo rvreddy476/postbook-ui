@@ -38,7 +38,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
         "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
             <h3 className="text-sm font-black text-[#3C2415] mb-5">
                 {initialData ? "Edit Tier" : "Create New Tier"}
             </h3>
@@ -116,7 +116,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:bg-white hover:border-[#D4A574]/50 transition-all duration-200"
+                    className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:bg-brand-card hover:border-[#D4A574]/50 transition-all duration-200"
                 >
                     Cancel
                 </button>
@@ -145,7 +145,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
 
 function TierCardSkeleton() {
     return (
-        <div className="bg-white rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm animate-pulse">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm animate-pulse">
             <div className="h-1 bg-[#F0E6DC]" />
             <div className="p-5 space-y-4">
                 <div className="flex items-start justify-between">
@@ -246,7 +246,7 @@ export default function TiersPage() {
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide pb-1">
                     <Link
                         href="/monetization"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-white hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -255,7 +255,7 @@ export default function TiersPage() {
                     </Link>
                     <Link
                         href="/monetization/tiers"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-white text-[#3C2415] border-[#D4A574] border shadow-sm shadow-[#D4A574]/10"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-brand-card text-[#3C2415] border-[#D4A574] border shadow-sm shadow-[#D4A574]/10"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -264,7 +264,7 @@ export default function TiersPage() {
                     </Link>
                     <Link
                         href="/monetization/payouts"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-white hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />

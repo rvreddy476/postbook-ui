@@ -137,9 +137,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                     {/* Progress bars */}
                     <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 p-2">
                         {currentGroup.stories.map((_, idx) => (
-                            <div key={idx} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
+                            <div key={idx} className="flex-1 h-0.5 bg-brand-card/30 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-white rounded-full transition-all duration-75"
+                                    className="h-full bg-brand-card rounded-full transition-all duration-75"
                                     style={{
                                         width: idx < storyIndex ? '100%' : idx === storyIndex ? `${progress}%` : '0%',
                                     }}

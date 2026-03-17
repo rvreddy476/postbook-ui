@@ -36,14 +36,14 @@ export function CompleteChannelBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
-          className="mx-auto mt-4 flex max-w-2xl items-center gap-3 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm"
+          className="mx-auto mt-4 flex max-w-2xl items-center gap-3 rounded-xl border border-brand-divider bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm"
         >
           <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-slate-700">
               Complete your channel to improve reach
             </p>
-            <p className="text-[12px] text-slate-400">
+            <p className="text-[12px] text-brand-text/60">
               Add an avatar, custom handle, and bio so viewers can find you.
             </p>
           </div>
@@ -56,7 +56,7 @@ export function CompleteChannelBanner() {
           <button
             type="button"
             onClick={dismiss}
-            className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="shrink-0 rounded-full p-1 text-brand-text/60 transition hover:bg-slate-100 hover:text-brand-highlight"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

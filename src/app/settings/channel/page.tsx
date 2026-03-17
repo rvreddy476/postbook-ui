@@ -38,7 +38,7 @@ export default function ChannelSettingsPage() {
         {/* Sidebar */}
         <nav className="w-[220px] shrink-0">
           <div className="sticky top-8 space-y-1">
-            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-400 px-3">
+            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-text/60 px-3">
               Channel Settings
             </h2>
             {TABS.map((tab) => {
@@ -51,14 +51,14 @@ export default function ChannelSettingsPage() {
                   className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
                     isActive
                       ? "bg-[#D8103F]/5 text-[#b80d35]"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                      : "text-brand-highlight hover:bg-brand-secondary hover:text-slate-700"
                   }`}
                 >
                   <tab.icon
                     className={`h-4 w-4 ${
                       isActive
                         ? "text-[#D8103F]"
-                        : "text-slate-400 group-hover:text-slate-500"
+                        : "text-brand-text/60 group-hover:text-brand-highlight"
                     }`}
                   />
                   <span className="text-[13px] font-semibold">{tab.label}</span>

@@ -101,7 +101,7 @@ export function HobbiesInterestsEditor({ userId }: HobbiesInterestsEditorProps) 
         return (
             <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="h-16 bg-slate-50 animate-pulse rounded-2xl" />
+                    <div key={i} className="h-16 bg-brand-secondary animate-pulse rounded-2xl" />
                 ))}
             </div>
         )
@@ -113,10 +113,10 @@ export function HobbiesInterestsEditor({ userId }: HobbiesInterestsEditorProps) 
         <div className="space-y-8">
             {/* Header */}
             <div>
-                <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">
                     Hobbies & Interests
                 </label>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">
                     Share your passions and what makes you, you
                 </p>
             </div>
@@ -198,17 +198,17 @@ function TagListSection({
     const canAdd = items.length < maxCount
 
     return (
-        <div className="rounded-[1.5rem] border border-slate-100 bg-white overflow-hidden">
+        <div className="rounded-[1.5rem] border border-brand-divider bg-brand-card overflow-hidden">
             {/* Section Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-slate-100 border border-slate-200">
-                        <Icon className="w-4 h-4 text-slate-500" />
+                    <div className="p-2 rounded-xl bg-slate-100 border border-brand-divider">
+                        <Icon className="w-4 h-4 text-brand-highlight" />
                     </div>
                     <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">
                         {title}
                     </span>
-                    <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black bg-slate-100 text-brand-highlight px-2 py-0.5 rounded-full">
                         {items.length}/{maxCount}
                     </span>
                 </div>
@@ -231,7 +231,7 @@ function TagListSection({
                 {items.length === 0 ? (
                     <div className="text-center py-8">
                         <Icon className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">
                             No {title.toLowerCase()} added yet
                         </p>
                         <Button
@@ -255,7 +255,7 @@ function TagListSection({
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    className="flex items-center gap-2 p-3 rounded-xl bg-slate-50/50 border border-slate-100 group hover:border-slate-200 transition-colors"
+                                    className="flex items-center gap-2 p-3 rounded-xl bg-brand-secondary/50 border border-brand-divider group hover:border-brand-divider transition-colors"
                                 >
                                     {/* Reorder Controls */}
                                     <div className="flex flex-col gap-0.5">
@@ -263,7 +263,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "up")}
                                             disabled={idx === 0 || isBusy}
-                                            className="p-0.5 rounded text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded text-slate-300 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move up"
                                         >
                                             <ChevronUp className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "down")}
                                             disabled={idx === items.length - 1 || isBusy}
-                                            className="p-0.5 rounded text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded text-slate-300 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move down"
                                         >
                                             <ChevronDown className="w-3.5 h-3.5" />
@@ -294,7 +294,7 @@ function TagListSection({
                                         value={item.visibility}
                                         onChange={(e) => onVisibilityChange(item, e.target.value as AboutVisibility)}
                                         disabled={isBusy}
-                                        className="h-7 px-2 rounded-lg border border-slate-200 bg-white text-[10px] font-bold text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none"
+                                        className="h-7 px-2 rounded-lg border border-brand-divider bg-brand-card text-[10px] font-bold text-brand-highlight focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none"
                                         aria-label={`Visibility for ${item.name}`}
                                     >
                                         {VISIBILITY_OPTIONS.map(opt => (

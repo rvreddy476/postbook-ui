@@ -62,7 +62,7 @@ export function ToggleSwitch({
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-sm transition-transform duration-200 ${
           checked ? "translate-x-[22px]" : "translate-x-[3px]"
         }`}
       />
@@ -248,7 +248,7 @@ export function StudioInput({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+      className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
       placeholder={placeholder}
     />
   );
@@ -275,7 +275,7 @@ export function StudioTextarea({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       rows={rows}
-      className="w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 py-3 text-[13px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10 resize-none transition-all"
+      className="w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 py-3 text-[13px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 resize-none transition-all"
       placeholder={placeholder}
     />
   );
@@ -299,7 +299,7 @@ export function StudioSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full appearance-none rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 pr-9 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-white focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+        className="h-11 w-full appearance-none rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 pr-9 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => (

@@ -199,13 +199,13 @@ function VisibilitySelector({
             className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${
               active
                 ? "bg-slate-900 text-white shadow-sm"
-                : "bg-[#F5F5F7] text-slate-600 hover:bg-slate-200/70"
+                : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
             }`}
           >
             <Icon className="h-4 w-4 shrink-0" />
             <div>
               <p className="text-[13px] font-medium">{opt.label}</p>
-              <p className={`text-[11px] ${active ? "text-white/70" : "text-slate-400"}`}>
+              <p className={`text-[11px] ${active ? "text-white/70" : "text-brand-text/60"}`}>
                 {opt.desc}
               </p>
             </div>
@@ -234,16 +234,16 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-slate-100 last:border-b-0">
+    <div className="border-b border-brand-divider last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-3 px-0 py-3 text-left"
       >
-        <Icon className="h-4 w-4 text-slate-400 shrink-0" />
+        <Icon className="h-4 w-4 text-brand-text/60 shrink-0" />
         <span className="flex-1 text-[13px] font-semibold text-slate-700">{title}</span>
         {badge && (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-brand-highlight">
             {badge}
           </span>
         )}
@@ -285,13 +285,13 @@ function TagInput({
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-medium text-slate-600"
+            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-medium text-brand-highlight"
           >
             {tag}
             <button
               type="button"
               onClick={() => onChange(tags.filter((t) => t !== tag))}
-              className="ml-0.5 text-slate-400 hover:text-slate-600"
+              className="ml-0.5 text-brand-text/60 hover:text-brand-highlight"
             >
               <X className="h-3 w-3" />
             </button>
@@ -311,7 +311,7 @@ function TagInput({
               }
             }}
             placeholder={placeholder}
-            className="flex-1 rounded-lg border border-slate-200 bg-[#F9FAFB] px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+            className="flex-1 rounded-lg border border-brand-divider bg-[#F9FAFB] px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
           />
         </div>
       )}
@@ -373,7 +373,7 @@ function StepUpload({
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           className={`relative aspect-[9/16] w-[320px] overflow-hidden rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] transition-colors ${
-            isDragging ? "bg-slate-100 ring-2 ring-slate-400" : "bg-slate-50"
+            isDragging ? "bg-slate-100 ring-2 ring-slate-400" : "bg-brand-secondary"
           }`}
         >
           {state.videoPreviewUrl ? (
@@ -431,16 +431,16 @@ function StepUpload({
               className="flex h-full w-full flex-col items-center justify-center gap-3 transition hover:bg-slate-100/60"
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-                <Upload className="h-7 w-7 text-slate-400" />
+                <Upload className="h-7 w-7 text-brand-text/60" />
               </div>
               <div className="text-center">
                 <p className="text-[14px] font-semibold text-slate-700">
                   Drag & drop or click to upload
                 </p>
-                <p className="mt-1 text-[12px] text-slate-400">
+                <p className="mt-1 text-[12px] text-brand-text/60">
                   MP4, MOV, WebM — max {REEL_LIMITS.MAX_FILE_SIZE / (1024 * 1024)} MB
                 </p>
-                <p className="text-[12px] text-slate-400">
+                <p className="text-[12px] text-brand-text/60">
                   {REEL_LIMITS.MIN_DURATION_SEC}–{REEL_LIMITS.MAX_DURATION_SEC} seconds
                 </p>
               </div>
@@ -478,7 +478,7 @@ function StepUpload({
             <button
               type="button"
               onClick={clearFile}
-              className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-4 py-2.5 text-[13px] font-medium text-slate-500 transition hover:bg-slate-200/70"
+              className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-4 py-2.5 text-[13px] font-medium text-brand-highlight transition hover:bg-slate-200/70"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Remove
@@ -504,7 +504,7 @@ function StepUpload({
         )}
 
         {state.videoFile && (
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-4 text-[11px] text-brand-text/60">
             <span>{state.videoFile.name}</span>
             <span>{(state.videoFile.size / (1024 * 1024)).toFixed(1)} MB</span>
             {state.videoDurationSec && <span>{state.videoDurationSec}s</span>}
@@ -533,7 +533,7 @@ function StepEdit({
   return (
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       <div className="flex flex-col items-center gap-4">
-        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-slate-50 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -554,7 +554,7 @@ function StepEdit({
             <ImageIcon className="mr-1.5 inline h-3.5 w-3.5" />
             Cover Frame
           </label>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Select a timestamp for the cover image shown in feeds
           </p>
           <div className="flex items-center gap-3">
@@ -571,7 +571,7 @@ function StepEdit({
               type="button"
               onClick={() => onExtractCover(state.coverTimestampMs ?? 0)}
               disabled={extractCoverPending}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[12px] font-medium text-slate-600 transition hover:bg-slate-200 disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[12px] font-medium text-brand-highlight transition hover:bg-slate-200 disabled:opacity-40"
             >
               {extractCoverPending ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -583,7 +583,7 @@ function StepEdit({
           </div>
           {/* Precise minute:second input */}
           <div className="mt-2 flex items-center gap-1.5">
-            <span className="text-[11px] text-slate-400">Jump to</span>
+            <span className="text-[11px] text-brand-text/60">Jump to</span>
             <input
               type="number"
               min={0}
@@ -598,10 +598,10 @@ function StepEdit({
                 );
                 patch({ coverTimestampMs: totalMs });
               }}
-              className="w-10 rounded border border-slate-200 bg-white px-1.5 py-1 text-center text-[12px] font-mono text-slate-700 outline-none focus:border-slate-400"
+              className="w-10 rounded border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-slate-700 outline-none focus:border-slate-400"
               aria-label="Minutes"
             />
-            <span className="text-[12px] font-bold text-slate-400">:</span>
+            <span className="text-[12px] font-bold text-brand-text/60">:</span>
             <input
               type="number"
               min={0}
@@ -616,10 +616,10 @@ function StepEdit({
                 );
                 patch({ coverTimestampMs: totalMs });
               }}
-              className="w-10 rounded border border-slate-200 bg-white px-1.5 py-1 text-center text-[12px] font-mono text-slate-700 outline-none focus:border-slate-400"
+              className="w-10 rounded border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-slate-700 outline-none focus:border-slate-400"
               aria-label="Seconds"
             />
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-brand-text/60">
               / {Math.floor((state.videoDurationSec ?? 0) / 60)}:{String(Math.floor((state.videoDurationSec ?? 0) % 60)).padStart(2, "0")}
             </span>
           </div>
@@ -648,7 +648,7 @@ function StepEdit({
           </label>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-[12px] text-slate-500 w-24">Original</span>
+              <span className="text-[12px] text-brand-highlight w-24">Original</span>
               <input
                 type="range"
                 min={0}
@@ -658,12 +658,12 @@ function StepEdit({
                 onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
                 className="flex-1 accent-slate-900"
               />
-              <span className="text-[12px] font-mono text-slate-500 w-10 text-right">
+              <span className="text-[12px] font-mono text-brand-highlight w-10 text-right">
                 {Math.round(state.originalAudioVolume * 100)}%
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[12px] text-slate-500 w-24">Overlay</span>
+              <span className="text-[12px] text-brand-highlight w-24">Overlay</span>
               <input
                 type="range"
                 min={0}
@@ -673,7 +673,7 @@ function StepEdit({
                 onChange={(e) => patch({ overlayAudioVolume: Number(e.target.value) })}
                 className="flex-1 accent-slate-900"
               />
-              <span className="text-[12px] font-mono text-slate-500 w-10 text-right">
+              <span className="text-[12px] font-mono text-brand-highlight w-10 text-right">
                 {Math.round(state.overlayAudioVolume * 100)}%
               </span>
             </div>
@@ -709,7 +709,7 @@ function StepDetails({
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       {/* Left — Video preview (small) */}
       <div className="flex flex-col items-center gap-3 shrink-0">
-        <div className="relative aspect-[9/16] w-[200px] overflow-hidden rounded-[16px] bg-slate-50 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-[9/16] w-[200px] overflow-hidden rounded-[16px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -722,14 +722,14 @@ function StepDetails({
           )}
         </div>
         {state.videoDurationSec && (
-          <span className="text-[11px] text-slate-400">{state.videoDurationSec}s</span>
+          <span className="text-[11px] text-brand-text/60">{state.videoDurationSec}s</span>
         )}
 
         {/* Copyright checks card */}
-        <div className="w-[200px] rounded-xl border border-slate-100 bg-[#F9FAFB] p-3">
+        <div className="w-[200px] rounded-xl border border-brand-divider bg-[#F9FAFB] p-3">
           <div className="flex items-center gap-2 mb-2">
-            <ShieldCheck className="h-4 w-4 text-slate-400" />
-            <span className="text-[12px] font-semibold text-slate-600">Checks</span>
+            <ShieldCheck className="h-4 w-4 text-brand-text/60" />
+            <span className="text-[12px] font-semibold text-brand-highlight">Checks</span>
           </div>
           {state.copyrightCheck ? (
             <div className="space-y-1.5">
@@ -760,14 +760,14 @@ function StepDetails({
                 </div>
               )}
               {state.copyrightCheck.status === "error" && (
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <div className="flex items-center gap-1.5 text-[11px] text-brand-text/60">
                   <Info className="h-3 w-3" />
                   Could not check
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-brand-text/60">
               Checks will run after processing
             </p>
           )}
@@ -777,7 +777,7 @@ function StepDetails({
       {/* Right — Details form */}
       <div className="flex w-[480px] flex-col gap-0 overflow-y-auto pr-2">
         {/* ── Title (required) ── */}
-        <div className="pb-4 border-b border-slate-100">
+        <div className="pb-4 border-b border-brand-divider">
           <label htmlFor="reel-title" className="mb-2 block text-[13px] font-semibold text-slate-700">
             Title <span className="text-red-400">*</span>
           </label>
@@ -788,13 +788,13 @@ function StepDetails({
             onChange={(e) => patch({ title: e.target.value })}
             placeholder="Add a title that describes your reel"
             maxLength={100}
-            className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+            className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
           />
           <p className="mt-1 text-right text-[11px] text-slate-300">{state.title.length}/100</p>
         </div>
 
         {/* ── Description / Caption ── */}
-        <div className="py-4 border-b border-slate-100">
+        <div className="py-4 border-b border-brand-divider">
           <label htmlFor="caption" className="mb-2 block text-[13px] font-semibold text-slate-700">
             Description
           </label>
@@ -805,7 +805,7 @@ function StepDetails({
             placeholder="Tell viewers about your reel. Use #hashtags and @mentions."
             maxLength={REEL_LIMITS.MAX_CAPTION_LENGTH}
             rows={4}
-            className="w-full resize-none rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+            className="w-full resize-none rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
           />
           <div className="mt-1.5 flex items-center justify-between px-1">
             <span className="text-[11px] text-slate-300">
@@ -816,7 +816,7 @@ function StepDetails({
                 {captionHashtags.slice(0, 5).map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500"
+                    className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-brand-highlight"
                   >
                     <Hash className="h-2.5 w-2.5" />
                     {tag.slice(1)}
@@ -833,9 +833,9 @@ function StepDetails({
         </div>
 
         {/* ── Audience / COPPA ── */}
-        <div className="py-4 border-b border-slate-100">
+        <div className="py-4 border-b border-brand-divider">
           <label className="mb-2 block text-[13px] font-semibold text-slate-700">Audience</label>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Is this reel made for kids? (Required by COPPA)
           </p>
           <div className="space-y-2">
@@ -861,7 +861,7 @@ function StepDetails({
               />
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Yes, it&apos;s made for kids</span>
-                <p className="text-[11px] text-slate-400">Features like comments and personalized ads will be restricted</p>
+                <p className="text-[11px] text-brand-text/60">Features like comments and personalized ads will be restricted</p>
               </div>
             </label>
           </div>
@@ -871,7 +871,7 @@ function StepDetails({
 
         {/* Paid promotion */}
         <Section title="Paid promotion" icon={Tag} badge={state.paidPromotion ? "ON" : undefined}>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Let viewers know if your reel contains paid promotion, sponsorship, or product placement.
           </p>
           <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
@@ -883,14 +883,14 @@ function StepDetails({
             />
             <div>
               <span className="text-[13px] font-medium text-slate-700">This reel contains paid promotion</span>
-              <p className="text-[11px] text-slate-400">A &quot;Includes paid promotion&quot; label will be shown</p>
+              <p className="text-[11px] text-brand-text/60">A &quot;Includes paid promotion&quot; label will be shown</p>
             </div>
           </label>
         </Section>
 
         {/* Altered content / AI disclosure */}
         <Section title="Altered content" icon={Sparkles} badge={state.alteredContent ? "ON" : undefined}>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Disclose if your reel uses AI-generated or significantly altered content that could be mistaken as real.
           </p>
           <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
@@ -902,7 +902,7 @@ function StepDetails({
             />
             <div>
               <span className="text-[13px] font-medium text-slate-700">This reel uses altered or synthetic content</span>
-              <p className="text-[11px] text-slate-400">Content that looks realistic but is AI-generated or digitally altered</p>
+              <p className="text-[11px] text-brand-text/60">Content that looks realistic but is AI-generated or digitally altered</p>
             </div>
           </label>
         </Section>
@@ -913,7 +913,7 @@ function StepDetails({
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Automatic chapters</span>
-                <p className="text-[11px] text-slate-400">Auto-generate chapters based on your content</p>
+                <p className="text-[11px] text-brand-text/60">Auto-generate chapters based on your content</p>
               </div>
               <input
                 type="checkbox"
@@ -925,7 +925,7 @@ function StepDetails({
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Featured places</span>
-                <p className="text-[11px] text-slate-400">Allow automatic detection and tagging of locations</p>
+                <p className="text-[11px] text-brand-text/60">Allow automatic detection and tagging of locations</p>
               </div>
               <input
                 type="checkbox"
@@ -937,7 +937,7 @@ function StepDetails({
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Automatic concepts</span>
-                <p className="text-[11px] text-slate-400">Auto-tag concepts and topics from your content</p>
+                <p className="text-[11px] text-brand-text/60">Auto-tag concepts and topics from your content</p>
               </div>
               <input
                 type="checkbox"
@@ -951,7 +951,7 @@ function StepDetails({
 
         {/* Tags */}
         <Section title="Tags" icon={Tag} badge={state.tags.length > 0 ? `${state.tags.length}` : undefined}>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Tags help with search discovery. Add keywords that describe your content.
           </p>
           <TagInput
@@ -966,12 +966,12 @@ function StepDetails({
         <Section title="Category & Topic" icon={Film} defaultOpen>
           <div className="space-y-4">
             <div>
-              <label htmlFor="category" className="mb-1.5 block text-[12px] font-medium text-slate-500">Category</label>
+              <label htmlFor="category" className="mb-1.5 block text-[12px] font-medium text-brand-highlight">Category</label>
               <select
                 id="category"
                 value={state.category}
                 onChange={(e) => patch({ category: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
               >
                 <option value="">Select a category</option>
                 {CATEGORIES.map((cat) => (
@@ -980,7 +980,7 @@ function StepDetails({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-slate-500">Topic</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-brand-highlight">Topic</label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -988,7 +988,7 @@ function StepDetails({
                   className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
                     state.topicId === null
                       ? "bg-slate-900 text-white"
-                      : "bg-[#F5F5F7] text-slate-500 hover:bg-slate-200/70"
+                      : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
                   }`}
                 >
                   None
@@ -1001,7 +1001,7 @@ function StepDetails({
                     className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
                       state.topicId === topic.id
                         ? "bg-slate-900 text-white"
-                        : "bg-[#F5F5F7] text-slate-500 hover:bg-slate-200/70"
+                        : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
                     }`}
                   >
                     {topic.icon ? `${topic.icon} ` : ""}{topic.label}
@@ -1016,22 +1016,22 @@ function StepDetails({
         <Section title="Language & captions certification" icon={Globe}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="language" className="mb-1.5 block text-[12px] font-medium text-slate-500">
+              <label htmlFor="language" className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
                 Video language
               </label>
               <select
                 id="language"
                 value={state.language}
                 onChange={(e) => patch({ language: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>{lang.label}</option>
                 ))}
               </select>
             </div>
-            <div className="rounded-xl bg-slate-50 px-4 py-3">
-              <p className="text-[12px] text-slate-500">
+            <div className="rounded-xl bg-brand-secondary px-4 py-3">
+              <p className="text-[12px] text-brand-highlight">
                 Captions certification: This reel has never aired on television in the U.S.
               </p>
             </div>
@@ -1042,7 +1042,7 @@ function StepDetails({
         <Section title="Recording date & location" icon={MapPin}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="recording-date" className="mb-1.5 block text-[12px] font-medium text-slate-500">
+              <label htmlFor="recording-date" className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
                 Recording date
               </label>
               <input
@@ -1050,11 +1050,11 @@ function StepDetails({
                 type="date"
                 value={state.recordingDate}
                 onChange={(e) => patch({ recordingDate: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
               />
             </div>
             <div>
-              <label htmlFor="recording-location" className="mb-1.5 block text-[12px] font-medium text-slate-500">
+              <label htmlFor="recording-location" className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
                 Video location
               </label>
               <input
@@ -1063,7 +1063,7 @@ function StepDetails({
                 value={state.recordingLocation}
                 onChange={(e) => patch({ recordingLocation: e.target.value })}
                 placeholder="Search for a location..."
-                className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
               />
             </div>
           </div>
@@ -1073,7 +1073,7 @@ function StepDetails({
         <Section title="License & distribution" icon={Shield}>
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-[12px] font-medium text-slate-500">License</label>
+              <label className="mb-1.5 block text-[12px] font-medium text-brand-highlight">License</label>
               <div className="space-y-2">
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
                   <input
@@ -1101,7 +1101,7 @@ function StepDetails({
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Allow embedding</span>
-                <p className="text-[11px] text-slate-400">Allow others to embed this reel on their websites</p>
+                <p className="text-[11px] text-brand-text/60">Allow others to embed this reel on their websites</p>
               </div>
               <input
                 type="checkbox"
@@ -1114,7 +1114,7 @@ function StepDetails({
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-slate-100">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Publish to subscriptions feed</span>
-                <p className="text-[11px] text-slate-400">Notify subscribers and show in their feed</p>
+                <p className="text-[11px] text-brand-text/60">Notify subscribers and show in their feed</p>
               </div>
               <input
                 type="checkbox"
@@ -1128,7 +1128,7 @@ function StepDetails({
 
         {/* Remixing */}
         <Section title="Flicks remixing" icon={Film}>
-          <p className="mb-3 text-[12px] text-slate-400">
+          <p className="mb-3 text-[12px] text-brand-text/60">
             Choose how others can remix your content.
           </p>
           <div className="space-y-2">
@@ -1152,7 +1152,7 @@ function StepDetails({
                 />
                 <div>
                   <span className="text-[13px] font-medium text-slate-700">{opt.label}</span>
-                  <p className="text-[11px] text-slate-400">{opt.desc}</p>
+                  <p className="text-[11px] text-brand-text/60">{opt.desc}</p>
                 </div>
               </label>
             ))}
@@ -1166,7 +1166,7 @@ function StepDetails({
             <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Show likes</span>
-                <p className="text-[11px] text-slate-400">Allow viewers to see like count and react</p>
+                <p className="text-[11px] text-brand-text/60">Allow viewers to see like count and react</p>
               </div>
               <button
                 type="button"
@@ -1178,7 +1178,7 @@ function StepDetails({
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-brand-card shadow ring-0 transition duration-200 ease-in-out ${
                     state.likesEnabled ? "translate-x-[22px]" : "translate-x-[2px]"
                   } mt-[2px]`}
                 />
@@ -1189,7 +1189,7 @@ function StepDetails({
             <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
               <div>
                 <span className="text-[13px] font-medium text-slate-700">Enable comments</span>
-                <p className="text-[11px] text-slate-400">Allow viewers to post comments on this reel</p>
+                <p className="text-[11px] text-brand-text/60">Allow viewers to post comments on this reel</p>
               </div>
               <button
                 type="button"
@@ -1201,7 +1201,7 @@ function StepDetails({
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-brand-card shadow ring-0 transition duration-200 ease-in-out ${
                     state.commentsEnabled ? "translate-x-[22px]" : "translate-x-[2px]"
                   } mt-[2px]`}
                 />
@@ -1211,13 +1211,13 @@ function StepDetails({
             {state.commentsEnabled && (
               <>
                 <div>
-                  <label className="mb-1.5 block text-[12px] font-medium text-slate-500">
+                  <label className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
                     Who can comment
                   </label>
                   <select
                     value={state.commentAccess}
                     onChange={(e) => patch({ commentAccess: e.target.value as CommentAccess })}
-                    className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
                   >
                     <option value="everyone">Everyone</option>
                     <option value="followers">Followers only</option>
@@ -1226,13 +1226,13 @@ function StepDetails({
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-[12px] font-medium text-slate-500">
+                  <label className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
                     Comment moderation
                   </label>
                   <select
                     value={state.commentModeration}
                     onChange={(e) => patch({ commentModeration: e.target.value as CommentModeration })}
-                    className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
                   >
                     <option value="none">None</option>
                     <option value="basic">Basic — hold potentially inappropriate comments</option>
@@ -1250,7 +1250,7 @@ function StepDetails({
           <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
             <div>
               <span className="text-[13px] font-medium text-slate-700">Publish to Postbook</span>
-              <p className="text-[11px] text-slate-400">Share as a post on your Postbook feed</p>
+              <p className="text-[11px] text-brand-text/60">Share as a post on your Postbook feed</p>
             </div>
             <button
               type="button"
@@ -1262,7 +1262,7 @@ function StepDetails({
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-brand-card shadow-md transition-transform duration-200 ${
                   state.crossPostPostbook ? "translate-x-[26px]" : "translate-x-[3px]"
                 }`}
               />
@@ -1273,7 +1273,7 @@ function StepDetails({
         {/* SEO Title */}
         <Section title="SEO & metadata" icon={Code2}>
           <div>
-            <label htmlFor="seo-title" className="mb-1.5 block text-[12px] font-medium text-slate-500">
+            <label htmlFor="seo-title" className="mb-1.5 block text-[12px] font-medium text-brand-highlight">
               SEO Title
             </label>
             <input
@@ -1283,7 +1283,7 @@ function StepDetails({
               onChange={(e) => patch({ seoTitle: e.target.value })}
               placeholder="Custom title for search engines"
               maxLength={120}
-              className="w-full rounded-xl border border-slate-200 bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+              className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
             />
             <p className="mt-1 text-right text-[11px] text-slate-300">{state.seoTitle.length}/120</p>
           </div>
@@ -1324,7 +1324,7 @@ function StepReview({
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       {/* Left — Video preview */}
       <div className="flex flex-col items-center gap-3 shrink-0">
-        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-slate-50 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -1345,7 +1345,7 @@ function StepReview({
 
       {/* Right — Visibility + Summary */}
       <div className="flex w-[420px] flex-col gap-5 overflow-y-auto pr-2">
-        <h2 className="text-[18px] font-bold text-slate-900">Visibility</h2>
+        <h2 className="text-[18px] font-bold text-brand-text">Visibility</h2>
 
         {/* Visibility selector */}
         <VisibilitySelector
@@ -1354,10 +1354,10 @@ function StepReview({
         />
 
         {/* Schedule toggle */}
-        <div className="rounded-2xl border border-slate-100 bg-[#F9FAFB] p-4 space-y-3">
+        <div className="rounded-2xl border border-brand-divider bg-[#F9FAFB] p-4 space-y-3">
           <label className="flex cursor-pointer items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-400" />
+              <Calendar className="h-4 w-4 text-brand-text/60" />
               <span className="text-[13px] font-semibold text-slate-700">Schedule</span>
             </div>
             <input
@@ -1372,7 +1372,7 @@ function StepReview({
           </label>
           {showSchedule && (
             <div className="space-y-3 pt-1">
-              <p className="text-[12px] text-slate-400">
+              <p className="text-[12px] text-brand-text/60">
                 Set a date and time for this reel to go live automatically.
               </p>
               <input
@@ -1380,14 +1380,14 @@ function StepReview({
                 value={state.scheduleAt ?? ""}
                 onChange={(e) => patch({ scheduleAt: e.target.value || null })}
                 min={new Date().toISOString().slice(0, 16)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+                className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-[13px] text-slate-800 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
               />
             </div>
           )}
         </div>
 
         {/* Summary card */}
-        <div className="rounded-2xl border border-slate-100 bg-[#F9FAFB] p-5 space-y-4">
+        <div className="rounded-2xl border border-brand-divider bg-[#F9FAFB] p-5 space-y-4">
           <h3 className="text-[14px] font-bold text-slate-700">Summary</h3>
 
           {/* Title */}
@@ -1412,7 +1412,7 @@ function StepReview({
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Hashtags</p>
               <div className="flex flex-wrap gap-1">
                 {captionHashtags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                  <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-brand-highlight">
                     {tag}
                   </span>
                 ))}
@@ -1426,7 +1426,7 @@ function StepReview({
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">Tags</p>
               <div className="flex flex-wrap gap-1">
                 {state.tags.slice(0, 10).map((tag) => (
-                  <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                  <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-brand-highlight">
                     {tag}
                   </span>
                 ))}
@@ -1550,7 +1550,7 @@ function StepReview({
             type="button"
             onClick={onSaveDraft}
             disabled={saveDraftPending}
-            className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-5 py-3 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-200/70 disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-5 py-3 text-[13px] font-semibold text-brand-highlight transition hover:bg-slate-200/70 disabled:opacity-40"
           >
             {saveDraftPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1625,19 +1625,19 @@ function CreateReelWizard() {
   const stepIndex = STEP_META.findIndex((s) => s.key === state.step);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-brand-card">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-brand-divider px-6">
         <div className="flex items-center gap-4">
           <Link
             href="/reels"
-            className="flex items-center gap-2 text-[13px] font-medium text-slate-500 transition hover:text-slate-800"
+            className="flex items-center gap-2 text-[13px] font-medium text-brand-highlight transition hover:text-slate-800"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
           <div className="h-5 w-px bg-slate-200" />
-          <h1 className="text-[15px] font-bold text-slate-900">Create Reel</h1>
+          <h1 className="text-[15px] font-bold text-brand-text">Create Reel</h1>
         </div>
 
         <StepIndicator currentStep={state.step} onStepClick={goToStep} />
@@ -1647,7 +1647,7 @@ function CreateReelWizard() {
             <button
               type="button"
               onClick={prevStep}
-              className="flex items-center gap-1.5 rounded-full bg-[#F5F5F7] px-4 py-2 text-[12px] font-medium text-slate-600 transition hover:bg-slate-200/70"
+              className="flex items-center gap-1.5 rounded-full bg-[#F5F5F7] px-4 py-2 text-[12px] font-medium text-brand-highlight transition hover:bg-slate-200/70"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back

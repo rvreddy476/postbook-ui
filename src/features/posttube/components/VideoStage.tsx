@@ -31,7 +31,7 @@ export function VideoStage({ video, active = true, muted, onToggleMuted, onExpan
 
         {/* Progress bar */}
         <div className="absolute bottom-0 left-0 right-0 z-20 px-3 pb-2.5">
-          <div className="h-[3px] overflow-hidden rounded-full bg-white/20">
+          <div className="h-[3px] overflow-hidden rounded-full bg-brand-card/20">
             <div
               className="h-full rounded-full bg-red-500 transition-[width] duration-100"
               style={{ width: `${progress}%` }}

@@ -355,7 +355,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
-            <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-brand-card/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-2xl">
               <Play className="w-10 h-10 text-white translate-x-0.5" fill="white" />
             </div>
           </motion.div>
@@ -377,12 +377,12 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
             {/* Progress bar */}
             <div
               ref={progressRef}
-              className="w-full h-1.5 bg-white/20 rounded-full mb-3 cursor-pointer group/progress relative hover:h-2.5 transition-all"
+              className="w-full h-1.5 bg-brand-card/20 rounded-full mb-3 cursor-pointer group/progress relative hover:h-2.5 transition-all"
               onMouseDown={handleProgressMouseDown}
             >
               {/* Buffered */}
               <div
-                className="absolute inset-y-0 left-0 bg-white/30 rounded-full transition-all"
+                className="absolute inset-y-0 left-0 bg-brand-card/30 rounded-full transition-all"
                 style={{ width: `${buffered}%` }}
               />
               {/* Progress fill */}
@@ -392,7 +392,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               />
               {/* Scrubber thumb */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-[#D8103F]/50 opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none"
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-brand-card rounded-full shadow-lg border-2 border-[#D8103F]/50 opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none"
                 style={{ left: `calc(${progress}% - 8px)` }}
               />
             </div>
@@ -402,7 +402,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               {/* Skip back 10s */}
               <button
                 onClick={() => skip(-10)}
-                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-brand-card/10 transition-all active:scale-90"
                 title="Skip back 10s"
               >
                 <RotateCcw className="w-5 h-5" />
@@ -411,7 +411,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               {/* Play / Pause */}
               <button
                 onClick={togglePlay}
-                className="p-2 rounded-xl text-white hover:bg-white/10 transition-all active:scale-90"
+                className="p-2 rounded-xl text-white hover:bg-brand-card/10 transition-all active:scale-90"
                 title={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? (
@@ -424,7 +424,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               {/* Skip forward 10s */}
               <button
                 onClick={() => skip(10)}
-                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-brand-card/10 transition-all active:scale-90"
                 title="Skip forward 10s"
               >
                 <RotateCw className="w-5 h-5" />
@@ -434,7 +434,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               <div className="flex items-center gap-0.5 group/vol">
                 <button
                   onClick={toggleMute}
-                  className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                  className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-brand-card/10 transition-all active:scale-90"
                   title={isMuted ? "Unmute" : "Mute"}
                 >
                   {isMuted || volume === 0 ? (
@@ -469,7 +469,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                     setShowQualityMenu(!showQualityMenu)
                     if (!qualityMenuOpened) setQualityMenuOpened(true)
                   }}
-                  className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90 flex items-center gap-1"
+                  className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-brand-card/10 transition-all active:scale-90 flex items-center gap-1"
                   title="Quality"
                 >
                   <Settings className="w-5 h-5" />
@@ -499,7 +499,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                             className={`w-full px-4 py-2.5 rounded-xl text-left text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-between ${
                               currentQuality === q
                                 ? "text-white orchid-gradient"
-                                : "text-white/70 hover:text-white hover:bg-white/10"
+                                : "text-white/70 hover:text-white hover:bg-brand-card/10"
                             }`}
                           >
                             <span>{q === "auto" ? "Auto" : q}</span>
@@ -515,7 +515,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               {/* Fullscreen */}
               <button
                 onClick={toggleFullscreen}
-                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-brand-card/10 transition-all active:scale-90"
                 title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               >
                 {isFullscreen ? (

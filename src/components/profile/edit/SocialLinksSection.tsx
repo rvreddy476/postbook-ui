@@ -13,8 +13,8 @@ const ICON_OPTIONS = [
     "spotify", "twitch", "reddit", "email", "other",
 ]
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-white shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
 
 export function SocialLinksSection() {
     const { data: links, isLoading } = useProfileLinks()
@@ -39,7 +39,7 @@ export function SocialLinksSection() {
 
     if (isLoading) return (
         <div className="space-y-4">
-            {[1, 2].map(i => <div key={i} className="h-20 bg-slate-50 animate-pulse rounded-[1.5rem]" />)}
+            {[1, 2].map(i => <div key={i} className="h-20 bg-brand-secondary animate-pulse rounded-[1.5rem]" />)}
         </div>
     )
 
@@ -47,15 +47,15 @@ export function SocialLinksSection() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <label className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em]">Social Links</label>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Links to your other websites</p>
+                    <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">Social Links</label>
+                    <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">Links to your other websites</p>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowAddForm(true)}
                     disabled={showAddForm}
-                    className="h-10 px-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-900 shadow-sm"
+                    className="h-10 px-4 rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-secondary text-[10px] font-black uppercase tracking-widest text-brand-text shadow-sm"
                 >
                     <Plus className="w-3.5 h-3.5 mr-2" />
                     Add New Link
@@ -96,7 +96,7 @@ export function SocialLinksSection() {
                                 className={inputBase}
                             />
                             <div className="flex gap-2 justify-end pt-2">
-                                <Button variant="ghost" className="h-10 px-6 rounded-xl text-slate-500 font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
+                                <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-highlight font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
                                     Cancel
                                 </Button>
                                 <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-600/20">
@@ -108,9 +108,9 @@ export function SocialLinksSection() {
                 </AnimatePresence>
 
                 {(!links || links.length === 0) && !showAddForm && (
-                    <div className="p-20 text-center bg-slate-50/50 border border-slate-100 border-dashed rounded-[2.5rem]">
+                    <div className="p-20 text-center bg-brand-secondary/50 border border-brand-divider border-dashed rounded-[2.5rem]">
                         <LinkIcon className="w-10 h-10 text-slate-200 mx-auto mb-4" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No links added to your profile yet.</p>
+                        <p className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">No links added to your profile yet.</p>
                     </div>
                 )}
 
@@ -156,11 +156,11 @@ function LinkRow({
 
     if (editing) {
         return (
-            <div className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-xl space-y-4">
+            <div className="p-6 rounded-[2rem] bg-brand-card border border-brand-divider shadow-xl space-y-4">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={inputBase} />
                 <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputBase} />
                 <div className="flex gap-2 justify-end pt-2">
-                    <Button variant="ghost" className="h-10 px-6 rounded-xl text-slate-400 font-bold uppercase tracking-widest text-[10px]" onClick={() => setEditing(false)}>Cancel</Button>
+                    <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-text/60 font-bold uppercase tracking-widest text-[10px]" onClick={() => setEditing(false)}>Cancel</Button>
                     <Button size="sm" className="h-10 px-8 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[10px]" onClick={handleSave}>
                         Update
                     </Button>
@@ -172,21 +172,21 @@ function LinkRow({
     return (
         <motion.div
             layout
-            className="flex items-center gap-6 p-5 rounded-[1.5rem] bg-white border border-slate-100 group hover:shadow-2xl transition-all duration-500"
+            className="flex items-center gap-6 p-5 rounded-[1.5rem] bg-brand-card border border-brand-divider group hover:shadow-2xl transition-all duration-500"
         >
-            <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 shrink-0">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+            <div className="w-12 h-12 bg-brand-secondary rounded-xl flex items-center justify-center border border-brand-divider shrink-0">
+                <span className="text-[10px] font-black text-brand-text/60 uppercase tracking-tighter">
                     {link.icon?.slice(0, 3) || "HUB"}
                 </span>
             </div>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
-                    <span className="text-sm font-black text-slate-900 uppercase tracking-tight truncate">{link.title}</span>
+                    <span className="text-sm font-black text-brand-text uppercase tracking-tight truncate">{link.title}</span>
                     {link.is_pinned && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
                 </div>
                 <div className="flex items-center gap-3 mt-1.5 font-bold uppercase tracking-[0.05em]">
-                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-400 hover:text-blue-600 truncate flex items-center gap-1.5 transition-colors">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-text/60 hover:text-blue-600 truncate flex items-center gap-1.5 transition-colors">
                         <ExternalLink className="w-3 h-3" />
                         {link.url}
                     </a>
@@ -201,7 +201,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onUpdate(link, { is_pinned: !link.is_pinned })}
-                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600"}`}
+                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-slate-100 text-brand-text/60 hover:bg-blue-50 hover:text-blue-600"}`}
                 >
                     <Pin className="w-4 h-4" />
                 </motion.button>
@@ -209,7 +209,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setEditing(true)}
-                    className="p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
+                    className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
                 >
                     <LinkIcon className="w-4 h-4" />
                 </motion.button>
@@ -218,7 +218,7 @@ function LinkRow({
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onDelete(link.id)}
                     disabled={isDeleting}
-                    className="p-2.5 bg-slate-100 text-slate-400 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
+                    className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
                 >
                     <Trash2 className="w-4 h-4" />
                 </motion.button>

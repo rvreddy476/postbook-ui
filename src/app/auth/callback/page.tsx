@@ -39,7 +39,7 @@ export default function OAuthCallbackPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#fcfaff] px-4 selection:bg-rose-100 selection:text-rose-900">
+    <div className="flex min-h-screen items-center justify-center bg-brand-bg px-4 selection:bg-rose-100 selection:text-rose-900">
       <div className="glass-panel rounded-[2rem] border border-white/90 p-8 shadow-[0_20px_50px_rgba(124,58,237,0.12)]">
         <div className="flex flex-col items-center gap-4">
           {error ? (
@@ -61,7 +61,7 @@ export default function OAuthCallbackPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-rose-700">{error}</p>
-                <p className="mt-1 text-xs text-slate-500">Redirecting to login...</p>
+                <p className="mt-1 text-xs text-brand-highlight">Redirecting to login...</p>
               </div>
             </>
           ) : (
@@ -70,8 +70,8 @@ export default function OAuthCallbackPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-white" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-slate-900">Completing sign in...</p>
-                <p className="mt-1 text-xs text-slate-500">Please wait a moment</p>
+                <p className="text-sm font-bold text-brand-text">Completing sign in...</p>
+                <p className="mt-1 text-xs text-brand-highlight">Please wait a moment</p>
               </div>
             </>
           )}

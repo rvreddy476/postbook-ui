@@ -32,16 +32,16 @@ export function ReelCommentsPanel({
           className="overflow-hidden"
           data-comments-drawer="true"
         >
-          <div className="flex w-[380px] flex-col rounded-2xl border border-[#E8E8EE] bg-white shadow-lg">
+          <div className="flex w-[380px] flex-col rounded-2xl border border-[#E8E8EE] bg-brand-card shadow-lg">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#E8E8EE] px-4 py-3">
-              <h3 className="text-[13px] font-bold text-slate-900">
+              <h3 className="text-[13px] font-bold text-brand-text">
                 Comments ({commentCount})
               </h3>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-slate-100 hover:text-brand-highlight"
                 aria-label="Close comments"
               >
                 <X className="h-4 w-4" />

@@ -194,16 +194,16 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-[200]"
+                className="absolute top-full left-0 right-0 mt-2 bg-brand-card rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-brand-divider overflow-hidden z-[200]"
             >
                 {isSearching ? (
                     <div className="px-4 py-6 flex flex-col items-center gap-2">
                         <div className="w-5 h-5 border-2 border-[#D8103F]/30 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Searching...</span>
+                        <span className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">Searching...</span>
                     </div>
                 ) : searchResults.length === 0 ? (
                     <div className="px-4 py-6 text-center">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No users found</p>
+                        <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">No users found</p>
                     </div>
                 ) : (
                     <div className="py-1.5 max-h-[320px] overflow-y-auto">
@@ -211,15 +211,15 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             <button
                                 key={user.id}
                                 onClick={() => handleSelectUser(user)}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-brand-secondary transition-colors text-left"
                             >
-                                <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0">
+                                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0">
                                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[12px] font-bold text-slate-900 truncate">{user.name}</p>
+                                    <p className="text-[12px] font-bold text-brand-text truncate">{user.name}</p>
                                     {user.username && (
-                                        <p className="text-[10px] text-slate-400 font-medium truncate">@{user.username}</p>
+                                        <p className="text-[10px] text-brand-text/60 font-medium truncate">@{user.username}</p>
                                     )}
                                 </div>
                             </button>
@@ -232,7 +232,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
 
     return (
         <>
-            <header className="fixed top-0 w-full z-[100] h-16 bg-white/70 backdrop-blur-3xl border-b border-slate-100 px-4 sm:px-10 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <header className="fixed top-0 w-full z-[100] h-16 bg-brand-text text-brand-bg dark:bg-brand-bg/80 dark:backdrop-blur-md dark:border-b dark:border-brand-divider px-4 sm:px-10 flex items-center justify-between transition-all duration-500">
                 {/* Logo */}
                 <div className="flex items-center gap-3">
                     <Link href="/">
@@ -240,7 +240,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             <div className="w-9 h-9 orchid-gradient rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-[#D8103F]/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
                                 <span className="text-white font-black text-base tracking-tighter">PB</span>
                             </div>
-                            <span className="text-xl font-black text-slate-950 tracking-tighter hidden sm:block italic">PostBoek.com</span>
+                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">PostBoek.com</span>
                         </div>
                     </Link>
                 </div>
@@ -254,13 +254,13 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             value={searchQuery}
                             onChange={e => handleSearchChange(e.target.value)}
                             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-                            className="w-full bg-slate-50/50 border border-slate-100/50 rounded-2xl py-2.5 px-11 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:ring-4 focus:ring-[#D8103F]/5 focus:bg-white focus:border-[#D8103F]/20 transition-all shadow-inner placeholder:text-slate-300 italic"
+                            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 px-11 text-sm outline-none transition-all"
                         />
-                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-[#D8103F]/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         {searchQuery && (
                             <button
                                 onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 text-white/70 hover:bg-white/30 dark:bg-brand-secondary dark:text-brand-highlight dark:hover:bg-brand-secondary/80 transition-colors"
                             >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
@@ -276,7 +276,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     {/* Mobile Search Toggle */}
                     <button
                         onClick={() => setIsSearchOpen(!isSearchOpen)}
-                        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors"
+                        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </button>
@@ -285,16 +285,16 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     <div className="relative" ref={notifRef}>
                         <button
                             onClick={() => setIsNotifOpen(!isNotifOpen)}
-                            className={`group relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'bg-amber-50 border-amber-100 shadow-inner' : 'bg-white border-slate-100 shadow-sm hover:shadow-md'}`}
+                            className={`group relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-brand-accent' : ''}`}
                             title="Notifications"
                         >
-                            <div className={`w-4 h-4 ${isNotifOpen ? 'text-amber-500' : 'text-slate-600 group-hover:text-amber-500'} transition-colors`}>
+                            <div className={`w-4 h-4 ${isNotifOpen ? 'text-white dark:text-brand-accent' : 'text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent'} transition-colors`}>
                                 <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                             </div>
                             {unreadNotifCount > 0 && (
-                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-rose-500 text-white text-[8px] font-black rounded-full border-2 border-white shadow-sm">
+                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-brand-accent text-white text-[8px] font-black rounded-full shadow-sm">
                                     {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                                 </div>
                             )}
@@ -308,10 +308,10 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                     transition={{ duration: 0.15, ease: "circOut" }}
-                                    className="absolute right-0 mt-3 w-[340px] bg-white/95 backdrop-blur-3xl rounded-[1.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] border border-slate-200/50 overflow-hidden z-[1000]"
+                                    className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-[1000]"
                                 >
-                                    <div className="p-4 border-b border-slate-100/60 flex items-center justify-between">
-                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notifications</h3>
+                                    <div className="p-4 border-b border-brand-divider/60 flex items-center justify-between">
+                                        <h3 className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">Notifications</h3>
                                         {unreadNotifCount > 0 && (
                                             <button
                                                 onClick={() => markAllRead.mutate()}
@@ -330,7 +330,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                         {activityNotifs.length === 0 ? (
                                             <div className="px-4 py-8 text-center">
                                                 <div className="text-2xl mb-2">&#128276;</div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No notifications yet</p>
+                                                <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">No notifications yet</p>
                                             </div>
                                         ) : (
                                             <AnimatePresence initial={false}>
@@ -347,14 +347,14 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             layout
                                                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                                             transition={{ duration: 0.3 }}
-                                                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors ${!notif.is_read ? 'bg-[#D8103F]/30' : ''}`}
+                                                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-[#D8103F]/30' : ''}`}
                                                         >
                                                             <button
                                                                 onClick={() => {
                                                                     router.push(`/u/${actorUsername || notif.actor_user_id}`);
                                                                     setIsNotifOpen(false);
                                                                 }}
-                                                                className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0 mt-0.5 shadow-sm"
+                                                                className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0 mt-0.5 shadow-sm"
                                                             >
                                                                 <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                                                             </button>
@@ -364,8 +364,8 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     onClick={() => handleNotificationClick(notif)}
                                                                     className="text-left w-full"
                                                                 >
-                                                                    <p className="text-[11px] font-bold text-slate-700 leading-snug">
-                                                                        <span className="font-black text-slate-900">{actorName}</span>
+                                                                    <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
+                                                                        <span className="font-black text-brand-text">{actorName}</span>
                                                                         {' '}
                                                                         {notif.type === 'friend_request' && 'sent you a friend request'}
                                                                         {notif.type === 'friend_accepted' && 'accepted your friend request'}
@@ -374,7 +374,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                         {notif.type === 'comment_reaction' && 'liked your comment'}
                                                                         {notif.type === 'comment' && 'commented on your post'}
                                                                     </p>
-                                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                                                    <p className="text-[9px] text-brand-text/60 font-bold uppercase tracking-widest mt-0.5">
                                                                         {formatTimeAgo(notif.created_at)}
                                                                     </p>
                                                                 </button>
@@ -407,7 +407,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                                 });
                                                                             }}
                                                                             disabled={rejectFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-95 transition-all"
+                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
                                                                         >
                                                                             Decline
                                                                         </button>
@@ -430,7 +430,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                             deleteNotification.mutate({ bucket: notif.bucket, ts: notif.ts });
                                                                         }
                                                                     }}
-                                                                    className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                                                    className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-brand-text/30 hover:text-rose-500 hover:bg-rose-50 transition-all"
                                                                     title="Delete notification"
                                                                 >
                                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -453,13 +453,15 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     <div className="relative" ref={profileRef}>
                         <div className="flex items-center gap-1">
                             <Link href="/profile">
-                                <button className="w-9 h-9 rounded-xl overflow-hidden border-2 border-white shadow-lg hover:ring-4 hover:ring-[#D8103F]/10 transition-all duration-300 hover:scale-105 active:scale-95">
-                                    <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
+                                <button className="p-0.5 bg-brand-accent rounded-full hover:scale-105 active:scale-95 transition-all duration-300">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-brand-bg">
+                                        <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
+                                    </div>
                                 </button>
                             </Link>
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="w-5 h-9 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                                className="w-5 h-9 flex items-center justify-center text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent transition-colors"
                             >
                                 <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                             </button>
@@ -472,21 +474,21 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                     transition={{ duration: 0.15, ease: "circOut" }}
-                                    className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-3xl rounded-[1.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] border border-slate-200/50 p-1.5 z-[1000]"
+                                    className="absolute right-0 mt-3 w-64 bg-brand-card border border-brand-divider rounded-2xl shadow-xl p-1.5 z-[1000]"
                                 >
-                                    <div className="p-3 border-b border-slate-100/60 mb-1">
+                                    <div className="p-3 border-b border-brand-divider/60 mb-1">
                                         <div className="flex items-center gap-3">
                                             <div className="relative shrink-0">
-                                                <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-100">
+                                                <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md ring-1 ring-brand-divider">
                                                     <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
                                                 </div>
                                                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
                                             </div>
                                             <div className="min-w-0">
-                                                <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest truncate">{profile?.display_name || currentUser.name}</h4>
+                                                <h4 className="text-[11px] font-black text-brand-text uppercase tracking-widest truncate">{profile?.display_name || currentUser.name}</h4>
                                                 <div className="flex items-center gap-1 mt-0.5">
                                                     <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Online</span>
+                                                    <span className="text-[8px] font-bold text-brand-text/60 uppercase tracking-widest">Online</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -494,30 +496,30 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
 
                                     <div className="space-y-0.5">
                                         <Link href="/profile" onClick={() => setIsProfileOpen(false)}>
-                                            <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
-                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F] transition-colors">
+                                            <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-secondary transition-all cursor-pointer">
+                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F] transition-colors">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
                                                 </div>
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest group-hover:text-slate-950">Profile</span>
+                                                <span className="text-[10px] font-black text-brand-highlight uppercase tracking-widest group-hover:text-brand-text">Profile</span>
                                             </div>
                                         </Link>
 
                                         <Link href="/settings/profile" onClick={() => setIsProfileOpen(false)}>
-                                            <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
-                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                            <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-secondary transition-all cursor-pointer">
+                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     </svg>
                                                 </div>
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest group-hover:text-slate-950">Settings</span>
+                                                <span className="text-[10px] font-black text-brand-highlight uppercase tracking-widest group-hover:text-brand-text">Settings</span>
                                             </div>
                                         </Link>
                                     </div>
 
-                                    <div className="mt-1 pt-1 border-t border-slate-100/60">
+                                    <div className="mt-1 pt-1 border-t border-brand-divider/60">
                                         <button
                                             onClick={handleLogout}
                                             className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-rose-50/50 transition-all text-rose-500"
@@ -543,7 +545,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             initial={{ opacity: 0, y: -60 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -60 }}
-                            className="fixed top-16 left-0 w-full px-4 py-3 bg-white border-b border-slate-100 z-[90] md:hidden"
+                            className="fixed top-16 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-[90] md:hidden shadow-lg"
                             ref={mobileSearchRef}
                         >
                             <div className="relative">
@@ -553,13 +555,13 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     placeholder="Search..."
                                     value={searchQuery}
                                     onChange={e => handleSearchChange(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-[#D8103F]/10 transition-all"
+                                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-[#D8103F]/10 transition-all"
                                 />
-                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 {searchQuery && (
                                     <button
                                         onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 transition-colors"
                                     >
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>

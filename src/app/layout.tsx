@@ -1,16 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Outfit, Playfair_Display } from 'next/font/google';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 
-const outfit = Outfit({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-outfit',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
 });
 
-const playfair = Playfair_Display({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  weight: ['700'],
+  variable: '--font-display',
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
@@ -55,10 +57,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${playfair.variable} bg-[#fcfaff] text-slate-950 antialiased`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} bg-brand-bg text-brand-text antialiased`}>
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(at_0%_0%,_rgba(124,58,237,0.15)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(219,39,119,0.15)_0px,_transparent_50%)]"></div>
-          <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-fuchsia-100/30 blur-[120px]"></div>
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(48,47,44,0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(48,47,44,0.06)_0px,_transparent_50%)]"></div>
+          <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-brand-secondary/10 blur-[120px]"></div>
         </div>
         <script
           type="application/ld+json"

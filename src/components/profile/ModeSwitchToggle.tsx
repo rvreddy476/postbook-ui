@@ -23,8 +23,8 @@ export function ModeSwitchToggle({ defaultMode = "social", onChange }: ModeSwitc
                 onClick={() => toggle("social")}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                     mode === "social"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-brand-bg text-brand-text shadow-sm"
+                        : "text-muted-foreground hover:text-brand-text"
                 }`}
             >
                 Social
@@ -33,8 +33,8 @@ export function ModeSwitchToggle({ defaultMode = "social", onChange }: ModeSwitc
                 onClick={() => toggle("creator")}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                     mode === "creator"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-brand-bg text-brand-text shadow-sm"
+                        : "text-muted-foreground hover:text-brand-text"
                 }`}
             >
                 Creator

@@ -43,7 +43,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
 
   return (
     <Link href={`/groups/${group.handle || group.id}`}>
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg hover:border-slate-200 transition-all duration-300 cursor-pointer group/card">
+      <div className="bg-brand-card rounded-2xl border border-brand-divider overflow-hidden hover:shadow-lg hover:border-brand-divider transition-all duration-300 cursor-pointer group/card">
         {/* Cover */}
         <div className="h-28 relative overflow-hidden">
           {group.cover_media_id ? (
@@ -59,7 +59,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
 
           {/* Privacy badge on cover */}
           <div className="absolute top-2.5 right-2.5">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur-sm ${privacyInfo.color}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-card/90 backdrop-blur-sm ${privacyInfo.color}`}>
               {privacyInfo.icon} {privacyInfo.label}
             </span>
           </div>
@@ -68,7 +68,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
         {/* Content */}
         <div className="p-4 -mt-7 relative">
           {/* Avatar */}
-          <div className="w-13 h-13 rounded-xl bg-white p-0.5 shadow-lg mb-2.5 inline-block">
+          <div className="w-13 h-13 rounded-xl bg-brand-card p-0.5 shadow-lg mb-2.5 inline-block">
             <div className="w-12 h-12 rounded-[10px] overflow-hidden">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
@@ -83,29 +83,29 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
           <h3 className="text-sm font-bold text-slate-800 truncate">{group.name}</h3>
 
           {group.handle && (
-            <p className="text-[11px] text-slate-400 font-medium mt-0.5">@{group.handle}</p>
+            <p className="text-[11px] text-brand-text/60 font-medium mt-0.5">@{group.handle}</p>
           )}
 
           {group.description && (
-            <p className="text-xs text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">{group.description}</p>
+            <p className="text-xs text-brand-text/60 mt-1.5 line-clamp-2 leading-relaxed">{group.description}</p>
           )}
 
           {/* Stats */}
           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-50">
-            <div className="flex items-center gap-1 text-slate-400">
+            <div className="flex items-center gap-1 text-brand-text/60">
               <Users className="w-3.5 h-3.5" />
               <span className="text-[11px] font-semibold">
                 {formatCount(group.member_count)}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-slate-400">
+            <div className="flex items-center gap-1 text-brand-text/60">
               <MessageSquare className="w-3.5 h-3.5" />
               <span className="text-[11px] font-semibold">
                 {formatCount(group.post_count)}
               </span>
             </div>
             {group.category && (
-              <span className="ml-auto px-2 py-0.5 bg-slate-50 text-slate-400 text-[10px] font-semibold rounded-full truncate max-w-[80px]">
+              <span className="ml-auto px-2 py-0.5 bg-brand-secondary text-brand-text/60 text-[10px] font-semibold rounded-full truncate max-w-[80px]">
                 {group.category}
               </span>
             )}

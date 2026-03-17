@@ -75,7 +75,7 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-            className="relative group rounded-2xl bg-white shadow-sm border border-slate-100/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-0.5"
+            className="relative group rounded-2xl bg-brand-card shadow-sm border border-brand-divider/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-0.5"
         >
             {/* Dismiss button */}
             {onDismiss && (
@@ -90,9 +90,9 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
             {/* Gradient cover band */}
             <div className={`h-20 bg-gradient-to-br ${gradient.bg} relative overflow-hidden`}>
                 {/* Decorative circles */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full" />
-                <div className="absolute -bottom-6 -left-3 w-12 h-12 bg-white/10 rounded-full" />
-                <div className="absolute top-2 left-1/2 w-8 h-8 bg-white/5 rounded-full" />
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-brand-card/10 rounded-full" />
+                <div className="absolute -bottom-6 -left-3 w-12 h-12 bg-brand-card/10 rounded-full" />
+                <div className="absolute top-2 left-1/2 w-8 h-8 bg-brand-card/5 rounded-full" />
             </div>
 
             {/* Avatar + info */}
@@ -112,13 +112,13 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
                         {displayName}
                     </p>
                     {username && (
-                        <p className="text-[11px] text-slate-400 truncate max-w-[140px]">@{username}</p>
+                        <p className="text-[11px] text-brand-text/60 truncate max-w-[140px]">@{username}</p>
                     )}
                 </Link>
 
                 {subtitle && (
                     <div className="relative flex items-center gap-1 mt-1.5">
-                        <p className="text-[10px] text-slate-400 text-center line-clamp-1">{subtitle}</p>
+                        <p className="text-[10px] text-brand-text/60 text-center line-clamp-1">{subtitle}</p>
                         {reasonCodes && reasonCodes.length > 0 && (
                             <button
                                 onClick={() => setShowWhy(!showWhy)}
@@ -129,11 +129,11 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
                             </button>
                         )}
                         {showWhy && reasonCodes && (
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-20 bg-white border border-slate-200 rounded-lg shadow-lg p-2.5 min-w-[160px]">
-                                <p className="text-[10px] font-bold text-slate-500 mb-1.5">Why this suggestion?</p>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-20 bg-brand-card border border-brand-divider rounded-lg shadow-lg p-2.5 min-w-[160px]">
+                                <p className="text-[10px] font-bold text-brand-highlight mb-1.5">Why this suggestion?</p>
                                 <ul className="space-y-0.5">
                                     {reasonCodes.map(code => (
-                                        <li key={code} className="text-[10px] text-slate-400">
+                                        <li key={code} className="text-[10px] text-brand-text/60">
                                             {REASON_LABELS[code] || code}
                                         </li>
                                     ))}
@@ -145,9 +145,9 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
 
                 {/* Mutual friends indicator */}
                 {mutualCount !== undefined && mutualCount > 0 && (
-                    <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-slate-50">
+                    <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-brand-secondary">
                         <Users className="w-3 h-3 text-[#D8103F]/50" />
-                        <span className="text-[10px] text-slate-500 font-semibold">
+                        <span className="text-[10px] text-brand-highlight font-semibold">
                             {mutualCount} mutual{mutualCount > 1 ? 's' : ''}
                         </span>
                     </div>

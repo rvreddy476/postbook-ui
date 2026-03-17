@@ -164,7 +164,7 @@ function ActionButton({ icon, label, count, active, activeColor = "text-[#D8103F
             whileTap={{ scale: 0.93 }}
             onClick={onClick}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                active ? activeColor : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                active ? activeColor : "text-brand-highlight hover:text-slate-700 hover:bg-brand-secondary"
             }`}
         >
             {icon}
@@ -244,7 +244,7 @@ export function PostCard({ post }: PostCardProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300"
+            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider hover:shadow-md transition-shadow duration-300"
         >
             {/* Pinned badge */}
             {post.is_pinned && (
@@ -260,7 +260,7 @@ export function PostCard({ post }: PostCardProps) {
             {post.text && (
                 <div className="mb-3">
                     <p
-                        className={`text-slate-950 text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+                        className={`text-brand-text text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
                             !expanded ? "line-clamp-4" : ""
                         }`}
                     >
@@ -313,7 +313,7 @@ export function PostCard({ post }: PostCardProps) {
 
             {/* Counts summary */}
             {(sparkCount > 0 || commentCount > 0 || echoCount > 0) && (
-                <div className="flex items-center gap-2 mt-4 text-xs text-slate-500">
+                <div className="flex items-center gap-2 mt-4 text-xs text-brand-highlight">
                     {sparkCount > 0 && (
                         <span className="flex items-center gap-1">
                             <Gem className="w-3.5 h-3.5 text-[#D8103F]/50" />
@@ -336,7 +336,7 @@ export function PostCard({ post }: PostCardProps) {
             )}
 
             {/* Divider */}
-            <div className="border-t border-slate-100 mt-4 mb-1" />
+            <div className="border-t border-brand-divider mt-4 mb-1" />
 
             {/* Action bar */}
             <div className="flex items-center justify-between -mx-1">
@@ -380,7 +380,7 @@ export function PostCard({ post }: PostCardProps) {
             </div>
 
             {/* Timestamp */}
-            <div className="mt-2 text-[11px] text-slate-400 text-right">
+            <div className="mt-2 text-[11px] text-brand-text/60 text-right">
                 {formatRelativeTime(post.created_at)}
             </div>
         </motion.article>

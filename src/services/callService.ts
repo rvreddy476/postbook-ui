@@ -231,7 +231,15 @@ export function initiateCall(contact: User, type: CallType) {
         call_type: type,
         call_id: session?.id,
         sdp: offer.sdp,
-        sender_name: currentUser?.name || currentUser?.username || '',
+        sender_name: (() => {
+          if (!currentUser) return '';
+          const fullName = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ');
+          if (fullName) return fullName;
+          if (currentUser.username) return currentUser.username;
+          // Avoid sending email as name
+          if (currentUser.name && !currentUser.name.includes('@')) return currentUser.name;
+          return '';
+        })(),
         sender_avatar: currentUser?.avatar || '',
       });
     } catch (err) {

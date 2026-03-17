@@ -80,7 +80,7 @@ export default function VerifyEmailPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8">
         <div className="w-full max-w-md">
-          <div className="rounded-[2rem] border border-[#F0E6DC] bg-white p-8 shadow-[0_20px_50px_rgba(60,36,21,0.08)]">
+          <div className="rounded-[2rem] border border-[#F0E6DC] bg-brand-card p-8 shadow-[0_20px_50px_rgba(60,36,21,0.08)]">
             <div className="py-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle className="h-8 w-8 text-emerald-600" />
@@ -99,7 +99,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
       <div className="w-full max-w-md">
-        <div className="rounded-[2rem] border border-[#F0E6DC] bg-white p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="rounded-[2rem] border border-[#F0E6DC] bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
           {/* Header */}
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5F0]">
@@ -142,7 +142,7 @@ export default function VerifyEmailPage() {
                 onChange={handleCodeChange}
                 placeholder="000000"
                 maxLength={6}
-                className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                 required
               />
             </div>

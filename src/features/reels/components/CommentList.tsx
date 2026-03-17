@@ -72,7 +72,7 @@ export function CommentList({
   if (loading && comments.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="text-sm text-slate-500">Loading comments...</span>
+        <span className="text-sm text-brand-highlight">Loading comments...</span>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function CommentList({
   if (!loading && comments.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="text-sm text-slate-400">No comments yet.</span>
+        <span className="text-sm text-brand-text/60">No comments yet.</span>
       </div>
     );
   }
@@ -104,12 +104,12 @@ export function CommentList({
             >
               <article
                 className={`rounded-2xl px-3 py-2 transition ${
-                  highlight ? "bg-blue-50 shadow-[0_0_24px_rgba(37,99,235,0.2)]" : "border border-slate-100 bg-slate-50"
+                  highlight ? "bg-blue-50 shadow-[0_0_24px_rgba(37,99,235,0.2)]" : "border border-brand-divider bg-brand-secondary"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-800">{comment.author_name}</span>
-                  <span className="text-[11px] text-slate-400">{formatRelativeTime(comment.created_at)}</span>
+                  <span className="text-[11px] text-brand-text/60">{formatRelativeTime(comment.created_at)}</span>
                 </div>
                 <p className="mt-1 text-sm leading-relaxed text-slate-700">{comment.text}</p>
               </article>
@@ -117,7 +117,7 @@ export function CommentList({
           );
         })}
       </div>
-      {fetchingNextPage ? <p className="py-2 text-center text-xs text-slate-500">Loading more...</p> : null}
+      {fetchingNextPage ? <p className="py-2 text-center text-xs text-brand-highlight">Loading more...</p> : null}
     </div>
   );
 }

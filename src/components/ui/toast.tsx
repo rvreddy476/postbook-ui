@@ -86,7 +86,7 @@ function ToastItem({
                         onClick={() => onDismiss(toast.id)}
                         className="absolute top-2 right-2 shrink-0 rounded-full p-1 transition-colors hover:bg-black/5"
                     >
-                        <X className="h-3.5 w-3.5 text-slate-500" />
+                        <X className="h-3.5 w-3.5 text-brand-highlight" />
                     </button>
                 </div>
             ) : (
@@ -106,7 +106,7 @@ function ToastItem({
                         onClick={() => onDismiss(toast.id)}
                         className="shrink-0 rounded-full p-1 transition-colors hover:bg-black/5"
                     >
-                        <X className="h-3.5 w-3.5 text-slate-500" />
+                        <X className="h-3.5 w-3.5 text-brand-highlight" />
                     </button>
                 </div>
             )}

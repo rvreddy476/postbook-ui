@@ -125,7 +125,7 @@ export default function BusinessPageProfilePage() {
             <div className="max-w-4xl mx-auto px-4 -mt-16 relative z-10">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
-                    <div className="h-28 w-28 rounded-2xl bg-white p-1.5 shadow-xl border border-[#F0E6DC]">
+                    <div className="h-28 w-28 rounded-2xl bg-brand-card p-1.5 shadow-xl border border-[#F0E6DC]">
                         <div className="w-full h-full rounded-xl overflow-hidden bg-[#F0E6DC]">
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt={page.name} className="w-full h-full object-cover" />
@@ -162,7 +162,7 @@ export default function BusinessPageProfilePage() {
 
                 {/* Description */}
                 {page.description && (
-                    <div className="mt-6 p-4 bg-white rounded-2xl border border-[#F0E6DC] shadow-sm">
+                    <div className="mt-6 p-4 bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm">
                         <p className="text-sm text-[#3C2415] leading-relaxed">{page.description}</p>
                     </div>
                 )}
@@ -172,7 +172,7 @@ export default function BusinessPageProfilePage() {
                     <div className="space-y-4">
                         {/* Map Placeholder */}
                         {(page.address || page.city) && (
-                            <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm overflow-hidden">
+                            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm overflow-hidden">
                                 <div className="h-40 bg-[#F0E6DC] flex items-center justify-center">
                                     <div className="text-center">
                                         <MapPin className="w-8 h-8 text-[#7B5B3A] mx-auto mb-2" />
@@ -193,7 +193,7 @@ export default function BusinessPageProfilePage() {
                         )}
 
                         {/* Contact Info */}
-                        <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm p-4 space-y-3">
+                        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm p-4 space-y-3">
                             <h3 className="text-sm font-bold text-[#3C2415] uppercase tracking-wide">
                                 Contact
                             </h3>
@@ -235,7 +235,7 @@ export default function BusinessPageProfilePage() {
                     {/* Right Column: Hours */}
                     <div>
                         {page.hours && Object.keys(page.hours).length > 0 && (
-                            <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm p-4">
+                            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm p-4">
                                 <h3 className="text-sm font-bold text-[#3C2415] uppercase tracking-wide mb-3 flex items-center gap-2">
                                     <Clock className="w-4 h-4 text-[#7B5B3A]" />
                                     Business Hours
@@ -269,7 +269,7 @@ export default function BusinessPageProfilePage() {
                     </h2>
 
                     {/* Submit Review Form */}
-                    <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm p-4 mb-4">
+                    <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm p-4 mb-4">
                         <h3 className="text-sm font-semibold text-[#3C2415] mb-3">
                             Write a review
                         </h3>
@@ -312,7 +312,7 @@ export default function BusinessPageProfilePage() {
                             {reviews.map((review) => (
                                 <div
                                     key={review.id}
-                                    className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm p-4"
+                                    className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm p-4"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="h-8 w-8 rounded-full bg-[#F0E6DC] flex items-center justify-center overflow-hidden">

@@ -36,7 +36,7 @@ export function EndorsementSection({ userId, endorsementSummary, isOwn }: Endors
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-[#F0E6DC] shadow-sm p-4">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm p-4">
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-[#3C2415] uppercase tracking-wide flex items-center gap-2">
                     <ThumbsUp className="w-4 h-4 text-[#D4A574]" />
@@ -70,14 +70,14 @@ export function EndorsementSection({ userId, endorsementSummary, isOwn }: Endors
                         value={skillTag}
                         onChange={(e) => setSkillTag(e.target.value)}
                         placeholder="Skill (e.g., JavaScript, Design)"
-                        className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-white text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50 mb-2"
+                        className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-brand-card text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50 mb-2"
                     />
                     <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Optional message..."
                         rows={2}
-                        className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-white text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50 resize-none mb-2"
+                        className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-brand-card text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50 resize-none mb-2"
                     />
                     <div className="flex justify-end">
                         <button
@@ -117,7 +117,7 @@ export function EndorsementSection({ userId, endorsementSummary, isOwn }: Endors
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-[#7B5B3A] bg-white px-2 py-0.5 rounded-full border border-[#F0E6DC]">
+                                <span className="text-xs font-bold text-[#7B5B3A] bg-brand-card px-2 py-0.5 rounded-full border border-[#F0E6DC]">
                                     {skill.count}
                                 </span>
                             </div>

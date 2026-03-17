@@ -244,7 +244,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
         </AnimatePresence>
 
         {/* Progress bar */}
-        <div className="absolute top-0 left-0 right-0 z-20 h-[3px] bg-white/10">
+        <div className="absolute top-0 left-0 right-0 z-20 h-[3px] bg-brand-card/10">
           <motion.div
             className="h-full bg-gradient-to-r from-fuchsia-500 to-rose-400"
             style={{ width: `${progress}%` }}
@@ -281,13 +281,13 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
                   >
                     <button
                       onClick={() => setShowMoreMenu(false)}
-                      className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-white/70 hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-white/70 hover:bg-brand-card/5 transition-colors"
                     >
                       <Flag className="w-3.5 h-3.5" /> Report
                     </button>
                     <button
                       onClick={() => setShowMoreMenu(false)}
-                      className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-white/70 hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs text-white/70 hover:bg-brand-card/5 transition-colors"
                     >
                       <Sparkles className="w-3.5 h-3.5" /> Not interested
                     </button>
@@ -308,7 +308,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-sm truncate">{authorName}</p>
             </div>
-            <button className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-white text-[11px] font-bold uppercase tracking-wider hover:bg-white/30 transition-colors border border-white/10">
+            <button className="px-4 py-1.5 bg-brand-card/20 backdrop-blur-md rounded-full text-white text-[11px] font-bold uppercase tracking-wider hover:bg-brand-card/30 transition-colors border border-white/10">
               <UserPlus className="w-3.5 h-3.5 inline mr-1" />
               Follow
             </button>

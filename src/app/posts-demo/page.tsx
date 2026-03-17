@@ -82,11 +82,11 @@ const MOCK_POSTS: PostDetail[] = [
 
 export default function PostsDemo() {
     return (
-        <div className="min-h-screen bg-slate-50 py-20 px-4 sm:px-0">
+        <div className="min-h-screen bg-brand-secondary py-20 px-4 sm:px-0">
             <div className="max-w-[640px] mx-auto space-y-12">
                 <header className="text-center space-y-4 mb-20 px-8">
                     <h1 className="text-5xl font-black italic tracking-tighter orchid-text-gradient">Post Design Showreel</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-[10px]">Testing Multi-Content Architecture</p>
+                    <p className="text-brand-highlight font-bold uppercase tracking-[0.4em] text-[10px]">Testing Multi-Content Architecture</p>
                 </header>
 
                 <div className="space-y-10">
@@ -104,8 +104,8 @@ export default function PostsDemo() {
                     ))}
                 </div>
 
-                <footer className="text-center py-20 border-t border-slate-200">
-                    <p className="text-slate-400 font-bold italic">End of Showcase</p>
+                <footer className="text-center py-20 border-t border-brand-divider">
+                    <p className="text-brand-text/60 font-bold italic">End of Showcase</p>
                 </footer>
             </div>
         </div>

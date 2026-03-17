@@ -42,7 +42,7 @@ export function StudioToolbar({
 }: StudioToolbarProps) {
 
   return (
-    <header className="border-b border-[#E8E6E1] bg-white px-4 py-1.5">
+    <header className="border-b border-[#E8E6E1] bg-brand-card px-4 py-1.5">
       <div className="flex items-center gap-2">
         {/* Step tabs */}
         <div className="flex items-center flex-1 min-w-0">

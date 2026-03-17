@@ -102,7 +102,7 @@ export function TagPickerModal({
             <div className="space-y-5">
                 {/* Counter */}
                 <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">
                         {remaining > 0 ? `${remaining} more available` : "Limit reached"}
                     </p>
                     {selected.length > 0 && (
@@ -114,14 +114,14 @@ export function TagPickerModal({
 
                 {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/60" />
                     <input
                         ref={searchRef}
                         type="text"
                         placeholder={`Search ${type === "hobby" ? "hobbies" : "interests"}...`}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400"
+                        className="w-full h-11 pl-10 pr-4 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
                     />
                 </div>
 
@@ -133,7 +133,7 @@ export function TagPickerModal({
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                             activeCategory === null
                                 ? "bg-slate-900 text-white"
-                                : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
                         }`}
                     >
                         All
@@ -146,7 +146,7 @@ export function TagPickerModal({
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                                 activeCategory === cat.id
                                     ? "bg-slate-900 text-white"
-                                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                    : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
                             }`}
                         >
                             {cat.label}
@@ -202,7 +202,7 @@ export function TagPickerModal({
                                             isSelected
                                                 ? "bg-blue-600 text-white border-blue-600"
                                                 : isExisting
-                                                  ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                                                  ? "bg-brand-secondary text-slate-300 border-brand-divider cursor-not-allowed"
                                                   : `${getCategoryColor(tag.category)} hover:shadow-sm cursor-pointer`
                                         }`}
                                     >
@@ -213,7 +213,7 @@ export function TagPickerModal({
                             })}
                         </div>
                     ) : search ? (
-                        <p className="text-xs text-slate-400 text-center py-4">
+                        <p className="text-xs text-brand-text/60 text-center py-4">
                             No suggestions match "{search}"
                         </p>
                     ) : null}
@@ -232,7 +232,7 @@ export function TagPickerModal({
                                 addCustomTag()
                             }
                         }}
-                        className="flex-1 h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400"
+                        className="flex-1 h-10 px-3 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
                     />
                     <Button
                         variant="secondary"
@@ -246,17 +246,17 @@ export function TagPickerModal({
                 </div>
 
                 {customInput.length > 0 && (
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-brand-text/60">
                         {customInput.length}/{MAX_LABEL_LENGTH} characters
                     </p>
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+                <div className="flex justify-end gap-3 pt-2 border-t border-brand-divider">
                     <Button
                         variant="ghost"
                         onClick={onClose}
-                        className="h-10 px-6 rounded-xl text-slate-500 text-xs font-bold uppercase tracking-widest"
+                        className="h-10 px-6 rounded-xl text-brand-highlight text-xs font-bold uppercase tracking-widest"
                     >
                         Cancel
                     </Button>

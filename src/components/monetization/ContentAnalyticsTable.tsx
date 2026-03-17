@@ -81,7 +81,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
                 {/* Sort controls */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-[#F0E6DC] bg-[#FAF5F0]">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mr-2">Sort by</span>
@@ -100,7 +100,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     if (items.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-[#F0E6DC] p-10 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-sm">
                 <div className="flex flex-col items-center justify-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     return (
         <>
-            <div className="bg-white rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
                 {/* Sort controls */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-[#F0E6DC] bg-[#FAF5F0]">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mr-2">Sort by</span>
@@ -126,8 +126,8 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
                             onClick={() => onSortChange(opt.value)}
                             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-200 ${
                                 sort === opt.value
-                                    ? "bg-white text-[#3C2415] border border-[#D4A574] shadow-sm shadow-[#D4A574]/10"
-                                    : "text-[#7B5B3A] border border-transparent hover:bg-white hover:border-[#F0E6DC] hover:text-[#3C2415]"
+                                    ? "bg-brand-card text-[#3C2415] border border-[#D4A574] shadow-sm shadow-[#D4A574]/10"
+                                    : "text-[#7B5B3A] border border-transparent hover:bg-brand-card hover:border-[#F0E6DC] hover:text-[#3C2415]"
                             }`}
                         >
                             {opt.label}
@@ -242,7 +242,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
                         <button
                             onClick={onLoadMore}
                             disabled={isFetchingNextPage}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:border-[#D4A574] hover:text-[#3C2415] hover:bg-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:border-[#D4A574] hover:text-[#3C2415] hover:bg-brand-card active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isFetchingNextPage ? (
                                 <>

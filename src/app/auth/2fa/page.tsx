@@ -76,7 +76,7 @@ function TwoFAPageContent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
       <div className="w-full max-w-md">
-        <div className="rounded-[2rem] border border-[#F0E6DC] bg-white p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="rounded-[2rem] border border-[#F0E6DC] bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
           {/* Header */}
           <div className="mb-6">
             <button
@@ -131,7 +131,7 @@ function TwoFAPageContent() {
                 value={code}
                 onChange={handleCodeChange}
                 placeholder={isRecoveryMode ? 'xxxx-xxxx-xxxx' : '000000'}
-                className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
                 required
               />
             </div>

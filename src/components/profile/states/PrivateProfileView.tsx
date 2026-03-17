@@ -29,7 +29,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="min-h-screen bg-slate-50"
+            className="min-h-screen bg-brand-secondary"
         >
             {/* Cover area */}
             <div className="relative h-48 sm:h-64 rounded-b-3xl overflow-hidden">
@@ -71,14 +71,14 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                     </div>
 
                     {/* Name and handle */}
-                    <h1 className="mt-4 text-xl sm:text-2xl font-bold text-slate-950">
+                    <h1 className="mt-4 text-xl sm:text-2xl font-bold text-brand-text">
                         {profile.display_name}
                     </h1>
-                    <p className="mt-1 text-sm text-slate-500">@{profile.username}</p>
+                    <p className="mt-1 text-sm text-brand-highlight">@{profile.username}</p>
 
                     {/* Bio (if visible) */}
                     {profile.bio && (
-                        <p className="mt-3 text-sm text-slate-600 text-center max-w-md leading-relaxed">
+                        <p className="mt-3 text-sm text-brand-highlight text-center max-w-md leading-relaxed">
                             {profile.bio}
                         </p>
                     )}
@@ -91,16 +91,16 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                     transition={{ duration: 0.45, delay: 0.25 }}
                     className="mt-8 mb-12"
                 >
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 sm:p-10 text-center">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-50 mb-5">
-                            <Shield className="w-7 h-7 text-slate-400" />
+                    <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-8 sm:p-10 text-center">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-brand-secondary mb-5">
+                            <Shield className="w-7 h-7 text-brand-text/60" />
                         </div>
 
-                        <h2 className="text-lg font-semibold text-slate-950">
+                        <h2 className="text-lg font-semibold text-brand-text">
                             This profile is private
                         </h2>
 
-                        <p className="mt-2 text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
+                        <p className="mt-2 text-sm text-brand-highlight max-w-xs mx-auto leading-relaxed">
                             Add them as a friend to see their posts and connect with them.
                         </p>
 

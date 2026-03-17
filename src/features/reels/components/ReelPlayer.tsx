@@ -321,7 +321,7 @@ export function ReelPlayer({
                 value={muted ? 0 : volume}
                 onChange={handleVolumeChange}
                 onClick={(e) => e.stopPropagation()}
-                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-white/30 accent-white [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-brand-card/30 accent-white [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-card"
                 aria-label="Volume"
               />
 
@@ -384,7 +384,7 @@ export function ReelPlayer({
               animate={{ y: -8, opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="absolute rounded-full bg-white/20 px-5 py-2 text-sm font-bold tracking-[0.14em] text-white backdrop-blur-sm"
+              className="absolute rounded-full bg-brand-card/20 px-5 py-2 text-sm font-bold tracking-[0.14em] text-white backdrop-blur-sm"
             >
               BOOST
             </motion.span>

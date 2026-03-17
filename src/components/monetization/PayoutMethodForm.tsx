@@ -77,7 +77,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
         "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
@@ -104,7 +104,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                         className={`flex flex-col items-center gap-2 px-3 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
                             selectedMethod === opt.value
                                 ? "bg-[#FAF5F0] text-[#3C2415] border-[#D4A574] shadow-sm"
-                                : "bg-white text-[#7B5B3A] border-[#F0E6DC] hover:border-[#D4A574]/50 hover:bg-[#FAF5F0]/50"
+                                : "bg-brand-card text-[#7B5B3A] border-[#F0E6DC] hover:border-[#D4A574]/50 hover:bg-[#FAF5F0]/50"
                         }`}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

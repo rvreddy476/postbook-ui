@@ -14,7 +14,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
       onClick={() => onChange(!enabled)}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
     >
-      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enabled ? "left-[22px]" : "left-0.5"}`} />
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-sm transition-transform ${enabled ? "left-[22px]" : "left-0.5"}`} />
     </button>
   );
 }
@@ -24,7 +24,7 @@ function SettingsRow({ label, description, children }: { label: string; descript
     <div className="flex items-center justify-between py-3">
       <div className="min-w-0 pr-4">
         <p className="text-[13px] font-medium text-slate-700">{label}</p>
-        {description ? <p className="mt-0.5 text-[11px] text-slate-400">{description}</p> : null}
+        {description ? <p className="mt-0.5 text-[11px] text-brand-text/60">{description}</p> : null}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -65,10 +65,10 @@ export function PrivacyTab() {
   return (
     <div className="space-y-6">
       {/* Comments */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-[14px] font-bold text-slate-900">Comments</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-4 text-[14px] font-bold text-brand-text">Comments</h2>
         <div>
-          <label className="mb-2 block text-[12px] font-semibold text-slate-500">
+          <label className="mb-2 block text-[12px] font-semibold text-brand-highlight">
             Who can comment on your content
           </label>
           <div className="flex gap-2">
@@ -80,7 +80,7 @@ export function PrivacyTab() {
                 className={`rounded-xl px-4 py-2 text-[12px] font-semibold transition-all ${
                   commentsMode === mode
                     ? "bg-[#D8103F] text-white shadow-sm"
-                    : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                    : "bg-brand-secondary text-brand-highlight hover:bg-slate-100"
                 }`}
               >
                 {mode === "everyone" ? "Everyone" : mode === "followers" ? "Followers Only" : "No One"}
@@ -90,11 +90,11 @@ export function PrivacyTab() {
         </div>
 
         {/* Blocked words */}
-        <div className="mt-5 border-t border-slate-100 pt-5">
-          <label className="mb-2 block text-[12px] font-semibold text-slate-500">
+        <div className="mt-5 border-t border-brand-divider pt-5">
+          <label className="mb-2 block text-[12px] font-semibold text-brand-highlight">
             Blocked Words
           </label>
-          <p className="mb-3 text-[11px] text-slate-400">
+          <p className="mb-3 text-[11px] text-brand-text/60">
             Comments containing these words will be automatically hidden.
           </p>
           <div className="flex gap-2 mb-3">
@@ -103,13 +103,13 @@ export function PrivacyTab() {
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBlockedWord(); } }}
               placeholder="Add a word..."
-              className="h-9 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-white focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-9 flex-1 rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
             />
             <button
               type="button"
               onClick={addBlockedWord}
               disabled={!newWord.trim()}
-              className="rounded-lg bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-200 disabled:opacity-40"
+              className="rounded-lg bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-brand-highlight hover:bg-slate-200 disabled:opacity-40"
             >
               Add
             </button>
@@ -119,10 +119,10 @@ export function PrivacyTab() {
               {blockedWords.map((word) => (
                 <span
                   key={word}
-                  className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600"
+                  className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-brand-highlight"
                 >
                   {word}
-                  <button type="button" onClick={() => removeBlockedWord(word)} className="text-slate-400 hover:text-slate-600">
+                  <button type="button" onClick={() => removeBlockedWord(word)} className="text-brand-text/60 hover:text-brand-highlight">
                     <X className="h-3 w-3" />
                   </button>
                 </span>
@@ -133,8 +133,8 @@ export function PrivacyTab() {
       </div>
 
       {/* Content Permissions */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-2 text-[14px] font-bold text-slate-900">Content Permissions</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-2 text-[14px] font-bold text-brand-text">Content Permissions</h2>
         <div className="divide-y divide-slate-100">
           <SettingsRow
             label="Allow Remix / Duet"

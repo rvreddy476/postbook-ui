@@ -261,10 +261,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
+    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-brand-bg shadow-2xl transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
       {/* Chat Header */}
       <header
-        className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-5 shadow-sm cursor-pointer"
+        className="flex h-16 shrink-0 items-center justify-between border-b border-brand-divider px-5 cursor-pointer"
         onClick={() => setIsMinimized(!isMinimized)}
       >
         <div className="flex items-center gap-3.5">
@@ -276,22 +276,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           </div>
           <div className="flex flex-col">
             <h3 className="text-[15px] font-extrabold tracking-tight text-slate-800">{contact.name}</h3>
-            <p className="text-[11px] font-semibold tracking-wide text-slate-400">
+            <p className="text-[11px] font-semibold tracking-wide text-brand-text/60">
               {contact.isOnline ? <span className="text-emerald-500">Active now</span> : 'Offline'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-slate-400">
-          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-indigo-600 active:scale-95">
+        <div className="flex items-center gap-1.5 text-brand-text/60">
+          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-indigo-600 active:scale-95">
             <Phone className="h-4 w-4" />
           </button>
-          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-indigo-600 active:scale-95">
+          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-indigo-600 active:scale-95">
             <Video className="h-4 w-4" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-slate-600 active:scale-95">
+          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-highlight active:scale-95">
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-50 hover:text-red-500 active:scale-95">
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-red-500 active:scale-95">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -300,14 +300,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
       {!isMinimized && (
         <>
           {/* Messages Area */}
-          <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto bg-slate-50/30 p-5">
+          <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto p-5">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50">
                   <MessageCircle className="h-8 w-8 text-indigo-500/70" />
                 </div>
                 <p className="text-sm font-extrabold text-slate-700">Start a conversation</p>
-                <p className="mt-1 text-[12px] font-medium text-slate-400">Say hello to {contact.name}</p>
+                <p className="mt-1 text-[12px] font-medium text-brand-text/60">Say hello to {contact.name}</p>
               </div>
             )}
 
@@ -343,13 +343,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               initial={{ opacity: 0, y: 4, scale: 0.9 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
-                              className={`absolute -top-8 z-20 flex gap-0.5 rounded-full border border-slate-100 bg-white p-1 shadow-lg ${isMe ? 'right-0' : 'left-0'}`}
+                              className={`absolute -top-8 z-20 flex gap-0.5 rounded-full border border-brand-divider bg-brand-card p-1 shadow-lg ${isMe ? 'right-0' : 'left-0'}`}
                             >
                               {QUICK_REACTIONS.map(e => (
                                 <button
                                   key={e}
                                   onClick={() => handleToggleReaction(msg, e)}
-                                  className="flex h-6 w-6 items-center justify-center rounded-full text-[13px] transition-all hover:scale-125 hover:bg-slate-50 active:scale-90"
+                                  className="flex h-6 w-6 items-center justify-center rounded-full text-[13px] transition-all hover:scale-125 hover:bg-brand-secondary active:scale-90"
                                 >
                                   {e}
                                 </button>
@@ -377,7 +377,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               <ArrowDownToLine className="h-3.5 w-3.5" />
                             </a>
                             {msg.text && (
-                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-slate-100 bg-white text-slate-700'}`}>
+                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-brand-divider bg-brand-card text-slate-700'}`}>
                                 {msg.text}
                               </div>
                             )}
@@ -385,14 +385,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                         ) : (
                           <div className={`max-w-[220px] break-words rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-sm ${isMe
                             ? 'rounded-tr-sm bg-indigo-600 text-white'
-                            : 'rounded-tl-sm border border-slate-100 bg-white text-slate-700'
+                            : 'rounded-tl-sm border border-brand-divider bg-brand-card text-slate-700'
                             }`}>
                             {msg.text}
                           </div>
                         )}
 
                         {/* Time */}
-                        <span className="mt-0.5 px-1 text-[9px] text-slate-400">{msg.time}</span>
+                        <span className="mt-0.5 px-1 text-[9px] text-brand-text/60">{msg.time}</span>
 
                         {/* Reaction pills */}
                         {hasReactions && (
@@ -403,7 +403,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                                 onClick={() => handleToggleReaction(msg, emoji)}
                                 className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-sm transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '')
                                   ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
-                                  : 'border border-slate-100 bg-white text-slate-500'
+                                  : 'border border-brand-divider bg-brand-card text-brand-highlight'
                                   }`}
                               >
                                 <span>{emoji}</span>
@@ -428,7 +428,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                   <div className="mb-1 px-1">
                     <span className="text-[10px] font-bold text-slate-700">{contact.name}</span>
                   </div>
-                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-slate-50 bg-white px-5 py-3.5 shadow-sm">
+                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-slate-50 bg-brand-card px-5 py-3.5 shadow-sm">
                     {[0, 1, 2].map(d => (
                       <motion.span
                         key={d}
@@ -452,9 +452,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 >
-                  <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-xl">
+                  <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
                     <Suspense fallback={
-                      <div className="flex h-[435px] w-[352px] items-center justify-center bg-white">
+                      <div className="flex h-[435px] w-[352px] items-center justify-center bg-brand-card">
                         <span className="text-xs font-medium text-slate-300">Loading emojis...</span>
                       </div>
                     }>
@@ -475,9 +475,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           </AnimatePresence>
 
           {/* Input Area */}
-          <footer className="border-t border-slate-100 bg-white p-3">
+          <footer className="border-t border-brand-divider p-3">
             <form onSubmit={handleSend} className="flex items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 ring-1 ring-slate-100 transition-all focus-within:ring-slate-200">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-slate-100 transition-all focus-within:ring-slate-200">
                 <input
                   value={input}
                   onChange={(e) => {
@@ -489,9 +489,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                     }
                   }}
                   placeholder="Write a message..."
-                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-slate-800 outline-none placeholder:text-brand-text/60"
                 />
-                <div className="flex items-center gap-1 text-slate-400">
+                <div className="flex items-center gap-1 text-brand-text/60">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}

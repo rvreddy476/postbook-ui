@@ -84,7 +84,7 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
                         onClick={e => e.stopPropagation()}
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+                        className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">

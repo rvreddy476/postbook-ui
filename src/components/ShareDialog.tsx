@@ -97,13 +97,13 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-sm mx-4 overflow-hidden"
+          className="bg-brand-card rounded-3xl shadow-2xl border border-brand-divider w-full max-w-sm mx-4 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
             <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Share Post</h3>
-            <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-brand-text/60 hover:text-brand-highlight transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -121,42 +121,42 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
               <button
                 onClick={() => handleShare('repost')}
                 disabled={shareMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 transition-colors text-left group/item"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-brand-secondary transition-colors text-left group/item"
               >
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                   <Repeat2 className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Repost</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Share to your followers</p>
+                  <p className="text-[10px] text-brand-text/60 mt-0.5">Share to your followers</p>
                 </div>
               </button>
 
               <button
                 onClick={() => handleShare('quote')}
                 disabled={shareMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 transition-colors text-left group/item"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-brand-secondary transition-colors text-left group/item"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#D8103F]/5 flex items-center justify-center text-[#D8103F]">
                   <Quote className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Quote</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Add your thoughts</p>
+                  <p className="text-[10px] text-brand-text/60 mt-0.5">Add your thoughts</p>
                 </div>
               </button>
 
               <button
                 onClick={() => handleShare('external')}
                 disabled={shareMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-slate-50 transition-colors text-left group/item"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-brand-secondary transition-colors text-left group/item"
               >
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
                   <Link2 className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-xs font-black text-slate-800 uppercase tracking-widest">Copy Link</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Copy link to clipboard</p>
+                  <p className="text-[10px] text-brand-text/60 mt-0.5">Copy link to clipboard</p>
                 </div>
               </button>
             </div>
@@ -169,14 +169,14 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
                 placeholder="Add your thoughts..."
                 rows={3}
                 maxLength={500}
-                className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm text-slate-800 border border-slate-100 outline-none focus:border-[#D8103F]/30 resize-none placeholder:text-slate-400"
+                className="w-full bg-brand-secondary rounded-2xl px-4 py-3 text-sm text-slate-800 border border-brand-divider outline-none focus:border-[#D8103F]/30 resize-none placeholder:text-brand-text/60"
                 autoFocus
               />
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setSelectedType(null)}
-                  className="text-[10px] font-bold text-slate-500 hover:text-slate-700 uppercase tracking-widest"
+                  className="text-[10px] font-bold text-brand-highlight hover:text-slate-700 uppercase tracking-widest"
                 >
                   Back
                 </button>

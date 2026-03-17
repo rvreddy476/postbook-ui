@@ -58,7 +58,7 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
             onClick={() => router.push(`/posttube/watch/${post.id}`)}
-            className="group cursor-pointer rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-400"
+            className="group cursor-pointer rounded-2xl overflow-hidden bg-brand-card border border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-400"
         >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-slate-100 overflow-hidden">
@@ -92,10 +92,10 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
 
             {/* Details */}
             <div className="p-4 space-y-2">
-                <h3 className="text-sm font-semibold text-slate-950 font-[var(--font-outfit)] line-clamp-2 leading-snug">
+                <h3 className="text-sm font-semibold text-brand-text font-[var(--font-outfit)] line-clamp-2 leading-snug">
                     {title}
                 </h3>
-                <div className="flex items-center gap-3 text-xs text-slate-400">
+                <div className="flex items-center gap-3 text-xs text-brand-text/60">
                     <span className="flex items-center gap-1">
                         <Sparkles className="h-3 w-3" />
                         {formatCount(sparkCount)} Sparks
@@ -116,7 +116,7 @@ function VideosSkeleton() {
             {Array.from({ length: 4 }).map((_, i) => (
                 <div
                     key={i}
-                    className="rounded-2xl overflow-hidden bg-white border border-slate-100"
+                    className="rounded-2xl overflow-hidden bg-brand-card border border-brand-divider"
                     style={{ animationDelay: `${i * 100}ms` }}
                 >
                     <div className="aspect-video bg-slate-100 animate-pulse" />
@@ -162,13 +162,13 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
     if (videos.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
                     <Video className="h-9 w-9 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-950 font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     {isOwn ? "Start creating on Posttube" : "No videos yet"}
                 </h3>
-                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+                <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">
                     {isOwn
                         ? "Upload your first video and share it with the world."
                         : "When videos are published, they will show up here."}

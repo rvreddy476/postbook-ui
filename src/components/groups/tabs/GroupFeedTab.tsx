@@ -64,7 +64,7 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
       <motion.article
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all"
+        className="bg-brand-card rounded-xl border border-brand-divider hover:border-brand-divider hover:shadow-sm transition-all"
       >
         {/* Author Row */}
         <div className="flex items-center gap-3 p-4 pb-0">
@@ -82,7 +82,7 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
               <span className="text-sm font-bold text-slate-800 truncate">{name}</span>
               <RoleBadge role={role} />
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-brand-text/60">
               {username && <span className="font-medium">{username}</span>}
               {username && <span>·</span>}
               <span>{timeAgo(post.created_at)}</span>
@@ -90,7 +90,7 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
           </div>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="p-1.5 text-slate-300 hover:text-slate-500 rounded-lg hover:bg-slate-50 transition-all"
+            className="p-1.5 text-slate-300 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -98,36 +98,36 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
 
         {/* Content placeholder — in a real implementation this would show post body/media */}
         <div className="px-4 py-3">
-          <div className="h-2.5 w-full bg-slate-50 rounded-full mb-2" />
-          <div className="h-2.5 w-3/4 bg-slate-50 rounded-full" />
+          <div className="h-2.5 w-full bg-brand-secondary rounded-full mb-2" />
+          <div className="h-2.5 w-3/4 bg-brand-secondary rounded-full" />
         </div>
 
         {/* Engagement Rail */}
         <div className="flex items-center border-t border-slate-50 px-2">
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-rose-500 hover:bg-rose-50/50 rounded-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-rose-500 hover:bg-rose-50/50 rounded-lg transition-all"
           >
             <Heart className="w-4 h-4" />
             <span className="hidden sm:inline">Spark</span>
           </button>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-blue-500 hover:bg-blue-50/50 rounded-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-blue-500 hover:bg-blue-50/50 rounded-lg transition-all"
           >
             <MessageCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Comment</span>
           </button>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-emerald-500 hover:bg-emerald-50/50 rounded-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-emerald-500 hover:bg-emerald-50/50 rounded-lg transition-all"
           >
             <Repeat2 className="w-4 h-4" />
             <span className="hidden sm:inline">Echo</span>
           </button>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-400 hover:text-amber-500 hover:bg-amber-50/50 rounded-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-amber-500 hover:bg-amber-50/50 rounded-lg transition-all"
           >
             <Bookmark className="w-4 h-4" />
             <span className="hidden sm:inline">Stash</span>
@@ -157,12 +157,12 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       {isMember && (
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full flex items-center gap-3 px-5 py-4 bg-white border border-slate-100 rounded-xl text-sm text-slate-400 hover:border-[#D8103F]/20 hover:shadow-sm transition-all group"
+          className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-[#D8103F]/20 hover:shadow-sm transition-all group"
         >
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center group-hover:from-[#D8103F]/10 group-hover:to-[#D8103F]/5 transition-all">
-            <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#D8103F] transition-colors" />
+            <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-[#D8103F] transition-colors" />
           </div>
-          <span className="group-hover:text-slate-500 transition-colors">Write something to the group...</span>
+          <span className="group-hover:text-brand-highlight transition-colors">Write something to the group...</span>
         </button>
       )}
 
@@ -185,27 +185,27 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 space-y-3 animate-pulse">
+            <div key={i} className="bg-brand-card rounded-xl border border-brand-divider p-4 space-y-3 animate-pulse">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-100" />
                 <div className="flex-1 space-y-1.5">
                   <div className="h-3.5 w-28 bg-slate-100 rounded" />
-                  <div className="h-2.5 w-16 bg-slate-50 rounded" />
+                  <div className="h-2.5 w-16 bg-brand-secondary rounded" />
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="h-2.5 w-full bg-slate-50 rounded-full" />
-                <div className="h-2.5 w-2/3 bg-slate-50 rounded-full" />
+                <div className="h-2.5 w-full bg-brand-secondary rounded-full" />
+                <div className="h-2.5 w-2/3 bg-brand-secondary rounded-full" />
               </div>
             </div>
           ))}
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
             <MessageCircle className="w-7 h-7 text-slate-200" />
           </div>
-          <p className="text-sm font-semibold text-slate-400">No posts yet</p>
+          <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
           <p className="text-xs text-slate-300 mt-1">Be the first to share something with the group!</p>
         </div>
       ) : (
@@ -222,7 +222,7 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-6 py-2.5 bg-white rounded-xl font-bold text-xs text-slate-500 hover:text-[#D8103F] hover:shadow-md transition-all border border-slate-100 disabled:opacity-50"
+            className="px-6 py-2.5 bg-brand-card rounded-xl font-bold text-xs text-brand-highlight hover:text-[#D8103F] hover:shadow-md transition-all border border-brand-divider disabled:opacity-50"
           >
             {isFetchingNextPage ? 'Loading...' : 'Load more posts'}
           </button>

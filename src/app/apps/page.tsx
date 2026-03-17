@@ -32,7 +32,7 @@ const CATEGORIES = [
 
 function SkeletonCard() {
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse space-y-3">
+        <div className="bg-brand-card rounded-2xl border border-gray-100 p-5 animate-pulse space-y-3">
             <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl bg-gray-100 flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -123,7 +123,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
     const isPending = installMutation.isPending || uninstallMutation.isPending
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 p-5 flex flex-col gap-3">
+        <div className="bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 p-5 flex flex-col gap-3">
             {/* Header: icon + name + category */}
             <div className="flex items-start gap-3">
                 <AppIcon app={app} />
@@ -205,9 +205,9 @@ export default function AppsPage() {
         : (allAppsData ?? [])
 
     return (
-        <div className="min-h-screen bg-[#fcfaff]">
+        <div className="min-h-screen bg-brand-bg">
             {/* Sticky header */}
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F] to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20">
                         <Grid3x3 className="w-5 h-5 text-white" />
@@ -222,13 +222,13 @@ export default function AppsPage() {
                         className={`ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
                             showInstalledOnly
                                 ? "bg-[#D8103F] text-white border-[#D8103F] shadow-sm shadow-[#D8103F]/20"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-[#D8103F]/30 hover:text-[#b80d35]"
+                                : "bg-brand-card text-gray-600 border-gray-200 hover:border-[#D8103F]/30 hover:text-[#b80d35]"
                         }`}
                     >
                         <Download className="w-4 h-4" />
                         Installed
                         {installedIds.size > 0 && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-white/20 text-white" : "bg-[#D8103F]/10 text-[#D8103F]"}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-brand-card/20 text-white" : "bg-[#D8103F]/10 text-[#D8103F]"}`}>
                                 {installedIds.size}
                             </span>
                         )}

@@ -36,7 +36,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="rounded-xl border border-slate-200 overflow-hidden bg-white inline-block max-w-[220px]"
+            className="rounded-xl border border-brand-divider overflow-hidden bg-brand-card inline-block max-w-[220px]"
         >
             {/* Thumbnail area — 9:16 portrait, capped height */}
             <Link href={flickUrl} className="block relative bg-slate-100 group" style={{ aspectRatio: "9/16", maxHeight: 300 }}>
@@ -71,13 +71,13 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
             {/* Info area */}
             <div className="px-3 py-3">
                 {caption && (
-                    <p className="text-slate-950 text-sm leading-snug line-clamp-2 mb-1">
+                    <p className="text-brand-text text-sm leading-snug line-clamp-2 mb-1">
                         {caption}
                     </p>
                 )}
 
                 {creatorName && (
-                    <p className="text-xs text-slate-400 mb-2.5">{creatorName}</p>
+                    <p className="text-xs text-brand-text/60 mb-2.5">{creatorName}</p>
                 )}
 
                 <Link

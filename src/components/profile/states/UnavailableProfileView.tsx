@@ -16,14 +16,14 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="min-h-screen bg-slate-50 flex items-center justify-center px-4"
+            className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
         >
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 sm:p-14 text-center max-w-md w-full">
+            <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.35, delay: 0.1 }}
-                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-50 mb-6"
+                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand-secondary mb-6"
                 >
                     <UserX className="w-10 h-10 text-slate-300" />
                 </motion.div>
@@ -33,11 +33,11 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.35, delay: 0.2 }}
                 >
-                    <h2 className="text-xl font-semibold text-slate-950">
+                    <h2 className="text-xl font-semibold text-brand-text">
                         This account is unavailable
                     </h2>
 
-                    <p className="mt-3 text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+                    <p className="mt-3 text-sm text-brand-highlight leading-relaxed max-w-xs mx-auto">
                         {message ?? "The profile you're looking for doesn't exist or has been removed."}
                     </p>
                 </motion.div>

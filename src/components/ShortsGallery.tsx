@@ -181,14 +181,14 @@ const ShortsGallery: React.FC = () => {
         <button
           onClick={() => navigateReel(-1)}
           disabled={activeIndex === 0}
-          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-20 disabled:cursor-not-allowed border border-white/10"
+          className="w-10 h-10 rounded-full bg-brand-card/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-brand-card/20 transition-colors disabled:opacity-20 disabled:cursor-not-allowed border border-white/10"
         >
           <ChevronUp className="w-5 h-5" />
         </button>
         <button
           onClick={() => navigateReel(1)}
           disabled={activeIndex === reels.length - 1}
-          className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-20 disabled:cursor-not-allowed border border-white/10"
+          className="w-10 h-10 rounded-full bg-brand-card/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-brand-card/20 transition-colors disabled:opacity-20 disabled:cursor-not-allowed border border-white/10"
         >
           <ChevronDown className="w-5 h-5" />
         </button>

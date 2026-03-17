@@ -12,7 +12,7 @@ function WatchContent() {
 
 export default function PostTubeWatchRoute() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#fcfaff]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-brand-bg" />}>
       <WatchContent />
     </Suspense>
   );

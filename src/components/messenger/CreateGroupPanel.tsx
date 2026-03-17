@@ -159,21 +159,21 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-lg mx-4 bg-brand-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 shrink-0">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-brand-divider shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#D8103F]/10 flex items-center justify-center">
             <Users className="w-4.5 h-4.5 text-[#D8103F]" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold text-slate-800">Create Group</h2>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-[11px] text-brand-text/60 font-medium">
               Step {step} of 3 — {step === 1 ? 'Identity' : step === 2 ? 'Add Members' : 'Review & Create'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+            className="p-1.5 text-brand-text/60 hover:text-brand-highlight hover:bg-slate-100 rounded-lg transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -198,7 +198,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               {/* Cover Photo Upload */}
               <div
                 onClick={() => coverInputRef.current?.click()}
-                className="relative w-full h-32 rounded-xl overflow-hidden cursor-pointer group border-2 border-dashed border-slate-200 hover:border-[#D8103F]/30 transition-all"
+                className="relative w-full h-32 rounded-xl overflow-hidden cursor-pointer group border-2 border-dashed border-brand-divider hover:border-[#D8103F]/30 transition-all"
               >
                 {coverPreview ? (
                   <>
@@ -208,9 +208,9 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center gap-1.5">
+                  <div className="w-full h-full bg-brand-secondary flex flex-col items-center justify-center gap-1.5">
                     <ImageIcon className="w-6 h-6 text-slate-300 group-hover:text-[#D8103F]/50 transition-colors" />
-                    <span className="text-[11px] font-semibold text-slate-400">Add Cover Photo</span>
+                    <span className="text-[11px] font-semibold text-brand-text/60">Add Cover Photo</span>
                   </div>
                 )}
                 <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
@@ -220,14 +220,14 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               <div className="flex justify-center -mt-10 relative z-10">
                 <div
                   onClick={() => avatarInputRef.current?.click()}
-                  className="w-16 h-16 rounded-2xl overflow-hidden cursor-pointer group bg-white p-0.5 shadow-lg ring-2 ring-white"
+                  className="w-16 h-16 rounded-2xl overflow-hidden cursor-pointer group bg-brand-card p-0.5 shadow-lg ring-2 ring-white"
                 >
                   <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-100 relative">
                     {avatarPreview ? (
                       <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-slate-400" />
+                        <Camera className="w-5 h-5 text-brand-text/60" />
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
@@ -237,25 +237,25 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 </div>
                 <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
               </div>
-              <p className="text-center text-[11px] text-slate-400 font-medium -mt-1">Group Icon</p>
+              <p className="text-center text-[11px] text-brand-text/60 font-medium -mt-1">Group Icon</p>
 
               {/* Name */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Group Name *</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Group Name *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. React Developers"
                   maxLength={100}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
                 />
                 <p className="text-[10px] text-slate-300 mt-1">{name.length}/100 · Minimum 3 characters</p>
               </div>
 
               {/* Handle */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Handle</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Handle</label>
                 <div className="relative">
                   <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
@@ -264,27 +264,27 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     placeholder={autoHandle || 'group-handle'}
                     maxLength={50}
-                    className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
                   />
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Description</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What's this group about?"
                   rows={2}
                   maxLength={500}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Category</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-2">Category</label>
                 <div className="flex flex-wrap gap-1.5">
                   {CATEGORIES.map(cat => (
                     <button
@@ -294,7 +294,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         category === cat
                           ? 'bg-[#D8103F] text-white shadow-sm'
-                          : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100'
+                          : 'bg-brand-secondary text-brand-highlight hover:bg-slate-100 border border-brand-divider'
                       }`}
                     >
                       {cat}
@@ -305,7 +305,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Privacy */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Privacy</label>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-2">Privacy</label>
                 <div className="space-y-2">
                   {([
                     { value: 'public' as const, icon: <Globe className="w-4 h-4" />, label: 'Public', desc: 'Anyone can find and join' },
@@ -319,13 +319,13 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
                         privacyLevel === opt.value
                           ? 'border-[#D8103F]/40 bg-[#D8103F]/5'
-                          : 'border-slate-100 hover:border-slate-200'
+                          : 'border-brand-divider hover:border-brand-divider'
                       }`}
                     >
-                      <div className={privacyLevel === opt.value ? 'text-[#D8103F]' : 'text-slate-400'}>{opt.icon}</div>
+                      <div className={privacyLevel === opt.value ? 'text-[#D8103F]' : 'text-brand-text/60'}>{opt.icon}</div>
                       <div>
                         <p className="text-sm font-semibold text-slate-700">{opt.label}</p>
-                        <p className="text-[11px] text-slate-400">{opt.desc}</p>
+                        <p className="text-[11px] text-brand-text/60">{opt.desc}</p>
                       </div>
                       {privacyLevel === opt.value && <Check className="w-4 h-4 text-[#D8103F] ml-auto" />}
                     </button>
@@ -351,7 +351,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                         onClick={() => toggleMember(m)}
                         className="w-4 h-4 rounded-full bg-slate-200 hover:bg-rose-200 flex items-center justify-center transition-colors"
                       >
-                        <X className="w-2.5 h-2.5 text-slate-500" />
+                        <X className="w-2.5 h-2.5 text-brand-highlight" />
                       </button>
                     </div>
                   ))}
@@ -367,7 +367,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search users by name..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
                   />
                 </div>
                 <p className="text-[10px] text-slate-300 mt-1.5 font-medium">
@@ -384,7 +384,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                         <div className="w-10 h-10 rounded-xl bg-slate-100" />
                         <div className="flex-1 space-y-1.5">
                           <div className="h-3 w-24 bg-slate-100 rounded" />
-                          <div className="h-2.5 w-16 bg-slate-50 rounded" />
+                          <div className="h-2.5 w-16 bg-brand-secondary rounded" />
                         </div>
                       </div>
                     ))}
@@ -392,7 +392,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 ) : filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 gap-2">
                     <Search className="w-8 h-8 text-slate-200" />
-                    <p className="text-sm text-slate-400 font-medium">
+                    <p className="text-sm text-brand-text/60 font-medium">
                       {search.trim() ? 'No users found' : 'No users available'}
                     </p>
                   </div>
@@ -407,7 +407,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                           className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left ${
                             isSelected
                               ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
-                              : 'hover:bg-slate-50 border border-transparent'
+                              : 'hover:bg-brand-secondary border border-transparent'
                           }`}
                         >
                           {/* Checkbox */}
@@ -428,7 +428,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-slate-700 truncate">{user.name}</p>
                             {user.loginId && (
-                              <p className="text-[11px] text-slate-400">@{user.loginId}</p>
+                              <p className="text-[11px] text-brand-text/60">@{user.loginId}</p>
                             )}
                           </div>
 
@@ -447,7 +447,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
           {step === 3 && (
             <div className="p-5 space-y-5">
               {/* Group preview card */}
-              <div className="rounded-xl border border-slate-100 overflow-hidden">
+              <div className="rounded-xl border border-brand-divider overflow-hidden">
                 {/* Cover */}
                 <div className="h-24 relative">
                   {coverPreview ? (
@@ -459,7 +459,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
                 {/* Avatar + name */}
                 <div className="px-4 pb-4 -mt-6 relative">
-                  <div className="w-14 h-14 rounded-xl bg-white p-0.5 shadow-lg inline-block">
+                  <div className="w-14 h-14 rounded-xl bg-brand-card p-0.5 shadow-lg inline-block">
                     <div className="w-full h-full rounded-[10px] overflow-hidden bg-slate-100">
                       {avatarPreview ? (
                         <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
@@ -472,19 +472,19 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   </div>
                   <h3 className="text-base font-bold text-slate-800 mt-2">{name}</h3>
                   {effectiveHandle && (
-                    <p className="text-xs text-slate-400 font-medium">@{effectiveHandle}</p>
+                    <p className="text-xs text-brand-text/60 font-medium">@{effectiveHandle}</p>
                   )}
                   {description && (
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{description}</p>
+                    <p className="text-xs text-brand-highlight mt-1 line-clamp-2">{description}</p>
                   )}
 
-                  <div className="flex items-center gap-3 mt-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 mt-3 text-xs text-brand-text/60">
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       {selectedMembers.length + 1} members
                     </span>
                     {category && (
-                      <span className="px-2 py-0.5 bg-slate-50 rounded-full text-[10px] font-semibold">{category}</span>
+                      <span className="px-2 py-0.5 bg-brand-secondary rounded-full text-[10px] font-semibold">{category}</span>
                     )}
                     <span className="flex items-center gap-1 capitalize">
                       {privacyLevel === 'public' ? <Globe className="w-3.5 h-3.5" /> :
@@ -498,17 +498,17 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Members list */}
               <div>
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Members</h3>
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Members</h3>
 
                 {/* Creator = Admin */}
                 {me && (
-                  <div className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl mb-1.5">
+                  <div className="flex items-center gap-3 p-2.5 bg-brand-secondary rounded-xl mb-1.5">
                     <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-200">
                       <img src={me.avatar} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-700 truncate">{me.name}</p>
-                      <p className="text-[10px] text-slate-400">You</p>
+                      <p className="text-[10px] text-brand-text/60">You</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 rounded-md">
                       <Crown className="w-2.5 h-2.5" />Admin
@@ -524,7 +524,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-700 truncate">{m.name}</p>
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md">
                       Member
                     </span>
                   </div>
@@ -543,12 +543,12 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-5 py-4 border-t border-slate-100 shrink-0">
+        <div className="flex items-center gap-3 px-5 py-4 border-t border-brand-divider shrink-0">
           {step > 1 && (
             <button
               onClick={() => setStep((step - 1) as 1 | 2)}
               disabled={creating}
-              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-brand-highlight bg-slate-100 rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
               Back

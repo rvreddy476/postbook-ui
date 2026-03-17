@@ -168,7 +168,7 @@ function ChatView({
   if (!activeConvId) {
     return (
       <div className="flex-1 flex items-center justify-center flex-col gap-4 px-6">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center">
           {creatingChat ? (
             <RefreshCw className="w-8 h-8 text-slate-300 animate-spin" />
           ) : (
@@ -176,11 +176,11 @@ function ChatView({
           )}
         </div>
         <div className="text-center">
-          <p className="text-[14px] font-medium text-slate-500">
+          <p className="text-[14px] font-medium text-brand-highlight">
             {creatingChat ? 'Setting up group chat...' : 'Could not set up chat'}
           </p>
           {!creatingChat && chatError && (
-            <p className="text-[12px] text-slate-400 mt-1 mb-3">{chatError}</p>
+            <p className="text-[12px] text-brand-text/60 mt-1 mb-3">{chatError}</p>
           )}
           {!creatingChat && (
             <button
@@ -213,7 +213,7 @@ function ChatView({
       {/* Pinned message banner */}
       {chat.pinnedMessage && (
         <div
-          className="flex items-center gap-3 px-6 lg:px-10 py-2.5 border-b border-slate-100 cursor-pointer flex-shrink-0 hover:bg-slate-50/80 transition-colors"
+          className="flex items-center gap-3 px-6 lg:px-10 py-2.5 border-b border-brand-divider cursor-pointer flex-shrink-0 hover:bg-brand-secondary/80 transition-colors"
           style={{ background: `${groupColor}06` }}
           onClick={() => scrollToMessage(chat.pinnedMessage!.message_id)}
         >
@@ -225,14 +225,14 @@ function ChatView({
             <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: groupColor }}>
               Pinned Message
             </div>
-            <div className="text-[12px] text-slate-500 truncate">
+            <div className="text-[12px] text-brand-highlight truncate">
               {chat.pinnedMessage.message?.text || 'Click to view'}
             </div>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); chat.handleUnpinMessage() }}
             title="Unpin message"
-            className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md p-1 transition-colors flex-shrink-0"
+            className="text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-md p-1 transition-colors flex-shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -243,39 +243,39 @@ function ChatView({
       )}
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 lg:px-10 py-6 flex flex-col gap-1 scrollbar-hide bg-slate-50/30">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 lg:px-10 py-6 flex flex-col gap-1 scrollbar-hide bg-brand-secondary/30">
         {chat.loading ? (
           <div className="flex flex-col gap-6 py-8 max-w-3xl mx-auto w-full">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex gap-3 items-end">
-                <div className="w-9 h-9 rounded-full bg-slate-100 animate-pulse" />
+                <div className="w-9 h-9 rounded-full bg-brand-secondary animate-pulse" />
                 <div className="flex flex-col gap-2">
-                  <div className="w-24 h-3 rounded bg-slate-100 animate-pulse" />
-                  <div className="h-12 rounded-2xl bg-slate-100/60 animate-pulse" style={{ width: 180 + i * 30 }} />
+                  <div className="w-24 h-3 rounded bg-brand-secondary animate-pulse" />
+                  <div className="h-12 rounded-2xl bg-brand-secondary/60 animate-pulse" style={{ width: 180 + i * 30 }} />
                 </div>
               </div>
             ))}
           </div>
         ) : chat.messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center flex-col gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center">
               <MessageSquare className="w-8 h-8 text-slate-300" />
             </div>
             <div className="text-center">
-              <p className="text-[14px] font-medium text-slate-500">No messages yet</p>
-              <p className="text-[12px] text-slate-400 mt-1">Start the conversation!</p>
+              <p className="text-[14px] font-medium text-brand-highlight">No messages yet</p>
+              <p className="text-[12px] text-brand-text/60 mt-1">Start the conversation!</p>
             </div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto w-full">
             <div className="text-center py-6">
-              <span className="text-[11px] font-medium text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100">Today</span>
+              <span className="text-[11px] font-medium text-brand-text/60 bg-brand-card px-3 py-1 rounded-full border border-brand-divider">Today</span>
             </div>
             {chat.messages.map((msg, idx) => {
               if (msg.type === 'system') {
                 return (
                   <div key={msg.id} id={`gmsg-${msg.id}`} className="text-center py-3" style={{ transition: 'background 0.3s' }}>
-                    <span className="text-[11px] font-medium text-slate-400 bg-white px-4 py-1.5 rounded-full border border-slate-100">
+                    <span className="text-[11px] font-medium text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full border border-brand-divider">
                       {msg.text || 'System message'}
                     </span>
                   </div>
@@ -309,19 +309,19 @@ function ChatView({
 
                   <div className={`flex flex-col ${mine ? 'items-end' : 'items-start'} max-w-[55%]`}>
                     {showAv && !mine && (
-                      <span className="text-[12px] font-medium text-slate-400 mb-1 ml-1">
+                      <span className="text-[12px] font-medium text-brand-text/60 mb-1 ml-1">
                         {sender.name}
                       </span>
                     )}
 
                     {/* Forwarded label */}
                     {msg.forwardedFromId && !msg.isDeleted && (
-                      <span className="text-[10px] text-slate-400 italic mb-0.5 ml-1">Forwarded</span>
+                      <span className="text-[10px] text-brand-text/60 italic mb-0.5 ml-1">Forwarded</span>
                     )}
 
                     {/* Reply preview */}
                     {replyTarget && !msg.isDeleted && (
-                      <div className="text-[11px] text-slate-400 px-3 py-1 border-l-2 rounded-r-lg mb-1 ml-1 max-w-full truncate"
+                      <div className="text-[11px] text-brand-text/60 px-3 py-1 border-l-2 rounded-r-lg mb-1 ml-1 max-w-full truncate"
                         style={{ borderColor: groupColor, background: `${groupColor}08` }}>
                         {replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text}
                       </div>
@@ -356,7 +356,7 @@ function ChatView({
 
                     {/* Edited indicator */}
                     {msg.isEdited && !msg.isDeleted && (
-                      <span className="text-[10px] text-slate-400 mt-0.5 px-1">(edited)</span>
+                      <span className="text-[10px] text-brand-text/60 mt-0.5 px-1">(edited)</span>
                     )}
 
                     {/* Reactions */}
@@ -366,14 +366,14 @@ function ChatView({
                           <button
                             key={r.emoji}
                             onClick={() => chat.handleToggleReaction(msg.id, r.emoji)}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] transition-colors hover:bg-slate-100"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] transition-colors hover:bg-brand-secondary"
                             style={{
                               border: r.user_ids.includes(myId) ? `1px solid ${groupColor}80` : '1px solid #e2e8f0',
                               background: r.user_ids.includes(myId) ? `${groupColor}10` : '#fff',
                             }}
                           >
                             <span>{r.emoji}</span>
-                            <span className="text-[10px] text-slate-400">{r.user_ids.length}</span>
+                            <span className="text-[10px] text-brand-text/60">{r.user_ids.length}</span>
                           </button>
                         ))}
                       </div>
@@ -381,7 +381,7 @@ function ChatView({
 
                     {/* Time + read receipt */}
                     <div className="flex items-center gap-1 mt-1 px-1">
-                      <span className="text-[11px] text-slate-400">{msg.time}</span>
+                      <span className="text-[11px] text-brand-text/60">{msg.time}</span>
                       {mine && msg.id === chat.lastSentMsgId && chat.readReceipts.has(msg.id) && (
                         <span className="text-[10px] font-medium" style={{ color: groupColor }}>Seen</span>
                       )}
@@ -397,17 +397,17 @@ function ChatView({
       {/* Context Menu */}
       {chat.contextMenu?.visible && (
         <div
-          className="fixed z-[1000] bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 min-w-[160px]"
+          className="fixed z-[1000] bg-brand-card border border-brand-divider rounded-xl shadow-xl py-1.5 min-w-[160px]"
           style={{ left: chat.contextMenu.x, top: chat.contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Quick emoji row */}
-          <div className="flex gap-1 px-3 py-2 border-b border-slate-100">
+          <div className="flex gap-1 px-3 py-2 border-b border-brand-divider">
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => chat.handleToggleReaction(chat.contextMenu!.messageId, emoji)}
-                className="text-[18px] p-1 rounded-md hover:bg-slate-50 transition-colors"
+                className="text-[18px] p-1 rounded-md hover:bg-brand-secondary transition-colors"
               >
                 {emoji}
               </button>
@@ -415,7 +415,7 @@ function ChatView({
           </div>
           <button
             onClick={() => { const m = chat.messages.find(m => m.id === chat.contextMenu!.messageId); if (m) chat.handleReply(m) }}
-            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
           >
             Reply
           </button>
@@ -427,7 +427,7 @@ function ChatView({
                 chat.handlePinMessage(chat.contextMenu!.messageId)
               }
             }}
-            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
           >
             {chat.pinnedMessage?.message_id === chat.contextMenu!.messageId ? 'Unpin' : 'Pin'}
           </button>
@@ -435,7 +435,7 @@ function ChatView({
             <>
               <button
                 onClick={() => { const m = chat.messages.find(m => m.id === chat.contextMenu!.messageId); if (m) chat.handleEditStart(m) }}
-                className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+                className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
               >
                 Edit
               </button>
@@ -454,28 +454,28 @@ function ChatView({
       {typingText && (
         <div className="px-6 lg:px-10 py-1.5">
           <div className="max-w-3xl mx-auto">
-            <span className="text-[12px] text-slate-400 italic">{typingText}</span>
+            <span className="text-[12px] text-brand-text/60 italic">{typingText}</span>
           </div>
         </div>
       )}
 
       {/* Reply bar */}
       {chat.replyingTo && (
-        <div className="px-6 lg:px-10 py-2 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
+        <div className="px-6 lg:px-10 py-2 bg-brand-secondary border-t border-brand-divider flex items-center gap-3">
           <div className="max-w-3xl mx-auto w-full flex items-center gap-3">
-            <div className="flex-1 text-[12px] text-slate-400 border-l-2 pl-3 truncate" style={{ borderColor: groupColor }}>
+            <div className="flex-1 text-[12px] text-brand-text/60 border-l-2 pl-3 truncate" style={{ borderColor: groupColor }}>
               <span className="font-medium" style={{ color: groupColor }}>Replying to </span>
               {chat.replyingTo.senderId === myId ? 'yourself' : resolveSender(chat.replyingTo.senderId).name}
-              <span className="ml-2 text-slate-400">{chat.replyingTo.text.slice(0, 50)}{chat.replyingTo.text.length > 50 ? '...' : ''}</span>
+              <span className="ml-2 text-brand-text/60">{chat.replyingTo.text.slice(0, 50)}{chat.replyingTo.text.length > 50 ? '...' : ''}</span>
             </div>
-            <button onClick={() => chat.setReplyingTo(null)} className="text-slate-400 hover:text-slate-600 text-[14px]">✕</button>
+            <button onClick={() => chat.setReplyingTo(null)} className="text-brand-text/60 hover:text-brand-highlight text-[14px]">✕</button>
           </div>
         </div>
       )}
 
       {/* Edit bar or Input */}
       {chat.editingMsgId ? (
-        <div className="px-6 lg:px-10 py-4 bg-white border-t border-slate-100 flex-shrink-0">
+        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider flex-shrink-0">
           <div className="max-w-3xl mx-auto w-full flex gap-3 items-center">
             <input
               value={chat.editText}
@@ -485,7 +485,7 @@ function ChatView({
                 if (e.key === 'Escape') { chat.setEditingMsgId(null); chat.setEditText('') }
               }}
               placeholder="Edit message..."
-              className="flex-1 py-3 px-5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-slate-100"
+              className="flex-1 py-3 px-5 rounded-xl border border-slate-300 bg-brand-secondary text-brand-text text-[14px] outline-none focus:bg-brand-card focus:ring-2 focus:ring-slate-100"
               autoFocus
             />
             <button
@@ -497,19 +497,19 @@ function ChatView({
             </button>
             <button
               onClick={() => { chat.setEditingMsgId(null); chat.setEditText('') }}
-              className="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-500 text-[13px] hover:bg-slate-50 transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-brand-divider text-brand-highlight text-[13px] hover:bg-brand-secondary transition-colors"
             >
               Cancel
             </button>
           </div>
         </div>
       ) : (
-        <div className="px-6 lg:px-10 py-4 bg-white border-t border-slate-100 flex-shrink-0">
+        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider flex-shrink-0">
           <div className="max-w-3xl mx-auto w-full relative flex gap-2 items-center">
             {/* Media upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
               title="Upload media"
             >
               <Plus className="w-5 h-5" />
@@ -517,7 +517,7 @@ function ChatView({
             {/* Paperclip attachment */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
               title="Attach file"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -538,7 +538,7 @@ function ChatView({
                 onChange={e => chat.handleInputChange(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') chat.handleSend(); if (e.key === 'Escape' && chat.replyingTo) chat.setReplyingTo(null) }}
                 placeholder="Type a message..."
-                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-[14px] outline-none transition-all focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-100 placeholder:text-slate-400"
+                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none transition-all focus:bg-brand-card focus:border-slate-300 focus:ring-2 focus:ring-slate-100 placeholder:text-brand-text/60"
               />
               <button
                 onClick={chat.handleSend}
@@ -595,7 +595,7 @@ function PostsView({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-6 flex flex-col gap-5 scrollbar-hide bg-slate-50/30 relative">
+    <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-6 flex flex-col gap-5 scrollbar-hide bg-brand-secondary/30 relative">
       {/* CreatePortal modal for group posts */}
       {showCreatePost && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -617,26 +617,26 @@ function PostsView({
         {isLoading ? (
           <>
             {[1, 2].map(i => (
-              <div key={i} className="p-5 bg-white border border-slate-100 rounded-2xl">
+              <div key={i} className="p-5 bg-brand-card border border-brand-divider rounded-2xl">
                 <div className="flex gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse" />
+                  <div className="w-10 h-10 rounded-full bg-brand-secondary animate-pulse" />
                   <div className="flex flex-col justify-center gap-2">
-                    <div className="w-28 h-3 rounded-full bg-slate-100 animate-pulse" />
-                    <div className="w-16 h-2 rounded-full bg-slate-50 animate-pulse" />
+                    <div className="w-28 h-3 rounded-full bg-brand-secondary animate-pulse" />
+                    <div className="w-16 h-2 rounded-full bg-brand-secondary animate-pulse" />
                   </div>
                 </div>
-                <div className="w-full h-4 rounded-full bg-slate-50 animate-pulse" />
-                <div className="w-3/4 h-4 rounded-full bg-slate-50 mt-2 animate-pulse" />
+                <div className="w-full h-4 rounded-full bg-brand-secondary animate-pulse" />
+                <div className="w-3/4 h-4 rounded-full bg-brand-secondary mt-2 animate-pulse" />
               </div>
             ))}
           </>
         ) : allPosts.length === 0 ? (
           <div className="text-center py-16 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center mb-4">
               <FileText className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
             </div>
-            <p className="text-[14px] font-medium text-slate-500">No posts yet</p>
-            <p className="text-[12px] mt-1 text-slate-400">Be the first to share something!</p>
+            <p className="text-[14px] font-medium text-brand-highlight">No posts yet</p>
+            <p className="text-[12px] mt-1 text-brand-text/60">Be the first to share something!</p>
           </div>
         ) : (
           allPosts.map(post => {
@@ -644,28 +644,28 @@ function PostsView({
             const liked = likedPosts.has(post.post_id)
 
             return (
-              <div key={post.post_id} className="p-5 rounded-2xl bg-white border border-slate-100 hover:shadow-sm transition-shadow">
+              <div key={post.post_id} className="p-5 rounded-2xl bg-brand-card border border-brand-divider hover:shadow-sm transition-shadow">
                 <div className="flex gap-3 mb-4">
                   <Avatar user={{ id: post.author_id, name: author.name, avatar: author.avatar }} size={40} showStatus />
                   <div className="flex-1 flex flex-col justify-center">
-                    <div className="font-semibold text-slate-900 text-[14px]">{author.name}</div>
-                    <div className="text-slate-400 text-[12px] font-normal">{relativeTime(post.created_at)}</div>
+                    <div className="font-semibold text-brand-text text-[14px]">{author.name}</div>
+                    <div className="text-brand-text/60 text-[12px] font-normal">{relativeTime(post.created_at)}</div>
                   </div>
                 </div>
                 <p className="text-slate-700 text-[14px] leading-relaxed whitespace-pre-wrap">
                   Shared a post
                 </p>
-                <div className="flex gap-6 mt-4 pt-3 border-t border-slate-100">
+                <div className="flex gap-6 mt-4 pt-3 border-t border-brand-divider">
                   <button
                     onClick={() => toggleLike(post.post_id)}
-                    className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${liked ? 'text-red-500' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${liked ? 'text-red-500' : 'text-brand-text/60 hover:text-brand-highlight'}`}
                   >
                     <span className="text-base leading-none">{liked ? '❤️' : '🤍'}</span>
                     Like
                   </button>
                   <button
                     onClick={() => setCommentOpen(commentOpen === post.post_id ? null : post.post_id)}
-                    className="flex items-center gap-2 text-[13px] font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                    className="flex items-center gap-2 text-[13px] font-medium text-brand-text/60 hover:text-brand-highlight transition-colors"
                     style={commentOpen === post.post_id ? { color: groupColor } : {}}
                   >
                     <MessageSquare className="w-4 h-4" />
@@ -673,14 +673,14 @@ function PostsView({
                   </button>
                 </div>
                 {commentOpen === post.post_id && (
-                  <div className="mt-4 flex gap-3 items-center bg-slate-50 p-3 rounded-xl">
+                  <div className="mt-4 flex gap-3 items-center bg-brand-secondary p-3 rounded-xl">
                     {me && <Avatar user={{ id: me.id, name: me.name, avatar: getInitials(me.name) }} size={32} />}
                     <input
                       value={commentText}
                       onChange={e => setCommentText(e.target.value)}
                       placeholder="Write a comment..."
                       onKeyDown={e => { if (e.key === 'Enter' && commentText.trim()) { setCommentText(''); setCommentOpen(null) } }}
-                      className="flex-1 w-full py-2 px-3 rounded-lg bg-transparent border-none text-slate-900 text-[13px] outline-none placeholder:text-slate-400"
+                      className="flex-1 w-full py-2 px-3 rounded-lg bg-transparent border-none text-brand-text text-[13px] outline-none placeholder:text-brand-text/60"
                     />
                     <button
                       onClick={() => { if (commentText.trim()) { setCommentText(''); setCommentOpen(null); } }}
@@ -715,14 +715,14 @@ function MembersView({
 }) {
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 py-3 bg-white">
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="flex gap-3 py-3 px-2 flex-col justify-center">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse" />
+              <div className="w-10 h-10 rounded-full bg-brand-secondary animate-pulse" />
               <div className="flex-1 flex flex-col gap-1.5">
-                <div className="w-32 h-3 rounded-full bg-slate-100 animate-pulse" />
-                <div className="w-20 h-2.5 rounded-full bg-slate-50 animate-pulse" />
+                <div className="w-32 h-3 rounded-full bg-brand-secondary animate-pulse" />
+                <div className="w-20 h-2.5 rounded-full bg-brand-secondary animate-pulse" />
               </div>
             </div>
           </div>
@@ -742,7 +742,7 @@ function MembersView({
     return (
       <div
         key={m.user_id}
-        className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
+        className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-secondary transition-colors cursor-pointer group"
       >
         <Avatar
           user={{ id: m.user_id, name, avatar: getInitials(name), isOnline: false }}
@@ -751,7 +751,7 @@ function MembersView({
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 text-[13px] group-hover:text-slate-700 transition-colors">{name}</span>
+            <span className="font-bold text-brand-text text-[13px] group-hover:text-slate-700 transition-colors">{name}</span>
             {isAdmin && (
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider" style={{ color: groupColor, background: `${groupColor}15` }}>Admin</span>
             )}
@@ -760,7 +760,7 @@ function MembersView({
             )}
           </div>
           {m.username && (
-            <div className="text-slate-400 text-[11px] font-medium mt-0.5">@{m.username}</div>
+            <div className="text-brand-text/60 text-[11px] font-medium mt-0.5">@{m.username}</div>
           )}
         </div>
       </div>
@@ -768,10 +768,10 @@ function MembersView({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-hide bg-white">
+    <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-hide">
       <div className="flex items-center gap-2 px-3 mb-2">
         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
-        <div className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">
+        <div className="text-brand-highlight text-[11px] font-bold uppercase tracking-widest">
           Online ({online.length})
         </div>
       </div>
@@ -783,7 +783,7 @@ function MembersView({
         <>
           <div className="flex items-center gap-2 px-3 mb-2 mt-4">
             <div className="w-2 h-2 rounded-full bg-slate-300" />
-            <div className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">
+            <div className="text-brand-text/60 text-[11px] font-bold uppercase tracking-widest">
               Offline ({offline.length})
             </div>
           </div>
@@ -796,9 +796,9 @@ function MembersView({
       )}
 
       {members.length === 0 && (
-        <div className="text-center py-12 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 border-dashed mx-3">
+        <div className="text-center py-12 flex flex-col items-center justify-center text-brand-text/60 bg-brand-secondary rounded-2xl border border-brand-divider border-dashed mx-3">
           <Users className="w-12 h-12 mb-3 text-slate-300" strokeWidth={1.5} />
-          <div className="text-[13px] font-medium text-slate-500">No members found</div>
+          <div className="text-[13px] font-medium text-brand-highlight">No members found</div>
         </div>
       )}
     </div>
@@ -869,15 +869,15 @@ export default function GroupPanel(props: GroupPanelProps) {
   }
 
   return (
-    <div className="w-full flex flex-col h-full bg-white font-sans border-l border-slate-100">
+    <div className="w-full flex flex-col h-full font-sans border-l border-brand-divider">
       {/* ── Header ── */}
-      <div className="px-8 py-5 border-b border-slate-100 flex-shrink-0 bg-white z-20">
+      <div className="px-8 py-5 border-b border-brand-divider flex-shrink-0 z-20">
         <div className="flex items-center justify-between">
           {/* Left: icon · name · info */}
           <div className="flex items-center gap-4">
             <button
               onClick={props.onClose}
-              className="md:hidden p-2 -ml-2 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-full transition-colors"
+              className="md:hidden p-2 -ml-2 flex items-center justify-center text-brand-highlight hover:bg-brand-secondary hover:text-brand-text rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -900,17 +900,17 @@ export default function GroupPanel(props: GroupPanelProps) {
             {/* Name + info */}
             <div className="flex flex-col justify-center">
               <h1
-                className="font-semibold text-slate-900 text-[16px] tracking-tight leading-tight cursor-pointer hover:text-blue-600 transition-colors"
+                className="font-semibold text-brand-text text-[16px] tracking-tight leading-tight cursor-pointer hover:text-blue-600 transition-colors"
                 onClick={() => router.push(`/groups/${groupId}`)}
               >{groupName}</h1>
-              <p className="text-slate-400 text-[12px] font-medium mt-0.5">
+              <p className="text-brand-text/60 text-[12px] font-medium mt-0.5">
                 {groupLoading ? '...' : `${memberCount} members`}
               </p>
             </div>
           </div>
 
           {/* Center: mode toggle */}
-          <div className="flex bg-slate-50 rounded-lg p-1 border border-slate-100">
+          <div className="flex bg-brand-secondary rounded-lg p-1 border border-brand-divider">
             {MODE_TABS.map(tab => {
               const active = mode === tab.mode
               const Icon = tab.icon
@@ -919,8 +919,8 @@ export default function GroupPanel(props: GroupPanelProps) {
                   key={tab.mode}
                   onClick={() => setMode(tab.mode)}
                   className={`py-2 px-5 rounded-md text-[13px] font-medium transition-all duration-200 flex items-center justify-center gap-2 ${active
-                    ? 'bg-white shadow-sm text-slate-900'
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-brand-card shadow-sm text-brand-text'
+                    : 'text-brand-text/60 hover:text-brand-highlight'
                   }`}
                 >
                   <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.5} />
@@ -934,7 +934,7 @@ export default function GroupPanel(props: GroupPanelProps) {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-[12px] font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-brand-divider px-3 text-[12px] font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
               title="Create a new group"
             >
               <Plus className="h-4 w-4" />
@@ -942,48 +942,48 @@ export default function GroupPanel(props: GroupPanelProps) {
             </button>
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="w-9 h-9 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-700 rounded-lg transition-colors lg:hidden"
+              className="w-9 h-9 flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-slate-700 rounded-lg transition-colors lg:hidden"
               title="Create a new group"
             >
               <Plus className="w-[18px] h-[18px]" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
+            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
               <Phone className="w-[18px] h-[18px]" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
+            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
               <Video className="w-[18px] h-[18px]" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-lg transition-colors">
+            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
               <Search className="w-[18px] h-[18px]" />
             </button>
             <div className="relative">
               <button
                 onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
+                className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors"
               >
                 <MoreVertical className="w-[18px] h-[18px]" />
               </button>
               {showMoreMenu && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50">
+                <div className="absolute right-0 top-full mt-1 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-xl py-1.5 z-50">
                   <button
                     onClick={() => { setShowCreateGroupModal(true); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
                   >
-                    <Plus className="w-4 h-4 text-slate-400" />
+                    <Plus className="w-4 h-4 text-brand-text/60" />
                     Create new group
                   </button>
                   <button
                     onClick={() => { setEditingName(true); setNewGroupName(groupName); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
                   >
-                    <Pencil className="w-4 h-4 text-slate-400" />
+                    <Pencil className="w-4 h-4 text-brand-text/60" />
                     Edit group name
                   </button>
                   <button
                     onClick={() => { setShowAddMember(true); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
                   >
-                    <UserPlus className="w-4 h-4 text-slate-400" />
+                    <UserPlus className="w-4 h-4 text-brand-text/60" />
                     Add member
                   </button>
                   <button
@@ -1024,12 +1024,12 @@ export default function GroupPanel(props: GroupPanelProps) {
 
       {editingName && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-[360px] shadow-xl">
-            <h3 className="text-[16px] font-semibold text-slate-900 mb-4">Edit group name</h3>
+          <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
+            <h3 className="text-[16px] font-semibold text-brand-text mb-4">Edit group name</h3>
             <input
               value={newGroupName}
               onChange={e => setNewGroupName(e.target.value)}
-              className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
               autoFocus
               onKeyDown={e => {
                 if (e.key === 'Enter' && newGroupName.trim()) {
@@ -1044,7 +1044,7 @@ export default function GroupPanel(props: GroupPanelProps) {
               }}
             />
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setEditingName(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 text-[13px] hover:bg-slate-50">Cancel</button>
+              <button onClick={() => setEditingName(false)} className="px-4 py-2 rounded-lg border border-brand-divider text-brand-highlight text-[13px] hover:bg-brand-secondary">Cancel</button>
               <button
                 onClick={() => {
                   if (group?.chat_conversation_id && newGroupName.trim()) {
@@ -1065,17 +1065,17 @@ export default function GroupPanel(props: GroupPanelProps) {
       {/* ── Add member modal ── */}
       {showAddMember && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-[360px] shadow-xl">
-            <h3 className="text-[16px] font-semibold text-slate-900 mb-4">Add member</h3>
+          <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
+            <h3 className="text-[16px] font-semibold text-brand-text mb-4">Add member</h3>
             <input
               value={addMemberId}
               onChange={e => setAddMemberId(e.target.value)}
               placeholder="Enter user ID"
-              className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
               autoFocus
             />
             <div className="flex gap-3 justify-end">
-              <button onClick={() => { setShowAddMember(false); setAddMemberId('') }} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-500 text-[13px] hover:bg-slate-50">Cancel</button>
+              <button onClick={() => { setShowAddMember(false); setAddMemberId('') }} className="px-4 py-2 rounded-lg border border-brand-divider text-brand-highlight text-[13px] hover:bg-brand-secondary">Cancel</button>
               <button
                 onClick={async () => {
                   if (group?.chat_conversation_id && addMemberId.trim()) {

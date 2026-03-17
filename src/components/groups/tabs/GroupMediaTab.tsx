@@ -27,10 +27,10 @@ export default function GroupMediaTab({ groupId }: GroupMediaTabProps) {
   if (posts.length === 0) {
     return (
       <div className="text-center py-20">
-        <div className="w-16 h-16 rounded-2xl bg-slate-50 mx-auto mb-4 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
           <ImageIcon className="w-8 h-8 text-slate-200" />
         </div>
-        <p className="text-sm font-semibold text-slate-400">No media yet</p>
+        <p className="text-sm font-semibold text-brand-text/60">No media yet</p>
         <p className="text-xs text-slate-300 mt-1">Photos and videos shared in this group will appear here.</p>
       </div>
     )
@@ -56,7 +56,7 @@ export default function GroupMediaTab({ groupId }: GroupMediaTabProps) {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-xl font-bold text-xs text-slate-500 hover:text-[#D8103F] hover:shadow-md transition-all border border-slate-100 disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 bg-brand-card rounded-xl font-bold text-xs text-brand-highlight hover:text-[#D8103F] hover:shadow-md transition-all border border-brand-divider disabled:opacity-50"
           >
             {isFetchingNextPage ? (
               <>

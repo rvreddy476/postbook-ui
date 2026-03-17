@@ -47,13 +47,13 @@ export default function CirclePage() {
     }, [router])
 
     if (!isSessionLoaded || !currentUser) {
-        return <div className="min-h-screen bg-[#fcfaff]" />
+        return <div className="min-h-screen bg-brand-bg" />
     }
 
     if (!authUser) {
         return (
-            <div className="flex h-screen items-center justify-center bg-[#fcfaff]">
-                <p className="text-slate-400">Please log in to view your circle.</p>
+            <div className="flex h-screen items-center justify-center bg-brand-bg">
+                <p className="text-brand-text/60">Please log in to view your circle.</p>
             </div>
         )
     }
@@ -76,7 +76,7 @@ export default function CirclePage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#fcfaff] font-sans selection:bg-rose-100 selection:text-rose-900">
+        <div className="min-h-screen bg-brand-bg font-sans selection:bg-rose-100 selection:text-rose-900">
             <MinimalHeader currentUser={currentUser} onLogout={handleLogout} />
 
             <div className="flex pt-16">
@@ -94,8 +94,8 @@ export default function CirclePage() {
                                 <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black text-slate-900 tracking-tight">My Circle</h1>
-                                <p className="text-xs text-slate-400 font-medium mt-0.5">Manage your connections and discover new people</p>
+                                <h1 className="text-2xl font-black text-brand-text tracking-tight">My Circle</h1>
+                                <p className="text-xs text-brand-text/60 font-medium mt-0.5">Manage your connections and discover new people</p>
                             </div>
                         </div>
 
@@ -113,7 +113,7 @@ export default function CirclePage() {
                                         className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${
                                             isActive
                                                 ? `bg-gradient-to-r ${t.gradient} text-white shadow-lg ${t.activeGlow}`
-                                                : 'bg-white text-slate-500 border border-slate-100 hover:border-slate-200 hover:shadow-sm hover:text-slate-700'
+                                                : 'bg-brand-card text-brand-highlight border border-brand-divider hover:border-brand-divider hover:shadow-sm hover:text-slate-700'
                                         }`}
                                     >
                                         <Icon className="w-4 h-4" />
@@ -121,7 +121,7 @@ export default function CirclePage() {
                                         {badge !== undefined && (
                                             <span className={`ml-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[9px] font-black ${
                                                 isActive
-                                                    ? 'bg-white/25 text-white'
+                                                    ? 'bg-brand-card/25 text-white'
                                                     : 'bg-rose-100 text-rose-600'
                                             }`}>
                                                 {badge > 99 ? '99+' : badge}

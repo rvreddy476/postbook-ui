@@ -72,11 +72,11 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h2 className="text-base font-bold text-slate-900">Your Profile QR Code</h2>
+            <div className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
+                    <h2 className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
-                        <X className="w-4 h-4 text-slate-500" />
+                        <X className="w-4 h-4 text-brand-highlight" />
                     </button>
                 </div>
                 <div className="p-6 space-y-4">
@@ -87,7 +87,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                     ) : (
                         <>
                             {/* QR placeholder styled box */}
-                            <div className="border-4 border-slate-900 rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-white">
+                            <div className="border-4 border-slate-900 rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-brand-card">
                                 <div className="grid grid-cols-5 gap-0.5">
                                     {Array.from({ length: 25 }).map((_, i) => (
                                         <div
@@ -95,7 +95,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                                             className={`w-7 h-7 rounded-sm ${
                                                 [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
                                                     ? "bg-slate-900"
-                                                    : "bg-white"
+                                                    : "bg-brand-card"
                                             }`}
                                         />
                                     ))}
@@ -103,16 +103,16 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                             </div>
 
                             <div className="text-center space-y-1">
-                                <p className="text-xs font-semibold text-slate-500">Share Profile</p>
+                                <p className="text-xs font-semibold text-brand-highlight">Share Profile</p>
                                 {qr?.profile_url && (
-                                    <p className="text-[11px] text-slate-400 break-all font-mono bg-slate-50 rounded-lg px-3 py-1.5">
+                                    <p className="text-[11px] text-brand-text/60 break-all font-mono bg-brand-secondary rounded-lg px-3 py-1.5">
                                         {qr.profile_url}
                                     </p>
                                 )}
                                 {typeof qr?.scan_count === "number" && (
-                                    <p className="text-[11px] text-slate-400">
+                                    <p className="text-[11px] text-brand-text/60">
                                         Scanned{" "}
-                                        <span className="font-bold text-slate-600">{qr.scan_count}</span>{" "}
+                                        <span className="font-bold text-brand-highlight">{qr.scan_count}</span>{" "}
                                         {qr.scan_count === 1 ? "time" : "times"}
                                     </p>
                                 )}
@@ -158,13 +158,13 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
                 <Pin className="w-3.5 h-3.5 text-[#D8103F]" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Pinned</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-highlight">Pinned</span>
             </div>
             <div className="flex flex-wrap gap-2">
                 {pins.map((pin) => (
                     <div
                         key={pin.id}
-                        className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-sm"
+                        className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-sm"
                     >
                         <Pin className="w-3 h-3 text-[#D8103F] shrink-0" />
                         <span className="text-xs font-medium text-slate-700 max-w-[120px] truncate">
@@ -172,7 +172,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                         </span>
                         <span
                             className={`text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
-                                CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-slate-50 text-slate-400 border-slate-100"
+                                CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-brand-secondary text-brand-text/60 border-brand-divider"
                             }`}
                         >
                             {pin.content_type}
@@ -233,7 +233,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
         article: "bg-emerald-50 text-emerald-600 border-emerald-100",
         video: "bg-[#D8103F]/10 text-[#D8103F] border-[#D8103F]/20",
         design: "bg-violet-50 text-violet-600 border-violet-100",
-        other: "bg-slate-50 text-slate-500 border-slate-200",
+        other: "bg-brand-secondary text-brand-highlight border-brand-divider",
     }
 
     return (
@@ -257,26 +257,26 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Title *"
-                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
                     />
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Description"
                         rows={2}
-                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 resize-none"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 resize-none"
                     />
                     <input
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="URL (optional)"
                         type="url"
-                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
                     />
                     <select
                         value={itemType}
                         onChange={(e) => setItemType(e.target.value)}
-                        className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 bg-white"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 bg-brand-card"
                     >
                         <option value="project">Project</option>
                         <option value="article">Article</option>
@@ -296,7 +296,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         </button>
                         <button
                             onClick={() => setShowAdd(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition-colors"
+                            className="px-4 py-2 rounded-xl bg-slate-100 text-brand-highlight text-xs font-bold hover:bg-slate-200 transition-colors"
                         >
                             Cancel
                         </button>
@@ -309,16 +309,16 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                     <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
                 </div>
             ) : items.length === 0 ? (
-                <div className="py-16 text-center text-sm text-slate-400">No portfolio items yet</div>
+                <div className="py-16 text-center text-sm text-brand-text/60">No portfolio items yet</div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {items.map((item) => (
                         <div
                             key={item.id}
-                            className="border border-slate-100 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow space-y-2"
+                            className="border border-brand-divider rounded-xl p-4 bg-brand-card shadow-sm hover:shadow-md transition-shadow space-y-2"
                         >
                             <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold text-slate-900 line-clamp-1">{item.title}</p>
+                                <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
                                 <span
                                     className={`shrink-0 text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
                                         ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
@@ -328,7 +328,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                                 </span>
                             </div>
                             {item.description && (
-                                <p className="text-xs text-slate-500 line-clamp-2">{item.description}</p>
+                                <p className="text-xs text-brand-highlight line-clamp-2">{item.description}</p>
                             )}
                             {item.url && (
                                 <a
@@ -610,7 +610,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 <div className="max-w-[1200px] mx-auto px-6 sm:px-8 pt-3 flex justify-end">
                     <button
                         onClick={() => setQrModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-500 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-divider text-brand-highlight text-xs font-semibold hover:bg-brand-secondary hover:border-slate-300 transition-all"
                     >
                         <QrCode className="w-3.5 h-3.5" />
                         QR Code
@@ -625,7 +625,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             <div
                 className={`${
                     isTabsSticky
-                        ? "sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm"
+                        ? "sticky top-0 z-30 bg-brand-card/95 backdrop-blur-xl border-b border-brand-divider shadow-sm"
                         : ""
                 } transition-all duration-200`}
             >
@@ -684,7 +684,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.25 }}
-                                className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+                                className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
                             >
                                 <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3.5">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">
@@ -700,11 +700,11 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                                     <Film className="h-4 w-4 text-[#D8103F]" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Posttube Videos</p>
-                                                    <p className="text-[10px] text-slate-400 font-medium">Long-form content</p>
+                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Posttube Videos</p>
+                                                    <p className="text-[10px] text-brand-text/60 font-medium">Long-form content</p>
                                                 </div>
                                             </div>
-                                            <span className="text-lg font-black text-slate-900">
+                                            <span className="text-lg font-black text-brand-text">
                                                 {contentCounts.video.toLocaleString()}
                                             </span>
                                         </div>
@@ -717,28 +717,28 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                                     <Clapperboard className="h-4 w-4 text-rose-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Flicks</p>
-                                                    <p className="text-[10px] text-slate-400 font-medium">Short-form clips</p>
+                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Flicks</p>
+                                                    <p className="text-[10px] text-brand-text/60 font-medium">Short-form clips</p>
                                                 </div>
                                             </div>
-                                            <span className="text-lg font-black text-slate-900">
+                                            <span className="text-lg font-black text-brand-text">
                                                 {contentCounts.reel.toLocaleString()}
                                             </span>
                                         </div>
                                     )}
 
                                     {contentCounts.total > 0 && (
-                                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div className="flex items-center justify-between pt-3 border-t border-brand-divider">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 rounded-xl bg-amber-50">
                                                     <Sparkles className="h-4 w-4 text-amber-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Total Sparks</p>
-                                                    <p className="text-[10px] text-slate-400 font-medium">All-time engagement</p>
+                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Total Sparks</p>
+                                                    <p className="text-[10px] text-brand-text/60 font-medium">All-time engagement</p>
                                                 </div>
                                             </div>
-                                            <span className="text-lg font-black text-slate-900">
+                                            <span className="text-lg font-black text-brand-text">
                                                 {contentCounts.total.toLocaleString()}
                                             </span>
                                         </div>
@@ -781,7 +781,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+                            className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
                         >
                             <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3">
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">Studio Stats</h3>

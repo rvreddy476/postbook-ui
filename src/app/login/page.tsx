@@ -134,9 +134,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
+    <div className="flex min-h-screen items-center justify-center px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
       <div className="w-full max-w-md">
-        <div className="relative overflow-hidden rounded-[2rem] border border-[#F0E6DC] bg-white p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="relative overflow-hidden rounded-[2rem] border border-brand-divider bg-brand-card p-7 shadow-lg sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             {screen === 'login' && (
               <motion.div
@@ -150,14 +150,14 @@ export default function LoginPage() {
               >
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D4A574] shadow-lg shadow-[#D4A574]/20">
-                    <span className="text-lg font-black tracking-tighter text-white">PB</span>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-accent shadow-lg">
+                    <span className="text-lg font-black tracking-tighter text-brand-bg">PB</span>
                   </div>
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight text-[#3C2415]">
+                    <h1 className="text-2xl font-black tracking-tight text-brand-text">
                       PostBoek.com
                     </h1>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#D4A574]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
                       Welcome Back
                     </p>
                   </div>
@@ -184,7 +184,7 @@ export default function LoginPage() {
                 <form className="space-y-3" onSubmit={handleSubmit}>
                   <div className="space-y-1.5">
                     <label
-                      className="text-xs font-semibold text-[#7B5B3A]"
+                      className="text-xs font-semibold text-brand-text/60"
                       htmlFor="loginId"
                     >
                       Mail or phone number for login
@@ -195,7 +195,7 @@ export default function LoginPage() {
                       value={loginId}
                       onChange={(e) => setLoginId(e.target.value)}
                       placeholder="you@example.com or 9876543210"
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
                       required
                     />
                   </div>
@@ -203,14 +203,14 @@ export default function LoginPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <label
-                        className="text-xs font-semibold text-[#7B5B3A]"
+                        className="text-xs font-semibold text-brand-text/60"
                         htmlFor="password"
                       >
                         Password
                       </label>
                       <Link
                         href="/auth/forgot-password"
-                        className="text-xs font-semibold text-[#D4A574] transition-colors hover:text-[#3C2415]"
+                        className="text-xs font-semibold text-brand-accent transition-colors hover:text-brand-text"
                       >
                         Forgot password?
                       </Link>
@@ -222,13 +222,13 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="********"
-                        className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7B5B3A] transition-colors hover:text-[#3C2415]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text/60 transition-colors hover:text-brand-text"
                         tabIndex={-1}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
@@ -244,7 +244,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01] disabled:opacity-60"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 hover:scale-[1.01] disabled:opacity-60"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isLoading ? 'Logging in...' : 'Login'}
@@ -255,11 +255,11 @@ export default function LoginPage() {
                 <OAuthButtons label="or continue with" />
 
                 {/* Register link */}
-                <div className="mt-5 text-center text-sm text-[#7B5B3A]">
+                <div className="mt-5 text-center text-sm text-brand-text/60">
                   <span>Don&apos;t have account? </span>
                   <Link
                     href="/register"
-                    className="font-bold text-[#D4A574] hover:text-[#3C2415]"
+                    className="font-bold text-brand-accent hover:text-brand-text"
                   >
                     Create One
                   </Link>
@@ -282,28 +282,28 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={handleBackToLogin}
-                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-[#7B5B3A] transition-colors hover:text-[#D4A574]"
+                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-brand-accent"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to login
                   </button>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                      <ShieldCheck className="h-6 w-6 text-[#D4A574]" />
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-secondary">
+                      <ShieldCheck className="h-6 w-6 text-brand-accent" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black tracking-tight text-[#3C2415]">
+                      <h2 className="text-xl font-black tracking-tight text-brand-text">
                         Two-Factor Auth
                       </h2>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#D4A574]">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
                         Verification Required
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <p className="mb-5 text-sm font-medium text-[#7B5B3A]">
+                <p className="mb-5 text-sm font-medium text-brand-text/60">
                   {isRecoveryMode
                     ? 'Enter one of your recovery codes to verify your identity.'
                     : 'Enter the 6-digit code from your authenticator app.'}
@@ -330,7 +330,7 @@ export default function LoginPage() {
                 <form onSubmit={handle2FASubmit} className="space-y-4">
                   <div className="space-y-1.5">
                     <label
-                      className="text-xs font-semibold text-[#7B5B3A]"
+                      className="text-xs font-semibold text-brand-text/60"
                       htmlFor="twoFACode"
                     >
                       {isRecoveryMode ? 'Recovery Code' : 'Verification Code'}
@@ -344,7 +344,7 @@ export default function LoginPage() {
                       value={twoFACode}
                       onChange={handleCodeChange}
                       placeholder={isRecoveryMode ? 'xxxx-xxxx-xxxx' : '000000'}
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-brand-text outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
                       required
                     />
                   </div>
@@ -352,7 +352,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isVerifying || (!isRecoveryMode && twoFACode.length < 6)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 hover:scale-[1.01] disabled:opacity-60"
                   >
                     {isVerifying && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isVerifying ? 'Verifying...' : 'Verify'}
@@ -368,7 +368,7 @@ export default function LoginPage() {
                       setTwoFACode('');
                       setTwoFAError(null);
                     }}
-                    className="text-sm font-semibold text-[#D4A574] transition-colors hover:text-[#3C2415]"
+                    className="text-sm font-semibold text-brand-accent transition-colors hover:text-brand-text"
                   >
                     {isRecoveryMode
                       ? 'Use authenticator code instead'

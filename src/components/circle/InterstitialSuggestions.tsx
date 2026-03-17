@@ -45,11 +45,11 @@ const InterstitialSuggestions: React.FC<InterstitialSuggestionsProps> = ({
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    <p className="text-xs font-bold text-slate-600">{headerText}</p>
+                    <p className="text-xs font-bold text-brand-highlight">{headerText}</p>
                 </div>
                 <button
                     onClick={onClose}
-                    className="w-6 h-6 rounded-full bg-slate-200/50 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
+                    className="w-6 h-6 rounded-full bg-slate-200/50 flex items-center justify-center text-brand-text/60 hover:text-brand-highlight hover:bg-slate-200 transition-colors"
                 >
                     <X className="w-3 h-3" />
                 </button>

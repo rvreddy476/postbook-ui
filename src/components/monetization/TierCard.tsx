@@ -25,8 +25,8 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
     const sym = currencySymbol(tier.currency)
 
     return (
-        <div className={`bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${
-            tier.is_active ? "border-[#F0E6DC]" : "border-slate-200 opacity-70"
+        <div className={`bg-brand-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${
+            tier.is_active ? "border-[#F0E6DC]" : "border-brand-divider opacity-70"
         }`}>
             {/* Top accent */}
             <div className={`h-1 ${tier.is_active ? "bg-gradient-to-r from-[#D4A574] to-[#7B5B3A]" : "bg-slate-300"}`} />
@@ -38,7 +38,7 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
                         <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-sm font-black text-[#3C2415] truncate">{tier.name}</h3>
                             {!tier.is_active && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-slate-100 text-brand-highlight border border-brand-divider flex-shrink-0">
                                     Inactive
                                 </span>
                             )}
@@ -69,7 +69,7 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
                                 className={`p-2 rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     tier.is_active
                                         ? "text-[#7B5B3A] hover:bg-red-50 hover:text-red-500"
-                                        : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-500"
+                                        : "text-brand-text/60 hover:bg-emerald-50 hover:text-emerald-500"
                                 }`}
                                 title={tier.is_active ? "Deactivate tier" : "Activate tier"}
                             >

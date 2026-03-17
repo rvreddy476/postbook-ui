@@ -720,7 +720,7 @@ function SessionItem({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
+            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
         >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
                 {getPlatformIcon(session.platform)}
@@ -776,7 +776,7 @@ function TrustedDeviceItem({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
+            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
         >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
                 <Smartphone className="h-5 w-5 text-[#D4A574]" />
@@ -810,7 +810,7 @@ function TrustedDeviceItem({
 
 function ItemSkeleton() {
     return (
-        <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-white px-4 py-3">
+        <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
             <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
             <div className="min-w-0 flex-1 space-y-2">
                 <div className="h-4 w-48 animate-pulse rounded bg-[#F0E6DC]" />
@@ -1066,7 +1066,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-2xl bg-white border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1125,7 +1125,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="rounded-2xl bg-white border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1217,7 +1217,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="rounded-2xl bg-white border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1294,7 +1294,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="rounded-2xl bg-white border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1355,7 +1355,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="rounded-2xl bg-white border border-rose-200 shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-rose-200 shadow-sm"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">

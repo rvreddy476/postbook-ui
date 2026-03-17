@@ -34,7 +34,7 @@ function OverlayAction({
       className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
         active
           ? "bg-slate-900 text-white"
-          : "bg-white/10 text-white/80 hover:bg-white/20"
+          : "bg-brand-card/10 text-white/80 hover:bg-brand-card/20"
       }`}
       aria-label={label}
     >
@@ -96,7 +96,7 @@ export function ExpandedVideoOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+            className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-brand-card/10 text-white backdrop-blur-sm transition hover:bg-brand-card/20"
             aria-label="Close expanded video"
           >
             <X className="h-5 w-5" />
@@ -172,15 +172,15 @@ export function ExpandedVideoOverlay({
 
             {/* Comments panel */}
             {showComments && commentsVisible ? (
-              <div className="flex w-[380px] shrink-0 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
+              <div className="flex w-[380px] shrink-0 flex-col rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between border-b border-[#E8E8EE] px-4 py-3">
-                  <h3 className="text-[13px] font-bold text-slate-900">
+                  <h3 className="text-[13px] font-bold text-brand-text">
                     Comments{typeof commentCount === "number" ? ` (${commentCount})` : ""}
                   </h3>
                   <button
                     type="button"
                     onClick={() => setCommentsVisible(false)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-slate-100 hover:text-brand-highlight"
                     aria-label="Close comments"
                   >
                     <X className="h-4 w-4" />

@@ -3,11 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 252, 250, 255;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 48, 47, 44;
+  --background-start-rgb: 239, 237, 227;
+  --background-end-rgb: 239, 237, 227;
   --prismatic-violet: #D8103F;
   --prismatic-rose: #db2777;
+
+  /* Brand Colors — awesome / Paper & Asphalt */
+  /* hex #efede3 (Paper) */ --brand-bg: 239 237 227;
+  /* hex #302f2c (Asphalt) */ --brand-text: 48 47 44;
+  /* hex #302f2c (Asphalt) */ --brand-accent: 48 47 44;
+  /* hex #e5e3d9 */ --brand-secondary: 229 227 217;
+  /* hex #302f2c */ --brand-highlight: 48 47 44;
+  --brand-divider: rgba(48, 47, 44, 0.15);
+  /* hex #ffffff */ --brand-card: 255 255 255;
+}
+
+.dark {
+  /* hex #302f2c (Asphalt) */ --brand-bg: 48 47 44;
+  /* hex #efede3 (Paper) */ --brand-text: 239 237 227;
+  /* hex #efede3 (Paper) */ --brand-accent: 239 237 227;
+  /* hex #3a3936 */ --brand-secondary: 58 57 54;
+  --brand-divider: rgba(239, 237, 227, 0.2);
+  /* hex #282725 (Deeper Asphalt) */ --brand-card: 40 39 37;
+  /* hex #efede3 */ --brand-highlight: 239 237 227;
 }
 
 html,
@@ -17,22 +36,14 @@ body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  font-family: var(--font-outfit), 'Outfit', sans-serif;
-  background-color: #fcfaff;
+  color: rgb(var(--brand-text));
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  background-color: rgb(var(--brand-bg));
 }
 
 @layer utilities {
-  .bg-background {
-    background-color: rgb(var(--background-start-rgb));
-  }
-
-  .text-foreground {
-    color: rgb(var(--foreground-rgb));
-  }
-
   .font-serif-display {
-    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+    font-family: var(--font-display), 'Space Grotesk', sans-serif;
   }
 }
 
@@ -40,8 +51,21 @@ body {
   display: none;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mask-fade-right {
+  mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}
+
 .glass-panel {
-  @apply bg-white/40 backdrop-blur-3xl saturate-150 ring-1 ring-white/60 shadow-[0_8px_32px_0_rgba(124,58,237,0.05)];
+  @apply bg-brand-card/40 backdrop-blur-3xl saturate-150 ring-1 ring-white/60 shadow-[0_8px_32px_0_rgba(124,58,237,0.05)];
 }
 
 .aero-glass {
@@ -61,11 +85,11 @@ body {
 }
 
 .pb-landing-root {
-  @apply relative flex min-h-screen flex-col overflow-hidden bg-[#fcfaff] font-sans text-slate-900 selection:bg-[#D8103F]/20 selection:text-[#6b081f];
+  @apply relative flex min-h-screen flex-col overflow-hidden bg-brand-bg font-sans text-brand-text selection:bg-[#D8103F]/20 selection:text-[#6b081f];
 }
 
 .pb-landing-bg {
-  @apply fixed inset-0 -z-10 overflow-hidden bg-[#fcfaff];
+  @apply fixed inset-0 -z-10 overflow-hidden bg-brand-bg;
 }
 
 .pb-landing-blob {
@@ -85,7 +109,7 @@ body {
 }
 
 .pb-landing-nav {
-  @apply fixed top-0 z-50 w-full border-b border-white/60 bg-white/40 px-6 py-5 backdrop-blur-2xl sm:px-10;
+  @apply fixed top-0 z-50 w-full border-b border-white/60 bg-brand-card/40 px-6 py-5 backdrop-blur-2xl sm:px-10;
 }
 
 .pb-landing-nav-inner {
@@ -105,7 +129,7 @@ body {
 }
 
 .pb-brand-text {
-  @apply text-2xl font-black tracking-tighter text-slate-950 sm:text-3xl;
+  @apply text-2xl font-black tracking-tighter text-brand-text sm:text-3xl;
 }
 
 .pb-landing-nav-actions {
@@ -113,7 +137,7 @@ body {
 }
 
 .pb-nav-login-link {
-  @apply text-xs font-bold uppercase tracking-[0.25em] text-slate-500 transition-all hover:text-[#D8103F];
+  @apply text-xs font-bold uppercase tracking-[0.25em] text-brand-highlight transition-all hover:text-[#D8103F];
 }
 
 .pb-nav-signup-link {
@@ -137,7 +161,7 @@ body {
 }
 
 .pb-landing-title {
-  @apply text-5xl font-black leading-[0.9] tracking-tighter text-slate-950 lg:text-7xl;
+  @apply text-5xl font-black leading-[0.9] tracking-tighter text-brand-text lg:text-7xl;
 }
 
 .pb-landing-title-gradient {
@@ -145,7 +169,7 @@ body {
 }
 
 .pb-landing-subtitle {
-  @apply mx-auto text-lg font-medium leading-relaxed text-slate-500;
+  @apply mx-auto text-lg font-medium leading-relaxed text-brand-highlight;
 }
 
 .pb-feature-grid {
@@ -153,7 +177,7 @@ body {
 }
 
 .pb-feature-card {
-  @apply rounded-[2rem] border border-white/70 bg-white/40 p-5 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:shadow-2xl;
+  @apply rounded-[2rem] border border-white/70 bg-brand-card/40 p-5 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:shadow-2xl;
 }
 
 .pb-feature-card--blue {
@@ -197,11 +221,11 @@ body {
 }
 
 .pb-feature-title {
-  @apply mb-1 text-xs font-black uppercase tracking-widest text-slate-950;
+  @apply mb-1 text-xs font-black uppercase tracking-widest text-brand-text;
 }
 
 .pb-feature-description {
-  @apply text-[10px] font-bold leading-tight text-slate-400;
+  @apply text-[10px] font-bold leading-tight text-brand-text/60;
 }
 
 @keyframes fadeIn {

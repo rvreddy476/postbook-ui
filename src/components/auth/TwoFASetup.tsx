@@ -61,7 +61,7 @@ export default function TwoFASetup({
         </div>
 
         {/* QR Code Image */}
-        <div className="flex justify-center rounded-xl border border-[#F0E6DC] bg-white p-4">
+        <div className="flex justify-center rounded-xl border border-[#F0E6DC] bg-brand-card p-4">
           <img
             src={setupData.qr_code_url}
             alt="2FA QR Code"
@@ -79,7 +79,7 @@ export default function TwoFASetup({
             <button
               type="button"
               onClick={handleCopySecret}
-              className="shrink-0 rounded-lg border border-[#F0E6DC] bg-white p-2 text-[#7B5B3A] transition-colors hover:bg-[#FAF5F0]"
+              className="shrink-0 rounded-lg border border-[#F0E6DC] bg-brand-card p-2 text-[#7B5B3A] transition-colors hover:bg-[#FAF5F0]"
             >
               {copiedSecret ? (
                 <Check className="h-4 w-4 text-emerald-600" />
@@ -125,7 +125,7 @@ export default function TwoFASetup({
               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
               setVerifyCode(val);
             }}
-            className="w-full rounded-xl border border-[#F0E6DC] bg-white px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/50 focus:ring-2 focus:ring-[#D4A574]/30"
+            className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/50 focus:ring-2 focus:ring-[#D4A574]/30"
           />
         </div>
 
@@ -139,7 +139,7 @@ export default function TwoFASetup({
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="flex-1 rounded-xl border border-[#F0E6DC] bg-white py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
+            className="flex-1 rounded-xl border border-[#F0E6DC] bg-brand-card py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
           >
             Back
           </button>
@@ -199,7 +199,7 @@ export default function TwoFASetup({
       <button
         type="button"
         onClick={handleCopyAllCodes}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#F0E6DC] bg-white py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#F0E6DC] bg-brand-card py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
       >
         {copiedCodes ? (
           <>

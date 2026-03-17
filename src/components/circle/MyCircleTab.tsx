@@ -46,7 +46,7 @@ const MyCircleTab: React.FC = () => {
                 <div className="h-11 w-full rounded-xl bg-slate-100/50 animate-pulse" />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="rounded-2xl bg-white border border-slate-100 overflow-hidden animate-pulse">
+                        <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider overflow-hidden animate-pulse">
                             <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
                             <div className="flex flex-col items-center -mt-10 px-4 pb-5">
                                 <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
@@ -70,8 +70,8 @@ const MyCircleTab: React.FC = () => {
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 flex items-center justify-center mb-5 shadow-sm">
                     <Users className="w-12 h-12 text-[#D8103F]/30" />
                 </div>
-                <p className="text-base font-bold text-slate-500">Your circle is empty</p>
-                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">Discover new people and send connection requests to build your circle!</p>
+                <p className="text-base font-bold text-brand-highlight">Your circle is empty</p>
+                <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">Discover new people and send connection requests to build your circle!</p>
             </div>
         )
     }
@@ -79,7 +79,7 @@ const MyCircleTab: React.FC = () => {
     return (
         <div className="space-y-5">
             <div className="flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-xs font-bold uppercase tracking-wider text-brand-text/60">
                     <span className="text-[#D8103F] text-sm mr-1">{friends.length}</span> in your circle
                 </p>
             </div>
@@ -92,7 +92,7 @@ const MyCircleTab: React.FC = () => {
                         placeholder="Search your circle..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-card py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-300 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10 transition-all"
                     />
                 </div>
             )}
@@ -122,7 +122,7 @@ const MyCircleTab: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={() => setConfirmRemove(null)}
-                                            className="rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+                                            className="rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-brand-highlight hover:bg-slate-200 transition-colors"
                                         >
                                             Cancel
                                         </button>
@@ -137,7 +137,7 @@ const MyCircleTab: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={() => setConfirmRemove(friend.user_id)}
-                                            className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-bold text-slate-400 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
+                                            className="rounded-xl border border-brand-divider bg-brand-card px-3 py-2.5 text-[11px] font-bold text-brand-text/60 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all"
                                         >
                                             Remove
                                         </button>
@@ -149,7 +149,7 @@ const MyCircleTab: React.FC = () => {
                 })}
                 {filtered.length === 0 && search && (
                     <div className="col-span-full py-12 text-center">
-                        <p className="text-sm text-slate-400">
+                        <p className="text-sm text-brand-text/60">
                             No friends matching &ldquo;{search}&rdquo;
                         </p>
                     </div>

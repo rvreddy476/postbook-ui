@@ -90,7 +90,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
                   className="absolute inset-0 flex items-center justify-center"
                 >
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
-                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-white/20 backdrop-blur-sm"
+                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-brand-card/20 backdrop-blur-sm"
                   }`}>
                     {playing ? (
                       <Pause className="h-5 w-5 text-white" fill="white" />
@@ -102,7 +102,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 text-white/30">
-                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center">
+                <div className="h-14 w-14 rounded-2xl bg-brand-card/5 flex items-center justify-center">
                   <Play className="h-6 w-6" />
                 </div>
                 <span className="text-[11px]">No preview</span>
@@ -116,7 +116,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               <button type="button" onClick={togglePlay} className="text-white/70 hover:text-white transition-colors">
                 {playing ? <Pause className="h-3 w-3" fill="currentColor" /> : <Play className="h-3 w-3" fill="currentColor" />}
               </button>
-              <div className="flex-1 h-1 bg-white/10 rounded-full">
+              <div className="flex-1 h-1 bg-brand-card/10 rounded-full">
                 <div className="h-1 bg-[#7C5CFC] rounded-full" style={{ width: "0%" }} />
               </div>
               <span className="text-[10px] text-white/50 font-mono">
@@ -127,7 +127,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         </div>
 
         {/* ── Content Link ── */}
-        <div className="rounded-xl border border-[#E8E6E1] bg-white p-3.5 shadow-sm">
+        <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[12px] font-semibold text-[#1A1A1A]">Content link</p>
             {contentLink && (
@@ -145,7 +145,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
 
         {/* ── File Metadata ── */}
         {form.videoFile && (
-          <div className="rounded-xl border border-[#E8E6E1] bg-white p-3.5 shadow-sm">
+          <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
             <p className="text-[12px] font-semibold text-[#1A1A1A] mb-2">File Info</p>
             <div className="space-y-1.5">
               {[
@@ -164,7 +164,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         )}
 
         {/* ── Publish to Postbook ── */}
-        <div className="rounded-xl border border-[#E8E6E1] bg-white p-3.5 shadow-sm">
+        <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[12px] font-semibold text-[#1A1A1A]">Publish to Postbook</p>
@@ -180,7 +180,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-sm transition-transform duration-200 ${
                   form.crossPostPostbook ? "translate-x-[22px]" : "translate-x-[3px]"
                 }`}
               />

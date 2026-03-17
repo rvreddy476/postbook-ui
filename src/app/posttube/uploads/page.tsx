@@ -80,7 +80,7 @@ function UploadCard({
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
-            className="group rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
+            className="group rounded-xl border border-brand-divider bg-brand-card overflow-hidden hover:shadow-md transition-shadow"
         >
             {/* Thumbnail */}
             {isVideo && (
@@ -115,11 +115,11 @@ function UploadCard({
                     <div className="min-w-0 flex-1">
                         <Link
                             href={isVideo ? `/posttube/watch/${item.id}` : `/post/${item.id}`}
-                            className="text-sm font-semibold text-slate-900 line-clamp-2 hover:text-[#D8103F] transition-colors"
+                            className="text-sm font-semibold text-brand-text line-clamp-2 hover:text-[#D8103F] transition-colors"
                         >
                             {item.title || item.text || "Untitled"}
                         </Link>
-                        <p className="text-xs text-slate-400 mt-1">{timeAgo(item.created_at)}</p>
+                        <p className="text-xs text-brand-text/60 mt-1">{timeAgo(item.created_at)}</p>
                     </div>
                     <Button
                         variant="ghost"
@@ -137,7 +137,7 @@ function UploadCard({
                 </div>
 
                 {/* Stats */}
-                <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                <div className="mt-3 flex items-center gap-4 text-xs text-brand-highlight">
                     {item.counts && (
                         <>
                             <span className="flex items-center gap-1">
@@ -149,7 +149,7 @@ function UploadCard({
                         </>
                     )}
                     {isVideo && item.video_metadata?.final_category && (
-                        <span className="ml-auto rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                        <span className="ml-auto rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-brand-highlight">
                             {item.video_metadata.final_category}
                         </span>
                     )}
@@ -331,7 +331,7 @@ function LoadingSkeleton() {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-slate-100 bg-white overflow-hidden animate-pulse">
+                <div key={i} className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden animate-pulse">
                     <div className="aspect-video bg-slate-100" />
                     <div className="p-4 space-y-2">
                         <div className="h-4 bg-slate-100 rounded w-3/4" />
@@ -345,7 +345,7 @@ function LoadingSkeleton() {
 
 function EmptyState({ label }: { label: string }) {
     return (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+        <div className="flex flex-col items-center justify-center py-16 text-brand-text/60">
             <Video className="h-10 w-10 mb-3" />
             <p className="text-sm font-medium">{label}</p>
             <p className="text-xs mt-1">Your uploaded content will appear here.</p>
@@ -371,8 +371,8 @@ export default function MyUploadsPage() {
                     <ArrowLeft className="h-4 w-4 text-[#D8103F]" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">My Uploads</h1>
-                    <p className="text-sm text-slate-500">Manage your videos, flicks, and posts.</p>
+                    <h1 className="text-2xl font-bold text-brand-text">My Uploads</h1>
+                    <p className="text-sm text-brand-highlight">Manage your videos, flicks, and posts.</p>
                 </div>
             </motion.div>
 
@@ -387,15 +387,15 @@ export default function MyUploadsPage() {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                                 isActive
-                                    ? "bg-white text-[#b80d35] shadow-sm"
-                                    : "text-slate-500 hover:text-slate-700"
+                                    ? "bg-brand-card text-[#b80d35] shadow-sm"
+                                    : "text-brand-highlight hover:text-slate-700"
                             }`}
                         >
                             <tab.icon className="h-4 w-4" />
                             {tab.label}
                             {countMap[tab.id] > 0 && (
                                 <span className={`text-[10px] rounded-full px-1.5 py-0.5 ${
-                                    isActive ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-slate-500"
+                                    isActive ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-brand-highlight"
                                 }`}>
                                     {fmtCount(countMap[tab.id])}
                                 </span>

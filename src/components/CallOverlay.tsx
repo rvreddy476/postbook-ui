@@ -364,11 +364,11 @@ const CallOverlay: React.FC = () => {
           </div>
         )}
 
-        {/* Controls — LEFT side for active/connecting, center for incoming/outgoing */}
-        <div className={`relative z-30 ${
+        {/* Controls — LEFT side below name for active/connecting, center for incoming/outgoing */}
+        <div className={`z-30 ${
           (isActive || isConnecting)
-            ? 'fixed left-4 bottom-1/2 translate-y-1/2 flex flex-col items-center gap-3'
-            : 'mt-12 flex items-center gap-4'
+            ? 'absolute left-4 top-20 flex flex-col items-start gap-2'
+            : 'relative mt-12 flex items-center gap-4'
         }`}>
           {/* Incoming: Accept + Decline */}
           {isIncoming && (
@@ -412,8 +412,8 @@ const CallOverlay: React.FC = () => {
                 title={isMuted ? 'Unmute' : 'Mute'}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                   isMuted
-                    ? 'bg-white/20 text-red-400'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-brand-card/20 text-red-400'
+                    : 'bg-brand-card/10 text-white hover:bg-brand-card/20'
                 }`}
               >
                 {isMuted ? (
@@ -434,8 +434,8 @@ const CallOverlay: React.FC = () => {
                   title={isCameraOff ? 'Turn camera on' : 'Turn camera off'}
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${
                     isCameraOff
-                      ? 'bg-white/20 text-red-400'
-                      : 'bg-white/10 text-white hover:bg-white/20'
+                      ? 'bg-brand-card/20 text-red-400'
+                      : 'bg-brand-card/10 text-white hover:bg-brand-card/20'
                   }`}
                 >
                   {isCameraOff ? (
@@ -454,7 +454,7 @@ const CallOverlay: React.FC = () => {
                 <button
                   onClick={handleFullscreen}
                   title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                  className="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:bg-white/20"
+                  className="w-12 h-12 rounded-full bg-brand-card/10 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:bg-brand-card/20"
                 >
                   {isFullscreen ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -54,9 +54,9 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
     <>
       {/* Divider */}
       <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-[#F0E6DC]" />
-        <span className="text-xs font-semibold text-[#7B5B3A]">{label}</span>
-        <div className="h-px flex-1 bg-[#F0E6DC]" />
+        <div className="h-px flex-1 bg-brand-divider" />
+        <span className="text-xs font-semibold text-brand-text/60">{label}</span>
+        <div className="h-px flex-1 bg-brand-divider" />
       </div>
 
       {/* OAuth Buttons */}
@@ -64,7 +64,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('google')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#F0E6DC] bg-white px-4 py-2.5 text-sm font-semibold text-[#3C2415] transition-all hover:bg-[#FAF5F0] hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-sm font-semibold text-brand-text transition-all hover:bg-brand-secondary hover:shadow-sm"
         >
           <GoogleIcon />
           Google
@@ -72,7 +72,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('github')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#3C2415] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#2a1a0e] hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-sm"
         >
           <GitHubIcon />
           GitHub
@@ -80,7 +80,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('apple')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-black/90 hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-sm"
         >
           <AppleIcon />
           Apple

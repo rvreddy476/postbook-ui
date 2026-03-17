@@ -59,7 +59,7 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: index * 0.04, ease: "easeOut" }}
-            className="rounded-2xl bg-white border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden"
+            className="rounded-2xl bg-brand-card border border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden"
         >
             {/* Stashed label */}
             <div className="px-5 pt-4 pb-2">
@@ -75,13 +75,13 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
                 {/* Content */}
                 <div className="flex-1 min-w-0 space-y-2.5">
                     {textPreview && (
-                        <p className="text-sm text-slate-950 leading-relaxed line-clamp-3 font-[var(--font-outfit)]">
+                        <p className="text-sm text-brand-text leading-relaxed line-clamp-3 font-[var(--font-outfit)]">
                             {textPreview}
                         </p>
                     )}
 
                     {/* Counts */}
-                    <div className="flex items-center gap-4 text-xs text-slate-400">
+                    <div className="flex items-center gap-4 text-xs text-brand-text/60">
                         <span className="flex items-center gap-1">
                             <Sparkles className="h-3 w-3" />
                             {formatCount(sparkCount)} Sparks
@@ -115,7 +115,7 @@ function StashedSkeleton() {
             {Array.from({ length: 4 }).map((_, i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-white border border-slate-100 p-5 flex gap-4"
+                    className="rounded-2xl bg-brand-card border border-brand-divider p-5 flex gap-4"
                     style={{ animationDelay: `${i * 100}ms` }}
                 >
                     <div className="flex-1 space-y-3">
@@ -162,13 +162,13 @@ export function StashedTab({ userId }: StashedTabProps) {
     if (posts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
                     <Bookmark className="h-9 w-9 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-950 font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     Nothing stashed yet
                 </h3>
-                <p className="text-sm text-slate-400 mt-1.5 max-w-xs">
+                <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">
                     {"Tap \u25C8 on any post to stash it for later."}
                 </p>
             </div>

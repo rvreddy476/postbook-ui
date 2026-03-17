@@ -28,7 +28,7 @@ export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
             <p className="text-[11px] text-[#9E9E9E]">Who can see this content</p>
           </div>
         </div>
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] bg-white p-2 shadow-sm">
+        <div className="space-y-1 rounded-xl border border-[#E8E6E1] bg-brand-card p-2 shadow-sm">
           <RadioOption
             name="visibility"
             label="Public"
@@ -78,7 +78,7 @@ export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
             <p className="text-[11px] text-[#9E9E9E]">Help viewers discover your content</p>
           </div>
         </div>
-        <div className={`rounded-xl border bg-white shadow-sm transition-colors ${
+        <div className={`rounded-xl border bg-brand-card shadow-sm transition-colors ${
           categoryError ? "border-[#E8527A]/40" : "border-[#E8E6E1]"
         }`}>
           <StudioSelect
@@ -109,7 +109,7 @@ export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
             <p className="text-[11px] text-[#9E9E9E]">Publish now or schedule for later</p>
           </div>
         </div>
-        <div className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
+        <div className={`rounded-xl border bg-brand-card p-4 shadow-sm transition-colors ${
           scheduleError ? "border-[#E8527A]/40" : "border-[#E8E6E1]"
         }`}>
           <ToggleRow
@@ -153,7 +153,7 @@ export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
             <p className="text-[11px] text-[#9E9E9E]">Also share to your Postbook feed</p>
           </div>
         </div>
-        <div className="rounded-xl border border-[#E8E6E1] bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-[#1A1A1A]">Publish to Postbook</p>
@@ -169,7 +169,7 @@ export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-brand-card shadow-md transition-transform duration-200 ${
                   form.crossPostPostbook ? "translate-x-[26px]" : "translate-x-[3px]"
                 }`}
               />

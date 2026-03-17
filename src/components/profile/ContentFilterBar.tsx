@@ -24,7 +24,7 @@ export function ContentFilterBar({ activeFilter, onFilterChange }: ContentFilter
                     className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                         activeFilter === filter.key
                             ? "bg-slate-900 text-white shadow-sm"
-                            : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-100"
+                            : "bg-brand-secondary text-brand-highlight hover:bg-slate-100 border border-brand-divider"
                     }`}
                 >
                     {filter.label}

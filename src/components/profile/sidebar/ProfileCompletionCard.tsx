@@ -68,13 +68,13 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25, delay: 0.25 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100"
+                className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
             >
                 <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-sm font-bold text-slate-900">Complete your profile</h3>
+                    <h3 className="text-sm font-bold text-brand-text">Complete your profile</h3>
                     <button
                         onClick={handleDismiss}
-                        className="text-slate-400 hover:text-slate-600 transition-colors -mt-0.5 -mr-0.5"
+                        className="text-brand-text/60 hover:text-brand-highlight transition-colors -mt-0.5 -mr-0.5"
                         aria-label="Dismiss"
                     >
                         <X className="h-4 w-4" />
@@ -109,11 +109,11 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                             />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-sm font-bold text-slate-900">{percentage}%</span>
+                            <span className="text-sm font-bold text-brand-text">{percentage}%</span>
                         </div>
                     </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed">
+                    <p className="text-xs text-brand-highlight leading-relaxed">
                         A complete profile helps others discover and connect with you.
                     </p>
                 </div>
@@ -129,7 +129,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                             <span
                                 className={`text-sm ${
                                     item.completed
-                                        ? "text-slate-400 line-through"
+                                        ? "text-brand-text/60 line-through"
                                         : "text-slate-700"
                                 }`}
                             >

@@ -27,6 +27,8 @@ import {
   Pin,
   Check,
   Link2,
+  Repeat2,
+  Upload,
 } from 'lucide-react';
 
 interface PostCardProps {
@@ -149,7 +151,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <article
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group/card"
+      className="bg-brand-card rounded-xl shadow-sm border border-gray-100 overflow-hidden group/card"
     >
       {/* Pin indicator */}
       {post.is_pinned && (
@@ -214,7 +216,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-[100]"
+                className="absolute right-0 mt-1 w-56 bg-brand-card rounded-xl shadow-xl border border-gray-100 py-1.5 z-[100]"
               >
                 <button onClick={handleBookmark} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
                   <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-amber-500 text-amber-500' : 'text-gray-400'}`} />
@@ -404,13 +406,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media!.length - 1))}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-white transition-all"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev < post.media!.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-white transition-all"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -418,7 +420,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   {post.media!.map((_, i) => (
                     <div
                       key={i}
-                      className={`rounded-full transition-all duration-300 ${i === activeMediaIndex ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`}
+                      className={`rounded-full transition-all duration-300 ${i === activeMediaIndex ? 'w-5 h-1.5 bg-brand-card' : 'w-1.5 h-1.5 bg-brand-card/50'}`}
                     />
                   ))}
                 </div>
@@ -444,7 +446,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg ${liked
                   ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
-                  : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white border border-gray-100 shadow-black/5'
+                  : 'bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5'
                   }`}>
                   <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
                 </div>
@@ -463,7 +465,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
                   ? 'bg-blue-600 text-white shadow-blue-600/30'
-                  : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white border border-gray-100 shadow-black/5'
+                  : 'bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
@@ -479,7 +481,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               onClick={handleShare}
               className="flex flex-col items-center gap-1 group"
             >
-              <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white border border-gray-100 shadow-black/5 transition-all">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5 transition-all">
                 {linkCopied ? (
                   <Check className="w-5 h-5 text-emerald-500" />
                 ) : (
@@ -494,48 +496,52 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className={`mx-4 mb-3 p-1.5 flex items-center justify-between border border-gray-100 bg-gray-50/50 rounded-2xl ${hasMedia && !isReel ? 'mt-3' : ''}`}>
-            {!post.no_likes && (
-              <div className="flex-1 flex items-center justify-center">
-                <ReactionPicker
-                  currentReaction={typeof post.viewer_reaction === 'string' ? post.viewer_reaction : (post.viewer_reaction ? 'like' : null)}
-                  onReact={handleReaction}
-                />
-                {likesCount > 0 && (
-                  <span className={`text-[13px] font-bold ml-1 ${liked ? 'text-rose-600' : 'text-gray-500'}`}>
-                    {likesCount}
-                  </span>
-                )}
-              </div>
-            )}
-
+          <div className={`px-4 py-2 flex items-center justify-between border-t border-brand-divider ${hasMedia && !isReel ? '' : ''}`}>
+            {/* Comment */}
             {!post.no_comments && (
               <button
                 onClick={() => setShowComments(!showComments)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[13px] font-bold transition-all mx-1 ${showComments
-                  ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100'
-                  : 'text-gray-500 hover:bg-white hover:shadow-sm hover:border hover:border-gray-100 border border-transparent'
-                  }`}
+                className={`flex items-center gap-1.5 transition-all ${showComments ? 'text-brand-accent' : 'text-brand-text/60 hover:text-brand-accent'}`}
               >
-                <div className={`flex items-center justify-center w-7 h-7 rounded-full ${showComments ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : ''}`}>
-                  <MessageCircle className={`w-4 h-4 ${showComments ? 'fill-current' : ''}`} />
-                </div>
-                <span>{commentsCount > 0 ? `${commentsCount} Comment${commentsCount !== 1 ? 's' : ''}` : 'Comment'}</span>
+                <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
+                {commentsCount > 0 && <span className="text-[10px] font-black tracking-widest">{commentsCount}</span>}
               </button>
             )}
 
+            {/* Repost */}
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[13px] font-bold text-gray-500 hover:bg-white hover:shadow-sm hover:border hover:border-gray-100 border border-transparent transition-all"
+              className="flex items-center gap-1.5 text-brand-text/60 hover:text-brand-accent transition-all"
             >
-              <div className="flex items-center justify-center w-7 h-7 rounded-full">
-                {linkCopied ? (
-                  <Check className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <Share2 className="w-4 h-4" />
-                )}
-              </div>
-              <span>{sharesCount > 0 ? `${sharesCount} Share${sharesCount !== 1 ? 's' : ''}` : 'Share'}</span>
+              <Repeat2 className="w-[18px] h-[18px]" />
+              {sharesCount > 0 && <span className="text-[10px] font-black tracking-widest">{sharesCount}</span>}
+            </button>
+
+            {/* Like */}
+            {!post.no_likes && (
+              <button
+                onClick={toggleLike}
+                className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-accent scale-110' : 'text-brand-text/60 hover:text-brand-accent'}`}
+              >
+                <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
+                {likesCount > 0 && <span className="text-[10px] font-black tracking-widest">{likesCount}</span>}
+              </button>
+            )}
+
+            {/* Bookmark */}
+            <button
+              onClick={handleBookmark}
+              className={`transition-all ${bookmarked ? 'text-brand-accent scale-110' : 'text-brand-text/60 hover:text-brand-accent'}`}
+            >
+              <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+            </button>
+
+            {/* Share */}
+            <button
+              onClick={handleShare}
+              className="text-brand-text/60 hover:text-brand-accent transition-all"
+            >
+              {linkCopied ? <Check className="w-[18px] h-[18px] text-emerald-500" /> : <Upload className="w-[18px] h-[18px]" />}
             </button>
           </div>
         )}

@@ -24,7 +24,7 @@ function UploadContent() {
 
 export default function PosttubeUploadRoute() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#fcfaff]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-brand-bg" />}>
       <UploadContent />
     </Suspense>
   );

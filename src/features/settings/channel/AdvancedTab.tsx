@@ -9,19 +9,19 @@ export function AdvancedTab() {
   return (
     <div className="space-y-6">
       {/* Channel Verification */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
             <BadgeCheck className="h-5 w-5 text-blue-500" />
           </div>
           <div>
-            <h2 className="text-[14px] font-bold text-slate-900">Channel Verification</h2>
-            <p className="text-[11px] text-slate-400">Verified channels get a badge and priority in search</p>
+            <h2 className="text-[14px] font-bold text-brand-text">Channel Verification</h2>
+            <p className="text-[11px] text-brand-text/60">Verified channels get a badge and priority in search</p>
           </div>
         </div>
-        <div className="rounded-xl bg-slate-50 p-4">
-          <p className="text-[12px] font-medium text-slate-500">Status: Not Verified</p>
-          <p className="mt-1 text-[11px] text-slate-400">
+        <div className="rounded-xl bg-brand-secondary p-4">
+          <p className="text-[12px] font-medium text-brand-highlight">Status: Not Verified</p>
+          <p className="mt-1 text-[11px] text-brand-text/60">
             Verification is currently available by invitation only. Continue growing your
             channel to become eligible.
           </p>
@@ -29,33 +29,33 @@ export function AdvancedTab() {
       </div>
 
       {/* Export Data */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
             <Download className="h-5 w-5 text-emerald-500" />
           </div>
           <div>
-            <h2 className="text-[14px] font-bold text-slate-900">Export Channel Data</h2>
-            <p className="text-[11px] text-slate-400">Download all your channel data including videos, analytics, and settings</p>
+            <h2 className="text-[14px] font-bold text-brand-text">Export Channel Data</h2>
+            <p className="text-[11px] text-brand-text/60">Download all your channel data including videos, analytics, and settings</p>
           </div>
         </div>
         <button
           type="button"
-          className="rounded-xl bg-slate-100 px-4 py-2.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+          className="rounded-xl bg-slate-100 px-4 py-2.5 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-slate-200"
         >
           Request Export
         </button>
       </div>
 
       {/* Delete Channel */}
-      <div className="rounded-2xl border border-rose-200/60 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-rose-200/60 bg-brand-card p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50">
             <Trash2 className="h-5 w-5 text-rose-500" />
           </div>
           <div>
             <h2 className="text-[14px] font-bold text-rose-700">Delete Channel</h2>
-            <p className="text-[11px] text-slate-400">Permanently remove this channel and all its content</p>
+            <p className="text-[11px] text-brand-text/60">Permanently remove this channel and all its content</p>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export function AdvancedTab() {
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmOpen(false)}
-                    className="rounded-lg bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+                    className="rounded-lg bg-brand-card px-3 py-1.5 text-[12px] font-semibold text-brand-highlight shadow-sm hover:bg-brand-secondary"
                   >
                     Cancel
                   </button>

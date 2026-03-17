@@ -209,13 +209,16 @@ export function useActorProfiles(actorIds: string[]) {
 // ---------- Unread count ----------
 
 export function useUnreadCount() {
+    const user = useAuthUser()
     return useQuery({
         queryKey: ["unread-count"],
         queryFn: async () => {
             const res = await api.get<{ data: { count: number } }>("/v1/notifications/unread-count")
             return res.data.data
         },
+        enabled: !!user,
         refetchInterval: 30000,
+        retry: false,
     })
 }
 

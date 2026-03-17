@@ -53,7 +53,7 @@ function VideoCard({ post }: { post: PostDetail }) {
                         {post.text || "Untitled"}
                     </p>
                 </Link>
-                <div className="mt-0.5 flex items-center gap-3 text-[11px] text-slate-400">
+                <div className="mt-0.5 flex items-center gap-3 text-[11px] text-brand-text/60">
                     <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{fmtCount(post.counts?.likes ?? 0)}</span>
                     <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{fmtCount(post.counts?.comments ?? 0)}</span>
                 </div>
@@ -98,8 +98,8 @@ export default function PublicChannelPage() {
         return (
             <AppShell sectionLabel="PostTube">
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                    <h2 className="text-xl font-bold text-slate-900">Channel not found</h2>
-                    <p className="text-sm text-slate-500 mt-2">
+                    <h2 className="text-xl font-bold text-brand-text">Channel not found</h2>
+                    <p className="text-sm text-brand-highlight mt-2">
                         The channel you are looking for does not exist or has been removed.
                     </p>
                 </div>
@@ -113,7 +113,7 @@ export default function PublicChannelPage() {
 
     return (
         <AppShell sectionLabel="PostTube">
-            <div className="min-h-screen bg-white">
+            <div className="min-h-screen bg-brand-card">
                 {/* Banner */}
                 <div className="relative h-40 bg-gradient-to-br from-[#D8103F] via-[#D8103F]/50 to-slate-300">
                     {bannerUrl && (
@@ -133,9 +133,9 @@ export default function PublicChannelPage() {
                             className="h-24 w-24 rounded-full border-4 border-white shadow-lg"
                         />
                         <div className="flex-1 min-w-0 pb-2">
-                            <h1 className="text-[22px] font-bold text-slate-900">{displayName}</h1>
-                            <p className="text-[13px] text-slate-400">@{channelHandle}</p>
-                            <div className="mt-1 flex items-center gap-4 text-[12px] text-slate-500">
+                            <h1 className="text-[22px] font-bold text-brand-text">{displayName}</h1>
+                            <p className="text-[13px] text-brand-text/60">@{channelHandle}</p>
+                            <div className="mt-1 flex items-center gap-4 text-[12px] text-brand-highlight">
                                 <span className="flex items-center gap-1">
                                     <Users className="h-3.5 w-3.5" />
                                     <strong className="text-slate-700">{fmtCount(subscriberCount)}</strong> subscribers
@@ -147,7 +147,7 @@ export default function PublicChannelPage() {
                     </div>
 
                     {/* Tabs */}
-                    <div className="mt-6 flex items-center gap-1 border-b border-slate-100">
+                    <div className="mt-6 flex items-center gap-1 border-b border-brand-divider">
                         {([
                             { id: "videos" as Tab, label: "Videos", icon: Video, count: videos.length },
                             { id: "flicks" as Tab, label: "Flicks", icon: Film, count: flicks.length },
@@ -157,14 +157,14 @@ export default function PublicChannelPage() {
                                 type="button"
                                 onClick={() => setTab(t.id)}
                                 className={`relative flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold transition-colors ${
-                                    tab === t.id ? "text-[#D8103F]" : "text-slate-400 hover:text-slate-600"
+                                    tab === t.id ? "text-[#D8103F]" : "text-brand-text/60 hover:text-brand-highlight"
                                 }`}
                             >
                                 <t.icon className="h-4 w-4" />
                                 {t.label}
                                 {t.count > 0 && (
                                     <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                                        tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-slate-400"
+                                        tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-brand-text/60"
                                     }`}>
                                         {t.count}
                                     </span>
@@ -180,10 +180,10 @@ export default function PublicChannelPage() {
                     <div className="py-6">
                         {items.length === 0 && !allQuery.isLoading ? (
                             <div className="flex flex-col items-center py-16 text-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-secondary">
                                     {tab === "videos" ? <Video className="h-7 w-7 text-slate-300" /> : <Film className="h-7 w-7 text-slate-300" />}
                                 </div>
-                                <p className="mt-4 text-[14px] font-semibold text-slate-600">No {tab} yet</p>
+                                <p className="mt-4 text-[14px] font-semibold text-brand-highlight">No {tab} yet</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
@@ -199,7 +199,7 @@ export default function PublicChannelPage() {
                                     type="button"
                                     onClick={() => allQuery.fetchNextPage()}
                                     disabled={allQuery.isFetchingNextPage}
-                                    className="rounded-xl border border-slate-200 px-5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+                                    className="rounded-xl border border-brand-divider px-5 py-2 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary disabled:opacity-40 transition-colors"
                                 >
                                     {allQuery.isFetchingNextPage ? "Loading..." : "Load more"}
                                 </button>

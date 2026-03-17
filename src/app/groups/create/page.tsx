@@ -102,7 +102,7 @@ export default function CreateGroupPage() {
           <Check className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-2xl font-black text-slate-800 mb-2">Group Created!</h1>
-        <p className="text-sm text-slate-500 mb-8">Your group is ready. Start inviting members and sharing content.</p>
+        <p className="text-sm text-brand-highlight mb-8">Your group is ready. Start inviting members and sharing content.</p>
         <button
           onClick={() => router.push(`/groups/${createdGroupId}`)}
           className="px-8 py-3 orchid-gradient text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
@@ -115,7 +115,7 @@ export default function CreateGroupPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-8 pb-12">
-      <button onClick={() => step === 1 ? router.back() : setStep((step - 1) as Step)} className="flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-6 text-sm font-medium">
+      <button onClick={() => step === 1 ? router.back() : setStep((step - 1) as Step)} className="flex items-center gap-2 text-brand-highlight hover:text-slate-700 mb-6 text-sm font-medium">
         <ArrowLeft className="w-4 h-4" />
         {step === 1 ? 'Back' : 'Previous'}
       </button>
@@ -132,20 +132,20 @@ export default function CreateGroupPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 mb-1">Name & Identity</h1>
-            <p className="text-sm text-slate-500">Choose a name and handle for your group</p>
+            <p className="text-sm text-brand-highlight">Choose a name and handle for your group</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Group Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter group name..." className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" maxLength={100} required />
-            <p className="text-xs text-slate-400 mt-1">3-100 characters</p>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Group Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter group name..." className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" maxLength={100} required />
+            <p className="text-xs text-brand-text/60 mt-1">3-100 characters</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Handle</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Handle</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">@</span>
-              <input type="text" value={handle} onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="group-handle" className="w-full pl-8 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" maxLength={50} />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-brand-text/60">@</span>
+              <input type="text" value={handle} onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} placeholder="group-handle" className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" maxLength={50} />
               {handle.length >= 3 && (
                 <span className="absolute right-4 top-1/2 -translate-y-1/2">
                   {handleCheck?.available ? (
@@ -156,19 +156,19 @@ export default function CreateGroupPage() {
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-1">3-50 characters, lowercase letters, digits, hyphens</p>
+            <p className="text-xs text-brand-text/60 mt-1">3-50 characters, lowercase letters, digits, hyphens</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this group about?" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none" rows={3} maxLength={500} />
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's this group about?" className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none" rows={3} maxLength={500} />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Category</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-3">Category</label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
-                <button key={cat} type="button" onClick={() => setCategory(category === cat ? '' : cat)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${category === cat ? 'bg-[#D8103F] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                <button key={cat} type="button" onClick={() => setCategory(category === cat ? '' : cat)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${category === cat ? 'bg-[#D8103F] text-white' : 'bg-slate-100 text-brand-highlight hover:bg-slate-200'}`}>
                   {cat}
                 </button>
               ))}
@@ -182,22 +182,22 @@ export default function CreateGroupPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 mb-1">Privacy & Access</h1>
-            <p className="text-sm text-slate-500">Control who can see and join your group</p>
+            <p className="text-sm text-brand-highlight">Control who can see and join your group</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Privacy Level</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-3">Privacy Level</label>
             <div className="space-y-3">
               {([
                 { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can find and see group content' },
                 { value: 'restricted' as const, icon: Shield, label: 'Restricted', desc: 'Anyone can find, but content is members-only' },
                 { value: 'private' as const, icon: Lock, label: 'Private', desc: 'Hidden from search, invite-only' },
               ]).map(({ value, icon: Icon, label, desc }) => (
-                <button key={value} type="button" onClick={() => setPrivacyLevel(value)} className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${privacyLevel === value ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                  <Icon className={`w-5 h-5 ${privacyLevel === value ? 'text-[#D8103F]' : 'text-slate-400'}`} />
+                <button key={value} type="button" onClick={() => setPrivacyLevel(value)} className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${privacyLevel === value ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'}`}>
+                  <Icon className={`w-5 h-5 ${privacyLevel === value ? 'text-[#D8103F]' : 'text-brand-text/60'}`} />
                   <div>
                     <p className="text-sm font-bold text-slate-700">{label}</p>
-                    <p className="text-xs text-slate-400">{desc}</p>
+                    <p className="text-xs text-brand-text/60">{desc}</p>
                   </div>
                 </button>
               ))}
@@ -205,17 +205,17 @@ export default function CreateGroupPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Join Mode</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-3">Join Mode</label>
             <div className="space-y-3">
               {([
                 { value: 'open' as const, label: 'Open', desc: 'Anyone can join immediately', enabled: privacyLevel === 'public' },
                 { value: 'request' as const, label: 'Request to Join', desc: 'Members must be approved by admins', enabled: privacyLevel === 'public' || privacyLevel === 'restricted' },
                 { value: 'invite_only' as const, label: 'Invite Only', desc: 'Only invited users can join', enabled: privacyLevel === 'restricted' || privacyLevel === 'private' },
               ]).map(({ value, label, desc, enabled }) => (
-                <button key={value} type="button" onClick={() => enabled && setJoinMode(value)} disabled={!enabled} className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${!enabled ? 'opacity-40 cursor-not-allowed' : ''} ${joinMode === value && enabled ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                <button key={value} type="button" onClick={() => enabled && setJoinMode(value)} disabled={!enabled} className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${!enabled ? 'opacity-40 cursor-not-allowed' : ''} ${joinMode === value && enabled ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'}`}>
                   <div>
                     <p className="text-sm font-bold text-slate-700">{label}</p>
-                    <p className="text-xs text-slate-400">{desc}</p>
+                    <p className="text-xs text-brand-text/60">{desc}</p>
                   </div>
                 </button>
               ))}
@@ -224,16 +224,16 @@ export default function CreateGroupPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Who Can Post</label>
-              <select value={whoCanPost} onChange={(e) => setWhoCanPost(e.target.value as typeof whoCanPost)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30">
+              <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Who Can Post</label>
+              <select value={whoCanPost} onChange={(e) => setWhoCanPost(e.target.value as typeof whoCanPost)} className="w-full px-3 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30">
                 <option value="all_members">All Members</option>
                 <option value="admins_mods">Admins & Mods</option>
                 <option value="admins_only">Admins Only</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Who Can Invite</label>
-              <select value={whoCanInvite} onChange={(e) => setWhoCanInvite(e.target.value as typeof whoCanInvite)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30">
+              <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Who Can Invite</label>
+              <select value={whoCanInvite} onChange={(e) => setWhoCanInvite(e.target.value as typeof whoCanInvite)} className="w-full px-3 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30">
                 <option value="all_members">All Members</option>
                 <option value="admins_mods">Admins & Mods</option>
                 <option value="admins_only">Admins Only</option>
@@ -248,15 +248,15 @@ export default function CreateGroupPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 mb-1">Appearance</h1>
-            <p className="text-sm text-slate-500">Customize your group's look (you can do this later too)</p>
+            <p className="text-sm text-brand-highlight">Customize your group's look (you can do this later too)</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-100 p-6 text-center">
+          <div className="bg-brand-card rounded-xl border border-brand-divider p-6 text-center">
             <div className="w-20 h-20 rounded-2xl bg-slate-100 mx-auto flex items-center justify-center mb-4">
               <Image className="w-8 h-8 text-slate-300" />
             </div>
-            <p className="text-sm text-slate-500 mb-2">Avatar & cover photos can be uploaded after creation</p>
-            <p className="text-xs text-slate-400">Go to group settings to upload images</p>
+            <p className="text-sm text-brand-highlight mb-2">Avatar & cover photos can be uploaded after creation</p>
+            <p className="text-xs text-brand-text/60">Go to group settings to upload images</p>
           </div>
         </div>
       )}
@@ -266,15 +266,15 @@ export default function CreateGroupPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 mb-1">Invite Members</h1>
-            <p className="text-sm text-slate-500">You can invite people after the group is created</p>
+            <p className="text-sm text-brand-highlight">You can invite people after the group is created</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-100 p-6 text-center">
+          <div className="bg-brand-card rounded-xl border border-brand-divider p-6 text-center">
             <div className="w-16 h-16 rounded-full bg-slate-100 mx-auto flex items-center justify-center mb-4">
               <UserPlus className="w-7 h-7 text-slate-300" />
             </div>
-            <p className="text-sm text-slate-500 mb-2">Invite members after your group is created</p>
-            <p className="text-xs text-slate-400">Use the invite button in the group header</p>
+            <p className="text-sm text-brand-highlight mb-2">Invite members after your group is created</p>
+            <p className="text-xs text-brand-text/60">Use the invite button in the group header</p>
           </div>
         </div>
       )}
@@ -284,27 +284,27 @@ export default function CreateGroupPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-black text-slate-800 mb-1">Rules & Review</h1>
-            <p className="text-sm text-slate-500">Set group rules and review your settings</p>
+            <p className="text-sm text-brand-highlight">Set group rules and review your settings</p>
           </div>
 
           {/* Rules */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Group Rules</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-brand-highlight">Group Rules</label>
               <button type="button" onClick={addRule} className="text-xs font-bold text-[#D8103F] hover:underline">+ Add Rule</button>
             </div>
             {rules.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No rules yet. You can add them later.</p>
+              <p className="text-xs text-brand-text/60 italic">No rules yet. You can add them later.</p>
             ) : (
               <div className="space-y-3">
                 {rules.map((rule, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-slate-100 p-4">
+                  <div key={i} className="bg-brand-card rounded-xl border border-brand-divider p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-slate-400">Rule {i + 1}</span>
+                      <span className="text-xs font-bold text-brand-text/60">Rule {i + 1}</span>
                       <button type="button" onClick={() => removeRule(i)} className="text-xs text-rose-500 hover:underline">Remove</button>
                     </div>
-                    <input type="text" value={rule.title} onChange={(e) => updateRule(i, 'title', e.target.value)} placeholder="Rule title..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" />
-                    <input type="text" value={rule.description} onChange={(e) => updateRule(i, 'description', e.target.value)} placeholder="Description (optional)..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" />
+                    <input type="text" value={rule.title} onChange={(e) => updateRule(i, 'title', e.target.value)} placeholder="Rule title..." className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" />
+                    <input type="text" value={rule.description} onChange={(e) => updateRule(i, 'description', e.target.value)} placeholder="Description (optional)..." className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30" />
                   </div>
                 ))}
               </div>
@@ -312,17 +312,17 @@ export default function CreateGroupPage() {
           </div>
 
           {/* Summary */}
-          <div className="bg-white rounded-xl border border-slate-100 p-5 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Review</h3>
+          <div className="bg-brand-card rounded-xl border border-brand-divider p-5 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-brand-highlight">Review</h3>
             <div className="grid grid-cols-2 gap-y-2 text-sm">
-              <span className="text-slate-400">Name</span><span className="font-bold text-slate-700">{name}</span>
-              <span className="text-slate-400">Handle</span><span className="font-bold text-slate-700">@{handle}</span>
-              {category && <><span className="text-slate-400">Category</span><span className="font-bold text-slate-700">{category}</span></>}
-              <span className="text-slate-400">Privacy</span><span className="font-bold text-slate-700 capitalize">{privacyLevel}</span>
-              <span className="text-slate-400">Join Mode</span><span className="font-bold text-slate-700 capitalize">{joinMode.replace('_', ' ')}</span>
-              <span className="text-slate-400">Who Can Post</span><span className="font-bold text-slate-700 capitalize">{whoCanPost.replace(/_/g, ' ')}</span>
-              <span className="text-slate-400">Who Can Invite</span><span className="font-bold text-slate-700 capitalize">{whoCanInvite.replace(/_/g, ' ')}</span>
-              <span className="text-slate-400">Rules</span><span className="font-bold text-slate-700">{rules.length || 'None'}</span>
+              <span className="text-brand-text/60">Name</span><span className="font-bold text-slate-700">{name}</span>
+              <span className="text-brand-text/60">Handle</span><span className="font-bold text-slate-700">@{handle}</span>
+              {category && <><span className="text-brand-text/60">Category</span><span className="font-bold text-slate-700">{category}</span></>}
+              <span className="text-brand-text/60">Privacy</span><span className="font-bold text-slate-700 capitalize">{privacyLevel}</span>
+              <span className="text-brand-text/60">Join Mode</span><span className="font-bold text-slate-700 capitalize">{joinMode.replace('_', ' ')}</span>
+              <span className="text-brand-text/60">Who Can Post</span><span className="font-bold text-slate-700 capitalize">{whoCanPost.replace(/_/g, ' ')}</span>
+              <span className="text-brand-text/60">Who Can Invite</span><span className="font-bold text-slate-700 capitalize">{whoCanInvite.replace(/_/g, ' ')}</span>
+              <span className="text-brand-text/60">Rules</span><span className="font-bold text-slate-700">{rules.length || 'None'}</span>
             </div>
           </div>
         </div>

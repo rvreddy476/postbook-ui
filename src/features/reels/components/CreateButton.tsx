@@ -91,7 +91,7 @@ export function CreateButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-white/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-[100]"
+            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-[100]"
           >
             <div className="px-3 py-2 flex items-center gap-2">
               <Zap className="h-3 w-3 text-[#F59E0B]" />

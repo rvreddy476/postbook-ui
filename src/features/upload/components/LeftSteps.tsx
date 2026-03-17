@@ -24,7 +24,7 @@ export function LeftSteps({ steps, currentStep, currentStepIndex, onStepClick }:
   const completedCount = currentStepIndex;
 
   return (
-    <div className="flex w-[220px] shrink-0 flex-col border-r border-[#E8E6E1] bg-white">
+    <div className="flex w-[220px] shrink-0 flex-col border-r border-[#E8E6E1] bg-brand-card">
       {/* Step list */}
       <div className="flex-1 p-4 space-y-1">
         {steps.map((stepId, idx) => {

@@ -88,13 +88,16 @@ export const mapAuthResponse = (payload: unknown, fallbackIdentifier: string): A
   }
   const email = getString(userSource, ['email']);
   const phone = getString(userSource, ['phone']);
+  const username = getString(userSource, ['username', 'handle']);
+  const displayName = getString(userSource, ['display_name', 'displayName']);
   const avatar =
     getString(userSource, ['avatar', 'avatar_url', 'avatarUrl', 'profile_image', 'profileImage']) ??
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName || fallbackIdentifier || userId)}`;
 
   const user: User = {
     id: userId,
-    name: fullName || email || phone || fallbackIdentifier || 'PostBoek.com User',
+    name: fullName || displayName || username || email || phone || fallbackIdentifier || 'PostBoek.com User',
+    username: username || undefined,
     firstName,
     lastName,
     loginId: email || phone || fallbackIdentifier,

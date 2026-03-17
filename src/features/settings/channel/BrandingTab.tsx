@@ -26,10 +26,10 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
 
   return (
     <div>
-      <label className="mb-1.5 block text-[12px] font-semibold text-slate-500">{label}</label>
-      <p className="mb-3 text-[11px] text-slate-400">{description}</p>
+      <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">{label}</label>
+      <p className="mb-3 text-[11px] text-brand-text/60">{description}</p>
       <div
-        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
+        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
         style={{ aspectRatio: aspectRatio || "auto", minHeight: aspectRatio ? undefined : "120px" }}
       >
         {currentUrl ? (
@@ -37,14 +37,14 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
         ) : (
           <div className="flex flex-col items-center gap-2 p-6">
             {icon}
-            <span className="text-[11px] font-medium text-slate-400 group-hover:text-[#D8103F]/50">
+            <span className="text-[11px] font-medium text-brand-text/60 group-hover:text-[#D8103F]/50">
               Click to upload
             </span>
             <span className="text-[10px] text-slate-300">{hint}</span>
           </div>
         )}
         {uploading ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-brand-card/80">
             <Loader2 className="h-5 w-5 animate-spin text-[#D8103F]/50" />
           </div>
         ) : null}
@@ -118,8 +118,8 @@ export function BrandingTab() {
   return (
     <div className="space-y-6">
       {/* Profile Photo */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-[14px] font-bold text-slate-900">Profile Photo</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-5 text-[14px] font-bold text-brand-text">Profile Photo</h2>
         <div className="flex items-center gap-6">
           <div className="relative">
             <Avatar
@@ -149,7 +149,7 @@ export function BrandingTab() {
           </div>
           <div>
             <p className="text-[13px] font-semibold text-slate-700">Channel Avatar</p>
-            <p className="mt-0.5 text-[11px] text-slate-400">
+            <p className="mt-0.5 text-[11px] text-brand-text/60">
               Square image, at least 256x256px. PNG or JPG.
             </p>
           </div>
@@ -157,8 +157,8 @@ export function BrandingTab() {
       </div>
 
       {/* Banner */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-[14px] font-bold text-slate-900">Banner Image</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-5 text-[14px] font-bold text-brand-text">Banner Image</h2>
         <UploadField
           label=""
           description="Displayed at the top of your channel page."
@@ -172,19 +172,19 @@ export function BrandingTab() {
       </div>
 
       {/* Watermark */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-[14px] font-bold text-slate-900">Video Watermark</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-5 text-[14px] font-bold text-brand-text">Video Watermark</h2>
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-[13px] font-medium text-slate-700">Enable watermark on videos</p>
-            <p className="text-[11px] text-slate-400">Subtle brand mark shown on your Posttube videos</p>
+            <p className="text-[11px] text-brand-text/60">Subtle brand mark shown on your Posttube videos</p>
           </div>
           <button
             type="button"
             onClick={() => setWatermarkEnabled(!watermarkEnabled)}
             className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
           >
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-sm transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
           </button>
         </div>
         {watermarkEnabled ? (
@@ -199,26 +199,26 @@ export function BrandingTab() {
       </div>
 
       {/* Theme Color */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-[14px] font-bold text-slate-900">Theme Color</h2>
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-5 text-[14px] font-bold text-brand-text">Theme Color</h2>
         <div className="flex items-center gap-4">
           <input
             type="color"
             value={themeColor}
             onChange={(e) => setThemeColor(e.target.value)}
-            className="h-10 w-10 cursor-pointer rounded-lg border border-slate-200"
+            className="h-10 w-10 cursor-pointer rounded-lg border border-brand-divider"
           />
           <div>
             <p className="text-[13px] font-medium text-slate-700">{themeColor}</p>
-            <p className="text-[11px] text-slate-400">Used as accent color on your channel page</p>
+            <p className="text-[11px] text-brand-text/60">Used as accent color on your channel page</p>
           </div>
         </div>
       </div>
 
       {/* Preview Card */}
-      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-[14px] font-bold text-slate-900">Preview</h2>
-        <div className="overflow-hidden rounded-xl border border-slate-200">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+        <h2 className="mb-5 text-[14px] font-bold text-brand-text">Preview</h2>
+        <div className="overflow-hidden rounded-xl border border-brand-divider">
           {/* Mini banner */}
           <div className="h-20 bg-gradient-to-r from-[#D8103F]/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
             {bannerUrl ? <img src={bannerUrl} alt="" className="h-full w-full object-cover" /> : null}
@@ -234,9 +234,9 @@ export function BrandingTab() {
                 className="border-4 border-white shadow-sm"
               />
             </div>
-            <p className="mt-2 text-[14px] font-bold text-slate-900">{channel?.name || "Your Channel"}</p>
-            <p className="text-[12px] text-slate-400">@{channel?.handle || "handle"}</p>
-            <p className="mt-1 text-[11px] text-slate-500">{channel?.description || "No description yet"}</p>
+            <p className="mt-2 text-[14px] font-bold text-brand-text">{channel?.name || "Your Channel"}</p>
+            <p className="text-[12px] text-brand-text/60">@{channel?.handle || "handle"}</p>
+            <p className="mt-1 text-[11px] text-brand-highlight">{channel?.description || "No description yet"}</p>
           </div>
         </div>
       </div>

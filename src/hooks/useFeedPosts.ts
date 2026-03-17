@@ -59,7 +59,7 @@ export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { ex
     return useInfiniteQuery({
         queryKey: ["home-feed", feedMode, excludeSelf, circleOnly],
         queryFn: async ({ pageParam }) => {
-            const params: Record<string, string> = { limit: "20", feed_mode: feedMode }
+            const params: Record<string, string> = { limit: "20", feed_mode: feedMode, platform: "postbook" }
             if (excludeSelf) {
                 params.exclude_self = "true"
             }

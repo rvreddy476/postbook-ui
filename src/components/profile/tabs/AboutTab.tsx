@@ -52,7 +52,7 @@ function SectionCard({ children, delay = 0 }: { children: React.ReactNode; delay
 function SectionHeader({ icon: Icon, title }: { icon: typeof Briefcase; title: string }) {
     return (
         <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-2 rounded-xl bg-white/80 border border-[#DED9D1]">
+            <div className="p-2 rounded-xl bg-brand-card/80 border border-[#DED9D1]">
                 <Icon className="w-4 h-4 text-zinc-600" />
             </div>
             <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-700">{title}</h3>
@@ -179,7 +179,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                             {d.industry ? <span className="text-zinc-400"> &middot; {str(d.industry)}</span> : null}
                                         </p>
                                         {d.employment_type ? (
-                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-white/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
+                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-brand-card/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
                                                 {str(d.employment_type).replace(/_/g, " ")}
                                             </span>
                                         ) : null}
@@ -224,7 +224,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                         <p className="text-sm font-bold text-zinc-900">{str(d.title) || "Untitled"}</p>
                                         <p className="text-xs text-zinc-500 mt-0.5">{str(d.subtitle)}</p>
                                         {d.field_of_study ? (
-                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-white/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
+                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-brand-card/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
                                                 <BookOpen className="w-3 h-3 inline mr-1" />
                                                 {str(d.field_of_study)}
                                             </span>
@@ -270,7 +270,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-bold text-zinc-900">{str(d.title)}</p>
-                                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 bg-white/60 px-1.5 py-0.5 rounded border border-[#DED9D1]/40">{entryType}</span>
+                                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 bg-brand-card/60 px-1.5 py-0.5 rounded border border-[#DED9D1]/40">{entryType}</span>
                                         </div>
                                         {d.subtitle ? <p className="text-xs text-zinc-500 mt-0.5">{str(d.subtitle)}</p> : null}
                                         {dateRange ? <p className="text-[10px] text-zinc-400 mt-1 font-medium">{dateRange}</p> : null}
@@ -288,7 +288,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                 <SectionHeader icon={Heart} title="Hobbies & Interests" />
                 {hobbiesLoading ? (
                     <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4].map(i => <div key={i} className="h-7 w-20 bg-white/40 rounded-full animate-pulse" />)}
+                        {[1, 2, 3, 4].map(i => <div key={i} className="h-7 w-20 bg-brand-card/40 rounded-full animate-pulse" />)}
                     </div>
                 ) : hobbies.length === 0 && interests.length === 0 ? (
                     <EmptyHint text="No hobbies or interests added yet." />
@@ -345,8 +345,8 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                 {allLinks.length > 0 || socialLinks.length > 0 ? (
                     <div className="space-y-3">
                         {allLinks.map((link) => (
-                            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-white/50 transition-colors group">
-                                <div className="w-9 h-9 rounded-lg bg-white/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
+                            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-card/50 transition-colors group">
+                                <div className="w-9 h-9 rounded-lg bg-brand-card/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
                                     <span className="text-[8px] font-black text-zinc-400 uppercase">{(link.icon || link.category || "web").slice(0, 3)}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -357,8 +357,8 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                             </a>
                         ))}
                         {socialLinks.map((link) => (
-                            <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-white/50 transition-colors group">
-                                <div className="w-9 h-9 rounded-lg bg-white/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
+                            <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-card/50 transition-colors group">
+                                <div className="w-9 h-9 rounded-lg bg-brand-card/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
                                     <span className="text-[8px] font-black text-zinc-400 uppercase">{link.platform.slice(0, 3)}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">

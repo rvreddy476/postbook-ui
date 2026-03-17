@@ -44,7 +44,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
     const strokeDashoffset = circumference - (score / 100) * circumference
 
     return (
-        <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#F0E6DC] shadow-sm">
+        <div className="flex flex-col items-center gap-2 p-4 bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm">
             <p className="text-[10px] font-bold text-[#7B5B3A] uppercase tracking-wide">
                 Compatibility
             </p>

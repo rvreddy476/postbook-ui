@@ -14,7 +14,7 @@ interface AppShellProps {
  */
 export function AppShell({ sectionLabel, children }: AppShellProps) {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-brand-card">
       <HeaderBar sectionLabel={sectionLabel} />
       <div className="flex flex-1 min-h-0">
         <ReelIconSideNav />

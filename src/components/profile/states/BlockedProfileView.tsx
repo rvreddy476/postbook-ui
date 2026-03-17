@@ -17,18 +17,18 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4 }}
-                className="min-h-screen bg-slate-50 flex items-center justify-center px-4"
+                className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
             >
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 sm:p-14 text-center max-w-md w-full">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-6">
-                        <UserX className="w-8 h-8 text-slate-400" />
+                <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-secondary mb-6">
+                        <UserX className="w-8 h-8 text-brand-text/60" />
                     </div>
 
-                    <h2 className="text-xl font-semibold text-slate-950">
+                    <h2 className="text-xl font-semibold text-brand-text">
                         This profile is unavailable
                     </h2>
 
-                    <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+                    <p className="mt-3 text-sm text-brand-highlight leading-relaxed">
                         You are unable to view this profile.
                     </p>
 
@@ -52,18 +52,18 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="min-h-screen bg-slate-50 flex items-center justify-center px-4"
+            className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
         >
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 sm:p-14 text-center max-w-md w-full">
+            <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-6">
                     <ShieldOff className="w-8 h-8 text-red-400" />
                 </div>
 
-                <h2 className="text-xl font-semibold text-slate-950">
+                <h2 className="text-xl font-semibold text-brand-text">
                     You have blocked {username ? `@${username}` : "this user"}
                 </h2>
 
-                <p className="mt-3 text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+                <p className="mt-3 text-sm text-brand-highlight leading-relaxed max-w-xs mx-auto">
                     You won&apos;t see their content, and they won&apos;t be able to
                     contact you. You can unblock them at any time.
                 </p>

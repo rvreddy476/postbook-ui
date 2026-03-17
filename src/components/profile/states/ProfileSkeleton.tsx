@@ -10,7 +10,7 @@ export function ProfileSkeleton() {
             <div className="max-w-5xl mx-auto px-4 sm:px-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6 -mt-16 sm:-mt-20">
                     {/* Avatar */}
-                    <div className="h-32 w-32 sm:h-36 sm:w-36 rounded-3xl bg-white p-1 shadow-lg">
+                    <div className="h-32 w-32 sm:h-36 sm:w-36 rounded-3xl bg-brand-card p-1 shadow-lg">
                         <div className="w-full h-full rounded-[20px] bg-slate-200/50 animate-pulse" />
                     </div>
 
@@ -65,7 +65,7 @@ export function ProfileSkeleton() {
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
-                                className="bg-white rounded-2xl border border-slate-100 p-5 animate-pulse"
+                                className="bg-brand-card rounded-2xl border border-brand-divider p-5 animate-pulse"
                             >
                                 <div className="space-y-3">
                                     <div className="h-4 w-full rounded bg-slate-200/50" />
@@ -87,7 +87,7 @@ export function ProfileSkeleton() {
                         {[120, 160, 100].map((h, i) => (
                             <div
                                 key={i}
-                                className="bg-white rounded-2xl border border-slate-100 animate-pulse"
+                                className="bg-brand-card rounded-2xl border border-brand-divider animate-pulse"
                                 style={{ height: `${h}px` }}
                             />
                         ))}
