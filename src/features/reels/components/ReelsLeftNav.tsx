@@ -37,14 +37,14 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
         active
           ? "bg-brand-card/15"
-          : "bg-transparent group-hover:bg-slate-100"
+          : "bg-transparent group-hover:bg-brand-secondary"
       }`}>
         {icon}
       </span>
       <span className="flex-1 truncate">{label}</span>
       {typeof count === "number" && count > 0 ? (
         <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
-          active ? "bg-brand-card/20 text-white" : "bg-slate-100 text-brand-highlight"
+          active ? "bg-brand-card/20 text-white" : "bg-brand-secondary text-brand-highlight"
         }`}>
           {count > 99 ? "99+" : count}
         </span>
@@ -56,7 +56,7 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
 function NavSection({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="mb-1">
-      <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-300">
+      <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-text/30">
         {label}
       </p>
       <nav className="flex flex-col gap-0.5">{children}</nav>
@@ -73,7 +73,7 @@ export function ReelsLeftNav() {
       <div className="mb-3 px-1">
         <Link
           href="/reels/create"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-slate-800"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand-text"
         >
           <Plus className="h-4 w-4" />
           Create Reel
@@ -101,7 +101,7 @@ export function ReelsLeftNav() {
         />
       </NavSection>
 
-      <div className="my-3 mx-3 h-px bg-slate-100" />
+      <div className="my-3 mx-3 h-px bg-brand-secondary" />
 
       {/* Library */}
       <NavSection label="Library">
@@ -127,11 +127,11 @@ export function ReelsLeftNav() {
         />
       </NavSection>
 
-      <div className="my-3 mx-3 h-px bg-slate-100" />
+      <div className="my-3 mx-3 h-px bg-brand-secondary" />
 
       {/* Suggested Creators */}
       <div className="mb-1 px-3">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-300">
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-text/30">
           Suggested Creators
         </p>
         <div className="flex flex-col gap-2.5">
@@ -144,10 +144,10 @@ export function ReelsLeftNav() {
               <img
                 src={creator.avatar}
                 alt={creator.name}
-                className="h-8 w-8 rounded-full bg-slate-100 object-cover"
+                className="h-8 w-8 rounded-full bg-brand-secondary object-cover"
               />
               <div className="flex-1 min-w-0">
-                <p className="truncate text-[12px] font-semibold text-slate-700">{creator.name}</p>
+                <p className="truncate text-[12px] font-semibold text-brand-text">{creator.name}</p>
                 <p className="truncate text-[11px] text-brand-text/60">{creator.handle}</p>
               </div>
             </div>
@@ -157,7 +157,7 @@ export function ReelsLeftNav() {
 
       {/* Bottom spacer + settings */}
       <div className="mt-auto pt-3">
-        <div className="mx-3 mb-3 h-px bg-slate-100" />
+        <div className="mx-3 mb-3 h-px bg-brand-secondary" />
         <NavItem
           href="/"
           icon={<Home className="h-[16px] w-[16px]" />}

@@ -109,7 +109,7 @@ export function SocialLinksSection() {
 
                 {(!links || links.length === 0) && !showAddForm && (
                     <div className="p-20 text-center bg-brand-secondary/50 border border-brand-divider border-dashed rounded-[2.5rem]">
-                        <LinkIcon className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+                        <LinkIcon className="w-10 h-10 text-brand-secondary mx-auto mb-4" />
                         <p className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">No links added to your profile yet.</p>
                     </div>
                 )}
@@ -191,7 +191,7 @@ function LinkRow({
                         {link.url}
                     </a>
                     {link.click_count > 0 && (
-                        <span className="text-[9px] text-slate-300 ml-auto">{link.click_count} Clicks</span>
+                        <span className="text-[9px] text-brand-text/30 ml-auto">{link.click_count} Clicks</span>
                     )}
                 </div>
             </div>
@@ -201,7 +201,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onUpdate(link, { is_pinned: !link.is_pinned })}
-                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-slate-100 text-brand-text/60 hover:bg-blue-50 hover:text-blue-600"}`}
+                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-brand-secondary text-brand-text/60 hover:bg-blue-50 hover:text-blue-600"}`}
                 >
                     <Pin className="w-4 h-4" />
                 </motion.button>
@@ -209,7 +209,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setEditing(true)}
-                    className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
+                    className="p-2.5 bg-brand-secondary text-brand-text/60 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
                 >
                     <LinkIcon className="w-4 h-4" />
                 </motion.button>
@@ -218,7 +218,7 @@ function LinkRow({
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onDelete(link.id)}
                     disabled={isDeleting}
-                    className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
+                    className="p-2.5 bg-brand-secondary text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all"
                 >
                     <Trash2 className="w-4 h-4" />
                 </motion.button>

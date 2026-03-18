@@ -46,7 +46,7 @@ function ConnectionUserAvatar({ user, size = "md" }: { user: Pick<ConnectionUser
     }
 
     return (
-        <div className={`${sizeClasses} rounded-full bg-[#D8103F]/10 flex items-center justify-center font-bold text-[#D8103F]`}>
+        <div className={`${sizeClasses} rounded-full bg-brand-text/10 flex items-center justify-center font-bold text-brand-text`}>
             {getInitials(user.display_name)}
         </div>
     )
@@ -56,14 +56,14 @@ function ConnectionUserCard({ user }: { user: ConnectionUser }) {
     return (
         <a
             href={`/u/${user.username}`}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#D8103F]/50 transition-colors border border-transparent hover:border-[#D8103F]/10"
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-text/50 transition-colors border border-transparent hover:border-brand-text/10"
         >
             <ConnectionUserAvatar user={user} />
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-brand-text truncate">
                     {user.display_name}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-brand-text/60 truncate">
                     @{user.username}
                 </p>
             </div>
@@ -124,8 +124,8 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                         onClick={() => setActiveType(tab.key)}
                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                             activeType === tab.key
-                                ? "bg-[#D8103F] text-white shadow-sm"
-                                : "bg-[#D8103F]/5 text-[#b80d35] hover:bg-[#D8103F]/10"
+                                ? "bg-brand-text text-white shadow-sm"
+                                : "bg-brand-text/5 text-brand-text hover:bg-brand-text/10"
                         }`}
                     >
                         {tab.label} ({tab.count})
@@ -149,11 +149,11 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                     {isLoading ? (
                         <div className="space-y-3">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-14 bg-[#D8103F]/50 rounded-xl animate-pulse" />
+                                <div key={i} className="h-14 bg-brand-text/50 rounded-xl animate-pulse" />
                             ))}
                         </div>
                     ) : users.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
+                        <div className="text-center py-12 text-brand-text/60">
                             No {activeType} yet
                         </div>
                     ) : (
@@ -189,21 +189,21 @@ function PendingRequestsList() {
 
     return (
         <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-500">
+            <h3 className="text-sm font-semibold text-brand-text/60">
                 Pending Requests ({requests.length})
             </h3>
             {requests.map((req) => (
                 <div
                     key={req.user_id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#D8103F]/50 border border-[#D8103F]/10"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-brand-text/50 border border-brand-text/10"
                 >
                     <ConnectionUserAvatar user={req} size="md" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
+                        <p className="text-sm font-semibold text-brand-text truncate">
                             {req.display_name}
                         </p>
                         {req.username && (
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-brand-text/60 truncate">
                                 @{req.username}
                             </p>
                         )}
@@ -241,7 +241,7 @@ function BlockedUsersList() {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-[#D8103F]/50 rounded-xl animate-pulse" />
+                    <div key={i} className="h-14 bg-brand-text/50 rounded-xl animate-pulse" />
                 ))}
             </div>
         )
@@ -249,8 +249,8 @@ function BlockedUsersList() {
 
     if (blockedUsers.length === 0) {
         return (
-            <div className="text-center py-12 text-gray-500">
-                <ShieldOff className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-12 text-brand-text/60">
+                <ShieldOff className="h-10 w-10 mx-auto mb-3 text-brand-text/30" />
                 <p>You have not blocked anyone</p>
             </div>
         )
@@ -267,10 +267,10 @@ function BlockedUsersList() {
                         {block.blocked_id.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-brand-text truncate">
                             {block.blocked_id}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-brand-text/40">
                             Blocked {new Date(block.created_at).toLocaleDateString()}
                         </p>
                     </div>

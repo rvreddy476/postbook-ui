@@ -133,7 +133,7 @@ export function TagPickerModal({
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                             activeCategory === null
                                 ? "bg-slate-900 text-white"
-                                : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+                                : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                         }`}
                     >
                         All
@@ -146,7 +146,7 @@ export function TagPickerModal({
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                                 activeCategory === cat.id
                                     ? "bg-slate-900 text-white"
-                                    : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+                                    : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                             }`}
                         >
                             {cat.label}
@@ -202,7 +202,7 @@ export function TagPickerModal({
                                             isSelected
                                                 ? "bg-blue-600 text-white border-blue-600"
                                                 : isExisting
-                                                  ? "bg-brand-secondary text-slate-300 border-brand-divider cursor-not-allowed"
+                                                  ? "bg-brand-secondary text-brand-text/30 border-brand-divider cursor-not-allowed"
                                                   : `${getCategoryColor(tag.category)} hover:shadow-sm cursor-pointer`
                                         }`}
                                     >

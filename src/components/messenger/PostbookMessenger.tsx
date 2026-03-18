@@ -41,10 +41,10 @@ function SidebarSkeleton() {
 function EmptyState() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center">
-      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/10 to-[#D8103F]/5 flex items-center justify-center mb-5">
-        <Send className="w-8 h-8 text-[#D8103F]/40" />
+      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/10 to-brand-text/5 flex items-center justify-center mb-5">
+        <Send className="w-8 h-8 text-brand-text/40" />
       </div>
-      <h3 className="text-lg font-bold text-slate-700 mb-1">Your Messages</h3>
+      <h3 className="text-lg font-bold text-brand-text mb-1">Your Messages</h3>
       <p className="text-sm text-brand-text/60 max-w-xs text-center">
         Select a conversation to start messaging or pick a group to chat with your community.
       </p>
@@ -215,7 +215,7 @@ export default function PostbookMessenger() {
                   }
                 />
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-[17px] font-bold text-slate-800 tracking-tight">Messenger</h1>
+                  <h1 className="text-[17px] font-bold text-brand-text tracking-tight">Messenger</h1>
                   <p className="text-[11px] text-brand-text/60 font-medium">{currentUser.name}</p>
                 </div>
                 <button className="w-8 h-8 rounded-lg bg-brand-secondary hover:bg-brand-secondary flex items-center justify-center text-brand-text/60 hover:text-brand-highlight transition-all">
@@ -227,13 +227,13 @@ export default function PostbookMessenger() {
 
           {/* Search */}
           <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30 pointer-events-none" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/10 focus:border-[#D8103F]/20 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 focus:border-brand-text/20 transition-all"
             />
           </div>
 
@@ -259,7 +259,7 @@ export default function PostbookMessenger() {
                   )}
                   {tab === 'friends' ? 'Messages' : 'Groups'}
                   {badge > 0 && (
-                    <span className="text-[9px] font-bold bg-[#D8103F] text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                    <span className="text-[9px] font-bold bg-brand-text text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
                       {badge}
                     </span>
                   )}
@@ -277,7 +277,7 @@ export default function PostbookMessenger() {
             /* Friends list */
             filteredFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <MessageCircle className="w-10 h-10 text-slate-200 mb-2" />
+                <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
                 <p className="text-[13px] font-medium text-brand-text/60">
                   {search ? 'No friends match your search' : 'No conversations yet'}
                 </p>
@@ -316,7 +316,7 @@ export default function PostbookMessenger() {
                             {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
-                            <span className="bg-[#D8103F] text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
+                            <span className="bg-brand-text text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
                               {unread}
                             </span>
                           )}
@@ -332,7 +332,7 @@ export default function PostbookMessenger() {
             <>
               {filteredGroups.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                  <Users className="w-10 h-10 text-slate-200 mb-2" />
+                  <Users className="w-10 h-10 text-brand-secondary mb-2" />
                   <p className="text-[13px] font-medium text-brand-text/60">
                     {search ? 'No groups match your search' : 'No groups yet'}
                   </p>
@@ -378,8 +378,8 @@ export default function PostbookMessenger() {
                             <span className={`text-xs font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
                               {group.name}
                             </span>
-                            {privacy === 'private' && <Lock className="w-3 h-3 text-slate-300 shrink-0" />}
-                            {privacy === 'restricted' && <Shield className="w-3 h-3 text-slate-300 shrink-0" />}
+                            {privacy === 'private' && <Lock className="w-3 h-3 text-brand-text/30 shrink-0" />}
+                            {privacy === 'restricted' && <Shield className="w-3 h-3 text-brand-text/30 shrink-0" />}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[11px] text-brand-text/60 flex items-center gap-1">
@@ -387,12 +387,12 @@ export default function PostbookMessenger() {
                               {group.member_count}
                             </span>
                             {group.handle && (
-                              <span className="text-[11px] text-slate-300">@{group.handle}</span>
+                              <span className="text-[11px] text-brand-text/30">@{group.handle}</span>
                             )}
                           </div>
                         </div>
 
-                        <ChevronRight className="w-4 h-4 text-slate-200 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-brand-secondary shrink-0" />
                       </button>
                     )
                   })}

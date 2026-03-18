@@ -29,7 +29,7 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
       <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">{label}</label>
       <p className="mb-3 text-[11px] text-brand-text/60">{description}</p>
       <div
-        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary transition-colors hover:border-[#D8103F]/30 hover:bg-[#D8103F]/30"
+        className="group relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary transition-colors hover:border-brand-text/30 hover:bg-brand-text/30"
         style={{ aspectRatio: aspectRatio || "auto", minHeight: aspectRatio ? undefined : "120px" }}
       >
         {currentUrl ? (
@@ -37,15 +37,15 @@ function UploadField({ label, description, hint, icon, currentUrl, onUpload, upl
         ) : (
           <div className="flex flex-col items-center gap-2 p-6">
             {icon}
-            <span className="text-[11px] font-medium text-brand-text/60 group-hover:text-[#D8103F]/50">
+            <span className="text-[11px] font-medium text-brand-text/60 group-hover:text-brand-text/50">
               Click to upload
             </span>
-            <span className="text-[10px] text-slate-300">{hint}</span>
+            <span className="text-[10px] text-brand-text/30">{hint}</span>
           </div>
         )}
         {uploading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-brand-card/80">
-            <Loader2 className="h-5 w-5 animate-spin text-[#D8103F]/50" />
+            <Loader2 className="h-5 w-5 animate-spin text-brand-text/50" />
           </div>
         ) : null}
         <input
@@ -127,9 +127,9 @@ export function BrandingTab() {
               name={channel?.name || "Channel"}
               seed={channel?.id}
               size="xl"
-              className="border-4 border-white shadow-lg ring-1 ring-slate-100"
+              className="border-4 border-white shadow-lg ring-1 ring-brand-secondary"
             />
-            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[#D8103F] text-white shadow-md transition-transform hover:scale-110">
+            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-text text-white shadow-md transition-transform hover:scale-110">
               {avatarUploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
@@ -148,7 +148,7 @@ export function BrandingTab() {
             </label>
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-slate-700">Channel Avatar</p>
+            <p className="text-[13px] font-semibold text-brand-text">Channel Avatar</p>
             <p className="mt-0.5 text-[11px] text-brand-text/60">
               Square image, at least 256x256px. PNG or JPG.
             </p>
@@ -163,7 +163,7 @@ export function BrandingTab() {
           label=""
           description="Displayed at the top of your channel page."
           hint="Recommended: 2048x1152px (16:9)"
-          icon={<Image className="h-6 w-6 text-slate-300" />}
+          icon={<Image className="h-6 w-6 text-brand-text/30" />}
           currentUrl={bannerUrl}
           onUpload={handleBannerUpload}
           uploading={bannerUploading}
@@ -176,13 +176,13 @@ export function BrandingTab() {
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Video Watermark</h2>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[13px] font-medium text-slate-700">Enable watermark on videos</p>
+            <p className="text-[13px] font-medium text-brand-text">Enable watermark on videos</p>
             <p className="text-[11px] text-brand-text/60">Subtle brand mark shown on your Posttube videos</p>
           </div>
           <button
             type="button"
             onClick={() => setWatermarkEnabled(!watermarkEnabled)}
-            className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
+            className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-brand-text" : "bg-brand-secondary"}`}
           >
             <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-sm transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
           </button>
@@ -192,7 +192,7 @@ export function BrandingTab() {
             label=""
             description="Upload a transparent PNG for best results."
             hint="Max 128x128px, transparent PNG"
-            icon={<Stamp className="h-6 w-6 text-slate-300" />}
+            icon={<Stamp className="h-6 w-6 text-brand-text/30" />}
             onUpload={handleWatermarkUpload}
           />
         ) : null}
@@ -209,7 +209,7 @@ export function BrandingTab() {
             className="h-10 w-10 cursor-pointer rounded-lg border border-brand-divider"
           />
           <div>
-            <p className="text-[13px] font-medium text-slate-700">{themeColor}</p>
+            <p className="text-[13px] font-medium text-brand-text">{themeColor}</p>
             <p className="text-[11px] text-brand-text/60">Used as accent color on your channel page</p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function BrandingTab() {
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Preview</h2>
         <div className="overflow-hidden rounded-xl border border-brand-divider">
           {/* Mini banner */}
-          <div className="h-20 bg-gradient-to-r from-[#D8103F]/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
+          <div className="h-20 bg-gradient-to-r from-brand-text/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
             {bannerUrl ? <img src={bannerUrl} alt="" className="h-full w-full object-cover" /> : null}
           </div>
           {/* Mini profile */}
@@ -260,7 +260,7 @@ export function BrandingTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

@@ -45,7 +45,7 @@ function ModuleCard({
     isDeleting: boolean
 }) {
     const colorMap: Record<string, string> = {
-        violet: "bg-[#D8103F]/5 text-[#D8103F] border-[#D8103F]/20",
+        violet: "bg-brand-text/5 text-brand-text border-brand-text/20",
         red: "bg-red-50 text-red-600 border-red-200",
         amber: "bg-amber-50 text-amber-600 border-amber-200",
     }
@@ -148,7 +148,7 @@ function ModuleEditForm({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-xl border border-[#D8103F]/20 bg-brand-card p-6 shadow-sm"
+            className="rounded-xl border border-brand-text/20 bg-brand-card p-6 shadow-sm"
         >
             <h3 className="text-sm font-bold text-brand-text capitalize mb-4">
                 Edit {module} Profile
@@ -160,10 +160,10 @@ function ModuleEditForm({
                         type="checkbox"
                         checked={useGlobal}
                         onChange={(e) => setUseGlobal(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 text-[#D8103F] focus:ring-[#D8103F]/50"
+                        className="h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                     />
                     <div>
-                        <p className="text-sm font-medium text-slate-700">Use global identity</p>
+                        <p className="text-sm font-medium text-brand-text">Use global identity</p>
                         <p className="text-xs text-brand-highlight">
                             Share the same name, avatar, and bio across all modules
                         </p>
@@ -186,7 +186,7 @@ function ModuleEditForm({
                                 value={nameOverride}
                                 onChange={(e) => setNameOverride(e.target.value)}
                                 placeholder="Custom display name for this module"
-                                className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                                className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
                             />
                         </div>
                     </motion.div>
@@ -201,7 +201,7 @@ function ModuleEditForm({
                         value={bannerUrl}
                         onChange={(e) => setBannerUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
                     />
                 </div>
 
@@ -214,7 +214,7 @@ function ModuleEditForm({
                         value={watermarkUrl}
                         onChange={(e) => setWatermarkUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
                     />
                 </div>
             </div>
@@ -227,7 +227,7 @@ function ModuleEditForm({
                     size="sm"
                     onClick={handleSave}
                     disabled={upsertMutation.isPending}
-                    className="bg-[#D8103F] text-white hover:bg-[#b80d35]"
+                    className="bg-brand-text text-white hover:bg-brand-text"
                 >
                     {upsertMutation.isPending ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -285,7 +285,7 @@ function HandleSection() {
                         onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                         placeholder="new_handle"
                         maxLength={30}
-                        className="w-full rounded-lg border border-brand-divider pl-8 pr-3 py-2 text-sm focus:border-[#D8103F]/50 focus:ring-1 focus:ring-[#D8103F]/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider pl-8 pr-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
                     />
                 </div>
             </div>
@@ -295,7 +295,7 @@ function HandleSection() {
                     type="checkbox"
                     checked={confirmChecked}
                     onChange={(e) => setConfirmChecked(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-[#D8103F] focus:ring-[#D8103F]/50"
+                    className="h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                 />
                 <span className="text-xs text-brand-highlight">
                     I understand this change has a 30-day cooldown
@@ -307,7 +307,7 @@ function HandleSection() {
                     size="sm"
                     onClick={handleSubmit}
                     disabled={!newUsername.trim() || !confirmChecked || changeHandleMutation.isPending}
-                    className="bg-[#D8103F] text-white hover:bg-[#b80d35]"
+                    className="bg-brand-text text-white hover:bg-brand-text"
                 >
                     {changeHandleMutation.isPending ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -341,7 +341,7 @@ function HandleSection() {
                                 {history.map((entry, i) => (
                                     <div key={i} className="flex items-center gap-3 text-xs text-brand-highlight rounded-lg bg-brand-secondary px-3 py-2">
                                         <span className="font-mono text-brand-text/60">@{entry.old_username}</span>
-                                        <span className="text-slate-300">&rarr;</span>
+                                        <span className="text-brand-text/30">&rarr;</span>
                                         <span className="font-mono font-semibold">@{entry.new_username}</span>
                                         <span className="ml-auto text-brand-text/60">
                                             {new Date(entry.changed_at).toLocaleDateString()}
@@ -389,8 +389,8 @@ export default function ModuleProfilesPage() {
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
-                <Link href="/settings" className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D8103F]/10 hover:bg-[#D8103F]/20 transition-colors">
-                    <ArrowLeft className="h-4 w-4 text-[#D8103F]" />
+                <Link href="/settings" className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-text/10 hover:bg-brand-text/20 transition-colors">
+                    <ArrowLeft className="h-4 w-4 text-brand-text" />
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold text-brand-text">Module Profiles</h1>
@@ -400,7 +400,7 @@ export default function ModuleProfilesPage() {
 
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-[#D8103F]/50" />
+                    <Loader2 className="h-6 w-6 animate-spin text-brand-text/50" />
                 </div>
             ) : (
                 <div className="space-y-4">

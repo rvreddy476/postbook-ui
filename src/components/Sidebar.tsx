@@ -3,7 +3,7 @@
 import { NavItem } from '../types';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Home, Compass, Tv, MessageSquare, ShoppingBag, Bell, Bookmark, Users, User, Menu } from 'lucide-react';
+import { Home, Compass, Tv, MessageSquare, ShoppingBag, Bell, Bookmark, Users, User, Menu, Radio, Globe2 } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: NavItem;
@@ -25,6 +25,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onChatClick,
     { id: 'Home', label: 'Home', icon: Home, href: '/' },
     { id: 'Explore', label: 'Explore', icon: Compass, action: () => setActiveTab('Home') },
     { id: 'TV', label: 'TV', icon: Tv, action: () => setActiveTab('TV') },
+    { id: 'Groups', label: 'Groups', icon: Users, href: '/groups' },
+    { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels' },
+    { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities' },
     { id: 'Chat', label: 'Chat', icon: MessageSquare, action: () => onChatClick?.() },
     { id: 'Store', label: 'Store', icon: ShoppingBag, href: '/shop' },
     { id: 'Notifications', label: 'Notifications', icon: Bell, action: () => onNotificationsClick?.() },

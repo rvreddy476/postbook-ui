@@ -58,7 +58,7 @@ export default function LiveStartPage() {
                 type="button"
                 onClick={() => setCameraOn(!cameraOn)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
-                  cameraOn ? "bg-slate-900 text-white" : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+                  cameraOn ? "bg-slate-900 text-white" : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                 }`}
               >
                 <Video className="h-3.5 w-3.5" />
@@ -68,7 +68,7 @@ export default function LiveStartPage() {
                 type="button"
                 onClick={() => setChatEnabled(!chatEnabled)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
-                  chatEnabled ? "bg-slate-900 text-white" : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+                  chatEnabled ? "bg-slate-900 text-white" : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                 }`}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
@@ -88,12 +88,12 @@ export default function LiveStartPage() {
               <div className="space-y-4">
                 <div>
                   <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">Title <span className="text-rose-400">*</span></label>
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10" placeholder="What are you streaming?" />
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10" placeholder="What are you streaming?" />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">Category</label>
                   <div className="relative">
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-3 pr-8 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10">
+                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-10 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-3 pr-8 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10">
                       <option value="">Select category</option>
                       {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>

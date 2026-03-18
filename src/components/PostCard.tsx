@@ -14,9 +14,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Heart,
   MessageCircle,
-  Share2,
   MoreHorizontal,
   Smile,
   Music,
@@ -28,7 +26,6 @@ import {
   Check,
   Link2,
   Repeat2,
-  Upload,
 } from 'lucide-react';
 
 interface PostCardProps {
@@ -134,8 +131,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const resolvedProfile = isOwnPost ? profile : authorProfile;
   const avatar = resolvedProfile?.avatar_media_id
     ? `/v1/media/${resolvedProfile.avatar_media_id}/serve`
-    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_id}`;
+    : null;
   const name = resolvedProfile?.display_name || 'User';
+  const avatarInitial = (name).charAt(0).toUpperCase();
 
   const isReel = post.content_type === 'short';
   const hasMultipleMedia = post.media && post.media.length > 1;
@@ -151,7 +149,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <article
-      className="bg-brand-card rounded-xl shadow-sm border border-gray-100 overflow-hidden group/card"
+      className="bg-brand-card rounded-xl shadow-sm border border-brand-divider group/card"
     >
       {/* Pin indicator */}
       {post.is_pinned && (
@@ -165,25 +163,31 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-gray-100 hover:ring-blue-100 transition-all flex-shrink-0">
-              <img src={avatar} alt="" className="w-full h-full object-cover" />
+            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all flex-shrink-0">
+              {avatar ? (
+                <img src={avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
+                  {avatarInitial}
+                </div>
+              )}
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-[14px] font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors">{name}</h4>
+              <h4 className="text-[14px] font-bold text-brand-text hover:text-blue-600 cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-brand-text/60">
                   — feeling {post.feeling} <Smile className="w-3 h-3 inline text-amber-400" />
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-0.5">
+            <div className="flex items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
               <span>{timeAgo(post.created_at)}</span>
               {post.location && (
                 <>
-                  <span className="text-gray-300">·</span>
-                  <span className="flex items-center gap-0.5 text-gray-400">
+                  <span className="text-brand-text/30">·</span>
+                  <span className="flex items-center gap-0.5 text-brand-text/40">
                     <MapPin className="w-3 h-3" />
                     {post.location}
                   </span>
@@ -191,8 +195,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               )}
               {post.activity && (
                 <>
-                  <span className="text-gray-300">·</span>
-                  <span className="flex items-center gap-0.5 text-gray-400">
+                  <span className="text-brand-text/30">·</span>
+                  <span className="flex items-center gap-0.5 text-brand-text/40">
                     <Music className="w-3 h-3" />
                     {post.activity}
                   </span>
@@ -204,7 +208,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => setIsMoreOpen(!isMoreOpen)}
-            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-gray-100 text-gray-700' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/40 hover:bg-brand-divider hover:text-brand-text/80'}`}
           >
             <MoreHorizontal className="w-5 h-5" />
           </button>
@@ -216,41 +220,41 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="absolute right-0 mt-1 w-56 bg-brand-card rounded-xl shadow-xl border border-gray-100 py-1.5 z-[100]"
+                className="absolute right-0 mt-1 w-36 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1 z-[100]"
               >
-                <button onClick={handleBookmark} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                  <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-amber-500 text-amber-500' : 'text-gray-400'}`} />
-                  <span className="text-sm text-gray-700 font-medium">
-                    {bookmarked ? 'Remove bookmark' : 'Save post'}
+                <button onClick={handleBookmark} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-amber-500 text-amber-500' : 'text-brand-text/40'}`} />
+                  <span className="text-[13px] text-brand-text font-medium">
+                    {bookmarked ? 'Unsave' : 'Save'}
                   </span>
                 </button>
 
                 {isOwnPost && (
-                  <button onClick={handlePin} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                    <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-blue-500 text-blue-500' : 'text-gray-400'}`} />
-                    <span className="text-sm text-gray-700 font-medium">
-                      {post.is_pinned ? 'Unpin post' : 'Pin post'}
+                  <button onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                    <Pin className={`w-3.5 h-3.5 ${post.is_pinned ? 'fill-blue-500 text-blue-500' : 'text-brand-text/40'}`} />
+                    <span className="text-[13px] text-brand-text font-medium">
+                      {post.is_pinned ? 'Unpin' : 'Pin'}
                     </span>
                   </button>
                 )}
 
-                <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                  <Link2 className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-700 font-medium">Copy link</span>
+                <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                  <Link2 className="w-3.5 h-3.5 text-brand-text/40" />
+                  <span className="text-[13px] text-brand-text font-medium">Copy link</span>
                 </button>
 
                 {isOwnPost && (
                   <>
-                    <div className="h-px bg-gray-100 my-1 mx-3" />
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
                     <button
                       onClick={() => {
                         setIsMoreOpen(false);
                         alert('Delete is not available yet.');
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors text-left text-red-500"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-red-50 transition-colors text-left text-red-500"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      <span className="text-sm font-medium">Delete post</span>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      <span className="text-[13px] font-medium">Delete</span>
                     </button>
                   </>
                 )}
@@ -263,12 +267,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Post Text with clickable hashtags and @mentions */}
       {post.text && (
         <div className={`px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
-          <p className="text-[15px] text-gray-800 leading-relaxed whitespace-pre-wrap">
+          <p className="text-[15px] text-brand-text leading-relaxed whitespace-pre-wrap">
             {post.text.split(/(#\w+|@\w+)/g).map((part, i) => {
               if (part.startsWith('#')) {
                 const tag = part.slice(1);
                 return (
-                  <Link key={i} href={`/hashtag/${tag}`} className="text-blue-500 hover:text-blue-700 font-medium">
+                  <Link key={i} href={`/hashtag/${tag}`} className="text-brand-text hover:text-brand-text/80 font-medium">
                     {part}
                   </Link>
                 );
@@ -276,7 +280,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               if (part.startsWith('@')) {
                 const username = part.slice(1);
                 return (
-                  <Link key={i} href={`/u/${username}`} className="text-blue-500 hover:text-blue-700 font-medium">
+                  <Link key={i} href={`/u/${username}`} className="text-brand-text hover:text-brand-text/80 font-medium">
                     {part}
                   </Link>
                 );
@@ -289,7 +293,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* Location name */}
       {post.location_name && !post.location && (
-        <div className="px-4 pb-2 flex items-center gap-1 text-xs text-gray-400">
+        <div className="px-4 pb-2 flex items-center gap-1 text-xs text-brand-text/40">
           <MapPin className="w-3 h-3" />
           <span>{post.location_name}</span>
         </div>
@@ -298,7 +302,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Poll Section */}
       {pollData && (
         <div className="px-4 pb-3 space-y-2.5">
-          <h5 className="text-sm font-semibold text-gray-900">{pollData.question}</h5>
+          <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
           {pollEnded && (
             <p className="text-xs text-red-500 font-medium">Poll ended</p>
           )}
@@ -313,23 +317,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   className={`w-full relative py-3 px-4 rounded-xl border text-left transition-all overflow-hidden ${isVoted
                     ? 'border-blue-400 bg-blue-50/80'
                     : showResults
-                      ? 'border-gray-100 bg-gray-50/50 cursor-default'
-                      : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer'
+                      ? 'border-brand-divider bg-brand-secondary/50 cursor-default'
+                      : 'border-brand-divider hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer'
                     }`}
                 >
                   {showResults && (
                     <div
-                      className={`absolute inset-y-0 left-0 transition-all duration-700 rounded-xl ${isVoted ? 'bg-blue-100/70' : 'bg-gray-100/70'}`}
+                      className={`absolute inset-y-0 left-0 transition-all duration-700 rounded-xl ${isVoted ? 'bg-blue-100/70' : 'bg-brand-divider/70'}`}
                       style={{ width: `${option.percentage}%` }}
                     />
                   )}
                   <div className="relative z-10 flex justify-between items-center">
-                    <span className={`text-sm ${isVoted ? 'font-semibold text-blue-700' : 'text-gray-700'}`}>
+                    <span className={`text-sm ${isVoted ? 'font-semibold text-blue-700' : 'text-brand-text'}`}>
                       {option.label}
                     </span>
                     <div className="flex items-center gap-2">
                       {showResults && (
-                        <span className={`text-xs font-bold ${isVoted ? 'text-blue-600' : 'text-gray-400'}`}>
+                        <span className={`text-xs font-bold ${isVoted ? 'text-blue-600' : 'text-brand-text/40'}`}>
                           {option.percentage}%
                         </span>
                       )}
@@ -345,7 +349,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             })}
           </div>
           {showResults && (
-            <p className="text-xs text-gray-400 font-medium">
+            <p className="text-xs text-brand-text/40 font-medium">
               {pollData.total_votes} vote{pollData.total_votes !== 1 ? 's' : ''}
             </p>
           )}
@@ -356,7 +360,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="relative">
         {/* Media Display */}
         {hasMedia && (
-          <div className={`relative overflow-hidden bg-gray-50 ${isReel ? 'aspect-[9/16] max-h-[700px]' : 'max-h-[70vh]'}`}>
+          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : 'max-h-[70vh]'}`}>
             <div className="h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
@@ -373,7 +377,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-gradient-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
-                            <img src={avatar} className="w-full h-full object-cover" alt="" />
+                            {avatar ? (
+                              <img src={avatar} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
+                                {avatarInitial}
+                              </div>
+                            )}
                           </div>
                           <div className="text-white">
                             <p className="text-sm font-semibold">{name} · Reel</p>
@@ -387,7 +397,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   ) : (
                     <VideoPlayer
                       mediaId={post.media![activeMediaIndex].media_id}
-                      className="w-full h-full border-b border-gray-100"
+                      className="w-full h-full border-b border-brand-divider"
                     />
                   )}
                 </div>
@@ -396,7 +406,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   key={post.media![activeMediaIndex].media_id}
                   src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve`}
                   alt=""
-                  className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-gray-100`}
+                  className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-brand-divider`}
                 />
               )}
             </div>
@@ -406,13 +416,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media!.length - 1))}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-brand-card transition-all"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev < post.media!.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-gray-700 shadow-lg hover:bg-brand-card transition-all"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -439,109 +449,113 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         {/* Action Bar (Pillar for Reels, Horizontal row for others) */}
         {isReel ? (
           <div className="absolute bottom-4 right-3 flex flex-col gap-3 z-10">
+            {/* Spark (was Heart) */}
             {!post.no_likes && (
               <button
                 onClick={toggleLike}
+                aria-label="Spark"
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg ${liked
                   ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
-                  : 'bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5'
+                  : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
-                  <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+                  <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-5 h-5">
+                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                  </svg>
                 </div>
                 {likesCount > 0 && (
-                  <span className={`text-[11px] font-bold drop-shadow-md ${liked ? 'text-rose-600' : 'text-gray-600'}`}>
+                  <span className={`text-[11px] font-bold drop-shadow-md ${liked ? 'text-rose-600' : 'text-brand-text/80'}`}>
                     {likesCount}
                   </span>
                 )}
               </button>
             )}
 
+            {/* Comment */}
             {!post.no_comments && (
               <button
                 onClick={() => setShowComments(!showComments)}
+                aria-label="Comment"
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
                   ? 'bg-blue-600 text-white shadow-blue-600/30'
-                  : 'bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5'
+                  : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-gray-600'}`}>
+                  <span className={`text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
               </button>
             )}
 
+            {/* Echo (was Share) */}
             <button
               onClick={handleShare}
+              aria-label="Echo"
               className="flex flex-col items-center gap-1 group"
             >
-              <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-gray-700 hover:bg-brand-card border border-gray-100 shadow-black/5 transition-all">
-                {linkCopied ? (
-                  <Check className="w-5 h-5 text-emerald-500" />
-                ) : (
-                  <Share2 className="w-5 h-5" />
-                )}
+              <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
+                <Repeat2 className="w-5 h-5" />
               </div>
               {sharesCount > 0 && (
-                <span className="text-[11px] font-bold text-gray-600 drop-shadow-md">
+                <span className="text-[11px] font-bold text-brand-text/80 drop-shadow-md">
                   {sharesCount}
                 </span>
               )}
             </button>
-          </div>
-        ) : (
-          <div className={`px-4 py-2 flex items-center justify-between border-t border-brand-divider ${hasMedia && !isReel ? '' : ''}`}>
-            {/* Comment */}
-            {!post.no_comments && (
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className={`flex items-center gap-1.5 transition-all ${showComments ? 'text-brand-accent' : 'text-brand-text/60 hover:text-brand-accent'}`}
-              >
-                <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
-                {commentsCount > 0 && <span className="text-[10px] font-black tracking-widest">{commentsCount}</span>}
-              </button>
-            )}
 
-            {/* Repost */}
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-1.5 text-brand-text/60 hover:text-brand-accent transition-all"
-            >
-              <Repeat2 className="w-[18px] h-[18px]" />
-              {sharesCount > 0 && <span className="text-[10px] font-black tracking-widest">{sharesCount}</span>}
-            </button>
-
-            {/* Like */}
-            {!post.no_likes && (
-              <button
-                onClick={toggleLike}
-                className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-accent scale-110' : 'text-brand-text/60 hover:text-brand-accent'}`}
-              >
-                <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
-                {likesCount > 0 && <span className="text-[10px] font-black tracking-widest">{likesCount}</span>}
-              </button>
-            )}
-
-            {/* Bookmark */}
+            {/* Stash (Bookmark) */}
             <button
               onClick={handleBookmark}
-              className={`transition-all ${bookmarked ? 'text-brand-accent scale-110' : 'text-brand-text/60 hover:text-brand-accent'}`}
+              aria-label="Stash"
+              className="flex flex-col items-center gap-1 group"
             >
-              <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
+                ? 'bg-brand-text text-brand-bg shadow-brand-text/30'
+                : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
+                }`}>
+                <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-current' : ''}`} />
+              </div>
+            </button>
+          </div>
+        ) : (
+          <div className="px-4 py-2 flex items-center justify-between border-t border-brand-divider">
+            {/* Comment */}
+            {!post.no_comments && (
+              <button onClick={() => setShowComments(!showComments)} aria-label="Comment"
+                className={`flex items-center gap-1.5 transition-all ${showComments ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
+                {commentsCount > 0 && <span className="text-[11px] font-mono">{commentsCount}</span>}
+              </button>
+            )}
+
+            {/* Echo (was Repost/Share) */}
+            <button onClick={handleShare} aria-label="Echo"
+              className="flex items-center gap-1.5 text-brand-text/40 hover:text-brand-text transition-all">
+              <Repeat2 className="w-[18px] h-[18px]" />
+              {sharesCount > 0 && <span className="text-[11px] font-mono">{sharesCount}</span>}
             </button>
 
-            {/* Share */}
-            <button
-              onClick={handleShare}
-              className="text-brand-text/60 hover:text-brand-accent transition-all"
-            >
-              {linkCopied ? <Check className="w-[18px] h-[18px] text-emerald-500" /> : <Upload className="w-[18px] h-[18px]" />}
+            {/* Spark (was Like/Heart) */}
+            {!post.no_likes && (
+              <button onClick={toggleLike} aria-label="Spark"
+                className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-[18px] h-[18px]">
+                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                </svg>
+                {likesCount > 0 && <span className="text-[11px] font-mono">{likesCount}</span>}
+              </button>
+            )}
+
+            {/* Stash (was Bookmark) */}
+            <button onClick={handleBookmark} aria-label="Stash"
+              className={`transition-all ${bookmarked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+              <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
             </button>
           </div>
         )}

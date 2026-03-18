@@ -124,13 +124,13 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                             {item.completed ? (
                                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                             ) : (
-                                <Circle className="h-4 w-4 text-slate-300 shrink-0" />
+                                <Circle className="h-4 w-4 text-brand-text/30 shrink-0" />
                             )}
                             <span
                                 className={`text-sm ${
                                     item.completed
                                         ? "text-brand-text/60 line-through"
-                                        : "text-slate-700"
+                                        : "text-brand-text"
                                 }`}
                             >
                                 {item.label}
@@ -141,7 +141,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
 
                 <button
                     onClick={onEditProfile}
-                    className="mt-4 w-full py-2 rounded-xl bg-[#D8103F] text-white text-sm font-semibold hover:bg-[#b80d35] transition-colors"
+                    className="mt-4 w-full py-2 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text transition-colors"
                 >
                     Edit Profile
                 </button>

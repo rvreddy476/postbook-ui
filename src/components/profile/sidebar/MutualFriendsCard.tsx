@@ -58,13 +58,13 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
     if (loading) {
         return (
             <div className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider animate-pulse">
-                <div className="h-4 w-28 bg-slate-200 rounded mb-3" />
+                <div className="h-4 w-28 bg-brand-secondary rounded mb-3" />
                 <div className="flex -space-x-2 mb-2">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white" />
+                        <div key={i} className="w-8 h-8 rounded-full bg-brand-secondary border-2 border-white" />
                     ))}
                 </div>
-                <div className="h-3 w-48 bg-slate-200 rounded" />
+                <div className="h-3 w-48 bg-brand-secondary rounded" />
             </div>
         )
     }
@@ -100,7 +100,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                 {displayProfiles.slice(0, 6).map((profile) => (
                     <div
                         key={profile.id}
-                        className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0"
+                        className="w-8 h-8 rounded-full border-2 border-white bg-brand-secondary overflow-hidden shrink-0"
                     >
                         {profile.avatar_media_id ? (
                             <img
@@ -109,7 +109,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full bg-[#D8103F]/10 flex items-center justify-center text-xs font-semibold text-[#D8103F]">
+                            <div className="w-full h-full bg-brand-text/10 flex items-center justify-center text-xs font-semibold text-brand-text">
                                 {(profile.display_name || profile.username).charAt(0).toUpperCase()}
                             </div>
                         )}

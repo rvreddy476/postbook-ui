@@ -201,7 +201,7 @@ const ContactList: React.FC<ContactListProps> = ({
                           {/* Removed Active Indicator Bar per user request */}
 
                           <div className="relative flex-shrink-0">
-                            <div className={`h-8 w-8 overflow-hidden rounded-full ring-2 transition-all ${isActive ? 'ring-indigo-100' : 'ring-transparent group-hover:ring-slate-100'
+                            <div className={`h-8 w-8 overflow-hidden rounded-full ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                               }`}>
                               <img src={contact.avatar || '/default-avatar.png'} alt={contact.name} className="h-full w-full object-cover" />
                             </div>
@@ -216,7 +216,7 @@ const ContactList: React.FC<ContactListProps> = ({
                                 {contact.name}
                               </h3>
                               {unreadCount > 0 && (
-                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-500 px-1 text-[9px] font-bold text-white shadow-sm">
+                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-text px-1 text-[9px] font-bold text-white shadow-sm">
                                   {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                               )}
@@ -231,7 +231,7 @@ const ContactList: React.FC<ContactListProps> = ({
 
                     {filteredContacts.length === 0 && (
                       <div className="px-2 py-12 text-center">
-                        <MessageCircle className="mx-auto mb-3 h-8 w-8 text-slate-200" />
+                        <MessageCircle className="mx-auto mb-3 h-8 w-8 text-brand-secondary" />
                         <p className="text-[11px] font-bold text-brand-text/60">
                           {search ? 'No matching friends' : 'No circle members yet'}
                         </p>
@@ -274,7 +274,7 @@ const ContactList: React.FC<ContactListProps> = ({
                         >
                           {/* Removed Active Indicator Bar per user request */}
 
-                          <div className={`h-8 w-8 flex-shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${isActive ? 'ring-indigo-100' : 'ring-transparent group-hover:ring-slate-100'
+                          <div className={`h-8 w-8 flex-shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                             }`}>
                             {avatarSrc ? (
                               <img src={avatarSrc} alt={group.name} className="h-full w-full object-cover" />
@@ -296,7 +296,7 @@ const ContactList: React.FC<ContactListProps> = ({
 
                     {filteredGroups.length === 0 && (
                       <div className="px-2 py-12 text-center">
-                        <Users className="mx-auto mb-3 h-8 w-8 text-slate-200" />
+                        <Users className="mx-auto mb-3 h-8 w-8 text-brand-secondary" />
                         <p className="text-[11px] font-bold text-brand-text/60">
                           {search ? 'No matching groups' : 'No groups yet'}
                         </p>
@@ -309,7 +309,7 @@ const ContactList: React.FC<ContactListProps> = ({
                     {/* Create Group */}
                     <button
                       onClick={() => setShowCreateGroupModal(true)}
-                      className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary/50 p-4 text-sm font-bold text-brand-highlight transition-all hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600"
+                      className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary/50 p-4 text-sm font-bold text-brand-highlight transition-all hover:border-brand-text/20 hover:bg-brand-text/5 hover:text-brand-text"
                     >
                       <Plus className="h-5 w-5 transition-transform group-hover:scale-110" />
                       New Group
@@ -334,7 +334,7 @@ const ContactList: React.FC<ContactListProps> = ({
 
 function SidebarIcon({ icon, active = false }: { icon: React.ReactNode; active?: boolean }) {
   return (
-    <button className={`p-1 transition-all ${active ? 'text-[#D8103F]' : 'text-brand-text/60 hover:text-brand-highlight'} [&_svg]:w-4 [&_svg]:h-4`}>
+    <button className={`p-1 transition-all ${active ? 'text-brand-text' : 'text-brand-text/60 hover:text-brand-highlight'} [&_svg]:w-4 [&_svg]:h-4`}>
       {icon}
     </button>
   );

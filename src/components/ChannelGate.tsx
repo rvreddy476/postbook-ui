@@ -60,7 +60,7 @@ export function ChannelGate({ children }: ChannelGateProps) {
   // Error state
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-3 bg-brand-card">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-secondary">
         <Tv className="h-7 w-7 text-brand-text/60" />
       </div>
       <p className="text-[14px] text-brand-highlight">
@@ -77,7 +77,7 @@ export function ChannelGate({ children }: ChannelGateProps) {
           ensurePublisher.reset();
           refetch();
         }}
-        className="rounded-full bg-slate-900 px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-slate-800"
+        className="rounded-full bg-slate-900 px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-brand-text"
       >
         Retry
       </button>

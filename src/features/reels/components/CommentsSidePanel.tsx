@@ -44,7 +44,7 @@ export function CommentsSidePanel({
         <button
           type="button"
           onClick={onOpen}
-          className="relative flex h-14 w-14 items-center justify-center rounded-full border border-brand-divider bg-brand-card text-slate-700 shadow-lg transition hover:bg-brand-secondary"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full border border-brand-divider bg-brand-card text-brand-text shadow-lg transition hover:bg-brand-secondary"
           aria-label="Open comments panel"
         >
           <MessageCircle className="h-5 w-5" />
@@ -66,7 +66,7 @@ export function CommentsSidePanel({
       <header className="flex items-center justify-between border-b border-brand-divider px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-highlight">Live Comments</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-brand-highlight">{comments.length}</span>
+          <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] text-brand-highlight">{comments.length}</span>
         </div>
         <button
           type="button"

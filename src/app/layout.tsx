@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Outfit, Space_Mono } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-inter',
+  variable: '--font-outfit',
 });
 
-const spaceGrotesk = Space_Grotesk({
+const spaceMono = Space_Mono({
   subsets: ['latin'],
-  weight: ['700'],
-  variable: '--font-display',
+  weight: ['400', '700'],
+  variable: '--font-mono',
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
@@ -20,12 +20,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'PostBoek.com | Orchid Prism Social Network',
-    template: '%s | PostBoek.com',
+    default: 'Home | Postbook \u00b7 atpost',
+    template: '%s | atpost',
   },
-  description: 'PostBoek.com is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
-  keywords: ['PostBoek.com', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
-  applicationName: 'PostBoek.com',
+  description: 'atpost is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
+  keywords: ['atpost', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
+  applicationName: 'atpost',
   alternates: {
     canonical: '/',
   },
@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'PostBoek.com | Orchid Prism Social Network',
-    description: 'PostBoek.com is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
-    siteName: 'PostBoek.com',
+    title: 'Home | Postbook \u00b7 atpost',
+    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    siteName: 'atpost',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PostBoek.com | Orchid Prism Social Network',
-    description: 'PostBoek.com is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    title: 'Home | Postbook \u00b7 atpost',
+    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
   },
 };
 
@@ -57,7 +57,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} bg-brand-bg text-brand-text antialiased`}>
+      <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(48,47,44,0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(48,47,44,0.06)_0px,_transparent_50%)]"></div>
           <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-brand-secondary/10 blur-[120px]"></div>
@@ -68,15 +68,15 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SocialMediaPosting',
-              'headline': 'PostBoek.com - Prismatic Social Network',
-              'description': 'PostBoek.com is a modern social experience with feed discovery, reels, and AI creator tools.',
+              'headline': 'atpost - Prismatic Social Network',
+              'description': 'atpost is a modern social experience with feed discovery, reels, and AI creator tools.',
               'author': {
                 '@type': 'Organization',
-                'name': 'PostBoek.com Team',
+                'name': 'atpost Team',
               },
               'publisher': {
                 '@type': 'Organization',
-                'name': 'PostBoek.com',
+                'name': 'atpost',
                 'logo': {
                   '@type': 'ImageObject',
                   'url': `${siteUrl}/logo.png`,

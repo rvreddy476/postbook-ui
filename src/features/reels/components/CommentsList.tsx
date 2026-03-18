@@ -84,7 +84,7 @@ export function CommentsList({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6">
         <p className="text-[13px] font-medium text-brand-text/60">No comments yet</p>
-        <p className="text-[12px] text-slate-300">Be the first to share your thoughts.</p>
+        <p className="text-[12px] text-brand-text/30">Be the first to share your thoughts.</p>
       </div>
     );
   }
@@ -109,13 +109,13 @@ export function CommentsList({
               <article
                 className={`rounded-2xl px-3.5 py-3 transition-all duration-300 ${
                   highlight
-                    ? "bg-[#D8103F]/5 shadow-[0_0_0_1px_rgba(124,58,237,0.15),0_0_20px_rgba(124,58,237,0.08)]"
+                    ? "bg-brand-text/5 shadow-[0_0_0_1px_rgba(124,58,237,0.15),0_0_20px_rgba(124,58,237,0.08)]"
                     : "hover:bg-brand-secondary"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-slate-800">{comment.author_name}</span>
-                  <span className="text-[11px] text-slate-300">{formatRelativeTime(comment.created_at)}</span>
+                  <span className="text-[13px] font-semibold text-brand-text">{comment.author_name}</span>
+                  <span className="text-[11px] text-brand-text/30">{formatRelativeTime(comment.created_at)}</span>
                 </div>
                 <p className="mt-0.5 text-[13px] leading-relaxed text-brand-highlight">{comment.text}</p>
               </article>

@@ -82,7 +82,7 @@ function FlicksSkeleton() {
             {Array.from({ length: 6 }).map((_, i) => (
                 <div
                     key={i}
-                    className="aspect-[9/16] rounded-2xl bg-slate-100 animate-pulse"
+                    className="aspect-[9/16] rounded-2xl bg-brand-secondary animate-pulse"
                     style={{ animationDelay: `${i * 80}ms` }}
                 />
             ))}
@@ -123,7 +123,7 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
-                    <Film className="h-9 w-9 text-slate-300" />
+                    <Film className="h-9 w-9 text-brand-text/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     {isOwn ? "Share your first Flick on Postgram" : "No Flicks yet"}
@@ -136,7 +136,7 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
                 {isOwn && (
                     <button
                         onClick={() => router.push("/postgram/create")}
-                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-[#D8103F] hover:bg-[#b80d35] text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-[#D8103F]/20"
+                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-text hover:bg-brand-text text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-brand-text/20"
                     >
                         <Plus className="h-4 w-4" />
                         Create Flick
@@ -159,7 +159,7 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
 
             {isFetchingNextPage && (
                 <div className="flex justify-center py-6">
-                    <div className="h-6 w-6 border-2 border-[#D8103F] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-6 w-6 border-2 border-brand-text border-t-transparent rounded-full animate-spin" />
                 </div>
             )}
         </div>

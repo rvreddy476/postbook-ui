@@ -50,9 +50,9 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D8103F]/50 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                checked ? "bg-[#D8103F]" : "bg-slate-200",
+                checked ? "bg-brand-text" : "bg-brand-secondary",
             ].join(" ")}
         >
             <span
@@ -91,7 +91,7 @@ function SectionCard({
             className="bg-brand-card dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-neutral-100 dark:border-neutral-800"
         >
             <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D8103F]/5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-text/5">
                     {icon}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -146,9 +146,9 @@ function ScreenTimeChart({ days }: { days: ScreenTimeDay[] }) {
                 return (
                     <div key={day.date} className="flex flex-col items-center flex-1 gap-1">
                         <span className="text-[10px] text-brand-text/60">{day.minutes}m</span>
-                        <div className="w-full rounded-t-md bg-slate-100 relative" style={{ height: "60px" }}>
+                        <div className="w-full rounded-t-md bg-brand-secondary relative" style={{ height: "60px" }}>
                             <div
-                                className="absolute bottom-0 left-0 right-0 rounded-t-md bg-[#D8103F]/70 transition-all"
+                                className="absolute bottom-0 left-0 right-0 rounded-t-md bg-brand-text/70 transition-all"
                                 style={{ height: `${heightPct}%` }}
                             />
                         </div>
@@ -170,14 +170,14 @@ function ScreenTimeSkeleton() {
             <div className="flex items-end gap-2 h-24">
                 {[40, 70, 55, 90, 60, 80, 45].map((h, i) => (
                     <div key={i} className="flex flex-col items-center flex-1 gap-1">
-                        <div className="w-full rounded-md bg-slate-100" style={{ height: "60px" }}>
-                            <div className="bg-slate-200 rounded-t-md w-full" style={{ height: `${h}%` }} />
+                        <div className="w-full rounded-md bg-brand-secondary" style={{ height: "60px" }}>
+                            <div className="bg-brand-secondary rounded-t-md w-full" style={{ height: `${h}%` }} />
                         </div>
-                        <div className="h-2 w-4 rounded bg-slate-200" />
+                        <div className="h-2 w-4 rounded bg-brand-secondary" />
                     </div>
                 ))}
             </div>
-            <div className="h-4 w-40 rounded bg-slate-200" />
+            <div className="h-4 w-40 rounded bg-brand-secondary" />
         </div>
     )
 }
@@ -205,7 +205,7 @@ function DailyLimitCard() {
 
     return (
         <SectionCard
-            icon={<Clock className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Clock className="h-6 w-6 text-brand-text/50" />}
             title="Daily Limit"
             description="Set a daily time limit to manage your usage."
             delay={0.1}
@@ -230,15 +230,14 @@ function DailyLimitCard() {
                             max={1440}
                             value={minutes}
                             onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                         />
                         <p className="text-xs text-brand-text/60">Set 0 to disable the limit.</p>
                     </div>
                 )}
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: "#D8103F" }}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
                 >
                     Save
                 </button>
@@ -273,7 +272,7 @@ function FocusModeCard() {
 
     return (
         <SectionCard
-            icon={<Focus className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Focus className="h-6 w-6 text-brand-text/50" />}
             title="Focus Mode"
             description="Limit distractions during your focus hours."
             delay={0.15}
@@ -297,7 +296,7 @@ function FocusModeCard() {
                             placeholder="09:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -310,14 +309,13 @@ function FocusModeCard() {
                             placeholder="17:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: "#D8103F" }}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
                 >
                     Save
                 </button>
@@ -352,7 +350,7 @@ function BedtimeModeCard() {
 
     return (
         <SectionCard
-            icon={<Moon className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Moon className="h-6 w-6 text-brand-text/50" />}
             title="Bedtime Mode"
             description="Silence Postbook during your sleep hours."
             delay={0.2}
@@ -376,7 +374,7 @@ function BedtimeModeCard() {
                             placeholder="22:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -389,14 +387,13 @@ function BedtimeModeCard() {
                             placeholder="07:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: "#D8103F" }}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
                 >
                     Save
                 </button>
@@ -429,7 +426,7 @@ function BreakRemindersCard() {
 
     return (
         <SectionCard
-            icon={<Coffee className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Coffee className="h-6 w-6 text-brand-text/50" />}
             title="Break Reminders"
             description="Get reminded to take a break after extended sessions."
             delay={0.25}
@@ -450,7 +447,7 @@ function BreakRemindersCard() {
                         id="break-interval"
                         value={interval}
                         onChange={(e) => setInterval(parseInt(e.target.value, 10))}
-                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20"
+                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                     >
                         <option value={30}>30 minutes</option>
                         <option value={60}>60 minutes</option>
@@ -460,8 +457,7 @@ function BreakRemindersCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: "#D8103F" }}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
                 >
                     Save
                 </button>
@@ -494,13 +490,13 @@ function ContentPreferencesCard() {
 
     return (
         <SectionCard
-            icon={<Eye className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Eye className="h-6 w-6 text-brand-text/50" />}
             title="Content Preferences"
             description="Reduce social pressure by hiding engagement metrics."
             delay={0.3}
         >
             <div className="space-y-4">
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-brand-secondary">
                     <div className="flex items-center justify-between py-3">
                         <div>
                             <p className="text-sm font-semibold text-brand-text">Hide like counts</p>
@@ -518,8 +514,7 @@ function ContentPreferencesCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors"
-                    style={{ backgroundColor: "#D8103F" }}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
                 >
                     Save
                 </button>
@@ -542,7 +537,7 @@ function ScreenTimeCard() {
 
     return (
         <SectionCard
-            icon={<Clock className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<Clock className="h-6 w-6 text-brand-text/50" />}
             title="Screen Time"
             description="Your Postbook usage over the last 7 days."
             delay={0.05}
@@ -554,7 +549,7 @@ function ScreenTimeCard() {
             ) : (
                 <div className="space-y-3">
                     <ScreenTimeChart days={data.days ?? []} />
-                    <p className="text-sm text-slate-700">
+                    <p className="text-sm text-brand-text">
                         <span className="font-bold text-brand-text">{data.total_minutes ?? 0} min</span>{" "}
                         total this week
                     </p>
@@ -574,7 +569,7 @@ export default function WellbeingPage() {
             {/* Back link */}
             <Link
                 href="/settings"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#D8103F] transition-colors hover:text-[#8a0a28]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-[#8a0a28]"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Settings
@@ -582,8 +577,8 @@ export default function WellbeingPage() {
 
             {/* Page header */}
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8103F]/10">
-                    <Clock className="h-5 w-5 text-[#D8103F]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-text/10">
+                    <Clock className="h-5 w-5 text-brand-text" />
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-brand-text">Digital Wellbeing</h1>

@@ -32,7 +32,7 @@ function NavIcon({ href, icon, label, active, newTab }: NavIconProps) {
       className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ${
         active
           ? "bg-slate-900 text-white shadow-sm"
-          : "text-brand-highlight hover:bg-slate-100 hover:text-slate-800"
+          : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
       aria-label={label}
     >
@@ -74,7 +74,7 @@ export function ReelIconSideNav() {
         label="Subscriptions"
       />
 
-      <div className="my-2 h-px w-8 bg-slate-100" />
+      <div className="my-2 h-px w-8 bg-brand-secondary" />
 
       <NavIcon
         href="/saved"
@@ -92,7 +92,7 @@ export function ReelIconSideNav() {
         label="Liked"
       />
 
-      <div className="my-2 h-px w-8 bg-slate-100" />
+      <div className="my-2 h-px w-8 bg-brand-secondary" />
 
       <NavIcon
         href="/reels/create"

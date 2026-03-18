@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import AppShell from '@/components/AppShell'
 import { useRouter, useParams } from 'next/navigation'
 import { useGroupDetails, useGroupMembers, useUpdateGroup, useDeleteGroup } from '@/hooks/useGroups'
 import { useAuthUser } from '@/store/auth'
@@ -35,19 +36,23 @@ export default function GroupSettingsPage() {
 
   if (isLoading) {
     return (
+      <AppShell>
       <div className="max-w-2xl mx-auto px-4 pt-8">
-        <div className="h-64 bg-slate-100 rounded-2xl animate-pulse" />
+        <div className="h-64 bg-brand-secondary rounded-2xl animate-pulse" />
       </div>
+      </AppShell>
     )
   }
 
   if (!group || !isAdmin) {
     return (
+      <AppShell>
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-slate-700">Access Denied</h2>
+        <h2 className="text-xl font-bold text-brand-text">Access Denied</h2>
         <p className="text-brand-text/60 mt-2 text-sm">Only group admins can access settings.</p>
-        <button onClick={() => router.back()} className="mt-4 text-[#D8103F] text-sm font-bold hover:underline">Go Back</button>
+        <button onClick={() => router.back()} className="mt-4 text-brand-text text-sm font-bold hover:underline">Go Back</button>
       </div>
+      </AppShell>
     )
   }
 
@@ -66,13 +71,14 @@ export default function GroupSettingsPage() {
   }
 
   return (
+    <AppShell>
     <div className="max-w-2xl mx-auto px-4 pt-8 pb-12">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <button onClick={() => router.push(`/groups/${groupId}`)} className="p-2 bg-slate-100 rounded-full text-brand-highlight hover:bg-slate-200 transition-all">
+        <button onClick={() => router.push(`/groups/${groupId}`)} className="p-2 bg-brand-secondary rounded-full text-brand-highlight hover:bg-brand-secondary transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-black text-slate-800">Group Settings</h1>
+        <h1 className="text-2xl font-black text-brand-text">Group Settings</h1>
       </div>
 
       {/* Settings Form */}
@@ -84,7 +90,7 @@ export default function GroupSettingsPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30"
               maxLength={100}
               required
             />
@@ -95,7 +101,7 @@ export default function GroupSettingsPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 resize-none"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -108,21 +114,21 @@ export default function GroupSettingsPage() {
                 type="button"
                 onClick={() => setVisibility('public')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'public' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'
+                  visibility === 'public' ? 'border-brand-text/50 bg-brand-text/5' : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                 }`}
               >
-                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-[#D8103F]/50' : 'text-brand-text/60'}`} />
-                <span className="text-sm font-bold text-slate-700">Public</span>
+                <Globe className={`w-4 h-4 ${visibility === 'public' ? 'text-brand-text/50' : 'text-brand-text/60'}`} />
+                <span className="text-sm font-bold text-brand-text">Public</span>
               </button>
               <button
                 type="button"
                 onClick={() => setVisibility('private')}
                 className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  visibility === 'private' ? 'border-[#D8103F]/50 bg-[#D8103F]/5' : 'border-brand-divider bg-brand-card hover:border-slate-300'
+                  visibility === 'private' ? 'border-brand-text/50 bg-brand-text/5' : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                 }`}
               >
-                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-[#D8103F]/50' : 'text-brand-text/60'}`} />
-                <span className="text-sm font-bold text-slate-700">Private</span>
+                <Lock className={`w-4 h-4 ${visibility === 'private' ? 'text-brand-text/50' : 'text-brand-text/60'}`} />
+                <span className="text-sm font-bold text-brand-text">Private</span>
               </button>
             </div>
           </div>
@@ -152,5 +158,6 @@ export default function GroupSettingsPage() {
         </button>
       </div>
     </div>
+    </AppShell>
   )
 }

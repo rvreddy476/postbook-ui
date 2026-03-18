@@ -87,9 +87,9 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                         className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900">Create Story</h2>
-                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-divider">
+                            <h2 className="text-lg font-semibold text-brand-text">Create Story</h2>
+                            <button onClick={onClose} className="text-brand-text/40 hover:text-brand-text/80">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -113,7 +113,7 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                             ) : (
                                 <button
                                     onClick={() => fileRef.current?.click()}
-                                    className="w-full aspect-[9/16] max-h-[200px] border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-blue-300 hover:text-blue-400 transition-colors"
+                                    className="w-full aspect-[9/16] max-h-[200px] border-2 border-dashed border-brand-divider rounded-xl flex flex-col items-center justify-center gap-3 text-brand-text/40 hover:border-blue-300 hover:text-blue-400 transition-colors"
                                 >
                                     <Upload className="w-8 h-8" />
                                     <div className="flex gap-4 text-xs">
@@ -138,7 +138,7 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                                 placeholder="Add a caption..."
                                 maxLength={500}
                                 rows={2}
-                                className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                                className="w-full text-sm border border-brand-divider rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
                             />
 
                             {/* Visibility */}
@@ -150,7 +150,7 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
                                             visibility === opt.value
                                                 ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                                : 'bg-brand-secondary border-brand-divider text-brand-text/80 hover:bg-brand-divider'
                                         }`}
                                     >
                                         <span className="mr-1">{opt.icon}</span> {opt.label}
@@ -159,12 +159,12 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                             </div>
 
                             {/* Highlight toggle */}
-                            <label className="flex items-center gap-3 text-sm text-gray-600 cursor-pointer">
+                            <label className="flex items-center gap-3 text-sm text-brand-text/80 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={isHighlight}
                                     onChange={e => setIsHighlight(e.target.checked)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-200"
+                                    className="rounded border-brand-text/30 text-blue-600 focus:ring-blue-200"
                                 />
                                 Save as Highlight
                             </label>
@@ -174,14 +174,14 @@ const StoryCreator: React.FC<StoryCreatorProps> = ({ isOpen, onClose }) => {
                                     value={highlightGroup}
                                     onChange={e => setHighlightGroup(e.target.value)}
                                     placeholder="Highlight group name (optional)"
-                                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                    className="w-full text-sm border border-brand-divider rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                                 />
                             )}
                         </div>
 
                         {/* Footer */}
-                        <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-3">
-                            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+                        <div className="px-5 py-4 border-t border-brand-divider flex justify-end gap-3">
+                            <button onClick={onClose} className="px-4 py-2 text-sm text-brand-text/60 hover:text-brand-text">
                                 Cancel
                             </button>
                             <button

@@ -68,18 +68,18 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
       >
         {/* Author Row */}
         <div className="flex items-center gap-3 p-4 pb-0">
-          <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 ring-2 ring-white shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-brand-secondary overflow-hidden flex-shrink-0 ring-2 ring-white shadow-sm">
             {avatarSrc ? (
               <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-sm font-bold text-white">
+              <div className="w-full h-full bg-gradient-to-br from-brand-secondary to-brand-text/30 flex items-center justify-center text-sm font-bold text-white">
                 {name.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-bold text-slate-800 truncate">{name}</span>
+              <span className="text-sm font-bold text-brand-text truncate">{name}</span>
               <RoleBadge role={role} />
             </div>
             <div className="flex items-center gap-1.5 text-xs text-brand-text/60">
@@ -90,7 +90,7 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
           </div>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="p-1.5 text-slate-300 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all"
+            className="p-1.5 text-brand-text/30 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -103,7 +103,7 @@ function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<st
         </div>
 
         {/* Engagement Rail */}
-        <div className="flex items-center border-t border-slate-50 px-2">
+        <div className="flex items-center border-t border-brand-secondary px-2">
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-rose-500 hover:bg-rose-50/50 rounded-lg transition-all"
@@ -157,10 +157,10 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       {isMember && (
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-[#D8103F]/20 hover:shadow-sm transition-all group"
+          className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-sm transition-all group"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center group-hover:from-[#D8103F]/10 group-hover:to-[#D8103F]/5 transition-all">
-            <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-[#D8103F] transition-colors" />
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-secondary to-brand-secondary flex items-center justify-center group-hover:from-brand-text/10 group-hover:to-brand-text/5 transition-all">
+            <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
           </div>
           <span className="group-hover:text-brand-highlight transition-colors">Write something to the group...</span>
         </button>
@@ -187,9 +187,9 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
           {[1, 2, 3].map(i => (
             <div key={i} className="bg-brand-card rounded-xl border border-brand-divider p-4 space-y-3 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100" />
+                <div className="w-10 h-10 rounded-full bg-brand-secondary" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-28 bg-slate-100 rounded" />
+                  <div className="h-3.5 w-28 bg-brand-secondary rounded" />
                   <div className="h-2.5 w-16 bg-brand-secondary rounded" />
                 </div>
               </div>
@@ -203,10 +203,10 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
-            <MessageCircle className="w-7 h-7 text-slate-200" />
+            <MessageCircle className="w-7 h-7 text-brand-secondary" />
           </div>
           <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
-          <p className="text-xs text-slate-300 mt-1">Be the first to share something with the group!</p>
+          <p className="text-xs text-brand-text/30 mt-1">Be the first to share something with the group!</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -222,7 +222,7 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-6 py-2.5 bg-brand-card rounded-xl font-bold text-xs text-brand-highlight hover:text-[#D8103F] hover:shadow-md transition-all border border-brand-divider disabled:opacity-50"
+            className="px-6 py-2.5 bg-brand-card rounded-xl font-bold text-xs text-brand-highlight hover:text-brand-text hover:shadow-md transition-all border border-brand-divider disabled:opacity-50"
           >
             {isFetchingNextPage ? 'Loading...' : 'Load more posts'}
           </button>

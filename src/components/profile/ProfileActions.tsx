@@ -114,7 +114,7 @@ export function ProfileActions({
                     variant="outline"
                     size="sm"
                     onClick={onEditProfile}
-                    className="rounded-xl border-brand-divider hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
+                    className="rounded-xl border-brand-divider hover:border-brand-text/20 hover:bg-brand-text/5 text-sm font-semibold"
                 >
                     <Settings className="mr-2 h-4 w-4" />
                     Edit Profile
@@ -241,8 +241,8 @@ export function ProfileActions({
                     size="sm"
                     className={`rounded-xl text-sm font-semibold ${
                         isFollowing
-                            ? "border-[#D8103F]/30 text-[#D8103F] hover:bg-[#D8103F]/5"
-                            : "bg-[#D8103F] hover:bg-[#b80d35] text-white"
+                            ? "border-brand-text/30 text-brand-text hover:bg-brand-text/5"
+                            : "bg-brand-text hover:bg-brand-text text-white"
                     }`}
                 >
                     {isFollowing ? (
@@ -302,7 +302,7 @@ export function ProfileActions({
                         onClick={onSendCircleRequest}
                         variant="outline"
                         size="sm"
-                        className="rounded-xl border-brand-divider text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5 text-sm font-semibold"
+                        className="rounded-xl border-brand-divider text-brand-text hover:border-brand-text/20 hover:bg-brand-text/5 text-sm font-semibold"
                     >
                         <UserPlus className="mr-1.5 h-4 w-4" />
                         Add Friend
@@ -317,7 +317,7 @@ export function ProfileActions({
                     onClick={canDM ? onMessage : undefined}
                     className={`rounded-xl text-sm font-semibold ${
                         canDM
-                            ? "border-brand-divider text-slate-700 hover:border-[#D8103F]/20 hover:bg-[#D8103F]/5"
+                            ? "border-brand-divider text-brand-text hover:border-brand-text/20 hover:bg-brand-text/5"
                             : "opacity-40 cursor-not-allowed"
                     }`}
                     title={canDM ? "Send message" : "Add to Circle first"}
@@ -364,7 +364,7 @@ export function ProfileActions({
                                             className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
                                                 item.destructive
                                                     ? "text-red-600 hover:bg-red-50"
-                                                    : "text-slate-700 hover:bg-brand-secondary"
+                                                    : "text-brand-text hover:bg-brand-secondary"
                                             }`}
                                         >
                                             {item.icon}

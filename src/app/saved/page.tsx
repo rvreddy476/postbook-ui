@@ -57,7 +57,7 @@ function targetTypeIcon(type: string): React.ReactNode {
 
 function targetTypeBadgeColor(type: string): string {
     switch (type.toLowerCase()) {
-        case "post":    return "bg-[#D8103F]/5 text-[#D8103F] border-[#D8103F]/10"
+        case "post":    return "bg-brand-text/5 text-brand-text border-brand-text/10"
         case "video":   return "bg-indigo-50 text-indigo-600 border-indigo-100"
         case "short":   return "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100"
         case "photo":   return "bg-rose-50 text-rose-600 border-rose-100"
@@ -73,13 +73,13 @@ function SavedItemSkeleton() {
     return (
         <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-sm animate-pulse">
             <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex-shrink-0" />
+                <div className="w-10 h-10 rounded-xl bg-brand-secondary flex-shrink-0" />
                 <div className="flex-1 space-y-2.5 min-w-0">
-                    <div className="h-3 bg-slate-100 rounded-full w-1/3" />
-                    <div className="h-3 bg-slate-100 rounded-full w-1/2" />
-                    <div className="h-2.5 bg-slate-100 rounded-full w-1/4" />
+                    <div className="h-3 bg-brand-secondary rounded-full w-1/3" />
+                    <div className="h-3 bg-brand-secondary rounded-full w-1/2" />
+                    <div className="h-2.5 bg-brand-secondary rounded-full w-1/4" />
                 </div>
-                <div className="w-16 h-8 bg-slate-100 rounded-xl flex-shrink-0" />
+                <div className="w-16 h-8 bg-brand-secondary rounded-xl flex-shrink-0" />
             </div>
         </div>
     )
@@ -99,7 +99,7 @@ function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
     const badgeColor = targetTypeBadgeColor(item.target_type)
 
     return (
-        <div className="group bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-300">
+        <div className="group bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-300">
             <div className="flex items-start gap-4">
                 {/* Type icon */}
                 <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${badgeColor}`}>
@@ -124,7 +124,7 @@ function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
                     </div>
 
                     {/* Target ID */}
-                    <p className="text-[11px] font-bold text-slate-700 truncate">
+                    <p className="text-[11px] font-bold text-brand-text truncate">
                         <span className="text-brand-text/60 font-medium">ID: </span>
                         <span className="font-mono">{item.target_id}</span>
                     </p>
@@ -174,7 +174,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
         return (
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
                 {[80, 100, 90, 110].map((w, i) => (
-                    <div key={i} className={`h-9 rounded-xl bg-slate-100 animate-pulse flex-shrink-0`} style={{ width: w }} />
+                    <div key={i} className={`h-9 rounded-xl bg-brand-secondary animate-pulse flex-shrink-0`} style={{ width: w }} />
                 ))}
             </div>
         )
@@ -187,8 +187,8 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 onClick={() => onSelect(undefined)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
                     activeCollection === undefined
-                        ? "bg-brand-card text-[#D8103F] border-[#D8103F]/20 shadow-sm shadow-[#D8103F]/10"
-                        : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-slate-700 hover:border-brand-divider"
+                        ? "bg-brand-card text-brand-text border-brand-text/20 shadow-sm shadow-brand-text/10"
+                        : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
                 }`}
             >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 All
                 {allCount > 0 && (
                     <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                        activeCollection === undefined ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-brand-highlight"
+                        activeCollection === undefined ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-highlight"
                     }`}>
                         {allCount}
                     </span>
@@ -211,8 +211,8 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                     onClick={() => onSelect(col.name)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
                         activeCollection === col.name
-                            ? "bg-brand-card text-[#D8103F] border-[#D8103F]/20 shadow-sm shadow-[#D8103F]/10"
-                            : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-slate-700 hover:border-brand-divider"
+                            ? "bg-brand-card text-brand-text border-brand-text/20 shadow-sm shadow-brand-text/10"
+                            : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
                     }`}
                 >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -221,7 +221,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                     {col.name}
                     {col.count > 0 && (
                         <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                            activeCollection === col.name ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-200 text-brand-highlight"
+                            activeCollection === col.name ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-highlight"
                         }`}>
                             {col.count}
                         </span>
@@ -274,7 +274,7 @@ export default function SavedPage() {
                 {/* Page heading */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 orchid-gradient rounded-[0.8rem] flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
+                        <div className="w-10 h-10 orchid-gradient rounded-[0.8rem] flex items-center justify-center shadow-lg shadow-brand-text/20">
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
@@ -297,7 +297,7 @@ export default function SavedPage() {
                 </div>
 
                 {/* Divider */}
-                <div className="h-px bg-slate-100 mb-6" />
+                <div className="h-px bg-brand-secondary mb-6" />
 
                 {/* Content area */}
                 {isLoading ? (
@@ -314,19 +314,19 @@ export default function SavedPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-slate-700">Something went wrong</p>
+                            <p className="text-[11px] font-black uppercase tracking-widest text-brand-text">Something went wrong</p>
                             <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">Failed to load your saved items.</p>
                         </div>
                     </div>
                 ) : allItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <div className="w-16 h-16 rounded-2xl orchid-gradient flex items-center justify-center shadow-lg shadow-[#D8103F]/20 opacity-30">
+                        <div className="w-16 h-16 rounded-2xl orchid-gradient flex items-center justify-center shadow-lg shadow-brand-text/20 opacity-30">
                             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-slate-700">
+                            <p className="text-[11px] font-black uppercase tracking-widest text-brand-text">
                                 {activeCollection ? `No items in "${activeCollection}"` : "Nothing saved yet"}
                             </p>
                             <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">
@@ -364,11 +364,11 @@ export default function SavedPage() {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-[#D8103F]/20 hover:text-[#D8103F] hover:bg-[#D8103F]/5 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isFetchingNextPage ? (
                                         <>
-                                            <div className="w-3.5 h-3.5 border-2 border-[#D8103F]/30 border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-3.5 h-3.5 border-2 border-brand-text/30 border-t-transparent rounded-full animate-spin" />
                                             Loading...
                                         </>
                                     ) : (
@@ -386,11 +386,11 @@ export default function SavedPage() {
                         {/* End of list indicator */}
                         {!hasNextPage && allItems.length > 0 && (
                             <div className="mt-10 flex items-center gap-3">
-                                <div className="flex-1 h-px bg-slate-100" />
-                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 flex-shrink-0">
+                                <div className="flex-1 h-px bg-brand-secondary" />
+                                <p className="text-[8px] font-black uppercase tracking-widest text-brand-text/30 flex-shrink-0">
                                     End of saved items
                                 </p>
-                                <div className="flex-1 h-px bg-slate-100" />
+                                <div className="flex-1 h-px bg-brand-secondary" />
                             </div>
                         )}
                     </>

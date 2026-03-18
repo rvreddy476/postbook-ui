@@ -100,7 +100,7 @@ export function AvatarStack({ users, size = 28, max = 3 }: AvatarStackProps) {
       ))}
       {overflow > 0 && (
         <div
-          className="rounded-full bg-slate-100 flex items-center justify-center text-brand-highlight font-bold border-2 border-white"
+          className="rounded-full bg-brand-secondary flex items-center justify-center text-brand-highlight font-bold border-2 border-white"
           style={{ marginLeft: -8, width: size, height: size, fontSize: Math.max(size * 0.32, 10) }}
         >
           +{overflow}

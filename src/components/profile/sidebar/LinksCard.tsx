@@ -65,9 +65,9 @@ export default function LinksCard({ links }: LinksCardProps) {
                         onClick={() => trackLinkClick(link.platform)}
                         className="flex items-center gap-2.5 group"
                     >
-                        <ExternalLink className="h-4 w-4 text-brand-text/60 shrink-0 group-hover:text-[#D8103F] transition-colors" />
+                        <ExternalLink className="h-4 w-4 text-brand-text/60 shrink-0 group-hover:text-brand-text transition-colors" />
                         <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-700 group-hover:text-[#D8103F] transition-colors">
+                            <p className="text-sm font-medium text-brand-text group-hover:text-brand-text transition-colors">
                                 {link.display_label || formatPlatformName(link.platform)}
                             </p>
                             <p className="text-xs text-brand-text/60 truncate">

@@ -43,7 +43,7 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
         <h2 className="text-[16px] font-bold text-brand-text">{title}</h2>
         {badge && (
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${badgeColor || "bg-slate-100 text-brand-highlight"}`}
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${badgeColor || "bg-brand-secondary text-brand-highlight"}`}
           >
             {badge}
           </span>
@@ -110,17 +110,17 @@ export function VideoRowSkeleton({ count = 4 }: { count?: number }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2.5 px-1">
-        <div className="h-5 w-32 animate-pulse rounded bg-slate-100" />
+        <div className="h-5 w-32 animate-pulse rounded bg-brand-secondary" />
       </div>
       <div className="flex gap-4">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="w-[280px] shrink-0">
-            <div className="aspect-video animate-pulse rounded-xl bg-slate-100" />
+            <div className="aspect-video animate-pulse rounded-xl bg-brand-secondary" />
             <div className="mt-3 flex gap-2.5">
-              <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-brand-secondary" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-3/4 animate-pulse rounded bg-slate-100" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-3/4 animate-pulse rounded bg-brand-secondary" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-brand-secondary" />
               </div>
             </div>
           </div>

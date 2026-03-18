@@ -37,7 +37,7 @@ export default function SessionPage() {
             {workItems.map((item) => (
               <li key={item} className="flex items-start gap-2.5 rounded-xl border border-brand-divider bg-brand-card px-3 py-2.5">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <span className="text-sm leading-6 text-slate-700">{item}</span>
+                <span className="text-sm leading-6 text-brand-text">{item}</span>
               </li>
             ))}
           </ul>
@@ -45,7 +45,7 @@ export default function SessionPage() {
           <div className="mt-6 flex flex-wrap gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-brand-secondary"
+              className="inline-flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-3 py-2 text-sm font-semibold text-brand-text transition hover:bg-brand-secondary"
             >
               <FileCode2 className="h-4 w-4 text-brand-highlight" />
               Back To Feed

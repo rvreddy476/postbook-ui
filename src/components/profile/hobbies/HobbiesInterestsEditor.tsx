@@ -200,15 +200,15 @@ function TagListSection({
     return (
         <div className="rounded-[1.5rem] border border-brand-divider bg-brand-card overflow-hidden">
             {/* Section Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-secondary">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-slate-100 border border-brand-divider">
+                    <div className="p-2 rounded-xl bg-brand-secondary border border-brand-divider">
                         <Icon className="w-4 h-4 text-brand-highlight" />
                     </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-brand-text">
                         {title}
                     </span>
-                    <span className="text-[10px] font-black bg-slate-100 text-brand-highlight px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black bg-brand-secondary text-brand-highlight px-2 py-0.5 rounded-full">
                         {items.length}/{maxCount}
                     </span>
                 </div>
@@ -230,7 +230,7 @@ function TagListSection({
             <div className="p-4">
                 {items.length === 0 ? (
                     <div className="text-center py-8">
-                        <Icon className="w-8 h-8 text-slate-200 mx-auto mb-3" />
+                        <Icon className="w-8 h-8 text-brand-secondary mx-auto mb-3" />
                         <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">
                             No {title.toLowerCase()} added yet
                         </p>
@@ -263,7 +263,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "up")}
                                             disabled={idx === 0 || isBusy}
-                                            className="p-0.5 rounded text-slate-300 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move up"
                                         >
                                             <ChevronUp className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "down")}
                                             disabled={idx === items.length - 1 || isBusy}
-                                            className="p-0.5 rounded text-slate-300 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move down"
                                         >
                                             <ChevronDown className="w-3.5 h-3.5" />
@@ -309,7 +309,7 @@ function TagListSection({
                                         type="button"
                                         onClick={() => onRemove(item.item_id)}
                                         disabled={isBusy}
-                                        className="p-2 rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
+                                        className="p-2 rounded-lg text-brand-text/30 hover:bg-rose-50 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
                                         aria-label={`Remove ${item.name}`}
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />

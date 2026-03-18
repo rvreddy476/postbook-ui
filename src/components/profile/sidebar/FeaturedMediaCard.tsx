@@ -29,10 +29,10 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
     if (isLoading) {
         return (
             <div className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider animate-pulse">
-                <div className="h-4 w-20 bg-slate-200 rounded mb-3" />
+                <div className="h-4 w-20 bg-brand-secondary rounded mb-3" />
                 <div className="grid grid-cols-3 gap-1.5">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="aspect-square bg-slate-200 rounded-xl" />
+                        <div key={i} className="aspect-square bg-brand-secondary rounded-xl" />
                     ))}
                 </div>
             </div>
@@ -66,7 +66,7 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
                     return (
                         <div
                             key={post.id}
-                            className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 group cursor-pointer"
+                            className="relative aspect-square rounded-xl overflow-hidden bg-brand-secondary group cursor-pointer"
                         >
                             {mediaId && (
                                 <img
@@ -89,7 +89,7 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
 
             <button
                 onClick={onSeeAll}
-                className="mt-4 w-full text-center text-sm font-semibold text-[#D8103F] hover:text-[#b80d35] transition-colors"
+                className="mt-4 w-full text-center text-sm font-semibold text-brand-text hover:text-brand-text transition-colors"
             >
                 See all
             </button>

@@ -93,9 +93,9 @@ export default function PostsDemo() {
                     {MOCK_POSTS.map(post => (
                         <div key={post.id} className="space-y-4">
                             <div className="flex items-center gap-4 px-4">
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic">{post.content_type === 'short' ? 'Reel View' : post.media ? 'Media View' : 'Quote View'}</span>
-                                <div className="h-px bg-slate-200 flex-1"></div>
+                                <div className="h-px bg-brand-secondary flex-1"></div>
+                                <span className="text-[9px] font-black text-brand-text/30 uppercase tracking-widest italic">{post.content_type === 'short' ? 'Reel View' : post.media ? 'Media View' : 'Quote View'}</span>
+                                <div className="h-px bg-brand-secondary flex-1"></div>
                             </div>
                             <PostCard
                                 post={post}

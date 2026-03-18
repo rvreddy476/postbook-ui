@@ -48,7 +48,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
     return (
         <div className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden hover:shadow-md transition-shadow">
             {/* Thumbnail area */}
-            <Link href={watchUrl} className="block relative aspect-video bg-slate-100 group">
+            <Link href={watchUrl} className="block relative aspect-video bg-brand-secondary group">
                 {thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
@@ -56,11 +56,11 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#D8103F]/10 to-purple-200">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-text/10 to-purple-200">
                         {isFlick ? (
-                            <Film className="h-10 w-10 text-[#D8103F]/30" />
+                            <Film className="h-10 w-10 text-brand-text/30" />
                         ) : (
-                            <Play className="h-10 w-10 text-[#D8103F]/30" />
+                            <Play className="h-10 w-10 text-brand-text/30" />
                         )}
                     </div>
                 )}
@@ -68,7 +68,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                 {/* Play overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-card/90 shadow-lg">
-                        <Play className="h-5 w-5 text-[#D8103F] ml-0.5" />
+                        <Play className="h-5 w-5 text-brand-text ml-0.5" />
                     </div>
                 </div>
 
@@ -92,7 +92,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     <div className="min-w-0 flex-1">
                         <Link
                             href={watchUrl}
-                            className="text-sm font-semibold text-brand-text line-clamp-2 hover:text-[#D8103F] transition-colors"
+                            className="text-sm font-semibold text-brand-text line-clamp-2 hover:text-brand-text transition-colors"
                         >
                             {embedRef?.title || post.text || "Untitled"}
                         </Link>
@@ -102,7 +102,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     </div>
                     <Link
                         href={watchUrl}
-                        className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 hover:bg-[#D8103F]/10 transition-colors"
+                        className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-brand-secondary hover:bg-brand-text/10 transition-colors"
                         title="Open in PostTube"
                     >
                         <ExternalLink className="h-3.5 w-3.5 text-brand-highlight" />

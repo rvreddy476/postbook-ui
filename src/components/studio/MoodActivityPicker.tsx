@@ -62,7 +62,7 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
             {t}
           </button>
         ))}
-        <button onClick={onClose} className={`px-3 text-brand-text/60 transition-colors ${isDarkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}>
+        <button onClick={onClose} className={`px-3 text-brand-text/60 transition-colors ${isDarkMode ? 'hover:text-brand-secondary' : 'hover:text-brand-text'}`}>
           <X className="w-3.5 h-3.5" />
         </button>
       </div>

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Reels | PostBoek.com",
-  description: "Watch and discover short-form video content on PostBoek Reels.",
+  title: "Reels | Postbook \u00b7 atpost",
+  description: "Watch and discover short-form video content on atpost Reels.",
 };
 
 export default function ReelsLayout({ children }: { children: React.ReactNode }) {

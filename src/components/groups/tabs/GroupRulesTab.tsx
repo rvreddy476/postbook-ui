@@ -43,18 +43,18 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-700">Edit Group Rules</h3>
+          <h3 className="text-sm font-bold text-brand-text">Edit Group Rules</h3>
           <div className="flex gap-2">
             <button
               onClick={() => setEditing(false)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-brand-highlight bg-slate-100 rounded-lg hover:bg-slate-200 transition-all"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-brand-highlight bg-brand-secondary rounded-lg hover:bg-brand-secondary transition-all"
             >
               <X className="w-3 h-3" /> Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={updateRules.isPending}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-[#D8103F] rounded-lg hover:bg-[#C00E38] transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text/90 transition-all disabled:opacity-50"
             >
               <Save className="w-3 h-3" /> {updateRules.isPending ? 'Saving...' : 'Save Rules'}
             </button>
@@ -74,14 +74,14 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <GripVertical className="w-4 h-4 text-slate-200" />
-                  <span className="w-6 h-6 rounded-full bg-[#D8103F]/10 flex items-center justify-center text-[10px] font-bold text-[#D8103F]">
+                  <GripVertical className="w-4 h-4 text-brand-secondary" />
+                  <span className="w-6 h-6 rounded-full bg-brand-text/10 flex items-center justify-center text-[10px] font-bold text-brand-text">
                     {i + 1}
                   </span>
                 </div>
                 <button
                   onClick={() => setDraft(draft.filter((_, idx) => idx !== i))}
-                  className="p-1 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all"
+                  className="p-1 text-brand-text/30 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -91,14 +91,14 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
                 value={rule.title}
                 onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], title: e.target.value }; setDraft(d) }}
                 placeholder="Rule title..."
-                className="w-full px-3 py-2.5 bg-brand-secondary border border-brand-divider rounded-lg text-sm font-medium text-slate-700 mb-2 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 placeholder:text-slate-300"
+                className="w-full px-3 py-2.5 bg-brand-secondary border border-brand-divider rounded-lg text-sm font-medium text-brand-text mb-2 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
               />
               <textarea
                 value={rule.description}
                 onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], description: e.target.value }; setDraft(d) }}
                 placeholder="Add a description (optional)..."
                 rows={2}
-                className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-xs text-brand-highlight resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 placeholder:text-slate-300"
+                className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-xs text-brand-highlight resize-none focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
               />
             </motion.div>
           ))}
@@ -107,7 +107,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
         {draft.length < 10 && (
           <button
             onClick={() => setDraft([...draft, { title: '', description: '' }])}
-            className="flex items-center gap-2 w-full justify-center py-3.5 border-2 border-dashed border-brand-divider rounded-xl text-brand-text/60 hover:border-[#D8103F]/30 hover:text-[#D8103F] transition-all text-sm font-bold"
+            className="flex items-center gap-2 w-full justify-center py-3.5 border-2 border-dashed border-brand-divider rounded-xl text-brand-text/60 hover:border-brand-text/30 hover:text-brand-text transition-all text-sm font-bold"
           >
             <Plus className="w-4 h-4" /> Add Rule
           </button>
@@ -123,11 +123,11 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-700">Group Rules</h3>
+        <h3 className="text-sm font-bold text-brand-text">Group Rules</h3>
         {isAdmin && (
           <button
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#D8103F] bg-[#D8103F]/5 rounded-lg hover:bg-[#D8103F]/10 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-brand-text bg-brand-text/5 rounded-lg hover:bg-brand-text/10 transition-all"
           >
             <Pencil className="w-3 h-3" /> Edit Rules
           </button>
@@ -137,16 +137,16 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
       {!rules || rules.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
-            <ScrollText className="w-8 h-8 text-slate-200" />
+            <ScrollText className="w-8 h-8 text-brand-secondary" />
           </div>
           <p className="text-sm font-semibold text-brand-text/60">No rules set</p>
-          <p className="text-xs text-slate-300 mt-1">
+          <p className="text-xs text-brand-text/30 mt-1">
             {isAdmin ? 'Add rules to set expectations for your group members.' : 'This group hasn\'t set any rules yet.'}
           </p>
           {isAdmin && (
             <button
               onClick={() => setEditing(true)}
-              className="mt-4 px-4 py-2 text-xs font-bold text-[#D8103F] bg-[#D8103F]/5 rounded-lg hover:bg-[#D8103F]/10 transition-all"
+              className="mt-4 px-4 py-2 text-xs font-bold text-brand-text bg-brand-text/5 rounded-lg hover:bg-brand-text/10 transition-all"
             >
               Add Rules
             </button>
@@ -163,11 +163,11 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
               className="bg-brand-card rounded-xl border border-brand-divider p-4 hover:border-brand-divider transition-all"
             >
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[#D8103F]/10 flex items-center justify-center text-xs font-bold text-[#D8103F]">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-text/10 flex items-center justify-center text-xs font-bold text-brand-text">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-700">{rule.title}</p>
+                  <p className="text-sm font-semibold text-brand-text">{rule.title}</p>
                   {rule.description && (
                     <p className="text-xs text-brand-text/60 mt-1 leading-relaxed">{rule.description}</p>
                   )}

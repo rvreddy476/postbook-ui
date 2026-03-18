@@ -75,14 +75,14 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
             <div className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
                     <h2 className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-brand-secondary transition-colors">
                         <X className="w-4 h-4 text-brand-highlight" />
                     </button>
                 </div>
                 <div className="p-6 space-y-4">
                     {isLoading ? (
                         <div className="flex justify-center py-8">
-                            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+                            <Loader2 className="w-6 h-6 animate-spin text-brand-text/30" />
                         </div>
                     ) : (
                         <>
@@ -120,7 +120,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <button
                                 onClick={handleCopy}
-                                className="w-full py-2.5 rounded-xl bg-[#D8103F] text-white text-xs font-bold hover:bg-[#b80d35] transition-colors"
+                                className="w-full py-2.5 rounded-xl bg-brand-text text-white text-xs font-bold hover:bg-brand-text transition-colors"
                             >
                                 {copied ? "Copied!" : "Copy Link"}
                             </button>
@@ -150,14 +150,14 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
 
     const CONTENT_TYPE_COLORS: Record<string, string> = {
         post: "bg-blue-50 text-blue-600 border-blue-100",
-        video: "bg-[#D8103F]/10 text-[#D8103F] border-[#D8103F]/20",
+        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
         reel: "bg-rose-50 text-rose-500 border-rose-100",
     }
 
     return (
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-                <Pin className="w-3.5 h-3.5 text-[#D8103F]" />
+                <Pin className="w-3.5 h-3.5 text-brand-text" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-highlight">Pinned</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -166,8 +166,8 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                         key={pin.id}
                         className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-sm"
                     >
-                        <Pin className="w-3 h-3 text-[#D8103F] shrink-0" />
-                        <span className="text-xs font-medium text-slate-700 max-w-[120px] truncate">
+                        <Pin className="w-3 h-3 text-brand-text shrink-0" />
+                        <span className="text-xs font-medium text-brand-text max-w-[120px] truncate">
                             {pin.content_id}
                         </span>
                         <span
@@ -181,7 +181,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                             <button
                                 onClick={() => unpinMutation.mutate(pin.id)}
                                 disabled={unpinMutation.isPending}
-                                className="ml-1 text-slate-300 hover:text-[#D8103F] transition-colors disabled:opacity-40"
+                                className="ml-1 text-brand-text/30 hover:text-brand-text transition-colors disabled:opacity-40"
                                 title="Unpin"
                             >
                                 <X className="w-3 h-3" />
@@ -231,7 +231,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
     const ITEM_TYPE_COLORS: Record<string, string> = {
         project: "bg-blue-50 text-blue-600 border-blue-100",
         article: "bg-emerald-50 text-emerald-600 border-emerald-100",
-        video: "bg-[#D8103F]/10 text-[#D8103F] border-[#D8103F]/20",
+        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
         design: "bg-violet-50 text-violet-600 border-violet-100",
         other: "bg-brand-secondary text-brand-highlight border-brand-divider",
     }
@@ -242,7 +242,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                 <div className="flex justify-end">
                     <button
                         onClick={() => setShowAdd((v) => !v)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-xs font-bold hover:bg-[#b80d35] transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold hover:bg-brand-text transition-colors"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         Add Item
@@ -251,32 +251,32 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
             )}
 
             {isOwn && showAdd && (
-                <div className="border border-[#D8103F]/20 rounded-xl p-4 bg-[#D8103F]/5 space-y-3">
-                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">New Portfolio Item</p>
+                <div className="border border-brand-text/20 rounded-xl p-4 bg-brand-text/5 space-y-3">
+                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">New Portfolio Item</p>
                     <input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Title *"
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50"
                     />
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Description"
                         rows={2}
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 resize-none"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50 resize-none"
                     />
                     <input
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="URL (optional)"
                         type="url"
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50"
                     />
                     <select
                         value={itemType}
                         onChange={(e) => setItemType(e.target.value)}
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-[#D8103F]/50 bg-brand-card"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50 bg-brand-card"
                     >
                         <option value="project">Project</option>
                         <option value="article">Article</option>
@@ -288,7 +288,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         <button
                             onClick={() => addMutation.mutate()}
                             disabled={!title.trim() || addMutation.isPending}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#b80d35] transition-colors"
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold disabled:opacity-40 hover:bg-brand-text transition-colors"
                         >
                             {addMutation.isPending ? (
                                 <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
@@ -296,7 +296,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         </button>
                         <button
                             onClick={() => setShowAdd(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-100 text-brand-highlight text-xs font-bold hover:bg-slate-200 transition-colors"
+                            className="px-4 py-2 rounded-xl bg-brand-secondary text-brand-highlight text-xs font-bold hover:bg-brand-secondary transition-colors"
                         >
                             Cancel
                         </button>
@@ -306,7 +306,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
 
             {isLoading ? (
                 <div className="flex justify-center py-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+                    <Loader2 className="w-5 h-5 animate-spin text-brand-text/30" />
                 </div>
             ) : items.length === 0 ? (
                 <div className="py-16 text-center text-sm text-brand-text/60">No portfolio items yet</div>
@@ -335,7 +335,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                                     href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#D8103F] hover:underline"
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-text hover:underline"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View
@@ -610,7 +610,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 <div className="max-w-[1200px] mx-auto px-6 sm:px-8 pt-3 flex justify-end">
                     <button
                         onClick={() => setQrModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-divider text-brand-highlight text-xs font-semibold hover:bg-brand-secondary hover:border-slate-300 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-divider text-brand-highlight text-xs font-semibold hover:bg-brand-secondary hover:border-brand-text/30 transition-all"
                     >
                         <QrCode className="w-3.5 h-3.5" />
                         QR Code
@@ -696,8 +696,8 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                     {contentCounts.video > 0 && (
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-[#D8103F]/10">
-                                                    <Film className="h-4 w-4 text-[#D8103F]" />
+                                                <div className="p-2 rounded-xl bg-brand-text/10">
+                                                    <Film className="h-4 w-4 text-brand-text" />
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Posttube Videos</p>
@@ -746,7 +746,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
                                     <Link
                                         href={`/posttube/channel/${profile.username}`}
-                                        className="flex items-center justify-center gap-2 mt-2 w-full py-3 rounded-xl bg-[#D8103F] text-white text-xs font-black uppercase tracking-[0.2em] hover:bg-[#b80d35] transition-all shadow-lg shadow-[#D8103F]/20"
+                                        className="flex items-center justify-center gap-2 mt-2 w-full py-3 rounded-xl bg-brand-text text-white text-xs font-black uppercase tracking-[0.2em] hover:bg-brand-text transition-all shadow-lg shadow-brand-text/20"
                                     >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                         View Channel
@@ -789,7 +789,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                             <div className="p-4 flex items-center justify-between gap-4">
                                 {contentCounts.video > 0 && (
                                     <div className="flex items-center gap-2">
-                                        <Film className="h-4 w-4 text-[#D8103F]" />
+                                        <Film className="h-4 w-4 text-brand-text" />
                                         <span className="text-sm font-bold">{contentCounts.video} Videos</span>
                                     </div>
                                 )}
@@ -801,7 +801,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 )}
                                 <Link
                                     href={`/posttube/channel/${profile.username}`}
-                                    className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-xs font-bold"
+                                    className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     Channel

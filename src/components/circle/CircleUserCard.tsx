@@ -27,7 +27,7 @@ function getAvatarUrl(userId: string, avatarMediaId?: string) {
 function getGradient(userId: string): { bg: string; ring: string } {
     const hash = userId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
     const gradients = [
-        { bg: 'from-[#D8103F]/50 via-fuchsia-500 to-pink-400', ring: 'ring-[#D8103F]/20' },
+        { bg: 'from-brand-text/50 via-fuchsia-500 to-pink-400', ring: 'ring-brand-text/20' },
         { bg: 'from-blue-500 via-indigo-500 to-purple-500', ring: 'ring-blue-200' },
         { bg: 'from-rose-500 via-orange-400 to-amber-400', ring: 'ring-rose-200' },
         { bg: 'from-emerald-500 via-teal-400 to-cyan-400', ring: 'ring-emerald-200' },
@@ -108,7 +108,7 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
                 </Link>
 
                 <Link href={profileHref} className="block mt-3 text-center">
-                    <p className="text-sm font-bold text-slate-800 truncate max-w-[160px] hover:text-[#D8103F] transition-colors">
+                    <p className="text-sm font-bold text-brand-text truncate max-w-[160px] hover:text-brand-text transition-colors">
                         {displayName}
                     </p>
                     {username && (
@@ -122,7 +122,7 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
                         {reasonCodes && reasonCodes.length > 0 && (
                             <button
                                 onClick={() => setShowWhy(!showWhy)}
-                                className="flex-shrink-0 text-slate-300 hover:text-[#D8103F]/50 transition-colors"
+                                className="flex-shrink-0 text-brand-text/30 hover:text-brand-text/50 transition-colors"
                                 title="Why this suggestion?"
                             >
                                 <Info className="w-3 h-3" />
@@ -146,7 +146,7 @@ const CircleUserCard: React.FC<CircleUserCardProps> = ({
                 {/* Mutual friends indicator */}
                 {mutualCount !== undefined && mutualCount > 0 && (
                     <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-brand-secondary">
-                        <Users className="w-3 h-3 text-[#D8103F]/50" />
+                        <Users className="w-3 h-3 text-brand-text/50" />
                         <span className="text-[10px] text-brand-highlight font-semibold">
                             {mutualCount} mutual{mutualCount > 1 ? 's' : ''}
                         </span>

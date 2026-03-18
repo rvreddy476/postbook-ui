@@ -95,7 +95,7 @@ export function ProfileTabs({
                                 onClick={() => onTabChange(tab.key)}
                                 className={`relative flex items-center gap-2 px-5 py-3.5 text-xs font-bold uppercase tracking-[0.15em] whitespace-nowrap transition-colors duration-200 ${
                                     isActive
-                                        ? "text-[#D8103F]"
+                                        ? "text-brand-text"
                                         : "text-zinc-400 hover:text-zinc-600"
                                 }`}
                             >
@@ -105,7 +105,7 @@ export function ProfileTabs({
                                 {isActive && (
                                     <motion.div
                                         layoutId="profile-tab-indicator"
-                                        className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#D8103F] rounded-full"
+                                        className="absolute bottom-0 left-3 right-3 h-[2px] bg-brand-text rounded-full"
                                         transition={{
                                             type: "spring",
                                             bounce: 0.2,

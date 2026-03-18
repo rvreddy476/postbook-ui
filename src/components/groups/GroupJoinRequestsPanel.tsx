@@ -37,7 +37,7 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
                 {req.user_id.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-700">{req.user_id.slice(0, 8)}...</p>
+                <p className="text-sm font-semibold text-brand-text">{req.user_id.slice(0, 8)}...</p>
                 <p className="text-[11px] text-brand-text/60 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

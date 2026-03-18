@@ -37,13 +37,13 @@ body {
 
 body {
   color: rgb(var(--brand-text));
-  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
   background-color: rgb(var(--brand-bg));
 }
 
 @layer utilities {
-  .font-serif-display {
-    font-family: var(--font-display), 'Space Grotesk', sans-serif;
+  .font-mono-display {
+    font-family: var(--font-mono), 'Space Mono', monospace;
   }
 }
 
@@ -65,7 +65,10 @@ body {
 }
 
 .glass-panel {
-  @apply bg-brand-card/40 backdrop-blur-3xl saturate-150 ring-1 ring-white/60 shadow-[0_8px_32px_0_rgba(124,58,237,0.05)];
+  background: rgba(239, 237, 227, 0.4);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(48, 47, 44, 0.1);
+  border-radius: 20px;
 }
 
 .aero-glass {

@@ -25,7 +25,7 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
                     transition={{ duration: 0.35, delay: 0.1 }}
                     className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand-secondary mb-6"
                 >
-                    <UserX className="w-10 h-10 text-slate-300" />
+                    <UserX className="w-10 h-10 text-brand-text/30" />
                 </motion.div>
 
                 <motion.div
@@ -50,7 +50,7 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
                 >
                     <button
                         onClick={() => router.push("/")}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#D8103F] text-white text-sm font-medium hover:bg-[#b80d35] transition-colors focus:outline-none focus:ring-2 focus:ring-[#D8103F]/50 focus:ring-offset-2"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                     >
                         <Home className="w-4 h-4" />
                         Go Home

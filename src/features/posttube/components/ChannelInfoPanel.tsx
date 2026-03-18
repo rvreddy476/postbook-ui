@@ -86,7 +86,7 @@ export function ChannelInfoPanel({
       {/* 3. Views + time */}
       <div className="mt-1.5 flex items-center gap-2 text-[12px] text-brand-text/60">
         <span>{formatCount(video.view_count)} views</span>
-        <span className="text-slate-200">·</span>
+        <span className="text-brand-secondary">·</span>
         <span>{timeAgo(video.published_at)}</span>
       </div>
 
@@ -97,7 +97,7 @@ export function ChannelInfoPanel({
             <Link
               key={tag}
               href={`/hashtag/${tag}`}
-              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-slate-100"
+              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-brand-secondary"
             >
               #{tag}
             </Link>

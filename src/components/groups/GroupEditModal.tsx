@@ -74,7 +74,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
-          <h2 className="text-lg font-black text-slate-800">Edit Group</h2>
+          <h2 className="text-lg font-black text-brand-text">Edit Group</h2>
           <button onClick={onClose} className="p-1 text-brand-text/60 hover:text-brand-highlight transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -101,7 +101,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-bold text-[#D8103F] hover:text-[#b80d35] transition-colors"
+              className="text-xs font-bold text-brand-text hover:text-brand-text/90 transition-colors"
             >
               Change Photo
             </button>
@@ -121,7 +121,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/50"
               placeholder="Enter group name"
             />
           </div>
@@ -133,7 +133,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/50"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/50"
               placeholder="What's this group about?"
             />
           </div>
@@ -146,7 +146,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-bold text-brand-highlight bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
+              className="flex-1 py-3 text-sm font-bold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all"
             >
               Cancel
             </button>

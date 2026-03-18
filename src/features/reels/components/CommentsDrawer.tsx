@@ -65,7 +65,7 @@ export function CommentsDrawer({
             <header className="flex items-center justify-between border-b border-brand-divider px-5 py-4">
               <div className="flex items-center gap-2.5">
                 <MessageCircle className="h-4 w-4 text-brand-text/60" />
-                <h2 className="text-[14px] font-semibold text-slate-800">
+                <h2 className="text-[14px] font-semibold text-brand-text">
                   Comments
                   <span className="ml-1.5 text-[13px] font-normal text-brand-text/60">
                     {commentCount.toLocaleString()}

@@ -58,10 +58,10 @@ function ProfileCard({ profile }: ProfileCardProps) {
     return (
         <Link
             href={`/u/${profile.username}`}
-            className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
         >
             <div className="relative flex-shrink-0">
-                <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-[#D8103F]/20 transition-all">
+                <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-brand-text/20 transition-all">
                     <img src={avatar} alt={profile.display_name} className="w-full h-full object-cover" />
                 </div>
                 {profile.is_verified && (
@@ -72,19 +72,19 @@ function ProfileCard({ profile }: ProfileCardProps) {
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-[15px] font-bold text-gray-900 group-hover:text-[#b80d35] transition-colors truncate">
+                    <span className="text-[15px] font-bold text-brand-text group-hover:text-brand-text transition-colors truncate">
                         {profile.display_name}
                     </span>
                 </div>
-                <p className="text-sm text-gray-400 truncate">@{profile.username}</p>
+                <p className="text-sm text-brand-text/40 truncate">@{profile.username}</p>
                 {bioSnippet && (
-                    <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{bioSnippet}</p>
+                    <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{bioSnippet}</p>
                 )}
-                <p className="text-xs text-gray-400 mt-1 font-medium">
+                <p className="text-xs text-brand-text/40 mt-1 font-medium">
                     {profile.follower_count.toLocaleString()} follower{profile.follower_count !== 1 ? "s" : ""}
                 </p>
             </div>
-            <div className="flex-shrink-0 text-gray-300 group-hover:text-[#D8103F]/50 transition-colors">
+            <div className="flex-shrink-0 text-brand-text/30 group-hover:text-brand-text/50 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -98,10 +98,10 @@ function ProfileCard({ profile }: ProfileCardProps) {
 function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: string; count?: number }) {
     return (
         <div className="flex items-center gap-2 mb-3">
-            <span className="text-[#D8103F]/50">{icon}</span>
-            <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">{label}</h2>
+            <span className="text-brand-text/50">{icon}</span>
+            <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">{label}</h2>
             {count !== undefined && (
-                <span className="ml-auto text-xs font-semibold text-gray-400">{count} result{count !== 1 ? "s" : ""}</span>
+                <span className="ml-auto text-xs font-semibold text-brand-text/40">{count} result{count !== 1 ? "s" : ""}</span>
             )}
         </div>
     )
@@ -112,12 +112,12 @@ function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: 
 function EmptyState({ query }: { query: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
-                <Search className="w-9 h-9 text-[#D8103F]/30" />
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                <Search className="w-9 h-9 text-brand-text/30" />
             </div>
             <div className="text-center max-w-xs">
-                <p className="text-base font-bold text-gray-900">No results for &ldquo;{query}&rdquo;</p>
-                <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                <p className="text-base font-bold text-brand-text">No results for &ldquo;{query}&rdquo;</p>
+                <p className="text-sm text-brand-text/40 mt-1.5 leading-relaxed">
                     Try searching for a different name, username, or topic.
                 </p>
             </div>
@@ -131,12 +131,12 @@ function LoadingSkeleton() {
     return (
         <div className="space-y-3 animate-pulse">
             {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100">
-                    <div className="w-14 h-14 rounded-full bg-gray-100 flex-shrink-0" />
+                <div key={i} className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider">
+                    <div className="w-14 h-14 rounded-full bg-brand-divider flex-shrink-0" />
                     <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-100 rounded-lg w-1/3" />
-                        <div className="h-3 bg-gray-100 rounded-lg w-1/4" />
-                        <div className="h-3 bg-gray-100 rounded-lg w-2/3" />
+                        <div className="h-4 bg-brand-divider rounded-lg w-1/3" />
+                        <div className="h-3 bg-brand-divider rounded-lg w-1/4" />
+                        <div className="h-3 bg-brand-divider rounded-lg w-2/3" />
                     </div>
                 </div>
             ))}
@@ -149,12 +149,12 @@ function LoadingSkeleton() {
 function HintState() {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
                 <Search className="w-7 h-7 text-white" />
             </div>
             <div className="text-center">
-                <p className="text-sm font-bold text-gray-700">Search PostBook</p>
-                <p className="text-xs text-gray-400 mt-1">Type at least 2 characters to begin</p>
+                <p className="text-sm font-bold text-brand-text">Search PostBook</p>
+                <p className="text-xs text-brand-text/40 mt-1">Type at least 2 characters to begin</p>
             </div>
         </div>
     )
@@ -198,12 +198,12 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
     if (recentItems.length === 0 && savedItems.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-[#D8103F]/20">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
                     <Search className="w-7 h-7 text-white" />
                 </div>
                 <div className="text-center">
-                    <p className="text-sm font-bold text-gray-700">Search PostBook</p>
-                    <p className="text-xs text-gray-400 mt-1">Your recent and saved searches will appear here</p>
+                    <p className="text-sm font-bold text-brand-text">Search PostBook</p>
+                    <p className="text-xs text-brand-text/40 mt-1">Your recent and saved searches will appear here</p>
                 </div>
             </div>
         )
@@ -214,24 +214,24 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
             {recentItems.length > 0 && (
                 <section>
                     <div className="flex items-center gap-2 mb-3">
-                        <Clock className="w-4 h-4 text-[#D8103F]/50" />
-                        <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Recent Searches</h2>
+                        <Clock className="w-4 h-4 text-brand-text/50" />
+                        <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">Recent Searches</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {recentItems.map((item, i) => (
                             <div
                                 key={i}
-                                className="flex items-center gap-1.5 bg-gray-100 hover:bg-[#D8103F]/5 border border-gray-200 hover:border-[#D8103F]/20 rounded-full px-3 py-1.5 transition-all group"
+                                className="flex items-center gap-1.5 bg-brand-divider hover:bg-brand-text/5 border border-brand-divider hover:border-brand-text/20 rounded-full px-3 py-1.5 transition-all group"
                             >
                                 <button
                                     onClick={() => onSelectQuery(item.query)}
-                                    className="text-sm font-medium text-gray-700 group-hover:text-[#b80d35]"
+                                    className="text-sm font-medium text-brand-text group-hover:text-brand-text"
                                 >
                                     {item.query}
                                 </button>
                                 <button
                                     onClick={() => deleteHistory.mutate(item.query)}
-                                    className="text-gray-400 hover:text-red-500 transition-colors ml-0.5"
+                                    className="text-brand-text/40 hover:text-red-500 transition-colors ml-0.5"
                                     aria-label="Remove"
                                 >
                                     <X className="w-3.5 h-3.5" />
@@ -245,25 +245,25 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
             {savedItems.length > 0 && (
                 <section>
                     <div className="flex items-center gap-2 mb-3">
-                        <Bookmark className="w-4 h-4 text-[#D8103F]/50" />
-                        <h2 className="text-sm font-black text-gray-700 uppercase tracking-wider">Saved Searches</h2>
+                        <Bookmark className="w-4 h-4 text-brand-text/50" />
+                        <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">Saved Searches</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {savedItems.map((item, i) => (
                             <div
                                 key={item.id ?? i}
-                                className="flex items-center gap-1.5 bg-[#D8103F]/5 hover:bg-[#D8103F]/10 border border-[#D8103F]/15 hover:border-[#D8103F]/30 rounded-full px-3 py-1.5 transition-all group"
+                                className="flex items-center gap-1.5 bg-brand-text/5 hover:bg-brand-text/10 border border-brand-text/15 hover:border-brand-text/30 rounded-full px-3 py-1.5 transition-all group"
                             >
                                 <button
                                     onClick={() => onSelectQuery(item.query)}
-                                    className="text-sm font-medium text-[#b80d35]"
+                                    className="text-sm font-medium text-brand-text"
                                 >
                                     {item.query}
                                 </button>
                                 {item.id && (
                                     <button
                                         onClick={() => deleteSaved.mutate(item.id!)}
-                                        className="text-[#D8103F]/40 hover:text-red-600 transition-colors ml-0.5"
+                                        className="text-brand-text/40 hover:text-red-600 transition-colors ml-0.5"
                                         aria-label="Delete saved search"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -306,10 +306,10 @@ function ProductsTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
-                    <ShoppingBag className="w-9 h-9 text-[#D8103F]/30" />
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                    <ShoppingBag className="w-9 h-9 text-brand-text/30" />
                 </div>
-                <p className="text-base font-bold text-gray-900">No products found for &ldquo;{query}&rdquo;</p>
+                <p className="text-base font-bold text-brand-text">No products found for &ldquo;{query}&rdquo;</p>
             </div>
         )
     }
@@ -325,24 +325,24 @@ function ProductsTab({ query }: { query: string }) {
             {items.map((product) => (
                 <div
                     key={product.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag className="w-6 h-6 text-[#D8103F]/50" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-bold text-gray-900 truncate">{product.name}</p>
+                        <p className="text-[15px] font-bold text-brand-text truncate">{product.name}</p>
                         {product.description && (
-                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{product.description}</p>
+                            <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-2">{product.description}</p>
                         )}
-                        <p className="text-sm font-bold text-[#D8103F] mt-1.5">
+                        <p className="text-sm font-bold text-brand-text mt-1.5">
                             {currencySymbol(product.currency)}{product.price.toLocaleString()}
                         </p>
                     </div>
                     {product.url && (
                         <Link
                             href={product.url}
-                            className="flex-shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-[#D8103F] rounded-lg hover:bg-[#b80d35] transition-colors"
+                            className="flex-shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text transition-colors"
                         >
                             View
                         </Link>
@@ -380,10 +380,10 @@ function EventsTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
-                    <Calendar className="w-9 h-9 text-[#D8103F]/30" />
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                    <Calendar className="w-9 h-9 text-brand-text/30" />
                 </div>
-                <p className="text-base font-bold text-gray-900">No events found for &ldquo;{query}&rdquo;</p>
+                <p className="text-base font-bold text-brand-text">No events found for &ldquo;{query}&rdquo;</p>
             </div>
         )
     }
@@ -404,20 +404,20 @@ function EventsTab({ query }: { query: string }) {
             {items.map((event) => (
                 <div
                     key={event.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
-                        <Calendar className="w-6 h-6 text-[#D8103F]/50" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-bold text-gray-900 truncate">{event.title}</p>
+                        <p className="text-[15px] font-bold text-brand-text truncate">{event.title}</p>
                         {event.description && (
-                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{event.description}</p>
+                            <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-2">{event.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                            <span className="text-xs font-semibold text-[#D8103F]">{formatDate(event.date)}</span>
+                            <span className="text-xs font-semibold text-brand-text">{formatDate(event.date)}</span>
                             {event.location && (
-                                <span className="text-xs text-gray-400">{event.location}</span>
+                                <span className="text-xs text-brand-text/40">{event.location}</span>
                             )}
                         </div>
                     </div>
@@ -452,10 +452,10 @@ function MessagesTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
-                    <MessageSquare className="w-9 h-9 text-[#D8103F]/30" />
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                    <MessageSquare className="w-9 h-9 text-brand-text/30" />
                 </div>
-                <p className="text-base font-bold text-gray-900">No messages found for &ldquo;{query}&rdquo;</p>
+                <p className="text-base font-bold text-brand-text">No messages found for &ldquo;{query}&rdquo;</p>
             </div>
         )
     }
@@ -466,17 +466,17 @@ function MessagesTab({ query }: { query: string }) {
             {items.map((msg) => (
                 <div
                     key={msg.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F]/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
-                        <MessageSquare className="w-5 h-5 text-[#D8103F]/50" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-5 h-5 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-700 line-clamp-2">{msg.content}</p>
+                        <p className="text-sm text-brand-text line-clamp-2">{msg.content}</p>
                     </div>
                     <Link
                         href="/messenger"
-                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-[#D8103F] border border-[#D8103F]/30 rounded-lg hover:bg-[#D8103F]/5 transition-colors whitespace-nowrap"
+                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-brand-text border border-brand-text/30 rounded-lg hover:bg-brand-text/5 transition-colors whitespace-nowrap"
                     >
                         View Conversation
                     </Link>
@@ -598,13 +598,13 @@ function SearchPageContent() {
     return (
         <div className="min-h-screen bg-brand-bg">
             {/* Sticky header with search input and tabs */}
-            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-0">
                     {/* Search input with autocomplete dropdown */}
                     <div className="relative flex items-center mb-4">
-                        <div className="absolute left-4 text-gray-400 pointer-events-none z-10">
+                        <div className="absolute left-4 text-brand-text/40 pointer-events-none z-10">
                             {isLoading || isFetching ? (
-                                <Loader2 className="w-5 h-5 animate-spin text-[#D8103F]/50" />
+                                <Loader2 className="w-5 h-5 animate-spin text-brand-text/50" />
                             ) : (
                                 <Search className="w-5 h-5" />
                             )}
@@ -622,12 +622,12 @@ function SearchPageContent() {
                             onKeyDown={handleInputKeyDown}
                             placeholder="Search people, posts, hashtags..."
                             autoFocus
-                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-[15px] text-gray-900 placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#D8103F]/30 focus:border-[#D8103F]/30 focus:bg-brand-card transition-all"
+                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-brand-secondary border border-brand-divider text-[15px] text-brand-text placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/30 focus:bg-brand-card transition-all"
                         />
                         {inputValue && (
                             <button
                                 onClick={handleClear}
-                                className="absolute right-4 text-gray-400 hover:text-gray-700 transition-colors z-10"
+                                className="absolute right-4 text-brand-text/40 hover:text-brand-text transition-colors z-10"
                                 aria-label="Clear search"
                             >
                                 <X className="w-5 h-5" />
@@ -636,20 +636,20 @@ function SearchPageContent() {
 
                         {/* Autocomplete dropdown */}
                         {hasAutocomplete && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-gray-100">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-brand-divider">
                                 {autocompleteResults!.map((user) => (
                                     <button
                                         key={user.user_id}
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => handleAutocompleteClick(user.username)}
-                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#D8103F]/5 transition-colors text-left"
+                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-brand-text/5 transition-colors text-left"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D8103F]/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
                                             {(user.display_name || user.username).charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{user.display_name}</p>
-                                            <p className="text-xs text-gray-400 truncate">@{user.username}</p>
+                                            <p className="text-sm font-semibold text-brand-text truncate">{user.display_name}</p>
+                                            <p className="text-xs text-brand-text/40 truncate">@{user.username}</p>
                                         </div>
                                     </button>
                                 ))}
@@ -667,8 +667,8 @@ function SearchPageContent() {
                                     onClick={() => handleTabChange(tab.type)}
                                     className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
                                         isActive
-                                            ? "border-[#D8103F]/50 text-[#D8103F] bg-[#D8103F]/60"
-                                            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                            ? "border-brand-text/50 text-brand-text bg-brand-text/60"
+                                            : "border-transparent text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary"
                                     }`}
                                 >
                                     {tab.icon}
@@ -758,7 +758,7 @@ function SearchPageContent() {
 function SearchPageFallback() {
     return (
         <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-[#D8103F]/50" />
+            <Loader2 className="w-6 h-6 animate-spin text-brand-text/50" />
         </div>
     )
 }

@@ -155,7 +155,7 @@ export default function LoginPage() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-black tracking-tight text-brand-text">
-                      PostBoek.com
+                      atpost
                     </h1>
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
                       Welcome Back

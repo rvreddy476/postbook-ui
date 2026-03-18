@@ -68,9 +68,9 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D8103F]/50 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                checked ? "bg-[#D8103F]/50" : "bg-slate-200",
+                checked ? "bg-brand-text/50" : "bg-brand-secondary",
             ].join(" ")}
         >
             <span
@@ -106,11 +106,11 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#D8103F]/5">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-text/5">
                         {icon}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -134,18 +134,18 @@ function PageSkeleton() {
             {[0, 1, 2].map((i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse"
+                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6 space-y-4 animate-pulse"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="h-11 w-11 rounded-xl bg-slate-200" />
+                        <div className="h-11 w-11 rounded-xl bg-brand-secondary" />
                         <div className="flex-1 space-y-2">
-                            <div className="h-4 w-36 rounded bg-slate-200" />
-                            <div className="h-3 w-52 rounded bg-slate-200" />
+                            <div className="h-4 w-36 rounded bg-brand-secondary" />
+                            <div className="h-3 w-52 rounded bg-brand-secondary" />
                         </div>
                     </div>
                     <div className="space-y-3 pt-2">
-                        <div className="h-12 rounded-xl bg-slate-100" />
-                        <div className="h-12 rounded-xl bg-slate-100" />
+                        <div className="h-12 rounded-xl bg-brand-secondary" />
+                        <div className="h-12 rounded-xl bg-brand-secondary" />
                     </div>
                 </div>
             ))}
@@ -176,7 +176,7 @@ function DigestsSection() {
 
     return (
         <SectionCard
-            icon={<BookOpen className="h-6 w-6 text-[#D8103F]/50" />}
+            icon={<BookOpen className="h-6 w-6 text-brand-text/50" />}
             title="Notification Digests"
             description="Weekly and monthly summaries of your activity"
             delay={0.2}
@@ -184,7 +184,7 @@ function DigestsSection() {
             {isLoading ? (
                 <div className="space-y-3 animate-pulse">
                     {[0, 1].map((i) => (
-                        <div key={i} className="h-16 rounded-xl bg-slate-100" />
+                        <div key={i} className="h-16 rounded-xl bg-brand-secondary" />
                     ))}
                 </div>
             ) : items.length === 0 ? (
@@ -192,7 +192,7 @@ function DigestsSection() {
                     No digests yet. Your first digest will appear after 7 days.
                 </p>
             ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-brand-secondary">
                     {items.map((digest) => {
                         const periodLabel =
                             digest.period_type === "weekly" ? "Weekly" : "Monthly"
@@ -209,7 +209,7 @@ function DigestsSection() {
                         return (
                             <div key={digest.id} className="py-3 space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="rounded-full bg-[#D8103F]/10 px-2 py-0.5 text-xs font-semibold text-[#D8103F]">
+                                    <span className="rounded-full bg-brand-text/10 px-2 py-0.5 text-xs font-semibold text-brand-text">
                                         {periodLabel}
                                     </span>
                                     <p className="text-xs text-brand-highlight">
@@ -294,7 +294,7 @@ export default function NotificationPreferencesPage() {
             {/* Back link */}
             <Link
                 href="/settings"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#D8103F] transition-colors hover:text-[#8a0a28]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-[#8a0a28]"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Settings
@@ -305,7 +305,7 @@ export default function NotificationPreferencesPage() {
                 <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-bold text-brand-text">Notification Preferences</h1>
                     {isSaving && (
-                        <span className="rounded-full bg-[#D8103F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#D8103F]">
+                        <span className="rounded-full bg-brand-text/10 px-2.5 py-0.5 text-xs font-semibold text-brand-text">
                             Saving...
                         </span>
                     )}
@@ -323,12 +323,12 @@ export default function NotificationPreferencesPage() {
                     {/*  Channels Section                                   */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<Bell className="h-6 w-6 text-[#D8103F]/50" />}
+                        icon={<Bell className="h-6 w-6 text-brand-text/50" />}
                         title="Notification Channels"
                         description="Choose which channels PostBook can use to reach you."
                         delay={0.05}
                     >
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-brand-secondary">
                             {/* Email */}
                             <div className="flex items-center justify-between py-3">
                                 <div className="flex items-center gap-3">
@@ -350,8 +350,8 @@ export default function NotificationPreferencesPage() {
                             {/* Push */}
                             <div className="flex items-center justify-between py-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D8103F]/5">
-                                        <Smartphone className="h-4 w-4 text-[#D8103F]/50" />
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-text/5">
+                                        <Smartphone className="h-4 w-4 text-brand-text/50" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold text-brand-text">Push</p>
@@ -389,7 +389,7 @@ export default function NotificationPreferencesPage() {
                     {/*  Quiet Hours Section                                */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<Moon className="h-6 w-6 text-[#D8103F]/50" />}
+                        icon={<Moon className="h-6 w-6 text-brand-text/50" />}
                         title="Quiet Hours"
                         description="During quiet hours, notifications will be held and delivered after the period ends."
                         delay={0.1}
@@ -411,7 +411,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
                                         "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
+                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -432,7 +432,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
                                         "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-[#D8103F]/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20",
+                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -441,9 +441,9 @@ export default function NotificationPreferencesPage() {
                         {prefs.quiet_hours_start && prefs.quiet_hours_end && (
                             <p className="mt-3 text-xs text-brand-highlight">
                                 Notifications will be silenced from{" "}
-                                <span className="font-semibold text-slate-700">{prefs.quiet_hours_start}</span>
+                                <span className="font-semibold text-brand-text">{prefs.quiet_hours_start}</span>
                                 {" "}to{" "}
-                                <span className="font-semibold text-slate-700">{prefs.quiet_hours_end}</span>.
+                                <span className="font-semibold text-brand-text">{prefs.quiet_hours_end}</span>.
                             </p>
                         )}
                     </SectionCard>
@@ -452,12 +452,12 @@ export default function NotificationPreferencesPage() {
                     {/*  Muted Types Section                                */}
                     {/* ------------------------------------------------- */}
                     <SectionCard
-                        icon={<VolumeX className="h-6 w-6 text-[#D8103F]/50" />}
+                        icon={<VolumeX className="h-6 w-6 text-brand-text/50" />}
                         title="Muted Notification Types"
                         description="Select which types of activity you do not want to be notified about."
                         delay={0.15}
                     >
-                        <div className="divide-y divide-slate-100">
+                        <div className="divide-y divide-brand-secondary">
                             {MUTED_TYPE_LABELS.map(({ value, label, description }) => {
                                 const isMuted = (prefs.muted_types ?? []).includes(value)
                                 const checkboxId = `muted-type-${value}`
@@ -478,9 +478,9 @@ export default function NotificationPreferencesPage() {
                                             disabled={isSaving}
                                             onChange={(e) => handleMutedTypeToggle(value, e.target.checked)}
                                             className={[
-                                                "h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300",
-                                                "text-[#D8103F]/50 accent-[#D8103F]/50",
-                                                "focus:ring-2 focus:ring-[#D8103F]/50 focus:ring-offset-1",
+                                                "h-4 w-4 shrink-0 cursor-pointer rounded border-brand-text/30",
+                                                "text-brand-text/50 accent-brand-text/50",
+                                                "focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-1",
                                                 "disabled:cursor-not-allowed disabled:opacity-50",
                                             ].join(" ")}
                                         />

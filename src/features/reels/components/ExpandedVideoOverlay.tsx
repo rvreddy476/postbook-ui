@@ -180,7 +180,7 @@ export function ExpandedVideoOverlay({
                   <button
                     type="button"
                     onClick={() => setCommentsVisible(false)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-slate-100 hover:text-brand-highlight"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary hover:text-brand-highlight"
                     aria-label="Close comments"
                   >
                     <X className="h-4 w-4" />

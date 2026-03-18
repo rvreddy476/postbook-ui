@@ -62,7 +62,7 @@ interface ProfileHeaderProps {
 
 const badgeConfig: Record<string, { icon: typeof BadgeCheck; color: string; bg: string }> = {
     verified: { icon: BadgeCheck, color: "text-teal-600", bg: "bg-teal-50 border-teal-100" },
-    creator: { icon: Sparkles, color: "text-[#D8103F]", bg: "bg-[#D8103F]/10 border-[#D8103F]/20" },
+    creator: { icon: Sparkles, color: "text-brand-text", bg: "bg-brand-text/10 border-brand-text/20" },
     business: { icon: Briefcase, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
 }
 
@@ -176,7 +176,7 @@ export function ProfileHeader({
                         onError={() => setCoverFails((n) => n + 1)}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-100 via-[#D8103F]/5 to-teal-50" />
+                    <div className="w-full h-full bg-gradient-to-br from-slate-200 via-brand-text/10 to-teal-100" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/10" />
 
@@ -193,11 +193,11 @@ export function ProfileHeader({
                                 ) : (
                                     <ImageIcon className="w-3.5 h-3.5" />
                                 )}
-                                <span className="hidden sm:inline">Edit cover</span>
+                                Edit cover
                             </button>
                             <button className="flex items-center gap-2 px-3.5 py-2 bg-black/30 backdrop-blur-md text-white text-xs font-semibold rounded-xl hover:bg-black/50 transition-all border border-white/10">
                                 <Eye className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Public</span>
+                                Public
                             </button>
                         </>
                     )}
@@ -224,14 +224,14 @@ export function ProfileHeader({
                                     onError={() => setAvatarFails((n) => n + 1)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-slate-300 bg-gradient-to-br from-slate-50 to-slate-100 uppercase">
+                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-white bg-gradient-to-br from-slate-400 to-slate-500 uppercase">
                                     {(profile.display_name || "?").charAt(0)}
                                 </div>
                             )}
 
                             {uploadMutation.isPending && uploadMutation.variables?.field === "avatar_media_id" && (
                                 <div className="absolute inset-0 bg-brand-card/70 backdrop-blur-sm flex items-center justify-center">
-                                    <Loader2 className="w-7 h-7 animate-spin text-[#D8103F]" />
+                                    <Loader2 className="w-7 h-7 animate-spin text-brand-text" />
                                 </div>
                             )}
                         </div>
@@ -247,11 +247,9 @@ export function ProfileHeader({
                         {isOwn && (
                             <button
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all rounded-3xl cursor-pointer"
+                                className="absolute bottom-1 right-1 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 rounded-xl cursor-pointer hover:bg-black/80 transition-all shadow-lg border border-white/10"
                             >
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity p-3 bg-brand-card/80 backdrop-blur-md rounded-2xl shadow-xl">
-                                    <Camera className="w-5 h-5 text-slate-800" />
-                                </div>
+                                <Camera className="w-4 h-4 text-white" />
                             </button>
                         )}
                     </motion.div>
@@ -283,7 +281,7 @@ export function ProfileHeader({
                                 )
                             })}
                             {!isOwn && followsYou && (
-                                <span className="text-[9px] font-bold text-brand-text/60 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md uppercase tracking-wider">
                                     Follows you
                                 </span>
                             )}
@@ -343,8 +341,8 @@ export function ProfileHeader({
                                         onClick={isFollowing ? onUnfollow : onFollow}
                                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
                                             isFollowing
-                                                ? "bg-brand-card border-2 border-[#D8103F]/30 text-[#D8103F] hover:bg-[#D8103F]/5"
-                                                : "bg-[#D8103F] text-white hover:bg-[#b80d35]"
+                                                ? "bg-brand-card border-2 border-brand-text/30 text-brand-text hover:bg-brand-text/5"
+                                                : "bg-brand-text text-white hover:bg-brand-text"
                                         }`}
                                     >
                                         {isFollowing ? (
@@ -357,8 +355,8 @@ export function ProfileHeader({
                                         onClick={canDM ? onMessage : undefined}
                                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 transition-all ${
                                             canDM
-                                                ? "border-brand-divider text-slate-700 hover:border-slate-300 hover:bg-brand-secondary shadow-sm"
-                                                : "border-brand-divider text-slate-300 cursor-not-allowed"
+                                                ? "border-brand-divider text-brand-text hover:border-brand-text/30 hover:bg-brand-secondary shadow-sm"
+                                                : "border-brand-divider text-brand-text/30 cursor-not-allowed"
                                         }`}
                                         title={canDM ? "Send message" : "Add to Circle to message"}
                                     >
@@ -431,7 +429,7 @@ export function ProfileHeader({
                                 </div>
                                 <Link
                                     href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#D8103F] text-white text-[9px] font-black uppercase tracking-[0.15em] hover:bg-[#b80d35] transition-all shadow-lg shadow-[#D8103F]/30 shrink-0 ml-2"
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-[9px] font-black uppercase tracking-[0.15em] hover:bg-brand-text transition-all shadow-lg shadow-brand-text/30 shrink-0 ml-2"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View Channel
@@ -486,7 +484,7 @@ export function ProfileHeader({
                             </div>
                             <Link
                                 href={`/posttube/channel/${channel.handle}`}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D8103F] text-white text-[8px] font-black uppercase tracking-wider"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-brand-text text-white text-[8px] font-black uppercase tracking-wider"
                             >
                                 <ExternalLink className="w-3 h-3" />
                                 Channel
@@ -500,7 +498,7 @@ export function ProfileHeader({
                     <div className="py-6 border-t border-black/5">
                         <div className="max-w-2xl">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-3">Biography</h3>
-                            <p className="text-xl sm:text-2xl font-serif-display italic leading-relaxed text-zinc-700">
+                            <p className="text-xl sm:text-2xl font-mono-display italic leading-relaxed text-zinc-700">
                                 {profile.bio}
                             </p>
                         </div>

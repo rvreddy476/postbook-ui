@@ -51,10 +51,10 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider flex-shrink-0">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Post Details</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-brand-text">Post Details</h3>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-100 text-brand-text/60 hover:text-brand-highlight transition-colors"
+              className="p-1.5 rounded-xl hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -63,14 +63,14 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
           {/* Content */}
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 text-[#D8103F]/50 animate-spin" />
+              <Loader2 className="w-6 h-6 text-brand-text/50 animate-spin" />
             </div>
           ) : isError || !post ? (
             <div className="flex-1 flex items-center justify-center py-20">
               <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">Post not found</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-brand-secondary">
               {/* Left: Post */}
               <div className="overflow-y-auto max-h-[80vh] p-4">
                 <PostCard post={post} />

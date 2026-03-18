@@ -33,13 +33,13 @@ function VideoCard({ post }: { post: PostDetail }) {
 
     return (
         <div className="group relative">
-            <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-100">
+            <div className="relative aspect-video overflow-hidden rounded-xl bg-brand-secondary">
                 <Link href={href} className="block h-full">
                     {thumbUrl ? (
                         <img src={thumbUrl} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     ) : (
                         <div className="flex h-full items-center justify-center">
-                            <Play className="h-8 w-8 text-slate-300" />
+                            <Play className="h-8 w-8 text-brand-text/30" />
                         </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
@@ -49,7 +49,7 @@ function VideoCard({ post }: { post: PostDetail }) {
             </div>
             <div className="mt-2 px-0.5">
                 <Link href={href}>
-                    <p className="truncate text-[13px] font-semibold text-slate-800 hover:text-[#D8103F] transition-colors">
+                    <p className="truncate text-[13px] font-semibold text-brand-text hover:text-brand-text transition-colors">
                         {post.text || "Untitled"}
                     </p>
                 </Link>
@@ -88,7 +88,7 @@ export default function PublicChannelPage() {
         return (
             <AppShell sectionLabel="PostTube">
                 <div className="flex items-center justify-center min-h-[60vh]">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#D8103F]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-text" />
                 </div>
             </AppShell>
         )
@@ -115,7 +115,7 @@ export default function PublicChannelPage() {
         <AppShell sectionLabel="PostTube">
             <div className="min-h-screen bg-brand-card">
                 {/* Banner */}
-                <div className="relative h-40 bg-gradient-to-br from-[#D8103F] via-[#D8103F]/50 to-slate-300">
+                <div className="relative h-40 bg-gradient-to-br from-brand-text via-brand-text/50 to-slate-300">
                     {bannerUrl && (
                         <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
                     )}
@@ -138,10 +138,10 @@ export default function PublicChannelPage() {
                             <div className="mt-1 flex items-center gap-4 text-[12px] text-brand-highlight">
                                 <span className="flex items-center gap-1">
                                     <Users className="h-3.5 w-3.5" />
-                                    <strong className="text-slate-700">{fmtCount(subscriberCount)}</strong> subscribers
+                                    <strong className="text-brand-text">{fmtCount(subscriberCount)}</strong> subscribers
                                 </span>
-                                <span><strong className="text-slate-700">{videos.length}</strong> videos</span>
-                                <span><strong className="text-slate-700">{flicks.length}</strong> flicks</span>
+                                <span><strong className="text-brand-text">{videos.length}</strong> videos</span>
+                                <span><strong className="text-brand-text">{flicks.length}</strong> flicks</span>
                             </div>
                         </div>
                     </div>
@@ -157,20 +157,20 @@ export default function PublicChannelPage() {
                                 type="button"
                                 onClick={() => setTab(t.id)}
                                 className={`relative flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold transition-colors ${
-                                    tab === t.id ? "text-[#D8103F]" : "text-brand-text/60 hover:text-brand-highlight"
+                                    tab === t.id ? "text-brand-text" : "text-brand-text/60 hover:text-brand-highlight"
                                 }`}
                             >
                                 <t.icon className="h-4 w-4" />
                                 {t.label}
                                 {t.count > 0 && (
                                     <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                                        tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-brand-text/60"
+                                        tab === t.id ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-text/60"
                                     }`}>
                                         {t.count}
                                     </span>
                                 )}
                                 {tab === t.id && (
-                                    <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#D8103F]" />
+                                    <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-brand-text" />
                                 )}
                             </button>
                         ))}
@@ -181,7 +181,7 @@ export default function PublicChannelPage() {
                         {items.length === 0 && !allQuery.isLoading ? (
                             <div className="flex flex-col items-center py-16 text-center">
                                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-secondary">
-                                    {tab === "videos" ? <Video className="h-7 w-7 text-slate-300" /> : <Film className="h-7 w-7 text-slate-300" />}
+                                    {tab === "videos" ? <Video className="h-7 w-7 text-brand-text/30" /> : <Film className="h-7 w-7 text-brand-text/30" />}
                                 </div>
                                 <p className="mt-4 text-[14px] font-semibold text-brand-highlight">No {tab} yet</p>
                             </div>

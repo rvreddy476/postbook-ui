@@ -162,18 +162,18 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
       <div className="w-full max-w-lg mx-4 bg-brand-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-brand-divider shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-[#D8103F]/10 flex items-center justify-center">
-            <Users className="w-4.5 h-4.5 text-[#D8103F]" />
+          <div className="w-9 h-9 rounded-xl bg-brand-text/10 flex items-center justify-center">
+            <Users className="w-4.5 h-4.5 text-brand-text" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-slate-800">Create Group</h2>
+            <h2 className="text-base font-bold text-brand-text">Create Group</h2>
             <p className="text-[11px] text-brand-text/60 font-medium">
               Step {step} of 3 — {step === 1 ? 'Identity' : step === 2 ? 'Add Members' : 'Review & Create'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-brand-text/60 hover:text-brand-highlight hover:bg-slate-100 rounded-lg transition-all"
+            className="p-1.5 text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-lg transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -185,7 +185,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <div
               key={s}
               className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                s <= step ? 'bg-[#D8103F]' : 'bg-slate-100'
+                s <= step ? 'bg-brand-text' : 'bg-brand-secondary'
               }`}
             />
           ))}
@@ -198,7 +198,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               {/* Cover Photo Upload */}
               <div
                 onClick={() => coverInputRef.current?.click()}
-                className="relative w-full h-32 rounded-xl overflow-hidden cursor-pointer group border-2 border-dashed border-brand-divider hover:border-[#D8103F]/30 transition-all"
+                className="relative w-full h-32 rounded-xl overflow-hidden cursor-pointer group border-2 border-dashed border-brand-divider hover:border-brand-text/30 transition-all"
               >
                 {coverPreview ? (
                   <>
@@ -209,7 +209,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   </>
                 ) : (
                   <div className="w-full h-full bg-brand-secondary flex flex-col items-center justify-center gap-1.5">
-                    <ImageIcon className="w-6 h-6 text-slate-300 group-hover:text-[#D8103F]/50 transition-colors" />
+                    <ImageIcon className="w-6 h-6 text-brand-text/30 group-hover:text-brand-text/50 transition-colors" />
                     <span className="text-[11px] font-semibold text-brand-text/60">Add Cover Photo</span>
                   </div>
                 )}
@@ -222,7 +222,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   onClick={() => avatarInputRef.current?.click()}
                   className="w-16 h-16 rounded-2xl overflow-hidden cursor-pointer group bg-brand-card p-0.5 shadow-lg ring-2 ring-white"
                 >
-                  <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-100 relative">
+                  <div className="w-full h-full rounded-[14px] overflow-hidden bg-brand-secondary relative">
                     {avatarPreview ? (
                       <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -248,23 +248,23 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. React Developers"
                   maxLength={100}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                 />
-                <p className="text-[10px] text-slate-300 mt-1">{name.length}/100 · Minimum 3 characters</p>
+                <p className="text-[10px] text-brand-text/30 mt-1">{name.length}/100 · Minimum 3 characters</p>
               </div>
 
               {/* Handle */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Handle</label>
                 <div className="relative">
-                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
                   <input
                     type="text"
                     value={handle}
                     onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     placeholder={autoHandle || 'group-handle'}
                     maxLength={50}
-                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                   />
                 </div>
               </div>
@@ -278,7 +278,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   placeholder="What's this group about?"
                   rows={2}
                   maxLength={500}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 resize-none focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                 />
               </div>
 
@@ -293,8 +293,8 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       onClick={() => setCategory(category === cat ? '' : cat)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         category === cat
-                          ? 'bg-[#D8103F] text-white shadow-sm'
-                          : 'bg-brand-secondary text-brand-highlight hover:bg-slate-100 border border-brand-divider'
+                          ? 'bg-brand-text text-white shadow-sm'
+                          : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary border border-brand-divider'
                       }`}
                     >
                       {cat}
@@ -318,16 +318,16 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       onClick={() => setPrivacyLevel(opt.value)}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
                         privacyLevel === opt.value
-                          ? 'border-[#D8103F]/40 bg-[#D8103F]/5'
+                          ? 'border-brand-text/40 bg-brand-text/5'
                           : 'border-brand-divider hover:border-brand-divider'
                       }`}
                     >
-                      <div className={privacyLevel === opt.value ? 'text-[#D8103F]' : 'text-brand-text/60'}>{opt.icon}</div>
+                      <div className={privacyLevel === opt.value ? 'text-brand-text' : 'text-brand-text/60'}>{opt.icon}</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-700">{opt.label}</p>
+                        <p className="text-sm font-semibold text-brand-text">{opt.label}</p>
                         <p className="text-[11px] text-brand-text/60">{opt.desc}</p>
                       </div>
-                      {privacyLevel === opt.value && <Check className="w-4 h-4 text-[#D8103F] ml-auto" />}
+                      {privacyLevel === opt.value && <Check className="w-4 h-4 text-brand-text ml-auto" />}
                     </button>
                   ))}
                 </div>
@@ -339,17 +339,17 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <div className="flex flex-col h-full">
               {/* Selected members chips */}
               {selectedMembers.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-2 border-b border-slate-50">
+                <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-2 border-b border-brand-secondary">
                   {selectedMembers.map(m => (
                     <div
                       key={m.id}
-                      className="flex items-center gap-1.5 pl-1 pr-2 py-1 bg-[#D8103F]/5 border border-[#D8103F]/15 rounded-full"
+                      className="flex items-center gap-1.5 pl-1 pr-2 py-1 bg-brand-text/5 border border-brand-text/15 rounded-full"
                     >
                       <img src={m.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
-                      <span className="text-[11px] font-semibold text-slate-700 max-w-[60px] truncate">{m.name}</span>
+                      <span className="text-[11px] font-semibold text-brand-text max-w-[60px] truncate">{m.name}</span>
                       <button
                         onClick={() => toggleMember(m)}
-                        className="w-4 h-4 rounded-full bg-slate-200 hover:bg-rose-200 flex items-center justify-center transition-colors"
+                        className="w-4 h-4 rounded-full bg-brand-secondary hover:bg-rose-200 flex items-center justify-center transition-colors"
                       >
                         <X className="w-2.5 h-2.5 text-brand-highlight" />
                       </button>
@@ -361,16 +361,16 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               {/* Search */}
               <div className="px-5 pt-3 pb-2">
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search users by name..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                   />
                 </div>
-                <p className="text-[10px] text-slate-300 mt-1.5 font-medium">
+                <p className="text-[10px] text-brand-text/30 mt-1.5 font-medium">
                   {selectedMembers.length} selected · Add at least 1 member to continue
                 </p>
               </div>
@@ -381,9 +381,9 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   <div className="space-y-2 px-2 pt-2">
                     {[1, 2, 3, 4, 5].map(i => (
                       <div key={i} className="flex items-center gap-3 p-2 animate-pulse">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100" />
+                        <div className="w-10 h-10 rounded-xl bg-brand-secondary" />
                         <div className="flex-1 space-y-1.5">
-                          <div className="h-3 w-24 bg-slate-100 rounded" />
+                          <div className="h-3 w-24 bg-brand-secondary rounded" />
                           <div className="h-2.5 w-16 bg-brand-secondary rounded" />
                         </div>
                       </div>
@@ -391,7 +391,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   </div>
                 ) : filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 gap-2">
-                    <Search className="w-8 h-8 text-slate-200" />
+                    <Search className="w-8 h-8 text-brand-secondary" />
                     <p className="text-sm text-brand-text/60 font-medium">
                       {search.trim() ? 'No users found' : 'No users available'}
                     </p>
@@ -406,27 +406,27 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                           onClick={() => toggleMember(user)}
                           className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left ${
                             isSelected
-                              ? 'bg-[#D8103F]/5 border border-[#D8103F]/10'
+                              ? 'bg-brand-text/5 border border-brand-text/10'
                               : 'hover:bg-brand-secondary border border-transparent'
                           }`}
                         >
                           {/* Checkbox */}
                           <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
                             isSelected
-                              ? 'bg-[#D8103F] border-[#D8103F]'
-                              : 'border-slate-300'
+                              ? 'bg-brand-text border-brand-text'
+                              : 'border-brand-text/30'
                           }`}>
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
 
                           {/* Avatar */}
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-brand-secondary shrink-0">
                             <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                           </div>
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-700 truncate">{user.name}</p>
+                            <p className="text-sm font-semibold text-brand-text truncate">{user.name}</p>
                             {user.loginId && (
                               <p className="text-[11px] text-brand-text/60">@{user.loginId}</p>
                             )}
@@ -460,17 +460,17 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 {/* Avatar + name */}
                 <div className="px-4 pb-4 -mt-6 relative">
                   <div className="w-14 h-14 rounded-xl bg-brand-card p-0.5 shadow-lg inline-block">
-                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-slate-100">
+                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-brand-secondary">
                       {avatarPreview ? (
                         <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#D8103F]/20 to-[#D8103F]/10 flex items-center justify-center text-[#D8103F] font-bold text-lg">
+                        <div className="w-full h-full bg-gradient-to-br from-brand-text/20 to-brand-text/10 flex items-center justify-center text-brand-text font-bold text-lg">
                           {name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 mt-2">{name}</h3>
+                  <h3 className="text-base font-bold text-brand-text mt-2">{name}</h3>
                   {effectiveHandle && (
                     <p className="text-xs text-brand-text/60 font-medium">@{effectiveHandle}</p>
                   )}
@@ -503,11 +503,11 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 {/* Creator = Admin */}
                 {me && (
                   <div className="flex items-center gap-3 p-2.5 bg-brand-secondary rounded-xl mb-1.5">
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-200">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-brand-secondary">
                       <img src={me.avatar} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{me.name}</p>
+                      <p className="text-sm font-semibold text-brand-text truncate">{me.name}</p>
                       <p className="text-[10px] text-brand-text/60">You</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 rounded-md">
@@ -518,11 +518,11 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
                 {selectedMembers.map(m => (
                   <div key={m.id} className="flex items-center gap-3 p-2.5 rounded-xl mb-1">
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-brand-secondary">
                       <img src={m.avatar} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{m.name}</p>
+                      <p className="text-sm font-semibold text-brand-text truncate">{m.name}</p>
                     </div>
                     <span className="text-[9px] font-bold uppercase tracking-wider text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md">
                       Member
@@ -548,7 +548,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <button
               onClick={() => setStep((step - 1) as 1 | 2)}
               disabled={creating}
-              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-brand-highlight bg-slate-100 rounded-xl hover:bg-slate-200 transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
               Back
@@ -561,7 +561,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-[#D8103F] rounded-xl hover:bg-[#C00E38] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Add Members
               <ChevronRight className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               <button
                 onClick={() => setStep(3)}
                 disabled={!canProceedStep2}
-                className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-[#D8103F] rounded-xl hover:bg-[#C00E38] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Review
                 <ChevronRight className="w-4 h-4" />
@@ -588,7 +588,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-[#D8103F] rounded-xl hover:bg-[#C00E38] transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-60"
             >
               {creating ? (
                 <>

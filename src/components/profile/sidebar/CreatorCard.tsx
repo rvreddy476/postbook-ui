@@ -69,7 +69,7 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
 
                 <Link
                     href={`/posttube/channel/${username}`}
-                    className="block mt-1 w-full text-center text-sm font-semibold text-[#D8103F] hover:text-[#b80d35] transition-colors"
+                    className="block mt-1 w-full text-center text-sm font-semibold text-brand-text hover:text-brand-text transition-colors"
                 >
                     View Channel
                 </Link>

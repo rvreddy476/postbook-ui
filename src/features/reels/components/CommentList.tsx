@@ -108,10 +108,10 @@ export function CommentList({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-800">{comment.author_name}</span>
+                  <span className="text-sm font-semibold text-brand-text">{comment.author_name}</span>
                   <span className="text-[11px] text-brand-text/60">{formatRelativeTime(comment.created_at)}</span>
                 </div>
-                <p className="mt-1 text-sm leading-relaxed text-slate-700">{comment.text}</p>
+                <p className="mt-1 text-sm leading-relaxed text-brand-text">{comment.text}</p>
               </article>
             </div>
           );

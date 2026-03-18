@@ -337,7 +337,7 @@ const CallOverlay: React.FC = () => {
                 {info.peerAvatar ? (
                   <img src={info.peerAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#D8103F]/50 to-pink-500 flex items-center justify-center text-white text-3xl font-bold">
+                  <div className="w-full h-full bg-gradient-to-br from-brand-text/50 to-pink-500 flex items-center justify-center text-white text-3xl font-bold">
                     {info.peerName.charAt(0).toUpperCase()}
                   </div>
                 )}

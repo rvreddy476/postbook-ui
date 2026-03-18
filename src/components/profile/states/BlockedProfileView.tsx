@@ -35,7 +35,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                     <div className="mt-8">
                         <button
                             onClick={onGoHome}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#D8103F] text-white text-sm font-medium hover:bg-[#b80d35] transition-colors focus:outline-none focus:ring-2 focus:ring-[#D8103F]/50 focus:ring-offset-2"
+                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                         >
                             <Home className="w-4 h-4" />
                             Go Home
@@ -72,7 +72,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                     {onUnblock && (
                         <button
                             onClick={onUnblock}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-secondary text-brand-text text-sm font-medium hover:bg-brand-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/40 focus:ring-offset-2"
                         >
                             <ShieldOff className="w-4 h-4" />
                             Unblock
@@ -81,7 +81,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
 
                     <button
                         onClick={onGoHome}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#D8103F] text-white text-sm font-medium hover:bg-[#b80d35] transition-colors focus:outline-none focus:ring-2 focus:ring-[#D8103F]/50 focus:ring-offset-2"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                     >
                         <Home className="w-4 h-4" />
                         Go Home

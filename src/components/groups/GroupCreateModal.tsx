@@ -88,7 +88,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider shrink-0">
-          <h2 className="text-lg font-bold text-slate-800">Create Group</h2>
+          <h2 className="text-lg font-bold text-brand-text">Create Group</h2>
           <button onClick={onClose} className="p-1 text-brand-text/60 hover:text-brand-highlight transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -104,30 +104,30 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. React Developers"
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
               maxLength={100}
               required
             />
-            <p className="text-[11px] text-slate-300 mt-1">{name.length}/100 characters</p>
+            <p className="text-[11px] text-brand-text/30 mt-1">{name.length}/100 characters</p>
           </div>
 
           {/* Handle */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Handle</label>
             <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
               <input
                 type="text"
                 value={handle}
                 onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 placeholder={autoHandle || 'group-handle'}
-                className="w-full pl-9 pr-10 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30"
+                className="w-full pl-9 pr-10 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
                 maxLength={50}
               />
               {effectiveHandle.length >= 3 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {checkingHandle ? (
-                    <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-brand-text/30 animate-spin" />
                   ) : handleCheck?.available ? (
                     <Check className="w-4 h-4 text-emerald-500" />
                   ) : (
@@ -136,7 +136,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                 </div>
               )}
             </div>
-            <p className="text-[11px] text-slate-300 mt-1">
+            <p className="text-[11px] text-brand-text/30 mt-1">
               {effectiveHandle.length >= 3 && handleCheck && !handleCheck.available
                 ? 'This handle is taken'
                 : 'Lowercase letters, numbers, and hyphens only'}
@@ -150,7 +150,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What's this group about?"
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 resize-none"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -167,8 +167,8 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                   onClick={() => setCategory(category === cat ? '' : cat)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     category === cat
-                      ? 'bg-[#D8103F] text-white shadow-sm'
-                      : 'bg-brand-secondary text-brand-highlight hover:bg-slate-100'
+                      ? 'bg-brand-text text-white shadow-sm'
+                      : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary'
                   }`}
                 >
                   {cat}
@@ -191,15 +191,15 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                   }}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
                     privacyLevel === opt.value
-                      ? 'border-[#D8103F]/40 bg-[#D8103F]/5'
+                      ? 'border-brand-text/40 bg-brand-text/5'
                       : 'border-brand-divider bg-brand-card hover:border-brand-divider'
                   }`}
                 >
-                  <div className={`${privacyLevel === opt.value ? 'text-[#D8103F]' : 'text-brand-text/60'}`}>
+                  <div className={`${privacyLevel === opt.value ? 'text-brand-text' : 'text-brand-text/60'}`}>
                     {opt.icon}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-700">{opt.label}</p>
+                    <p className="text-sm font-semibold text-brand-text">{opt.label}</p>
                     <p className="text-[11px] text-brand-text/60">{opt.desc}</p>
                   </div>
                 </button>
@@ -219,14 +219,14 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                     onClick={() => setJoinMode(opt.value)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                       joinMode === opt.value
-                        ? 'border-[#D8103F]/40 bg-[#D8103F]/5'
+                        ? 'border-brand-text/40 bg-brand-text/5'
                         : 'border-brand-divider bg-brand-card hover:border-brand-divider'
                     }`}
                   >
-                    <div className={`${joinMode === opt.value ? 'text-[#D8103F]' : 'text-brand-text/60'}`}>
+                    <div className={`${joinMode === opt.value ? 'text-brand-text' : 'text-brand-text/60'}`}>
                       {opt.icon}
                     </div>
-                    <span className="text-xs font-semibold text-slate-700">{opt.label}</span>
+                    <span className="text-xs font-semibold text-brand-text">{opt.label}</span>
                   </button>
                 ))}
               </div>
@@ -240,14 +240,14 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-bold text-brand-highlight bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
+              className="flex-1 py-3 text-sm font-bold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || createGroup.isPending}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#D8103F] text-white font-bold text-sm rounded-xl hover:bg-[#C00E38] transition-all disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-brand-text text-white font-bold text-sm rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-50"
             >
               {createGroup.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {createGroup.isPending ? 'Creating...' : 'Create Group'}

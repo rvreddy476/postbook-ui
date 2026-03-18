@@ -268,24 +268,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
         onClick={() => setIsMinimized(!isMinimized)}
       >
         <div className="flex items-center gap-3.5">
-          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-transparent transition-all hover:ring-slate-100">
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-transparent transition-all hover:ring-brand-secondary">
             <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" />
             {contact.isOnline && (
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
             )}
           </div>
           <div className="flex flex-col">
-            <h3 className="text-[15px] font-extrabold tracking-tight text-slate-800">{contact.name}</h3>
+            <h3 className="text-[15px] font-extrabold tracking-tight text-brand-text">{contact.name}</h3>
             <p className="text-[11px] font-semibold tracking-wide text-brand-text/60">
               {contact.isOnline ? <span className="text-emerald-500">Active now</span> : 'Offline'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 text-brand-text/60">
-          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-indigo-600 active:scale-95">
+          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
             <Phone className="h-4 w-4" />
           </button>
-          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-indigo-600 active:scale-95">
+          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
             <Video className="h-4 w-4" />
           </button>
           <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-highlight active:scale-95">
@@ -306,7 +306,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50">
                   <MessageCircle className="h-8 w-8 text-indigo-500/70" />
                 </div>
-                <p className="text-sm font-extrabold text-slate-700">Start a conversation</p>
+                <p className="text-sm font-extrabold text-brand-text">Start a conversation</p>
                 <p className="mt-1 text-[12px] font-medium text-brand-text/60">Say hello to {contact.name}</p>
               </div>
             )}
@@ -377,7 +377,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               <ArrowDownToLine className="h-3.5 w-3.5" />
                             </a>
                             {msg.text && (
-                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-brand-divider bg-brand-card text-slate-700'}`}>
+                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-brand-divider bg-brand-card text-brand-text'}`}>
                                 {msg.text}
                               </div>
                             )}
@@ -385,7 +385,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                         ) : (
                           <div className={`max-w-[220px] break-words rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-sm ${isMe
                             ? 'rounded-tr-sm bg-indigo-600 text-white'
-                            : 'rounded-tl-sm border border-brand-divider bg-brand-card text-slate-700'
+                            : 'rounded-tl-sm border border-brand-divider bg-brand-card text-brand-text'
                             }`}>
                             {msg.text}
                           </div>
@@ -426,15 +426,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                 </div>
                 <div>
                   <div className="mb-1 px-1">
-                    <span className="text-[10px] font-bold text-slate-700">{contact.name}</span>
+                    <span className="text-[10px] font-bold text-brand-text">{contact.name}</span>
                   </div>
-                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-slate-50 bg-brand-card px-5 py-3.5 shadow-sm">
+                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-brand-secondary bg-brand-card px-5 py-3.5 shadow-sm">
                     {[0, 1, 2].map(d => (
                       <motion.span
                         key={d}
                         animate={{ y: [0, -3, 0] }}
                         transition={{ repeat: Infinity, duration: 0.6, delay: d * 0.15 }}
-                        className="h-1.5 w-1.5 rounded-full bg-slate-300"
+                        className="h-1.5 w-1.5 rounded-full bg-brand-text/30"
                       />
                     ))}
                   </div>
@@ -455,7 +455,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                   <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
                     <Suspense fallback={
                       <div className="flex h-[435px] w-[352px] items-center justify-center bg-brand-card">
-                        <span className="text-xs font-medium text-slate-300">Loading emojis...</span>
+                        <span className="text-xs font-medium text-brand-text/30">Loading emojis...</span>
                       </div>
                     }>
                       <EmojiPicker
@@ -477,7 +477,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           {/* Input Area */}
           <footer className="border-t border-brand-divider p-3">
             <form onSubmit={handleSend} className="flex items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-slate-100 transition-all focus-within:ring-slate-200">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-brand-secondary transition-all focus-within:ring-slate-200">
                 <input
                   value={input}
                   onChange={(e) => {
@@ -489,20 +489,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                     }
                   }}
                   placeholder="Write a message..."
-                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-slate-800 outline-none placeholder:text-brand-text/60"
+                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-brand-text outline-none placeholder:text-brand-text/60"
                 />
                 <div className="flex items-center gap-1 text-brand-text/60">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-200 hover:text-slate-700 ${showEmojiPicker ? 'bg-slate-200 text-slate-700' : ''}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text ${showEmojiPicker ? 'bg-brand-secondary text-brand-text' : ''}`}
                   >
                     <Smile className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-slate-200 hover:text-indigo-600"
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text"
                   >
                     <Image className="h-4 w-4" />
                   </button>

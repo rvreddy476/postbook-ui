@@ -95,7 +95,7 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
 
                 {/* Thumbnail */}
                 {thumbnail && (
-                    <div className="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-slate-100">
+                    <div className="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-brand-secondary">
                         <img
                             src={thumbnail}
                             alt=""
@@ -119,12 +119,12 @@ function StashedSkeleton() {
                     style={{ animationDelay: `${i * 100}ms` }}
                 >
                     <div className="flex-1 space-y-3">
-                        <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-1/3" />
-                        <div className="h-4 bg-slate-100 rounded-lg animate-pulse w-full" />
-                        <div className="h-4 bg-slate-100 rounded-lg animate-pulse w-2/3" />
-                        <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-1/4" />
+                        <div className="h-3 bg-brand-secondary rounded-lg animate-pulse w-1/3" />
+                        <div className="h-4 bg-brand-secondary rounded-lg animate-pulse w-full" />
+                        <div className="h-4 bg-brand-secondary rounded-lg animate-pulse w-2/3" />
+                        <div className="h-3 bg-brand-secondary rounded-lg animate-pulse w-1/4" />
                     </div>
-                    <div className="h-20 w-20 rounded-xl bg-slate-100 animate-pulse flex-shrink-0" />
+                    <div className="h-20 w-20 rounded-xl bg-brand-secondary animate-pulse flex-shrink-0" />
                 </div>
             ))}
         </div>
@@ -163,7 +163,7 @@ export function StashedTab({ userId }: StashedTabProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
-                    <Bookmark className="h-9 w-9 text-slate-300" />
+                    <Bookmark className="h-9 w-9 text-brand-text/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     Nothing stashed yet
@@ -186,7 +186,7 @@ export function StashedTab({ userId }: StashedTabProps) {
 
             {isFetchingNextPage && (
                 <div className="flex justify-center py-6">
-                    <div className="h-6 w-6 border-2 border-[#D8103F] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-6 w-6 border-2 border-brand-text border-t-transparent rounded-full animate-spin" />
                 </div>
             )}
         </div>

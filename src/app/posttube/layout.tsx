@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PostTube | PostBoek.com",
+  title: "PostTube | Postbook \u00b7 atpost",
   description: "Watch long-form video content on PostTube.",
 };
 

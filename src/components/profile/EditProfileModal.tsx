@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Dialog } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Camera, Loader2, ImageIcon } from "lucide-react"
 import api from "@/lib/api"
+import { uploadMedia } from "@/lib/mediaUpload"
 import type { UserProfile } from "@/types/profile"
 
 interface EditProfileModalProps {
@@ -28,6 +30,50 @@ interface FormState {
 
 export function EditProfileModal({ profile, open, onClose }: EditProfileModalProps) {
     const qc = useQueryClient()
+    const avatarInputRef = useRef<HTMLInputElement>(null)
+    const coverInputRef = useRef<HTMLInputElement>(null)
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+    const [coverPreview, setCoverPreview] = useState<string | null>(null)
+
+    const avatarUpload = useMutation({
+        mutationFn: async (file: File) => {
+            const mediaId = await uploadMedia(file, "image", "avatar")
+            await api.put("/v1/profiles/me/avatar", { media_id: mediaId })
+            return mediaId
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["profile"] })
+            qc.invalidateQueries({ queryKey: ["my-profile"] })
+            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
+        },
+    })
+
+    const coverUpload = useMutation({
+        mutationFn: async (file: File) => {
+            const mediaId = await uploadMedia(file, "image", "cover")
+            await api.put("/v1/profiles/me/cover", { media_id: mediaId })
+            return mediaId
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["profile"] })
+            qc.invalidateQueries({ queryKey: ["my-profile"] })
+            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
+        },
+    })
+
+    const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setAvatarPreview(URL.createObjectURL(file))
+        avatarUpload.mutate(file)
+    }
+
+    const handleCoverFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setCoverPreview(URL.createObjectURL(file))
+        coverUpload.mutate(file)
+    }
 
     const [form, setForm] = useState<FormState>({
         display_name: profile.display_name,
@@ -79,6 +125,66 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                 }}
                 className="space-y-4"
             >
+                {/* Cover Photo */}
+                <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverFile} />
+                <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleAvatarFile} />
+
+                <div className="space-y-3">
+                    <div
+                        onClick={() => coverInputRef.current?.click()}
+                        className="relative h-32 rounded-xl overflow-hidden bg-zinc-100 cursor-pointer group border border-zinc-200"
+                    >
+                        {(coverPreview || profile.cover_media_id) ? (
+                            <img
+                                src={coverPreview || `/v1/media/${profile.cover_media_id}/serve`}
+                                alt=""
+                                className="w-full h-full object-cover group-hover:brightness-90 transition-all"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                                <ImageIcon className="w-8 h-8 text-zinc-300" />
+                            </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                            {coverUpload.isPending ? (
+                                <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            ) : (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold">
+                                    <Camera className="w-3.5 h-3.5" /> Change Cover
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Avatar overlapping cover */}
+                    <div className="flex items-center gap-4 -mt-10 ml-4 relative z-10">
+                        <div
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="w-16 h-16 rounded-2xl overflow-hidden border-[3px] border-white shadow-lg bg-zinc-100 cursor-pointer group relative"
+                        >
+                            {(avatarPreview || profile.avatar_media_id) ? (
+                                <img
+                                    src={avatarPreview || `/v1/media/${profile.avatar_media_id}/serve`}
+                                    alt=""
+                                    className="w-full h-full object-cover group-hover:brightness-90 transition-all"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-lg font-black text-white">
+                                    {profile.display_name.charAt(0)}
+                                </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-2xl">
+                                {avatarUpload.isPending ? (
+                                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="w-4 h-4 text-white" />
+                                )}
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-medium mt-6">Click to change photo</p>
+                    </div>
+                </div>
+
                 <Field label="Display Name">
                     <Input value={form.display_name} onChange={update("display_name")} required />
                 </Field>

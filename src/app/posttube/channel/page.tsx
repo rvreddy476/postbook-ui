@@ -41,13 +41,13 @@ function PostCard({ post, onDelete }: { post: PostDetail; onDelete: (id: string)
 
   return (
     <div className="group relative">
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-100">
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-brand-secondary">
         <Link href={href} className="block h-full">
           {thumbUrl ? (
             <img src={thumbUrl} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <Play className="h-8 w-8 text-slate-300" />
+              <Play className="h-8 w-8 text-brand-text/30" />
             </div>
           )}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
@@ -67,7 +67,7 @@ function PostCard({ post, onDelete }: { post: PostDetail; onDelete: (id: string)
 
       <div className="mt-2 px-0.5">
         <Link href={href}>
-          <p className="truncate text-[13px] font-semibold text-slate-800 hover:text-[#D8103F] transition-colors">
+          <p className="truncate text-[13px] font-semibold text-brand-text hover:text-brand-text transition-colors">
             {post.text || "Untitled"}
           </p>
         </Link>
@@ -116,7 +116,7 @@ export default function MyChannelPage() {
     <AppShell sectionLabel="PostTube">
       <div className="min-h-screen bg-brand-card">
         {/* Banner */}
-        <div className="relative h-40 bg-gradient-to-br from-[#D8103F] via-[#D8103F]/50 to-purple-400">
+        <div className="relative h-40 bg-gradient-to-br from-brand-text via-brand-text/50 to-purple-400">
           {bannerUrl && (
             <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
           )}
@@ -141,14 +141,14 @@ export default function MyChannelPage() {
                 <p className="text-[13px] text-brand-text/60">@{profile.username}</p>
               )}
               <div className="mt-1 flex items-center gap-4 text-[12px] text-brand-highlight">
-                <span><strong className="text-slate-700">{videos.length}</strong> videos</span>
-                <span><strong className="text-slate-700">{flicks.length}</strong> flicks</span>
+                <span><strong className="text-brand-text">{videos.length}</strong> videos</span>
+                <span><strong className="text-brand-text">{flicks.length}</strong> flicks</span>
               </div>
             </div>
             <div className="flex items-center gap-2 pb-2">
               <Link
                 href="/posttube/upload?type=long"
-                className="flex items-center gap-1.5 rounded-xl bg-[#D8103F] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#b80d35] transition-colors"
+                className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-white hover:bg-brand-text transition-colors"
               >
                 <Upload className="h-3.5 w-3.5" />
                 Upload
@@ -173,20 +173,20 @@ export default function MyChannelPage() {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={`relative flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold transition-colors ${
-                  tab === t.id ? "text-[#D8103F]" : "text-brand-text/60 hover:text-brand-highlight"
+                  tab === t.id ? "text-brand-text" : "text-brand-text/60 hover:text-brand-highlight"
                 }`}
               >
                 <t.icon className="h-4 w-4" />
                 {t.label}
                 {t.count > 0 && (
                   <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    tab === t.id ? "bg-[#D8103F]/10 text-[#D8103F]" : "bg-slate-100 text-brand-text/60"
+                    tab === t.id ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-text/60"
                   }`}>
                     {t.count}
                   </span>
                 )}
                 {tab === t.id && (
-                  <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#D8103F]" />
+                  <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-brand-text" />
                 )}
               </button>
             ))}
@@ -197,13 +197,13 @@ export default function MyChannelPage() {
             {items.length === 0 && !query.isLoading ? (
               <div className="flex flex-col items-center py-16 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-secondary">
-                  {tab === "videos" ? <Video className="h-7 w-7 text-slate-300" /> : <Film className="h-7 w-7 text-slate-300" />}
+                  {tab === "videos" ? <Video className="h-7 w-7 text-brand-text/30" /> : <Film className="h-7 w-7 text-brand-text/30" />}
                 </div>
                 <p className="mt-4 text-[14px] font-semibold text-brand-highlight">No {tab} yet</p>
                 <p className="mt-1 text-[12px] text-brand-text/60">Upload your first {tab === "videos" ? "video" : "flick"} to get started</p>
                 <Link
                   href={`/posttube/upload?type=${tab === "videos" ? "long" : "short"}`}
-                  className="mt-4 rounded-xl bg-[#D8103F] px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-[#b80d35] transition-colors"
+                  className="mt-4 rounded-xl bg-brand-text px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-text transition-colors"
                 >
                   Upload Now
                 </Link>
@@ -247,14 +247,14 @@ export default function MyChannelPage() {
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(null)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-slate-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="px-6 py-5">
                 <p className="text-[13px] text-brand-highlight">
-                  Are you sure you want to delete <strong className="text-slate-800">&ldquo;{deleteTarget.title}&rdquo;</strong>? This action cannot be undone.
+                  Are you sure you want to delete <strong className="text-brand-text">&ldquo;{deleteTarget.title}&rdquo;</strong>? This action cannot be undone.
                 </p>
               </div>
               <div className="border-t border-brand-divider px-6 py-4 flex justify-end gap-3">

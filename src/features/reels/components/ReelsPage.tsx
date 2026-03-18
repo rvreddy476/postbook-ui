@@ -275,7 +275,7 @@ export function ReelsPage() {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "PostBoek Reel", url: shareUrl });
+        await navigator.share({ title: "atpost Reel", url: shareUrl });
         return;
       } catch {
         return;
@@ -547,13 +547,13 @@ export function ReelsPage() {
                 <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
                 <p className="mt-1 text-[13px] text-brand-highlight">Our team will review this content shortly.</p>
                 <button onClick={() => setReportOpen(false)}
-                  className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-slate-800">Done</button>
+                  className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-brand-text">Done</button>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3.5">
                   <h3 className="text-[14px] font-bold text-brand-text">Report Content</h3>
-                  <button onClick={() => setReportOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-slate-100">
+                  <button onClick={() => setReportOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
@@ -563,7 +563,7 @@ export function ReelsPage() {
                     {REPORT_REASONS.map((r) => (
                       <button key={r.value} onClick={() => setReportReason(r.value)}
                         className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
-                          reportReason === r.value ? 'bg-slate-900 text-white font-medium' : 'bg-brand-secondary text-slate-700 hover:bg-slate-100'
+                          reportReason === r.value ? 'bg-slate-900 text-white font-medium' : 'bg-brand-secondary text-brand-text hover:bg-brand-secondary'
                         }`}>{r.label}</button>
                     ))}
                   </div>

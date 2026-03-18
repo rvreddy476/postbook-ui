@@ -102,7 +102,7 @@ export function GeneralTab() {
               type="button"
               onClick={() => ensurePublisher.mutate()}
               disabled={ensurePublisher.isPending}
-              className="mt-4 rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#b80d35] disabled:opacity-50 transition-colors"
+              className="mt-4 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-text disabled:opacity-50 transition-colors"
             >
               {ensurePublisher.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -135,7 +135,7 @@ export function GeneralTab() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               placeholder="My Awesome Channel"
             />
             <p className="mt-1 text-[11px] text-brand-text/60">{name.length}/50 characters</p>
@@ -149,14 +149,14 @@ export function GeneralTab() {
             <div className="flex items-center gap-3">
               <div className="flex h-10 flex-1 items-center rounded-xl border border-brand-divider bg-brand-secondary px-3">
                 <span className="text-[13px] text-brand-text/60">@</span>
-                <span className="ml-0.5 text-[13px] font-medium text-slate-700">
+                <span className="ml-0.5 text-[13px] font-medium text-brand-text">
                   {channel?.handle || "—"}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setHandleModalOpen(true)}
-                className="shrink-0 rounded-xl bg-slate-100 px-4 py-2.5 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-slate-200"
+                className="shrink-0 rounded-xl bg-brand-secondary px-4 py-2.5 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-brand-secondary"
               >
                 Change
               </button>
@@ -176,7 +176,7 @@ export function GeneralTab() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             >
               <option value="">Select category</option>
               {CATEGORIES.map((c) => (
@@ -192,7 +192,7 @@ export function GeneralTab() {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             >
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -207,7 +207,7 @@ export function GeneralTab() {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-slate-800 outline-none transition-all focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               placeholder="e.g. Mumbai, India"
             />
           </div>
@@ -233,7 +233,7 @@ export function GeneralTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -258,7 +258,7 @@ export function GeneralTab() {
                 <button
                   type="button"
                   onClick={() => { setHandleModalOpen(false); setNewHandle(""); setHandleAvailable(null); setHandleConfirmed(false); }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-slate-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -308,7 +308,7 @@ export function GeneralTab() {
                           setHandleAvailable(null);
                         }}
                         maxLength={24}
-                        className="h-10 w-full rounded-xl border border-brand-divider bg-brand-card pl-7 pr-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
+                        className="h-10 w-full rounded-xl border border-brand-divider bg-brand-card pl-7 pr-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                         placeholder="new_handle"
                       />
                     </div>
@@ -316,7 +316,7 @@ export function GeneralTab() {
                       type="button"
                       onClick={handleCheckAvailability}
                       disabled={newHandle.length < 3 || checkHandle.isPending}
-                      className="shrink-0 rounded-xl bg-slate-100 px-4 py-2 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-slate-200 disabled:opacity-40"
+                      className="shrink-0 rounded-xl bg-brand-secondary px-4 py-2 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-brand-secondary disabled:opacity-40"
                     >
                       {checkHandle.isPending ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -342,7 +342,7 @@ export function GeneralTab() {
                       type="checkbox"
                       checked={handleConfirmed}
                       onChange={(e) => setHandleConfirmed(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#D8103F] focus:ring-[#D8103F]/50"
+                      className="mt-0.5 h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                     />
                     <span className="text-[12px] leading-relaxed text-brand-highlight">
                       I understand this change syncs across all platforms and I won&apos;t be able
@@ -364,7 +364,7 @@ export function GeneralTab() {
                   type="button"
                   onClick={handleConfirmChange}
                   disabled={!handleAvailable || !handleConfirmed || changeHandle.isPending}
-                  className="rounded-xl bg-[#D8103F] px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-[#b80d35] disabled:opacity-40"
+                  className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-text disabled:opacity-40"
                 >
                   {changeHandle.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

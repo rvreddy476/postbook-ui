@@ -64,18 +64,18 @@ const TYPE_OPTIONS: {
 
 function PageSkeleton() {
     return (
-        <div className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6 space-y-4 animate-pulse">
+        <div className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6 space-y-4 animate-pulse">
             <div className="flex items-center gap-4">
-                <div className="h-11 w-11 rounded-xl bg-slate-200" />
+                <div className="h-11 w-11 rounded-xl bg-brand-secondary" />
                 <div className="flex-1 space-y-2">
-                    <div className="h-4 w-36 rounded bg-slate-200" />
-                    <div className="h-3 w-52 rounded bg-slate-200" />
+                    <div className="h-4 w-36 rounded bg-brand-secondary" />
+                    <div className="h-3 w-52 rounded bg-brand-secondary" />
                 </div>
             </div>
             <div className="space-y-3 pt-2">
-                <div className="h-12 rounded-xl bg-slate-100" />
-                <div className="h-12 rounded-xl bg-slate-100" />
-                <div className="h-12 rounded-xl bg-slate-100" />
+                <div className="h-12 rounded-xl bg-brand-secondary" />
+                <div className="h-12 rounded-xl bg-brand-secondary" />
+                <div className="h-12 rounded-xl bg-brand-secondary" />
             </div>
         </div>
     )
@@ -142,8 +142,8 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
                         className={[
                             "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
                             selectedType === opt.value
-                                ? "border-[#D8103F]/40 bg-[#D8103F]/5"
-                                : "border-brand-divider bg-brand-card hover:border-[#D8103F]/20",
+                                ? "border-brand-text/40 bg-brand-text/5"
+                                : "border-brand-divider bg-brand-card hover:border-brand-text/20",
                         ].join(" ")}
                     >
                         <input
@@ -152,7 +152,7 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
                             value={opt.value}
                             checked={selectedType === opt.value}
                             onChange={() => setSelectedType(opt.value)}
-                            className="mt-0.5 h-4 w-4 shrink-0 accent-[#D8103F]"
+                            className="mt-0.5 h-4 w-4 shrink-0 accent-brand-text"
                         />
                         <div>
                             <p className="text-sm font-semibold text-brand-text">{opt.label}</p>
@@ -171,8 +171,7 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
             <button
                 onClick={() => mutation.mutate(selectedType)}
                 disabled={mutation.isPending}
-                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
-                style={{ backgroundColor: "#D8103F" }}
+                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand-text transition-opacity disabled:opacity-60"
             >
                 {mutation.isPending ? "Submitting…" : "Submit Application"}
             </button>
@@ -203,7 +202,7 @@ export default function VerificationPage() {
             {/* Back link */}
             <Link
                 href="/settings"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#D8103F] transition-colors hover:text-[#8a0a28]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-[#8a0a28]"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Settings
@@ -211,8 +210,8 @@ export default function VerificationPage() {
 
             {/* Page header */}
             <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8103F]/10">
-                    <BadgeCheck className="h-5 w-5 text-[#D8103F]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-text/10">
+                    <BadgeCheck className="h-5 w-5 text-brand-text" />
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-brand-text">Get Verified</h1>
@@ -230,7 +229,7 @@ export default function VerificationPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-brand-card border border-[#D8103F]/10 shadow-sm p-6"
+                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6"
                 >
                     {/* ---- Approved ---- */}
                     {request?.status === "approved" && (
@@ -315,7 +314,7 @@ export default function VerificationPage() {
                     {!request && !justSubmitted && !canReapply && (
                         <div className="space-y-5">
                             <div className="flex items-center gap-3">
-                                <BadgeCheck className="h-8 w-8 shrink-0 text-[#D8103F]/60" />
+                                <BadgeCheck className="h-8 w-8 shrink-0 text-brand-text/60" />
                                 <div>
                                     <h2 className="text-base font-bold text-brand-text">
                                         Apply for verification

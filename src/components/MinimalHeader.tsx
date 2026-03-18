@@ -198,7 +198,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
             >
                 {isSearching ? (
                     <div className="px-4 py-6 flex flex-col items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-[#D8103F]/30 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-brand-text/30 border-t-transparent rounded-full animate-spin" />
                         <span className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">Searching...</span>
                     </div>
                 ) : searchResults.length === 0 ? (
@@ -237,10 +237,10 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                 <div className="flex items-center gap-3">
                     <Link href="/">
                         <div className="flex items-center gap-3 cursor-pointer group">
-                            <div className="w-9 h-9 orchid-gradient rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-[#D8103F]/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
+                            <div className="w-9 h-9 orchid-gradient rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-brand-text/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
                                 <span className="text-white font-black text-base tracking-tighter">PB</span>
                             </div>
-                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">PostBoek.com</span>
+                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">atpost</span>
                         </div>
                     </Link>
                 </div>
@@ -316,7 +316,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                             <button
                                                 onClick={() => markAllRead.mutate()}
                                                 disabled={markAllRead.isPending}
-                                                className="flex items-center gap-1 text-[9px] font-black text-[#D8103F]/50 hover:text-[#b80d35] uppercase tracking-widest transition-colors disabled:opacity-50"
+                                                className="flex items-center gap-1 text-[9px] font-black text-brand-text/50 hover:text-brand-text uppercase tracking-widest transition-colors disabled:opacity-50"
                                             >
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -347,7 +347,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             layout
                                                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                                             transition={{ duration: 0.3 }}
-                                                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-[#D8103F]/30' : ''}`}
+                                                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-brand-text/30' : ''}`}
                                                         >
                                                             <button
                                                                 onClick={() => {
@@ -421,7 +421,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
 
                                                             <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
                                                                 {!notif.is_read && (
-                                                                    <div className="w-2 h-2 rounded-full bg-[#D8103F]/50" />
+                                                                    <div className="w-2 h-2 rounded-full bg-brand-text/50" />
                                                                 )}
                                                                 <button
                                                                     onClick={e => {
@@ -497,7 +497,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     <div className="space-y-0.5">
                                         <Link href="/profile" onClick={() => setIsProfileOpen(false)}>
                                             <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-secondary transition-all cursor-pointer">
-                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F] transition-colors">
+                                                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-brand-text/5 group-hover:text-brand-text transition-colors">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                     </svg>
@@ -555,7 +555,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     placeholder="Search..."
                                     value={searchQuery}
                                     onChange={e => handleSearchChange(e.target.value)}
-                                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-[#D8103F]/10 transition-all"
+                                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-brand-text/10 transition-all"
                                 />
                                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 {searchQuery && (

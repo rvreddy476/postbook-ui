@@ -59,7 +59,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
     ? `/v1/media/${group.avatar_media_id}/serve`
     : null
 
-  const gradient = categoryGradients[group.category?.toLowerCase() ?? ''] || 'from-slate-600 to-slate-800'
+  const gradient = categoryGradients[group.category?.toLowerCase() ?? ''] || 'from-brand-text/80 to-brand-text'
 
   const handleJoin = async () => {
     await joinGroup.mutateAsync(group.id)
@@ -104,29 +104,29 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
       </button>
 
       {/* Cover Photo */}
-      <div className="relative w-full aspect-[3/1] sm:aspect-[3.5/1] overflow-hidden rounded-b-3xl sm:rounded-2xl">
+      <div className="relative w-full aspect-[3.5/1] sm:aspect-[4/1] overflow-hidden rounded-b-3xl sm:rounded-2xl">
         {coverSrc ? (
           <img src={coverSrc} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} opacity-80`} />
+          <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
 
       {/* Avatar + Identity */}
-      <div className="relative max-w-4xl mx-auto px-4 -mt-16 sm:-mt-20 z-10">
+      <div className="relative max-w-4xl mx-auto px-4 -mt-12 sm:-mt-14 z-10">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Avatar */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-brand-card p-1 shadow-xl ring-4 ring-white shrink-0"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-brand-card p-1 shadow-xl ring-4 ring-white shrink-0"
           >
-            <div className="w-full h-full rounded-xl overflow-hidden bg-slate-100">
+            <div className="w-full h-full rounded-xl overflow-hidden bg-brand-secondary">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-3xl`}>
+                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-2xl sm:text-3xl`}>
                   {group.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -157,12 +157,12 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   </span>
 
                   {group.category && (
-                    <span className="px-2 py-0.5 bg-slate-100 text-brand-highlight text-[11px] font-semibold rounded-full">
+                    <span className="px-2 py-0.5 bg-brand-secondary text-brand-highlight text-[11px] font-semibold rounded-full">
                       {group.category}
                     </span>
                   )}
 
-                  <span className="text-slate-300">|</span>
+                  <span className="text-brand-text/30">|</span>
 
                   <div className="flex items-center gap-3 text-xs text-brand-text/60">
                     <span className="flex items-center gap-1">
@@ -189,7 +189,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {/* Primary CTA */}
                   <button
                     onClick={() => {}}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-[#D8103F] text-white text-sm font-bold rounded-xl hover:bg-[#C00E38] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors shadow-sm"
                   >
                     <Plus className="w-4 h-4" />
                     New Post
@@ -197,7 +197,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
 
                   <button
                     onClick={onOpenInvite}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-brand-text/30 transition-all"
                   >
                     <UserPlus className="w-4 h-4" />
                     Invite
@@ -206,7 +206,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {group.chat_conversation_id && (
                     <button
                       onClick={() => router.push(`/chat?conversation=${group.chat_conversation_id}`)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-slate-300 transition-all"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-card border border-brand-divider text-brand-highlight text-sm font-semibold rounded-xl hover:border-brand-text/30 transition-all"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Chat
@@ -216,7 +216,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {isAdmin && onEditProfile && (
                     <button
                       onClick={onEditProfile}
-                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-slate-300 transition-all"
+                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-brand-text/30 transition-all"
                       title="Edit Group"
                     >
                       <Pencil className="w-4 h-4" />
@@ -226,7 +226,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {isAdmin && (
                     <button
                       onClick={() => router.push(`/groups/${group.id}/settings`)}
-                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-slate-300 transition-all"
+                      className="p-2 bg-brand-card border border-brand-divider text-brand-highlight rounded-xl hover:border-brand-text/30 transition-all"
                       title="Group Settings"
                     >
                       <Settings className="w-4 h-4" />
@@ -235,7 +235,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
 
                   {/* Overflow menu */}
                   <div className="relative group/overflow ml-auto">
-                    <button className="p-2 bg-brand-card border border-brand-divider text-brand-text/60 rounded-xl hover:border-slate-300 transition-all">
+                    <button className="p-2 bg-brand-card border border-brand-divider text-brand-text/60 rounded-xl hover:border-brand-text/30 transition-all">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                     <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg py-1 hidden group-hover/overflow:block z-30">
@@ -273,7 +273,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                 <button
                   onClick={handleJoin}
                   disabled={joinGroup.isPending}
-                  className="flex items-center gap-2 px-6 py-2.5 border-2 border-[#D8103F] text-[#D8103F] text-sm font-bold rounded-xl hover:bg-[#D8103F]/5 transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 border-2 border-brand-text text-brand-text text-sm font-bold rounded-xl hover:bg-brand-text/5 transition-all disabled:opacity-50"
                 >
                   <Clock className="w-4 h-4" />
                   {joinGroup.isPending ? 'Requesting...' : 'Request to Join'}
@@ -287,7 +287,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                 <button
                   onClick={handleJoin}
                   disabled={joinGroup.isPending}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#D8103F] text-white text-sm font-bold rounded-xl hover:bg-[#C00E38] shadow-sm transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 shadow-sm transition-all disabled:opacity-50"
                 >
                   <Users className="w-4 h-4" />
                   {joinGroup.isPending ? 'Joining...' : 'Join Group'}

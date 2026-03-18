@@ -34,10 +34,10 @@ const SuggestionsTab: React.FC = () => {
                     <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider overflow-hidden animate-pulse">
                         <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
                         <div className="flex flex-col items-center -mt-10 px-4 pb-5">
-                            <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
-                            <div className="mt-3 w-24 h-3.5 rounded bg-slate-200" />
-                            <div className="mt-1 w-16 h-2.5 rounded bg-slate-100" />
-                            <div className="mt-4 w-28 h-9 rounded-xl bg-slate-100" />
+                            <div className="w-[76px] h-[76px] rounded-full bg-brand-secondary ring-4 ring-white" />
+                            <div className="mt-3 w-24 h-3.5 rounded bg-brand-secondary" />
+                            <div className="mt-1 w-16 h-2.5 rounded bg-brand-secondary" />
+                            <div className="mt-4 w-28 h-9 rounded-xl bg-brand-secondary" />
                         </div>
                     </div>
                 ))}
@@ -56,7 +56,7 @@ const SuggestionsTab: React.FC = () => {
                 {dismissedIds.size > 0 && (
                     <button
                         onClick={() => setDismissedIds(new Set())}
-                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-[#D8103F] bg-[#D8103F]/5 hover:bg-[#D8103F]/10 transition-colors"
+                        className="mt-5 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-brand-text bg-brand-text/5 hover:bg-brand-text/10 transition-colors"
                     >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Show dismissed suggestions
@@ -76,7 +76,7 @@ const SuggestionsTab: React.FC = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[#D8103F] bg-[#D8103F]/5 hover:bg-[#D8103F]/10 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-bold text-brand-text bg-brand-text/5 hover:bg-brand-text/10 transition-colors disabled:opacity-50"
                 >
                     <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
                     Refresh

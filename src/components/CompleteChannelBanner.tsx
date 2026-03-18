@@ -40,7 +40,7 @@ export function CompleteChannelBanner() {
         >
           <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-slate-700">
+            <p className="text-[13px] font-medium text-brand-text">
               Complete your channel to improve reach
             </p>
             <p className="text-[12px] text-brand-text/60">
@@ -49,14 +49,14 @@ export function CompleteChannelBanner() {
           </div>
           <Link
             href="/settings/profile"
-            className="shrink-0 rounded-full bg-slate-900 px-4 py-1.5 text-[12px] font-semibold text-white transition hover:bg-slate-800"
+            className="shrink-0 rounded-full bg-slate-900 px-4 py-1.5 text-[12px] font-semibold text-white transition hover:bg-brand-text"
           >
             Complete Profile
           </Link>
           <button
             type="button"
             onClick={dismiss}
-            className="shrink-0 rounded-full p-1 text-brand-text/60 transition hover:bg-slate-100 hover:text-brand-highlight"
+            className="shrink-0 rounded-full p-1 text-brand-text/60 transition hover:bg-brand-secondary hover:text-brand-highlight"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

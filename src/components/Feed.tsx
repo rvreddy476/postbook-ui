@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Smile, Hash } from 'lucide-react';
 import PostCard from './PostCard';
 import StoriesRow from './StoriesRow';
+import Link from 'next/link';
 import { useHomeFeed } from '@/hooks/useFeedPosts';
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messageService';
@@ -145,11 +146,17 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
         )}
 
         {!isLoading && posts.length === 0 && (
-          <div className="rounded-2xl border border-brand-divider py-20 text-center">
-            <h3 className="text-base font-semibold text-brand-text/60">No posts yet</h3>
-            <p className="mt-1 text-sm text-brand-text/60">
-              Follow people to see their posts here.
+          <div className="rounded-2xl border border-brand-divider py-20 text-center flex flex-col items-center">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-brand-text/20 mb-4">
+              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+            </svg>
+            <h3 className="text-base font-semibold text-brand-text/60">Your feed is quiet</h3>
+            <p className="mt-1 text-sm text-brand-text/40">
+              Follow people and creators to see their posts here
             </p>
+            <Link href="/discover" className="mt-4 px-6 py-2.5 bg-brand-accent text-brand-bg text-xs font-black tracking-widest uppercase rounded-full hover:opacity-90 transition-opacity">
+              Discover People
+            </Link>
           </div>
         )}
 

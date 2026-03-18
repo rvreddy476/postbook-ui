@@ -1,18 +1,21 @@
 'use client'
 
 import React, { useState } from 'react'
+import AppShell from '@/components/AppShell'
 import { useMyGroups, useDiscoverGroups, useGroupSearch } from '@/hooks/useGroups'
 import GroupCard from '@/components/groups/GroupCard'
-import GroupCreateModal from '@/components/groups/GroupCreateModal'
-import { Search, Plus, Users, Compass } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Search, Plus, Users, Compass, Mail, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
-type Tab = 'my-groups' | 'discover'
+type Tab = 'my-groups' | 'discover' | 'invites' | 'suggested'
+
+const FILTER_CHIPS = ['All', 'Public', 'Private', 'Local', 'Recent', 'Active'] as const
+type FilterChip = (typeof FILTER_CHIPS)[number]
 
 export default function GroupsPage() {
   const [tab, setTab] = useState<Tab>('my-groups')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showCreate, setShowCreate] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<FilterChip>('All')
 
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
@@ -22,118 +25,155 @@ export default function GroupsPage() {
     ? searchResults
     : tab === 'my-groups'
       ? myGroups
-      : discoverGroups
+      : tab === 'discover'
+        ? discoverGroups
+        : tab === 'suggested'
+          ? discoverGroups
+          : undefined
+
+  const filteredGroups = groups?.filter((group) => {
+    if (tab !== 'my-groups' || activeFilter === 'All') return true
+    if (activeFilter === 'Public') return group.privacy_level === 'public' || group.visibility === 'public'
+    if (activeFilter === 'Private') return group.privacy_level === 'private' || group.visibility === 'private'
+    if (activeFilter === 'Local') return !!group.location
+    if (activeFilter === 'Recent') return true
+    if (activeFilter === 'Active') return true
+    return true
+  })
+
   const isLoading = tab === 'my-groups' ? loadingMy : loadingDiscover
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 pt-8 pb-16">
-      {/* Title + Create button */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Groups</h1>
-          <p className="text-sm text-brand-text/60 mt-0.5">Connect with communities that matter to you</p>
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'my-groups', label: 'My Groups', icon: <Users className="w-4 h-4" /> },
+    { key: 'discover', label: 'Discover', icon: <Compass className="w-4 h-4" /> },
+    { key: 'invites', label: 'Invites', icon: <Mail className="w-4 h-4" /> },
+    { key: 'suggested', label: 'Suggested', icon: <Sparkles className="w-4 h-4" /> },
+  ]
+
+  const renderEmptyState = () => {
+    const config: Record<Tab, { title: string; desc: string }> = {
+      'my-groups': {
+        title: 'No groups yet',
+        desc: 'Join groups to connect with people who share your interests',
+      },
+      discover: {
+        title: 'Nothing to discover',
+        desc: 'No groups to discover right now. Check back later!',
+      },
+      invites: {
+        title: 'No invites',
+        desc: 'You have no pending group invitations',
+      },
+      suggested: {
+        title: 'No suggestions',
+        desc: 'We don\'t have any group suggestions for you yet',
+      },
+    }
+    const { title, desc } = config[tab]
+    return (
+      <div className="text-center py-20">
+        <div className="w-16 h-16 rounded-2xl bg-brand-text/5 mx-auto mb-4 flex items-center justify-center">
+          <Users className="w-8 h-8 text-brand-text/20" />
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D8103F] text-white text-sm font-bold rounded-xl hover:bg-[#C00E38] transition-colors shadow-sm"
+        <h3 className="text-base font-semibold text-brand-text/60">{title}</h3>
+        <p className="text-sm text-brand-text/40 mt-1">{desc}</p>
+      </div>
+    )
+  }
+
+  return (
+    <AppShell>
+    <div className="max-w-5xl mx-auto px-4 pt-8 pb-16">
+      {/* Header: Title + Create Group button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[26px] font-[800] tracking-tight text-brand-text" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>
+          Groups
+        </h1>
+        <Link
+          href="/groups/create"
+          className="flex items-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-90 transition-all"
         >
           <Plus className="w-4 h-4" />
           Create Group
-        </button>
+        </Link>
       </div>
 
-      {/* Search bar */}
+      {/* Search bar — white card, full width */}
       <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
         <input
           type="text"
           placeholder="Search groups..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+          className="w-full pl-11 pr-4 py-3 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 focus:border-brand-text/20 transition-all"
         />
       </div>
 
-      {/* Tabs */}
+      {/* 4 Tabs */}
       {!searchQuery && (
-        <div className="flex items-center gap-0 border-b border-brand-divider mb-6 -mx-1">
-          <button
-            onClick={() => setTab('my-groups')}
-            className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-colors ${
-              tab === 'my-groups' ? 'text-[#D8103F]' : 'text-brand-text/60 hover:text-brand-highlight'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            My Groups
-            {tab === 'my-groups' && (
-              <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#D8103F] rounded-full" />
-            )}
-          </button>
-          <button
-            onClick={() => setTab('discover')}
-            className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-colors ${
-              tab === 'discover' ? 'text-[#D8103F]' : 'text-brand-text/60 hover:text-brand-highlight'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            Discover
-            {tab === 'discover' && (
-              <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#D8103F] rounded-full" />
-            )}
-          </button>
+        <div className="flex items-center gap-0 border-b border-brand-divider mb-6">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-bold transition-colors ${
+                tab === t.key ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-text/70'
+              }`}
+            >
+              {t.icon}
+              {t.label}
+              {tab === t.key && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 border-b-2 border-brand-text rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Groups grid */}
+      {/* Filter chips on My Groups tab */}
+      {!searchQuery && tab === 'my-groups' && (
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide">
+          {FILTER_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              onClick={() => setActiveFilter(chip)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                activeFilter === chip
+                  ? 'bg-brand-text text-brand-bg'
+                  : 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
+              }`}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Groups grid — 2 columns */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="bg-brand-card rounded-2xl border border-brand-divider overflow-hidden animate-pulse">
-              <div className="h-28 bg-slate-100" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white border border-brand-divider rounded-2xl overflow-hidden animate-pulse">
+              <div className="h-20 bg-brand-text/5" />
               <div className="p-4 space-y-2">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 -mt-7" />
-                <div className="h-4 w-32 bg-slate-100 rounded" />
-                <div className="h-3 w-48 bg-brand-secondary rounded" />
-                <div className="h-3 w-24 bg-brand-secondary rounded" />
+                <div className="h-4 w-32 bg-brand-text/5 rounded" />
+                <div className="h-3 w-48 bg-brand-text/5 rounded" />
+                <div className="h-3 w-24 bg-brand-text/5 rounded" />
               </div>
             </div>
           ))}
         </div>
-      ) : groups && groups.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groups.map((group, i) => (
-            <motion.div
-              key={group.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <GroupCard group={group} />
-            </motion.div>
+      ) : filteredGroups && filteredGroups.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filteredGroups.map((group) => (
+            <GroupCard key={group.id} group={group} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
-            <Users className="w-8 h-8 text-slate-200" />
-          </div>
-          <p className="text-sm font-semibold text-brand-text/60">
-            {searchQuery
-              ? 'No groups found'
-              : tab === 'my-groups'
-                ? "You haven't joined any groups yet"
-                : 'No groups to discover'}
-          </p>
-          <p className="text-xs text-slate-300 mt-1">
-            {tab === 'my-groups' && !searchQuery && 'Create one or explore what\'s out there'}
-          </p>
-        </div>
+        renderEmptyState()
       )}
-
-      {/* Create Group Modal */}
-      <AnimatePresence>
-        {showCreate && <GroupCreateModal onClose={() => setShowCreate(false)} />}
-      </AnimatePresence>
     </div>
+    </AppShell>
   )
 }

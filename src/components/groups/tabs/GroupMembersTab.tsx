@@ -50,11 +50,11 @@ function MemberCard({
   return (
     <div className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-brand-divider hover:border-brand-divider transition-all group/card">
       <Link href={`/profile/${member.username || member.user_id}`} className="shrink-0">
-        <div className="w-11 h-11 rounded-xl overflow-hidden bg-slate-100">
+        <div className="w-11 h-11 rounded-xl overflow-hidden bg-brand-secondary">
           {avatarSrc ? (
             <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-sm font-bold text-white">
+            <div className="w-full h-full bg-gradient-to-br from-brand-secondary to-brand-text/30 flex items-center justify-center text-sm font-bold text-white">
               {(member.display_name || '?').charAt(0).toUpperCase()}
             </div>
           )}
@@ -63,7 +63,7 @@ function MemberCard({
 
       <div className="flex-1 min-w-0">
         <Link href={`/profile/${member.username || member.user_id}`}>
-          <p className="text-sm font-bold text-slate-700 truncate hover:text-[#D8103F] transition-colors">
+          <p className="text-sm font-bold text-brand-text truncate hover:text-brand-text/80 transition-colors">
             {member.display_name || member.username || 'Unknown'}
           </p>
         </Link>
@@ -71,8 +71,8 @@ function MemberCard({
           {member.username && (
             <span className="text-[11px] text-brand-text/60 font-medium">@{member.username}</span>
           )}
-          <span className="text-slate-200">·</span>
-          <span className="text-[11px] text-slate-300">
+          <span className="text-brand-secondary">·</span>
+          <span className="text-[11px] text-brand-text/30">
             Joined {new Date(member.joined_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
           </span>
         </div>
@@ -89,7 +89,7 @@ function MemberCard({
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 text-slate-300 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all sm:opacity-0 sm:group-hover/card:opacity-100"
+            className="p-1.5 text-brand-text/30 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all sm:opacity-0 sm:group-hover/card:opacity-100"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -222,9 +222,9 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
         <div className="h-10 bg-brand-secondary rounded-xl animate-pulse" />
         {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-brand-divider animate-pulse">
-            <div className="w-11 h-11 rounded-xl bg-slate-100" />
+            <div className="w-11 h-11 rounded-xl bg-brand-secondary" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 w-24 bg-slate-100 rounded" />
+              <div className="h-3.5 w-24 bg-brand-secondary rounded" />
               <div className="h-2.5 w-16 bg-brand-secondary rounded" />
             </div>
             <div className="h-6 w-14 bg-brand-secondary rounded-lg" />
@@ -238,7 +238,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     return (
       <div className="text-center py-20">
         <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
-          <Shield className="w-7 h-7 text-slate-200" />
+          <Shield className="w-7 h-7 text-brand-secondary" />
         </div>
         <p className="text-sm font-semibold text-brand-text/60">No members found</p>
       </div>
@@ -249,13 +249,13 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     <div className="space-y-5">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
         <input
           type="text"
           placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D8103F]/20 focus:border-[#D8103F]/30 transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
         />
       </div>
 

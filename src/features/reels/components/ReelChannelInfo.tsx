@@ -50,7 +50,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onPrev}
           disabled={!hasPrev}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous reel"
         >
           <ChevronUp className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onNext}
           disabled={!hasNext}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-slate-200/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next reel"
         >
           <ChevronDown className="h-4 w-4" />
@@ -125,7 +125,7 @@ export function ReelChannelInfo({
             <Link
               key={tag}
               href={`/hashtag/${tag}`}
-              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-slate-100"
+              className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[11px] font-semibold text-brand-highlight transition hover:bg-brand-secondary"
             >
               #{tag}
             </Link>

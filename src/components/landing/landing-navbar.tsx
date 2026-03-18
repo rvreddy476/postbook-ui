@@ -8,10 +8,7 @@ export function LandingNavbar() {
     <nav className="fixed top-0 z-50 h-20 w-full border-b border-brand-divider px-4 backdrop-blur-2xl sm:px-8">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
         <Link href="/" className="group flex cursor-pointer items-center gap-3 sm:gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-accent shadow-lg transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12">
-            <span className="text-white font-black text-lg sm:text-xl tracking-tighter">PB</span>
-          </div>
-          <span className="text-2xl font-black tracking-tighter text-brand-text sm:text-3xl">PostBoek.com</span>
+          <span className="text-2xl font-black tracking-tighter text-brand-text">&#10022; atpost</span>
         </Link>
         <div className="hidden items-center gap-8 md:flex">
           <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">

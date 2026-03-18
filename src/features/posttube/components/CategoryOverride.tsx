@@ -67,8 +67,8 @@ export function CategoryOverride({
             selected === "flick"
               ? "bg-amber-500 text-white"
               : canBeFlick
-                ? "bg-slate-100 text-brand-highlight hover:bg-slate-200"
-                : "bg-brand-secondary text-slate-300 cursor-not-allowed"
+                ? "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
+                : "bg-brand-secondary text-brand-text/30 cursor-not-allowed"
           }`}
         >
           Flick
@@ -80,7 +80,7 @@ export function CategoryOverride({
           className={`flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition-colors ${
             selected === "long_video"
               ? "bg-blue-600 text-white"
-              : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+              : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
           }`}
         >
           Video

@@ -67,7 +67,7 @@ function InfoRow({ icon: Icon, label, value, isLink }: { icon: typeof Briefcase;
             <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-0.5">{label}</p>
                 {isLink ? (
-                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#D8103F] hover:underline flex items-center gap-1">
+                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-brand-text hover:underline flex items-center gap-1">
                         {value.replace(/^https?:\/\//, "")}
                         <ExternalLink className="w-3 h-3" />
                     </a>
@@ -118,7 +118,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
             <SectionCard delay={0}>
                 <SectionHeader icon={User} title="Overview" />
                 {profile.bio && (
-                    <p className="font-serif-display text-lg italic leading-relaxed text-zinc-700 mb-5 pl-1">
+                    <p className="font-mono-display text-lg italic leading-relaxed text-zinc-700 mb-5 pl-1">
                         &ldquo;{profile.bio}&rdquo;
                     </p>
                 )}
@@ -149,7 +149,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                 </div>
                 {profile.cta_label && profile.cta_url && (
                     <div className="mt-4 pt-4 border-t border-[#DED9D1]/80">
-                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#D8103F] text-white text-xs font-bold uppercase tracking-[0.15em] hover:bg-[#b80d35] transition-colors shadow-sm">
+                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-xs font-bold uppercase tracking-[0.15em] hover:bg-brand-text transition-colors shadow-sm">
                             {profile.cta_label}
                             <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -191,7 +191,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                         ) : null}
                                         {d.description ? <p className="text-xs text-zinc-600 mt-2 leading-relaxed">{str(d.description)}</p> : null}
                                         {d.is_current ? (
-                                            <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-[#D8103F] bg-[#D8103F]/10 px-2 py-0.5 rounded-md">
+                                            <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-brand-text bg-brand-text/10 px-2 py-0.5 rounded-md">
                                                 <Target className="w-3 h-3" /> Current
                                             </span>
                                         ) : null}
@@ -237,7 +237,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                         ) : null}
                                         {d.description ? <p className="text-xs text-zinc-600 mt-2 leading-relaxed">{str(d.description)}</p> : null}
                                         {d.is_current ? (
-                                            <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-[#D8103F] bg-[#D8103F]/10 px-2 py-0.5 rounded-md">
+                                            <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-brand-text bg-brand-text/10 px-2 py-0.5 rounded-md">
                                                 <Target className="w-3 h-3" /> Currently Enrolled
                                             </span>
                                         ) : null}
@@ -353,7 +353,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                     <p className="text-sm font-semibold text-zinc-800 truncate">{link.title}</p>
                                     <p className="text-[10px] text-zinc-400 truncate">{link.url}</p>
                                 </div>
-                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-[#D8103F] transition-colors shrink-0" />
+                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-brand-text transition-colors shrink-0" />
                             </a>
                         ))}
                         {socialLinks.map((link) => (
@@ -365,7 +365,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                     <p className="text-sm font-semibold text-zinc-800 truncate">{link.display_label || link.platform}</p>
                                     <p className="text-[10px] text-zinc-400 truncate">{link.url}</p>
                                 </div>
-                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-[#D8103F] transition-colors shrink-0" />
+                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-brand-text transition-colors shrink-0" />
                             </a>
                         ))}
                     </div>

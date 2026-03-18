@@ -66,7 +66,7 @@ export default function OAuthCallbackPage() {
             </>
           ) : (
             <>
-              <div className="orchid-gradient flex h-12 w-12 items-center justify-center rounded-xl shadow-lg shadow-[#D8103F]/20">
+              <div className="orchid-gradient flex h-12 w-12 items-center justify-center rounded-xl shadow-lg shadow-brand-text/20">
                 <Loader2 className="h-6 w-6 animate-spin text-white" />
               </div>
               <div className="text-center">

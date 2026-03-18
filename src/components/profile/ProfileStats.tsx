@@ -27,7 +27,7 @@ interface StatItem {
 
 export function ProfileStats({ graphCounts, contentCounts, onStatClick }: ProfileStatsProps) {
     const stats: StatItem[] = [
-        { key: "posts", label: "Posts", value: contentCounts.total, icon: Newspaper, color: "text-[#D8103F]", bgColor: "bg-[#D8103F]/5 group-hover:bg-[#D8103F]/10" },
+        { key: "posts", label: "Posts", value: contentCounts.total, icon: Newspaper, color: "text-brand-text", bgColor: "bg-brand-text/5 group-hover:bg-brand-text/10" },
         { key: "friends", label: "Friends", value: graphCounts.friend_count, icon: Users, color: "text-teal-600", bgColor: "bg-teal-50 group-hover:bg-teal-100" },
         { key: "followers", label: "Followers", value: graphCounts.follower_count, icon: Heart, color: "text-rose-500", bgColor: "bg-rose-50 group-hover:bg-rose-100" },
         { key: "following", label: "Following", value: graphCounts.following_count, icon: UserPlus, color: "text-amber-600", bgColor: "bg-amber-50 group-hover:bg-amber-100" },

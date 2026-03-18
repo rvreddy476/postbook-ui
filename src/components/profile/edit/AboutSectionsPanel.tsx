@@ -122,7 +122,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                             className="w-full flex items-center justify-between px-6 py-5 hover:bg-brand-secondary transition-colors"
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-blue-600 border-blue-500" : "bg-slate-100 border-brand-divider"} border`}>
+                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-blue-600 border-blue-500" : "bg-brand-secondary border-brand-divider"} border`}>
                                     <Icon className={`w-4 h-4 ${isExpanded ? "text-white" : "text-brand-text/60"}`} />
                                 </div>
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
@@ -257,7 +257,7 @@ function AboutItemRow({
                 whileTap={{ scale: 0.9 }}
                 type="button"
                 onClick={onDelete}
-                className="p-2.5 bg-slate-100 text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all ml-4 shrink-0"
+                className="p-2.5 bg-brand-secondary text-brand-text/60 rounded-xl hover:bg-rose-500 hover:text-white transition-all ml-4 shrink-0"
             >
                 <Trash2 className="w-4 h-4" />
             </motion.button>
@@ -384,7 +384,7 @@ function AddItemForm({
                                     type="checkbox"
                                     checked={!!formData[f.key]}
                                     onChange={(e) => setField(f.key, e.target.checked)}
-                                    className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                                    className="w-5 h-5 rounded-lg border-brand-text/30 text-blue-600 focus:ring-blue-500/20"
                                 />
                                 <span className="text-[11px] font-black text-brand-text uppercase tracking-widest">{fieldLabel}</span>
                             </label>
@@ -406,7 +406,7 @@ function AddItemForm({
                 })}
             </div>
 
-            <div className="flex gap-4 justify-end pt-6 border-t border-slate-50">
+            <div className="flex gap-4 justify-end pt-6 border-t border-brand-secondary">
                 <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
                     Cancel
                 </Button>

@@ -32,21 +32,21 @@ const CATEGORIES = [
 
 function SkeletonCard() {
     return (
-        <div className="bg-brand-card rounded-2xl border border-gray-100 p-5 animate-pulse space-y-3">
+        <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 animate-pulse space-y-3">
             <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 flex-shrink-0" />
+                <div className="w-14 h-14 rounded-2xl bg-brand-divider flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-100 rounded-lg w-3/4" />
-                    <div className="h-3 bg-gray-100 rounded-lg w-1/2" />
+                    <div className="h-4 bg-brand-divider rounded-lg w-3/4" />
+                    <div className="h-3 bg-brand-divider rounded-lg w-1/2" />
                 </div>
             </div>
             <div className="space-y-1.5">
-                <div className="h-3 bg-gray-100 rounded-lg w-full" />
-                <div className="h-3 bg-gray-100 rounded-lg w-4/5" />
+                <div className="h-3 bg-brand-divider rounded-lg w-full" />
+                <div className="h-3 bg-brand-divider rounded-lg w-4/5" />
             </div>
             <div className="flex items-center justify-between">
-                <div className="h-5 bg-gray-100 rounded-full w-20" />
-                <div className="h-8 bg-gray-100 rounded-xl w-24" />
+                <div className="h-5 bg-brand-divider rounded-full w-20" />
+                <div className="h-8 bg-brand-divider rounded-xl w-24" />
             </div>
         </div>
     )
@@ -58,7 +58,7 @@ function AppIcon({ app }: { app: MiniApp }) {
     const [failed, setFailed] = useState(false)
 
     const colors = [
-        "from-[#D8103F] to-fuchsia-500",
+        "from-brand-text to-fuchsia-500",
         "from-violet-500 to-purple-600",
         "from-blue-500 to-cyan-500",
         "from-emerald-500 to-teal-600",
@@ -123,24 +123,24 @@ function AppCard({ app, isInstalled }: AppCardProps) {
     const isPending = installMutation.isPending || uninstallMutation.isPending
 
     return (
-        <div className="bg-brand-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#D8103F]/10 transition-all duration-200 p-5 flex flex-col gap-3">
+        <div className="bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 p-5 flex flex-col gap-3">
             {/* Header: icon + name + category */}
             <div className="flex items-start gap-3">
                 <AppIcon app={app} />
                 <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-bold text-gray-900 truncate leading-tight">{app.name}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold text-[#D8103F] bg-[#D8103F]/8 border border-[#D8103F]/15 rounded-full capitalize">
+                    <p className="text-[15px] font-bold text-brand-text truncate leading-tight">{app.name}</p>
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold text-brand-text bg-brand-text/8 border border-brand-text/15 rounded-full capitalize">
                         {app.category}
                     </span>
                 </div>
             </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-500 line-clamp-2 flex-1">{app.description}</p>
+            <p className="text-sm text-brand-text/60 line-clamp-2 flex-1">{app.description}</p>
 
             {/* Footer: install count + button */}
             <div className="flex items-center justify-between gap-2">
-                <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                <p className="text-xs text-brand-text/40 font-medium flex items-center gap-1">
                     <Download className="w-3 h-3" />
                     {formatInstalls(app.install_count)}
                 </p>
@@ -149,7 +149,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
                     <button
                         onClick={() => uninstallMutation.mutate()}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-[#D8103F] border-2 border-[#D8103F]/40 rounded-xl hover:bg-[#D8103F]/5 hover:border-[#D8103F]/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-brand-text border-2 border-brand-text/40 rounded-xl hover:bg-brand-text/5 hover:border-brand-text/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -162,7 +162,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
                     <button
                         onClick={() => installMutation.mutate()}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-[#D8103F] rounded-xl hover:bg-[#b80d35] transition-all shadow-sm shadow-[#D8103F]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-sm shadow-brand-text/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -207,28 +207,28 @@ export default function AppsPage() {
     return (
         <div className="min-h-screen bg-brand-bg">
             {/* Sticky header */}
-            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+            <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D8103F] to-fuchsia-500 flex items-center justify-center shadow-md shadow-[#D8103F]/20">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
                         <Grid3x3 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-gray-900 tracking-tight">Mini Apps</h1>
-                        <p className="text-xs text-gray-400 font-medium">Discover apps built on AtPost</p>
+                        <h1 className="text-xl font-black text-brand-text tracking-tight">Mini Apps</h1>
+                        <p className="text-xs text-brand-text/40 font-medium">Discover apps built on AtPost</p>
                     </div>
                     {/* Installed toggle */}
                     <button
                         onClick={() => setShowInstalledOnly((v) => !v)}
                         className={`ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
                             showInstalledOnly
-                                ? "bg-[#D8103F] text-white border-[#D8103F] shadow-sm shadow-[#D8103F]/20"
-                                : "bg-brand-card text-gray-600 border-gray-200 hover:border-[#D8103F]/30 hover:text-[#b80d35]"
+                                ? "bg-brand-text text-white border-brand-text shadow-sm shadow-brand-text/20"
+                                : "bg-brand-card text-brand-text/80 border-brand-divider hover:border-brand-text/30 hover:text-brand-text"
                         }`}
                     >
                         <Download className="w-4 h-4" />
                         Installed
                         {installedIds.size > 0 && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-brand-card/20 text-white" : "bg-[#D8103F]/10 text-[#D8103F]"}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-brand-card/20 text-white" : "bg-brand-text/10 text-brand-text"}`}>
                                 {installedIds.size}
                             </span>
                         )}
@@ -245,8 +245,8 @@ export default function AppsPage() {
                                     onClick={() => setActiveCategory(cat.value)}
                                     className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
                                         activeCategory === cat.value
-                                            ? "bg-[#D8103F] text-white shadow-sm shadow-[#D8103F]/20"
-                                            : "bg-gray-100 text-gray-600 hover:bg-[#D8103F]/10 hover:text-[#b80d35]"
+                                            ? "bg-brand-text text-white shadow-sm shadow-brand-text/20"
+                                            : "bg-brand-divider text-brand-text/80 hover:bg-brand-text/10 hover:text-brand-text"
                                     }`}
                                 >
                                     {cat.label}
@@ -258,13 +258,13 @@ export default function AppsPage() {
             </div>
 
             {/* Hero section */}
-            <div className="bg-gradient-to-br from-[#D8103F]/5 via-fuchsia-50/50 to-transparent border-b border-gray-100">
+            <div className="bg-gradient-to-br from-brand-text/5 via-fuchsia-50/50 to-transparent border-b border-brand-divider">
                 <div className="max-w-5xl mx-auto px-4 py-10 text-center">
-                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#D8103F] to-fuchsia-500 flex items-center justify-center shadow-xl shadow-[#D8103F]/20 mx-auto mb-4">
+                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-xl shadow-brand-text/20 mx-auto mb-4">
                         <Grid3x3 className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Mini Apps</h2>
-                    <p className="text-gray-500 mt-2 text-base max-w-sm mx-auto">
+                    <h2 className="text-3xl font-black text-brand-text tracking-tight">Mini Apps</h2>
+                    <p className="text-brand-text/60 mt-2 text-base max-w-sm mx-auto">
                         Discover and install apps built on the AtPost platform
                     </p>
                 </div>
@@ -282,14 +282,14 @@ export default function AppsPage() {
 
                 {!appsLoading && displayedApps.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-24 gap-4">
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#D8103F]/5 to-fuchsia-50 border border-[#D8103F]/10 flex items-center justify-center">
-                            <Grid3x3 className="w-9 h-9 text-[#D8103F]/30" />
+                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                            <Grid3x3 className="w-9 h-9 text-brand-text/30" />
                         </div>
                         <div className="text-center max-w-xs">
-                            <p className="text-base font-bold text-gray-900">
+                            <p className="text-base font-bold text-brand-text">
                                 {showInstalledOnly ? "No installed apps yet" : "No apps found in this category"}
                             </p>
-                            <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                            <p className="text-sm text-brand-text/40 mt-1.5 leading-relaxed">
                                 {showInstalledOnly
                                     ? "Browse and install apps from the discover page."
                                     : "Check back later for new apps."}
@@ -298,7 +298,7 @@ export default function AppsPage() {
                         {showInstalledOnly && (
                             <button
                                 onClick={() => setShowInstalledOnly(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-white bg-[#D8103F] rounded-xl hover:bg-[#b80d35] transition-all shadow-sm shadow-[#D8103F]/20"
+                                className="px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-sm shadow-brand-text/20"
                             >
                                 Browse Apps
                             </button>

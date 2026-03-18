@@ -30,7 +30,7 @@ export default function IntroCard({ profile, onSeeAll }: IntroCardProps) {
 
             <div className="space-y-3">
                 {profile.bio && (
-                    <p className="text-sm text-slate-700 line-clamp-2 leading-relaxed">
+                    <p className="text-sm text-brand-text line-clamp-2 leading-relaxed">
                         {profile.bio}
                     </p>
                 )}
@@ -61,7 +61,7 @@ export default function IntroCard({ profile, onSeeAll }: IntroCardProps) {
                             href={profile.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#D8103F] hover:underline truncate"
+                            className="text-brand-text hover:underline truncate"
                         >
                             {profile.website.replace(/^https?:\/\//, "")}
                         </a>
@@ -71,7 +71,7 @@ export default function IntroCard({ profile, onSeeAll }: IntroCardProps) {
 
             <button
                 onClick={onSeeAll}
-                className="mt-4 w-full text-center text-sm font-semibold text-[#D8103F] hover:text-[#b80d35] transition-colors"
+                className="mt-4 w-full text-center text-sm font-semibold text-brand-text hover:text-brand-text transition-colors"
             >
                 See all
             </button>

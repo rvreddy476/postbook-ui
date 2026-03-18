@@ -394,8 +394,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     const el = document.getElementById(`msg-${msgId}`)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      el.classList.add('bg-[#D8103F]/5')
-      setTimeout(() => el.classList.remove('bg-[#D8103F]/5'), 1500)
+      el.classList.add('bg-brand-text/5')
+      setTimeout(() => el.classList.remove('bg-brand-text/5'), 1500)
     }
   }, [])
 
@@ -574,7 +574,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                 {/* Reply preview */}
                 {replyTarget && !msg.isDeleted && (
-                  <div className="text-[11px] text-brand-text/60 px-3 py-1.5 border-l-2 border-[#D8103F] bg-[#D8103F]/5 rounded-r-lg mb-0.5 max-w-full truncate">
+                  <div className="text-[11px] text-brand-text/60 px-3 py-1.5 border-l-2 border-brand-text bg-brand-text/5 rounded-r-lg mb-0.5 max-w-full truncate">
                     {replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text}
                   </div>
                 )}

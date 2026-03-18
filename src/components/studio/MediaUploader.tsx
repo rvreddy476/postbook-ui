@@ -110,7 +110,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
                   >
                     <Video className="w-5 h-5" style={{ color: accentColor }} />
                   </div>
-                  <span className={`text-[10px] max-w-[80%] truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{f.name}</span>
+                  <span className={`text-[10px] max-w-[80%] truncate ${isDarkMode ? 'text-brand-secondary' : 'text-brand-text'}`}>{f.name}</span>
                   <span
                     className="text-[9px] px-2 py-0.5 rounded-full"
                     style={{ background: `${accentColor}26`, color: isDarkMode ? '#E2E8F0' : accentColor }}

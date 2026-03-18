@@ -41,7 +41,7 @@ export function AdvancedTab() {
         </div>
         <button
           type="button"
-          className="rounded-xl bg-slate-100 px-4 py-2.5 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-slate-200"
+          className="rounded-xl bg-brand-secondary px-4 py-2.5 text-[12px] font-semibold text-brand-highlight transition-colors hover:bg-brand-secondary"
         >
           Request Export
         </button>

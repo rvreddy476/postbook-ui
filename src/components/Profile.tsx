@@ -40,7 +40,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             </div>
             <button
               onClick={() => setIsEditing(false)}
-              className="px-6 py-2.5 bg-slate-100 text-brand-highlight rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+              className="px-6 py-2.5 bg-brand-secondary text-brand-highlight rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-secondary transition-all"
             >
               Cancel
             </button>
@@ -78,7 +78,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
             <button
               onClick={handleSave}
-              className="w-full py-6 bg-gradient-to-r from-blue-600 to-[#b80d35] text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              className="w-full py-6 bg-gradient-to-r from-blue-600 to-brand-text text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               Synchronize Identity
             </button>
@@ -92,7 +92,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     <div className="w-full max-w-7xl mx-auto py-10 px-4 sm:px-10 animate-fadeIn">
       <div className="flex flex-col lg:flex-row gap-12 items-start mb-16">
         <div className="relative group">
-          <div className="w-64 h-64 rounded-[3.5rem] overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.1)] border-8 border-white ring-1 ring-slate-100 bg-brand-card">
+          <div className="w-64 h-64 rounded-[3.5rem] overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.1)] border-8 border-white ring-1 ring-brand-secondary bg-brand-card">
             <img src={user.avatar} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
           </div>
           <button
@@ -155,14 +155,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             )}
             {activeTab !== 'posts' && (
               <div className="p-20 text-center bg-brand-card/40 rounded-[3rem] border-2 border-dashed border-brand-divider">
-                <p className="text-slate-300 font-black uppercase tracking-[0.5em] text-sm italic">Data stream empty</p>
+                <p className="text-brand-text/30 font-black uppercase tracking-[0.5em] text-sm italic">Data stream empty</p>
               </div>
             )}
           </div>
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gradient-to-br from-blue-600 to-[#b80d35] rounded-[3rem] p-8 text-white shadow-2xl shadow-[#D8103F]/20">
+          <div className="bg-gradient-to-br from-blue-600 to-brand-text rounded-[3rem] p-8 text-white shadow-2xl shadow-brand-text/20">
             <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Active Frequencies</h3>
             <div className="flex flex-wrap gap-2">
               {(user.hobbies || 'Design, AI, Code').split(',').map(h => (
@@ -175,7 +175,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             <h3 className="text-brand-text font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Network Nodes</h3>
             <div className="grid grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="aspect-square bg-slate-100 rounded-2xl overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-sm border border-white">
+                <div key={i} className="aspect-square bg-brand-secondary rounded-2xl overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-sm border border-white">
                   <img src={`https://picsum.photos/seed/pnode${i}/150/150`} className="w-full h-full object-cover" alt="" />
                 </div>
               ))}

@@ -39,7 +39,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
             className="rounded-xl border border-brand-divider overflow-hidden bg-brand-card inline-block max-w-[220px]"
         >
             {/* Thumbnail area — 9:16 portrait, capped height */}
-            <Link href={flickUrl} className="block relative bg-slate-100 group" style={{ aspectRatio: "9/16", maxHeight: 300 }}>
+            <Link href={flickUrl} className="block relative bg-brand-secondary group" style={{ aspectRatio: "9/16", maxHeight: 300 }}>
                 {thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
@@ -48,7 +48,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#D8103F]/50 to-[#D8103F] flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-brand-text/50 to-brand-text flex items-center justify-center">
                         <Film className="w-10 h-10 text-white/60" />
                     </div>
                 )}
@@ -82,7 +82,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
 
                 <Link
                     href={flickUrl}
-                    className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-[#D8103F] hover:bg-[#b80d35] text-white text-xs font-semibold transition-colors duration-200"
+                    className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-brand-text hover:bg-brand-text text-white text-xs font-semibold transition-colors duration-200"
                 >
                     <Film className="w-3 h-3" />
                     View Flick

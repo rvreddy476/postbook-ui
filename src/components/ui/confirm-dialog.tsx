@@ -29,7 +29,7 @@ export function ConfirmDialog({
     return (
         <Dialog open={open} onClose={onClose} title={title}>
             <div className="space-y-6">
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="text-sm text-brand-text/80 leading-relaxed">
                     {description}
                 </p>
                 <div className="flex justify-end gap-3">

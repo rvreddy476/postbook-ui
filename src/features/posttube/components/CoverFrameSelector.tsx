@@ -80,7 +80,7 @@ export function CoverFrameSelector({
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
               mode === m
                 ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-brand-highlight hover:bg-slate-200"
+                : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
             }`}
           >
             {m === "auto" && "Auto"}
@@ -99,7 +99,7 @@ export function CoverFrameSelector({
       </div>
 
       {/* Preview */}
-      <div className="mb-3 aspect-video overflow-hidden rounded-lg bg-slate-100">
+      <div className="mb-3 aspect-video overflow-hidden rounded-lg bg-brand-secondary">
         {previewUrl ? (
           <img
             src={previewUrl}
@@ -108,7 +108,7 @@ export function CoverFrameSelector({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 to-slate-100">
-            <Image className="h-8 w-8 text-slate-300" />
+            <Image className="h-8 w-8 text-brand-text/30" />
           </div>
         )}
       </div>
@@ -141,7 +141,7 @@ export function CoverFrameSelector({
 
       {mode === "upload" && (
         <div>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-divider py-4 text-[13px] text-brand-highlight transition-colors hover:border-slate-300 hover:text-brand-highlight">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-divider py-4 text-[13px] text-brand-highlight transition-colors hover:border-brand-text/30 hover:text-brand-highlight">
             <Upload className="h-4 w-4" />
             Choose an image
             <input

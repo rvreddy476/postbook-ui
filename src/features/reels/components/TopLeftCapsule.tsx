@@ -8,7 +8,7 @@ import { uiTokens } from "@/ui/tokens";
 export function TopLeftCapsule() {
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-[20px] border border-brand-divider/80 bg-brand-card/90 px-2 py-2 text-slate-700 shadow-lg backdrop-blur-md"
+      className="inline-flex items-center gap-2 rounded-[20px] border border-brand-divider/80 bg-brand-card/90 px-2 py-2 text-brand-text shadow-lg backdrop-blur-md"
       style={{ backdropFilter: `blur(${uiTokens.blur.medium}px)` }}
     >
       <Link

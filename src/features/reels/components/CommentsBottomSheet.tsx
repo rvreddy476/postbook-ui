@@ -44,7 +44,7 @@ export function CommentsBottomSheet({
         <button
           type="button"
           onClick={onOpen}
-          className="fixed right-4 top-1/2 z-40 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-brand-divider bg-brand-card text-slate-700 shadow-lg lg:hidden"
+          className="fixed right-4 top-1/2 z-40 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-brand-divider bg-brand-card text-brand-text shadow-lg lg:hidden"
           aria-label="Open comments"
         >
           <MessageCircle className="h-5 w-5" />

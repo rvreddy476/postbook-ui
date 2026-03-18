@@ -39,7 +39,7 @@ function ActionButton({
       className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
         active
           ? "bg-slate-900 text-white"
-          : "bg-[#F5F5F7] text-brand-highlight hover:bg-slate-200/70"
+          : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
       }`}
       aria-label={label}
     >

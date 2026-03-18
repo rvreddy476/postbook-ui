@@ -392,7 +392,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               />
               {/* Scrubber thumb */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-brand-card rounded-full shadow-lg border-2 border-[#D8103F]/50 opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none"
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-brand-card rounded-full shadow-lg border-2 border-brand-text/50 opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none"
                 style={{ left: `calc(${progress}% - 8px)` }}
               />
             </div>
@@ -450,7 +450,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                   step={0.05}
                   value={isMuted ? 0 : volume}
                   onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                  className="w-0 group-hover/vol:w-20 transition-all duration-300 overflow-hidden accent-[#D8103F]/50 h-1 cursor-pointer"
+                  className="w-0 group-hover/vol:w-20 transition-all duration-300 overflow-hidden accent-brand-text/50 h-1 cursor-pointer"
                 />
               </div>
 

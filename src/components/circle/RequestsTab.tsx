@@ -45,11 +45,11 @@ const RequestsTab: React.FC = () => {
                     <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider overflow-hidden animate-pulse">
                         <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-50" />
                         <div className="flex flex-col items-center -mt-10 px-4 pb-5">
-                            <div className="w-[76px] h-[76px] rounded-full bg-slate-200 ring-4 ring-white" />
-                            <div className="mt-3 w-24 h-3.5 rounded bg-slate-200" />
+                            <div className="w-[76px] h-[76px] rounded-full bg-brand-secondary ring-4 ring-white" />
+                            <div className="mt-3 w-24 h-3.5 rounded bg-brand-secondary" />
                             <div className="mt-4 flex gap-2">
-                                <div className="h-9 w-20 rounded-xl bg-slate-200" />
-                                <div className="h-9 w-20 rounded-xl bg-slate-100" />
+                                <div className="h-9 w-20 rounded-xl bg-brand-secondary" />
+                                <div className="h-9 w-20 rounded-xl bg-brand-secondary" />
                             </div>
                         </div>
                     </div>

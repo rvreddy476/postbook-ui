@@ -12,7 +12,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "bg-[#D8103F]" : "bg-slate-200"}`}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${enabled ? "bg-brand-text" : "bg-brand-secondary"}`}
     >
       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-sm transition-transform ${enabled ? "left-[22px]" : "left-0.5"}`} />
     </button>
@@ -23,7 +23,7 @@ function SettingsRow({ label, description, children }: { label: string; descript
   return (
     <div className="flex items-center justify-between py-3">
       <div className="min-w-0 pr-4">
-        <p className="text-[13px] font-medium text-slate-700">{label}</p>
+        <p className="text-[13px] font-medium text-brand-text">{label}</p>
         {description ? <p className="mt-0.5 text-[11px] text-brand-text/60">{description}</p> : null}
       </div>
       <div className="shrink-0">{children}</div>
@@ -79,8 +79,8 @@ export function PrivacyTab() {
                 onClick={() => setCommentsMode(mode)}
                 className={`rounded-xl px-4 py-2 text-[12px] font-semibold transition-all ${
                   commentsMode === mode
-                    ? "bg-[#D8103F] text-white shadow-sm"
-                    : "bg-brand-secondary text-brand-highlight hover:bg-slate-100"
+                    ? "bg-brand-text text-white shadow-sm"
+                    : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                 }`}
               >
                 {mode === "everyone" ? "Everyone" : mode === "followers" ? "Followers Only" : "No One"}
@@ -103,13 +103,13 @@ export function PrivacyTab() {
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addBlockedWord(); } }}
               placeholder="Add a word..."
-              className="h-9 flex-1 rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+              className="h-9 flex-1 rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             />
             <button
               type="button"
               onClick={addBlockedWord}
               disabled={!newWord.trim()}
-              className="rounded-lg bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-brand-highlight hover:bg-slate-200 disabled:opacity-40"
+              className="rounded-lg bg-brand-secondary px-3 py-1.5 text-[12px] font-semibold text-brand-highlight hover:bg-brand-secondary disabled:opacity-40"
             >
               Add
             </button>
@@ -119,7 +119,7 @@ export function PrivacyTab() {
               {blockedWords.map((word) => (
                 <span
                   key={word}
-                  className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-brand-highlight"
+                  className="flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-highlight"
                 >
                   {word}
                   <button type="button" onClick={() => removeBlockedWord(word)} className="text-brand-text/60 hover:text-brand-highlight">
@@ -135,7 +135,7 @@ export function PrivacyTab() {
       {/* Content Permissions */}
       <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
         <h2 className="mb-2 text-[14px] font-bold text-brand-text">Content Permissions</h2>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-brand-secondary">
           <SettingsRow
             label="Allow Remix / Duet"
             description="Let others create remixes or duets with your Postgram reels"
@@ -176,7 +176,7 @@ export function PrivacyTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

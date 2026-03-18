@@ -61,7 +61,7 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
             className="group cursor-pointer rounded-2xl overflow-hidden bg-brand-card border border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-400"
         >
             {/* Thumbnail */}
-            <div className="relative aspect-video bg-slate-100 overflow-hidden">
+            <div className="relative aspect-video bg-brand-secondary overflow-hidden">
                 {thumbnail ? (
                     <img
                         src={thumbnail}
@@ -70,8 +70,8 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
                         loading="lazy"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                        <Video className="h-10 w-10 text-slate-300" />
+                    <div className="w-full h-full flex items-center justify-center bg-brand-secondary">
+                        <Video className="h-10 w-10 text-brand-text/30" />
                     </div>
                 )}
 
@@ -119,10 +119,10 @@ function VideosSkeleton() {
                     className="rounded-2xl overflow-hidden bg-brand-card border border-brand-divider"
                     style={{ animationDelay: `${i * 100}ms` }}
                 >
-                    <div className="aspect-video bg-slate-100 animate-pulse" />
+                    <div className="aspect-video bg-brand-secondary animate-pulse" />
                     <div className="p-4 space-y-3">
-                        <div className="h-4 bg-slate-100 rounded-lg animate-pulse w-3/4" />
-                        <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-1/2" />
+                        <div className="h-4 bg-brand-secondary rounded-lg animate-pulse w-3/4" />
+                        <div className="h-3 bg-brand-secondary rounded-lg animate-pulse w-1/2" />
                     </div>
                 </div>
             ))}
@@ -163,7 +163,7 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
-                    <Video className="h-9 w-9 text-slate-300" />
+                    <Video className="h-9 w-9 text-brand-text/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     {isOwn ? "Start creating on Posttube" : "No videos yet"}
@@ -176,7 +176,7 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
                 {isOwn && (
                     <button
                         onClick={() => router.push("/posttube/upload")}
-                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-[#D8103F] hover:bg-[#b80d35] text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-[#D8103F]/20"
+                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-text hover:bg-brand-text text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-brand-text/20"
                     >
                         <Upload className="h-4 w-4" />
                         Upload Video
@@ -199,7 +199,7 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
 
             {isFetchingNextPage && (
                 <div className="flex justify-center py-6">
-                    <div className="h-6 w-6 border-2 border-[#D8103F] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-6 w-6 border-2 border-brand-text border-t-transparent rounded-full animate-spin" />
                 </div>
             )}
         </div>

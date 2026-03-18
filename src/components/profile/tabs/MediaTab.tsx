@@ -46,7 +46,7 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, delay: index * 0.04, ease: "easeOut" }}
-            className="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 group cursor-pointer"
+            className="relative aspect-square rounded-2xl overflow-hidden bg-brand-secondary group cursor-pointer"
         >
             {thumbnail ? (
                 <img
@@ -56,8 +56,8 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
                     loading="lazy"
                 />
             ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                    <Image className="h-8 w-8 text-slate-300" />
+                <div className="w-full h-full flex items-center justify-center bg-brand-secondary">
+                    <Image className="h-8 w-8 text-brand-text/30" />
                 </div>
             )}
 
@@ -95,7 +95,7 @@ function MediaSkeleton() {
             {Array.from({ length: 9 }).map((_, i) => (
                 <div
                     key={i}
-                    className="aspect-square rounded-2xl bg-slate-100 animate-pulse"
+                    className="aspect-square rounded-2xl bg-brand-secondary animate-pulse"
                     style={{ animationDelay: `${i * 80}ms` }}
                 />
             ))}
@@ -140,7 +140,7 @@ export function MediaTab({ userId }: MediaTabProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
-                    <Image className="h-9 w-9 text-slate-300" />
+                    <Image className="h-9 w-9 text-brand-text/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
                     No photos or videos yet
@@ -165,7 +165,7 @@ export function MediaTab({ userId }: MediaTabProps) {
 
             {isFetchingNextPage && (
                 <div className="flex justify-center py-6">
-                    <div className="h-6 w-6 border-2 border-[#D8103F] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-6 w-6 border-2 border-brand-text border-t-transparent rounded-full animate-spin" />
                 </div>
             )}
         </div>

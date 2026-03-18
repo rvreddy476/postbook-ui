@@ -19,9 +19,9 @@ function DetailRow({ icon, label, value, sub }: { icon: React.ReactNode; label: 
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-700">{label}</p>
+        <p className="text-sm font-semibold text-brand-text">{label}</p>
         <p className="text-xs text-brand-text/60 mt-0.5">{value}</p>
-        {sub && <p className="text-[11px] text-slate-300 mt-0.5">{sub}</p>}
+        {sub && <p className="text-[11px] text-brand-text/30 mt-0.5">{sub}</p>}
       </div>
     </div>
   )
@@ -69,7 +69,7 @@ export default function GroupAboutTab({ group }: GroupAboutTabProps) {
       <div className="bg-brand-card rounded-xl border border-brand-divider p-5">
         <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Details</h3>
 
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-brand-secondary">
           <DetailRow
             icon={privacy.icon}
             label={privacy.label}
@@ -143,7 +143,7 @@ export default function GroupAboutTab({ group }: GroupAboutTabProps) {
         <div className="bg-brand-card rounded-xl border border-brand-divider p-5">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Permissions</h3>
 
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-brand-secondary">
             {group.who_can_post && (
               <DetailRow
                 icon={<FileText className="w-4 h-4 text-brand-text/60" />}

@@ -40,7 +40,7 @@ export function ProfileDropdown() {
       label: isPosttube ? "My Channel" : "Profile",
       href: isPosttube ? "/posttube/channel" : "/profile",
       icon: User,
-      hoverColor: "group-hover:bg-[#D8103F]/5 group-hover:text-[#D8103F]",
+      hoverColor: "group-hover:bg-brand-text/5 group-hover:text-brand-text",
     },
     { label: "Channel Settings", href: "/settings/channel", icon: Settings, hoverColor: "group-hover:bg-blue-50 group-hover:text-blue-600" },
     { label: "Saved", href: "/saved", icon: Bookmark, hoverColor: "group-hover:bg-amber-50 group-hover:text-amber-600" },
@@ -51,7 +51,7 @@ export function ProfileDropdown() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-[#D8103F]/10"
+        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-brand-text/10"
       >
         <Avatar
           src={avatarUrl}
@@ -80,7 +80,7 @@ export function ProfileDropdown() {
                     name={displayName}
                     seed={profile?.id}
                     size="lg"
-                    className="border-2 border-white shadow-md ring-1 ring-slate-100"
+                    className="border-2 border-white shadow-md ring-1 ring-brand-secondary"
                   />
                   <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                 </div>

@@ -123,7 +123,7 @@ export function TrimControls({
         </div>
 
         {/* Visual timeline bar */}
-        <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden">
+        <div className="relative h-2 rounded-full bg-brand-secondary overflow-hidden">
           <div
             className="absolute top-0 h-full bg-blue-500/30 rounded-full"
             style={{

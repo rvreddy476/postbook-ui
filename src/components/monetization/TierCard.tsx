@@ -38,7 +38,7 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
                         <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-sm font-black text-[#3C2415] truncate">{tier.name}</h3>
                             {!tier.is_active && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-slate-100 text-brand-highlight border border-brand-divider flex-shrink-0">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-brand-secondary text-brand-highlight border border-brand-divider flex-shrink-0">
                                     Inactive
                                 </span>
                             )}

@@ -78,7 +78,7 @@ export function LinksTab() {
             type="button"
             onClick={addLink}
             disabled={links.length >= 5}
-            className="flex items-center gap-1.5 rounded-xl bg-[#D8103F]/5 px-3 py-2 text-[12px] font-semibold text-[#D8103F] transition-colors hover:bg-[#D8103F]/10 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-xl bg-brand-text/5 px-3 py-2 text-[12px] font-semibold text-brand-text transition-colors hover:bg-brand-text/10 disabled:opacity-40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Link
@@ -88,10 +88,10 @@ export function LinksTab() {
         {links.length === 0 ? (
           <div className="flex flex-col items-center py-8 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-secondary">
-              <Plus className="h-5 w-5 text-slate-300" />
+              <Plus className="h-5 w-5 text-brand-text/30" />
             </div>
             <p className="mt-3 text-[13px] font-medium text-brand-text/60">No links added yet</p>
-            <p className="text-[11px] text-slate-300">Add links to your website, social profiles, or other content</p>
+            <p className="text-[11px] text-brand-text/30">Add links to your website, social profiles, or other content</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -106,19 +106,19 @@ export function LinksTab() {
                   className="overflow-hidden"
                 >
                   <div className="flex items-start gap-3 rounded-xl border border-brand-divider bg-brand-secondary/50 p-3">
-                    <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-slate-300 cursor-grab" />
+                    <GripVertical className="mt-2.5 h-4 w-4 shrink-0 text-brand-text/30 cursor-grab" />
                     <div className="flex-1 space-y-2">
                       <input
                         value={link.title}
                         onChange={(e) => updateLink(link.id, "title", e.target.value)}
                         placeholder="Link title"
-                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                       />
                       <input
                         value={link.url}
                         onChange={(e) => updateLink(link.id, "url", e.target.value)}
                         placeholder="https://..."
-                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:ring-2 focus:ring-[#D8103F]/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                       />
                     </div>
                     <div className="flex shrink-0 gap-1 pt-1.5">
@@ -128,7 +128,7 @@ export function LinksTab() {
                         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                           link.featured
                             ? "bg-amber-50 text-amber-500"
-                            : "text-slate-300 hover:bg-slate-100 hover:text-brand-highlight"
+                            : "text-brand-text/30 hover:bg-brand-secondary hover:text-brand-highlight"
                         }`}
                         title="Set as featured link"
                       >
@@ -137,7 +137,7 @@ export function LinksTab() {
                       <button
                         type="button"
                         onClick={() => removeLink(link.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-text/30 transition-colors hover:bg-rose-50 hover:text-rose-500"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -164,7 +164,7 @@ export function LinksTab() {
               </label>
               <input
                 placeholder={`${platform} URL`}
-                className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-slate-800 outline-none focus:border-[#D8103F]/30 focus:bg-brand-card focus:ring-2 focus:ring-[#D8103F]/10"
+                className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               />
             </div>
           ))}
@@ -190,7 +190,7 @@ export function LinksTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-[#D8103F] px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#b80d35] disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

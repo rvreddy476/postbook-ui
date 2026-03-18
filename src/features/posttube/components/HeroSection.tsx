@@ -87,7 +87,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
           <Link
             key={video.id}
             href={`/posttube/watch?v=${video.id}`}
-            className="group relative flex-1 overflow-hidden rounded-xl bg-slate-100"
+            className="group relative flex-1 overflow-hidden rounded-xl bg-brand-secondary"
           >
             {video.thumbnail_url ? (
               <img
@@ -122,10 +122,10 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
 export function HeroSkeleton() {
   return (
     <section className="grid grid-cols-3 gap-4">
-      <div className="col-span-2 aspect-[2.1/1] animate-pulse rounded-2xl bg-slate-100" />
+      <div className="col-span-2 aspect-[2.1/1] animate-pulse rounded-2xl bg-brand-secondary" />
       <div className="flex flex-col gap-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="flex-1 animate-pulse rounded-xl bg-slate-100" />
+          <div key={i} className="flex-1 animate-pulse rounded-xl bg-brand-secondary" />
         ))}
       </div>
     </section>

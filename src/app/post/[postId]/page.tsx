@@ -31,7 +31,7 @@ export default function PostDetailPage() {
   if (isError || !post) {
     return (
       <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center gap-4">
-        <p className="text-lg font-black text-slate-300 uppercase tracking-widest italic">Post not found</p>
+        <p className="text-lg font-black text-brand-text/30 uppercase tracking-widest italic">Post not found</p>
         <button
           onClick={() => router.back()}
           className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] uppercase tracking-widest text-brand-highlight hover:text-blue-600 hover:shadow-lg transition-all border border-brand-divider"
@@ -49,11 +49,11 @@ export default function PostDetailPage() {
         <div className="max-w-[640px] mx-auto px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl hover:bg-brand-secondary transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-brand-highlight" />
           </button>
-          <h1 className="text-sm font-black uppercase tracking-widest text-slate-700 italic">Post</h1>
+          <h1 className="text-sm font-black uppercase tracking-widest text-brand-text italic">Post</h1>
         </div>
       </div>
 

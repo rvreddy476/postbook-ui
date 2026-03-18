@@ -158,13 +158,13 @@ interface ActionButtonProps {
     onClick?: () => void
 }
 
-function ActionButton({ icon, label, count, active, activeColor = "text-[#D8103F]", onClick }: ActionButtonProps) {
+function ActionButton({ icon, label, count, active, activeColor = "text-brand-text", onClick }: ActionButtonProps) {
     return (
         <motion.button
             whileTap={{ scale: 0.93 }}
             onClick={onClick}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                active ? activeColor : "text-brand-highlight hover:text-slate-700 hover:bg-brand-secondary"
+                active ? activeColor : "text-brand-highlight hover:text-brand-text hover:bg-brand-secondary"
             }`}
         >
             {icon}
@@ -270,7 +270,7 @@ export function PostCard({ post }: PostCardProps) {
                     {post.text.length > 280 && (
                         <button
                             onClick={() => setExpanded((v) => !v)}
-                            className="mt-1 text-sm font-medium text-[#D8103F] hover:text-[#b80d35] transition-colors"
+                            className="mt-1 text-sm font-medium text-brand-text hover:text-brand-text transition-colors"
                         >
                             {expanded ? "Show less" : "Show more"}
                         </button>
@@ -316,18 +316,18 @@ export function PostCard({ post }: PostCardProps) {
                 <div className="flex items-center gap-2 mt-4 text-xs text-brand-highlight">
                     {sparkCount > 0 && (
                         <span className="flex items-center gap-1">
-                            <Gem className="w-3.5 h-3.5 text-[#D8103F]/50" />
+                            <Gem className="w-3.5 h-3.5 text-brand-text/50" />
                             {formatCount(sparkCount)} {sparkCount === 1 ? "Spark" : "Sparks"}
                         </span>
                     )}
                     {sparkCount > 0 && (commentCount > 0 || echoCount > 0) && (
-                        <span className="text-slate-300">·</span>
+                        <span className="text-brand-text/30">·</span>
                     )}
                     {commentCount > 0 && (
                         <span>{formatCount(commentCount)} {commentCount === 1 ? "Comment" : "Comments"}</span>
                     )}
                     {commentCount > 0 && echoCount > 0 && (
-                        <span className="text-slate-300">·</span>
+                        <span className="text-brand-text/30">·</span>
                     )}
                     {echoCount > 0 && (
                         <span>{formatCount(echoCount)} {echoCount === 1 ? "Echo" : "Echoes"}</span>
@@ -344,14 +344,14 @@ export function PostCard({ post }: PostCardProps) {
                     icon={
                         <Gem
                             className={`w-[18px] h-[18px] transition-colors ${
-                                sparked ? "fill-[#D8103F]/50 text-[#D8103F]" : ""
+                                sparked ? "fill-brand-text/50 text-brand-text" : ""
                             }`}
                         />
                     }
                     label="Spark"
                     count={sparkCount}
                     active={sparked}
-                    activeColor="text-[#D8103F]"
+                    activeColor="text-brand-text"
                     onClick={handleSpark}
                 />
                 <ActionButton
@@ -368,13 +368,13 @@ export function PostCard({ post }: PostCardProps) {
                     icon={
                         <Bookmark
                             className={`w-[18px] h-[18px] transition-colors ${
-                                stashed ? "fill-slate-700 text-slate-700" : ""
+                                stashed ? "fill-slate-700 text-brand-text" : ""
                             }`}
                         />
                     }
                     label="Stash"
                     active={stashed}
-                    activeColor="text-slate-700"
+                    activeColor="text-brand-text"
                     onClick={handleStash}
                 />
             </div>

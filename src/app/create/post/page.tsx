@@ -147,7 +147,7 @@ export default function CreatePostPage() {
               <h2 className="mt-5 text-xl font-bold text-brand-text">Posted!</h2>
               <p className="mt-2 text-[13px] text-brand-highlight">Your post is now live on your feed.</p>
               <div className="mt-6 flex gap-3">
-                <Link href="/" className="rounded-xl bg-slate-100 px-5 py-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-200">Go to Feed</Link>
+                <Link href="/" className="rounded-xl bg-brand-secondary px-5 py-2.5 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary">Go to Feed</Link>
                 <button type="button" onClick={() => { setPublished(false); setContent(""); setImages([]); }} className="rounded-xl bg-blue-600 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-blue-700">Create Another</button>
               </div>
             </motion.div>
@@ -165,7 +165,7 @@ export default function CreatePostPage() {
                         const idx = VISIBILITY.findIndex((v) => v.value === visibility);
                         setVisibility(VISIBILITY[(idx + 1) % VISIBILITY.length].value);
                       }}
-                      className="flex items-center gap-1 rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-semibold text-brand-highlight hover:bg-slate-100"
+                      className="flex items-center gap-1 rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-semibold text-brand-highlight hover:bg-brand-secondary"
                     >
                       <VisIcon className="h-3 w-3" />
                       {visibilityOption.label}
@@ -180,7 +180,7 @@ export default function CreatePostPage() {
                   maxLength={2000}
                   rows={6}
                   autoFocus
-                  className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-slate-800 placeholder:text-slate-300 outline-none"
+                  className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-brand-text placeholder:text-brand-text/30 outline-none"
                   placeholder="What's on your mind?"
                 />
 
@@ -230,7 +230,7 @@ export default function CreatePostPage() {
                       <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Suggested Captions</p>
                       {captionSuggestions.map((caption, i) => (
                         <div key={i} className="flex items-start gap-2 bg-brand-card rounded-lg p-2.5 border border-violet-100">
-                          <p className="flex-1 text-[13px] text-slate-700 leading-relaxed">{caption}</p>
+                          <p className="flex-1 text-[13px] text-brand-text leading-relaxed">{caption}</p>
                           <button
                             type="button"
                             onClick={() => { setContent(caption); setCaptionSuggestions([]); }}
@@ -292,14 +292,14 @@ export default function CreatePostPage() {
                     <Hash className="h-4 w-4 text-blue-500" /> Tag
                   </button>
                   <div className="flex-1" />
-                  <span className="text-[11px] text-slate-300">{content.length}/2000</span>
+                  <span className="text-[11px] text-brand-text/30">{content.length}/2000</span>
                 </div>
 
                 {location ? (
                   <div className="mt-2 flex items-center gap-1.5 text-[11px] text-brand-text/60">
                     <MapPin className="h-3 w-3" />
                     {location}
-                    <button type="button" onClick={() => setLocation("")} className="text-slate-300 hover:text-brand-highlight"><X className="h-3 w-3" /></button>
+                    <button type="button" onClick={() => setLocation("")} className="text-brand-text/30 hover:text-brand-highlight"><X className="h-3 w-3" /></button>
                   </div>
                 ) : null}
               </div>

@@ -170,9 +170,9 @@ function ChatView({
       <div className="flex-1 flex items-center justify-center flex-col gap-4 px-6">
         <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center">
           {creatingChat ? (
-            <RefreshCw className="w-8 h-8 text-slate-300 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-brand-text/30 animate-spin" />
           ) : (
-            <MessageSquare className="w-8 h-8 text-slate-300" />
+            <MessageSquare className="w-8 h-8 text-brand-text/30" />
           )}
         </div>
         <div className="text-center">
@@ -259,7 +259,7 @@ function ChatView({
         ) : chat.messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center flex-col gap-4">
             <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center">
-              <MessageSquare className="w-8 h-8 text-slate-300" />
+              <MessageSquare className="w-8 h-8 text-brand-text/30" />
             </div>
             <div className="text-center">
               <p className="text-[14px] font-medium text-brand-highlight">No messages yet</p>
@@ -415,7 +415,7 @@ function ChatView({
           </div>
           <button
             onClick={() => { const m = chat.messages.find(m => m.id === chat.contextMenu!.messageId); if (m) chat.handleReply(m) }}
-            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+            className="w-full text-left px-4 py-2 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
           >
             Reply
           </button>
@@ -427,7 +427,7 @@ function ChatView({
                 chat.handlePinMessage(chat.contextMenu!.messageId)
               }
             }}
-            className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+            className="w-full text-left px-4 py-2 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
           >
             {chat.pinnedMessage?.message_id === chat.contextMenu!.messageId ? 'Unpin' : 'Pin'}
           </button>
@@ -435,7 +435,7 @@ function ChatView({
             <>
               <button
                 onClick={() => { const m = chat.messages.find(m => m.id === chat.contextMenu!.messageId); if (m) chat.handleEditStart(m) }}
-                className="w-full text-left px-4 py-2 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+                className="w-full text-left px-4 py-2 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
               >
                 Edit
               </button>
@@ -485,7 +485,7 @@ function ChatView({
                 if (e.key === 'Escape') { chat.setEditingMsgId(null); chat.setEditText('') }
               }}
               placeholder="Edit message..."
-              className="flex-1 py-3 px-5 rounded-xl border border-slate-300 bg-brand-secondary text-brand-text text-[14px] outline-none focus:bg-brand-card focus:ring-2 focus:ring-slate-100"
+              className="flex-1 py-3 px-5 rounded-xl border border-brand-text/30 bg-brand-secondary text-brand-text text-[14px] outline-none focus:bg-brand-card focus:ring-2 focus:ring-brand-secondary"
               autoFocus
             />
             <button
@@ -538,7 +538,7 @@ function ChatView({
                 onChange={e => chat.handleInputChange(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') chat.handleSend(); if (e.key === 'Escape' && chat.replyingTo) chat.setReplyingTo(null) }}
                 placeholder="Type a message..."
-                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none transition-all focus:bg-brand-card focus:border-slate-300 focus:ring-2 focus:ring-slate-100 placeholder:text-brand-text/60"
+                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none transition-all focus:bg-brand-card focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary placeholder:text-brand-text/60"
               />
               <button
                 onClick={chat.handleSend}
@@ -633,7 +633,7 @@ function PostsView({
         ) : allPosts.length === 0 ? (
           <div className="text-center py-16 flex flex-col items-center justify-center">
             <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
+              <FileText className="w-8 h-8 text-brand-text/30" strokeWidth={1.5} />
             </div>
             <p className="text-[14px] font-medium text-brand-highlight">No posts yet</p>
             <p className="text-[12px] mt-1 text-brand-text/60">Be the first to share something!</p>
@@ -652,7 +652,7 @@ function PostsView({
                     <div className="text-brand-text/60 text-[12px] font-normal">{relativeTime(post.created_at)}</div>
                   </div>
                 </div>
-                <p className="text-slate-700 text-[14px] leading-relaxed whitespace-pre-wrap">
+                <p className="text-brand-text text-[14px] leading-relaxed whitespace-pre-wrap">
                   Shared a post
                 </p>
                 <div className="flex gap-6 mt-4 pt-3 border-t border-brand-divider">
@@ -751,7 +751,7 @@ function MembersView({
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-brand-text text-[13px] group-hover:text-slate-700 transition-colors">{name}</span>
+            <span className="font-bold text-brand-text text-[13px] group-hover:text-brand-text transition-colors">{name}</span>
             {isAdmin && (
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider" style={{ color: groupColor, background: `${groupColor}15` }}>Admin</span>
             )}
@@ -797,7 +797,7 @@ function MembersView({
 
       {members.length === 0 && (
         <div className="text-center py-12 flex flex-col items-center justify-center text-brand-text/60 bg-brand-secondary rounded-2xl border border-brand-divider border-dashed mx-3">
-          <Users className="w-12 h-12 mb-3 text-slate-300" strokeWidth={1.5} />
+          <Users className="w-12 h-12 mb-3 text-brand-text/30" strokeWidth={1.5} />
           <div className="text-[13px] font-medium text-brand-highlight">No members found</div>
         </div>
       )}
@@ -934,7 +934,7 @@ export default function GroupPanel(props: GroupPanelProps) {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="hidden h-9 items-center gap-1.5 rounded-lg border border-brand-divider px-3 text-[12px] font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-brand-divider px-3 text-[12px] font-semibold text-brand-text transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
               title="Create a new group"
             >
               <Plus className="h-4 w-4" />
@@ -942,7 +942,7 @@ export default function GroupPanel(props: GroupPanelProps) {
             </button>
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="w-9 h-9 flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-slate-700 rounded-lg transition-colors lg:hidden"
+              className="w-9 h-9 flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text rounded-lg transition-colors lg:hidden"
               title="Create a new group"
             >
               <Plus className="w-[18px] h-[18px]" />
@@ -967,21 +967,21 @@ export default function GroupPanel(props: GroupPanelProps) {
                 <div className="absolute right-0 top-full mt-1 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-xl py-1.5 z-50">
                   <button
                     onClick={() => { setShowCreateGroupModal(true); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
                   >
                     <Plus className="w-4 h-4 text-brand-text/60" />
                     Create new group
                   </button>
                   <button
                     onClick={() => { setEditingName(true); setNewGroupName(groupName); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
                   >
                     <Pencil className="w-4 h-4 text-brand-text/60" />
                     Edit group name
                   </button>
                   <button
                     onClick={() => { setShowAddMember(true); setShowMoreMenu(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-brand-secondary transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-brand-text hover:bg-brand-secondary transition-colors"
                   >
                     <UserPlus className="w-4 h-4 text-brand-text/60" />
                     Add member
@@ -1029,7 +1029,7 @@ export default function GroupPanel(props: GroupPanelProps) {
             <input
               value={newGroupName}
               onChange={e => setNewGroupName(e.target.value)}
-              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
               autoFocus
               onKeyDown={e => {
                 if (e.key === 'Enter' && newGroupName.trim()) {
@@ -1071,7 +1071,7 @@ export default function GroupPanel(props: GroupPanelProps) {
               value={addMemberId}
               onChange={e => setAddMemberId(e.target.value)}
               placeholder="Enter user ID"
-              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-100 mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
               autoFocus
             />
             <div className="flex gap-3 justify-end">

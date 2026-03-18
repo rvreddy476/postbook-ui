@@ -18,7 +18,7 @@ const COLORS = [
   "bg-sky-500",
   "bg-blue-500",
   "bg-indigo-500",
-  "bg-[#D8103F]/50",
+  "bg-brand-text/50",
   "bg-purple-500",
   "bg-fuchsia-500",
   "bg-pink-500",

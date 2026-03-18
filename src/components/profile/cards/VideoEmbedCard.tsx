@@ -43,7 +43,7 @@ export function VideoEmbedCard({ embedRef }: VideoEmbedCardProps) {
             className="rounded-xl border border-brand-divider overflow-hidden bg-brand-card"
         >
             {/* Thumbnail area — 16:9 */}
-            <Link href={watchUrl} className="block relative aspect-video bg-slate-100 group">
+            <Link href={watchUrl} className="block relative aspect-video bg-brand-secondary group">
                 {thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
@@ -84,7 +84,7 @@ export function VideoEmbedCard({ embedRef }: VideoEmbedCardProps) {
                             <span className="text-xs text-brand-highlight">{creatorName}</span>
                         )}
                         {creatorName && durationSeconds > 0 && (
-                            <span className="text-slate-300 text-xs">·</span>
+                            <span className="text-brand-text/30 text-xs">·</span>
                         )}
                         {durationSeconds > 0 && (
                             <span className="text-xs text-brand-text/60">

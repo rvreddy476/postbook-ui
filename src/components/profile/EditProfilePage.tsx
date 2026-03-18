@@ -41,7 +41,7 @@ function SectionSkeleton() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="space-y-3">
-                        <div className="h-3 w-20 bg-slate-100 rounded-full" />
+                        <div className="h-3 w-20 bg-brand-secondary rounded-full" />
                         <div className="h-2 w-32 bg-brand-secondary rounded-full" />
                         <div className="h-12 w-full bg-brand-secondary/50 rounded-2xl border border-brand-divider" />
                     </div>
@@ -231,7 +231,7 @@ export function EditProfilePage() {
                                     : "bg-brand-card/50 hover:bg-brand-card text-brand-highlight border border-brand-divider/50 hover:border-brand-divider"
                                     }`}
                             >
-                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-slate-100 group-hover:bg-blue-50"}`}>
+                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-brand-secondary group-hover:bg-blue-50"}`}>
                                     <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-brand-text/60 group-hover:text-blue-600"}`} />
                                 </div>
                                 <div className="flex-1 text-left">

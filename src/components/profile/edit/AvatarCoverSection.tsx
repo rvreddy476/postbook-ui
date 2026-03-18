@@ -48,7 +48,7 @@ export function AvatarCoverSection({
                 </div>
 
                 <div
-                    className="relative h-64 rounded-[2.5rem] overflow-hidden bg-slate-100 group cursor-pointer shadow-inner border border-brand-divider"
+                    className="relative h-64 rounded-[2.5rem] overflow-hidden bg-brand-secondary group cursor-pointer shadow-inner border border-brand-divider"
                     onClick={() => coverInputRef.current?.click()}
                 >
                     {coverMediaId && !coverBroken ? (
@@ -60,7 +60,7 @@ export function AvatarCoverSection({
                         />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                            <Image className="w-12 h-12 text-slate-200" />
+                            <Image className="w-12 h-12 text-brand-secondary" />
                         </div>
                     )}
 
@@ -115,7 +115,7 @@ export function AvatarCoverSection({
 
                 <div className="flex items-center gap-10">
                     <div
-                        className="relative h-32 w-32 rounded-[2.5rem] bg-brand-card p-2 shadow-2xl ring-1 ring-slate-100 cursor-pointer group"
+                        className="relative h-32 w-32 rounded-[2.5rem] bg-brand-card p-2 shadow-2xl ring-1 ring-brand-secondary cursor-pointer group"
                         onClick={() => avatarInputRef.current?.click()}
                     >
                         <div className="w-full h-full rounded-[2rem] overflow-hidden bg-brand-secondary relative">
@@ -127,7 +127,7 @@ export function AvatarCoverSection({
                                     onError={() => setAvatarBroken(true)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-slate-200 uppercase italic">
+                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-secondary uppercase italic">
                                     {displayName.charAt(0)}
                                 </div>
                             )}

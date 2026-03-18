@@ -30,7 +30,7 @@ export function CreationsTab({ userId, platform }: CreationsTabProps) {
         return (
             <div className="max-w-[680px] space-y-4">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-32 bg-slate-100/50 rounded-2xl animate-pulse" />
+                    <div key={i} className="h-32 bg-brand-secondary/50 rounded-2xl animate-pulse" />
                 ))}
             </div>
         )
@@ -43,7 +43,7 @@ export function CreationsTab({ userId, platform }: CreationsTabProps) {
             {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="h-14 w-14 rounded-2xl bg-brand-secondary flex items-center justify-center mb-4">
-                        <Gem className="h-6 w-6 text-slate-300" />
+                        <Gem className="h-6 w-6 text-brand-text/30" />
                     </div>
                     <h3 className="text-base font-semibold text-brand-text">No posts yet</h3>
                     <p className="text-sm text-brand-text/60 mt-1 max-w-xs">

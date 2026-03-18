@@ -50,15 +50,15 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto py-6 space-y-4 px-4">
-        <div className="h-56 bg-slate-100 rounded-2xl animate-pulse" />
+        <div className="h-56 bg-brand-secondary rounded-2xl animate-pulse" />
         <div className="flex gap-4">
-          <div className="w-24 h-24 rounded-2xl bg-slate-100 animate-pulse -mt-12" />
+          <div className="w-24 h-24 rounded-2xl bg-brand-secondary animate-pulse -mt-12" />
           <div className="flex-1 space-y-2 pt-2">
-            <div className="h-6 w-48 bg-slate-100 rounded-lg animate-pulse" />
+            <div className="h-6 w-48 bg-brand-secondary rounded-lg animate-pulse" />
             <div className="h-4 w-32 bg-brand-secondary rounded animate-pulse" />
           </div>
         </div>
-        <div className="h-12 bg-slate-100 rounded-xl animate-pulse" />
+        <div className="h-12 bg-brand-secondary rounded-xl animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-3">
             {[1, 2, 3].map(i => <div key={i} className="h-32 bg-brand-secondary rounded-xl animate-pulse" />)}
@@ -75,10 +75,10 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
   if (!group) {
     return (
       <div className="max-w-5xl mx-auto py-24 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 mx-auto mb-4 flex items-center justify-center">
-          <Users className="w-8 h-8 text-slate-300" />
+        <div className="w-16 h-16 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
+          <Users className="w-8 h-8 text-brand-text/30" />
         </div>
-        <h2 className="text-xl font-bold text-slate-700">Group not found</h2>
+        <h2 className="text-xl font-bold text-brand-text">Group not found</h2>
         <p className="text-brand-text/60 mt-2 text-sm max-w-sm mx-auto">This group may have been deleted or you don&apos;t have access.</p>
       </div>
     )
@@ -119,18 +119,18 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                 onClick={() => setActiveTab(tab.key)}
                 className={`relative flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold whitespace-nowrap transition-colors ${
                   activeTab === tab.key
-                    ? 'text-[#D8103F]'
+                    ? 'text-brand-text'
                     : 'text-brand-text/60 hover:text-brand-highlight'
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.key === 'members' && group.member_count > 0 && (
-                  <span className="text-[10px] font-bold text-slate-300 ml-0.5">{group.member_count}</span>
+                  <span className="text-[10px] font-bold text-brand-text/30 ml-0.5">{group.member_count}</span>
                 )}
                 {/* Coral accent underline */}
                 {activeTab === tab.key && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#D8103F] rounded-full" />
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-text rounded-full" />
                 )}
               </button>
             ))}
@@ -182,7 +182,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                           : null
                       return (
                         <div key={m.user_id} className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-brand-secondary shrink-0">
                             {avatarUrl ? (
                               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -192,7 +192,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-700 truncate">{m.display_name || m.username || 'Unknown'}</p>
+                            <p className="text-sm font-semibold text-brand-text truncate">{m.display_name || m.username || 'Unknown'}</p>
                           </div>
                           {roleIcon}
                         </div>
@@ -207,7 +207,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                 <div className="bg-brand-card rounded-xl border border-brand-divider p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/60">Group Rules</h3>
-                    <button onClick={() => setActiveTab('rules')} className="text-[10px] font-bold text-[#D8103F] hover:underline">View All</button>
+                    <button onClick={() => setActiveTab('rules')} className="text-[10px] font-bold text-brand-text hover:underline">View All</button>
                   </div>
                   <div className="space-y-2">
                     {rules.slice(0, 3).map((rule, i) => (
@@ -219,7 +219,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                       </div>
                     ))}
                     {rules.length > 3 && (
-                      <p className="text-[10px] text-slate-300 font-semibold pl-7">+{rules.length - 3} more rules</p>
+                      <p className="text-[10px] text-brand-text/30 font-semibold pl-7">+{rules.length - 3} more rules</p>
                     )}
                   </div>
                 </div>
