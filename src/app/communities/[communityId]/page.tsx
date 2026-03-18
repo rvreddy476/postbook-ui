@@ -10,8 +10,11 @@ import {
   useCommunityEvents,
   useCommunityAnnouncements,
   useDeleteSpace,
+  useJoinCommunity,
+  useLeaveCommunity,
 } from '@/hooks/useCommunities'
 import CommunityHeader from '@/components/communities/CommunityHeader'
+import CommunityEditModal from '@/components/communities/CommunityEditModal'
 import SpaceCard from '@/components/communities/SpaceCard'
 import {
   Home,
@@ -28,6 +31,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import type { CommunityEvent, CommunityAnnouncement } from '@/types/communities'
 
@@ -54,13 +58,18 @@ export default function CommunityDetailPage() {
   const [activeNav, setActiveNav] = useState<NavSection>('home')
   const [spacesExpanded, setSpacesExpanded] = useState(true)
   const [memberSearch, setMemberSearch] = useState('')
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const { data: community, isLoading } = useCommunity(communityId)
   const { data: spaces } = useCommunitySpaces(communityId)
   const { data: members } = useCommunityMembers(communityId)
-  const { data: events } = useCommunityEvents(communityId)
-  const { data: announcements } = useCommunityAnnouncements(communityId)
+  const { data: events = [] } = useCommunityEvents(activeNav === 'events' ? communityId : undefined)
+  const { data: announcements = [] } = useCommunityAnnouncements(
+    activeNav === 'home' || activeNav === 'announcements' ? communityId : undefined
+  )
   const deleteSpace = useDeleteSpace()
+  const joinCommunity = useJoinCommunity()
+  const leaveCommunity = useLeaveCommunity()
 
   const isAdmin =
     community?.viewer_role === 'admin' ||
@@ -71,16 +80,16 @@ export default function CommunityDetailPage() {
   if (isLoading) {
     return (
       <AppShell>
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
-        <div className="bg-white rounded-2xl border border-brand-divider overflow-hidden animate-pulse">
-          <div className="h-[120px] bg-brand-bg" />
-          <div className="px-6 pb-6 -mt-10">
-            <div className="w-20 h-20 rounded-2xl bg-brand-bg mb-3" />
-            <div className="h-6 w-48 bg-brand-bg rounded mb-2" />
-            <div className="h-4 w-32 bg-brand-bg rounded" />
+        <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+          <div className="bg-white rounded-2xl border border-brand-divider overflow-hidden animate-pulse">
+            <div className="h-[120px] bg-brand-bg" />
+            <div className="px-6 pb-6 -mt-10">
+              <div className="w-20 h-20 rounded-2xl bg-brand-bg mb-3" />
+              <div className="h-6 w-48 bg-brand-bg rounded mb-2" />
+              <div className="h-4 w-32 bg-brand-bg rounded" />
+            </div>
           </div>
         </div>
-      </div>
       </AppShell>
     )
   }
@@ -88,466 +97,464 @@ export default function CommunityDetailPage() {
   if (!community) {
     return (
       <AppShell>
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-16 text-center">
-        <p className="text-brand-text/60">Community not found</p>
-      </div>
+        <div className="max-w-6xl mx-auto px-4 pt-8 pb-16 text-center">
+          <p className="text-brand-text/60">Community not found</p>
+        </div>
       </AppShell>
     )
   }
 
-  const pinnedAnnouncement = announcements?.find((a) => a.is_pinned)
+  const pinnedAnnouncement = announcements.find((announcement) => announcement.is_pinned)
   const filteredMembers = memberSearch
     ? members?.filter(
-        (m) =>
-          m.display_name?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-          m.username?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-          m.user_id.toLowerCase().includes(memberSearch.toLowerCase())
+        (member) =>
+          member.display_name?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+          member.username?.toLowerCase().includes(memberSearch.toLowerCase()) ||
+          member.user_id.toLowerCase().includes(memberSearch.toLowerCase())
       )
     : members
 
-  const upcomingEvents = events?.filter((e) => new Date(e.starts_at) >= new Date()) ?? []
-  const pastEvents = events?.filter((e) => new Date(e.starts_at) < new Date()) ?? []
+  const upcomingEvents = events.filter((event) => new Date(event.starts_at) >= new Date())
+  const pastEvents = events.filter((event) => new Date(event.starts_at) < new Date())
 
   return (
     <AppShell>
-    <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
-      {/* Back link */}
-      <Link
-        href="/communities"
-        className="inline-flex items-center gap-1.5 text-sm text-brand-text/60 hover:text-brand-text mb-4 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Communities
-      </Link>
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+        <Link
+          href="/communities"
+          className="inline-flex items-center gap-1.5 text-sm text-brand-text/60 hover:text-brand-text mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Communities
+        </Link>
 
-      {/* Header */}
-      <CommunityHeader community={community} />
+        <CommunityHeader
+          community={community}
+          canEdit={isAdmin}
+          onEdit={() => setShowEditModal(true)}
+        />
 
-      {/* Main layout: sidebar + content */}
-      <div className="flex gap-6 mt-6">
-        {/* Left Sidebar (220px) */}
-        <div className="w-[220px] flex-shrink-0 hidden md:block">
-          <div className="bg-white rounded-2xl border border-brand-divider p-4 sticky top-24">
-            {/* Community avatar + name + handle */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                {community.avatar_media_id ? (
-                  <img
-                    src={`/v1/media/${community.avatar_media_id}/serve`}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-bold text-sm">
-                    {community.name.charAt(0).toUpperCase()}
-                  </div>
+        <div className="flex gap-6 mt-6">
+          <div className="w-[220px] flex-shrink-0 hidden md:block">
+            <div className="bg-white rounded-2xl border border-brand-divider p-4 sticky top-24">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                  {community.avatar_media_id ? (
+                    <img
+                      src={`/v1/media/${community.avatar_media_id}/serve`}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-bold text-sm">
+                      {community.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-brand-text truncate">{community.name}</p>
+                  <p className="text-[11px] font-mono text-brand-text/50">@{community.handle}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-3 text-xs font-mono text-brand-text/60">
+                <span>{formatCount(community.member_count)} members</span>
+                {community.online_count !== undefined && (
+                  <>
+                    <span className="text-brand-text/20">|</span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      {community.online_count} online
+                    </span>
+                  </>
                 )}
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-brand-text truncate">{community.name}</p>
-                <p className="text-[11px] font-mono text-brand-text/50">@{community.handle}</p>
-              </div>
-            </div>
 
-            {/* Member count + Online */}
-            <div className="flex items-center gap-3 mb-3 text-xs font-mono text-brand-text/60">
-              <span>{formatCount(community.member_count)} members</span>
-              {community.online_count !== undefined && (
-                <>
-                  <span className="text-brand-text/20">·</span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    {community.online_count} online
-                  </span>
-                </>
+              {isAdmin ? (
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="block w-full text-center px-3 py-2 border border-brand-divider text-brand-text text-xs font-semibold rounded-xl hover:bg-brand-bg transition-colors"
+                  >
+                    Edit Community
+                  </button>
+                </div>
+              ) : isMember ? (
+                <div className="mb-4">
+                  <button
+                    onClick={() => leaveCommunity.mutate(community.id)}
+                    disabled={leaveCommunity.isPending}
+                    className="block w-full text-center px-3 py-2 border border-brand-divider text-brand-text text-xs font-semibold rounded-xl hover:bg-brand-bg transition-colors disabled:opacity-50"
+                  >
+                    Leave Community
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <button
+                    onClick={() => joinCommunity.mutate(community.id)}
+                    disabled={joinCommunity.isPending}
+                    className="block w-full text-center px-3 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-60"
+                  >
+                    Join Community
+                  </button>
+                </div>
               )}
-            </div>
 
-            {/* Joined button */}
-            {isMember ? (
-              <div className="mb-4">
-                <span className="block w-full text-center px-3 py-2 border border-brand-divider text-brand-text text-xs font-semibold rounded-xl">
-                  Joined ✓
-                </span>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <button className="block w-full text-center px-3 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors">
-                  Join Community
+              <nav className="space-y-0.5">
+                {navItems.map((item) => {
+                  const isSpaces = item.key === 'spaces'
+                  return (
+                    <div key={item.key}>
+                      <button
+                        onClick={() => {
+                          setActiveNav(item.key)
+                          if (isSpaces) setSpacesExpanded(!spacesExpanded)
+                        }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                          activeNav === item.key
+                            ? 'bg-brand-bg text-brand-text font-semibold'
+                            : 'text-brand-text/60 hover:bg-brand-bg hover:text-brand-text'
+                        }`}
+                      >
+                        {item.icon}
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {isSpaces && (
+                          spacesExpanded ? (
+                            <ChevronDown className="w-3.5 h-3.5 text-brand-text/40" />
+                          ) : (
+                            <ChevronRight className="w-3.5 h-3.5 text-brand-text/40" />
+                          )
+                        )}
+                      </button>
+                      {isSpaces && spacesExpanded && spaces && spaces.length > 0 && (
+                        <div className="ml-7 mt-0.5 space-y-0.5">
+                          {spaces.slice(0, 5).map((space) => (
+                            <Link
+                              key={space.id}
+                              href={
+                                space.linked_group_id
+                                  ? `/groups/${space.linked_group_id}`
+                                  : space.linked_channel_id
+                                    ? `/channels/${space.linked_channel_id}`
+                                    : '#'
+                              }
+                              className="block text-xs text-brand-text/50 hover:text-brand-text py-1 px-2 rounded truncate transition-colors"
+                            >
+                              # {space.name}
+                            </Link>
+                          ))}
+                          {spaces.length > 5 && (
+                            <button
+                              onClick={() => setActiveNav('spaces')}
+                              className="text-xs text-brand-text/40 hover:text-brand-text py-1 px-2 transition-colors"
+                            >
+                              +{spaces.length - 5} more
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </nav>
+            </div>
+          </div>
+
+          <div className="md:hidden w-full mb-4">
+            <div className="flex items-center gap-0 border-b border-brand-divider overflow-x-auto">
+              {navItems.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveNav(item.key)}
+                  className={`relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                    activeNav === item.key
+                      ? 'text-brand-text'
+                      : 'text-brand-text/60 hover:text-brand-text'
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                  {activeNav === item.key && (
+                    <span className="absolute bottom-0 left-1 right-1 h-0.5 border-b-2 border-brand-text rounded-full" />
+                  )}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {activeNav === 'home' && (
+              <div>
+                <h2 className="text-lg font-bold text-brand-text mb-4">Home Feed</h2>
+
+                {pinnedAnnouncement && (
+                  <div className="bg-white rounded-2xl border border-brand-divider p-4 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Pin className="w-3.5 h-3.5 text-brand-text/50" />
+                      <span className="text-[11px] font-semibold text-brand-text/50 uppercase tracking-wide">
+                        Pinned Announcement
+                      </span>
+                    </div>
+                    <p className="text-sm text-brand-text leading-relaxed">
+                      {pinnedAnnouncement.content}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-brand-text/40">
+                      {pinnedAnnouncement.author_name && (
+                        <span className="font-semibold">{pinnedAnnouncement.author_name}</span>
+                      )}
+                      <span>
+                        {new Date(pinnedAnnouncement.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
+                  <Home className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
+                  <p className="text-sm text-brand-text/50">
+                    Community feed posts will appear here
+                  </p>
+                </div>
               </div>
             )}
 
-            {/* Nav items */}
-            <nav className="space-y-0.5">
-              {navItems.map((item) => {
-                const isSpaces = item.key === 'spaces'
-                return (
-                  <div key={item.key}>
-                    <button
-                      onClick={() => {
-                        setActiveNav(item.key)
-                        if (isSpaces) setSpacesExpanded(!spacesExpanded)
-                      }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
-                        activeNav === item.key
-                          ? 'bg-brand-bg text-brand-text font-semibold'
-                          : 'text-brand-text/60 hover:bg-brand-bg hover:text-brand-text'
-                      }`}
-                    >
-                      {item.icon}
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {isSpaces && (
-                        spacesExpanded ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-brand-text/40" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-brand-text/40" />
-                        )
-                      )}
-                    </button>
-                    {/* Expandable spaces list */}
-                    {isSpaces && spacesExpanded && spaces && spaces.length > 0 && (
-                      <div className="ml-7 mt-0.5 space-y-0.5">
-                        {spaces.slice(0, 5).map((s) => (
-                          <Link
-                            key={s.id}
-                            href={
-                              s.linked_group_id
-                                ? `/groups/${s.linked_group_id}`
-                                : s.linked_channel_id
-                                  ? `/channels/${s.linked_channel_id}`
-                                  : '#'
-                            }
-                            className="block text-xs text-brand-text/50 hover:text-brand-text py-1 px-2 rounded truncate transition-colors"
-                          >
-                            # {s.name}
-                          </Link>
-                        ))}
-                        {spaces.length > 5 && (
-                          <button
-                            onClick={() => setActiveNav('spaces')}
-                            className="text-xs text-brand-text/40 hover:text-brand-text py-1 px-2 transition-colors"
-                          >
-                            +{spaces.length - 5} more
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </nav>
-          </div>
-        </div>
-
-        {/* Mobile nav */}
-        <div className="md:hidden w-full mb-4">
-          <div className="flex items-center gap-0 border-b border-brand-divider overflow-x-auto">
-            {navItems.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setActiveNav(item.key)}
-                className={`relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                  activeNav === item.key
-                    ? 'text-brand-text'
-                    : 'text-brand-text/60 hover:text-brand-text'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-                {activeNav === item.key && (
-                  <span className="absolute bottom-0 left-1 right-1 h-0.5 border-b-2 border-brand-text rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* HOME FEED */}
-          {activeNav === 'home' && (
-            <div>
-              <h2 className="text-lg font-bold text-brand-text mb-4">Home Feed</h2>
-
-              {/* Pinned announcement */}
-              {pinnedAnnouncement && (
-                <div className="bg-white rounded-2xl border border-brand-divider p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Pin className="w-3.5 h-3.5 text-brand-text/50" />
-                    <span className="text-[11px] font-semibold text-brand-text/50 uppercase tracking-wide">
-                      Pinned Announcement
-                    </span>
-                  </div>
-                  <p className="text-sm text-brand-text leading-relaxed">
-                    {pinnedAnnouncement.content}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-brand-text/40">
-                    {pinnedAnnouncement.author_name && (
-                      <span className="font-semibold">{pinnedAnnouncement.author_name}</span>
-                    )}
-                    <span>
-                      {new Date(pinnedAnnouncement.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Aggregated posts placeholder */}
-              <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                <Home className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                <p className="text-sm text-brand-text/50">
-                  Community feed posts will appear here
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ANNOUNCEMENTS */}
-          {activeNav === 'announcements' && (
-            <div>
-              <h2 className="text-lg font-bold text-brand-text mb-4">Announcements</h2>
-              {announcements && announcements.length > 0 ? (
-                <div className="space-y-3">
-                  {announcements.map((a) => (
-                    <AnnouncementCard key={a.id} announcement={a} />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                  <Megaphone className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                  <p className="text-sm text-brand-text/50">No announcements yet</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* SPACES */}
-          {activeNav === 'spaces' && (
-            <div>
-              <h2 className="text-lg font-bold text-brand-text mb-4">
-                Spaces ({spaces?.length ?? 0})
-              </h2>
-              {spaces && spaces.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {spaces.map((space) => (
-                    <SpaceCard
-                      key={space.id}
-                      space={space}
-                      isAdmin={isAdmin}
-                      onRemove={(spaceId) =>
-                        deleteSpace.mutate({ communityId, spaceId })
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                  <LayoutGrid className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                  <p className="text-sm text-brand-text/50">No spaces yet</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* EVENTS */}
-          {activeNav === 'events' && (
-            <div>
-              <h2 className="text-lg font-bold text-brand-text mb-4">Events</h2>
-
-              {upcomingEvents.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
-                    Upcoming
-                  </h3>
+            {activeNav === 'announcements' && (
+              <div>
+                <h2 className="text-lg font-bold text-brand-text mb-4">Announcements</h2>
+                {announcements.length > 0 ? (
                   <div className="space-y-3">
-                    {upcomingEvents.map((e) => (
-                      <EventCard key={e.id} event={e} />
+                    {announcements.map((announcement) => (
+                      <AnnouncementCard key={announcement.id} announcement={announcement} />
                     ))}
                   </div>
-                </div>
-              )}
-
-              {pastEvents.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
-                    Past
-                  </h3>
-                  <div className="space-y-3">
-                    {pastEvents.map((e) => (
-                      <EventCard key={e.id} event={e} isPast />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {upcomingEvents.length === 0 && pastEvents.length === 0 && (
-                <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                  <Calendar className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                  <p className="text-sm text-brand-text/50">No events yet</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* MEMBERS */}
-          {activeNav === 'members' && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-brand-text">
-                  Members ({community.member_count})
-                </h2>
-              </div>
-
-              {/* Search members */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
-                <input
-                  type="text"
-                  placeholder="Search members..."
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-divider rounded-xl text-sm placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 text-brand-text"
-                />
-              </div>
-
-              <div className="space-y-2">
-                {filteredMembers && filteredMembers.length > 0 ? (
-                  filteredMembers.map((member) => (
-                    <div
-                      key={member.user_id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white border border-brand-divider"
-                    >
-                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                        {member.avatar_url ? (
-                          <img
-                            src={member.avatar_url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-brand-bg flex items-center justify-center">
-                            <Users className="w-5 h-5 text-brand-text/30" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-brand-text truncate">
-                          {member.display_name || member.username || member.user_id}
-                        </p>
-                        {member.username && (
-                          <p className="text-[11px] font-mono text-brand-text/50">
-                            @{member.username}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {(member.role === 'admin' ||
-                          member.role === 'owner' ||
-                          member.role === 'moderator') && (
-                          <span className="px-2 py-0.5 bg-brand-bg text-brand-text/60 text-[10px] font-bold rounded-full uppercase">
-                            {member.role}
-                          </span>
-                        )}
-                        <span className="text-[10px] font-mono text-brand-text/40">
-                          {new Date(member.joined_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
                 ) : (
-                  <div className="text-center py-12">
-                    <Users className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                    <p className="text-sm text-brand-text/50">
-                      {memberSearch ? 'No members found' : 'No members to show'}
-                    </p>
+                  <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
+                    <Megaphone className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
+                    <p className="text-sm text-brand-text/50">No announcements yet</p>
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ABOUT */}
-          {activeNav === 'about' && (
-            <div>
-              <h2 className="text-lg font-bold text-brand-text mb-4">About</h2>
-
-              <div className="bg-white rounded-2xl border border-brand-divider p-5 space-y-5">
-                {/* Description */}
-                {community.description && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
-                      Description
-                    </h4>
-                    <p className="text-sm text-brand-text leading-relaxed">
-                      {community.description}
-                    </p>
+            {activeNav === 'spaces' && (
+              <div>
+                <h2 className="text-lg font-bold text-brand-text mb-4">
+                  Spaces ({spaces?.length ?? 0})
+                </h2>
+                {spaces && spaces.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {spaces.map((space) => (
+                      <SpaceCard
+                        key={space.id}
+                        space={space}
+                        isAdmin={isAdmin}
+                        onRemove={(spaceId) => deleteSpace.mutate({ communityId, spaceId })}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
+                    <LayoutGrid className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
+                    <p className="text-sm text-brand-text/50">No spaces yet</p>
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* Rules */}
-                {community.rules && community.rules.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-2">
-                      Rules
-                    </h4>
-                    <ol className="space-y-1.5">
-                      {community.rules.map((rule, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-brand-text">
-                          <span className="font-mono text-brand-text/40 text-xs mt-0.5">
-                            {i + 1}.
-                          </span>
-                          {rule}
-                        </li>
+            {activeNav === 'events' && (
+              <div>
+                <h2 className="text-lg font-bold text-brand-text mb-4">Events</h2>
+
+                {upcomingEvents.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
+                      Upcoming
+                    </h3>
+                    <div className="space-y-3">
+                      {upcomingEvents.map((event) => (
+                        <EventCard key={event.id} event={event} />
                       ))}
-                    </ol>
+                    </div>
                   </div>
                 )}
 
-                {/* Category */}
-                {community.category && (
+                {pastEvents.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
-                      Category
-                    </h4>
-                    <span className="px-3 py-1 bg-brand-bg text-brand-text text-sm font-semibold rounded-full">
-                      {community.category}
-                    </span>
+                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
+                      Past
+                    </h3>
+                    <div className="space-y-3">
+                      {pastEvents.map((event) => (
+                        <EventCard key={event.id} event={event} isPast />
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* Created date */}
-                <div>
-                  <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
-                    Created
-                  </h4>
-                  <p className="text-sm font-mono text-brand-text/70">
-                    {new Date(community.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
+                {upcomingEvents.length === 0 && pastEvents.length === 0 && (
+                  <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
+                    <Calendar className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
+                    <p className="text-sm text-brand-text/50">No events yet</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeNav === 'members' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-brand-text">
+                    Members ({community.member_count})
+                  </h2>
                 </div>
 
-                {/* Type */}
-                <div>
-                  <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
-                    Type
-                  </h4>
-                  <p className="text-sm text-brand-text capitalize">{community.community_type}</p>
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-divider rounded-xl text-sm placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 text-brand-text"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {filteredMembers && filteredMembers.length > 0 ? (
+                    filteredMembers.map((member) => (
+                      <div
+                        key={member.user_id}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white border border-brand-divider"
+                      >
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-brand-bg flex items-center justify-center">
+                              <Users className="w-5 h-5 text-brand-text/30" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-brand-text truncate">
+                            {member.display_name || member.username || member.user_id}
+                          </p>
+                          {member.username && (
+                            <p className="text-[11px] font-mono text-brand-text/50">
+                              @{member.username}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {(member.role === 'admin' ||
+                            member.role === 'owner' ||
+                            member.role === 'moderator') && (
+                            <span className="px-2 py-0.5 bg-brand-bg text-brand-text/60 text-[10px] font-bold rounded-full uppercase">
+                              {member.role}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-mono text-brand-text/40">
+                            {new Date(member.joined_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Users className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
+                      <p className="text-sm text-brand-text/50">
+                        {memberSearch ? 'No members found' : 'No members to show'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {activeNav === 'about' && (
+              <div>
+                <h2 className="text-lg font-bold text-brand-text mb-4">About</h2>
+
+                <div className="bg-white rounded-2xl border border-brand-divider p-5 space-y-5">
+                  {community.description && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                        Description
+                      </h4>
+                      <p className="text-sm text-brand-text leading-relaxed">
+                        {community.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {community.rules && community.rules.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-2">
+                        Rules
+                      </h4>
+                      <ol className="space-y-1.5">
+                        {community.rules.map((rule, i) => (
+                          <li key={i} className="flex gap-2 text-sm text-brand-text">
+                            <span className="font-mono text-brand-text/40 text-xs mt-0.5">
+                              {i + 1}.
+                            </span>
+                            {rule}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  {community.category && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                        Category
+                      </h4>
+                      <span className="px-3 py-1 bg-brand-bg text-brand-text text-sm font-semibold rounded-full">
+                        {community.category}
+                      </span>
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                      Created
+                    </h4>
+                    <p className="text-sm font-mono text-brand-text/70">
+                      {new Date(community.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                      Type
+                    </h4>
+                    <p className="text-sm text-brand-text capitalize">{community.community_type}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        <AnimatePresence>
+          {showEditModal && (
+            <CommunityEditModal community={community} onClose={() => setShowEditModal(false)} />
+          )}
+        </AnimatePresence>
       </div>
-    </div>
     </AppShell>
   )
 }
-
-/* --- Sub-components --- */
 
 function AnnouncementCard({ announcement }: { announcement: CommunityAnnouncement }) {
   return (
@@ -585,7 +592,6 @@ function EventCard({ event, isPast }: { event: CommunityEvent; isPast?: boolean 
       className={`bg-white rounded-2xl border border-brand-divider p-4 ${isPast ? 'opacity-60' : ''}`}
     >
       <div className="flex gap-4">
-        {/* Date block */}
         <div className="w-14 h-14 rounded-xl bg-brand-bg flex flex-col items-center justify-center flex-shrink-0">
           <span className="text-xs font-mono text-brand-text/50 uppercase">
             {date.toLocaleDateString('en-US', { month: 'short' })}

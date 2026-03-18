@@ -1,5 +1,6 @@
 "use client"
 
+import axios from "axios"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { BroadcastChannel, ChannelUpdate, ChannelMember } from "@/types/channels"
@@ -52,6 +53,8 @@ export function useChannelUpdates(channelId: string | undefined, limit = 20) {
       return res.data.data
     },
     enabled: !!channelId,
+    refetchInterval: 15_000, // Poll every 15s for new updates
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -59,7 +62,7 @@ export function useMyBroadcasts() {
   return useQuery({
     queryKey: ["my-broadcasts"],
     queryFn: async () => {
-      const res = await api.get<ChannelsResponse>("/v1/broadcast-channels/owned")
+      const res = await api.get<ChannelsResponse>("/v1/broadcast-channels/my")
       return res.data.data
     },
   })
@@ -80,8 +83,15 @@ export function useCheckHandleAvailability(handle: string) {
   return useQuery({
     queryKey: ["channel-handle-check", handle],
     queryFn: async () => {
-      const res = await api.get<{ data: { available: boolean } }>(`/v1/broadcast-channels/check-handle`, { params: { handle } })
-      return res.data.data.available
+      try {
+        const res = await api.get<{ data: { available: boolean } }>(`/v1/broadcast-channels/check-handle`, { params: { handle } })
+        return res.data.data.available
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          return null
+        }
+        throw error
+      }
     },
     enabled: handle.length >= 3,
     staleTime: 10_000,
@@ -103,12 +113,17 @@ export function useCreateBroadcastChannel() {
       subscription_price_cents?: number
       category?: string
       language?: string
+      reaction_mode?: string
+      forward_allowed?: boolean
+      avatar_media_id?: string
+      banner_media_id?: string
     }) => {
       const res = await api.post<ChannelResponse>("/v1/broadcast-channels", payload)
       return res.data.data
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-broadcast-channels"] })
+      qc.invalidateQueries({ queryKey: ["my-broadcasts"] })
       qc.invalidateQueries({ queryKey: ["discover-channels"] })
     },
   })
@@ -122,8 +137,15 @@ export function useUpdateBroadcastChannel() {
       name?: string
       description?: string
       channel_type?: string
+      category?: string
+      language?: string
       comment_mode?: string
+      reaction_mode?: string
+      forward_allowed?: boolean
       paid_access?: boolean
+      subscription_price_cents?: number
+      avatar_media_id?: string
+      banner_media_id?: string
     }) => {
       const res = await api.put<ChannelResponse>(`/v1/broadcast-channels/${channelId}`, payload)
       return res.data.data
@@ -131,6 +153,8 @@ export function useUpdateBroadcastChannel() {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["broadcast-channel", vars.channelId] })
       qc.invalidateQueries({ queryKey: ["my-broadcast-channels"] })
+      qc.invalidateQueries({ queryKey: ["my-broadcasts"] })
+      qc.invalidateQueries({ queryKey: ["discover-channels"] })
     },
   })
 }
@@ -184,6 +208,9 @@ export function useCreateChannelUpdate() {
       body: string
       media_ids?: string[]
       is_urgent?: boolean
+      is_pinned?: boolean
+      metadata?: Record<string, unknown>
+      scheduled_at?: string
     }) => {
       const res = await api.post<UpdateResponse>(`/v1/broadcast-channels/${channelId}/updates`, payload)
       return res.data.data

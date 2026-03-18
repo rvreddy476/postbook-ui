@@ -179,13 +179,15 @@ export function useCreateGroup() {
 export function useUpdateGroup() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ groupId, ...payload }: { groupId: string; name?: string; description?: string; visibility?: string; avatar_media_id?: string }) => {
+    mutationFn: async ({ groupId, ...payload }: { groupId: string; name?: string; description?: string; visibility?: string; avatar_media_id?: string; cover_media_id?: string }) => {
       const res = await api.put(`/v1/groups/${groupId}`, payload)
       return res.data
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["group", vars.groupId] })
+      qc.invalidateQueries({ queryKey: ["group-by-handle"] })
       qc.invalidateQueries({ queryKey: ["my-groups"] })
+      qc.invalidateQueries({ queryKey: ["discover-groups"] })
     },
   })
 }

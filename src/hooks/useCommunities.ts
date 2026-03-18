@@ -1,5 +1,6 @@
 "use client"
 
+import axios from "axios"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { Community, CommunityMember, CommunitySpace, CommunityEvent, CommunityAnnouncement } from "@/types/communities"
@@ -71,8 +72,15 @@ export function useCommunityEvents(communityId: string | undefined) {
   return useQuery({
     queryKey: ["community-events", communityId],
     queryFn: async () => {
-      const res = await api.get<EventsResponse>(`/v1/communities/${communityId}/events`)
-      return res.data.data
+      try {
+        const res = await api.get<EventsResponse>(`/v1/communities/${communityId}/events`)
+        return res.data.data
+      } catch (error) {
+        if (axios.isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
+          return []
+        }
+        throw error
+      }
     },
     enabled: !!communityId,
   })
@@ -82,8 +90,15 @@ export function useCommunityAnnouncements(communityId: string | undefined) {
   return useQuery({
     queryKey: ["community-announcements", communityId],
     queryFn: async () => {
-      const res = await api.get<AnnouncementsResponse>(`/v1/communities/${communityId}/announcements`)
-      return res.data.data
+      try {
+        const res = await api.get<AnnouncementsResponse>(`/v1/communities/${communityId}/announcements`)
+        return res.data.data
+      } catch (error) {
+        if (axios.isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
+          return []
+        }
+        throw error
+      }
     },
     enabled: !!communityId,
   })
@@ -123,6 +138,7 @@ export function useCreateCommunity() {
       join_mode?: string
       avatar_media_id?: string
       banner_media_id?: string
+      rules?: string[]
     }) => {
       const res = await api.post<CommunityResponse>("/v1/communities", payload)
       return res.data.data
@@ -130,6 +146,33 @@ export function useCreateCommunity() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-communities"] })
       qc.invalidateQueries({ queryKey: ["discover-communities"] })
+    },
+  })
+}
+
+export function useUpdateCommunity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ communityId, ...payload }: {
+      communityId: string
+      name?: string
+      description?: string
+      community_type?: string
+      category?: string
+      join_mode?: string
+      avatar_media_id?: string
+      banner_media_id?: string
+      rules?: string[]
+    }) => {
+      const res = await api.put<CommunityResponse>(`/v1/communities/${communityId}`, payload)
+      return res.data.data
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["community", vars.communityId] })
+      qc.invalidateQueries({ queryKey: ["my-communities"] })
+      qc.invalidateQueries({ queryKey: ["discover-communities"] })
+      qc.invalidateQueries({ queryKey: ["nearby-communities"] })
+      qc.invalidateQueries({ queryKey: ["suggested-communities"] })
     },
   })
 }

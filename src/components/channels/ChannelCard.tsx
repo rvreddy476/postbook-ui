@@ -52,7 +52,8 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
     ? `/v1/media/${channel.avatar_media_id}/serve`
     : null
   const gradient = pickColor(channel.name)
-  const isSubscribed = channel.viewer_role === 'subscriber' || channel.viewer_role === 'admin' || channel.viewer_role === 'editor'
+  const isSubscribed = channel.viewer_role === 'subscriber'
+  const isManager = channel.viewer_role === 'admin' || channel.viewer_role === 'editor'
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -103,7 +104,15 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
             {timeAgo(channel.updated_at)}
           </span>
 
-          {isSubscribed ? (
+          {isManager ? (
+            <Link
+              href={`/channels/${channel.id}`}
+              className="flex items-center gap-1 border border-brand-divider text-brand-text text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:bg-brand-secondary/50 transition-colors"
+            >
+              <Eye className="w-3 h-3" />
+              Manage
+            </Link>
+          ) : isSubscribed ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={(e) => {

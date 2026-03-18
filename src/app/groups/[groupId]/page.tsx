@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import AppShell from '@/components/AppShell'
 import CreatePortal from '@/components/CreatePortal'
 import { useParams, useRouter } from 'next/navigation'
@@ -47,6 +47,7 @@ export default function GroupDetailPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [showOverflow, setShowOverflow] = useState(false)
   const [showCreatePost, setShowCreatePost] = useState(false)
+  const overflowRef = useRef<HTMLDivElement>(null)
 
   const authUser = useAuthUser()
   const { data: groupById, isLoading: loadingById } = useGroupDetails(isUUID ? param : undefined)
@@ -70,6 +71,19 @@ export default function GroupDetailPage() {
   const isMember = isAdminOrMod || viewerRole === 'member'
 
   const adminsAndMods = members?.filter(m => m.role === 'admin' || m.role === 'moderator' || m.role === 'owner') ?? []
+
+  useEffect(() => {
+    if (!showOverflow) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(event.target as Node)) {
+        setShowOverflow(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showOverflow])
 
   const handleJoin = () => joinGroup.mutate(group!.id)
   const handleLeave = () => {
@@ -160,8 +174,8 @@ export default function GroupDetailPage() {
   return (
     <AppShell>
     <div className="max-w-5xl mx-auto pb-16">
-      {/* Cover image — 180px */}
-      <div className="relative w-full h-[180px] overflow-hidden rounded-b-2xl sm:rounded-2xl">
+      {/* Cover image */}
+      <div className="relative h-[164px] w-full overflow-hidden rounded-b-2xl sm:h-[180px] sm:rounded-2xl">
         {coverSrc ? (
           <img src={coverSrc} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -181,15 +195,15 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Group header: avatar (-36px overlap), name, meta, actions */}
-      <div className="relative max-w-4xl mx-auto px-4 -mt-9 z-10">
+      <div className="relative z-10 mx-auto -mt-8 max-w-4xl px-4 sm:-mt-9">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Avatar — overlapping cover */}
-          <div className="w-[72px] h-[72px] rounded-2xl bg-white p-[3px] shadow-xl border border-brand-divider shrink-0">
-            <div className="w-full h-full rounded-[13px] overflow-hidden bg-brand-text/5">
+          <div className="h-[64px] w-[64px] shrink-0 rounded-[22px] border border-white/80 bg-white/95 p-[2px] shadow-lg sm:h-[72px] sm:w-[72px]">
+            <div className="h-full w-full overflow-hidden rounded-[18px] bg-brand-text/5">
               {avatarSrc ? (
                 <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-white font-black text-2xl`}>
+                <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${avatarGrad} text-xl font-black text-white sm:text-2xl`}>
                   {group.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -280,7 +294,7 @@ export default function GroupDetailPage() {
                   )}
 
                   {/* Overflow menu */}
-                  <div className="relative ml-auto">
+                  <div className="relative ml-auto" ref={overflowRef}>
                     <button
                       onClick={() => setShowOverflow(!showOverflow)}
                       className="p-2 border border-brand-divider text-brand-text/60 rounded-xl hover:bg-brand-text/5 transition-all"
@@ -288,31 +302,31 @@ export default function GroupDetailPage() {
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                     {showOverflow && (
-                      <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-brand-divider rounded-xl shadow-lg py-1 z-50 max-h-[280px] overflow-y-auto">
+                      <div className="absolute right-0 top-full z-50 mt-2 min-w-[11rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-brand-divider bg-white py-1 shadow-lg">
                         {isAdmin && (
-                          <button onClick={() => { setShowEdit(true); setShowOverflow(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text hover:bg-brand-text/5 transition-colors">
+                          <button onClick={() => { setShowEdit(true); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
                             <Pencil className="w-4 h-4" /> Edit Group
                           </button>
                         )}
                         {isAdmin && (
-                          <button onClick={() => { router.push(`/groups/${group.id}/settings`); setShowOverflow(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text hover:bg-brand-text/5 transition-colors">
+                          <button onClick={() => { router.push(`/groups/${group.id}/settings`); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
                             <Settings className="w-4 h-4" /> Group Settings
                           </button>
                         )}
-                        <button onClick={() => setShowOverflow(false)} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text hover:bg-brand-text/5 transition-colors">
+                        <button onClick={() => setShowOverflow(false)} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
                           <Share2 className="w-4 h-4" /> Share
                         </button>
-                        <button onClick={() => setShowOverflow(false)} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text hover:bg-brand-text/5 transition-colors">
+                        <button onClick={() => setShowOverflow(false)} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
                           <Link2 className="w-4 h-4" /> Copy Link
                         </button>
-                        <button onClick={() => { handleLeave(); setShowOverflow(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text hover:bg-brand-text/5 transition-colors">
+                        <button onClick={() => { handleLeave(); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
                           <LogOut className="w-4 h-4" /> Leave Group
                         </button>
-                        <button onClick={() => setShowOverflow(false)} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text/60 hover:bg-brand-text/5 transition-colors">
+                        <button onClick={() => setShowOverflow(false)} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text/60 transition-colors hover:bg-brand-text/5">
                           <Flag className="w-4 h-4" /> Report
                         </button>
                         {isOwner && (
-                          <button onClick={() => { handleDelete(); setShowOverflow(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-brand-text font-semibold hover:bg-brand-text/5 transition-colors">
+                          <button onClick={() => { handleDelete(); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-text/5">
                             <Trash2 className="w-4 h-4" /> Delete Group
                           </button>
                         )}

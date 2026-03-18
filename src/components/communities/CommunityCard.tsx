@@ -48,10 +48,6 @@ function formatCount(n: number): string {
 const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
   const joinMut = useJoinCommunity()
 
-  const avatarSrc = community.avatar_media_id
-    ? `/v1/media/${community.avatar_media_id}/serve`
-    : null
-
   const isMember = community.viewer_role && community.viewer_role !== 'outsider'
   const gradient =
     categoryGradients[community.category?.toLowerCase() ?? ''] ?? 'from-slate-700 to-slate-500'
@@ -59,7 +55,6 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-brand-divider overflow-hidden hover:shadow-lg hover:border-brand-text/20 transition-all duration-300 group/card flex flex-col">
-      {/* Cover image (16:9, 100px) or colored gradient with emoji */}
       <Link href={`/communities/${community.id}`}>
         <div className="h-[100px] relative overflow-hidden">
           {community.banner_media_id ? (
@@ -78,18 +73,13 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
         </div>
       </Link>
 
-      {/* Content */}
       <div className="p-4 flex-1 flex flex-col">
         <Link href={`/communities/${community.id}`} className="flex-1">
-          {/* Name */}
           <h3 className="text-sm font-bold text-brand-text truncate" style={{ fontWeight: 700 }}>
             {community.name}
           </h3>
-
-          {/* Handle */}
           <p className="text-[11px] text-brand-text/50 font-mono mt-0.5">@{community.handle}</p>
 
-          {/* Description */}
           {community.description && (
             <p className="text-xs text-brand-text/60 mt-1.5 line-clamp-2 leading-relaxed">
               {community.description}
@@ -97,18 +87,17 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
           )}
         </Link>
 
-        {/* Stats */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
           <span className="text-[11px] font-mono text-brand-text/60">
             {formatCount(community.member_count)} members
           </span>
-          <span className="text-brand-text/20">·</span>
+          <span className="text-brand-text/20">|</span>
           <span className="text-[11px] font-mono text-brand-text/60">
             {community.space_count} spaces
           </span>
           {community.category && (
             <>
-              <span className="text-brand-text/20">·</span>
+              <span className="text-brand-text/20">|</span>
               <span className="px-2 py-0.5 bg-brand-bg text-brand-text/60 text-[10px] font-semibold rounded-full truncate max-w-[90px]">
                 {community.category}
               </span>
@@ -116,23 +105,21 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
           )}
         </div>
 
-        {/* Mutual member pips + Join button */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-brand-divider">
-          {/* Mutual pips */}
           <div className="flex items-center">
             {community.mutual_members && community.mutual_members.length > 0 ? (
               <div className="flex -space-x-1.5">
-                {community.mutual_members.slice(0, 3).map((m, i) => (
+                {community.mutual_members.slice(0, 3).map((member, index) => (
                   <div
-                    key={m.user_id}
+                    key={member.user_id}
                     className="w-5 h-5 rounded-full border border-white bg-brand-bg flex items-center justify-center overflow-hidden"
-                    style={{ zIndex: 3 - i }}
+                    style={{ zIndex: 3 - index }}
                   >
-                    {m.avatar_url ? (
-                      <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                    {member.avatar_url ? (
+                      <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-[8px] font-bold text-brand-text/40">
-                        {m.display_name?.charAt(0) ?? '?'}
+                        {member.display_name?.charAt(0) ?? '?'}
                       </span>
                     )}
                   </div>
@@ -148,20 +135,19 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
             )}
           </div>
 
-          {/* Join / Joined button */}
           {isMember ? (
             <span className="px-3 py-1 border border-brand-divider text-brand-text text-xs font-semibold rounded-lg">
-              Joined ✓
+              Joined
             </span>
           ) : (
             <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
                 joinMut.mutate(community.id)
               }}
               disabled={joinMut.isPending}
-              className="px-3 py-1 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors"
+              className="px-3 py-1 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors disabled:opacity-60"
             >
               Join
             </button>

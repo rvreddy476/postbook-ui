@@ -85,10 +85,10 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
   return (
     <Link
       href={`/groups/${group.handle || group.id}`}
-      className="block bg-white border border-brand-divider rounded-2xl overflow-hidden hover:shadow-lg hover:border-brand-text/10 transition-all duration-200 max-w-[260px]"
+      className="block h-full w-full overflow-hidden rounded-2xl border border-brand-divider bg-white transition-all duration-200 hover:border-brand-text/10 hover:shadow-lg"
     >
       {/* Cover photo */}
-      <div className="relative h-24 overflow-hidden">
+      <div className="relative h-20 overflow-hidden sm:h-24">
         {group.cover_media_id ? (
           <img
             src={`/v1/media/${group.cover_media_id}/serve`}
@@ -112,9 +112,9 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
       </div>
 
       {/* Avatar overlapping cover */}
-      <div className="relative px-3 -mt-6">
-        <div className="w-12 h-12 rounded-xl bg-white p-[2px] shadow-md border border-brand-divider">
-          <div className="w-full h-full rounded-[10px] overflow-hidden">
+      <div className="relative -mt-5 px-3.5">
+        <div className="h-11 w-11 rounded-xl border border-brand-divider bg-white/95 p-[2px] shadow-md">
+          <div className="h-full w-full overflow-hidden rounded-[10px] bg-brand-text/5">
             {group.avatar_media_id ? (
               <img
                 src={`/v1/media/${group.avatar_media_id}/serve`}
@@ -122,7 +122,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${avatarGradients[gradIdx]} flex items-center justify-center text-white font-black text-base`}>
+              <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${avatarGradients[gradIdx]} text-sm font-black text-white`}>
                 {group.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -131,11 +131,11 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
       </div>
 
       {/* Content */}
-      <div className="px-3 pb-3 pt-2">
-        <h3 className="text-[13px] font-bold text-brand-text truncate leading-tight">{group.name}</h3>
+      <div className="px-3.5 pb-3.5 pt-2">
+        <h3 className="truncate text-[14px] font-bold leading-tight text-brand-text">{group.name}</h3>
 
         {group.description && (
-          <p className="text-[11px] text-brand-text/50 line-clamp-2 mt-1 leading-relaxed">{group.description}</p>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-brand-text/50">{group.description}</p>
         )}
 
         {/* Stats */}
@@ -168,17 +168,17 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
               </button>
 
               {showDropdown && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-brand-divider rounded-xl shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-full z-50 mt-2 min-w-[9rem] overflow-hidden rounded-xl border border-brand-divider bg-white py-1 shadow-lg">
                   <button
                     onClick={handleLeave}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+                    className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-50"
                   >
                     <LogOut className="w-3 h-3" />
                     Leave
                   </button>
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDropdown(false) }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-brand-text hover:bg-brand-text/5 transition-colors"
+                    className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-[11px] font-medium text-brand-text transition-colors hover:bg-brand-text/5"
                   >
                     <BellOff className="w-3 h-3" />
                     Mute

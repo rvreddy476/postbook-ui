@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react'
 import AppShell from '@/components/AppShell'
 import { useRouter } from 'next/navigation'
-import { useCreateGroup, useCheckHandle, useUpdateGroupRules } from '@/hooks/useGroups'
+import { useCreateGroup, useCheckHandle, useUpdateGroup, useUpdateGroupRules } from '@/hooks/useGroups'
 import {
   Check, ChevronLeft, ChevronRight, Upload, Pencil,
   MapPin, X, Loader2, Globe, Lock, Shield,
@@ -39,6 +39,7 @@ const COVER_SWATCHES = [
 export default function CreateGroupPage() {
   const router = useRouter()
   const createGroup = useCreateGroup()
+  const updateGroup = useUpdateGroup()
   const updateRules = useUpdateGroupRules()
 
   const [step, setStep] = useState<Step>(1)
@@ -121,9 +122,14 @@ export default function CreateGroupPage() {
         who_can_invite: whoCanInvite,
         location: location || undefined,
         idempotency_key: `create-${Date.now()}`,
-        ...(coverMediaId ? { cover_media_id: coverMediaId } : {}),
-        ...(avatarMediaId ? { avatar_media_id: avatarMediaId } : {}),
       })
+      if (coverMediaId || avatarMediaId) {
+        await updateGroup.mutateAsync({
+          groupId: group.id,
+          ...(coverMediaId ? { cover_media_id: coverMediaId } : {}),
+          ...(avatarMediaId ? { avatar_media_id: avatarMediaId } : {}),
+        })
+      }
       // Save rules if any were defined
       const validRules = rules.filter(r => r.title.trim())
       if (validRules.length > 0) {
