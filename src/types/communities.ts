@@ -74,5 +74,45 @@ export interface CommunityJoinRequest {
   community_id: string
   user_id: string
   status: string
+  reviewed_by?: string
+  reviewed_at?: string
   created_at: string
+}
+
+export type CommunityRole =
+  | 'owner'
+  | 'admin'
+  | 'moderator'
+  | 'space_manager'
+  | 'expert'
+  | 'member'
+  | 'pending'
+  | 'outsider'
+
+export interface CommunityModlogEntry {
+  id: string
+  community_id: string
+  actor_id: string
+  action: string
+  target_type: string
+  target_id: string
+  reason?: string
+  metadata?: Record<string, unknown>
+  created_at: string
+}
+
+export interface WikiPage {
+  id: string
+  community_id: string
+  title: string
+  slug: string
+  content: string
+  content_html?: string
+  category?: string
+  is_pinned: boolean
+  created_by: string
+  updated_by?: string
+  version: number
+  created_at: string
+  updated_at: string
 }

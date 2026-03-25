@@ -1,6 +1,6 @@
 "use client";
 
-import { SectionHeader, ToggleRow, RadioOption, StudioInput, StudioSelect, InfoBanner } from "../primitives";
+import { SectionHeader, ToggleRow, RadioOption, StudioInput, StudioSelect } from "../primitives";
 import type { StudioFormState } from "../types";
 
 interface EnrichStepProps {
@@ -52,10 +52,32 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
             <input
               type="file"
               accept=".srt,.vtt"
-              onChange={(e) => patch({ subtitlesFile: e.target.files?.[0] ?? null })}
+              onChange={(e) => patch({
+                subtitlesFile: e.target.files?.[0] ?? null,
+                subtitleUploadState: "idle",
+                subtitleUploadError: null,
+              })}
               className="hidden"
             />
           </label>
+          {form.subtitleUploadState === "uploading" && (
+            <p className="mt-3 text-[12px] text-[#7C5CFC]">Uploading subtitle track...</p>
+          )}
+          {form.subtitleUploadState === "done" && form.subtitleTracks.length > 0 && (
+            <div className="mt-3 rounded-xl border border-[#2BB5A0]/20 bg-[#2BB5A0]/5 p-3">
+              <p className="text-[12px] font-semibold text-[#2BB5A0]">Subtitle tracks saved</p>
+              <div className="mt-2 space-y-1">
+                {form.subtitleTracks.map((track) => (
+                  <p key={track.id} className="text-[11px] text-[#6B6B6B]">
+                    {track.language.toUpperCase()} • {track.format.toUpperCase()} • {track.source.replace(/_/g, " ")}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+          {form.subtitleUploadState === "error" && form.subtitleUploadError && (
+            <p className="mt-3 text-[12px] text-[#E8527A]">{form.subtitleUploadError}</p>
+          )}
         </div>
       </div>
 

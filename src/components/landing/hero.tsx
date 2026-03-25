@@ -25,7 +25,7 @@ export function LandingHero() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6">
         <FeatureCard
           title="Video Stream"
           desc="Professional 4K lossless quality."

@@ -167,7 +167,7 @@ export function ProfileHeader({
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
 
             {/* 1. Cover Photo — half-height hero */}
-            <div className="relative h-[320px] w-full overflow-hidden">
+            <div className="relative h-[200px] sm:h-[280px] lg:h-[320px] w-full overflow-hidden">
                 {resolvedCover ? (
                     <img
                         src={resolvedCover}
@@ -213,9 +213,9 @@ export function ProfileHeader({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3 }}
-                        className="relative group justify-self-center md:justify-self-start"
+                        className="relative group justify-self-center md:justify-self-start z-10"
                     >
-                        <div className="h-44 w-44 rounded-3xl overflow-hidden border-[6px] border-white shadow-2xl bg-zinc-100 relative">
+                        <div className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 rounded-[1.5rem] sm:rounded-3xl overflow-hidden border-[4px] sm:border-[6px] border-white shadow-2xl bg-zinc-100 relative">
                             {resolvedAvatar ? (
                                 <img
                                     src={resolvedAvatar}
@@ -263,7 +263,7 @@ export function ProfileHeader({
                     >
                         {/* Name + badges */}
                         <div className="flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
-                            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-brand-text">
+                            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-brand-text">
                                 {profile.display_name}
                             </h1>
                             {badges.map((badge) => {

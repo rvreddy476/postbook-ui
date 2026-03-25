@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSharePost } from '@/hooks/usePostActions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Repeat2, Quote, Link2, Send } from 'lucide-react';
@@ -9,22 +10,33 @@ interface ShareDialogProps {
   postId: string;
   isOpen: boolean;
   onClose: () => void;
+  shareUrl?: string;
 }
 
-const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) => {
+const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shareUrl }) => {
   const [quoteText, setQuoteText] = useState('');
   const [selectedType, setSelectedType] = useState<'repost' | 'quote' | 'external' | null>(null);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const shareMutation = useSharePost();
 
   const handleShare = async (type: 'repost' | 'quote' | 'external') => {
+    const showSuccessAndClose = (msg: string) => {
+      setError('');
+      setSuccessMsg(msg);
+      setTimeout(() => {
+        setSuccessMsg('');
+        onClose();
+      }, 1500);
+    };
+
     if (type === 'external') {
-      const url = `${window.location.origin}/post/${postId}`;
+      const url = shareUrl || `${window.location.origin}/post/${postId}`;
       await navigator.clipboard.writeText(url);
       shareMutation.mutate(
         { postId, shareType: 'external' },
         {
-          onSuccess: () => onClose(),
+          onSuccess: () => showSuccessAndClose('Link copied to clipboard!'),
           onError: (err: any) => {
             const msg = err?.response?.data?.error?.message || 'Failed to share';
             setError(msg);
@@ -38,15 +50,15 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
       shareMutation.mutate(
         { postId, shareType: 'repost' },
         {
-          onSuccess: () => onClose(),
+          onSuccess: () => showSuccessAndClose('Reposted! It will appear in your followers\' feeds.'),
           onError: (err: any) => {
             const code = err?.response?.data?.error?.code;
-            if (code === 'ALREADY_SHARED') {
+            if (code === 'ALREADY_SHARED' || code === 'ALREADY_REPOSTED') {
               setError('You already reposted this');
-            } else if (code === 'CIRCLE_SHARE_RESTRICTED') {
-              setError('This post cannot be shared');
+            } else if (code === 'CIRCLE_SHARE_RESTRICTED' || code === 'NOT_ELIGIBLE') {
+              setError('This post cannot be reposted');
             } else {
-              setError('Failed to share');
+              setError('Failed to repost');
             }
           },
         }
@@ -67,12 +79,21 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
         onSuccess: () => {
           setQuoteText('');
           setSelectedType(null);
-          onClose();
+          setError('');
+          setSuccessMsg('Quote posted!');
+          setTimeout(() => {
+            setSuccessMsg('');
+            onClose();
+          }, 1500);
         },
         onError: (err: any) => {
           const code = err?.response?.data?.error?.code;
-          if (code === 'CIRCLE_SHARE_RESTRICTED') {
-            setError('This post cannot be shared');
+          if (code === 'CIRCLE_SHARE_RESTRICTED' || code === 'NOT_ELIGIBLE') {
+            setError('This post cannot be reposted');
+          } else if (code === 'QUOTE_TEXT_REQUIRED') {
+            setError('Add your thoughts to quote repost');
+          } else if (code === 'QUOTE_TEXT_TOO_LONG') {
+            setError('Quote text must be 500 characters or fewer');
           } else {
             setError('Failed to share');
           }
@@ -81,25 +102,26 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
     );
   };
 
-  if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
-      >
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-brand-card rounded-3xl shadow-2xl border border-brand-divider w-full max-w-sm mx-4 overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+          onClick={onClose}
         >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-brand-card rounded-3xl shadow-2xl border border-brand-divider w-full max-w-sm mx-4 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
             <h3 className="text-sm font-black uppercase tracking-widest text-brand-text">Share Post</h3>
@@ -108,15 +130,25 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
             </button>
           </div>
 
+          {/* Success */}
+          {successMsg && (
+            <div className="p-8 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
+                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </div>
+              <p className="text-sm font-semibold text-brand-text">{successMsg}</p>
+            </div>
+          )}
+
           {/* Error */}
-          {error && (
+          {!successMsg && error && (
             <div className="mx-6 mt-3 px-3 py-2 bg-rose-50 rounded-xl text-[11px] font-bold text-rose-600">
               {error}
             </div>
           )}
 
           {/* Options */}
-          {selectedType !== 'quote' ? (
+          {successMsg ? null : selectedType !== 'quote' ? (
             <div className="p-4 space-y-2">
               <button
                 onClick={() => handleShare('repost')}
@@ -191,9 +223,11 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose }) =>
               </div>
             </form>
           )}
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 };
 

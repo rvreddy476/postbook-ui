@@ -577,7 +577,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
     }
 
     return (
-        <div className="w-full pb-12">
+        <div className="w-full pb-28 md:pb-12">
             {/* Header: Cover + 3-col grid + Bio */}
             <ProfileHeader
                 profile={profile}
@@ -607,7 +607,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
             {/* QR Code button (own profile only) */}
             {isOwn && (
-                <div className="max-w-[1200px] mx-auto px-6 sm:px-8 pt-3 flex justify-end">
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-8 pt-3 flex justify-end">
                     <button
                         onClick={() => setQrModalOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-divider text-brand-highlight text-xs font-semibold hover:bg-brand-secondary hover:border-brand-text/30 transition-all"
@@ -629,7 +629,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         : ""
                 } transition-all duration-200`}
             >
-                <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
                     <ProfileTabs
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -643,7 +643,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             </div>
 
             {/* Main content: 70/30 split (or 100% if no creator content) */}
-            <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mt-6">
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-8 mt-6">
                 {/* Pinned posts (shown above tabs content for all tab states) */}
                 {activeTab === "posts" && (
                     <PinnedSection userId={profile.id} isOwn={isOwn} />

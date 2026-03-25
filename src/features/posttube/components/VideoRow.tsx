@@ -12,9 +12,10 @@ interface VideoRowProps {
   variant?: "default" | "wide";
   badge?: string;
   badgeColor?: string;
+  showSeeAll?: boolean;
 }
 
-export function VideoRow({ title, icon, videos, variant = "default", badge, badgeColor }: VideoRowProps) {
+export function VideoRow({ title, icon, videos, variant = "default", badge, badgeColor, showSeeAll = false }: VideoRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -48,12 +49,14 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
             {badge}
           </span>
         )}
-        <button
-          type="button"
-          className="ml-auto text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition-colors"
-        >
-          See all
-        </button>
+        {showSeeAll && (
+          <button
+            type="button"
+            className="ml-auto text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition-colors"
+          >
+            See all
+          </button>
+        )}
       </div>
 
       {/* Scrollable row */}

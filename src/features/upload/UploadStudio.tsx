@@ -28,6 +28,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
   const { form, patch, steps, currentStepIndex, goToStep, nextStep, prevStep, isFirstStep, isLastStep } = studio;
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [attemptedNext, setAttemptedNext] = useState(false);
+  const publishError = studio.publishMutation.error instanceof Error ? studio.publishMutation.error.message : null;
 
   const checksPass = canPublish(form, steps);
   const draftSaved = studio.saveDraftMutation.isSuccess && !studio.saveDraftMutation.isPending;
@@ -90,7 +91,14 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
       case "enrich":
         return <EnrichStep {...props} />;
       case "publish":
-        return <PublishStep {...props} />;
+        return (
+          <PublishStep
+            {...props}
+            publishError={publishError}
+            retryProcessingCheck={studio.retryProcessingCheck}
+            onReplaceVideo={studio.clearFile}
+          />
+        );
       default:
         return null;
     }
@@ -117,6 +125,11 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               Your video is being processed and will be available to viewers shortly.
               This usually takes a few minutes.
             </p>
+            {form.publishWarning && (
+              <p className="mt-3 rounded-xl border border-[#E5A93D]/20 bg-[#E5A93D]/5 px-4 py-3 text-[12px] text-[#6B6B6B]">
+                {form.publishWarning}
+              </p>
+            )}
 
             {postUrl && (
               <div className="mt-6 flex items-center gap-2 rounded-xl border border-[#E8E6E1] bg-brand-card px-4 py-3 shadow-sm">
@@ -142,16 +155,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               </Link>
               <button
                 type="button"
-                onClick={() => patch({
-                  ...studio.form,
-                  videoFile: null, videoPreviewUrl: null, videoDurationSec: null, mediaId: null,
-                  draftId: null, uploadProgress: 0, uploadPhase: "idle", uploadError: null,
-                  title: "", caption: "", hashtags: [], tags: [], hashtagInput: "",
-                  coverSourceType: "video_frame", coverTimestampMs: null, coverPreviewUrl: null,
-                  customCoverFile: null, customCoverPreviewUrl: null, coverResult: null,
-                  processingReady: false, copyrightCheck: null, publishedPostId: null,
-                  publishSuccess: false, currentStep: "video", category: "",
-                })}
+                onClick={studio.clearFile}
                 className="rounded-xl bg-[#7C5CFC] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors shadow-sm"
               >
                 Upload Another

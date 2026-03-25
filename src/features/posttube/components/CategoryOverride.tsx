@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Tag } from "lucide-react";
 import { overrideVideoCategory } from "../data/posttubeApi";
 
 interface CategoryOverrideProps {
-  videoId: string;
+  videoId?: string;
   computedCategory: "flick" | "long_video";
   currentCategory: "flick" | "long_video";
   durationSeconds: number;
@@ -34,7 +34,9 @@ export function CategoryOverride({
       setError(null);
       setSaving(true);
       try {
-        await overrideVideoCategory(videoId, value);
+        if (videoId) {
+          await overrideVideoCategory(videoId, value);
+        }
         setSelected(value);
         onCategoryChange?.(value);
       } catch (err: unknown) {
@@ -47,6 +49,10 @@ export function CategoryOverride({
     },
     [videoId, selected, onCategoryChange],
   );
+
+  useEffect(() => {
+    setSelected(currentCategory);
+  }, [currentCategory]);
 
   return (
     <div className="rounded-xl border border-brand-divider bg-brand-card p-4">

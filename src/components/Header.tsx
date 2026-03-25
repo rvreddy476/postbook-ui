@@ -358,7 +358,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           href="/posttube"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
           title="TV"
         >
           <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
@@ -385,7 +385,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 5b. Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">

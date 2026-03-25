@@ -9,6 +9,7 @@ import type {
   CopyrightCheck,
   AudioTrack,
 } from "@/features/reels/types";
+import type { MediaSubtitleTrack } from "@/features/posttube/types";
 
 export type { ContentType, StepId };
 
@@ -73,6 +74,9 @@ export interface StudioFormState {
   autoConcepts: boolean;
   language: string;
   subtitlesFile: File | null;
+  subtitleTracks: MediaSubtitleTrack[];
+  subtitleUploadState: "idle" | "uploading" | "done" | "error";
+  subtitleUploadError: string | null;
   recordingDate: string;
   recordingLocation: string;
   license: LicenseType;
@@ -88,11 +92,18 @@ export interface StudioFormState {
 
   /* ── Processing ─────────────────── */
   processingReady: boolean;
+  processingStatus: "idle" | "processing" | "ready" | "failed";
+  processingError: string | null;
   copyrightCheck: CopyrightCheck | null;
 
   /* ── Post (after publish) ───────── */
   publishedPostId: string | null;
   publishSuccess: boolean;
+  publishWarning: string | null;
+  trimStartMs: number;
+  trimEndMs: number | null;
+  computedVideoCategory: "flick" | "long_video" | null;
+  finalVideoCategory: "flick" | "long_video" | null;
 }
 
 export const INITIAL_FORM_STATE: StudioFormState = {
@@ -137,6 +148,9 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   autoConcepts: true,
   language: "en",
   subtitlesFile: null,
+  subtitleTracks: [],
+  subtitleUploadState: "idle",
+  subtitleUploadError: null,
   recordingDate: "",
   recordingLocation: "",
   license: "standard",
@@ -148,7 +162,14 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   crossPostPosttube: false,
   publishToFeed: true,
   processingReady: false,
+  processingStatus: "idle",
+  processingError: null,
   copyrightCheck: null,
   publishedPostId: null,
   publishSuccess: false,
+  publishWarning: null,
+  trimStartMs: 0,
+  trimEndMs: null,
+  computedVideoCategory: null,
+  finalVideoCategory: null,
 };

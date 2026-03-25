@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, Check, Loader2, X } from "lucide-react";
 import { useMyChannels, useUpdateChannel } from "@/hooks/useChannels";
 import { useCheckHandle, useChangeHandle } from "@/hooks/useChannelSettings";
+import { useMyProfile } from "@/hooks/useEditProfile";
 import api from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 
@@ -31,6 +32,7 @@ function SettingsCard({ title, children }: { title: string; children: React.Reac
 
 export function GeneralTab() {
   const { data: channels, refetch: refetchChannels } = useMyChannels();
+  const { data: profile } = useMyProfile();
   const channel = channels?.[0];
   const updateMutation = useUpdateChannel();
   const checkHandle = useCheckHandle();
@@ -49,11 +51,11 @@ export function GeneralTab() {
   const [location, setLocation] = useState("");
   const [saved, setSaved] = useState(false);
 
-  // Handle change modal
   const [handleModalOpen, setHandleModalOpen] = useState(false);
   const [newHandle, setNewHandle] = useState("");
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
   const [handleConfirmed, setHandleConfirmed] = useState(false);
+  const [handleReason, setHandleReason] = useState<string | null>(null);
 
   useEffect(() => {
     if (channel) {
@@ -74,23 +76,43 @@ export function GeneralTab() {
     setTimeout(() => setSaved(false), 2000);
   }, [channel, name, category, updateMutation]);
 
-  const [handleReason, setHandleReason] = useState<string | null>(null);
+  const currentUsername = profile?.username?.toLowerCase() ?? null;
 
-  const handleCheckAvailability = useCallback(async () => {
-    if (!newHandle || newHandle.length < 3) return;
-    const result = await checkHandle.mutateAsync(newHandle);
-    setHandleAvailable(result.available);
-    setHandleReason(result.reason ?? null);
-  }, [newHandle, checkHandle]);
-
-  const handleConfirmChange = useCallback(async () => {
-    if (!handleAvailable || !handleConfirmed) return;
-    await changeHandle.mutateAsync(newHandle);
+  const resetHandleState = useCallback(() => {
     setHandleModalOpen(false);
     setNewHandle("");
     setHandleAvailable(null);
     setHandleConfirmed(false);
-  }, [handleAvailable, handleConfirmed, newHandle, changeHandle]);
+    setHandleReason(null);
+  }, []);
+
+  const handleCheckAvailability = useCallback(async () => {
+    const normalized = newHandle.trim().toLowerCase();
+    if (!normalized || normalized.length < 3) return;
+    if (currentUsername && normalized === currentUsername) {
+      setHandleAvailable(false);
+      setHandleReason("This is already your current handle.");
+      return;
+    }
+    const result = await checkHandle.mutateAsync(normalized);
+    setHandleAvailable(result.available);
+    setHandleReason(result.reason ?? null);
+  }, [newHandle, checkHandle, currentUsername]);
+
+  const handleConfirmChange = useCallback(async () => {
+    if (!handleAvailable || !handleConfirmed) return;
+    try {
+      await changeHandle.mutateAsync(newHandle);
+      resetHandleState();
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ||
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        (error instanceof Error ? error.message : "Could not change handle.");
+      setHandleAvailable(false);
+      setHandleReason(message);
+    }
+  }, [handleAvailable, handleConfirmed, newHandle, changeHandle, resetHandleState]);
 
   if (!channel) {
     return (
@@ -123,10 +145,8 @@ export function GeneralTab() {
 
   return (
     <div className="space-y-6">
-      {/* Channel Name + Handle */}
       <SettingsCard title="Channel Identity">
         <div className="space-y-5">
-          {/* Channel Name */}
           <div>
             <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">
               Channel Name
@@ -141,16 +161,15 @@ export function GeneralTab() {
             <p className="mt-1 text-[11px] text-brand-text/60">{name.length}/50 characters</p>
           </div>
 
-          {/* Handle */}
           <div>
             <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">
-              Handle
+              Account Handle
             </label>
             <div className="flex items-center gap-3">
               <div className="flex h-10 flex-1 items-center rounded-xl border border-brand-divider bg-brand-secondary px-3">
                 <span className="text-[13px] text-brand-text/60">@</span>
                 <span className="ml-0.5 text-[13px] font-medium text-brand-text">
-                  {channel?.handle || "—"}
+                  {profile?.username || "-"}
                 </span>
               </div>
               <button
@@ -161,12 +180,13 @@ export function GeneralTab() {
                 Change
               </button>
             </div>
+            <p className="mt-1 text-[11px] text-brand-text/60">
+              This is your global account handle used across profile surfaces and mentions.
+            </p>
           </div>
         </div>
       </SettingsCard>
 
-
-      {/* Category + Language + Location */}
       <SettingsCard title="Details">
         <div className="grid grid-cols-2 gap-5">
           <div>
@@ -214,7 +234,6 @@ export function GeneralTab() {
         </div>
       </SettingsCard>
 
-      {/* Save */}
       <div className="flex items-center justify-end gap-3">
         <AnimatePresence>
           {saved ? (
@@ -243,7 +262,6 @@ export function GeneralTab() {
         </button>
       </div>
 
-      {/* Handle Change Modal */}
       <AnimatePresence>
         {handleModalOpen ? (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -257,15 +275,14 @@ export function GeneralTab() {
                 <h3 className="text-[15px] font-bold text-brand-text">Change Handle</h3>
                 <button
                   type="button"
-                  onClick={() => { setHandleModalOpen(false); setNewHandle(""); setHandleAvailable(null); setHandleConfirmed(false); }}
+                  onClick={resetHandleState}
                   className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="px-6 py-5 space-y-4">
-                {/* Warning */}
+              <div className="space-y-4 px-6 py-5">
                 <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                   <div className="text-[12px] leading-relaxed text-amber-800">
@@ -280,9 +297,8 @@ export function GeneralTab() {
                   </div>
                 </div>
 
-                {/* Handle rules */}
                 <div className="rounded-xl bg-brand-secondary p-3">
-                  <p className="text-[11px] font-semibold text-brand-highlight mb-1">Handle rules:</p>
+                  <p className="mb-1 text-[11px] font-semibold text-brand-highlight">Handle rules:</p>
                   <ul className="space-y-0.5 text-[11px] text-brand-text/60">
                     <li>3-24 characters, lowercase a-z, 0-9, underscore</li>
                     <li>Cannot start or end with underscore</li>
@@ -291,7 +307,6 @@ export function GeneralTab() {
                   </ul>
                 </div>
 
-                {/* New handle input */}
                 <div>
                   <label className="mb-1.5 block text-[12px] font-semibold text-brand-highlight">
                     New Handle
@@ -306,6 +321,7 @@ export function GeneralTab() {
                         onChange={(e) => {
                           setNewHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""));
                           setHandleAvailable(null);
+                          setHandleReason(null);
                         }}
                         maxLength={24}
                         className="h-10 w-full rounded-xl border border-brand-divider bg-brand-card pl-7 pr-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
@@ -335,9 +351,8 @@ export function GeneralTab() {
                   ) : null}
                 </div>
 
-                {/* Confirmation checkbox */}
                 {handleAvailable ? (
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                  <label className="flex cursor-pointer items-start gap-2.5">
                     <input
                       type="checkbox"
                       checked={handleConfirmed}
@@ -352,10 +367,10 @@ export function GeneralTab() {
                 ) : null}
               </div>
 
-              <div className="border-t border-brand-divider px-6 py-4 flex justify-end gap-3">
+              <div className="flex justify-end gap-3 border-t border-brand-divider px-6 py-4">
                 <button
                   type="button"
-                  onClick={() => { setHandleModalOpen(false); setNewHandle(""); setHandleAvailable(null); setHandleConfirmed(false); }}
+                  onClick={resetHandleState}
                   className="rounded-xl px-4 py-2.5 text-[13px] font-semibold text-brand-highlight hover:bg-brand-secondary"
                 >
                   Cancel

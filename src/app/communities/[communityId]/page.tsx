@@ -1,49 +1,57 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import AppShell from '@/components/AppShell'
 import { useParams } from 'next/navigation'
 import {
   useCommunity,
-  useCommunitySpaces,
-  useCommunityMembers,
   useCommunityEvents,
   useCommunityAnnouncements,
-  useDeleteSpace,
+  useCreateCommunityEvent,
   useJoinCommunity,
   useLeaveCommunity,
 } from '@/hooks/useCommunities'
 import CommunityHeader from '@/components/communities/CommunityHeader'
 import CommunityEditModal from '@/components/communities/CommunityEditModal'
-import SpaceCard from '@/components/communities/SpaceCard'
+import CommunityFeedTab from '@/components/communities/tabs/CommunityFeedTab'
+import CommunityMembersTab from '@/components/communities/tabs/CommunityMembersTab'
+import CommunityAdminTab from '@/components/communities/tabs/CommunityAdminTab'
+import CommunityWikiTab from '@/components/communities/tabs/CommunityWikiTab'
+import CommunityRightRail from '@/components/communities/CommunityRightRail'
+import { isAtLeast } from '@/lib/communityRoles'
 import {
   Home,
   Megaphone,
-  LayoutGrid,
   Calendar,
   Users,
   Info,
   ArrowLeft,
-  Search,
   Pin,
   MapPin,
   Video,
-  ChevronDown,
-  ChevronRight,
+  BookOpen,
+  Shield,
+  Plus,
+  X,
+  Globe,
+  Clock,
+  PenLine,
+  CalendarPlus,
 } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import type { CommunityEvent, CommunityAnnouncement } from '@/types/communities'
 
-type NavSection = 'home' | 'announcements' | 'spaces' | 'events' | 'members' | 'about'
+type NavSection = 'home' | 'announcements' | 'events' | 'members' | 'wiki' | 'about' | 'admin'
 
-const navItems: { key: NavSection; label: string; icon: React.ReactNode }[] = [
+const allNavItems: { key: NavSection; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { key: 'home', label: 'Home Feed', icon: <Home className="w-4 h-4" /> },
   { key: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" /> },
-  { key: 'spaces', label: 'Spaces', icon: <LayoutGrid className="w-4 h-4" /> },
   { key: 'events', label: 'Events', icon: <Calendar className="w-4 h-4" /> },
   { key: 'members', label: 'Members', icon: <Users className="w-4 h-4" /> },
+  { key: 'wiki', label: 'Wiki', icon: <BookOpen className="w-4 h-4" /> },
   { key: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
+  { key: 'admin', label: 'Admin Tools', icon: <Shield className="w-4 h-4" />, adminOnly: true },
 ]
 
 function formatCount(n: number): string {
@@ -56,31 +64,55 @@ export default function CommunityDetailPage() {
   const params = useParams()
   const communityId = params.communityId as string
   const [activeNav, setActiveNav] = useState<NavSection>('home')
-  const [spacesExpanded, setSpacesExpanded] = useState(true)
-  const [memberSearch, setMemberSearch] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCreateEvent, setShowCreateEvent] = useState(false)
+  const [eventTitle, setEventTitle] = useState('')
+  const [eventDesc, setEventDesc] = useState('')
+  const [eventDate, setEventDate] = useState('')
+  const [eventStartTime, setEventStartTime] = useState('')
+  const [eventEndTime, setEventEndTime] = useState('')
+  const [eventLocation, setEventLocation] = useState('')
+  const [eventIsOnline, setEventIsOnline] = useState(false)
+  const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const createMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
+        setShowCreateMenu(false)
+      }
+    }
+    if (showCreateMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showCreateMenu])
 
   const { data: community, isLoading } = useCommunity(communityId)
-  const { data: spaces } = useCommunitySpaces(communityId)
-  const { data: members } = useCommunityMembers(communityId)
   const { data: events = [] } = useCommunityEvents(activeNav === 'events' ? communityId : undefined)
   const { data: announcements = [] } = useCommunityAnnouncements(
     activeNav === 'home' || activeNav === 'announcements' ? communityId : undefined
   )
-  const deleteSpace = useDeleteSpace()
   const joinCommunity = useJoinCommunity()
   const leaveCommunity = useLeaveCommunity()
+  const createEvent = useCreateCommunityEvent(communityId)
 
-  const isAdmin =
-    community?.viewer_role === 'admin' ||
-    community?.viewer_role === 'owner' ||
-    community?.viewer_role === 'moderator'
+  const isAdmin = isAtLeast(community?.viewer_role, 'moderator')
   const isMember = community?.viewer_role && community.viewer_role !== 'outsider'
+
+  const navItems = useMemo(
+    () => allNavItems.filter(item => !item.adminOnly || isAtLeast(community?.viewer_role, 'moderator')),
+    [community?.viewer_role]
+  )
+
+  const eventsList = events ?? []
+  const upcomingEvents = eventsList.filter((event) => new Date(event.starts_at) >= new Date())
+  const pastEvents = eventsList.filter((event) => new Date(event.starts_at) < new Date())
 
   if (isLoading) {
     return (
       <AppShell>
-        <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-16">
           <div className="bg-white rounded-2xl border border-brand-divider overflow-hidden animate-pulse">
             <div className="h-[120px] bg-brand-bg" />
             <div className="px-6 pb-6 -mt-10">
@@ -97,29 +129,16 @@ export default function CommunityDetailPage() {
   if (!community) {
     return (
       <AppShell>
-        <div className="max-w-6xl mx-auto px-4 pt-8 pb-16 text-center">
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-16 text-center">
           <p className="text-brand-text/60">Community not found</p>
         </div>
       </AppShell>
     )
   }
 
-  const pinnedAnnouncement = announcements.find((announcement) => announcement.is_pinned)
-  const filteredMembers = memberSearch
-    ? members?.filter(
-        (member) =>
-          member.display_name?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-          member.username?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-          member.user_id.toLowerCase().includes(memberSearch.toLowerCase())
-      )
-    : members
-
-  const upcomingEvents = events.filter((event) => new Date(event.starts_at) >= new Date())
-  const pastEvents = events.filter((event) => new Date(event.starts_at) < new Date())
-
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-8 pb-16">
         <Link
           href="/communities"
           className="inline-flex items-center gap-1.5 text-sm text-brand-text/60 hover:text-brand-text mb-4 transition-colors"
@@ -135,10 +154,11 @@ export default function CommunityDetailPage() {
         />
 
         <div className="flex gap-6 mt-6">
-          <div className="w-[220px] flex-shrink-0 hidden md:block">
-            <div className="bg-white rounded-2xl border border-brand-divider p-4 sticky top-24">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+          {/* ─── Left Sidebar ─── */}
+          <div className="w-[240px] flex-shrink-0 hidden md:block">
+            <div className="bg-white/60 dark:bg-brand-bg/60 backdrop-blur-xl rounded-3xl border border-brand-divider/60 p-5 sticky top-24 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
                   {community.avatar_media_id ? (
                     <img
                       src={`/v1/media/${community.avatar_media_id}/serve`}
@@ -146,24 +166,24 @@ export default function CommunityDetailPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-black text-lg">
                       {community.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-brand-text truncate">{community.name}</p>
-                  <p className="text-[11px] font-mono text-brand-text/50">@{community.handle}</p>
+                  <p className="text-sm font-black text-brand-text truncate tracking-tight">{community.name}</p>
+                  <p className="text-[11px] font-medium text-brand-text/50">@{community.handle}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-3 text-xs font-mono text-brand-text/60">
+              <div className="flex items-center gap-3 mb-5 text-[11px] font-bold text-brand-text/60 tracking-wide uppercase">
                 <span>{formatCount(community.member_count)} members</span>
                 {community.online_count !== undefined && (
                   <>
                     <span className="text-brand-text/20">|</span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className="flex items-center gap-1.5 text-green-600 dark:text-green-500">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                       {community.online_count} online
                     </span>
                   </>
@@ -171,152 +191,85 @@ export default function CommunityDetailPage() {
               </div>
 
               {isAdmin ? (
-                <div className="mb-4">
+                <div className="mb-5">
                   <button
                     onClick={() => setShowEditModal(true)}
-                    className="block w-full text-center px-3 py-2 border border-brand-divider text-brand-text text-xs font-semibold rounded-xl hover:bg-brand-bg transition-colors"
+                    className="block w-full text-center px-4 py-2.5 border border-brand-divider text-brand-text text-sm font-bold rounded-xl hover:bg-brand-bg hover:shadow-sm transition-all duration-300"
                   >
                     Edit Community
                   </button>
                 </div>
               ) : isMember ? (
-                <div className="mb-4">
+                <div className="mb-5">
                   <button
                     onClick={() => leaveCommunity.mutate(community.id)}
                     disabled={leaveCommunity.isPending}
-                    className="block w-full text-center px-3 py-2 border border-brand-divider text-brand-text text-xs font-semibold rounded-xl hover:bg-brand-bg transition-colors disabled:opacity-50"
+                    className="block w-full text-center px-4 py-2.5 border border-brand-divider/60 bg-white/50 dark:bg-brand-bg/50 text-brand-text text-sm font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-200 transition-all duration-300 disabled:opacity-50"
                   >
                     Leave Community
                   </button>
                 </div>
               ) : (
-                <div className="mb-4">
+                <div className="mb-5">
                   <button
                     onClick={() => joinCommunity.mutate(community.id)}
                     disabled={joinCommunity.isPending}
-                    className="block w-full text-center px-3 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-60"
+                    className="block w-full text-center px-4 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0"
                   >
                     Join Community
                   </button>
                 </div>
               )}
 
-              <nav className="space-y-0.5">
-                {navItems.map((item) => {
-                  const isSpaces = item.key === 'spaces'
-                  return (
-                    <div key={item.key}>
-                      <button
-                        onClick={() => {
-                          setActiveNav(item.key)
-                          if (isSpaces) setSpacesExpanded(!spacesExpanded)
-                        }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
-                          activeNav === item.key
-                            ? 'bg-brand-bg text-brand-text font-semibold'
-                            : 'text-brand-text/60 hover:bg-brand-bg hover:text-brand-text'
-                        }`}
-                      >
-                        {item.icon}
-                        <span className="flex-1 text-left">{item.label}</span>
-                        {isSpaces && (
-                          spacesExpanded ? (
-                            <ChevronDown className="w-3.5 h-3.5 text-brand-text/40" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-brand-text/40" />
-                          )
-                        )}
-                      </button>
-                      {isSpaces && spacesExpanded && spaces && spaces.length > 0 && (
-                        <div className="ml-7 mt-0.5 space-y-0.5">
-                          {spaces.slice(0, 5).map((space) => (
-                            <Link
-                              key={space.id}
-                              href={
-                                space.linked_group_id
-                                  ? `/groups/${space.linked_group_id}`
-                                  : space.linked_channel_id
-                                    ? `/channels/${space.linked_channel_id}`
-                                    : '#'
-                              }
-                              className="block text-xs text-brand-text/50 hover:text-brand-text py-1 px-2 rounded truncate transition-colors"
-                            >
-                              # {space.name}
-                            </Link>
-                          ))}
-                          {spaces.length > 5 && (
-                            <button
-                              onClick={() => setActiveNav('spaces')}
-                              className="text-xs text-brand-text/40 hover:text-brand-text py-1 px-2 transition-colors"
-                            >
-                              +{spaces.length - 5} more
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+              {/* Replaced old New Post button with FAB logic below */}
+
+              <nav className="space-y-1.5">
+                {navItems.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setActiveNav(item.key)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded-xl font-bold transition-all duration-300 ${
+                      activeNav === item.key
+                        ? 'bg-brand-text text-brand-bg shadow-md scale-100'
+                        : 'text-brand-text/70 hover:bg-brand-bg hover:text-brand-text hover:scale-[1.02]'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="flex-1 text-left">{item.label}</span>
+                  </button>
+                ))}
               </nav>
             </div>
           </div>
 
-          <div className="md:hidden w-full mb-4">
-            <div className="flex items-center gap-0 border-b border-brand-divider overflow-x-auto">
+          {/* ─── Mobile Tab Bar ─── */}
+          <div className="md:hidden w-full mb-6 relative">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 px-1">
               {navItems.map((item) => (
                 <button
                   key={item.key}
                   onClick={() => setActiveNav(item.key)}
-                  className={`relative flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                  className={`relative flex items-center gap-2 px-5 py-3 text-xs font-bold rounded-2xl whitespace-nowrap transition-all duration-300 ${
                     activeNav === item.key
-                      ? 'text-brand-text'
-                      : 'text-brand-text/60 hover:text-brand-text'
+                      ? 'bg-brand-text text-brand-bg shadow-lg scale-100'
+                      : 'bg-white/50 dark:bg-brand-bg/50 backdrop-blur-sm text-brand-text/70 hover:bg-white dark:hover:bg-brand-bg hover:text-brand-text border border-transparent hover:border-brand-divider scale-95 hover:scale-100'
                   }`}
                 >
                   {item.icon}
                   {item.label}
-                  {activeNav === item.key && (
-                    <span className="absolute bottom-0 left-1 right-1 h-0.5 border-b-2 border-brand-text rounded-full" />
-                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* ─── Main Content ─── */}
+          <div className="flex-1 min-w-0 bg-white/40 dark:bg-brand-bg/40 backdrop-blur-3xl rounded-[2.5rem] border border-brand-divider/50 p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] relative overflow-hidden">
             {activeNav === 'home' && (
-              <div>
-                <h2 className="text-lg font-bold text-brand-text mb-4">Home Feed</h2>
-
-                {pinnedAnnouncement && (
-                  <div className="bg-white rounded-2xl border border-brand-divider p-4 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Pin className="w-3.5 h-3.5 text-brand-text/50" />
-                      <span className="text-[11px] font-semibold text-brand-text/50 uppercase tracking-wide">
-                        Pinned Announcement
-                      </span>
-                    </div>
-                    <p className="text-sm text-brand-text leading-relaxed">
-                      {pinnedAnnouncement.content}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-brand-text/40">
-                      {pinnedAnnouncement.author_name && (
-                        <span className="font-semibold">{pinnedAnnouncement.author_name}</span>
-                      )}
-                      <span>
-                        {new Date(pinnedAnnouncement.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                  <Home className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                  <p className="text-sm text-brand-text/50">
-                    Community feed posts will appear here
-                  </p>
-                </div>
-              </div>
+              <CommunityFeedTab
+                communityId={communityId}
+                isMember={!!isMember}
+                viewerRole={community.viewer_role}
+              />
             )}
 
             {activeNav === 'announcements' && (
@@ -337,34 +290,148 @@ export default function CommunityDetailPage() {
               </div>
             )}
 
-            {activeNav === 'spaces' && (
-              <div>
-                <h2 className="text-lg font-bold text-brand-text mb-4">
-                  Spaces ({spaces?.length ?? 0})
-                </h2>
-                {spaces && spaces.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {spaces.map((space) => (
-                      <SpaceCard
-                        key={space.id}
-                        space={space}
-                        isAdmin={isAdmin}
-                        onRemove={(spaceId) => deleteSpace.mutate({ communityId, spaceId })}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
-                    <LayoutGrid className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                    <p className="text-sm text-brand-text/50">No spaces yet</p>
-                  </div>
-                )}
-              </div>
-            )}
-
             {activeNav === 'events' && (
               <div>
-                <h2 className="text-lg font-bold text-brand-text mb-4">Events</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-brand-text">Events</h2>
+                  {isMember && (
+                    <button
+                      onClick={() => setShowCreateEvent(!showCreateEvent)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Create Event
+                    </button>
+                  )}
+                </div>
+
+                {/* Create Event form */}
+                {showCreateEvent && (
+                  <div className="bg-white border border-brand-divider rounded-2xl p-5 mb-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-bold text-brand-text">New Event</h3>
+                      <button onClick={() => setShowCreateEvent(false)} className="p-1 text-brand-text/40 hover:text-brand-text">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Event title *"
+                      value={eventTitle}
+                      onChange={e => setEventTitle(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-3"
+                    />
+
+                    <textarea
+                      placeholder="Description (optional)"
+                      value={eventDesc}
+                      onChange={e => setEventDesc(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-3 resize-none"
+                    />
+
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      <div>
+                        <label className="text-[11px] text-brand-text/40 mb-1 block">Date *</label>
+                        <input
+                          type="date"
+                          value={eventDate}
+                          onChange={e => setEventDate(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-brand-text/40 mb-1 block">Start time</label>
+                        <input
+                          type="time"
+                          value={eventStartTime}
+                          onChange={e => setEventStartTime(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-brand-text/40 mb-1 block">End time</label>
+                        <input
+                          type="time"
+                          value={eventEndTime}
+                          onChange={e => setEventEndTime(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-3">
+                      <button
+                        onClick={() => setEventIsOnline(false)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                          !eventIsOnline
+                            ? 'bg-brand-text text-brand-bg'
+                            : 'border border-brand-divider text-brand-text/50 hover:bg-brand-bg'
+                        }`}
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        In-Person
+                      </button>
+                      <button
+                        onClick={() => setEventIsOnline(true)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                          eventIsOnline
+                            ? 'bg-brand-text text-brand-bg'
+                            : 'border border-brand-divider text-brand-text/50 hover:bg-brand-bg'
+                        }`}
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        Online
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder={eventIsOnline ? 'Meeting link (optional)' : 'Venue address (optional)'}
+                      value={eventLocation}
+                      onChange={e => setEventLocation(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-4"
+                    />
+
+                    <button
+                      onClick={() => {
+                        if (!eventTitle.trim() || !eventDate) return
+                        const startsAt = eventStartTime
+                          ? `${eventDate}T${eventStartTime}:00`
+                          : `${eventDate}T00:00:00`
+                        const endsAt = eventEndTime
+                          ? `${eventDate}T${eventEndTime}:00`
+                          : undefined
+                        createEvent.mutate(
+                          {
+                            title: eventTitle.trim(),
+                            description: eventDesc.trim() || undefined,
+                            location: eventLocation.trim() || undefined,
+                            starts_at: new Date(startsAt).toISOString(),
+                            ends_at: endsAt ? new Date(endsAt).toISOString() : undefined,
+                          },
+                          {
+                            onSuccess: () => {
+                              setEventTitle('')
+                              setEventDesc('')
+                              setEventDate('')
+                              setEventStartTime('')
+                              setEventEndTime('')
+                              setEventLocation('')
+                              setEventIsOnline(false)
+                              setShowCreateEvent(false)
+                            },
+                          }
+                        )
+                      }}
+                      disabled={!eventTitle.trim() || !eventDate || createEvent.isPending}
+                      className="w-full py-2.5 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-40"
+                    >
+                      {createEvent.isPending ? 'Creating...' : 'Create Event'}
+                    </button>
+                  </div>
+                )}
 
                 {upcomingEvents.length > 0 && (
                   <div className="mb-6">
@@ -392,88 +459,36 @@ export default function CommunityDetailPage() {
                   </div>
                 )}
 
-                {upcomingEvents.length === 0 && pastEvents.length === 0 && (
+                {upcomingEvents.length === 0 && pastEvents.length === 0 && !showCreateEvent && (
                   <div className="bg-white rounded-2xl border border-brand-divider p-8 text-center">
                     <Calendar className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                    <p className="text-sm text-brand-text/50">No events yet</p>
+                    <p className="text-sm font-semibold text-brand-text/50">No events yet</p>
+                    {isMember && (
+                      <button
+                        onClick={() => setShowCreateEvent(true)}
+                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Create First Event
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             )}
 
             {activeNav === 'members' && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-brand-text">
-                    Members ({community.member_count})
-                  </h2>
-                </div>
+              <CommunityMembersTab
+                communityId={communityId}
+                viewerRole={community.viewer_role}
+              />
+            )}
 
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
-                  <input
-                    type="text"
-                    placeholder="Search members..."
-                    value={memberSearch}
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-divider rounded-xl text-sm placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 text-brand-text"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  {filteredMembers && filteredMembers.length > 0 ? (
-                    filteredMembers.map((member) => (
-                      <div
-                        key={member.user_id}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-white border border-brand-divider"
-                      >
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                          {member.avatar_url ? (
-                            <img
-                              src={member.avatar_url}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-brand-bg flex items-center justify-center">
-                              <Users className="w-5 h-5 text-brand-text/30" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-brand-text truncate">
-                            {member.display_name || member.username || member.user_id}
-                          </p>
-                          {member.username && (
-                            <p className="text-[11px] font-mono text-brand-text/50">
-                              @{member.username}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {(member.role === 'admin' ||
-                            member.role === 'owner' ||
-                            member.role === 'moderator') && (
-                            <span className="px-2 py-0.5 bg-brand-bg text-brand-text/60 text-[10px] font-bold rounded-full uppercase">
-                              {member.role}
-                            </span>
-                          )}
-                          <span className="text-[10px] font-mono text-brand-text/40">
-                            {new Date(member.joined_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <Users className="w-8 h-8 text-brand-text/20 mx-auto mb-2" />
-                      <p className="text-sm text-brand-text/50">
-                        {memberSearch ? 'No members found' : 'No members to show'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {activeNav === 'wiki' && (
+              <CommunityWikiTab
+                communityId={communityId}
+                viewerRole={community.viewer_role}
+              />
             )}
 
             {activeNav === 'about' && (
@@ -543,6 +558,15 @@ export default function CommunityDetailPage() {
                 </div>
               </div>
             )}
+
+            {activeNav === 'admin' && (
+              <CommunityAdminTab communityId={communityId} />
+            )}
+          </div>
+
+          {/* ─── Right Rail ─── */}
+          <div className="w-[260px] flex-shrink-0 hidden lg:block">
+            <CommunityRightRail communityId={communityId} viewerRole={community.viewer_role} />
           </div>
         </div>
 
@@ -551,6 +575,53 @@ export default function CommunityDetailPage() {
             <CommunityEditModal community={community} onClose={() => setShowEditModal(false)} />
           )}
         </AnimatePresence>
+
+        {/* ─── Floating Action Button (FAB) ─── */}
+        {isMember && (
+          <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end" ref={createMenuRef}>
+            <AnimatePresence>
+              {showCreateMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="mb-4 flex flex-col gap-3"
+                >
+                  <Link
+                    href={`/communities/${communityId}/new-post`}
+                    className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
+                  >
+                    <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Post</span>
+                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-sm">
+                      <PenLine className="w-4 h-4" />
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowCreateEvent(true)
+                      setShowCreateMenu(false)
+                      setActiveNav('events')
+                    }}
+                    className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
+                  >
+                    <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Event</span>
+                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-sm">
+                      <CalendarPlus className="w-4 h-4" />
+                    </div>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <button
+              onClick={() => setShowCreateMenu(!showCreateMenu)}
+              className={`w-14 h-14 rounded-full bg-rose-600 text-white shadow-[0_8px_30px_rgb(225,29,72,0.3)] flex items-center justify-center hover:scale-110 hover:shadow-[0_8px_40px_rgb(225,29,72,0.4)] transition-all duration-300 active:scale-95 ${
+                showCreateMenu ? 'rotate-45 bg-rose-700' : ''
+              }`}
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          </div>
+        )}
       </div>
     </AppShell>
   )
@@ -558,28 +629,37 @@ export default function CommunityDetailPage() {
 
 function AnnouncementCard({ announcement }: { announcement: CommunityAnnouncement }) {
   return (
-    <div className="bg-white rounded-2xl border border-brand-divider p-4">
-      <div className="flex items-center gap-2 mb-2">
-        {announcement.is_pinned && <Pin className="w-3.5 h-3.5 text-brand-text/50" />}
+    <div className="bg-gradient-to-br from-brand-text/5 to-transparent rounded-3xl border border-brand-divider/60 p-5 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-1 h-full bg-brand-text/40 rounded-l-3xl" />
+      <div className="flex items-center gap-3 mb-3">
+        {announcement.is_pinned && (
+          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-2 py-1 rounded-md">
+            <Pin className="w-3 h-3" /> Pinned
+          </div>
+        )}
         <div className="flex items-center gap-2">
-          {announcement.author_avatar && (
+          {announcement.author_avatar ? (
             <img
               src={announcement.author_avatar}
               alt=""
-              className="w-5 h-5 rounded-full object-cover"
+              className="w-6 h-6 rounded-full object-cover ring-1 ring-black/5"
             />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-brand-bg flex items-center justify-center text-[10px] font-bold">
+              {announcement.author_name?.charAt(0) || '?'}
+            </div>
           )}
           {announcement.author_name && (
-            <span className="text-xs font-semibold text-brand-text">
+            <span className="text-sm font-bold text-brand-text">
               {announcement.author_name}
             </span>
           )}
         </div>
-        <span className="text-[11px] font-mono text-brand-text/40 ml-auto">
+        <span className="text-[11px] font-bold text-brand-text/40 ml-auto uppercase tracking-wide">
           {new Date(announcement.created_at).toLocaleDateString()}
         </span>
       </div>
-      <p className="text-sm text-brand-text leading-relaxed">{announcement.content}</p>
+      <p className="text-sm text-brand-text/80 leading-relaxed font-medium">{announcement.content}</p>
     </div>
   )
 }
@@ -589,38 +669,44 @@ function EventCard({ event, isPast }: { event: CommunityEvent; isPast?: boolean 
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-brand-divider p-4 ${isPast ? 'opacity-60' : ''}`}
+      className={`group relative overflow-hidden bg-white/70 dark:bg-brand-bg/70 backdrop-blur-md rounded-3xl border border-brand-divider/60 p-5 hover:shadow-xl hover:-translate-y-1 hover:bg-white dark:hover:bg-brand-bg hover:border-brand-text/30 transition-all duration-300 ${isPast ? 'opacity-60 grayscale-[0.3]' : ''}`}
     >
-      <div className="flex gap-4">
-        <div className="w-14 h-14 rounded-xl bg-brand-bg flex flex-col items-center justify-center flex-shrink-0">
-          <span className="text-xs font-mono text-brand-text/50 uppercase">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-brand-text/[0.03] rounded-bl-full pointer-events-none -z-10 group-hover:scale-110 transition-transform duration-500" />
+      <div className="flex gap-5">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/10 to-transparent flex flex-col items-center justify-center flex-shrink-0 border border-brand-divider/50 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 w-full h-1.5 bg-brand-text opacity-80" />
+          <span className="text-[11px] font-bold text-brand-text/70 uppercase tracking-widest mt-1">
             {date.toLocaleDateString('en-US', { month: 'short' })}
           </span>
-          <span className="text-lg font-bold text-brand-text">{date.getDate()}</span>
+          <span className="text-xl font-black text-brand-text leading-none mt-0.5">{date.getDate()}</span>
         </div>
 
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-bold text-brand-text truncate">{event.title}</h4>
+          <h4 className="text-base font-bold text-brand-text truncate tracking-tight">{event.title}</h4>
           {event.description && (
-            <p className="text-xs text-brand-text/60 mt-0.5 line-clamp-1">{event.description}</p>
+            <p className="text-sm text-brand-text/60 mt-1 line-clamp-2 leading-relaxed">{event.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-2 text-[11px] font-mono text-brand-text/50">
-            <span>
+          <div className="flex items-center gap-4 mt-3 text-xs font-semibold text-brand-text/60 flex-wrap">
+            <span className="flex items-center gap-1.5 text-brand-text/80 bg-brand-text/5 px-2 py-1 rounded-lg">
+              <Clock className="w-3.5 h-3.5" />
               {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </span>
             {event.location && (
-              <span className="flex items-center gap-0.5">
-                <MapPin className="w-3 h-3" />
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" />
                 {event.location}
               </span>
             )}
             {event.is_online && (
-              <span className="flex items-center gap-0.5">
-                <Video className="w-3 h-3" />
+              <span className="flex items-center gap-1.5 text-brand-text">
+                <Video className="w-3.5 h-3.5" />
                 Online
               </span>
             )}
-            <span>{event.attendee_count} attending</span>
+            <span className="flex items-center gap-1.5 ml-auto text-brand-text/50">
+              <Users className="w-3.5 h-3.5" />
+              {event.attendee_count} attending
+            </span>
           </div>
         </div>
       </div>

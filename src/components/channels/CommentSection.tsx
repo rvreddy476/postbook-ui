@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
   MessageCircle,
   Send,
@@ -17,6 +17,12 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { LetterAvatar } from '@/components/LetterAvatar'
+import api from '@/lib/api'
+import { useBatchProfiles } from '@/hooks/useProfile'
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuthUser } from '@/store/auth'
+import { useUpdateCommentRoom } from '@/hooks/useUpdateCommentRoom'
+import type { ChannelCommentUpdate } from '@/services/messageService'
 
 /* ── Types ──────────────────────────────────────────────────── */
 
@@ -36,6 +42,7 @@ interface Comment {
 
 interface CommentSectionProps {
   updateId: string
+  channelId: string
   isOwner?: boolean
   isOpen: boolean
 }
@@ -66,46 +73,59 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString()
 }
 
-const CURRENT_USER_ID = 'current-user'
-const CURRENT_USER_NAME = 'You'
+// Removed hardcoded constants — now using useAuthUser() in the component
 
-/* ── Mock seed data ─────────────────────────────────────────── */
+/* ── Fetch comments from API ─────────────────────────────────── */
 
-function makeSeedComments(updateId: string): Comment[] {
-  return [
-    {
-      id: 'cmt_seed_1',
-      update_id: updateId,
-      user_id: 'user_alice',
-      user_name: 'Alice Chen',
-      user_avatar: undefined,
-      body: 'This is a really insightful update. Thanks for sharing!',
-      spark_count: 12,
-      is_pinned: true,
-      created_at: new Date(Date.now() - 3_600_000 * 2).toISOString(),
-    },
-    {
-      id: 'cmt_seed_2',
-      update_id: updateId,
-      user_id: 'user_bob',
-      user_name: 'Bob Martinez',
-      user_avatar: undefined,
-      body: 'Totally agree with this. Looking forward to more updates like this one.',
-      spark_count: 5,
-      created_at: new Date(Date.now() - 3_600_000 * 5).toISOString(),
-    },
-    {
-      id: 'cmt_seed_3',
-      update_id: updateId,
-      user_id: 'user_carol',
-      user_name: 'Carol Nnadi',
-      user_avatar: undefined,
-      body: 'Could you elaborate on the second point? I would love to hear more.',
-      parent_id: 'cmt_seed_1',
-      spark_count: 2,
-      created_at: new Date(Date.now() - 3_600_000).toISOString(),
-    },
-  ]
+// Backend returns author_id, we normalize to user_id for the frontend
+function normalizeComment(raw: any): Comment {
+  return {
+    id: raw.id,
+    update_id: raw.update_id,
+    user_id: raw.author_id || raw.user_id || '',
+    user_name: raw.user_name,
+    user_avatar: raw.user_avatar,
+    body: raw.body,
+    parent_id: raw.parent_id || undefined,
+    is_pinned: raw.is_pinned || false,
+    spark_count: raw.spark_count || 0,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+  }
+}
+
+async function fetchComments(channelId: string, updateId: string): Promise<Comment[]> {
+  try {
+    const res = await api.get(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments`)
+    const data = res.data?.data
+    if (Array.isArray(data)) return data.map(normalizeComment)
+    return []
+  } catch {
+    return []
+  }
+}
+
+async function postComment(channelId: string, updateId: string, body: string, parentId?: string): Promise<Comment | null> {
+  try {
+    const res = await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments`, {
+      body,
+      parent_id: parentId || undefined,
+    })
+    const raw = res.data?.data
+    if (raw) return normalizeComment(raw)
+    return null
+  } catch {
+    return null
+  }
+}
+
+async function deleteCommentApi(channelId: string, updateId: string, commentId: string): Promise<boolean> {
+  try {
+    await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments/${commentId}`)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /* ── Avatar component ───────────────────────────────────────── */
@@ -173,6 +193,7 @@ const ActionMenu: React.FC<{
 const CommentRow: React.FC<{
   comment: Comment
   isOwner: boolean
+  currentUserId: string
   isReply?: boolean
   onReply: (commentId: string, userName: string) => void
   onDelete: (commentId: string) => void
@@ -180,13 +201,13 @@ const CommentRow: React.FC<{
   onPin: (commentId: string) => void
   onSpark: (commentId: string) => void
   sparkedIds: Set<string>
-}> = ({ comment, isOwner, isReply, onReply, onDelete, onEdit, onPin, onSpark, sparkedIds }) => {
+}> = ({ comment, isOwner, currentUserId, isReply, onReply, onDelete, onEdit, onPin, onSpark, sparkedIds }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(comment.body)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const isOwnComment = comment.user_id === CURRENT_USER_ID
+  const isOwnComment = comment.user_id === currentUserId
   const sparked = sparkedIds.has(comment.id)
   const displaySparkCount = comment.spark_count + (sparked ? 1 : 0)
 
@@ -377,7 +398,13 @@ const CommentSkeleton: React.FC = () => (
 
 /* ── Main CommentSection ────────────────────────────────────── */
 
-export default function CommentSection({ updateId, isOwner = false, isOpen }: CommentSectionProps) {
+export default function CommentSection({ updateId, channelId, isOwner = false, isOpen }: CommentSectionProps) {
+  // Auth user
+  const authUser = useAuthUser()
+  const currentUserId = authUser?.id ?? ''
+  const currentUserName = authUser?.name ?? 'You'
+  const currentUserAvatar = authUser?.avatar ?? undefined
+
   // State
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
@@ -391,6 +418,25 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const mountedRef = useRef(true)
+  const qc = useQueryClient()
+
+  // Resolve author names via batch profiles
+  const authorIds = useMemo(
+    () => [...new Set(comments.map(c => c.user_id).filter(id => id && id !== currentUserId))],
+    [comments, currentUserId]
+  )
+  const { data: profileMap } = useBatchProfiles(authorIds)
+
+  const resolveAuthorName = useCallback((userId: string): string => {
+    if (!userId || userId === currentUserId) return currentUserName
+    const p = profileMap?.get(userId)
+    if (p) {
+      if (p.display_name) return p.display_name
+      if (p.first_name || p.last_name) return `${p.first_name || ''} ${p.last_name || ''}`.trim()
+      if (p.username) return p.username
+    }
+    return `User ${userId.slice(0, 6)}`
+  }, [profileMap, currentUserId, currentUserName])
 
   useEffect(() => {
     mountedRef.current = true
@@ -399,18 +445,62 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
     }
   }, [])
 
-  // Simulate initial load
+  // Load comments from API
+  const doFetch = useCallback(() => {
+    if (!channelId) return
+    fetchComments(channelId, updateId).then(data => {
+      if (!mountedRef.current) return
+      setComments(data)
+      setLoading(false)
+    }).catch(() => {
+      if (!mountedRef.current) return
+      setError(true)
+      setLoading(false)
+    })
+  }, [channelId, updateId])
+
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || !channelId) return
     setLoading(true)
     setError(false)
-    const timer = setTimeout(() => {
-      if (!mountedRef.current) return
-      setComments(makeSeedComments(updateId))
-      setLoading(false)
-    }, 600)
-    return () => clearTimeout(timer)
-  }, [isOpen, updateId])
+    doFetch()
+    // Fallback poll every 30s (only fires if WS is down — primary delivery is realtime)
+    const interval = setInterval(doFetch, 30_000)
+    return () => clearInterval(interval)
+  }, [isOpen, channelId, doFetch])
+
+  // Realtime comment handler — merges WS events into local state
+  const handleRealtimeEvent = useCallback((event: ChannelCommentUpdate) => {
+    if (!mountedRef.current) return
+
+    if (event.update_type === 'comment_created') {
+      setComments(prev => {
+        // Skip if already present (own optimistic insert or duplicate)
+        if (prev.some(c => c.id === event.comment_id)) return prev
+        const newComment: Comment = {
+          id: event.comment_id,
+          update_id: event.update_id,
+          user_id: event.author_id || '',
+          body: event.body || '',
+          parent_id: event.parent_id || undefined,
+          spark_count: 0,
+          created_at: event.created_at || new Date().toISOString(),
+        }
+        return [...prev, newComment]
+      })
+    } else if (event.update_type === 'comment_deleted') {
+      setComments(prev => prev.filter(c => c.id !== event.comment_id && c.parent_id !== event.comment_id))
+    } else if (event.update_type === 'comment_updated') {
+      setComments(prev =>
+        prev.map(c =>
+          c.id === event.comment_id ? { ...c, body: event.body || c.body, updated_at: new Date().toISOString() } : c,
+        ),
+      )
+    }
+  }, [])
+
+  // Subscribe to realtime comment updates via WebSocket
+  useUpdateCommentRoom(isOpen ? updateId : undefined, channelId, handleRealtimeEvent)
 
   // Sorted + structured comments
   const topLevelComments = comments.filter((c) => !c.parent_id)
@@ -439,47 +529,57 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
   const handleRetry = useCallback(() => {
     setLoading(true)
     setError(false)
-    const timer = setTimeout(() => {
-      if (!mountedRef.current) return
-      setComments(makeSeedComments(updateId))
-      setLoading(false)
-    }, 600)
-    return () => clearTimeout(timer)
-  }, [updateId])
+    doFetch()
+  }, [doFetch])
 
-  const handleAddComment = useCallback(() => {
+  const handleAddComment = useCallback(async () => {
     const body = inputText.trim()
-    if (!body || body.length > MAX_CHARS) return
+    if (!body || body.length > MAX_CHARS || !channelId) return
 
+    // Optimistic add
+    const tempId = nextId()
     const newComment: Comment = {
-      id: nextId(),
+      id: tempId,
       update_id: updateId,
-      user_id: CURRENT_USER_ID,
-      user_name: CURRENT_USER_NAME,
+      user_id: currentUserId,
+      user_name: currentUserName,
+      user_avatar: currentUserAvatar,
       body,
       parent_id: replyTarget?.id,
       spark_count: 0,
       created_at: new Date().toISOString(),
     }
-
-    // Optimistic add
     setComments((prev) => [...prev, newComment])
     setInputText('')
     setReplyTarget(null)
     setOptimisticError(null)
 
-    // Simulate async — randomly succeed (mock)
-    setTimeout(() => {
-      if (!mountedRef.current) return
-      // In real implementation, on failure:
-      // setComments(prev => prev.filter(c => c.id !== newComment.id))
-      // setOptimisticError('Failed to post comment. Please try again.')
-    }, 300)
-  }, [inputText, replyTarget, updateId])
+    const result = await postComment(channelId, updateId, body, replyTarget?.id)
+    if (!mountedRef.current) return
+    if (result) {
+      // Replace optimistic comment with server response
+      setComments(prev => prev.map(c => c.id === tempId ? result : c))
+      // Invalidate channel-updates cache so comment_count in engagement rail syncs
+      qc.invalidateQueries({ queryKey: ['channel-updates', channelId] })
+    } else {
+      // Remove optimistic comment on failure
+      setComments(prev => prev.filter(c => c.id !== tempId))
+      setOptimisticError('Failed to post comment. Please try again.')
+    }
+  }, [inputText, replyTarget, updateId, channelId, qc])
 
-  const handleDelete = useCallback((commentId: string) => {
+  const handleDelete = useCallback(async (commentId: string) => {
+    // Optimistic delete
+    const backup = comments
     setComments((prev) => prev.filter((c) => c.id !== commentId && c.parent_id !== commentId))
-  }, [])
+    if (channelId) {
+      const ok = await deleteCommentApi(channelId, updateId, commentId)
+      if (!ok && mountedRef.current) {
+        setComments(backup)
+        setOptimisticError('Failed to delete comment.')
+      }
+    }
+  }, [channelId, updateId, comments])
 
   const handleEdit = useCallback((commentId: string, newBody: string) => {
     setComments((prev) =>
@@ -580,7 +680,7 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
           </div>
         )}
         <div className="flex gap-2.5 items-start">
-          <CommentAvatar name={CURRENT_USER_NAME} size="md" />
+          <CommentAvatar name={currentUserName} avatar={currentUserAvatar} size="md" />
           <div className="flex-1 relative">
             <textarea
               ref={inputRef}
@@ -675,8 +775,9 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
           {visibleComments.map((comment) => (
             <React.Fragment key={comment.id}>
               <CommentRow
-                comment={comment}
+                comment={{ ...comment, user_name: resolveAuthorName(comment.user_id) }}
                 isOwner={isOwner}
+                currentUserId={currentUserId}
                 onReply={handleReply}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
@@ -688,8 +789,9 @@ export default function CommentSection({ updateId, isOwner = false, isOpen }: Co
               {repliesByParent[comment.id]?.map((reply) => (
                 <CommentRow
                   key={reply.id}
-                  comment={reply}
+                  comment={{ ...reply, user_name: resolveAuthorName(reply.user_id) }}
                   isOwner={isOwner}
+                  currentUserId={currentUserId}
                   isReply
                   onReply={handleReply}
                   onDelete={handleDelete}

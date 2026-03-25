@@ -54,3 +54,56 @@ export function useFeaturedPosts(communityId: string) {
     enabled: !!communityId,
   })
 }
+
+export function useStashCommunityPost(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (postId: string) => { await api.post(`/v1/communities/${communityId}/posts/${postId}/stash`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts', communityId] }),
+  })
+}
+
+export function useViewCommunityPost(communityId: string) {
+  return useMutation({
+    mutationFn: async (postId: string) => { await api.post(`/v1/communities/${communityId}/posts/${postId}/view`) },
+  })
+}
+
+export function usePinCommunityPost(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (postId: string) => { await api.post(`/v1/communities/${communityId}/posts/${postId}/pin`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts', communityId] }),
+  })
+}
+
+export function useFeatureCommunityPost(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ postId, featured }: { postId: string; featured: boolean }) => {
+      await api.post(`/v1/communities/${communityId}/posts/${postId}/feature`, { featured })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-posts', communityId] })
+      qc.invalidateQueries({ queryKey: ['community-featured', communityId] })
+    },
+  })
+}
+
+export function useDeleteCommunityPost(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (postId: string) => { await api.delete(`/v1/communities/${communityId}/posts/${postId}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts', communityId] }),
+  })
+}
+
+export function useAcceptAnswer(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ postId, answerId }: { postId: string; answerId: string }) => {
+      await api.post(`/v1/communities/${communityId}/posts/${postId}/accept-answer`, { answer_id: answerId })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['community-posts', communityId] }),
+  })
+}

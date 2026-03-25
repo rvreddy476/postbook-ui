@@ -31,6 +31,10 @@ interface CreatePostPayload {
         allows_multiple?: boolean
         duration_hours?: number
     } | null
+    rich_text?: {
+        background?: string
+        text_color?: string
+    } | null
 }
 
 export function useFeedPosts(userId: string | undefined) {

@@ -199,7 +199,7 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
-      <div className="w-[340px] shrink-0 flex flex-col border-r border-brand-divider">
+      <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId ? 'hidden md:flex' : 'flex'}`}>
         {/* Current user header */}
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-center gap-3 mb-4">
@@ -415,7 +415,7 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  MAIN CONTENT                                                  */}
       {/* ============================================================ */}
-      <div className="flex-1 flex flex-col min-w-0 bg-brand-secondary">
+      <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!activeDm && !activeGroupId ? 'hidden md:flex' : 'flex'}`}>
         {activeDm ? (
           <DmChat
             userId={activeDm.id}

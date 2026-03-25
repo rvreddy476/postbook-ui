@@ -69,6 +69,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const castVoteMutation = useCastVote();
 
   const { data: authorProfile } = useUserProfile(post.author_id);
+  const { data: reposterProfile } = useUserProfile(post.is_repost ? post.reposted_by : undefined);
 
   const hasPoll = !!post.poll || post.content_type === 'poll';
   const { data: livePoll } = usePoll(post.id, hasPoll);
@@ -151,6 +152,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     <article
       className="bg-brand-card rounded-xl shadow-sm border border-brand-divider group/card"
     >
+      {/* Repost indicator */}
+      {post.is_repost && (
+        <div className="px-4 pt-2.5 flex items-center gap-1.5" style={{ color: '#EC1A59' }}>
+          <Repeat2 className="w-3.5 h-3.5" />
+          <span className="text-xs font-semibold">
+            {reposterProfile?.display_name || 'Someone'} reposted
+          </span>
+        </div>
+      )}
+
       {/* Pin indicator */}
       {post.is_pinned && (
         <div className="px-4 pt-2.5 flex items-center gap-1.5 text-blue-500">
@@ -160,7 +171,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       )}
 
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+      <div className="px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all flex-shrink-0">
@@ -265,14 +276,21 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </div>
 
       {/* Post Text with clickable hashtags and @mentions */}
-      {post.text && (
-        <div className={`px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
-          <p className="text-[15px] text-brand-text leading-relaxed whitespace-pre-wrap">
+      {post.text && (() => {
+        const bg = post.rich_text?.background;
+        const textColor = post.rich_text?.text_color;
+        const hasStyledBg = !!bg && !post.media?.length;
+
+        const textContent = (
+          <p
+            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? 'text-center text-[20px] font-semibold' : 'text-[15px] text-brand-text'}`}
+            style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}
+          >
             {post.text.split(/(#\w+|@\w+)/g).map((part, i) => {
               if (part.startsWith('#')) {
                 const tag = part.slice(1);
                 return (
-                  <Link key={i} href={`/hashtag/${tag}`} className="text-brand-text hover:text-brand-text/80 font-medium">
+                  <Link key={i} href={`/hashtag/${tag}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -280,7 +298,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               if (part.startsWith('@')) {
                 const username = part.slice(1);
                 return (
-                  <Link key={i} href={`/u/${username}`} className="text-brand-text hover:text-brand-text/80 font-medium">
+                  <Link key={i} href={`/u/${username}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -288,8 +306,25 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               return part;
             })}
           </p>
-        </div>
-      )}
+        );
+
+        if (hasStyledBg) {
+          return (
+            <div
+              className="mx-3 sm:mx-4 mb-3 rounded-xl p-6 min-h-[160px] flex items-center justify-center"
+              style={{ background: bg }}
+            >
+              {textContent}
+            </div>
+          );
+        }
+
+        return (
+          <div className={`px-3 sm:px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
+            {textContent}
+          </div>
+        );
+      })()}
 
       {/* Location name */}
       {post.location_name && !post.location && (
@@ -448,7 +483,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         {/* Action Bar (Pillar for Reels, Horizontal row for others) */}
         {isReel ? (
-          <div className="absolute bottom-4 right-3 flex flex-col gap-3 z-10">
+          <div className="absolute bottom-4 right-2 sm:right-3 flex flex-col gap-3 z-10">
             {/* Spark (was Heart) */}
             {!post.no_likes && (
               <button
@@ -456,7 +491,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 aria-label="Spark"
                 className="flex flex-col items-center gap-1 group"
               >
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg ${liked
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg ${liked
                   ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
                   : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
@@ -465,7 +500,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   </svg>
                 </div>
                 {likesCount > 0 && (
-                  <span className={`text-[11px] font-bold drop-shadow-md ${liked ? 'text-rose-600' : 'text-brand-text/80'}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${liked ? 'text-rose-600' : 'text-brand-text/80'}`}>
                     {likesCount}
                   </span>
                 )}
@@ -479,14 +514,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 aria-label="Comment"
                 className="flex flex-col items-center gap-1 group"
               >
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
                   ? 'bg-blue-600 text-white shadow-blue-600/30'
                   : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-brand-text/80'}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
@@ -499,11 +534,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               aria-label="Echo"
               className="flex flex-col items-center gap-1 group"
             >
-              <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
                 <Repeat2 className="w-5 h-5" />
               </div>
               {sharesCount > 0 && (
-                <span className="text-[11px] font-bold text-brand-text/80 drop-shadow-md">
+                <span className="text-[10px] sm:text-[11px] font-bold text-brand-text/80 drop-shadow-md">
                   {sharesCount}
                 </span>
               )}
@@ -515,7 +550,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               aria-label="Stash"
               className="flex flex-col items-center gap-1 group"
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
+              <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
                 ? 'bg-brand-text text-brand-bg shadow-brand-text/30'
                 : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                 }`}>
@@ -524,7 +559,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className="px-4 py-2 flex items-center justify-between border-t border-brand-divider">
+          <div className="px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between border-t border-brand-divider">
             {/* Comment */}
             {!post.no_comments && (
               <button onClick={() => setShowComments(!showComments)} aria-label="Comment"

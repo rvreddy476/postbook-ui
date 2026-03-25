@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   Pin, Megaphone, Image as ImageIcon, Video, Headphones, BarChart3,
   Calendar, ShoppingBag, AlertTriangle, BookOpen,
-  MessageCircle, Share2, MoreHorizontal, Trash2, Pencil,
-  Sparkles, Bookmark, Eye, Copy, Flag, BellOff, ExternalLink,
+  MessageCircle, Share2, Repeat2, MoreHorizontal, Trash2, Pencil,
+  Heart, Bookmark, Eye, Copy, Flag, BellOff, ExternalLink,
   MapPin, Monitor, Clock, CheckCircle, Users, ChevronLeft, ChevronRight,
   X, Play,
 } from 'lucide-react'
@@ -15,12 +15,18 @@ import type { ChannelUpdate, BroadcastChannel } from '@/types/channels'
 interface UpdateCardProps {
   update: ChannelUpdate
   channel?: BroadcastChannel
+  channelId?: string
   isOwner?: boolean
   onDelete?: (updateId: string) => void
   onPin?: (updateId: string, pinned: boolean) => void
   onEdit?: (update: ChannelUpdate) => void
-  onSpark?: (updateId: string) => void
-  onStash?: (updateId: string) => void
+  onLike?: (channelId: string, updateId: string) => void
+  onUnlike?: (channelId: string, updateId: string) => void
+  onStash?: (channelId: string, updateId: string) => void
+  onUnstash?: (channelId: string, updateId: string) => void
+  onRepost?: (channelId: string, updateId: string, echoType: string) => void
+  onUnrepost?: (channelId: string, updateId: string) => void
+  onView?: (channelId: string, updateId: string) => void
 }
 
 /* ===== Helpers ===== */
@@ -291,19 +297,38 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
 }
 
 /* ===== MAIN CARD ===== */
-const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDelete, onPin, onEdit, onSpark, onStash }) => {
+const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView }) => {
+  const channelId = propChannelId || channel?.id || ''
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [sparked, setSparked] = useState(false)
   const [stashed, setStashed] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [showEchoMenu, setShowEchoMenu] = useState(false)
+  const [echoed, setEchoed] = useState(false)
+  const [echoCount, setEchoCount] = useState(update.forward_count ?? 0)
+  const prevForwardCount = useRef(update.forward_count ?? 0)
   const [sparkCount, setSparkCount] = useState(update.reaction_count)
+  const prevReactionCount = useRef(update.reaction_count)
   const overflowRef = useRef<HTMLDivElement>(null)
+
+  // Sync sparkCount when server data changes (e.g. from 15s refetch)
+  useEffect(() => {
+    if (update.reaction_count !== prevReactionCount.current) {
+      setSparkCount(update.reaction_count)
+      prevReactionCount.current = update.reaction_count
+    }
+  }, [update.reaction_count])
+  useEffect(() => {
+    const fc = update.forward_count ?? 0
+    if (fc !== prevForwardCount.current) {
+      setEchoCount(fc)
+      prevForwardCount.current = fc
+    }
+  }, [update.forward_count])
   const echoRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLParagraphElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
-  const sparkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isClamped, setIsClamped] = useState(false)
   const [viewed, setViewed] = useState(false)
 
@@ -324,56 +349,68 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
     return () => document.removeEventListener('mousedown', handler)
   }, [overflowOpen, showEchoMenu])
 
-  // View tracking: count view after 1s in viewport
+  // View tracking: count view after 1s in viewport (fire once)
   useEffect(() => {
     if (viewed || !cardRef.current) return
+    let timer: ReturnType<typeof setTimeout> | null = null
     const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        const timer = setTimeout(() => { setViewed(true) /* TODO: POST /updates/{id}/view */ }, 1000)
-        return () => clearTimeout(timer)
+      if (entry.isIntersecting && !timer) {
+        timer = setTimeout(() => {
+          setViewed(true)
+          onView?.(channelId, update.id)
+          obs.disconnect()
+        }, 1000)
+      } else if (!entry.isIntersecting && timer) {
+        clearTimeout(timer)
+        timer = null
       }
     }, { threshold: 0.5 })
     obs.observe(cardRef.current)
-    return () => obs.disconnect()
-  }, [viewed])
+    return () => {
+      if (timer) clearTimeout(timer)
+      obs.disconnect()
+    }
+  }, [viewed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const channelIcon = channel?.avatar_media_id ? `/v1/media/${channel.avatar_media_id}/serve` : null
   const gradient = channel ? pickColor(channel.name) : avatarColors[0]
 
-  // Spark with debounce; long-press (600ms) = Supernova (5x)
-  const handleSparkDown = () => {
-    sparkTimerRef.current = setTimeout(() => {
-      // Supernova — long press
-      if (!sparked) {
-        setSparked(true)
-        setSparkCount(c => c + 5)
-        onSpark?.(update.id)
-      }
-      sparkTimerRef.current = null
-    }, 600)
-  }
-
-  const handleSparkUp = () => {
-    if (sparkTimerRef.current) {
-      // Normal tap — released before 600ms
-      clearTimeout(sparkTimerRef.current)
-      sparkTimerRef.current = null
-      setSparked(!sparked)
-      setSparkCount(c => sparked ? c - 1 : c + 1)
-      onSpark?.(update.id)
+  const handleLike = () => {
+    if (sparked) {
+      setSparked(false)
+      setSparkCount(c => Math.max(0, c - 1))
+      onUnlike?.(channelId, update.id)
+    } else {
+      setSparked(true)
+      setSparkCount(c => c + 1)
+      onLike?.(channelId, update.id)
     }
   }
 
   const handleStash = () => {
-    setStashed(!stashed)
-    onStash?.(update.id)
+    if (stashed) {
+      setStashed(false)
+      onUnstash?.(channelId, update.id)
+    } else {
+      setStashed(true)
+      onStash?.(channelId, update.id)
+    }
   }
 
-  const handleEcho = (action: 'feed' | 'chat' | 'copy' | 'external') => {
+  const handleRepost = (action: 'feed' | 'copy' | 'external') => {
     setShowEchoMenu(false)
     switch (action) {
-      case 'feed': /* TODO: POST /updates/{id}/echo */ break
-      case 'chat': /* TODO: open contact picker */ break
+      case 'feed':
+        if (echoed) {
+          setEchoed(false)
+          setEchoCount(c => Math.max(0, c - 1))
+          onUnrepost?.(channelId, update.id)
+        } else {
+          setEchoed(true)
+          setEchoCount(c => c + 1)
+          onRepost?.(channelId, update.id, 'feed')
+        }
+        break
       case 'copy':
         navigator.clipboard.writeText(`${window.location.origin}/updates/${update.id}`)
         break
@@ -492,11 +529,11 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
         )}
 
         {/* Type-specific content */}
-        {update.update_type === 'image' && update.media_ids.length > 0 && (
+        {update.update_type === 'image' && (update.media_ids ?? []).length > 0 && (
           <PhotoGallery mediaIds={update.media_ids} />
         )}
 
-        {update.update_type === 'video' && update.media_ids.length > 0 && (
+        {update.update_type === 'video' && (update.media_ids ?? []).length > 0 && (
           <VideoPreview mediaId={update.media_ids[0]} />
         )}
 
@@ -513,22 +550,20 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
         )}
 
         {/* Announcement/other media */}
-        {update.update_type === 'announcement' && update.media_ids.length > 0 && (
+        {update.update_type === 'announcement' && (update.media_ids ?? []).length > 0 && (
           <PhotoGallery mediaIds={update.media_ids} />
         )}
 
         {/* Engagement bar */}
         <div className="flex items-center gap-1 mt-3 pt-3 border-t border-brand-divider flex-wrap">
-          {/* Spark — long-press for Supernova */}
+          {/* Like */}
           <button
-            onMouseDown={handleSparkDown} onMouseUp={handleSparkUp} onMouseLeave={() => { if (sparkTimerRef.current) { clearTimeout(sparkTimerRef.current); sparkTimerRef.current = null } }}
-            onTouchStart={handleSparkDown} onTouchEnd={handleSparkUp}
+            onClick={handleLike}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors select-none ${
-              sparked ? 'text-brand-text bg-brand-text/5' : 'text-brand-text/45 hover:text-brand-text hover:bg-brand-secondary/50'
+              sparked ? 'text-red-500 bg-red-50' : 'text-brand-text/45 hover:text-red-500 hover:bg-red-50/50'
             }`}>
-            <Sparkles className="w-3.5 h-3.5" />
+            <Heart className={`w-3.5 h-3.5 ${sparked ? 'fill-red-500' : ''}`} />
             <span className="font-mono text-[11px] font-semibold">{formatCount(sparkCount)}</span>
-            <span className="text-[10px] hidden sm:inline">Spark</span>
           </button>
 
           {/* Comments toggle */}
@@ -541,37 +576,37 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
           </button>
 
           {/* Echo dropdown */}
-          <div className="relative" ref={echoRef}>
-            <button onClick={() => setShowEchoMenu(!showEchoMenu)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-brand-text/45 hover:text-brand-text hover:bg-brand-secondary/50 transition-colors">
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-semibold">Echo</span>
-            </button>
-            {showEchoMenu && (
-              <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
-                <button onClick={() => handleEcho('feed')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                  <Share2 className="w-3.5 h-3.5" /> Share to my feed
-                </button>
-                <button onClick={() => handleEcho('chat')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                  <MessageCircle className="w-3.5 h-3.5" /> Send in chat
-                </button>
-                <button onClick={() => handleEcho('copy')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                  <Copy className="w-3.5 h-3.5" /> Copy link
-                </button>
-                <button onClick={() => handleEcho('external')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                  <ExternalLink className="w-3.5 h-3.5" /> Share externally
-                </button>
-              </div>
-            )}
-          </div>
+          {channel?.forward_allowed !== false && (
+            <div className="relative" ref={echoRef}>
+              <button onClick={() => setShowEchoMenu(!showEchoMenu)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
+                  echoed ? 'text-green-600 bg-green-50' : 'text-brand-text/45 hover:text-green-600 hover:bg-green-50/50'
+                }`}>
+                <Repeat2 className="w-3.5 h-3.5" />
+                {echoCount > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(echoCount)}</span>}
+              </button>
+              {showEchoMenu && (
+                <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+                  <button onClick={() => handleRepost('feed')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
+                    <Repeat2 className="w-3.5 h-3.5" /> {echoed ? 'Undo echo' : 'Echo to feed'}
+                  </button>
+                  <button onClick={() => handleRepost('copy')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
+                    <Copy className="w-3.5 h-3.5" /> Copy link
+                  </button>
+                  <button onClick={() => handleRepost('external')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
+                    <ExternalLink className="w-3.5 h-3.5" /> Share externally
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Stash */}
+          {/* Bookmark */}
           <button onClick={handleStash}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-              stashed ? 'text-brand-text bg-brand-text/5' : 'text-brand-text/45 hover:text-brand-text hover:bg-brand-secondary/50'
+              stashed ? 'text-blue-500 bg-blue-50' : 'text-brand-text/45 hover:text-blue-500 hover:bg-blue-50/50'
             }`}>
-            <Bookmark className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-semibold">Stash</span>
+            <Bookmark className={`w-3.5 h-3.5 ${stashed ? 'fill-blue-500' : ''}`} />
           </button>
 
           {/* View count */}
@@ -584,7 +619,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
         {/* Comment section (lazy loaded) */}
         {showComments && (
           <div className="mt-3 pt-3 border-t border-brand-divider">
-            <CommentSectionLazy updateId={update.id} isOwner={isOwner} />
+            <CommentSectionLazy updateId={update.id} channelId={channelId} isOwner={isOwner} />
           </div>
         )}
       </div>
@@ -593,13 +628,13 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, isOwner, onDel
 }
 
 /* Lazy comment section — dynamic import to avoid circular deps */
-function CommentSectionLazy({ updateId, isOwner }: { updateId: string; isOwner?: boolean }) {
+function CommentSectionLazy({ updateId, channelId, isOwner }: { updateId: string; channelId: string; isOwner?: boolean }) {
   const [Comp, setComp] = useState<React.ComponentType<any> | null>(null)
   useEffect(() => {
     import('./CommentSection').then(m => setComp(() => m.default)).catch(() => {})
   }, [])
   if (!Comp) return <div className="py-4 text-center text-xs text-brand-text/30">Loading comments...</div>
-  return <Comp updateId={updateId} isOwner={isOwner} isOpen={true} />
+  return <Comp updateId={updateId} channelId={channelId} isOwner={isOwner} isOpen={true} />
 }
 
 export default UpdateCard

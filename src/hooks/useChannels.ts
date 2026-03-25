@@ -7,6 +7,16 @@ import type { Channel, ChannelDetail } from "@/types/profile"
 interface ChannelsResponse { data: Channel[] }
 interface ChannelDetailResponse { data: ChannelDetail }
 interface ChannelResponse { data: Channel }
+interface ChannelSubscriptionState {
+    subscribed: boolean
+    subscription?: {
+        channel_id: string
+        user_id: string
+        notify_on: string
+        subscribed_at: string
+    }
+}
+interface ChannelSubscriptionResponse { data: ChannelSubscriptionState }
 
 // === QUERIES ===
 
@@ -41,6 +51,19 @@ export function useChannel(handle: string | undefined) {
         },
         enabled: !!handle,
         staleTime: 60_000,
+    })
+}
+
+export function useChannelSubscription(channelId: string | undefined) {
+    return useQuery({
+        queryKey: ["channel-subscription", channelId],
+        queryFn: async () => {
+            const res = await api.get<ChannelSubscriptionResponse>(`/v1/channels/${channelId}/subscription`)
+            return res.data.data
+        },
+        enabled: !!channelId,
+        staleTime: 30_000,
+        retry: false,
     })
 }
 
@@ -96,6 +119,30 @@ export function useDeleteChannel() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["my-channels"] })
+        },
+    })
+}
+
+export function useToggleChannelSubscription() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ channelId, subscribe }: { channelId: string; subscribe: boolean }) => {
+            if (subscribe) {
+                await api.post(`/v1/channels/${channelId}/subscribe`, { notify_on: "all" })
+            } else {
+                await api.delete(`/v1/channels/${channelId}/subscribe`)
+            }
+            return { channelId, subscribed: subscribe }
+        },
+        onSuccess: ({ channelId, subscribed }) => {
+            qc.setQueryData<ChannelSubscriptionState | undefined>(
+                ["channel-subscription", channelId],
+                (current) => ({ ...(current ?? {}), subscribed })
+            )
+            qc.invalidateQueries({ queryKey: ["channel-subscription", channelId] })
+            qc.invalidateQueries({ queryKey: ["user-channels"] })
+            qc.invalidateQueries({ queryKey: ["my-channels"] })
+            qc.invalidateQueries({ queryKey: ["channel"] })
         },
     })
 }

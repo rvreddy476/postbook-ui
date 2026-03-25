@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useJoinRequests, useApproveJoinRequest, useRejectJoinRequest } from '@/hooks/useGroups'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import { Check, X, Clock, UserPlus, Loader2 } from 'lucide-react'
 
 interface GroupJoinRequestsPanelProps {
@@ -12,6 +13,10 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
   const { data: requests } = useJoinRequests(groupId)
   const approve = useApproveJoinRequest()
   const reject = useRejectJoinRequest()
+
+  // Batch-fetch profiles for request user IDs
+  const requestUserIds = useMemo(() => requests?.map(r => r.user_id) ?? [], [requests])
+  const { data: profileMap } = useBatchProfiles(requestUserIds)
 
   if (!requests || requests.length === 0) return null
 
@@ -30,14 +35,22 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
       </div>
 
       <div className="space-y-2">
-        {requests.map((req) => (
+        {requests.map((req) => {
+          const profile = profileMap?.get(req.user_id)
+          const name = profile?.display_name || profile?.username || 'User'
+          const avatarUrl = profile?.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : null
+          return (
           <div key={req.id} className="flex items-center justify-between bg-brand-card/80 backdrop-blur-sm rounded-xl p-3 border border-amber-100/50">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-xs font-bold text-amber-600">
-                {req.user_id.slice(0, 2).toUpperCase()}
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-xs font-bold text-amber-600">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  name.charAt(0).toUpperCase()
+                )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-brand-text">{req.user_id.slice(0, 8)}...</p>
+                <p className="text-sm font-semibold text-brand-text">{name}</p>
                 <p className="text-[11px] text-brand-text/60 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -63,7 +76,8 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
               </button>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

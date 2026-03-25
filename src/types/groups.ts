@@ -23,7 +23,7 @@ export interface Group {
   language?: string
   status?: 'active' | 'archived' | 'deleted'
   pending_request_count?: number
-  viewer_role?: 'owner' | 'admin' | 'moderator' | 'member' | 'outsider' | 'banned'
+  viewer_role?: 'owner' | 'admin' | 'moderator' | 'member' | 'pending' | 'outsider' | 'banned'
 }
 
 export interface GroupMember {
@@ -58,6 +58,45 @@ export interface GroupPost {
   created_at: string
 }
 
+export interface GroupPostV2 {
+  id: string
+  group_id: string
+  channel_id?: string
+  author_id: string
+  content_type: string
+  title?: string
+  body?: string
+  body_html?: string
+  type_payload?: Record<string, unknown>
+  attachments?: string[]
+  needs_approval: boolean
+  is_pinned: boolean
+  is_announcement: boolean
+  status: string
+  spark_count: number
+  comment_count: number
+  echo_count: number
+  view_count: number
+  created_at: string
+  updated_at: string
+  // Enriched by frontend
+  author_name?: string
+  author_avatar_url?: string
+  channel_name?: string
+}
+
+export interface GroupPostComment {
+  id: string
+  post_id: string
+  user_id: string
+  body: string
+  parent_id?: string
+  is_pinned: boolean
+  spark_count: number
+  created_at: string
+  updated_at?: string
+}
+
 export interface GroupJoinRequest {
   id: string
   group_id: string
@@ -77,4 +116,4 @@ export interface GroupRule {
   created_at: string
 }
 
-export type GroupTab = 'feed' | 'members' | 'about' | 'media' | 'rules'
+export type GroupTab = 'feed' | 'members' | 'about' | 'media' | 'rules' | 'events'

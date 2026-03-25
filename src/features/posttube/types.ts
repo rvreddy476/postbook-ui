@@ -1,11 +1,14 @@
 export interface PostTubeVideo {
   id: string;
+  author_id: string;
   title: string;
   description: string;
   video_url: string;
   thumbnail_url: string;
   content_type?: string;
   channel_id: string;
+  subscription_channel_id?: string;
+  channel_handle?: string;
   channel_name: string;
   channel_avatar_url: string;
   channel_subscriber_count: number;
@@ -21,6 +24,10 @@ export interface PostTubeVideo {
   viewer_has_disliked: boolean;
   viewer_has_saved: boolean;
   viewer_has_subscribed: boolean;
+  resume_position_ms?: number;
+  resume_duration_ms?: number;
+  resume_percent_watched?: number;
+  last_watched_at?: string;
   /** Tiny 360p 3–5s loop for hover preview (optional, falls back to video_url) */
   preview_url?: string;
   /** Best-moment start offset in ms for hover preview */
@@ -74,8 +81,20 @@ export interface VideoMetadataDTO {
   computed_category: string;
   final_category: string;
   upload_status: string;
+  media_asset_id?: string;
   thumbnail_url?: string;
   playback_url?: string;
   trim_start_ms: number;
   trim_end_ms?: number;
+}
+
+export interface MediaSubtitleTrack {
+  id: string;
+  media_asset_id: string;
+  language: string;
+  source: string;
+  format: string;
+  content_url: string;
+  confidence?: number | null;
+  created_at: string;
 }

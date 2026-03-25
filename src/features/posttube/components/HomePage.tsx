@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Upload, Play, ChevronLeft, ChevronRight, Zap, Eye, Sparkles, Tv2 } from "lucide-react";
+import { Upload, Play, ChevronLeft, ChevronRight, Zap, Eye, Sparkles, Tv2, History } from "lucide-react";
 import Link from "next/link";
 import { PostTubeShell } from "./PostTubeShell";
 import { VideoCard } from "./VideoCard";
+import { VideoRow, VideoRowSkeleton } from "./VideoRow";
 import {
   useHomeFeed,
+  useContinueWatchingFeed,
   useFlicksFeed,
   useLongVideosFeed,
 } from "../hooks/usePosttubeHome";
@@ -210,11 +212,13 @@ export function HomePage() {
   const [activeChip, setActiveChip] = useState("all");
 
   const homeFeed = useHomeFeed();
+  const continueWatchingFeed = useContinueWatchingFeed(10);
 
   const [moreVideosEnabled, setMoreVideosEnabled] = useState(false);
   const [moreFlicksEnabled, setMoreFlicksEnabled] = useState(false);
   const longVideosFeed = useLongVideosFeed(20, moreVideosEnabled);
   const flicksFeed = useFlicksFeed(20, moreFlicksEnabled);
+  const continueWatching = continueWatchingFeed.data ?? [];
 
   let flicks: PostTubeVideo[] = homeFeed.data?.flicks ?? [];
   let longVideos: PostTubeVideo[] = homeFeed.data?.longVideos ?? [];
@@ -230,8 +234,8 @@ export function HomePage() {
     longVideos = [...longVideos, ...extraVideos.filter((v) => !videoIds.has(v.id))];
   }
 
-  const isLoading = homeFeed.isLoading;
-  const hasContent = flicks.length > 0 || longVideos.length > 0;
+  const hasContent = continueWatching.length > 0 || flicks.length > 0 || longVideos.length > 0;
+  const isLoading = (homeFeed.isLoading || continueWatchingFeed.isLoading) && !hasContent;
 
   return (
     <PostTubeShell>
@@ -258,6 +262,23 @@ export function HomePage() {
           <VideoGridSkeleton />
         ) : hasContent ? (
           <>
+            {continueWatchingFeed.isLoading && continueWatching.length === 0 ? (
+              <VideoRowSkeleton count={3} />
+            ) : (
+              <VideoRow
+                title="Continue watching"
+                icon={
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.35)]">
+                    <History className="h-4 w-4 text-white" />
+                  </div>
+                }
+                videos={continueWatching}
+                variant="wide"
+                badge="Resume"
+                badgeColor="bg-[#FFF1DA] text-[#C56508] dark:bg-[#3A2410] dark:text-[#F7B154]"
+              />
+            )}
+
             {/* Flicks */}
             {flicks.length > 0 && <FlicksRow videos={flicks} />}
 

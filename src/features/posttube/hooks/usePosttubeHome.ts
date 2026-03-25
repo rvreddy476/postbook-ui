@@ -3,6 +3,7 @@ import {
   getHomeFeed,
   getFlicksFeed,
   getLongVideosFeed,
+  getContinueWatchingVideos,
 } from "../data/posttubeApi";
 
 /**
@@ -43,5 +44,14 @@ export function useLongVideosFeed(limit = 20, enabled = false) {
     getNextPageParam: (lastPage) => lastPage.next_cursor,
     staleTime: 2 * 60 * 1000,
     enabled,
+  });
+}
+
+export function useContinueWatchingFeed(limit = 10) {
+  return useQuery({
+    queryKey: ["feed", "continueWatching", limit],
+    queryFn: () => getContinueWatchingVideos(limit),
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 }

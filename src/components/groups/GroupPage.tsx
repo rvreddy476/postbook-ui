@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useGroupDetails, useGroupByHandle, useGroupMembers, useGroupRules } from '@/hooks/useGroups'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import GroupHeader from './GroupHeader'
 import GroupFeedTab from './tabs/GroupFeedTab'
@@ -46,6 +47,21 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
 
   // Sidebar admin list
   const adminsAndMods = members?.filter(m => m.role === 'admin' || m.role === 'moderator' || m.role === 'owner') ?? []
+
+  // Batch-fetch profiles for sidebar admins/mods
+  const adminUserIds = useMemo(() => adminsAndMods.map(m => m.user_id), [adminsAndMods])
+  const { data: adminProfileMap } = useBatchProfiles(adminUserIds)
+
+  const enrichedAdmins = useMemo(() => adminsAndMods.map(m => {
+    const profile = adminProfileMap?.get(m.user_id)
+    if (!profile) return m
+    return {
+      ...m,
+      display_name: profile.display_name || profile.username || m.display_name,
+      username: profile.username || m.username,
+      avatar_media_id: profile.avatar_media_id || m.avatar_media_id,
+    }
+  }), [adminsAndMods, adminProfileMap])
 
   if (isLoading) {
     return (
@@ -144,7 +160,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main content area */}
             <div className="lg:col-span-2">
-              {activeTab === 'feed' && resolvedId && <GroupFeedTab groupId={resolvedId} isMember={isMember} />}
+              {activeTab === 'feed' && resolvedId && <GroupFeedTab groupId={resolvedId} isMember={isMember} viewerRole={viewerRole} />}
               {activeTab === 'about' && <GroupAboutTab group={group} />}
             </div>
 
@@ -169,11 +185,11 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
               </div>
 
               {/* Admins & Mods Card */}
-              {adminsAndMods.length > 0 && (
+              {enrichedAdmins.length > 0 && (
                 <div className="bg-brand-card rounded-xl border border-brand-divider p-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/60 mb-3">Admins & Moderators</h3>
                   <div className="space-y-2.5">
-                    {adminsAndMods.slice(0, 5).map(m => {
+                    {enrichedAdmins.slice(0, 5).map(m => {
                       const avatarUrl = m.avatar_media_id ? `/v1/media/${m.avatar_media_id}/serve` : null
                       const roleIcon = m.role === 'owner' || m.role === 'admin'
                         ? <Crown className="w-3 h-3 text-amber-500" />

@@ -28,19 +28,19 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, 
           </button>
         </li>
 
-        {/* Flicks */}
+        {/* Reels */}
         <li>
           <button
             type="button"
-            onClick={() => onChange('Flicks')}
-            className={`flex w-full flex-col items-center justify-center gap-1 px-1 py-2 transition-all ${activeTab === 'Flicks' ? 'text-brand-text' : 'text-brand-text/40'}`}
-            aria-label="Flicks"
+            onClick={() => onChange('Reels')}
+            className={`flex w-full flex-col items-center justify-center gap-1 px-1 py-2 transition-all ${activeTab === 'Reels' ? 'text-brand-text' : 'text-brand-text/40'}`}
+            aria-label="Reels"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="truncate text-[9px] font-black uppercase tracking-wide">Flicks</span>
+            <span className="truncate text-[9px] font-black uppercase tracking-wide">Reels</span>
           </button>
         </li>
 

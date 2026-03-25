@@ -47,5 +47,6 @@ export interface ChannelUpdate {
   view_count: number
   reaction_count: number
   comment_count: number
+  forward_count: number
   created_at: string
 }

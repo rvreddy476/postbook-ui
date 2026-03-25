@@ -200,10 +200,24 @@ export default function ChannelsPage() {
   const subscribeMutation = useSubscribeChannel()
   const unsubscribeMutation = useUnsubscribeChannel()
 
-  // Filter discover channels by category + search
+  // Featured channels for discover (first 6 unsubscribed)
+  const featured = useMemo(() => {
+    if (!discoverChannels) return []
+    return discoverChannels
+      .filter(c => c.viewer_role !== 'subscriber' && c.viewer_role !== 'admin' && c.viewer_role !== 'editor')
+      .slice(0, 6)
+  }, [discoverChannels])
+
+  const featuredIds = useMemo(() => new Set(featured.map(c => c.id)), [featured])
+
+  // Filter discover channels by category + search, excluding featured
   const filteredDiscover = useMemo(() => {
     if (!discoverChannels) return []
     let filtered = discoverChannels
+    // Exclude featured channels from the vertical list when showing featured section
+    if (!searchQuery.trim() && activeCategory === 'All' && featured.length > 0) {
+      filtered = filtered.filter(c => !featuredIds.has(c.id))
+    }
     if (activeCategory !== 'All') {
       filtered = filtered.filter(
         c => c.category?.toLowerCase() === activeCategory.toLowerCase() ||
@@ -217,7 +231,7 @@ export default function ChannelsPage() {
       )
     }
     return filtered
-  }, [discoverChannels, activeCategory, searchQuery])
+  }, [discoverChannels, activeCategory, searchQuery, featured, featuredIds])
 
   // Filter my channels by search
   const filteredMy = useMemo(() => {
@@ -228,14 +242,6 @@ export default function ChannelsPage() {
       c => c.name.toLowerCase().includes(q) || c.handle.toLowerCase().includes(q)
     )
   }, [myChannels, searchQuery])
-
-  // Featured channels for discover (first 6 unsubscribed)
-  const featured = useMemo(() => {
-    if (!discoverChannels) return []
-    return discoverChannels
-      .filter(c => c.viewer_role !== 'subscriber' && c.viewer_role !== 'admin' && c.viewer_role !== 'editor')
-      .slice(0, 6)
-  }, [discoverChannels])
 
   return (
     <AppShell>

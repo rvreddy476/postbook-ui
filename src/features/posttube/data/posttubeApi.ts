@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import type { PostDetail } from "@/types/profile";
-import type { PostTubeVideo, VideoFeedItem, VideoMetadataDTO, FeedPage } from "../types";
+import type { MediaSubtitleTrack, PostTubeVideo, VideoFeedItem, VideoMetadataDTO, FeedPage } from "../types";
 
 /* ── Mapping: PostDetail → PostTubeVideo ─────────────────── */
 
@@ -9,17 +9,30 @@ function mediaUrl(mediaId: string): string {
   return `${base}/v1/media/${mediaId}/serve`;
 }
 
-// In-memory author cache to avoid repeated lookups within the same session
-const authorCache = new Map<string, { name: string; avatarUrl: string; subscriberCount: number }>();
+interface ResolvedAuthorInfo {
+  channelId?: string;
+  channelHandle?: string;
+  name: string;
+  avatarUrl: string;
+  subscriberCount: number;
+}
 
-export async function resolveAuthor(authorId: string): Promise<{ name: string; avatarUrl: string; subscriberCount: number }> {
+// In-memory author cache to avoid repeated lookups within the same session.
+// PostTube creator identity currently comes from the user-service channel model.
+const authorCache = new Map<string, ResolvedAuthorInfo>();
+
+export async function resolveAuthor(authorId: string): Promise<ResolvedAuthorInfo> {
   if (authorCache.has(authorId)) return authorCache.get(authorId)!;
-  const fallback = { name: authorId.slice(0, 8), avatarUrl: `https://api.dicebear.com/9.x/lorelei/svg?seed=${authorId}`, subscriberCount: 0 };
+  const fallback: ResolvedAuthorInfo = {
+    name: authorId.slice(0, 8),
+    avatarUrl: `https://api.dicebear.com/9.x/lorelei/svg?seed=${authorId}`,
+    subscriberCount: 0,
+  };
   try {
     // Fetch user's channels — the channel name is what shows on videos
     const [userRes, chRes] = await Promise.all([
       api.get<{ data: { display_name?: string; avatar_media_id?: string; username?: string } }>(`/v1/users/${authorId}`).catch(() => null),
-      api.get<{ data: { id: string; name: string; avatar_media_id?: string; subscriber_count?: number }[] }>(`/v1/users/${authorId}/channels`).catch(() => null),
+      api.get<{ data: { id: string; handle?: string; name: string; avatar_media_id?: string; subscriber_count?: number }[] }>(`/v1/users/${authorId}/channels`).catch(() => null),
     ]);
     const user = userRes?.data?.data;
     const channels = chRes?.data?.data ?? [];
@@ -31,7 +44,13 @@ export async function resolveAuthor(authorId: string): Promise<{ name: string; a
     const avatarUrl = avatarMediaId ? mediaUrl(avatarMediaId) : fallback.avatarUrl;
     const subscriberCount = channel?.subscriber_count ?? 0;
 
-    const result = { name, avatarUrl, subscriberCount };
+    const result: ResolvedAuthorInfo = {
+      channelId: channel?.id,
+      channelHandle: channel?.handle,
+      name,
+      avatarUrl,
+      subscriberCount,
+    };
     authorCache.set(authorId, result);
     return result;
   } catch {
@@ -39,7 +58,7 @@ export async function resolveAuthor(authorId: string): Promise<{ name: string; a
   }
 }
 
-export function postDetailToVideo(post: PostDetail, authorInfo?: { name: string; avatarUrl: string; subscriberCount: number }): PostTubeVideo {
+export function postDetailToVideo(post: PostDetail, authorInfo?: ResolvedAuthorInfo): PostTubeVideo {
   const videoMedia = post.media?.find((m) => m.kind === "video");
   const imageMedia = post.media?.find((m) => m.kind === "image");
 
@@ -72,12 +91,15 @@ export function postDetailToVideo(post: PostDetail, authorInfo?: { name: string;
 
   return {
     id: post.id,
+    author_id: post.author_id,
     title: post.text?.split("\n")[0] || "Untitled",
     description: post.text || "",
     video_url: vm?.playback_url || (videoMedia ? mediaUrl(videoMedia.media_id) : ""),
     thumbnail_url: vm?.thumbnail_url || (thumbnailId ? mediaUrl(thumbnailId) : ""),
     content_type: resolvedCategory || post.content_type,
-    channel_id: post.author_id,
+    channel_id: authorInfo?.channelId || post.author_id,
+    subscription_channel_id: authorInfo?.channelId,
+    channel_handle: authorInfo?.channelHandle,
     channel_name: authorInfo?.name || post.author_id,
     channel_avatar_url: authorInfo?.avatarUrl || `https://api.dicebear.com/9.x/lorelei/svg?seed=${post.author_id}`,
     channel_subscriber_count: authorInfo?.subscriberCount ?? 0,
@@ -101,7 +123,7 @@ export function postDetailToVideo(post: PostDetail, authorInfo?: { name: string;
 async function hydratePosts(posts: PostDetail[]): Promise<PostTubeVideo[]> {
   // Resolve unique authors in parallel
   const authorIds = [...new Set(posts.map((p) => p.author_id))];
-  const authorMap = new Map<string, { name: string; avatarUrl: string; subscriberCount: number }>();
+  const authorMap = new Map<string, ResolvedAuthorInfo>();
   await Promise.all(
     authorIds.map(async (id) => {
       const info = await resolveAuthor(id);
@@ -118,11 +140,27 @@ interface ApiResponse<T> {
   meta?: { next_cursor?: string };
 }
 
+async function getPostDetailById(postId: string): Promise<PostDetail | null> {
+  try {
+    const res = await api.get<ApiResponse<PostDetail>>(`/v1/posts/${postId}`);
+    return res.data.data;
+  } catch {
+    return null;
+  }
+}
+
+function convertSrtToVtt(content: string): string {
+  const normalized = content.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return "WEBVTT\n\n";
+  if (normalized.startsWith("WEBVTT")) return `${normalized}\n`;
+  const body = normalized.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
+  return `WEBVTT\n\n${body}\n`;
+}
+
 /* ── Category feed types ─────────────────────────────────── */
 
 export type FeedCategory =
   | "trending"
-  | "continue_watching"
   | "live"
   | "recommended"
   | "recent"
@@ -149,9 +187,6 @@ export async function getCategoryFeed(
   switch (category) {
     case "trending":
       queryParams.sort = "trending";
-      break;
-    case "continue_watching":
-      queryParams.filter = "history";
       break;
     case "live":
       queryParams.filter = "live";
@@ -290,7 +325,102 @@ export async function publishVideo(videoId: string): Promise<void> {
 }
 
 /** Get video metadata */
-export async function getVideoDetail(videoId: string) {
-  const res = await api.get<ApiResponse<Record<string, unknown>>>(`/v1/videos/${videoId}`);
+export async function getVideoDetail(videoId: string): Promise<VideoMetadataDTO> {
+  const res = await api.get<ApiResponse<VideoMetadataDTO>>(`/v1/videos/${videoId}`);
   return res.data.data;
+}
+
+export async function getSubtitleTracks(mediaId: string): Promise<MediaSubtitleTrack[]> {
+  try {
+    const res = await api.get<ApiResponse<{ subtitles: MediaSubtitleTrack[] }>>(`/v1/subtitles/${mediaId}`);
+    return res.data.data?.subtitles ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createSubtitleTrack(
+  mediaId: string,
+  params: { language: string; file: File; source?: string },
+): Promise<MediaSubtitleTrack> {
+  const fileName = params.file.name.toLowerCase();
+  const rawContent = await params.file.text();
+  const vttContent = fileName.endsWith(".srt") ? convertSrtToVtt(rawContent) : rawContent;
+  const contentUrl = `data:text/vtt;charset=utf-8,${encodeURIComponent(vttContent)}`;
+
+  const res = await api.post<ApiResponse<MediaSubtitleTrack>>(`/v1/subtitles/${mediaId}`, {
+    language: params.language,
+    source: params.source ?? "manual_upload",
+    format: "vtt",
+    content_url: contentUrl,
+  });
+  return res.data.data;
+}
+
+export interface VideoWatchProgress {
+  user_id: string;
+  post_id: string;
+  position_ms: number;
+  duration_ms: number;
+  percent_watched: number;
+  completed: boolean;
+  last_watched_at: string;
+}
+
+export async function getContinueWatchingProgress(limit = 20): Promise<VideoWatchProgress[]> {
+  try {
+    const res = await api.get<ApiResponse<VideoWatchProgress[]>>("/v1/videos/continue-watching", {
+      params: { limit },
+    });
+    return res.data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getWatchProgressForVideo(videoId: string): Promise<VideoWatchProgress | null> {
+  const items = await getContinueWatchingProgress(100);
+  return items.find((item) => item.post_id === videoId) ?? null;
+}
+
+export async function getContinueWatchingVideos(limit = 12): Promise<PostTubeVideo[]> {
+  const progressItems = await getContinueWatchingProgress(limit);
+  if (progressItems.length === 0) return [];
+
+  const postEntries = await Promise.all(
+    progressItems.map(async (progress) => {
+      const post = await getPostDetailById(progress.post_id);
+      return post ? { post, progress } : null;
+    })
+  );
+
+  const resolvedEntries = postEntries.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  if (resolvedEntries.length === 0) return [];
+
+  const hydratedVideos = await hydratePosts(resolvedEntries.map((entry) => entry.post));
+  return hydratedVideos.map((video, index) => {
+    const progress = resolvedEntries[index].progress;
+    return {
+      ...video,
+      resume_position_ms: progress.position_ms,
+      resume_duration_ms: progress.duration_ms,
+      resume_percent_watched: progress.percent_watched,
+      last_watched_at: progress.last_watched_at,
+    };
+  });
+}
+
+export async function saveVideoWatchProgress(
+  videoId: string,
+  params: { positionMs: number; durationMs: number },
+): Promise<VideoWatchProgress> {
+  const res = await api.post<ApiResponse<VideoWatchProgress>>(`/v1/videos/${videoId}/progress`, {
+    position_ms: params.positionMs,
+    duration_ms: params.durationMs,
+  });
+  return res.data.data;
+}
+
+export async function deleteVideoWatchProgress(videoId: string): Promise<void> {
+  await api.delete(`/v1/videos/${videoId}/progress`);
 }

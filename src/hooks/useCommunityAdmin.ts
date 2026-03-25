@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
+import type { CommunityJoinRequest, CommunityModlogEntry } from '@/types/communities'
 
 export interface CommunitySpaceV2 {
   id: string; community_id: string; name: string; description: string;
@@ -67,5 +68,102 @@ export function useCommunityBans(communityId: string) {
       return res.data.data?.items ?? []
     },
     enabled: !!communityId,
+  })
+}
+
+export function useCommunityJoinRequests(communityId: string) {
+  return useQuery({
+    queryKey: ['community-join-requests', communityId],
+    queryFn: async () => {
+      const res = await api.get<{ data: { items: CommunityJoinRequest[] } }>(`/v1/communities/${communityId}/join-requests`)
+      return res.data.data?.items ?? []
+    },
+    enabled: !!communityId,
+  })
+}
+
+export function useApproveJoinRequest(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      await api.post(`/v1/communities/${communityId}/join-requests/${requestId}/approve`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-join-requests', communityId] })
+      qc.invalidateQueries({ queryKey: ['community-members', communityId] })
+      qc.invalidateQueries({ queryKey: ['community', communityId] })
+    },
+  })
+}
+
+export function useRejectJoinRequest(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      await api.post(`/v1/communities/${communityId}/join-requests/${requestId}/reject`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-join-requests', communityId] })
+    },
+  })
+}
+
+export function useChangeMemberRole(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await api.put(`/v1/communities/${communityId}/members/${userId}/role`, { role })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-members', communityId] })
+    },
+  })
+}
+
+export function useBanMember(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
+      await api.post(`/v1/communities/${communityId}/members/${userId}/ban`, { reason })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-members', communityId] })
+      qc.invalidateQueries({ queryKey: ['community-bans', communityId] })
+      qc.invalidateQueries({ queryKey: ['community', communityId] })
+    },
+  })
+}
+
+export function useUnbanMember(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      await api.delete(`/v1/communities/${communityId}/members/${userId}/ban`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['community-bans', communityId] })
+    },
+  })
+}
+
+export function useCommunityModlog(communityId: string) {
+  return useQuery({
+    queryKey: ['community-modlog', communityId],
+    queryFn: async () => {
+      const res = await api.get<{ data: { items: CommunityModlogEntry[] } }>(`/v1/communities/${communityId}/modlog`)
+      return res.data.data?.items ?? []
+    },
+    enabled: !!communityId,
+  })
+}
+
+export function useUpdateWikiPage(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ slug, ...payload }: { slug: string; title?: string; content?: string; category?: string }) => {
+      const res = await api.put(`/v1/communities/${communityId}/wiki/${slug}`, payload)
+      return res.data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['community-wiki', communityId] }),
   })
 }

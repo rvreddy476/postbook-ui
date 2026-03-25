@@ -9,14 +9,65 @@ interface PublishStepProps {
   form: StudioFormState;
   patch: (u: Partial<StudioFormState>) => void;
   showErrors?: boolean;
+  publishError?: string | null;
+  retryProcessingCheck?: () => void;
+  onReplaceVideo?: () => void;
 }
 
-export function PublishStep({ form, patch, showErrors }: PublishStepProps) {
+export function PublishStep({ form, patch, showErrors, publishError, retryProcessingCheck, onReplaceVideo }: PublishStepProps) {
   const categoryError = showErrors && !form.category;
   const scheduleError = showErrors && form.scheduleAt && new Date(form.scheduleAt) <= new Date();
 
   return (
     <div className="space-y-7">
+      <div className={`rounded-xl border p-4 shadow-sm ${
+        form.processingStatus === "ready"
+          ? "border-[#2BB5A0]/20 bg-[#2BB5A0]/5"
+          : form.processingStatus === "failed"
+            ? "border-[#E8527A]/20 bg-[#E8527A]/5"
+            : "border-[#E5A93D]/20 bg-[#E5A93D]/5"
+      }`}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-semibold text-[#1A1A1A]">Processing status</p>
+            <p className="mt-1 text-[12px] text-[#6B6B6B]">
+              {form.processingStatus === "ready"
+                ? "Video renditions are ready for publishing."
+                : form.processingStatus === "failed"
+                  ? form.processingError || "Processing failed for this upload."
+                  : "Your video is still processing. Publishing stays disabled until renditions are ready."}
+            </p>
+            {form.subtitlesFile && form.subtitleUploadState === "uploading" && (
+              <p className="mt-2 text-[12px] text-[#7C5CFC]">Subtitle upload is still in progress.</p>
+            )}
+            {form.subtitlesFile && form.subtitleUploadState === "error" && form.subtitleUploadError && (
+              <p className="mt-2 text-[12px] text-[#E8527A]">{form.subtitleUploadError}</p>
+            )}
+            {publishError && (
+              <p className="mt-2 text-[12px] text-[#E8527A]">{publishError}</p>
+            )}
+          </div>
+
+          {form.processingStatus === "failed" && (
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={retryProcessingCheck}
+                className="rounded-lg border border-[#E8E6E1] bg-brand-card px-3 py-2 text-[12px] font-semibold text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors"
+              >
+                Check again
+              </button>
+              <button
+                type="button"
+                onClick={onReplaceVideo}
+                className="rounded-lg bg-[#E8527A] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#D4426A] transition-colors"
+              >
+                Replace video
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
       {/* ── Visibility ── */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">

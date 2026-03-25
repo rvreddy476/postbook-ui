@@ -1,18 +1,25 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import axios from "axios"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { ChannelDetail, HandleCheckResult } from "@/types/profile"
 
 interface ChannelDetailResponse { data: ChannelDetail }
-interface HandleCheckResponse { data: HandleCheckResult }
+interface ChannelsResponse { data: ChannelDetail[] }
+
+type ChangeHandleInput = string | { username: string }
+
+function normalizeHandle(handle: string) {
+    return handle.trim().toLowerCase()
+}
 
 export function useMyChannel() {
     return useQuery({
         queryKey: ["my-channel-settings"],
         queryFn: async () => {
-            const res = await api.get<ChannelDetailResponse>("/v1/channel/me")
-            return res.data.data
+            const res = await api.get<ChannelsResponse>("/v1/users/me/channels")
+            return res.data.data?.[0] ?? null
         },
         staleTime: 30_000,
         retry: false,
@@ -22,18 +29,22 @@ export function useMyChannel() {
 export function useUpdateMyChannel() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (payload: Partial<ChannelDetail>) => {
-            const res = await api.put<ChannelDetailResponse>("/v1/channel/me", payload)
+        mutationFn: async ({ id, ...payload }: Partial<ChannelDetail> & { id: string }) => {
+            if (!id) {
+                throw new Error("Channel ID is required")
+            }
+            const res = await api.patch<ChannelDetailResponse>(`/v1/channels/${id}`, payload)
             return res.data.data
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             qc.invalidateQueries({ queryKey: ["my-channel-settings"] })
             qc.invalidateQueries({ queryKey: ["my-channels"] })
+            qc.invalidateQueries({ queryKey: ["channel", data.handle] })
         },
     })
 }
 
-/** Basic client-side handle validation (used as fallback when endpoint is missing). */
+/** Basic client-side handle validation, used before the server availability check. */
 function validateHandleLocally(handle: string): HandleCheckResult {
     const re = /^[a-z0-9_]{3,24}$/
     if (!re.test(handle)) {
@@ -49,21 +60,26 @@ function validateHandleLocally(handle: string): HandleCheckResult {
     if (banned.some((w) => handle.includes(w))) {
         return { available: false, reason: "This handle is reserved." }
     }
-    // Can't check uniqueness client-side — assume available
     return { available: true }
 }
 
 export function useCheckHandle() {
     return useMutation({
         mutationFn: async (handle: string): Promise<HandleCheckResult> => {
+            const normalized = normalizeHandle(handle)
+            const local = validateHandleLocally(normalized)
+            if (!local.available) {
+                return local
+            }
+
             try {
-                const res = await api.post<HandleCheckResponse>(
-                    `/v1/handle/check?value=${encodeURIComponent(handle)}`
-                )
-                return res.data.data
-            } catch {
-                // Endpoint not available — validate client-side
-                return validateHandleLocally(handle)
+                await api.get(`/v1/profiles/by-username/${encodeURIComponent(normalized)}`)
+                return { available: false, reason: "This handle is already taken." }
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                    return { available: true }
+                }
+                return { available: true }
             }
         },
     })
@@ -72,18 +88,22 @@ export function useCheckHandle() {
 export function useChangeHandle() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (newHandle: string) => {
-            try {
-                await api.post("/v1/handle/change", { new_handle: newHandle })
-            } catch {
-                // Endpoint not available yet — silently succeed so UI doesn't break.
-                // The handle change will take effect once the backend is deployed.
+        mutationFn: async (input: ChangeHandleInput) => {
+            const requestedHandle = typeof input === "string" ? input : input.username
+            const normalized = normalizeHandle(requestedHandle)
+            const local = validateHandleLocally(normalized)
+            if (!local.available) {
+                throw new Error(local.reason ?? "Invalid handle")
             }
+
+            const res = await api.put<{ data: unknown }>("/v1/profiles/me/handle", { username: normalized })
+            return res.data.data
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["my-channel-settings"] })
             qc.invalidateQueries({ queryKey: ["my-channels"] })
             qc.invalidateQueries({ queryKey: ["my-profile"] })
+            qc.invalidateQueries({ queryKey: ["handle-history"] })
         },
     })
 }

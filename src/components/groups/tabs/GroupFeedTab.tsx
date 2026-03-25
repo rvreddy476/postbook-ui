@@ -2,154 +2,98 @@
 
 import React, { useState, useMemo } from 'react'
 import CreatePortal from '@/components/CreatePortal'
-import { useGroupFeed, useGroupMembers } from '@/hooks/useGroups'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Plus, Heart, MessageCircle, Repeat2, Bookmark, Pin,
-  Crown, ShieldCheck, Wrench, MoreHorizontal, Image as ImageIcon
-} from 'lucide-react'
-import Link from 'next/link'
-import type { GroupPost, GroupMember } from '@/types/groups'
+  useGroupFeedV2,
+  useSparkGroupPostV2,
+  useUnsparkGroupPostV2,
+  useStashGroupPostV2,
+  useUnstashGroupPostV2,
+  useRecordGroupPostView,
+  useDeleteGroupPostV2,
+  useEchoGroupPostV2,
+  useUnechoGroupPostV2,
+} from '@/hooks/useGroups'
+import { useBatchProfiles } from '@/hooks/useProfile'
+import { useAuthUser } from '@/store/auth'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Plus, MessageCircle } from 'lucide-react'
+import GroupPostCard from '@/components/groups/GroupPostCard'
 
 interface GroupFeedTabProps {
   groupId: string
   isMember: boolean
+  viewerRole?: string
 }
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now()
-  const then = new Date(dateStr).getTime()
-  const diffMs = now - then
-  const diffSec = Math.floor(diffMs / 1000)
-  if (diffSec < 60) return 'just now'
-  const diffMin = Math.floor(diffSec / 60)
-  if (diffMin < 60) return `${diffMin}m`
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}h`
-  const diffDay = Math.floor(diffHr / 24)
-  if (diffDay < 7) return `${diffDay}d`
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)}w`
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function RoleBadge({ role }: { role: string }) {
-  if (role === 'owner' || role === 'admin') {
-    return (
-      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 rounded-md">
-        <Crown className="w-2.5 h-2.5" />{role === 'owner' ? 'Owner' : 'Admin'}
-      </span>
-    )
-  }
-  if (role === 'moderator') {
-    return (
-      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 rounded-md">
-        <Wrench className="w-2.5 h-2.5" />Mod
-      </span>
-    )
-  }
-  return null
-}
-
-function GroupPostCard({ post, memberMap }: { post: GroupPost; memberMap: Map<string, GroupMember> }) {
-  const member = memberMap.get(post.author_id)
-  const name = member?.display_name || member?.username || `User ${post.author_id.slice(0, 8)}`
-  const username = member?.username ? `@${member.username}` : null
-  const avatarSrc = member?.avatar_media_id
-    ? `/v1/media/${member.avatar_media_id}/serve`
-    : null
-  const role = member?.role || 'member'
-
-  return (
-    <Link href={`/post/${post.post_id}`} className="block">
-      <motion.article
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-brand-card rounded-xl border border-brand-divider hover:border-brand-divider hover:shadow-sm transition-all"
-      >
-        {/* Author Row */}
-        <div className="flex items-center gap-3 p-4 pb-0">
-          <div className="w-10 h-10 rounded-full bg-brand-secondary overflow-hidden flex-shrink-0 ring-2 ring-white shadow-sm">
-            {avatarSrc ? (
-              <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-brand-secondary to-brand-text/30 flex items-center justify-center text-sm font-bold text-white">
-                {name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-bold text-brand-text truncate">{name}</span>
-              <RoleBadge role={role} />
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-brand-text/60">
-              {username && <span className="font-medium">{username}</span>}
-              {username && <span>·</span>}
-              <span>{timeAgo(post.created_at)}</span>
-            </div>
-          </div>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="p-1.5 text-brand-text/30 hover:text-brand-highlight rounded-lg hover:bg-brand-secondary transition-all"
-          >
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Content placeholder — in a real implementation this would show post body/media */}
-        <div className="px-4 py-3">
-          <div className="h-2.5 w-full bg-brand-secondary rounded-full mb-2" />
-          <div className="h-2.5 w-3/4 bg-brand-secondary rounded-full" />
-        </div>
-
-        {/* Engagement Rail */}
-        <div className="flex items-center border-t border-brand-secondary px-2">
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-rose-500 hover:bg-rose-50/50 rounded-lg transition-all"
-          >
-            <Heart className="w-4 h-4" />
-            <span className="hidden sm:inline">Spark</span>
-          </button>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-blue-500 hover:bg-blue-50/50 rounded-lg transition-all"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Comment</span>
-          </button>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-emerald-500 hover:bg-emerald-50/50 rounded-lg transition-all"
-          >
-            <Repeat2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Echo</span>
-          </button>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-brand-text/60 hover:text-amber-500 hover:bg-amber-50/50 rounded-lg transition-all"
-          >
-            <Bookmark className="w-4 h-4" />
-            <span className="hidden sm:inline">Stash</span>
-          </button>
-        </div>
-      </motion.article>
-    </Link>
-  )
-}
-
-export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
+export default function GroupFeedTab({ groupId, isMember, viewerRole }: GroupFeedTabProps) {
   const [showCreate, setShowCreate] = useState(false)
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeed(groupId)
-  const { data: members } = useGroupMembers(groupId)
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
+  const authUser = useAuthUser()
 
-  const memberMap = useMemo(() => {
-    const map = new Map<string, GroupMember>()
-    members?.forEach((m) => map.set(m.user_id, m))
-    return map
-  }, [members])
+  const isAdmin = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'moderator'
 
-  const posts = data?.pages.flatMap((page) => page.data) ?? []
+  // Engagement mutations
+  const sparkMut = useSparkGroupPostV2()
+  const unsparkMut = useUnsparkGroupPostV2()
+  const stashMut = useStashGroupPostV2()
+  const unstashMut = useUnstashGroupPostV2()
+  const viewMut = useRecordGroupPostView()
+  const deleteMut = useDeleteGroupPostV2()
+  const echoMut = useEchoGroupPostV2()
+  const unechoMut = useUnechoGroupPostV2()
+
+  const rawPosts = data?.pages.flatMap((page) => page.data) ?? []
+
+  // Batch-fetch author profiles
+  const authorIds = useMemo(() => [...new Set(rawPosts.map(p => p.author_id))], [rawPosts])
+  const { data: profileMap } = useBatchProfiles(authorIds)
+
+  // Enrich posts with author name/avatar
+  const posts = useMemo(() => rawPosts.map(post => {
+    const profile = profileMap?.get(post.author_id)
+    if (!profile) return post
+    return {
+      ...post,
+      author_name: profile.display_name || profile.username || post.author_name,
+      author_avatar_url: profile.avatar_media_id
+        ? `/v1/media/${profile.avatar_media_id}/serve`
+        : post.author_avatar_url,
+    }
+  }), [rawPosts, profileMap])
+
+  // Split pinned vs regular
+  const pinnedPosts = useMemo(() => posts.filter(p => p.is_pinned), [posts])
+  const regularPosts = useMemo(() => posts.filter(p => !p.is_pinned), [posts])
+
+  // Engagement callbacks
+  const handleSpark = (gId: string, postId: string) => sparkMut.mutate({ groupId: gId, postId })
+  const handleUnspark = (gId: string, postId: string) => unsparkMut.mutate({ groupId: gId, postId })
+  const handleStash = (gId: string, postId: string) => stashMut.mutate({ groupId: gId, postId })
+  const handleUnstash = (gId: string, postId: string) => unstashMut.mutate({ groupId: gId, postId })
+  const handleView = (gId: string, postId: string) => viewMut.mutate({ groupId: gId, postId })
+  const handleDelete = (postId: string) => {
+    if (confirm('Delete this post?')) {
+      deleteMut.mutate({ groupId, postId })
+    }
+  }
+  const handleRepost = (gId: string, postId: string, echoType: string) => echoMut.mutate({ groupId: gId, postId, echoType })
+  const handleUnrepost = (gId: string, postId: string) => unechoMut.mutate({ groupId: gId, postId })
+
+  const renderPost = (post: typeof posts[0]) => (
+    <GroupPostCard
+      key={post.id}
+      post={post}
+      groupId={groupId}
+      isAdmin={isAdmin}
+      isAuthor={authUser?.id === post.author_id}
+      onSpark={handleSpark}
+      onUnspark={handleUnspark}
+      onStash={handleStash}
+      onUnstash={handleUnstash}
+      onView={handleView}
+      onDelete={handleDelete}
+    />
+  )
 
   return (
     <div className="space-y-4">
@@ -203,16 +147,15 @@ export default function GroupFeedTab({ groupId, isMember }: GroupFeedTabProps) {
       ) : posts.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
-            <MessageCircle className="w-7 h-7 text-brand-secondary" />
+            <MessageCircle className="w-7 h-7 text-brand-text/20" />
           </div>
           <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
           <p className="text-xs text-brand-text/30 mt-1">Be the first to share something with the group!</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {posts.map((post) => (
-            <GroupPostCard key={post.post_id} post={post} memberMap={memberMap} />
-          ))}
+          {pinnedPosts.map(renderPost)}
+          {regularPosts.map(renderPost)}
         </div>
       )}
 

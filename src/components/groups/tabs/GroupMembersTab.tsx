@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import {
   Crown, ShieldCheck, Wrench, UserMinus, Search, Shield,
   MoreHorizontal, ChevronDown, Ban
@@ -183,6 +184,25 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   const isMod = currentUserRole === 'moderator'
   const canManage = isAdmin || isMod
 
+  // Batch-fetch profiles for all members
+  const memberUserIds = useMemo(() => members?.map(m => m.user_id) ?? [], [members])
+  const { data: profileMap } = useBatchProfiles(memberUserIds)
+
+  // Enrich members with profile data
+  const enrichedMembers = useMemo(() => {
+    if (!members) return undefined
+    return members.map(m => {
+      const profile = profileMap?.get(m.user_id)
+      if (!profile) return m
+      return {
+        ...m,
+        display_name: profile.display_name || profile.username || m.display_name,
+        username: profile.username || m.username,
+        avatar_media_id: profile.avatar_media_id || m.avatar_media_id,
+      }
+    })
+  }, [members, profileMap])
+
   const handleRoleChange = (member: GroupMember, newRole: string) => {
     updateRole.mutate({ groupId, userId: member.user_id, role: newRole })
   }
@@ -201,9 +221,9 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
 
   // Filter and group by role
   const filtered = useMemo(() => {
-    if (!members) return []
+    if (!enrichedMembers) return []
     const q = searchQuery.toLowerCase().trim()
-    return members.filter(m => {
+    return enrichedMembers.filter(m => {
       if (!q) return true
       return (m.display_name?.toLowerCase().includes(q)) ||
         (m.username?.toLowerCase().includes(q))
@@ -234,7 +254,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     )
   }
 
-  if (!members || members.length === 0) {
+  if (!enrichedMembers || enrichedMembers.length === 0) {
     return (
       <div className="text-center py-20">
         <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">

@@ -1,4 +1,17 @@
 import { User } from '@/types';
+import {
+  isLiveRealtimeEventType,
+  type LiveChatMessageEvent,
+  type LiveMessagePinnedEvent,
+  type LiveRealtimeEvent,
+  type LiveStreamEndedEvent,
+  type LiveStreamLikesEvent,
+  type LiveStreamViewersEvent,
+  type LiveUserMutedEvent,
+  type LiveUserUnmutedEvent,
+  type LiveWordFilterAddedEvent,
+  type LiveWordFilterRemovedEvent,
+} from '@/features/live/types';
 
 export interface Message {
   id: string;
@@ -98,8 +111,111 @@ const readReceiptListeners = new Set<(e: ReadReceiptEvent) => void>();
 const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
+const commentUpdateListeners = new Set<(u: ChannelCommentUpdate) => void>();
+const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
+const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
 const presenceListeners = new Set<(e: { user_id: string; online: boolean }) => void>();
+const liveEventListeners = new Set<(event: LiveRealtimeEvent) => void>();
+
+// Track active room subscriptions so they can be re-sent on WS reconnect
+const activeRoomSubscriptions = new Set<string>();
+const pendingSignals: object[] = [];
+
+const normalizeLiveEvent = (data: Record<string, any>): LiveRealtimeEvent | null => {
+  if (!isLiveRealtimeEventType(data.type)) {
+    return null;
+  }
+
+  const payload =
+    data.payload && typeof data.payload === 'object'
+      ? data.payload as Record<string, any>
+      : {};
+  const streamId = String(payload.stream_id || data.stream_id || '');
+  if (!streamId) return null;
+
+  switch (data.type) {
+    case 'live_chat_message':
+      return {
+        type: 'live_chat_message',
+        stream_id: streamId,
+        message_id: String(payload.message_id || payload.id || ''),
+        user_id: String(payload.user_id || ''),
+        message: String(payload.message || ''),
+        is_pinned: Boolean(payload.is_pinned),
+        created_at: String(payload.created_at || new Date().toISOString()),
+      } satisfies LiveChatMessageEvent;
+    case 'live_stream_viewers':
+      return {
+        type: 'live_stream_viewers',
+        stream_id: streamId,
+        viewer_count: Number(payload.viewer_count ?? 0),
+        peak_viewers: payload.peak_viewers == null ? undefined : Number(payload.peak_viewers),
+        total_viewers: payload.total_viewers == null ? undefined : Number(payload.total_viewers),
+        reason: typeof payload.reason === 'string' ? payload.reason : undefined,
+        actor_id: typeof payload.actor_id === 'string' ? payload.actor_id : undefined,
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveStreamViewersEvent;
+    case 'live_stream_likes':
+      return {
+        type: 'live_stream_likes',
+        stream_id: streamId,
+        like_count: Number(payload.like_count ?? 0),
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveStreamLikesEvent;
+    case 'live_message_pinned':
+      return {
+        type: 'live_message_pinned',
+        stream_id: streamId,
+        message_id: String(payload.message_id || ''),
+        pinned_by: typeof payload.pinned_by === 'string' ? payload.pinned_by : undefined,
+        pinned_at: typeof payload.pinned_at === 'string' ? payload.pinned_at : undefined,
+      } satisfies LiveMessagePinnedEvent;
+    case 'live_stream_ended':
+      return {
+        type: 'live_stream_ended',
+        stream_id: streamId,
+        host_id: typeof payload.host_id === 'string' ? payload.host_id : undefined,
+        duration_secs: payload.duration_secs == null ? undefined : Number(payload.duration_secs),
+        peak_viewers: payload.peak_viewers == null ? undefined : Number(payload.peak_viewers),
+        total_viewers: payload.total_viewers == null ? undefined : Number(payload.total_viewers),
+        ended_at: typeof payload.ended_at === 'string' ? payload.ended_at : undefined,
+      } satisfies LiveStreamEndedEvent;
+    case 'live_user_muted':
+      return {
+        type: 'live_user_muted',
+        stream_id: streamId,
+        user_id: String(payload.user_id || ''),
+        muted_by: typeof payload.muted_by === 'string' ? payload.muted_by : undefined,
+        muted_at: typeof payload.muted_at === 'string' ? payload.muted_at : undefined,
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveUserMutedEvent;
+    case 'live_user_unmuted':
+      return {
+        type: 'live_user_unmuted',
+        stream_id: streamId,
+        user_id: String(payload.user_id || ''),
+        unmuted_by: typeof payload.unmuted_by === 'string' ? payload.unmuted_by : undefined,
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveUserUnmutedEvent;
+    case 'live_word_filter_added':
+      return {
+        type: 'live_word_filter_added',
+        stream_id: streamId,
+        word: String(payload.word || ''),
+        added_by: typeof payload.added_by === 'string' ? payload.added_by : undefined,
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveWordFilterAddedEvent;
+    case 'live_word_filter_removed':
+      return {
+        type: 'live_word_filter_removed',
+        stream_id: streamId,
+        word: String(payload.word || ''),
+        removed_by: typeof payload.removed_by === 'string' ? payload.removed_by : undefined,
+        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
+      } satisfies LiveWordFilterRemovedEvent;
+  }
+};
 
 export interface CallSignal {
   type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy'
@@ -137,6 +253,37 @@ export interface PostInteractionUpdate {
   comments?: number;
   shares?: number;
   comment_id?: string;
+}
+
+export interface ChannelCommentUpdate {
+  event_id: string;
+  update_id: string;
+  channel_id: string;
+  update_type: 'comment_created' | 'comment_deleted' | 'comment_updated';
+  comment_id: string;
+  author_id?: string;
+  actor_id?: string;
+  body?: string;
+  parent_id?: string;
+  created_at?: string;
+}
+
+export interface GroupCommentUpdate {
+  event_id: string;
+  group_id: string;
+  post_id: string;
+  update_type: 'comment_created' | 'comment_deleted';
+  comment_id: string;
+  author_id?: string;
+  actor_id?: string;
+  body?: string;
+  parent_id?: string;
+  created_at?: string;
+}
+
+export interface GroupTypingEvent {
+  post_id: string;
+  user_id: string;
 }
 
 const canUseBrowserApis = () => typeof window !== 'undefined';
@@ -237,6 +384,10 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
   const user = getSessionUser();
   if (!user) return;
 
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
+
   try {
     // Fetch a signed chat token from the proxy
     const headers = new Headers({ 'X-User-Id': user.id });
@@ -327,6 +478,18 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
       } else if (data.type === 'post_update') {
         const update: PostInteractionUpdate = data.payload;
         postUpdateListeners.forEach(cb => cb(update));
+      } else if (data.type === 'comment_update') {
+        const update: ChannelCommentUpdate = data.payload;
+        commentUpdateListeners.forEach(cb => cb(update));
+      } else if (data.type === 'group_comment_update') {
+        const update: GroupCommentUpdate = data.payload;
+        groupCommentUpdateListeners.forEach(cb => cb(update));
+      } else if (data.type === 'group_post_typing') {
+        const evt: GroupTypingEvent = {
+          post_id: data.post_id,
+          user_id: data.user_id,
+        };
+        groupTypingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'pin_update') {
         const evt: PinUpdateEvent = {
           conversation_id: data.payload.conversation_id,
@@ -338,11 +501,29 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
       } else if (data.type === 'presence_update') {
         const evt = { user_id: data.user_id as string, online: data.online as boolean };
         presenceListeners.forEach(cb => cb(evt));
+      } else {
+        const liveEvent = normalizeLiveEvent(data as Record<string, any>);
+        if (liveEvent) {
+          liveEventListeners.forEach(cb => cb(liveEvent));
+        }
       }
     };
 
     socket.onopen = () => {
       wsRetryCount = 0; // reset on successful connection
+      // Flush any signals that were queued while socket was connecting
+      while (pendingSignals.length > 0) {
+        const msg = pendingSignals.shift();
+        if (msg && socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify(msg));
+        }
+      }
+      // Re-subscribe to any active rooms (post/update/call)
+      activeRoomSubscriptions.forEach(sub => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(sub);
+        }
+      });
     };
 
     socket.onclose = () => {
@@ -546,6 +727,9 @@ export const subscribeToPinUpdates = (cb: (e: PinUpdateEvent) => void) => {
 export const sendSignaling = (data: object) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(data));
+  } else {
+    // Queue for delivery when socket opens
+    pendingSignals.push(data);
   }
 };
 
@@ -610,22 +794,88 @@ export const getPinnedMessage = async (conversationId: string): Promise<PinnedMe
   }
 };
 
-// Post room subscription — subscribe to per-post real-time updates via WS gateway
+// Post room subscription â€” subscribe to per-post real-time updates via WS gateway
 export const subscribeToPostRoom = (postId: string) => {
-  sendSignaling({ type: 'subscribe_post', post_id: postId });
+  const msg = { type: 'subscribe_post', post_id: postId };
+  activeRoomSubscriptions.add(JSON.stringify(msg));
+  sendSignaling(msg);
 };
 
 export const unsubscribeFromPostRoom = (postId: string) => {
+  const subMsg = JSON.stringify({ type: 'subscribe_post', post_id: postId });
+  activeRoomSubscriptions.delete(subMsg);
   sendSignaling({ type: 'unsubscribe_post', post_id: postId });
 };
 
-// Call room subscription — subscribe to per-call real-time updates via WS gateway
+// Call room subscription â€” subscribe to per-call real-time updates via WS gateway
 export const subscribeToCallRoom = (callId: string) => {
   sendSignaling({ type: 'subscribe_call', call_id: callId });
 };
 
 export const unsubscribeFromCallRoom = (callId: string) => {
   sendSignaling({ type: 'unsubscribe_call', call_id: callId });
+};
+
+// Update room subscription â€” subscribe to per-update real-time comment updates via WS gateway
+export const subscribeToUpdateRoom = (updateId: string) => {
+  const msg = { type: 'subscribe_update', update_id: updateId };
+  activeRoomSubscriptions.add(JSON.stringify(msg));
+  sendSignaling(msg);
+};
+
+export const unsubscribeFromUpdateRoom = (updateId: string) => {
+  const subMsg = JSON.stringify({ type: 'subscribe_update', update_id: updateId });
+  activeRoomSubscriptions.delete(subMsg);
+  sendSignaling({ type: 'unsubscribe_update', update_id: updateId });
+};
+
+export const subscribeToCommentUpdates = (cb: (u: ChannelCommentUpdate) => void) => {
+  commentUpdateListeners.add(cb);
+  return () => { commentUpdateListeners.delete(cb); };
+};
+
+export const subscribeToLiveStream = (streamId: string) => {
+  const msg = { type: 'subscribe_live_stream', stream_id: streamId };
+  activeRoomSubscriptions.add(JSON.stringify(msg));
+  sendSignaling(msg);
+};
+
+export const unsubscribeFromLiveStream = (streamId: string) => {
+  const subMsg = JSON.stringify({ type: 'subscribe_live_stream', stream_id: streamId });
+  activeRoomSubscriptions.delete(subMsg);
+  sendSignaling({ type: 'unsubscribe_live_stream', stream_id: streamId });
+};
+
+export const subscribeToLiveEvents = (cb: (event: LiveRealtimeEvent) => void) => {
+  liveEventListeners.add(cb);
+  return () => { liveEventListeners.delete(cb); };
+};
+
+// Group post room subscription â€” subscribe to per-group-post real-time comment updates via WS gateway
+export const subscribeToGroupPostRoom = (postId: string) => {
+  const msg = { type: 'subscribe_group_post', post_id: postId };
+  activeRoomSubscriptions.add(JSON.stringify(msg));
+  sendSignaling(msg);
+};
+
+export const unsubscribeFromGroupPostRoom = (postId: string) => {
+  const subMsg = JSON.stringify({ type: 'subscribe_group_post', post_id: postId });
+  activeRoomSubscriptions.delete(subMsg);
+  sendSignaling({ type: 'unsubscribe_group_post', post_id: postId });
+};
+
+export const subscribeToGroupCommentUpdates = (cb: (u: GroupCommentUpdate) => void) => {
+  groupCommentUpdateListeners.add(cb);
+  return () => { groupCommentUpdateListeners.delete(cb); };
+};
+
+export const subscribeToGroupTyping = (cb: (e: GroupTypingEvent) => void) => {
+  groupTypingListeners.add(cb);
+  return () => { groupTypingListeners.delete(cb); };
+};
+
+export const sendGroupPostTyping = (postId: string) => {
+  sendSignaling({ type: 'group_post_typing', post_id: postId });
 };
 
 // ---------------------------------------------------------------------------
@@ -644,3 +894,4 @@ export const fetchPresence = async (userIds: string[]): Promise<Record<string, b
     return {};
   }
 };
+

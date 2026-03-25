@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { Users, Search, ChevronDown, MoreHorizontal, ShieldCheck, Clock, UserX, Ban, CheckCircle2, XCircle } from 'lucide-react'
 import type { BroadcastChannel, ChannelMember } from '@/types/channels'
+import { useBatchProfiles } from '@/hooks/useProfile'
 
 interface SubscribersTabProps {
   channel: BroadcastChannel
@@ -152,6 +153,29 @@ export default function SubscribersTab({
   const [sortOpen, setSortOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
 
+  // Fetch user profiles for subscriber names
+  const subscriberIds = useMemo(() => subscribers.map(s => s.user_id), [subscribers])
+  const { data: profileMap } = useBatchProfiles(subscriberIds)
+
+  const getName = (userId: string) => {
+    const p = profileMap?.get(userId)
+    if (p) {
+      if (p.display_name) return p.display_name
+      if (p.first_name || p.last_name) return `${p.first_name || ''} ${p.last_name || ''}`.trim()
+      if (p.username) return p.username
+    }
+    return userId.slice(0, 8) + '...'
+  }
+  const getHandle = (userId: string) => {
+    const p = profileMap?.get(userId)
+    return p?.username ? `@${p.username}` : `@${userId.slice(0, 8)}`
+  }
+  const getAvatar = (userId: string) => {
+    const p = profileMap?.get(userId)
+    if (p?.avatar_media_id) return `/v1/media/${p.avatar_media_id}/serve`
+    return null
+  }
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
@@ -175,7 +199,11 @@ export default function SubscribersTab({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
     let list = q
-      ? activeMembers.filter(s => s.user_id.toLowerCase().includes(q))
+      ? activeMembers.filter(s => {
+          const name = getName(s.user_id).toLowerCase()
+          const handle = getHandle(s.user_id).toLowerCase()
+          return name.includes(q) || handle.includes(q) || s.user_id.toLowerCase().includes(q)
+        })
       : activeMembers
 
     list = [...list].sort((a, b) => {
@@ -185,14 +213,14 @@ export default function SubscribersTab({
         case 'oldest':
           return new Date(a.subscribed_at).getTime() - new Date(b.subscribed_at).getTime()
         case 'name_asc':
-          return a.user_id.localeCompare(b.user_id)
+          return getName(a.user_id).localeCompare(getName(b.user_id))
         default:
           return 0
       }
     })
 
     return list
-  }, [activeMembers, search, sort])
+  }, [activeMembers, search, sort, profileMap]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortLabels: Record<SortOption, string> = {
     newest: 'Newest',
@@ -291,19 +319,22 @@ export default function SubscribersTab({
               {pendingMembers.length} Pending {pendingMembers.length === 1 ? 'Approval' : 'Approvals'}
             </p>
           </div>
-          {pendingMembers.map(member => (
+          {pendingMembers.map(member => {
+            const name = getName(member.user_id)
+            const handle = getHandle(member.user_id)
+            return (
             <div
               key={member.user_id}
               className="flex items-center gap-3 px-4 py-3 border-b border-orange-200 last:border-b-0"
             >
               <div className="w-9 h-9 rounded-full bg-orange-200/60 flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-orange-600">
-                  {member.user_id.charAt(0).toUpperCase()}
+                  {name.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-brand-text truncate">{member.user_id}</p>
-                <p className="text-[11px] text-brand-text/40 truncate">@{member.user_id}</p>
+                <p className="text-xs font-semibold text-brand-text truncate">{name}</p>
+                <p className="text-[11px] text-brand-text/40 truncate">{handle}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {onApprove && (
@@ -324,36 +355,45 @@ export default function SubscribersTab({
                 )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
       {/* Subscriber list */}
       {filtered.length > 0 ? (
         <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
-          {filtered.map(member => (
-            <div
-              key={member.user_id}
-              className="flex items-center gap-3 px-4 py-3 border-b border-brand-divider last:border-b-0"
-            >
-              <div className="w-9 h-9 rounded-full bg-brand-secondary/60 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-brand-text/50">
-                  {member.user_id.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-semibold text-brand-text truncate">{member.user_id}</p>
-                  {roleBadge(member.role)}
+          {filtered.map(member => {
+            const name = getName(member.user_id)
+            const handle = getHandle(member.user_id)
+            const avatar = getAvatar(member.user_id)
+            return (
+              <div
+                key={member.user_id}
+                className="flex items-center gap-3 px-4 py-3 border-b border-brand-divider last:border-b-0"
+              >
+                <div className="w-9 h-9 rounded-full bg-brand-secondary/60 flex items-center justify-center shrink-0 overflow-hidden">
+                  {avatar ? (
+                    <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-brand-text/50">
+                      {name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] text-brand-text/40 truncate">@{member.user_id}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-brand-text truncate">{name}</p>
+                    {roleBadge(member.role)}
+                  </div>
+                  <p className="text-[11px] text-brand-text/40 truncate">{handle}</p>
+                </div>
+                <p className="text-[11px] text-brand-text/35 shrink-0 hidden sm:block">
+                  Subscribed {formatDate(member.subscribed_at)}
+                </p>
+                <ActionsDropdown userId={member.user_id} onRemove={onRemove} onBlock={onBlock} />
               </div>
-              <p className="text-[11px] text-brand-text/35 shrink-0 hidden sm:block">
-                Subscribed {formatDate(member.subscribed_at)}
-              </p>
-              <ActionsDropdown userId={member.user_id} onRemove={onRemove} onBlock={onBlock} />
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div className="bg-white border border-brand-divider rounded-xl p-8 text-center">

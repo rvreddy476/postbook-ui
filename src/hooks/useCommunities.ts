@@ -74,7 +74,7 @@ export function useCommunityEvents(communityId: string | undefined) {
     queryFn: async () => {
       try {
         const res = await api.get<EventsResponse>(`/v1/communities/${communityId}/events`)
-        return res.data.data
+        return res.data.data ?? []
       } catch (error) {
         if (axios.isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
           return []
@@ -83,6 +83,17 @@ export function useCommunityEvents(communityId: string | undefined) {
       }
     },
     enabled: !!communityId,
+  })
+}
+
+export function useCreateCommunityEvent(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { title: string; description?: string; location?: string; starts_at: string; ends_at?: string; max_attendees?: number }) => {
+      const res = await api.post(`/v1/communities/${communityId}/events`, payload)
+      return res.data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["community-events", communityId] }),
   })
 }
 

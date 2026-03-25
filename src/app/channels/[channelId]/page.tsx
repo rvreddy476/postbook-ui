@@ -13,6 +13,13 @@ import {
   useDeleteChannelUpdate,
   usePinChannelUpdate,
   useUpdateBroadcastChannel,
+  useSparkUpdate,
+  useUnsparkUpdate,
+  useStashUpdate,
+  useUnstashUpdate,
+  useEchoUpdate,
+  useUnechoUpdate,
+  useRecordView,
 } from '@/hooks/useBroadcastChannels'
 import ChannelComposer, { type ComposerPayload } from '@/components/channels/ChannelComposer'
 import ChannelEditModal from '@/components/channels/ChannelEditModal'
@@ -118,6 +125,13 @@ export default function ChannelDetailPage() {
   const deleteUpdate = useDeleteChannelUpdate()
   const pinUpdate = usePinChannelUpdate()
   const updateChannel = useUpdateBroadcastChannel()
+  const sparkMut = useSparkUpdate()
+  const unsparkMut = useUnsparkUpdate()
+  const stashMut = useStashUpdate()
+  const unstashMut = useUnstashUpdate()
+  const echoMut = useEchoUpdate()
+  const unechoMut = useUnechoUpdate()
+  const viewMut = useRecordView()
 
   const role: ChannelRole = channel ? getRole(channel) : 'visitor'
   const draftCount = 0
@@ -186,6 +200,34 @@ export default function ChannelDetailPage() {
     if (unsubscribeMut.isPending) return
     unsubscribeMut.mutate(channelId, { onError: () => setMutError('Failed to unsubscribe.') })
   }, [channelId, unsubscribeMut])
+
+  const handleLike = useCallback((cId: string, updateId: string) => {
+    sparkMut.mutate({ channelId: cId, updateId })
+  }, [sparkMut])
+
+  const handleUnlike = useCallback((cId: string, updateId: string) => {
+    unsparkMut.mutate({ channelId: cId, updateId })
+  }, [unsparkMut])
+
+  const handleStash = useCallback((cId: string, updateId: string) => {
+    stashMut.mutate({ channelId: cId, updateId })
+  }, [stashMut])
+
+  const handleUnstash = useCallback((cId: string, updateId: string) => {
+    unstashMut.mutate({ channelId: cId, updateId })
+  }, [unstashMut])
+
+  const handleRepost = useCallback((cId: string, updateId: string, echoType: string) => {
+    echoMut.mutate({ channelId: cId, updateId, echoType })
+  }, [echoMut])
+
+  const handleUnrepost = useCallback((cId: string, updateId: string) => {
+    unechoMut.mutate({ channelId: cId, updateId })
+  }, [unechoMut])
+
+  const handleView = useCallback((cId: string, updateId: string) => {
+    viewMut.mutate({ channelId: cId, updateId })
+  }, [viewMut])
 
   const handleSettingsUpdate = useCallback((data: any) => {
     updateChannel.mutate({ channelId, ...data }, {
@@ -407,14 +449,20 @@ export default function ChannelDetailPage() {
                 ) : allUpdates.length > 0 ? (
                   <div className="space-y-4">
                     {pinnedUpdates.map(u => (
-                      <UpdateCard key={u.id} update={u} channel={channel} isOwner={can.publish(role)}
+                      <UpdateCard key={u.id} update={u} channel={channel} channelId={channelId} isOwner={can.publish(role)}
                         onDelete={can.publish(role) ? handleDelete : undefined}
-                        onPin={can.publish(role) ? handlePin : undefined} />
+                        onPin={can.publish(role) ? handlePin : undefined}
+                        onLike={handleLike} onUnlike={handleUnlike}
+                        onStash={handleStash} onUnstash={handleUnstash}
+                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView} />
                     ))}
                     {regularUpdates.map(u => (
-                      <UpdateCard key={u.id} update={u} channel={channel} isOwner={can.publish(role)}
+                      <UpdateCard key={u.id} update={u} channel={channel} channelId={channelId} isOwner={can.publish(role)}
                         onDelete={can.publish(role) ? handleDelete : undefined}
-                        onPin={can.publish(role) ? handlePin : undefined} />
+                        onPin={can.publish(role) ? handlePin : undefined}
+                        onLike={handleLike} onUnlike={handleUnlike}
+                        onStash={handleStash} onUnstash={handleUnstash}
+                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView} />
                     ))}
                   </div>
                 ) : (

@@ -224,6 +224,15 @@ export interface PostDetail {
         upload_status: string
         final_category: string
     }
+    // Rich text / styling metadata (stored as JSONB)
+    rich_text?: {
+        background?: string
+        text_color?: string
+    } | null
+    // Repost metadata — set when this feed entry is a repost
+    is_repost?: boolean
+    reposted_by?: string
+    feed_content_type?: string
 }
 
 // --- Stories ---

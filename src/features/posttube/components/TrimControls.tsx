@@ -5,7 +5,7 @@ import { Scissors } from "lucide-react";
 import { updateVideoTrim } from "../data/posttubeApi";
 
 interface TrimControlsProps {
-  videoId: string;
+  videoId?: string;
   durationSeconds: number;
   initialStartMs?: number;
   initialEndMs?: number;
@@ -39,6 +39,7 @@ export function TrimControls({
     (start: number, end: number) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
+        if (!videoId) return;
         setSaving(true);
         try {
           await updateVideoTrim(videoId, start, end < maxMs ? end : undefined);
@@ -51,6 +52,14 @@ export function TrimControls({
     },
     [videoId, maxMs],
   );
+
+  useEffect(() => {
+    setStartMs(initialStartMs);
+  }, [initialStartMs]);
+
+  useEffect(() => {
+    setEndMs(initialEndMs ?? maxMs);
+  }, [initialEndMs, maxMs]);
 
   const handleStartChange = useCallback(
     (val: number) => {

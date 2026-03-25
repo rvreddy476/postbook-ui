@@ -79,13 +79,27 @@ export function useBatchProfiles(userIds: string[]) {
     return useQuery({
         queryKey: ["profiles", "batch", ...capped.slice().sort()],
         queryFn: async () => {
-            const res = await api.post<UserProfileBatchResponse>("/v1/profiles/batch", {
+            const res = await api.post("/v1/profiles/batch", {
                 user_ids: capped,
             })
             const map = new Map<string, UserProfile>()
-            for (const profile of res.data.profiles) {
-                const normalized = normalizeProfile(profile as unknown as Record<string, unknown>)
-                map.set(normalized.id, normalized)
+            const data = res.data
+            // API returns either { profiles: [...] } or { "uuid": {...}, ... }
+            if (data && typeof data === 'object') {
+                if (Array.isArray(data.profiles)) {
+                    for (const profile of data.profiles) {
+                        const normalized = normalizeProfile(profile as Record<string, unknown>)
+                        map.set(normalized.id, normalized)
+                    }
+                } else {
+                    // Map format: { "uuid1": {profile}, "uuid2": {profile} }
+                    for (const [key, value] of Object.entries(data)) {
+                        if (value && typeof value === 'object' && 'user_id' in (value as Record<string, unknown>)) {
+                            const normalized = normalizeProfile(value as Record<string, unknown>)
+                            map.set(key, normalized)
+                        }
+                    }
+                }
             }
             return map
         },

@@ -58,6 +58,23 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
   if (!form.category) {
     errors.push({ field: "category", message: "Please select a category" });
   }
+  if (form.processingStatus === "failed") {
+    errors.push({
+      field: "processing",
+      message: form.processingError || "Video processing failed. Replace the upload or check again.",
+    });
+  } else if (!form.processingReady || form.processingStatus !== "ready") {
+    errors.push({ field: "processing", message: "Video processing must finish before publishing" });
+  }
+  if (form.subtitlesFile && form.subtitleUploadState === "uploading") {
+    errors.push({ field: "subtitles", message: "Subtitle upload is still in progress" });
+  }
+  if (form.subtitlesFile && form.subtitleUploadState === "error") {
+    errors.push({
+      field: "subtitles",
+      message: form.subtitleUploadError || "Subtitle upload failed",
+    });
+  }
   if (form.scheduleAt) {
     const scheduleDate = new Date(form.scheduleAt);
     if (scheduleDate <= new Date()) {
@@ -95,7 +112,7 @@ export function isStepComplete(
       }
       return false;
     case "publish":
-      return form.category.length > 0;
+      return form.category.length > 0 && form.processingReady && form.processingStatus === "ready";
     default:
       return false;
   }

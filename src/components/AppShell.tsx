@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { getSession, logoutUser } from '@/services/authService';
+import { connectToHub } from '@/services/messageService';
 import { NavItem, User } from '@/types';
 
 interface AppShellProps {
@@ -24,6 +25,7 @@ export default function AppShell({ children }: AppShellProps) {
       return;
     }
     setCurrentUser(user);
+    connectToHub(() => {}); // Ensure WebSocket is connected for realtime features
   }, [router]);
 
   const handleNavChange = useCallback((tab: NavItem) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   uploadMedia,
@@ -12,6 +12,13 @@ import {
   getProcessingStatus,
   uploadCoverDataUrl,
 } from "@/features/reels/data/reelsApi";
+import {
+  createSubtitleTrack,
+  getSubtitleTracks,
+  overrideVideoCategory,
+  setCoverFrame,
+  updateVideoTrim,
+} from "@/features/posttube/data/posttubeApi";
 
 import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
 import { type StudioFormState, INITIAL_FORM_STATE } from "./types";
@@ -78,9 +85,12 @@ function extractFrameClientSide(videoUrl: string, timestampMs: number): Promise<
 /* ── Hook ──────────────────────────────────────────────── */
 
 export function useUploadStudio(contentType: ContentType) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<StudioFormState>({ ...INITIAL_FORM_STATE, contentType, currentStep: "video" });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const subtitleUploadKeyRef = useRef<string | null>(null);
   const steps = STEP_SCHEMAS[contentType];
+  const isLongStudio = contentType === "long" || contentType === "podcast";
 
   const patch = useCallback(
     (updates: Partial<StudioFormState>) => setForm((prev) => ({ ...prev, ...updates })),
@@ -99,6 +109,9 @@ export function useUploadStudio(contentType: ContentType) {
         patch({ uploadError: `File too large. Maximum ${MAX_FILE_SIZE_DEFAULT / (1024 * 1024)} MB.` });
         return;
       }
+
+      subtitleUploadKeyRef.current = null;
+      uploadTriggeredRef.current = null;
 
       setForm((prev) => {
         if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
@@ -132,6 +145,8 @@ export function useUploadStudio(contentType: ContentType) {
           return;
         }
 
+        const computedCategory = classifyVideo(Math.round(dur), vw || null, vh || null);
+
         patch({
           videoFile: file,
           videoPreviewUrl: previewUrl,
@@ -140,6 +155,17 @@ export function useUploadStudio(contentType: ContentType) {
           videoHeight: vh || null,
           uploadError: null,
           coverTimestampMs: Math.round((dur / 2) * 1000),
+          trimStartMs: 0,
+          trimEndMs: null,
+          computedVideoCategory: computedCategory,
+          finalVideoCategory: computedCategory,
+          subtitleTracks: [],
+          subtitleUploadState: "idle",
+          subtitleUploadError: null,
+          processingReady: false,
+          processingStatus: "idle",
+          processingError: null,
+          publishWarning: null,
         });
       };
       video.onerror = () => {
@@ -151,6 +177,8 @@ export function useUploadStudio(contentType: ContentType) {
   );
 
   const clearFile = useCallback(() => {
+    subtitleUploadKeyRef.current = null;
+    uploadTriggeredRef.current = null;
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
       return { ...INITIAL_FORM_STATE, contentType, currentStep: "video" };
@@ -175,7 +203,13 @@ export function useUploadStudio(contentType: ContentType) {
         // Draft endpoint not available
       }
 
-      patch({ uploadPhase: "done", draftId });
+      patch({
+        uploadPhase: "done",
+        draftId,
+        processingReady: false,
+        processingStatus: "processing",
+        processingError: null,
+      });
       return { mediaId, draftId };
     },
     onError: (err: Error) => {
@@ -200,7 +234,7 @@ export function useUploadStudio(contentType: ContentType) {
 
   useEffect(() => {
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
-    if (!form.mediaId || form.processingReady) return;
+    if (!form.mediaId || form.processingReady || form.processingStatus === "failed") return;
 
     const mediaId = form.mediaId;
     let cancelled = false;
@@ -211,10 +245,23 @@ export function useUploadStudio(contentType: ContentType) {
         const status = await getProcessingStatus(mediaId);
         if (cancelled) return;
         if (status.all_ready) {
-          patch({ processingReady: true });
+          patch({ processingReady: true, processingStatus: "ready", processingError: null });
           if (pollingRef.current) clearInterval(pollingRef.current);
           pollingRef.current = null;
+          return;
         }
+        const hasFailedRendition = status.status === "failed" || status.renditions.some((rendition) => rendition.status === "failed");
+        if (hasFailedRendition) {
+          patch({
+            processingReady: false,
+            processingStatus: "failed",
+            processingError: "Processing failed for this upload. Replace the file or check again if renditions recover.",
+          });
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = null;
+          return;
+        }
+        patch({ processingReady: false, processingStatus: "processing", processingError: null });
       } catch { /* ignore */ }
     }, 3000);
 
@@ -222,9 +269,130 @@ export function useUploadStudio(contentType: ContentType) {
       cancelled = true;
       if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
-  }, [form.mediaId, form.processingReady, patch]);
+  }, [form.mediaId, form.processingReady, form.processingStatus, patch]);
 
   /* ── Cover poster — local-only preview extraction ── */
+
+  const retryProcessingCheck = useCallback(async () => {
+    if (!form.mediaId) return;
+
+    patch({
+      processingReady: false,
+      processingStatus: "processing",
+      processingError: null,
+    });
+
+    try {
+      const status = await getProcessingStatus(form.mediaId);
+      if (status.all_ready) {
+        patch({ processingReady: true, processingStatus: "ready", processingError: null });
+        return;
+      }
+
+      const hasFailedRendition = status.status === "failed" || status.renditions.some((rendition) => rendition.status === "failed");
+      if (hasFailedRendition) {
+        patch({
+          processingReady: false,
+          processingStatus: "failed",
+          processingError: "Processing failed for this upload. Replace the file or check again if renditions recover.",
+        });
+        return;
+      }
+
+      patch({ processingReady: false, processingStatus: "processing", processingError: null });
+    } catch {
+      patch({
+        processingReady: false,
+        processingStatus: "failed",
+        processingError: "Processing status could not be confirmed. Try checking again.",
+      });
+    }
+  }, [form.mediaId, patch]);
+
+  useEffect(() => {
+    if (!form.mediaId) {
+      subtitleUploadKeyRef.current = null;
+      patch({
+        subtitleTracks: [],
+        subtitleUploadState: "idle",
+        subtitleUploadError: null,
+      });
+      return;
+    }
+
+    const mediaId = form.mediaId;
+    let cancelled = false;
+
+    void getSubtitleTracks(mediaId)
+      .then((tracks) => {
+        if (cancelled) return;
+        setForm((prev) => {
+          if (prev.mediaId !== mediaId) return prev;
+          if (tracks.length === 0 && prev.subtitleTracks.length > 0) return prev;
+          return { ...prev, subtitleTracks: tracks };
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setForm((prev) => (prev.mediaId === mediaId ? { ...prev, subtitleTracks: prev.subtitleTracks } : prev));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.mediaId, patch]);
+
+  useEffect(() => {
+    if (!form.mediaId || !form.subtitlesFile) {
+      subtitleUploadKeyRef.current = null;
+      if (!form.subtitlesFile) {
+        patch({
+          subtitleUploadState: "idle",
+          subtitleUploadError: null,
+        });
+      }
+      return;
+    }
+
+    const uploadKey = `${form.mediaId}:${form.subtitlesFile.name}:${form.subtitlesFile.size}:${form.language}`;
+    if (subtitleUploadKeyRef.current === uploadKey || form.subtitleUploadState === "uploading") {
+      return;
+    }
+
+    subtitleUploadKeyRef.current = uploadKey;
+    patch({ subtitleUploadState: "uploading", subtitleUploadError: null });
+
+    let cancelled = false;
+
+    void createSubtitleTrack(form.mediaId, {
+      language: form.language,
+      file: form.subtitlesFile,
+    })
+      .then((track) => {
+        if (cancelled) return;
+        setForm((prev) => {
+          const dedupedTracks = prev.subtitleTracks.filter((item) => item.id !== track.id);
+          return {
+            ...prev,
+            subtitleTracks: [...dedupedTracks, track],
+            subtitleUploadState: "done",
+            subtitleUploadError: null,
+          };
+        });
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        subtitleUploadKeyRef.current = null;
+        patch({
+          subtitleUploadState: "error",
+          subtitleUploadError: error instanceof Error ? error.message : "Subtitle upload failed.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.language, form.mediaId, form.subtitleUploadState, form.subtitlesFile, patch]);
 
   const extractCoverPreview = useMutation({
     mutationFn: async (timestampMs: number) => {
@@ -314,6 +482,19 @@ export function useUploadStudio(contentType: ContentType) {
   const publishMutation = useMutation({
     mutationFn: async () => {
       if (!form.mediaId) throw new Error("No media uploaded");
+      if (form.processingStatus === "failed") {
+        throw new Error(form.processingError || "Video processing failed. Replace the file or retry processing.");
+      }
+      if (!form.processingReady || form.processingStatus !== "ready") {
+        throw new Error(form.processingError || "Video processing is not finished yet.");
+      }
+      if (form.subtitlesFile && form.subtitleUploadState !== "done") {
+        throw new Error(
+          form.subtitleUploadState === "error"
+            ? form.subtitleUploadError || "Subtitle upload failed."
+            : "Subtitle upload is still in progress.",
+        );
+      }
 
       // Upload cover ONCE at publish time — no orphaned media
       let coverMediaId: string | undefined;
@@ -328,17 +509,18 @@ export function useUploadStudio(contentType: ContentType) {
       if (form.draftId) {
         try {
           await saveDraftWithCover(coverMediaId);
-          return await publishDraft(
+          const reel = await publishDraft(
             form.draftId,
             form.scheduleAt ? { schedule_at: form.scheduleAt } : undefined,
           );
+          return { reel, coverMediaId };
         } catch { /* fall through to direct create */ }
       }
 
       // Direct create path (no draft)
       const hashtags = extractHashtags(form.caption);
       const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
-      return createReel({
+      const reel = await createReel({
         text: form.caption,
         mediaIds: [form.mediaId],
         visibility: form.visibility,
@@ -347,9 +529,52 @@ export function useUploadStudio(contentType: ContentType) {
         content_type: classified,
         publish_to_feed: form.publishToFeed,
       });
+      return { reel, coverMediaId };
     },
-    onSuccess: (reel) => {
-      patch({ publishedPostId: reel.reel_id, publishSuccess: true });
+    onSuccess: async ({ reel, coverMediaId }) => {
+      const postId = reel.reel_id;
+      const warnings: string[] = [];
+
+      if (isLongStudio && !form.scheduleAt) {
+        if (form.trimStartMs > 0 || form.trimEndMs != null) {
+          try {
+            await updateVideoTrim(postId, form.trimStartMs, form.trimEndMs ?? undefined);
+          } catch {
+            warnings.push("Trim settings could not be saved.");
+          }
+        }
+
+        if (form.finalVideoCategory && form.computedVideoCategory && form.finalVideoCategory !== form.computedVideoCategory) {
+          try {
+            await overrideVideoCategory(postId, form.finalVideoCategory);
+          } catch {
+            warnings.push("Video category override could not be saved.");
+          }
+        }
+
+        if (coverMediaId || form.coverTimestampMs != null) {
+          try {
+            await setCoverFrame(postId, {
+              cover_media_id: coverMediaId,
+              timestamp_ms: form.coverSourceType === "video_frame" ? (form.coverTimestampMs ?? undefined) : undefined,
+            });
+          } catch {
+            warnings.push("Cover selection could not be saved.");
+          }
+        }
+      }
+
+      patch({
+        publishedPostId: postId,
+        publishSuccess: true,
+        publishWarning: warnings.length > 0 ? warnings.join(" ") : null,
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-uploads"] }),
+        queryClient.invalidateQueries({ queryKey: ["posttube"] }),
+      ]);
     },
   });
 
@@ -403,6 +628,7 @@ export function useUploadStudio(contentType: ContentType) {
     selectCustomCover,
     saveDraftMutation,
     publishMutation,
+    retryProcessingCheck,
     goToStep,
     nextStep,
     prevStep,

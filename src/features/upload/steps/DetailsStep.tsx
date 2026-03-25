@@ -2,9 +2,11 @@
 
 import { useCallback, useRef } from "react";
 import { Image as ImageIcon, Loader2, Music, Volume2, Film, AlertCircle } from "lucide-react";
-import { SectionHeader, FieldLabel, TagChip, StudioInput, StudioTextarea, Collapsible } from "../primitives";
+import { SectionHeader, FieldLabel, TagChip, StudioInput, Collapsible } from "../primitives";
 import type { StudioFormState } from "../types";
 import type { ContentType } from "../tokens";
+import { TrimControls } from "@/features/posttube/components/TrimControls";
+import { CategoryOverride } from "@/features/posttube/components/CategoryOverride";
 
 interface DetailsStepProps {
   form: StudioFormState;
@@ -22,6 +24,17 @@ function fmtMs(ms: number) {
 
 export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors }: DetailsStepProps) {
   const coverFileRef = useRef<HTMLInputElement>(null);
+  const isLongStudio = contentType === "long" || contentType === "podcast";
+  const totalDurationMs = Math.floor((form.videoDurationSec ?? 0) * 1000);
+  const orientation = form.videoWidth && form.videoHeight
+    ? form.videoWidth > form.videoHeight
+      ? "landscape"
+      : form.videoWidth === form.videoHeight
+        ? "square"
+        : "portrait"
+    : "portrait";
+  const computedCategory = form.computedVideoCategory ?? "long_video";
+  const currentCategory = form.finalVideoCategory ?? computedCategory;
 
   const titleError = showErrors && !form.title.trim();
   const captionOverflow = form.caption.length > 2200;
@@ -131,6 +144,33 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
       </div>
 
       {/* ── Cover Poster ── */}
+      {isLongStudio && form.videoDurationSec != null && (
+        <div className="space-y-4">
+          <SectionHeader
+            title="Video Tools"
+            subtitle="Adjust trim and final category before the video goes live"
+          />
+
+          <TrimControls
+            durationSeconds={form.videoDurationSec}
+            initialStartMs={form.trimStartMs}
+            initialEndMs={form.trimEndMs ?? totalDurationMs}
+            onTrimChange={(startMs, endMs) => patch({
+              trimStartMs: startMs,
+              trimEndMs: endMs >= totalDurationMs ? null : endMs,
+            })}
+          />
+
+          <CategoryOverride
+            computedCategory={computedCategory}
+            currentCategory={currentCategory}
+            durationSeconds={form.videoDurationSec}
+            orientation={orientation}
+            onCategoryChange={(category) => patch({ finalVideoCategory: category })}
+          />
+        </div>
+      )}
+
       {form.videoPreviewUrl && contentType !== "podcast" && (
         <Collapsible title="Cover Poster" defaultOpen>
           <div className="space-y-4">

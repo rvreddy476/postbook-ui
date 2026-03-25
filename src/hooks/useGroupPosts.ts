@@ -1,15 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
+import type { GroupPostV2 } from '@/types/groups'
 
-export interface GroupPostV2 {
-  id: string; group_id: string; channel_id?: string; author_id: string;
-  content_type: string; title?: string; body?: string;
-  type_payload?: Record<string, unknown>; attachments?: unknown[];
-  needs_approval: boolean; is_pinned: boolean; is_announcement: boolean;
-  status: string; spark_count: number; comment_count: number; echo_count: number; view_count: number;
-  created_at: string; updated_at: string;
-  author_name?: string; author_avatar_url?: string; channel_name?: string;
-}
+// Re-export for backward compat
+export type { GroupPostV2 }
 
 export function useGroupPosts(groupId: string, channelId?: string) {
   return useQuery({

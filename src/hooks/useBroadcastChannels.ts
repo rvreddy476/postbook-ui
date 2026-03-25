@@ -181,6 +181,7 @@ export function useSubscribeChannel() {
     onSuccess: (_, channelId) => {
       qc.invalidateQueries({ queryKey: ["broadcast-channel", channelId] })
       qc.invalidateQueries({ queryKey: ["my-broadcast-channels"] })
+      qc.invalidateQueries({ queryKey: ["discover-channels"] })
     },
   })
 }
@@ -194,6 +195,7 @@ export function useUnsubscribeChannel() {
     onSuccess: (_, channelId) => {
       qc.invalidateQueries({ queryKey: ["broadcast-channel", channelId] })
       qc.invalidateQueries({ queryKey: ["my-broadcast-channels"] })
+      qc.invalidateQueries({ queryKey: ["discover-channels"] })
     },
   })
 }
@@ -241,6 +243,129 @@ export function usePinChannelUpdate() {
       await api.put(`/v1/broadcast-channels/${channelId}/updates/${updateId}/pin`, { pinned })
     },
     onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+// === ENGAGEMENT MUTATIONS ===
+
+export function useSparkUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId, isSupernova }: { channelId: string; updateId: string; isSupernova?: boolean }) => {
+      await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/spark`, { is_supernova: isSupernova || false })
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+    retry: false,
+  })
+}
+
+export function useUnsparkUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/spark`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+    retry: false,
+  })
+}
+
+export function useStashUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/stash`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useUnstashUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/stash`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useEchoUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId, echoType }: { channelId: string; updateId: string; echoType?: string }) => {
+      await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/echo`, { echo_type: echoType || 'feed' })
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useUnechoUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/echo`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useRecordView() {
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/view`)
+    },
+    retry: false, // fire-and-forget, no retries
+  })
+}
+
+export function useChannelComments(channelId: string | undefined, updateId: string | undefined) {
+  return useQuery({
+    queryKey: ["channel-comments", channelId, updateId],
+    queryFn: async () => {
+      const res = await api.get(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments`)
+      return res.data.data
+    },
+    enabled: !!channelId && !!updateId,
+  })
+}
+
+export function useAddComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId, body, parentId }: { channelId: string; updateId: string; body: string; parentId?: string }) => {
+      const res = await api.post(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments`, { body, parent_id: parentId || undefined })
+      return res.data.data
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-comments", vars.channelId, vars.updateId] })
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useDeleteComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId, commentId }: { channelId: string; updateId: string; commentId: string }) => {
+      await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/comments/${commentId}`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-comments", vars.channelId, vars.updateId] })
       qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
     },
   })

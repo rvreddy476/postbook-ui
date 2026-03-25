@@ -2,13 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Globe, Lock, Shield, Users, Check, Clock, Plus, LogOut, BellOff, MessageSquare } from 'lucide-react'
+import { Globe, Lock, Shield, Users, Check, Clock, Plus, LogOut, BellOff, MessageSquare, X } from 'lucide-react'
 import { useJoinGroup, useLeaveGroup } from '@/hooks/useGroups'
 import type { Group } from '@/types/groups'
 
 interface GroupCardProps {
   group: Group
+  /** When rendered under "My Groups" tab, force membership display */
+  isMyGroup?: boolean
 }
 
 function formatCount(n: number): string {
@@ -17,41 +18,36 @@ function formatCount(n: number): string {
   return String(n)
 }
 
-const coverGradients = [
-  'from-amber-100 to-orange-50',
-  'from-blue-100 to-cyan-50',
-  'from-emerald-100 to-teal-50',
-  'from-purple-100 to-pink-50',
-  'from-rose-100 to-red-50',
-  'from-indigo-100 to-blue-50',
+const gradients = [
+  'from-violet-400 to-purple-300',
+  'from-sky-400 to-blue-300',
+  'from-emerald-400 to-teal-300',
+  'from-amber-400 to-orange-300',
+  'from-rose-400 to-pink-300',
+  'from-indigo-400 to-blue-300',
 ]
 
-const avatarGradients = [
-  'from-amber-300 to-orange-200',
-  'from-blue-300 to-cyan-200',
-  'from-emerald-300 to-teal-200',
-  'from-purple-300 to-pink-200',
-  'from-rose-300 to-red-200',
-  'from-indigo-300 to-blue-200',
-]
-
-function getGradientIndex(name: string): number {
-  return name.charCodeAt(0) % coverGradients.length
+function hashIndex(name: string): number {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % gradients.length
+  return h
 }
 
-const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
-  const router = useRouter()
+const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
   const joinGroup = useJoinGroup()
   const leaveGroup = useLeaveGroup()
   const [showDropdown, setShowDropdown] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const privacy = group.privacy_level ?? (group.visibility === 'private' ? 'private' : 'public')
-  const viewerRole = group.viewer_role ?? 'outsider'
+  const viewerRole = group.viewer_role ?? (isMyGroup ? 'member' : 'outsider')
   const isMember = viewerRole === 'member' || viewerRole === 'admin' || viewerRole === 'moderator' || viewerRole === 'owner'
-  const isPending = viewerRole === 'outsider' && group.join_mode === 'request'
+  const isPending = viewerRole === 'pending' || (group.pending_request_count != null && group.pending_request_count > 0 && viewerRole === 'outsider' && group.join_mode === 'request')
 
-  const gradIdx = getGradientIndex(group.name)
+  const idx = hashIndex(group.name)
+  const PrivacyIcon = privacy === 'private' ? Lock : privacy === 'restricted' ? Shield : Globe
+  const privacyLabel = privacy === 'public' ? 'Public' : privacy === 'restricted' ? 'Restricted' : 'Private'
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -65,10 +61,26 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
     }
   }, [showDropdown])
 
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
+
   const handleJoin = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    joinGroup.mutate(group.id)
+    joinGroup.mutate(group.id, {
+      onSuccess: (data) => {
+        if (data?.status === 'pending' || group.join_mode === 'request' || privacy === 'private') {
+          setToast('Request sent! Waiting for admin approval.')
+        } else {
+          setToast('You joined the group!')
+        }
+      },
+      onError: () => setToast('Failed to join. Try again.'),
+    })
   }
 
   const handleLeave = (e: React.MouseEvent) => {
@@ -80,133 +92,106 @@ const GroupCard: React.FC<GroupCardProps> = ({ group }) => {
     setShowDropdown(false)
   }
 
-  const PrivacyIcon = privacy === 'private' ? Lock : privacy === 'restricted' ? Shield : Globe
-
   return (
     <Link
       href={`/groups/${group.handle || group.id}`}
-      className="block h-full w-full overflow-hidden rounded-2xl border border-brand-divider bg-white transition-all duration-200 hover:border-brand-text/10 hover:shadow-lg"
+      className="group/card flex items-center gap-3.5 p-3 rounded-xl border border-brand-divider bg-white hover:border-brand-text/15 hover:shadow-sm transition-all relative"
     >
-      {/* Cover photo */}
-      <div className="relative h-20 overflow-hidden sm:h-24">
-        {group.cover_media_id ? (
+      {/* Avatar */}
+      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+        {group.avatar_media_id ? (
           <img
-            src={`/v1/media/${group.cover_media_id}/serve`}
-            alt=""
+            src={`/v1/media/${group.avatar_media_id}/serve`}
+            alt={group.name}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${coverGradients[gradIdx]}`}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-4xl font-black opacity-15">{group.name.charAt(0).toUpperCase()}</span>
-            </div>
+          <div className={`w-full h-full bg-gradient-to-br ${gradients[idx]} flex items-center justify-center text-white font-bold text-base`}>
+            {group.name.charAt(0).toUpperCase()}
           </div>
         )}
-        {/* Privacy pill */}
-        <div className="absolute top-2 right-2">
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-black/30 backdrop-blur-sm text-white">
-            <PrivacyIcon className="w-2.5 h-2.5" />
-            {privacy === 'public' ? 'Public' : privacy === 'restricted' ? 'Restricted' : 'Private'}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <h3 className="text-[13px] font-bold text-brand-text truncate leading-tight">{group.name}</h3>
+          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-brand-text/5 flex-shrink-0">
+            <PrivacyIcon className="w-2.5 h-2.5 text-brand-text/40" />
+            <span className="text-[9px] font-semibold text-brand-text/40">{privacyLabel}</span>
           </span>
         </div>
-      </div>
-
-      {/* Avatar overlapping cover */}
-      <div className="relative -mt-5 px-3.5">
-        <div className="h-11 w-11 rounded-xl border border-brand-divider bg-white/95 p-[2px] shadow-md">
-          <div className="h-full w-full overflow-hidden rounded-[10px] bg-brand-text/5">
-            {group.avatar_media_id ? (
-              <img
-                src={`/v1/media/${group.avatar_media_id}/serve`}
-                alt={group.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${avatarGradients[gradIdx]} text-sm font-black text-white`}>
-                {group.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="px-3.5 pb-3.5 pt-2">
-        <h3 className="truncate text-[14px] font-bold leading-tight text-brand-text">{group.name}</h3>
-
-        {group.description && (
-          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-brand-text/50">{group.description}</p>
-        )}
-
-        {/* Stats */}
-        <div className="flex items-center gap-2 text-[10px] text-brand-text/45 mt-2">
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-brand-text/45">
           <span className="flex items-center gap-0.5">
             <Users className="w-3 h-3" />
             {formatCount(group.member_count)}
           </span>
-          <span className="w-px h-2.5 bg-brand-divider" />
+          <span className="text-brand-text/20">·</span>
           <span className="flex items-center gap-0.5">
             <MessageSquare className="w-3 h-3" />
-            {formatCount(group.post_count)}
+            {formatCount(group.post_count)} posts
           </span>
         </div>
-
-        {/* Action button */}
-        <div className="mt-3" ref={dropdownRef}>
-          {isMember ? (
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setShowDropdown(!showDropdown)
-                }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-brand-divider text-brand-text rounded-xl text-[11px] font-bold hover:bg-brand-text/5 transition-all"
-              >
-                <Check className="w-3 h-3" />
-                Joined
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 top-full z-50 mt-2 min-w-[9rem] overflow-hidden rounded-xl border border-brand-divider bg-white py-1 shadow-lg">
-                  <button
-                    onClick={handleLeave}
-                    className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-50"
-                  >
-                    <LogOut className="w-3 h-3" />
-                    Leave
-                  </button>
-                  <button
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDropdown(false) }}
-                    className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-[11px] font-medium text-brand-text transition-colors hover:bg-brand-text/5"
-                  >
-                    <BellOff className="w-3 h-3" />
-                    Mute
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : isPending ? (
-            <button
-              disabled
-              onClick={(e) => e.preventDefault()}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-text/5 text-brand-text/40 rounded-xl text-[11px] font-bold cursor-not-allowed"
-            >
-              <Clock className="w-3 h-3" />
-              Pending
-            </button>
-          ) : (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleJoin(e) }}
-              disabled={joinGroup.isPending}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-brand-text text-brand-bg rounded-xl text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
-            >
-              <Plus className="w-3 h-3" />
-              Join Group
-            </button>
-          )}
-        </div>
       </div>
+
+      {/* Action */}
+      <div className="flex-shrink-0" ref={dropdownRef}>
+        {isMember ? (
+          <div className="relative">
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDropdown(!showDropdown) }}
+              className="flex items-center gap-1 px-3 py-1.5 border border-brand-divider text-brand-text rounded-lg text-[10px] font-bold hover:bg-brand-text/5 transition-all"
+            >
+              <Check className="w-3 h-3" />
+              Joined
+            </button>
+            {showDropdown && (
+              <div className="absolute right-0 top-full z-50 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-brand-divider bg-white py-0.5 shadow-lg">
+                <button
+                  onClick={handleLeave}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50"
+                >
+                  <LogOut className="w-3 h-3" /> Leave
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDropdown(false) }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-brand-text hover:bg-brand-text/5"
+                >
+                  <BellOff className="w-3 h-3" /> Mute
+                </button>
+              </div>
+            )}
+          </div>
+        ) : isPending ? (
+          <button
+            disabled
+            onClick={(e) => e.preventDefault()}
+            className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold cursor-default"
+          >
+            <Clock className="w-3 h-3" />
+            Pending
+          </button>
+        ) : (
+          <button
+            onClick={handleJoin}
+            disabled={joinGroup.isPending}
+            className="flex items-center gap-1 px-3 py-1.5 bg-brand-text text-brand-bg rounded-lg text-[10px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+          >
+            <Plus className="w-3 h-3" />
+            Join
+          </button>
+        )}
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
+          {toast}
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setToast(null) }}>
+            <X className="w-3 h-3 opacity-60" />
+          </button>
+        </div>
+      )}
     </Link>
   )
 }

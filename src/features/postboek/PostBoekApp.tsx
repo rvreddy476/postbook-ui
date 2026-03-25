@@ -35,6 +35,15 @@ const PostBoekApp: React.FC = () => {
   const [groupRefreshKey, setGroupRefreshKey] = useState(0);
   const [navExpanded, setNavExpanded] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Intercept Profile/Friends tabs — navigate to dedicated routes instead of rendering inline
   const handleNavChange = useCallback((tab: NavItem) => {
     setActiveGroupId(null);
@@ -50,8 +59,16 @@ const PostBoekApp: React.FC = () => {
       router.push('/reels');
       return;
     }
+    if (tab === 'Messenger') {
+      if (isMobile) {
+        router.push('/messenger');
+      } else {
+        setIsContactListOpen(!isContactListOpen);
+      }
+      return;
+    }
     setActiveTab(tab);
-  }, [currentUser, router]);
+  }, [currentUser, router, isContactListOpen, isMobile]);
 
   const handleGroupClick = useCallback((groupId: string) => {
     setActiveGroupId(groupId);
@@ -175,12 +192,31 @@ const PostBoekApp: React.FC = () => {
           setActiveTab={handleNavChange}
           onCreateClick={() => setIsCreateOpen(true)}
           onLogout={handleLogout}
-          onToggleContactList={() => setIsContactListOpen(!isContactListOpen)}
+          onToggleContactList={() => {
+            if (isMobile) {
+              router.push('/messenger');
+            } else {
+              setIsContactListOpen(!isContactListOpen);
+            }
+          }}
           navExpanded={navExpanded}
         />
 
         {/* Fixed sidebar — renders itself as position:fixed */}
-        <Sidebar activeTab={activeTab} setActiveTab={handleNavChange} onChatClick={() => setIsContactListOpen(!isContactListOpen)} onNotificationsClick={() => {}} expanded={navExpanded} setExpanded={setNavExpanded} />
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={handleNavChange}
+          onChatClick={() => {
+            if (isMobile) {
+              router.push('/messenger');
+            } else {
+              setIsContactListOpen(!isContactListOpen);
+            }
+          }}
+          onNotificationsClick={() => { }}
+          expanded={navExpanded}
+          setExpanded={setNavExpanded}
+        />
 
         <div className={`relative flex h-full flex-1 overflow-hidden pt-20 transition-all duration-500 ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
 
@@ -209,7 +245,7 @@ const PostBoekApp: React.FC = () => {
           </main>
 
           {!isReelsMode && !isGroupMode && (
-            <aside className="hidden w-[300px] flex-col overflow-y-auto border-l border-brand-divider p-4 xl:flex">
+            <aside className="hidden w-[300px] flex-col overflow-y-auto border-l border-brand-divider p-4 lg:flex">
               <RightPanel onContactClick={handleContactClick} />
             </aside>
           )}

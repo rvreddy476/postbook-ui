@@ -150,24 +150,24 @@ export default function GroupsPage() {
         </div>
       )}
 
-      {/* Groups grid — 2 columns */}
+      {/* Groups list */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white border border-brand-divider rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-20 bg-brand-text/5" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 w-32 bg-brand-text/5 rounded" />
-                <div className="h-3 w-48 bg-brand-text/5 rounded" />
+            <div key={i} className="flex items-center gap-3.5 p-3 bg-white border border-brand-divider rounded-xl animate-pulse">
+              <div className="w-12 h-12 rounded-xl bg-brand-text/5 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 w-32 bg-brand-text/5 rounded" />
                 <div className="h-3 w-24 bg-brand-text/5 rounded" />
               </div>
+              <div className="h-7 w-16 bg-brand-text/5 rounded-lg" />
             </div>
           ))}
         </div>
       ) : filteredGroups && filteredGroups.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
           {filteredGroups.map((group) => (
-            <GroupCard key={group.id} group={group} />
+            <GroupCard key={group.id} group={group} isMyGroup={tab === 'my-groups'} />
           ))}
         </div>
       ) : (

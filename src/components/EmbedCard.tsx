@@ -1,8 +1,13 @@
 "use client"
 
+import React, { useState } from "react"
 import Link from "next/link"
-import { Play, Film, ExternalLink, Eye, Heart } from "lucide-react"
+import { Play, Film, ExternalLink, Eye, Heart, MessageCircle, Repeat2, Bookmark } from "lucide-react"
 import type { PostDetail } from "@/types/profile"
+import { useToggleLike } from "@/hooks/usePostReaction"
+import { useToggleBookmark } from "@/hooks/usePostActions"
+import { useUserProfile } from "@/hooks/useEditProfile"
+import ShareDialog from "@/components/ShareDialog"
 
 interface EmbedCardProps {
     post: PostDetail
@@ -30,6 +35,18 @@ export default function EmbedCard({ post }: EmbedCardProps) {
         view_count?: number
     } | null
 
+    const liked = !!post.viewer_reaction
+    const likesCount = post.counts?.likes ?? 0
+    const commentsCount = post.counts?.comments ?? 0
+    const sharesCount = post.counts?.shares ?? 0
+
+    const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked)
+    const [showShareDialog, setShowShareDialog] = useState(false)
+
+    const likeMutation = useToggleLike()
+    const bookmarkMutation = useToggleBookmark()
+    const { data: reposterProfile } = useUserProfile(post.is_repost ? post.reposted_by : undefined)
+
     const isFlick = post.content_type === "flick_embed"
     const sourceModule = embedRef?.source_module ?? (isFlick ? "postgram" : "posttube")
     const watchUrl = `/posttube/watch/${embedRef?.source_post_id ?? post.id}`
@@ -45,8 +62,25 @@ export default function EmbedCard({ post }: EmbedCardProps) {
         return `${m}:${String(s).padStart(2, "0")}`
     })()
 
+    const toggleLike = () => likeMutation.mutate(post.id)
+
+    const handleBookmark = () => {
+        const was = bookmarked
+        setBookmarked(!was)
+        bookmarkMutation.mutate(post.id, { onError: () => setBookmarked(was) })
+    }
+
     return (
         <div className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden hover:shadow-md transition-shadow">
+            {/* Repost indicator */}
+            {post.is_repost && (
+                <div className="px-4 pt-2.5 flex items-center gap-1.5" style={{ color: '#EC1A59' }}>
+                    <Repeat2 className="w-3.5 h-3.5" />
+                    <span className="text-xs font-semibold">
+                        {reposterProfile?.display_name || 'Someone'} reposted
+                    </span>
+                </div>
+            )}
             {/* Thumbnail area */}
             <Link href={watchUrl} className="block relative aspect-video bg-brand-secondary group">
                 {thumbnailUrl ? (
@@ -128,6 +162,41 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     )}
                 </div>
             </div>
+
+            {/* Action Bar */}
+            <div className="px-4 py-2 flex items-center justify-between border-t border-brand-divider">
+                {/* Spark */}
+                <button onClick={toggleLike} aria-label="Spark"
+                    className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                    <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-[18px] h-[18px]">
+                        <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                    </svg>
+                    {likesCount > 0 && <span className="text-[11px] font-mono">{likesCount}</span>}
+                </button>
+
+                {/* Comment */}
+                <Link href={`/post/${post.id}`} aria-label="Comment"
+                    className="flex items-center gap-1.5 text-brand-text/40 hover:text-brand-text transition-all">
+                    <MessageCircle className="w-[18px] h-[18px]" />
+                    {commentsCount > 0 && <span className="text-[11px] font-mono">{commentsCount}</span>}
+                </Link>
+
+                {/* Echo / Repost */}
+                <button onClick={() => setShowShareDialog(true)} aria-label="Echo"
+                    className="flex items-center gap-1.5 text-brand-text/40 hover:text-brand-text transition-all">
+                    <Repeat2 className="w-[18px] h-[18px]" />
+                    {sharesCount > 0 && <span className="text-[11px] font-mono">{sharesCount}</span>}
+                </button>
+
+                {/* Stash / Bookmark */}
+                <button onClick={handleBookmark} aria-label="Stash"
+                    className={`transition-all ${bookmarked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                    <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+                </button>
+            </div>
+
+            {/* Share Dialog */}
+            <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} />
         </div>
     )
 }

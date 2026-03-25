@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { HeaderBar } from "@/features/reels/components/HeaderBar";
 import { ReelIconSideNav } from "@/features/reels/components/ReelIconSideNav";
+import { connectToHub } from "@/services/messageService";
 
 interface AppShellProps {
   sectionLabel?: string;
@@ -13,6 +15,10 @@ interface AppShellProps {
  * and left icon sidebar. Used by all content pages.
  */
 export function AppShell({ sectionLabel, children }: AppShellProps) {
+  useEffect(() => {
+    void connectToHub(() => {});
+  }, []);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-brand-card">
       <HeaderBar sectionLabel={sectionLabel} />

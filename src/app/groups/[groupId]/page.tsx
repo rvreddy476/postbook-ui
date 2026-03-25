@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
 import AppShell from '@/components/AppShell'
 import CreatePortal from '@/components/CreatePortal'
 import { useParams, useRouter } from 'next/navigation'
 import { useGroupDetails, useGroupByHandle, useGroupMembers, useGroupRules, useJoinGroup, useLeaveGroup, useDeleteGroup } from '@/hooks/useGroups'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import GroupFeedTab from '@/components/groups/tabs/GroupFeedTab'
 import GroupMembersTab from '@/components/groups/tabs/GroupMembersTab'
@@ -71,6 +72,22 @@ export default function GroupDetailPage() {
   const isMember = isAdminOrMod || viewerRole === 'member'
 
   const adminsAndMods = members?.filter(m => m.role === 'admin' || m.role === 'moderator' || m.role === 'owner') ?? []
+
+  // Batch-fetch profiles for sidebar admins/mods
+  const adminUserIds = useMemo(() => adminsAndMods.map(m => m.user_id), [adminsAndMods])
+  const { data: adminProfileMap } = useBatchProfiles(adminUserIds)
+
+  // Enrich admins/mods with profile data
+  const enrichedAdmins = useMemo(() => adminsAndMods.map(m => {
+    const profile = adminProfileMap?.get(m.user_id)
+    if (!profile) return m
+    return {
+      ...m,
+      display_name: profile.display_name || profile.username || m.display_name,
+      username: profile.username || m.username,
+      avatar_media_id: profile.avatar_media_id || m.avatar_media_id,
+    }
+  }), [adminsAndMods, adminProfileMap])
 
   useEffect(() => {
     if (!showOverflow) return
@@ -415,7 +432,7 @@ export default function GroupDetailPage() {
             {/* Main content */}
             <div>
               {activeTab === 'feed' && resolvedId && (
-                <GroupFeedTab groupId={resolvedId} isMember={isMember} />
+                <GroupFeedTab groupId={resolvedId} isMember={isMember} viewerRole={viewerRole} />
               )}
               {activeTab === 'about' && <GroupAboutTab group={group} />}
             </div>
@@ -423,11 +440,11 @@ export default function GroupDetailPage() {
             {/* Sidebar — 240px */}
             <aside className="hidden lg:block space-y-4">
               {/* Admins & Mods card */}
-              {adminsAndMods.length > 0 && (
+              {enrichedAdmins.length > 0 && (
                 <div className="bg-white border border-brand-divider rounded-2xl p-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Admins & Mods</h3>
                   <div className="space-y-2.5">
-                    {adminsAndMods.slice(0, 5).map(m => {
+                    {enrichedAdmins.slice(0, 5).map(m => {
                       const avatarUrl = m.avatar_media_id ? `/v1/media/${m.avatar_media_id}/serve` : null
                       const roleIcon = m.role === 'owner' || m.role === 'admin'
                         ? <Crown className="w-3 h-3 text-brand-text/40" />
@@ -445,7 +462,7 @@ export default function GroupDetailPage() {
                               </div>
                             )}
                           </div>
-                          <p className="flex-1 text-xs font-semibold text-brand-text truncate">{m.display_name || m.username || `${m.user_id.slice(0, 8)}...`}</p>
+                          <p className="flex-1 text-xs font-semibold text-brand-text truncate">{m.display_name || m.username || 'Member'}</p>
                           {roleIcon}
                         </div>
                       )

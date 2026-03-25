@@ -28,6 +28,10 @@ function fmtSparks(n: number) {
   return String(n);
 }
 
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60_000);
@@ -217,6 +221,13 @@ interface VideoCardProps {
 export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   const duration = fmtDuration(video.duration_seconds);
   const [spotlightActive, setSpotlightActive] = useState(false);
+  const resumePosition = typeof video.resume_position_ms === "number"
+    ? Math.max(0, Math.floor(video.resume_position_ms / 1000))
+    : 0;
+  const resumePercent = typeof video.resume_percent_watched === "number"
+    ? clampPercent(video.resume_percent_watched)
+    : 0;
+  const hasResumeState = resumePosition > 0 && resumePercent > 0;
 
   if (variant === "wide") {
     return (
@@ -240,6 +251,25 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
             {video.title}
           </h3>
           <p className="mt-1.5 text-[11px] text-[#8B8B9E] dark:text-[#6B6980]">{video.channel_name}</p>
+          {hasResumeState && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6B5FC7] dark:text-[#A78BFA]">
+                <span>Resume at {fmtDuration(resumePosition)}</span>
+                <span>{Math.round(resumePercent)}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#F0EEFF] dark:bg-[#2A2740]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#F59E0B] via-[#F97066] to-[#7C5CFC]"
+                  style={{ width: `${Math.max(8, resumePercent)}%` }}
+                />
+              </div>
+              {video.last_watched_at && (
+                <p className="mt-1.5 text-[10px] text-[#B0ADBE] dark:text-[#555368]">
+                  Watched {timeAgo(video.last_watched_at)}
+                </p>
+              )}
+            </div>
+          )}
           <p className="text-[11px] text-[#B0ADBE] dark:text-[#555368]">{fmtViews(video.view_count)} · {timeAgo(video.published_at)}</p>
         </div>
       </Link>
