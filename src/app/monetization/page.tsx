@@ -57,10 +57,17 @@ export default function MonetizationPage() {
                     </Link>
                 </div>
 
-                {/* Divider */}
-                <div className="h-px bg-[#F0E6DC] mb-6" />
+{/* Divider */}
+<div className="h-px bg-[#F0E6DC] mb-6" />
 
-                {/* Content */}
+<div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Demo payouts</p>
+    <p className="mt-1 text-[11px] font-bold text-amber-900">
+        Razorpay live credentials are not configured in this environment, so payout and payment actions should be treated as safe demo flows, not live settlement.
+    </p>
+</div>
+
+{/* Content */}
                 {isError ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">

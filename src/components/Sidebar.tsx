@@ -3,7 +3,24 @@
 import { NavItem } from '../types';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Home, Compass, Tv, MessageSquare, ShoppingBag, Bell, Bookmark, Users, User, Menu, Radio, Globe2 } from 'lucide-react';
+import {
+  Bell,
+  BookOpen,
+  Bookmark,
+  Briefcase,
+  Globe2,
+  HelpCircle,
+  Home,
+  Menu,
+  MessageSquare,
+  Radio,
+  Search,
+  ShoppingBag,
+  Heart,
+  User,
+  UserRoundPlus,
+  Users,
+} from 'lucide-react';
 
 interface SidebarProps {
   activeTab: NavItem;
@@ -14,36 +31,46 @@ interface SidebarProps {
   setExpanded?: (v: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onChatClick, onNotificationsClick, expanded = false, setExpanded }) => {
-  const navItems: {
-    id: string;
-    label: string;
-    icon: typeof Home;
-    href?: string;
-    action?: () => void;
-  }[] = [
-    { id: 'Home', label: 'Home', icon: Home, href: '/' },
-    { id: 'Explore', label: 'Explore', icon: Compass, action: () => setActiveTab('Home') },
-    { id: 'TV', label: 'TV', icon: Tv, action: () => setActiveTab('TV') },
-    { id: 'Groups', label: 'Groups', icon: Users, href: '/groups' },
-    { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels' },
-    { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities' },
-    { id: 'Chat', label: 'Chat', icon: MessageSquare, action: () => onChatClick?.() },
-    { id: 'Store', label: 'Store', icon: ShoppingBag, href: '/shop' },
-    { id: 'Notifications', label: 'Notifications', icon: Bell, action: () => onNotificationsClick?.() },
-    { id: 'Bookmarks', label: 'Bookmarks', icon: Bookmark, href: '/bookmarks' },
-  ];
+const navItems: {
+  id: string;
+  label: string;
+  icon: typeof Home;
+  href?: string;
+  action?: () => void;
+}[] = [
+  { id: 'Home', label: 'Home', icon: Home, href: '/' },
+  { id: 'Circle', label: 'Circle', icon: UserRoundPlus, href: '/circle' },
+  { id: 'Search', label: 'Search', icon: Search, href: '/search' },
+  { id: 'Groups', label: 'Groups', icon: Users, href: '/groups' },
+  { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels' },
+  { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities' },
+  { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa' },
+  { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages' },
+  { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/commerce' },
+  { id: 'PostMatch', label: 'PostMatch', icon: Heart, href: '/postmatch' },
+  { id: 'Messenger', label: 'Messenger', icon: MessageSquare },
+  { id: 'Notifications', label: 'Notifications', icon: Bell },
+  { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved' },
+  { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories' },
+];
 
+const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onChatClick,
+  onNotificationsClick,
+  expanded = false,
+  setExpanded,
+}) => {
   return (
-    <nav className={`fixed left-0 top-0 h-full border-r border-brand-divider flex flex-col py-6 z-[60] hidden md:flex transition-all duration-500 ease-in-out
-      ${expanded ? 'w-64 px-4' : 'w-16 px-0 items-center'}
-      bg-brand-text text-brand-bg dark:bg-brand-bg dark:text-brand-text`}>
-
-      {/* Toggle button */}
-      <div className={`flex items-center mb-10 ${expanded ? 'px-2 justify-between' : 'justify-center'}`}>
+    <nav
+      className={`fixed left-0 top-0 z-[60] hidden h-full flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg transition-all duration-500 ease-in-out dark:bg-brand-bg dark:text-brand-text md:flex ${
+        expanded ? 'w-64 px-4' : 'w-16 items-center px-0'
+      }`}
+    >
+      <div className={`mb-10 flex items-center ${expanded ? 'justify-between px-2' : 'justify-center'}`}>
         <button
           onClick={() => setExpanded?.(!expanded)}
-          className="p-2 rounded-lg transition-colors text-white/60 hover:text-white hover:bg-white/10 dark:text-brand-text/60 dark:hover:text-brand-accent dark:hover:bg-brand-accent/10"
+          className="rounded-lg p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-brand-accent/10 dark:hover:text-brand-accent"
         >
           <Menu size={20} strokeWidth={2.5} />
         </button>
@@ -51,40 +78,32 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onChatClick,
 
       {!expanded && <div className="h-8" />}
 
-      {/* Nav items */}
-      <div className="flex-1 flex flex-col gap-4 w-full">
+      <div className="flex flex-1 flex-col gap-4 w-full overflow-y-auto scrollbar-none">
         {navItems.map((item) => {
           const isActive = activeTab === item.label || activeTab === item.id;
           const Icon = item.icon;
-
-          const btnClass = `relative flex items-center transition-all duration-300 group rounded-xl
-            ${expanded ? 'px-4 py-3 gap-4 w-full' : 'p-3 justify-center'}
-            ${isActive
+          const buttonClass = `relative flex items-center rounded-xl transition-all duration-300 group ${
+            expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
+          } ${
+            isActive
               ? 'text-white dark:text-brand-accent'
-              : 'text-white/60 hover:text-white hover:bg-white/5 dark:text-brand-text/60 dark:hover:text-brand-accent dark:hover:bg-brand-accent/5'
-            }`;
+              : 'text-white/60 hover:bg-white/5 hover:text-white dark:text-brand-text/60 dark:hover:bg-brand-accent/5 dark:hover:text-brand-accent'
+          }`;
 
           const inner = (
             <>
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2.2} className="flex-shrink-0" />
-
-              {expanded && (
-                <span className="text-sm font-bold tracking-wide">{item.label}</span>
-              )}
-
-              {/* Tooltip — only when collapsed */}
+              {expanded && <span className="text-sm font-bold tracking-wide">{item.label}</span>}
               {!expanded && (
-                <div className="absolute left-full ml-4 px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl bg-white text-black dark:bg-brand-text dark:text-brand-bg">
+                <div className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
                   {item.label}
-                  <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45 bg-white dark:bg-brand-text" />
+                  <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-white dark:bg-brand-text" />
                 </div>
               )}
-
-              {/* Active indicator — only when collapsed */}
               {isActive && !expanded && (
                 <motion.div
                   layoutId="rail-active"
-                  className="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-white dark:bg-brand-accent"
+                  className="absolute -left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-white dark:bg-brand-accent"
                 />
               )}
             </>
@@ -92,26 +111,30 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onChatClick,
 
           if (item.href) {
             return (
-              <Link key={item.id} href={item.href} className={btnClass}>
+              <Link key={item.id} href={item.href} className={buttonClass}>
                 {inner}
               </Link>
             );
           }
 
+          const action = item.id === 'Messenger' ? onChatClick : onNotificationsClick;
           return (
-            <button key={item.id} onClick={item.action} className={btnClass}>
+            <button key={item.id} onClick={action} className={buttonClass}>
               {inner}
             </button>
           );
         })}
       </div>
 
-      {/* Account button at bottom */}
-      <button className={`flex items-center gap-4 transition-colors ${expanded ? 'px-4 py-3 w-full' : 'p-3'}
-        text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent`}>
+      <Link
+        href="/profile"
+        className={`flex items-center gap-4 text-white/60 transition-colors hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent ${
+          expanded ? 'w-full px-4 py-3' : 'p-3'
+        }`}
+      >
         <User size={20} strokeWidth={2.2} />
         {expanded && <span className="text-sm font-bold">Account</span>}
-      </button>
+      </Link>
     </nav>
   );
 };

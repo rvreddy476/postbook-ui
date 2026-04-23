@@ -15,6 +15,9 @@ export function LandingNavbar() {
         
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
+          <Link href="/commerce" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
+            Sell on Postbook
+          </Link>
           <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Log In
           </Link>
@@ -42,8 +45,15 @@ export function LandingNavbar() {
       {isOpen && (
         <div className="absolute left-0 top-20 w-full border-b border-brand-divider bg-brand-bg/95 p-6 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-6">
-            <Link 
-              href="/login" 
+            <Link
+              href="/commerce"
+              onClick={() => setIsOpen(false)}
+              className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
+            >
+              Sell on Postbook
+            </Link>
+            <Link
+              href="/login"
               onClick={() => setIsOpen(false)}
               className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
             >

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useSendFriendRequest } from '@/hooks/useConnections';
 import type { SuggestionUser } from '@/hooks/useConnections';
+import { useTrending } from '@/hooks/useSearch';
 import { User } from '../types';
 
 interface RightPanelProps {
@@ -38,6 +39,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
   const router = useRouter();
   const authUser = useAuthUser();
   const { data: suggestions, isLoading } = useFriendSuggestions(authUser?.id, 6);
+  const { data: trendingData, isLoading: trendingLoading } = useTrending();
 
   const sendRequest = useSendFriendRequest();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
@@ -141,21 +143,36 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
       )}
 
       {/* Trending Topics */}
-      <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
-        <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Trending Topics</h5>
-        <div className="space-y-4">
-          {[
-            { tag: '#Minimalism', posts: '12.4k' },
-            { tag: '#DigitalArt', posts: '8.2k' },
-            { tag: '#TechTrends', posts: '5.1k' },
-          ].map((trend) => (
-            <div key={trend.tag} className="group cursor-pointer">
-              <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors">{trend.tag}</h6>
-              <p className="text-[10px] text-brand-text/40 uppercase tracking-widest">{trend.posts} posts</p>
+      {(trendingLoading || (trendingData?.trending ?? []).length > 0) && (
+        <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
+          <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Trending Topics</h5>
+          {trendingLoading ? (
+            <div className="space-y-4 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="h-3 w-24 rounded bg-brand-secondary" />
+                  <div className="h-2 w-16 rounded bg-brand-secondary" />
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="space-y-4">
+              {(trendingData?.trending ?? []).slice(0, 5).map((trend) => (
+                <button
+                  key={trend.hashtag}
+                  onClick={() => router.push(`/hashtag/${trend.hashtag}`)}
+                  className="group cursor-pointer block text-left w-full"
+                >
+                  <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors">#{trend.hashtag}</h6>
+                  <p className="text-[10px] text-brand-text/40 uppercase tracking-widest">
+                    {trend.score >= 1000 ? `${(trend.score / 1000).toFixed(1)}k` : Math.round(trend.score)} posts
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Footer */}
       <footer className="px-6 text-[10px] text-brand-text/40 uppercase tracking-[0.2em] space-y-2">

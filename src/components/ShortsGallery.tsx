@@ -5,50 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useReelsFeed } from '@/hooks/useReelsFeed';
 import ReelCard from './ReelCard';
-import type { PostDetail } from '@/types/profile';
 
-// Demo fallback reels for when API returns no data
-const DEMO_REELS: PostDetail[] = [
-  {
-    id: 'demo-1',
-    author_id: 'demo-author-1',
-    text: 'Visualizing the Prismatic Mesh Architecture #web3 #postbook',
-    visibility: 'public',
-    content_type: 'reel',
-    is_pinned: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    media: [{ media_id: 'demo-video-1', kind: 'video' }],
-    counts: { likes: 124000, comments: 1200, shares: 450 },
-    hashtags: ['web3', 'postbook'],
-  },
-  {
-    id: 'demo-2',
-    author_id: 'demo-author-2',
-    text: 'Cyberpunk vibes in the neural forge tonight #tech #future',
-    visibility: 'public',
-    content_type: 'reel',
-    is_pinned: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    media: [{ media_id: 'demo-video-2', kind: 'video' }],
-    counts: { likes: 89000, comments: 3400, shares: 780 },
-    hashtags: ['tech', 'future'],
-  },
-  {
-    id: 'demo-3',
-    author_id: 'demo-author-3',
-    text: 'Manifesting digital dreams with AI Generators #ai #creation',
-    visibility: 'public',
-    content_type: 'reel',
-    is_pinned: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    media: [{ media_id: 'demo-video-3', kind: 'video' }],
-    counts: { likes: 230000, comments: 560, shares: 1200 },
-    hashtags: ['ai', 'creation'],
-  },
-];
 
 const ShortsGallery: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -59,9 +16,9 @@ const ShortsGallery: React.FC = () => {
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useReelsFeed();
 
-  // Flatten all pages into a single array, fallback to demo reels
+  // Flatten all pages into a single array
   const allReels = data?.pages?.flatMap(p => p.data) ?? [];
-  const reels = allReels.length > 0 ? allReels : DEMO_REELS;
+  const reels = allReels;
 
   // Set up IntersectionObserver for snap detection
   useEffect(() => {
@@ -139,6 +96,18 @@ const ShortsGallery: React.FC = () => {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-fuchsia-400 animate-spin" />
           <p className="text-white/40 text-xs font-medium tracking-wider uppercase">Loading Reels</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (reels.length === 0) {
+    return (
+      <div className="h-full w-full bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <svg className="w-16 h-16 text-white/20" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+          <p className="text-white/50 text-sm font-semibold">No reels yet</p>
+          <p className="text-white/30 text-xs">Reels will appear here once they are uploaded.</p>
         </div>
       </div>
     );

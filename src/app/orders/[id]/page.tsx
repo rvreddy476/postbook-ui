@@ -1,0 +1,111 @@
+'use client'
+
+import { use } from 'react'
+import Link from 'next/link'
+import { useOrder, useShipment, useInvoice, useCancelOrder } from '@/hooks/useCommerce'
+
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const { data: order, isLoading } = useOrder(id)
+  const { data: shipmentData } = useShipment(id)
+  const { data: invoiceData } = useInvoice(id)
+  const cancel = useCancelOrder()
+
+  if (isLoading) return <div className="p-8">Loading order…</div>
+  if (!order) return <div className="p-8 text-red-600">Order not found</div>
+
+  const cancellable = ['payment_pending', 'confirmed', 'packed'].includes(order.status)
+
+  return (
+    <div className="mx-auto max-w-4xl p-6 space-y-6">
+      <div>
+        <Link href="/orders" className="text-sm text-gray-500 hover:text-indigo-600">
+          ← All orders
+        </Link>
+        <h1 className="text-2xl font-semibold mt-2">Order {order.order_number}</h1>
+        <div className="text-sm text-gray-500">
+          Placed {new Date(order.created_at).toLocaleString()}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="text-xs uppercase text-gray-500">Status</div>
+          <div className="text-lg font-semibold">{order.status.replace(/_/g, ' ')}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="text-xs uppercase text-gray-500">Payment</div>
+          <div className="text-lg font-semibold">{order.payment_status}</div>
+          <div className="text-sm text-gray-500">{order.payment_method ?? '-'}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="text-xs uppercase text-gray-500">Total</div>
+          <div className="text-lg font-semibold">
+            {order.currency_code} {order.final_amount.toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      {shipmentData?.shipment ? (
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-lg font-semibold mb-3">Shipment</h2>
+          <div className="text-sm text-gray-700">
+            Courier: <span className="font-medium">{shipmentData.shipment.courier}</span>
+            {shipmentData.shipment.tracking_number ? (
+              <> · AWB: <span className="font-medium">{shipmentData.shipment.tracking_number}</span></>
+            ) : null}
+          </div>
+          {shipmentData.shipment.tracking_url ? (
+            <a href={shipmentData.shipment.tracking_url} target="_blank" rel="noreferrer"
+              className="text-indigo-600 hover:underline text-sm">
+              Track shipment →
+            </a>
+          ) : null}
+
+          {shipmentData.events && shipmentData.events.length > 0 ? (
+            <ol className="mt-4 space-y-2">
+              {shipmentData.events.map((e) => (
+                <li key={e.id} className="border-l-2 border-indigo-400 pl-3 text-sm">
+                  <div className="font-medium">{e.status.replace(/_/g, ' ')}</div>
+                  {e.location ? <div className="text-gray-500">{e.location}</div> : null}
+                  {e.remark ? <div className="text-gray-500">{e.remark}</div> : null}
+                  <div className="text-xs text-gray-400">
+                    {new Date(e.occurred_at).toLocaleString()}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </section>
+      ) : null}
+
+      {invoiceData?.invoice ? (
+        <section className="rounded-xl border border-gray-200 bg-white p-6">
+          <h2 className="text-lg font-semibold mb-2">Invoice</h2>
+          <div className="text-sm text-gray-700">
+            Invoice {invoiceData.invoice.invoice_number}
+          </div>
+          {invoiceData.download_url ? (
+            <a href={invoiceData.download_url} target="_blank" rel="noreferrer"
+              className="inline-block mt-2 rounded bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-700">
+              Download invoice
+            </a>
+          ) : null}
+        </section>
+      ) : null}
+
+      {cancellable ? (
+        <div>
+          <button
+            onClick={() => {
+              if (confirm('Cancel this order?')) cancel.mutate({ orderId: order.id })
+            }}
+            className="rounded border border-red-300 text-red-600 px-4 py-2 text-sm hover:bg-red-50"
+          >
+            Cancel Order
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}

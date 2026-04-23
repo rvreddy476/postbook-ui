@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { getSession, getOAuthUrl, loginUser, verify2FA } from '@/services/authService';
@@ -26,7 +26,17 @@ const slideVariants = {
 };
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const [screen, setScreen] = useState<Screen>('login');
   const [direction, setDirection] = useState(0);
 
@@ -48,9 +58,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (getSession()) {
-      router.replace('/');
+      router.replace(redirectTo);
     }
-  }, [router]);
+  }, [router, redirectTo]);
 
   useEffect(() => {
     if (screen === '2fa' && codeInputRef.current) {
@@ -80,7 +90,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/');
+    router.push(redirectTo);
   };
 
   const handleVerify2FA = useCallback(
@@ -92,7 +102,7 @@ export default function LoginPage() {
       const result = await verify2FA(userId, code, pendingToken);
 
       if (result.success) {
-        router.push('/');
+        router.push(redirectTo);
         return;
       }
 
@@ -383,3 +393,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

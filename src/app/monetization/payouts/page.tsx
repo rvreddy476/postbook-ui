@@ -458,10 +458,17 @@ export default function PayoutsPage() {
                     </Link>
                 </div>
 
-                {/* Divider */}
-                <div className="h-px bg-[#F0E6DC] mb-6" />
+{/* Divider */}
+<div className="h-px bg-[#F0E6DC] mb-6" />
 
-                {/* Balance summary + request payout button */}
+<div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Demo payouts</p>
+    <p className="mt-1 text-[11px] font-bold text-amber-900">
+        Razorpay live credentials are not configured in this environment, so payout requests and payment movement here should be treated as demo-mode behavior.
+    </p>
+</div>
+
+{/* Balance summary + request payout button */}
                 <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-sm mb-6">
                     <div className="flex items-center justify-between">
                         <div>

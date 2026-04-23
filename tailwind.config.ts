@@ -15,6 +15,14 @@ const config: Config = {
           rose: '#db2777',
           bg: '#fcfaff',
         },
+        // Q&A / Ask feature brand color
+        ask: {
+          DEFAULT:  '#2563eb',
+          hover:    '#1d4ed8',
+          light:    'rgb(37 99 235 / 0.08)',
+          muted:    'rgb(37 99 235 / 0.15)',
+          text:     '#2563eb',
+        },
         // Brand Semantic Tokens
         brand: {
           bg: 'rgb(var(--brand-bg) / <alpha-value>)',

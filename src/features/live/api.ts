@@ -1,3 +1,5 @@
+import type { AxiosResponse } from "axios";
+
 import api from "@/lib/api";
 import type {
   LiveChatMessage,
@@ -10,6 +12,20 @@ import { sortLiveChatMessages } from "@/features/live/utils";
 
 interface ApiResponse<T> {
   data: T;
+}
+
+export interface BrowserLivePublishResult {
+  answerSdp: string;
+  sessionUrl?: string | null;
+}
+
+function resolveBrowserPublishSessionUrl(location: string | undefined | null, publishUrl: string) {
+  if (!location) return null;
+  try {
+    return new URL(location, publishUrl).toString();
+  } catch {
+    return location;
+  }
 }
 
 export async function listLiveStreams(limit = 20): Promise<LiveStream[]> {
@@ -38,6 +54,33 @@ export async function createLiveStream(input: {
 }): Promise<LiveStream> {
   const res = await api.post<ApiResponse<LiveStream>>("/v1/live/streams", input);
   return res.data.data;
+}
+
+export async function publishBrowserLiveStream(input: {
+  publishUrl: string;
+  offerSdp: string;
+}): Promise<BrowserLivePublishResult> {
+  const res = await api.post<string, AxiosResponse<string>, string>(input.publishUrl, input.offerSdp, {
+    headers: {
+      "Content-Type": "application/sdp",
+      Accept: "application/sdp",
+    },
+    responseType: "text",
+  });
+
+  const answerSdp = typeof res.data === "string" ? res.data : String(res.data ?? "");
+  if (!answerSdp.trim()) {
+    throw new Error("Browser publish did not return an SDP answer.");
+  }
+
+  return {
+    answerSdp,
+    sessionUrl: resolveBrowserPublishSessionUrl(res.headers?.location ?? res.headers?.Location, input.publishUrl),
+  };
+}
+
+export async function stopBrowserLivePublishSession(sessionUrl: string): Promise<void> {
+  await api.delete(sessionUrl);
 }
 
 export async function goLive(streamId: string): Promise<void> {

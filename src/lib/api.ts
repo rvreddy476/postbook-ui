@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 
 const SESSION_KEY = "postbook_session"
 const TOKEN_KEY = "postbook_auth_tokens"
+const SESSION_CHANGE_EVENT = "postbook:session-changed"
 
 const canUseStorage = () =>
     typeof window !== "undefined" && typeof localStorage !== "undefined"
@@ -36,6 +37,13 @@ const saveTokens = (accessToken: string, refreshToken: string) => {
     localStorage.setItem(TOKEN_KEY, JSON.stringify(record))
 }
 
+const clearStoredAuth = () => {
+    if (!canUseStorage()) return
+    localStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    window.dispatchEvent(new Event(SESSION_CHANGE_EVENT))
+}
+
 const getUserId = (): string | null => {
     if (!canUseStorage()) return null
     try {
@@ -62,7 +70,6 @@ const api = axios.create({
     withCredentials: true,
 })
 
-// Request interceptor — attach auth headers
 api.interceptors.request.use((config) => {
     const token = getAccessToken()
     if (token) {
@@ -82,12 +89,13 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Response interceptor — auto-refresh on 401
-let refreshPromise: Promise<boolean> | null = null
+type RefreshResult = "success" | "invalid" | "unavailable"
 
-async function refreshAccessToken(): Promise<boolean> {
+let refreshPromise: Promise<RefreshResult> | null = null
+
+async function refreshAccessToken(): Promise<RefreshResult> {
     const refreshToken = getRefreshToken()
-    if (!refreshToken) return false
+    if (!refreshToken) return "invalid"
 
     try {
         const res = await fetch("/api/auth/refresh", {
@@ -96,21 +104,22 @@ async function refreshAccessToken(): Promise<boolean> {
             body: JSON.stringify({ refreshToken }),
         })
 
-        if (!res.ok) return false
+        if (!res.ok) {
+            return res.status === 401 || res.status === 403 ? "invalid" : "unavailable"
+        }
 
         const payload = await res.json()
-        // Auth service returns { data: { tokens: { access_token, refresh_token } } }
         const tokens = payload?.data?.tokens ?? payload?.tokens ?? payload
         const newAccess = tokens?.access_token ?? tokens?.accessToken
         const newRefresh = tokens?.refresh_token ?? tokens?.refreshToken
 
         if (newAccess) {
             saveTokens(newAccess, newRefresh ?? refreshToken)
-            return true
+            return "success"
         }
-        return false
+        return "invalid"
     } catch {
-        return false
+        return "unavailable"
     }
 }
 
@@ -122,22 +131,26 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true
 
-            // Deduplicate concurrent refresh calls
             if (!refreshPromise) {
                 refreshPromise = refreshAccessToken().finally(() => {
                     refreshPromise = null
                 })
             }
 
-            const success = await refreshPromise
-            if (success) {
-                // Retry with new token
+            const result = await refreshPromise
+            if (result === "success") {
                 const newToken = getAccessToken()
                 if (newToken) {
                     originalRequest.headers["Authorization"] = `Bearer ${newToken}`
                 }
                 return api(originalRequest)
             }
+
+            if (result === "invalid") {
+                clearStoredAuth()
+            }
+        } else if (error.response?.status === 401) {
+            clearStoredAuth()
         }
 
         return Promise.reject(error)

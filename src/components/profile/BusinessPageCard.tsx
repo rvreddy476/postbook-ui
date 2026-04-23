@@ -15,7 +15,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
 
     return (
         <Link
-            href={`/page/${page.handle}`}
+            href={`/page/${page.page_handle}`}
             className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
         >
             {/* Avatar */}
@@ -23,12 +23,12 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
                 {avatarUrl ? (
                     <img
                         src={avatarUrl}
-                        alt={page.name}
+                        alt={page.page_name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-lg font-bold text-[#7B5B3A]">
-                        {page.name.charAt(0).toUpperCase()}
+                        {page.page_name.charAt(0).toUpperCase()}
                     </div>
                 )}
             </div>
@@ -37,7 +37,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                     <h3 className="text-sm font-bold text-[#3C2415] truncate">
-                        {page.name}
+                        {page.page_name}
                     </h3>
                     {page.is_verified && (
                         <BadgeCheck className="w-3.5 h-3.5 text-[#D4A574] flex-shrink-0" />
@@ -46,10 +46,10 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
                 {page.category && (
                     <p className="text-xs text-[#7B5B3A] truncate">{page.category}</p>
                 )}
-                {page.city && (
+                {page.address && (
                     <div className="flex items-center gap-1 text-[10px] text-[#7B5B3A]/60 mt-0.5">
                         <MapPin className="w-2.5 h-2.5" />
-                        <span>{[page.city, page.state].filter(Boolean).join(", ")}</span>
+                        <span className="truncate">{page.address}</span>
                     </div>
                 )}
             </div>
@@ -59,7 +59,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
                 <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 fill-[#D4A574] text-[#D4A574]" />
                     <span className="text-sm font-bold text-[#3C2415]">
-                        {page.average_rating.toFixed(1)}
+                        {page.avg_rating.toFixed(1)}
                     </span>
                 </div>
                 <span className="text-[10px] text-[#7B5B3A]">

@@ -10,10 +10,15 @@ interface ReelPlayerProps {
   muted: boolean;
   active: boolean;
   contain?: boolean;
+  loadingTitle?: string;
+  loadingHint?: string;
+  errorTitle?: string;
+  errorHint?: string;
   onToggleMuted: () => void;
   onBoost: () => void;
   onProgressChange?: (progressPercent: number) => void;
   onExpand?: () => void;
+  onPlaybackStateChange?: (state: "loading" | "playing" | "error") => void;
 }
 
 export function ReelPlayer({
@@ -22,10 +27,15 @@ export function ReelPlayer({
   muted,
   active,
   contain,
+  loadingTitle,
+  loadingHint,
+  errorTitle,
+  errorHint,
   onToggleMuted,
   onBoost,
   onProgressChange,
   onExpand,
+  onPlaybackStateChange,
 }: ReelPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,32 +44,30 @@ export function ReelPlayer({
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [volume, setVolume] = useState(1);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
-  // Cover image state — visible overlay that hides black frame until video plays
   const [coverSrc, setCoverSrc] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
-  // Resolve cover: try posterUrl first, fall back to canvas capture from video
   useEffect(() => {
     setCoverSrc(null);
     setVideoPlaying(false);
+    setPlaybackError(null);
+    onPlaybackStateChange?.("loading");
 
-    // If we have a poster URL, probe it
     if (posterUrl) {
       const img = new Image();
       img.onload = () => setCoverSrc(posterUrl);
-      img.onerror = () => setCoverSrc(null); // will rely on canvas fallback
+      img.onerror = () => setCoverSrc(null);
       img.src = posterUrl;
     }
-  }, [posterUrl, videoUrl]);
+  }, [onPlaybackStateChange, posterUrl, videoUrl]);
 
-  // Canvas fallback: capture first frame once video has data
   useEffect(() => {
     const mediaElement = videoRef.current;
     if (!mediaElement) return;
 
     const handleLoaded = () => {
-      // Only generate if we don't already have a working cover
       setCoverSrc((prev) => {
         if (prev) return prev;
         try {
@@ -80,23 +88,37 @@ export function ReelPlayer({
     return () => mediaElement.removeEventListener("loadeddata", handleLoaded);
   }, [videoUrl]);
 
-  // Track when video actually starts rendering frames
   useEffect(() => {
     const mediaElement = videoRef.current;
     if (!mediaElement) return;
 
-    const onPlaying = () => setVideoPlaying(true);
-    const onWaiting = () => setVideoPlaying(false);
+    const onPlaying = () => {
+      setVideoPlaying(true);
+      setPlaybackError(null);
+      onPlaybackStateChange?.("playing");
+    };
+    const onWaiting = () => {
+      setVideoPlaying(false);
+      if (!playbackError) {
+        onPlaybackStateChange?.("loading");
+      }
+    };
+    const onError = () => {
+      setVideoPlaying(false);
+      setPlaybackError("Playback failed");
+      onPlaybackStateChange?.("error");
+    };
 
     mediaElement.addEventListener("playing", onPlaying);
     mediaElement.addEventListener("waiting", onWaiting);
+    mediaElement.addEventListener("error", onError);
     return () => {
       mediaElement.removeEventListener("playing", onPlaying);
       mediaElement.removeEventListener("waiting", onWaiting);
+      mediaElement.removeEventListener("error", onError);
     };
-  }, [videoUrl]);
+  }, [onPlaybackStateChange, playbackError, videoUrl]);
 
-  // Attach HLS or plain source
   useEffect(() => {
     const currentElement = videoRef.current;
     if (!currentElement) return;
@@ -122,11 +144,18 @@ export function ReelPlayer({
           instance.loadSource(videoUrl);
           instance.attachMedia(mediaElement);
           hlsInstance = instance;
-          // Play once HLS has parsed manifest and buffered enough
           instance.on(Hls.Events.MANIFEST_PARSED, () => {
             if (!mounted) return;
             sourceReadyRef.current = true;
+            setPlaybackError(null);
+            onPlaybackStateChange?.("loading");
             if (active) mediaElement.play().catch(() => undefined);
+          });
+          instance.on(Hls.Events.ERROR, (_event, data) => {
+            if (!mounted || !data?.fatal) return;
+            setVideoPlaying(false);
+            setPlaybackError(data.details || data.type || "Playback failed");
+            onPlaybackStateChange?.("error");
           });
           return;
         }
@@ -143,7 +172,7 @@ export function ReelPlayer({
       mediaElement.removeAttribute("src");
       mediaElement.load();
     };
-  }, [videoUrl, active]);
+  }, [active, onPlaybackStateChange, videoUrl]);
 
   useEffect(() => {
     const mediaElement = videoRef.current;
@@ -161,8 +190,6 @@ export function ReelPlayer({
     const mediaElement = videoRef.current;
     if (!mediaElement) return;
     if (active) {
-      // For non-HLS, source is set synchronously so sourceReady is already true.
-      // For HLS, play is triggered by MANIFEST_PARSED callback instead.
       if (sourceReadyRef.current) {
         mediaElement.play().catch(() => undefined);
       }
@@ -233,8 +260,10 @@ export function ReelPlayer({
     [muted, onToggleMuted]
   );
 
-  // Show cover overlay when video isn't visibly playing yet
   const showCover = coverSrc && !videoPlaying;
+  const stateTitle = playbackError ? errorTitle : loadingTitle;
+  const stateHint = playbackError ? errorHint : loadingHint;
+  const showStateOverlay = !!stateTitle && (!videoPlaying || !!playbackError);
 
   return (
     <div
@@ -247,11 +276,10 @@ export function ReelPlayer({
         loop
         playsInline
         muted={muted}
-        className={`h-full w-full ${contain ? "object-contain" : "object-cover"}`}
+        className={"h-full w-full " + (contain ? "object-contain" : "object-cover")}
         onClick={handleClick}
       />
 
-      {/* Cover image overlay — hides black frame until video actually plays */}
       <AnimatePresence>
         {showCover ? (
           <motion.img
@@ -260,13 +288,23 @@ export function ReelPlayer({
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`pointer-events-none absolute inset-0 z-[1] h-full w-full ${contain ? "object-contain" : "object-cover"}`}
+            className={"pointer-events-none absolute inset-0 z-[1] h-full w-full " + (contain ? "object-contain" : "object-cover")}
             onClick={handleClick}
           />
         ) : null}
       </AnimatePresence>
 
-      {/* ── Hover controls bar ─────────────────────────── */}
+      {showStateOverlay ? (
+        <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/35 px-8 text-center">
+          <div className="max-w-md">
+            <p className="text-[15px] font-semibold text-white">{stateTitle}</p>
+            {stateHint ? (
+              <p className="mt-2 text-[12px] leading-relaxed text-white/75">{stateHint}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <AnimatePresence>
         {isHovered ? (
           <motion.div
@@ -278,7 +316,6 @@ export function ReelPlayer({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex w-full items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-md">
-              {/* Play / Pause */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -289,13 +326,12 @@ export function ReelPlayer({
                 aria-label={isPaused ? "Play" : "Pause"}
               >
                 {isPaused ? (
-                  <Play className="h-3.5 w-3.5 ml-0.5" fill="white" />
+                  <Play className="ml-0.5 h-3.5 w-3.5" fill="white" />
                 ) : (
                   <Pause className="h-3.5 w-3.5" fill="white" />
                 )}
               </button>
 
-              {/* Mute toggle */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -312,7 +348,6 @@ export function ReelPlayer({
                 )}
               </button>
 
-              {/* Volume slider */}
               <input
                 type="range"
                 min="0"
@@ -327,7 +362,6 @@ export function ReelPlayer({
 
               <div className="flex-1" />
 
-              {/* Expand */}
               {onExpand ? (
                 <button
                   type="button"
@@ -346,7 +380,6 @@ export function ReelPlayer({
         ) : null}
       </AnimatePresence>
 
-      {/* Paused overlay (center play icon when not hovered) */}
       <AnimatePresence>
         {isPaused && !isHovered ? (
           <motion.div
@@ -357,13 +390,12 @@ export function ReelPlayer({
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-              <Play className="h-7 w-7 text-white ml-1" fill="white" />
+              <Play className="ml-1 h-7 w-7 text-white" fill="white" />
             </div>
           </motion.div>
         ) : null}
       </AnimatePresence>
 
-      {/* Boost burst animation (double-tap) */}
       <AnimatePresence>
         {boostBurstKey > 0 ? (
           <motion.div

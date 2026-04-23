@@ -7,6 +7,7 @@ import {
   Compass,
   Users,
   Library,
+
   Upload,
   Film,
   Clock,
@@ -81,6 +82,7 @@ export function ReelIconSideNav() {
         icon={<Library className="h-[18px] w-[18px]" />}
         label="Library"
       />
+
       <NavIcon
         href="/reels?tab=history"
         icon={<Clock className="h-[18px] w-[18px]" />}
@@ -111,3 +113,4 @@ export function ReelIconSideNav() {
     </aside>
   );
 }
+

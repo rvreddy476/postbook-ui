@@ -9,6 +9,8 @@ export interface LiveStream {
   stream_key?: string;
   ingest_url?: string | null;
   ingest_protocol?: string | null;
+  publish_url?: string | null;
+  publish_protocol?: string | null;
   playback_url?: string | null;
   playback_protocol?: string | null;
   status: LiveStreamStatus;

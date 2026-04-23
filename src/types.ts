@@ -30,4 +30,4 @@ export interface Post {
   timestamp: string;
 }
 
-export type NavItem = 'Home' | 'Chat' | 'TV' | 'Reels' | 'Shop' | 'Profile' | 'Friends' | 'My Circle' | 'Memories' | 'Groups' | 'Flicks' | 'Create' | 'Messenger';
+export type NavItem = 'Home' | 'Chat' | 'TV' | 'Reels' | 'Shop' | 'Profile' | 'Friends' | 'My Circle' | 'Memories' | 'Groups' | 'Flicks' | 'Create' | 'Messenger' | 'Ask' | 'Pages' | 'PostMatch';

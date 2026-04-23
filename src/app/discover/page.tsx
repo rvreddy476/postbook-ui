@@ -27,7 +27,7 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
 
     return (
         <button
-            onClick={() => router.push(`/hashtag/${item.tag}`)}
+            onClick={() => router.push(`/hashtag/${item.hashtag}`)}
             className="group flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 text-left w-full"
         >
             {/* Rank badge */}
@@ -40,17 +40,12 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
             {/* Tag info */}
             <div className="flex-1 min-w-0">
                 <p className="text-[15px] font-bold text-brand-text group-hover:text-brand-text transition-colors truncate">
-                    #{item.tag}
+                    #{item.hashtag}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                     <TrendingUp className="w-3 h-3 text-emerald-500" />
                     <p className="text-xs text-brand-text/40 font-medium">
-                        {item.post_count.toLocaleString()} post{item.post_count !== 1 ? "s" : ""}
-                        {item.growth_rate !== undefined && item.growth_rate > 0 && (
-                            <span className="ml-1.5 text-emerald-500 font-semibold">
-                                +{item.growth_rate.toFixed(0)}%
-                            </span>
-                        )}
+                        {Math.round(item.score).toLocaleString()} post{item.score !== 1 ? "s" : ""}
                     </p>
                 </div>
             </div>
@@ -76,19 +71,19 @@ function HashtagCard({ item }: HashtagCardProps) {
 
     return (
         <button
-            onClick={() => router.push(`/hashtag/${item.tag}`)}
+            onClick={() => router.push(`/hashtag/${item.hashtag}`)}
             className="group flex flex-col items-center justify-center gap-2 p-5 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 hover:bg-brand-text/30 transition-all duration-200 aspect-square"
         >
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20 group-hover:scale-105 transition-transform duration-200">
                 <Hash className="w-6 h-6 text-white" />
             </div>
             <p className="text-sm font-bold text-brand-text group-hover:text-brand-text transition-colors truncate max-w-full px-1">
-                {item.tag}
+                {item.hashtag}
             </p>
             <p className="text-xs text-brand-text/40 font-medium">
-                {item.post_count >= 1000
-                    ? `${(item.post_count / 1000).toFixed(1)}K`
-                    : item.post_count} posts
+                {item.score >= 1000
+                    ? `${(item.score / 1000).toFixed(1)}K`
+                    : Math.round(item.score)} posts
             </p>
         </button>
     )
@@ -180,7 +175,7 @@ export default function DiscoverPage() {
     const { data: trendingData, isLoading: trendingLoading, isError: trendingError } = useTrending()
     const { data: suggestedData, isLoading: suggestedLoading, isError: suggestedError } = useSuggested()
 
-    const hashtags = trendingData?.hashtags ?? []
+    const hashtags = trendingData?.trending ?? []
     const suggestedPosts = suggestedData?.posts ?? []
 
     // Split hashtags: top 3 as list with rank, rest as grid pills
@@ -241,7 +236,7 @@ export default function DiscoverPage() {
                     {!trendingLoading && topHashtags.length > 0 && (
                         <div className="space-y-3">
                             {topHashtags.map((item, index) => (
-                                <HashtagPill key={item.tag} item={item} rank={index + 1} />
+                                <HashtagPill key={item.hashtag} item={item} rank={index + 1} />
                             ))}
                         </div>
                     )}
@@ -250,7 +245,7 @@ export default function DiscoverPage() {
                     {!trendingLoading && moreHashtags.length > 0 && (
                         <div className="mt-4 grid grid-cols-3 gap-3">
                             {moreHashtags.map((item) => (
-                                <HashtagCard key={item.tag} item={item} />
+                                <HashtagCard key={item.hashtag} item={item} />
                             ))}
                         </div>
                     )}

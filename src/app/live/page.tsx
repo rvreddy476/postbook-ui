@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Eye,
   Heart,
   Loader2,
   MessageSquare,
@@ -11,7 +12,9 @@ import {
   Radio,
   Send,
   Users,
+  X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { AppShell } from "@/features/reels/components/AppShell";
 import { ReelPlayer } from "@/features/reels/components/ReelPlayer";
@@ -34,14 +37,14 @@ import { liveKeys } from "@/features/live/queryKeys";
 import type { LiveStream } from "@/features/live/types";
 import { useLiveStreamRoom } from "@/features/live/useLiveStreamRoom";
 import {
-  formatDateTime,
   formatRelativeTime,
   getPreferredLiveVideoUrl,
   messageFromError,
   resolvePinnedLiveMessage,
   shortUserId,
-  upsertLiveChatMessage,
 } from "@/features/live/utils";
+
+/* ───────────────────────────── main content ───────────────────────────── */
 
 function LivePageContent() {
   const router = useRouter();
@@ -49,12 +52,15 @@ function LivePageContent() {
   const queryClient = useQueryClient();
   const { data: myProfile } = useMyProfile();
   const joinedStreamRef = useRef<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
   const [chatDraft, setChatDraft] = useState("");
   const [likedStreamId, setLikedStreamId] = useState<string | null>(null);
   const [playerMuted, setPlayerMuted] = useState(true);
+  const [chatOpen, setChatOpen] = useState(true);
 
+  /* ── queries ── */
   const liveStreamsQuery = useQuery({
     queryKey: liveKeys.streams(),
     queryFn: () => listLiveStreams(20),
@@ -95,67 +101,59 @@ function LivePageContent() {
     applyLiveRealtimeEvent(queryClient, event);
   });
 
-  const selectedStream =
-    streamQuery.data ??
-    liveStreamsQuery.data?.find((stream) => stream.id === selectedStreamId) ??
-    null;
+  /* ── derived ── */
+  const selectedStream = streamQuery.data ?? liveStreamsQuery.data?.find((s) => s.id === selectedStreamId) ?? null;
   const chatMessages = chatQuery.data ?? [];
   const pinnedMessage = resolvePinnedLiveMessage(chatMessages);
-  const liveStreamIds = new Set((liveStreamsQuery.data ?? []).map((stream) => stream.id));
   const mutedUsers = mutesQuery.data ?? [];
-  const currentUserMuted = !!myProfile?.id && mutedUsers.some((mute) => mute.user_id === myProfile.id);
+  const currentUserMuted = !!myProfile?.id && mutedUsers.some((m) => m.user_id === myProfile.id);
+  const effectiveViewerCount = viewerCountQuery.data ?? 0;
+  const preferredVideoUrl = getPreferredLiveVideoUrl(selectedStream);
+  const liveStreams = liveStreamsQuery.data ?? [];
 
   const authorIds = [
     ...new Set([
-      ...(liveStreamsQuery.data ?? []).map((stream) => stream.host_id),
+      ...liveStreams.map((s) => s.host_id),
       ...(selectedStream ? [selectedStream.host_id] : []),
-      ...chatMessages.map((message) => message.user_id),
+      ...chatMessages.map((m) => m.user_id),
     ]),
   ];
   const profilesQuery = useBatchProfiles(authorIds);
 
   const getProfileLabel = (userId: string) => {
-    const profile = profilesQuery.data?.get(userId);
-    return profile?.display_name || profile?.username || shortUserId(userId);
+    const p = profilesQuery.data?.get(userId);
+    return p?.display_name || p?.username || shortUserId(userId);
   };
-
   const getAvatarSrc = (userId: string) => {
-    const profile = profilesQuery.data?.get(userId);
-    return profile?.avatar_media_id ? `${apiBaseUrl}/v1/media/${profile.avatar_media_id}/serve` : null;
+    const p = profilesQuery.data?.get(userId);
+    return p?.avatar_media_id ? `${apiBaseUrl}/v1/media/${p.avatar_media_id}/serve` : null;
   };
 
+  /* ── auto-scroll chat ── */
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages.length]);
+
+  /* ── join/leave ── */
   useEffect(() => {
     setLikedStreamId(null);
   }, [selectedStreamId]);
 
   useEffect(() => {
-    if (!selectedStreamId || !selectedStream || selectedStream.status !== "live" || !myProfile?.id) {
-      return;
-    }
-    if (joinedStreamRef.current === selectedStreamId) {
-      return;
-    }
-
+    if (!selectedStreamId || !selectedStream || selectedStream.status !== "live" || !myProfile?.id) return;
+    if (joinedStreamRef.current === selectedStreamId) return;
     joinedStreamRef.current = selectedStreamId;
     void joinLiveStream(selectedStreamId)
-      .then((viewerCount) => {
-        queryClient.setQueryData(liveKeys.viewerCount(selectedStreamId), viewerCount);
-      })
-      .catch(() => {
-        if (joinedStreamRef.current === selectedStreamId) {
-          joinedStreamRef.current = null;
-        }
-      });
-
+      .then((vc) => queryClient.setQueryData(liveKeys.viewerCount(selectedStreamId), vc))
+      .catch(() => { if (joinedStreamRef.current === selectedStreamId) joinedStreamRef.current = null; });
     return () => {
-      if (joinedStreamRef.current !== selectedStreamId) {
-        return;
-      }
+      if (joinedStreamRef.current !== selectedStreamId) return;
       joinedStreamRef.current = null;
       void leaveLiveStream(selectedStreamId).catch(() => {});
     };
   }, [myProfile?.id, queryClient, selectedStream, selectedStreamId]);
 
+  /* ── mutations ── */
   const sendChatMutation = useMutation({
     mutationFn: (input: { streamId: string; message: string }) => sendLiveChatMessage(input),
     onSuccess: (message, variables) => {
@@ -177,346 +175,354 @@ function LivePageContent() {
     onMutate: async (streamId) => {
       await queryClient.cancelQueries({ queryKey: liveKeys.stream(streamId) });
       await queryClient.cancelQueries({ queryKey: liveKeys.streams() });
-
       const previousStream = queryClient.getQueryData<LiveStream>(liveKeys.stream(streamId));
       const previousStreams = queryClient.getQueryData<LiveStream[]>(liveKeys.streams());
-
       setLikedStreamId(streamId);
-
-      queryClient.setQueryData<LiveStream | undefined>(liveKeys.stream(streamId), (stream) =>
-        stream ? { ...stream, like_count: stream.like_count + 1 } : stream,
+      queryClient.setQueryData<LiveStream | undefined>(liveKeys.stream(streamId), (s) =>
+        s ? { ...s, like_count: s.like_count + 1 } : s,
       );
-      queryClient.setQueryData<LiveStream[] | undefined>(liveKeys.streams(), (streams) =>
-        streams?.map((stream) =>
-          stream.id === streamId ? { ...stream, like_count: stream.like_count + 1 } : stream,
-        ),
+      queryClient.setQueryData<LiveStream[] | undefined>(liveKeys.streams(), (ss) =>
+        ss?.map((s) => (s.id === streamId ? { ...s, like_count: s.like_count + 1 } : s)),
       );
-
       return { previousStream, previousStreams };
     },
-    onError: (_error, streamId, context) => {
-      if (likedStreamId === streamId) {
-        setLikedStreamId(null);
-      }
-      queryClient.setQueryData(liveKeys.stream(streamId), context?.previousStream);
-      queryClient.setQueryData(liveKeys.streams(), context?.previousStreams);
+    onError: (_err, streamId, ctx) => {
+      if (likedStreamId === streamId) setLikedStreamId(null);
+      queryClient.setQueryData(liveKeys.stream(streamId), ctx?.previousStream);
+      queryClient.setQueryData(liveKeys.streams(), ctx?.previousStreams);
     },
   });
 
-  const actionError =
-    streamQuery.error ??
-    viewerCountQuery.error ??
-    chatQuery.error ??
-    mutesQuery.error ??
-    sendChatMutation.error ??
-    likeMutation.error;
-  const effectiveViewerCount = viewerCountQuery.data ?? 0;
   const composerDisabled = selectedStream?.status !== "live" || sendChatMutation.isPending || currentUserMuted;
-  const preferredVideoUrl = getPreferredLiveVideoUrl(selectedStream);
+  const actionError = streamQuery.error ?? viewerCountQuery.error ?? chatQuery.error ?? mutesQuery.error ?? sendChatMutation.error ?? likeMutation.error;
+
+  /* ───────────────────────────── render ───────────────────────────── */
+
+  // Empty state
+  if (!selectedStream && !liveStreamsQuery.isLoading) {
+    return (
+      <AppShell sectionLabel="Live">
+        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-500/10">
+            <Radio className="h-9 w-9 text-rose-500" />
+          </div>
+          <h2 className="mt-6 text-[22px] font-bold text-brand-text">No one is live right now</h2>
+          <p className="mt-2 max-w-sm text-[14px] text-brand-text/50">
+            Check back later or start your own broadcast from the control room.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/live/start")}
+            className="mt-6 rounded-xl bg-rose-500 px-6 py-3 text-[14px] font-bold text-white transition-colors hover:bg-rose-600"
+          >
+            Go Live
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  // Loading state
+  if (!selectedStream) {
+    return (
+      <AppShell sectionLabel="Live">
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-text/30" />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell sectionLabel="Live">
-      <div className="mx-auto max-w-[1280px] px-6 py-8">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50">
-            <Radio className="h-5 w-5 text-rose-500" />
-          </div>
-          <div>
-            <h1 className="text-[18px] font-bold text-brand-text">Live Streams</h1>
-            <p className="text-[12px] text-brand-text/60">Browse current broadcasts, join live chat, and track audience activity without polling.</p>
-          </div>
-        </div>
+      <div className="flex h-full flex-col">
+        {/* ── Theater: Video + Chat ── */}
+        <div className="flex min-h-0 flex-1">
+          {/* Video column */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Player */}
+            <div className="relative flex-1 bg-black">
+              {preferredVideoUrl ? (
+                <ReelPlayer
+                  videoUrl={preferredVideoUrl}
+                  posterUrl={selectedStream.thumbnail_url || ""}
+                  muted={playerMuted}
+                  active
+                  contain
+                  loadingTitle="Connecting to live stream..."
+                  errorTitle="Stream unavailable"
+                  errorHint="The encoder may have disconnected. Try refreshing."
+                  onToggleMuted={() => setPlayerMuted((m) => !m)}
+                  onBoost={() => selectedStreamId && likeMutation.mutate(selectedStreamId)}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+                  <Radio className="h-10 w-10 text-white/25" />
+                  <p className="text-[15px] font-semibold text-white/60">{selectedStream.title}</p>
+                  <p className="max-w-md text-[13px] text-white/30">
+                    {selectedStream.status === "live"
+                      ? "Waiting for the live stream to begin playback..."
+                      : "This stream has ended."}
+                  </p>
+                </div>
+              )}
 
-        <div className="grid gap-8 xl:grid-cols-[1fr_360px]">
-          <div className="space-y-5">
-            {selectedStream ? (
-              <>
-                <div className="overflow-hidden rounded-2xl border border-brand-divider bg-black shadow-sm" style={{ aspectRatio: "16/9" }}>
-                  {preferredVideoUrl ? (
-                    <ReelPlayer
-                      videoUrl={preferredVideoUrl}
-                      posterUrl={selectedStream.thumbnail_url || ""}
-                      muted={playerMuted}
-                      active
-                      onToggleMuted={() => setPlayerMuted((current) => !current)}
-                      onBoost={() => {}}
-                    />
-                  ) : selectedStream.thumbnail_url ? (
-                    <div className="relative h-full w-full">
-                      <img src={selectedStream.thumbnail_url} alt={selectedStream.title} className="h-full w-full object-cover opacity-70" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/35 px-8 text-center">
-                        <Radio className="h-8 w-8 text-white/90" />
-                        <p className="mt-3 text-[16px] font-bold text-white">{selectedStream.title}</p>
-                        <p className="mt-2 max-w-md text-[13px] text-white/75">
-                          {selectedStream.status === "live"
-                            ? "Live playback is wired for this page, but the media origin has not produced a manifest for this stream yet."
-                            : selectedStream.status === "ended"
-                              ? "This stream ended before a replay manifest was generated."
-                              : "Prepare the stream in the control room and start publishing to expose live playback here."}
-                        </p>
-                      </div>
+              {/* LIVE badge + viewer count overlay */}
+              <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2">
+                {selectedStream.status === "live" && (
+                  <span className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase text-white shadow-lg">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                    Live
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+                  <Eye className="h-3 w-3" />
+                  {effectiveViewerCount}
+                </span>
+              </div>
+
+              {/* Chat toggle (mobile + desktop) */}
+              <button
+                type="button"
+                onClick={() => setChatOpen((o) => !o)}
+                className="absolute right-4 top-4 flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1.5 text-[11px] font-medium text-white/80 backdrop-blur-sm transition-colors hover:bg-black/80"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                {chatOpen ? "Hide Chat" : "Show Chat"}
+              </button>
+            </div>
+
+            {/* Host bar */}
+            <div className="flex items-center justify-between gap-4 border-t border-brand-divider bg-brand-card px-5 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar
+                  src={getAvatarSrc(selectedStream.host_id)}
+                  name={getProfileLabel(selectedStream.host_id)}
+                  seed={selectedStream.host_id}
+                  size="sm"
+                />
+                <div className="min-w-0">
+                  <h2 className="truncate text-[14px] font-bold text-brand-text">{selectedStream.title}</h2>
+                  <p className="truncate text-[12px] text-brand-text/50">{getProfileLabel(selectedStream.host_id)}</p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="flex items-center gap-1.5 rounded-lg bg-brand-secondary px-3 py-2 text-[12px] text-brand-text/60">
+                  <Users className="h-3.5 w-3.5" />
+                  <span className="font-bold text-brand-text">{effectiveViewerCount}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => selectedStreamId && likeMutation.mutate(selectedStreamId)}
+                  disabled={!selectedStreamId || selectedStream.status !== "live" || likedStreamId === selectedStreamId}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold transition-all disabled:opacity-40 ${
+                    likedStreamId === selectedStreamId
+                      ? "bg-rose-500 text-white"
+                      : "bg-brand-secondary text-brand-text hover:bg-rose-50 hover:text-rose-600"
+                  }`}
+                >
+                  <Heart className={`h-3.5 w-3.5 ${likedStreamId === selectedStreamId ? "fill-current" : ""}`} />
+                  {selectedStream.like_count}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Chat sidebar ── */}
+          <AnimatePresence>
+            {chatOpen && (
+              <motion.aside
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 360, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex h-full flex-col border-l border-brand-divider bg-brand-card"
+                style={{ minWidth: 0 }}
+              >
+                {/* Chat header */}
+                <div className="flex items-center justify-between border-b border-brand-divider px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-brand-text/50" />
+                    <span className="text-[13px] font-bold text-brand-text">Live Chat</span>
+                    {selectedStream.status === "live" && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setChatOpen(false)}
+                    className="rounded-md p-1 text-brand-text/40 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Pinned message */}
+                {pinnedMessage && (
+                  <div className="border-b border-amber-200/30 bg-amber-500/5 px-4 py-2.5">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                      <Pin className="h-3 w-3" />
+                      Pinned
+                    </div>
+                    <p className="mt-1 text-[12px] text-brand-text/80">{pinnedMessage.message}</p>
+                  </div>
+                )}
+
+                {/* Muted notice */}
+                {currentUserMuted && (
+                  <div className="border-b border-rose-200/30 bg-rose-500/5 px-4 py-2 text-[11px] text-rose-500">
+                    You are muted by the host.
+                  </div>
+                )}
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto px-3 py-2">
+                  {chatQuery.isLoading ? (
+                    <div className="flex h-full items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-brand-text/30" />
+                    </div>
+                  ) : chatMessages.length > 0 ? (
+                    <div className="space-y-1">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className="group rounded-lg px-2 py-1.5 transition-colors hover:bg-brand-secondary/50">
+                          <div className="flex items-start gap-2">
+                            <Avatar
+                              src={getAvatarSrc(msg.user_id)}
+                              name={getProfileLabel(msg.user_id)}
+                              seed={msg.user_id}
+                              size="xs"
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] font-bold text-brand-text/70">
+                                {getProfileLabel(msg.user_id)}
+                              </span>
+                              {msg.is_pinned && (
+                                <Pin className="ml-1 inline h-2.5 w-2.5 text-amber-500" />
+                              )}
+                              <span className="ml-1.5 text-[12px] text-brand-text/80">
+                                {msg.message}
+                              </span>
+                            </div>
+                            <span className="shrink-0 text-[10px] text-brand-text/30 opacity-0 group-hover:opacity-100">
+                              {formatRelativeTime(msg.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
                     </div>
                   ) : (
-                    <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-                      <Radio className="h-8 w-8 text-white/70" />
-                      <p className="mt-3 text-[16px] font-bold text-white">{selectedStream.title}</p>
-                      <p className="mt-2 max-w-md text-[13px] text-white/65">
-                        {selectedStream.status === "live"
-                          ? "Waiting for the live HLS manifest to appear from the playback origin."
-                          : "Playback is unavailable for this stream right now, but realtime chat and moderation remain active."}
+                    <div className="flex h-full flex-col items-center justify-center text-center">
+                      <MessageSquare className="h-8 w-8 text-brand-text/15" />
+                      <p className="mt-2 text-[12px] text-brand-text/40">
+                        {selectedStream.status === "live" ? "No messages yet. Say hello!" : "Chat is closed."}
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase ${
-                          selectedStream.status === "live"
-                            ? "bg-rose-100 text-rose-600"
-                            : selectedStream.status === "ended"
-                              ? "bg-slate-100 text-slate-600"
-                              : "bg-amber-100 text-amber-700"
-                        }`}>
-                          {selectedStream.status}
-                        </span>
-                        <span className="text-[11px] uppercase tracking-[0.14em] text-brand-text/50">
-                          {selectedStream.status === "live" ? "Watching live" : "Stream detail"}
-                        </span>
-                      </div>
-
-                      <h2 className="mt-3 text-[22px] font-bold text-brand-text">{selectedStream.title}</h2>
-                      {selectedStream.description ? (
-                        <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-brand-text/70">{selectedStream.description}</p>
-                      ) : null}
-
-                      <div className="mt-4 flex items-center gap-3">
-                        <Avatar
-                          src={getAvatarSrc(selectedStream.host_id)}
-                          name={getProfileLabel(selectedStream.host_id)}
-                          seed={selectedStream.host_id}
-                          size="sm"
-                        />
-                        <div>
-                          <p className="text-[13px] font-semibold text-brand-text">{getProfileLabel(selectedStream.host_id)}</p>
-                          <p className="text-[11px] text-brand-text/50">{formatDateTime(selectedStream.started_at || selectedStream.created_at)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="rounded-xl bg-brand-secondary px-4 py-3">
-                        <div className="flex items-center gap-2 text-[11px] text-brand-text/60">
-                          <Users className="h-3.5 w-3.5" />
-                          Live Viewers
-                        </div>
-                        <p className="mt-1 text-[18px] font-bold text-brand-text">{effectiveViewerCount}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => selectedStreamId && likeMutation.mutate(selectedStreamId)}
-                        disabled={!selectedStreamId || selectedStream.status !== "live" || likedStreamId === selectedStreamId || likeMutation.isPending}
-                        className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-[13px] font-bold text-white transition-colors hover:bg-brand-text disabled:opacity-40"
-                      >
-                        {likeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-4 w-4" />}
-                        {selectedStream.like_count} Likes
-                      </button>
-                    </div>
+                {/* Composer */}
+                <div className="border-t border-brand-divider px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={chatDraft}
+                      onChange={(e) => setChatDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey && chatDraft.trim() && selectedStreamId) {
+                          e.preventDefault();
+                          sendChatMutation.mutate({ streamId: selectedStreamId, message: chatDraft.trim() });
+                        }
+                      }}
+                      maxLength={500}
+                      disabled={composerDisabled}
+                      placeholder={
+                        selectedStream.status !== "live"
+                          ? "Chat closed"
+                          : currentUserMuted
+                            ? "You are muted"
+                            : "Send a message..."
+                      }
+                      className="h-9 flex-1 rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none placeholder:text-brand-text/30 focus:border-brand-text/20 focus:ring-1 focus:ring-brand-text/10 disabled:opacity-40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => selectedStreamId && chatDraft.trim() && sendChatMutation.mutate({ streamId: selectedStreamId, message: chatDraft.trim() })}
+                      disabled={composerDisabled || !chatDraft.trim()}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white transition-colors hover:bg-rose-600 disabled:opacity-30"
+                    >
+                      {sendChatMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    </button>
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-[14px] font-bold text-brand-text">Live Comments</h2>
-                      <p className="text-[12px] text-brand-text/60">Join the conversation while the stream is active.</p>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${
-                      selectedStream.status === "live" ? "bg-rose-100 text-rose-600" : "bg-brand-secondary text-brand-highlight"
-                    }`}>
-                      {selectedStream.status === "live" ? "Chat Open" : "Chat Read Only"}
-                    </span>
-                  </div>
-
-                  {pinnedMessage ? (
-                    <div className="mt-4 rounded-xl border border-[#E5A93D]/20 bg-[#E5A93D]/5 p-4">
-                      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#A46D12]">
-                        <Pin className="h-3.5 w-3.5" />
-                        Pinned Comment
-                      </div>
-                      <p className="mt-2 text-[12px] font-semibold text-brand-text/75">{getProfileLabel(pinnedMessage.user_id)}</p>
-                      <p className="mt-1 text-[13px] text-brand-text">{pinnedMessage.message}</p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-4 rounded-2xl border border-brand-divider bg-[#FAFAF8]">
-                    <div className="max-h-[360px] overflow-y-auto px-4 py-3">
-                      {currentUserMuted ? (
-                        <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-600">
-                          The host has muted you in this stream. You can keep reading chat, but you cannot send messages.
-                        </div>
-                      ) : null}
-
-                      {chatQuery.isLoading ? (
-                        <div className="flex items-center gap-2 text-[12px] text-brand-text/60">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading comments...
-                        </div>
-                      ) : chatMessages.length > 0 ? (
-                        <div className="space-y-3">
-                          {chatMessages.map((message) => (
-                            <div key={message.id} className="rounded-xl bg-brand-card px-3 py-3 shadow-sm">
-                              <div className="flex items-start gap-3">
-                                <Avatar src={getAvatarSrc(message.user_id)} name={getProfileLabel(message.user_id)} seed={message.user_id} size="sm" />
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="truncate text-[12px] font-semibold text-brand-text">{getProfileLabel(message.user_id)}</p>
-                                    <span className="text-[11px] text-brand-text/50">{formatRelativeTime(message.created_at)}</span>
-                                    {message.is_pinned ? (
-                                      <span className="rounded-full bg-[#E5A93D]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#A46D12]">
-                                        Pinned
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-brand-text/80">{message.message}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-[12px] text-brand-text/60">
-                          {selectedStream.status === "live"
-                            ? "No comments yet. Say hello to start the chat."
-                            : "Comments are unavailable once the stream is no longer live."}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="border-t border-brand-divider bg-brand-card px-4 py-3">
-                      <div className="flex items-end gap-2">
-                        <textarea
-                          value={chatDraft}
-                          onChange={(event) => setChatDraft(event.target.value)}
-                          rows={2}
-                          maxLength={500}
-                          disabled={composerDisabled}
-                          placeholder={
-                            selectedStream.status !== "live"
-                              ? "Chat is closed for this stream"
-                              : currentUserMuted
-                                ? "You are muted in this stream"
-                                : "Send a comment"
-                          }
-                          className="min-h-[52px] flex-1 rounded-xl border border-brand-divider bg-[#FAFAF8] px-3 py-2 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 disabled:opacity-60"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => selectedStreamId && sendChatMutation.mutate({ streamId: selectedStreamId, message: chatDraft.trim() })}
-                          disabled={composerDisabled || !chatDraft.trim()}
-                          className="flex h-[52px] shrink-0 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[12px] font-semibold text-white transition-colors hover:bg-brand-text disabled:opacity-40"
-                        >
-                          {sendChatMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                          Send
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : liveStreamsQuery.isLoading ? (
-              <div className="flex h-[420px] items-center justify-center rounded-2xl border border-brand-divider bg-brand-card">
-                <Loader2 className="h-8 w-8 animate-spin text-brand-text/40" />
-              </div>
-            ) : (
-              <div className="flex h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-brand-divider bg-brand-card px-6 text-center">
-                <Radio className="h-8 w-8 text-brand-text/30" />
-                <h2 className="mt-4 text-[18px] font-bold text-brand-text">No live streams right now</h2>
-                <p className="mt-2 text-[13px] text-brand-text/60">Check back later or open the control room to start broadcasting.</p>
-              </div>
+              </motion.aside>
             )}
-
-            {actionError ? (
-              <p className="rounded-xl border border-[#E8527A]/20 bg-[#E8527A]/5 px-4 py-3 text-[12px] text-[#E8527A]">
-                {messageFromError(actionError)}
-              </p>
-            ) : null}
-          </div>
-
-          <aside className="space-y-4">
-            <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Radio className="h-4 w-4 text-rose-500" />
-                <h2 className="text-[14px] font-bold text-brand-text">Now Live</h2>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {(liveStreamsQuery.data ?? []).length > 0 ? (
-                  (liveStreamsQuery.data ?? []).map((stream) => {
-                    const isSelected = stream.id === selectedStreamId;
-
-                    return (
-                      <button
-                        key={stream.id}
-                        type="button"
-                        onClick={() => router.replace(`/live?streamId=${stream.id}`)}
-                        className={`w-full rounded-2xl border p-4 text-left transition-colors ${
-                          isSelected
-                            ? "border-rose-200 bg-rose-50/70"
-                            : "border-brand-divider bg-[#FAFAF8] hover:bg-brand-secondary"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Avatar src={getAvatarSrc(stream.host_id)} name={getProfileLabel(stream.host_id)} seed={stream.host_id} size="sm" />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[13px] font-semibold text-brand-text">{stream.title}</p>
-                            <p className="mt-1 text-[11px] text-brand-text/60">{getProfileLabel(stream.host_id)}</p>
-                            <div className="mt-2 flex items-center gap-3 text-[11px] text-brand-text/50">
-                              <span className="inline-flex items-center gap-1">
-                                <Users className="h-3.5 w-3.5" />
-                                {stream.total_viewers}
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <Heart className="h-3.5 w-3.5" />
-                                {stream.like_count}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <p className="rounded-xl border border-dashed border-brand-divider px-4 py-4 text-[12px] text-brand-text/60">
-                    No active live streams found.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {selectedStreamId && !liveStreamIds.has(selectedStreamId) && selectedStream ? (
-              <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
-                <h2 className="text-[14px] font-bold text-brand-text">Direct Stream Link</h2>
-                <p className="mt-2 text-[12px] text-brand-text/60">
-                  This stream is not currently in the live listing. You are viewing it directly by ID.
-                </p>
-              </div>
-            ) : null}
-          </aside>
+          </AnimatePresence>
         </div>
+
+        {/* ── Now Live strip ── */}
+        {liveStreams.length > 1 && (
+          <div className="border-t border-brand-divider bg-brand-card px-5 py-3">
+            <div className="flex items-center gap-4 overflow-x-auto">
+              <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Now Live</span>
+              {liveStreams.map((stream) => {
+                const isSelected = stream.id === selectedStreamId;
+                return (
+                  <button
+                    key={stream.id}
+                    type="button"
+                    onClick={() => router.replace(`/live?streamId=${stream.id}`)}
+                    className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-all ${
+                      isSelected
+                        ? "bg-rose-500/10 ring-1 ring-rose-500/30"
+                        : "bg-brand-secondary hover:bg-brand-secondary/80"
+                    }`}
+                  >
+                    <Avatar
+                      src={getAvatarSrc(stream.host_id)}
+                      name={getProfileLabel(stream.host_id)}
+                      seed={stream.host_id}
+                      size="xs"
+                    />
+                    <div className="min-w-0">
+                      <p className={`truncate text-[12px] font-semibold ${isSelected ? "text-rose-600" : "text-brand-text"}`}>
+                        {stream.title}
+                      </p>
+                      <p className="text-[10px] text-brand-text/40">
+                        {getProfileLabel(stream.host_id)} &middot; {stream.total_viewers} viewers
+                      </p>
+                    </div>
+                    {isSelected && (
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Error toast */}
+        {actionError && (
+          <div className="border-t border-rose-200/30 bg-rose-500/5 px-5 py-2 text-[12px] text-rose-500">
+            {messageFromError(actionError)}
+          </div>
+        )}
       </div>
     </AppShell>
   );
 }
+
+/* ───────────────────────────── page export ───────────────────────────── */
+
 export default function LivePage() {
   return (
     <Suspense
       fallback={
         <AppShell sectionLabel="Live">
-          <div className="flex min-h-[60vh] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-text/40" />
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-text/30" />
           </div>
         </AppShell>
       }
@@ -525,4 +531,3 @@ export default function LivePage() {
     </Suspense>
   );
 }
-

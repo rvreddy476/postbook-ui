@@ -424,27 +424,33 @@ export interface HandleChangeRequest {
 
 export interface BusinessPage {
     id: string
-    owner_id: string
-    handle: string
-    name: string
-    description?: string
-    category?: string
-    avatar_media_id?: string
-    cover_media_id?: string
-    phone?: string
-    email?: string
-    website?: string
+    user_id: string
+    page_handle: string
+    page_name: string
+    category: string
+    description: string
     address?: string
-    city?: string
-    state?: string
-    country?: string
-    zip_code?: string
-    latitude?: number
-    longitude?: number
-    hours?: Record<string, { open: string; close: string }>
-    average_rating: number
-    review_count: number
+    lat?: number
+    lng?: number
+    business_hours?: unknown
+    phone?: string
+    whatsapp?: string
+    business_email?: string
+    services?: unknown
+    price_range?: string
+    booking_url?: string
+    menu_urls?: unknown
+    website?: string
+    cover_media_id?: string
+    avatar_media_id?: string
     is_verified: boolean
+    avg_rating: number
+    review_count: number
+    follower_count: number
+    is_following?: boolean
+    faq?: unknown
+    status: 'draft' | 'active' | 'suspended'
+    seller_id?: string
     created_at: string
     updated_at: string
 }
@@ -452,13 +458,10 @@ export interface BusinessPage {
 export interface BusinessReview {
     id: string
     page_id: string
-    author_id: string
-    author_display_name?: string
-    author_avatar_media_id?: string
+    reviewer_id: string
     rating: number
     review_text: string
     created_at: string
-    updated_at: string
 }
 
 // --- Reputation & Endorsements ---

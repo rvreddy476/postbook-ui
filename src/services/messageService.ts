@@ -1,4 +1,5 @@
 import { User } from '@/types';
+import { logoutUser } from '@/services/authService';
 import {
   isLiveRealtimeEventType,
   type LiveChatMessageEvent,
@@ -306,6 +307,27 @@ const getAccessToken = () => {
   }
 };
 
+const clearInvalidSession = (reason?: string) => {
+  if (!canUseBrowserApis()) return;
+
+  if (reason) {
+    console.warn(`Chat auth reset: ${reason}`);
+  }
+
+  wsRetryCount = 0;
+
+  if (socket) {
+    socket.onclose = null;
+    socket.onerror = null;
+    try {
+      socket.close();
+    } catch {}
+    socket = null;
+  }
+
+  logoutUser();
+};
+
 const getChannel = () => {
   if (!canUseBrowserApis() || typeof BroadcastChannel === 'undefined') {
     return null;
@@ -369,7 +391,11 @@ const chatClient = {
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     const payload = await parseResponsePayload(res);
     if (!res.ok) {
-      throw new Error(getErrorMessage(payload, `Chat API request failed (${res.status})`));
+      const message = getErrorMessage(payload, `Chat API request failed (${res.status})`);
+      if (res.status === 401 || /invalid token/i.test(message)) {
+        clearInvalidSession(message);
+      }
+      throw new Error(message);
     }
     return payload as TResponse;
   }
@@ -398,7 +424,11 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
     const tokenRes = await fetch(`${API_BASE}/token`, { headers });
     const tokenPayload = await parseResponsePayload(tokenRes);
     if (!tokenRes.ok) {
-      throw new Error(getErrorMessage(tokenPayload, 'Could not acquire chat token'));
+      const message = getErrorMessage(tokenPayload, 'Could not acquire chat token');
+      if (tokenRes.status === 401 || /invalid token/i.test(message)) {
+        clearInvalidSession(message);
+      }
+      throw new Error(message);
     }
     const token =
       tokenPayload &&
@@ -527,6 +557,12 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
     };
 
     socket.onclose = () => {
+      socket = null;
+
+      if (!getSessionUser()) {
+        return;
+      }
+
       if (wsRetryCount >= WS_MAX_RETRIES) {
         console.warn(`Chat: gave up after ${WS_MAX_RETRIES} retries. Refresh the page to reconnect.`);
         return;

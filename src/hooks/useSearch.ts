@@ -52,13 +52,12 @@ export function useSearchHashtags(query: string) {
 }
 
 export interface TrendingHashtag {
-    tag: string
-    post_count: number
-    growth_rate?: number
+    hashtag: string
+    score: number
 }
 
 export interface TrendingResponse {
-    hashtags: TrendingHashtag[]
+    trending: TrendingHashtag[]
 }
 
 export function useTrending() {

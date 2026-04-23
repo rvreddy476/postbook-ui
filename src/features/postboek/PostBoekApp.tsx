@@ -67,6 +67,18 @@ const PostBoekApp: React.FC = () => {
       }
       return;
     }
+    if (tab === 'Shop') {
+      router.push('/commerce');
+      return;
+    }
+    if (tab === 'Ask') {
+      router.push('/qa');
+      return;
+    }
+    if (tab === 'Pages') {
+      router.push('/pages');
+      return;
+    }
     setActiveTab(tab);
   }, [currentUser, router, isContactListOpen, isMobile]);
 

@@ -40,10 +40,7 @@ const extractUserId = (payload: unknown): string | null => {
     );
 };
 
-async function resolveAuthenticatedUserId(req: Request): Promise<string | null> {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) return null;
-
+async function resolveAuthenticatedUserId(authHeader: string): Promise<string | null> {
     try {
         const res = await fetch(`${AUTH_SERVICE_URL}/v1/auth/me`, {
             method: 'GET',
@@ -93,6 +90,16 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
         );
     }
 
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const authenticatedUserId = await resolveAuthenticatedUserId(authHeader);
+    if (!authenticatedUserId) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     const signToken = (uid: string) => {
         const payload = {
             sub: uid,
@@ -109,24 +116,16 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
     const queryUserId = url.searchParams.get('userId')?.trim() || null;
     const requestedUserId = headerUserId ?? (fullPath === 'token' ? queryUserId : null);
 
-    if (!requestedUserId) {
-        return NextResponse.json({ error: 'Unauthorized: No User ID found in session' }, { status: 401 });
-    }
-
-    const authenticatedUserId = await resolveAuthenticatedUserId(req);
-    if (!authenticatedUserId) {
-        console.warn('[ChatProxy] Could not verify access token via auth service — proceeding with X-User-Id');
-    } else if (authenticatedUserId !== requestedUserId) {
+    if (requestedUserId && authenticatedUserId !== requestedUserId) {
         return NextResponse.json(
             { error: 'Forbidden: user identity mismatch' },
             { status: 403 },
         );
     }
 
-    const effectiveUserId = authenticatedUserId ?? requestedUserId;
+    const effectiveUserId = authenticatedUserId;
     const chatToken = signToken(effectiveUserId);
 
-    // Special endpoint to get a token for WS
     if (fullPath === 'token') {
         return NextResponse.json({ token: chatToken });
     }

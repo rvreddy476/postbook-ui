@@ -14,7 +14,7 @@ function normalizeProfile(raw: Record<string, unknown>): UserProfile {
     return data as unknown as UserProfile
 }
 
-export function useMyProfile() {
+export function useMyProfile(options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: ["my-profile"],
         queryFn: async () => {
@@ -22,6 +22,7 @@ export function useMyProfile() {
             return normalizeProfile(res.data.data)
         },
         staleTime: 30 * 1000,
+        enabled: options?.enabled ?? true,
     })
 }
 
