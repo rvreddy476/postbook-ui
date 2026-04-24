@@ -537,3 +537,126 @@ export function useMyAnswerRequests(limit = 20) {
     staleTime: 60_000,
   })
 }
+
+export function useCreateAnswerRequest(questionId: string) {
+  return useMutation({
+    mutationFn: async (params: { target_user_id: string }) =>
+      api.post(`/v1/qa/questions/${questionId}/request-answer`, params),
+  })
+}
+
+export function useRespondToAnswerRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ requestId, response }: { requestId: string; response: "accept" | "decline" }) =>
+      api.post(`/v1/qa/answer-requests/${requestId}/respond`, { response }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-answer-requests"] }),
+  })
+}
+
+// ---- Local feed ----
+
+export function useQALocalFeed(limit = 20) {
+  return useQuery({
+    queryKey: ["qa-local"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QuestionSummary>>("/v1/qa/feed/local", { params: { limit } })
+      return res.data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
+// ---- Followed topics ----
+
+export function useFollowedTopics() {
+  return useQuery({
+    queryKey: ["qa-topics-following"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QATopic>>("/v1/qa/topics/following")
+      return res.data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
+// ---- Contributors ----
+
+export function useFollowContributor(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => api.post(`/v1/qa/contributors/${userId}/follow`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa-profile", userId] })
+      qc.invalidateQueries({ queryKey: ["qa-following"] })
+    },
+  })
+}
+
+export function useUnfollowContributor(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => api.delete(`/v1/qa/contributors/${userId}/follow`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa-profile", userId] })
+      qc.invalidateQueries({ queryKey: ["qa-following"] })
+    },
+  })
+}
+
+// ---- Save answers + saved lists ----
+
+export function useSaveAnswer(answerId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => api.post(`/v1/qa/answers/${answerId}/save`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-saved-answers"] }),
+  })
+}
+
+export function useUnsaveAnswer(answerId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => api.delete(`/v1/qa/answers/${answerId}/save`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-saved-answers"] }),
+  })
+}
+
+export function useSavedQuestions(limit = 20) {
+  return useQuery({
+    queryKey: ["qa-saved-questions"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QuestionSummary>>("/v1/qa/saved/questions", { params: { limit } })
+      return res.data.data
+    },
+  })
+}
+
+export function useSavedAnswers(limit = 20) {
+  return useQuery({
+    queryKey: ["qa-saved-answers"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<Answer>>("/v1/qa/saved/answers", { params: { limit } })
+      return res.data.data
+    },
+  })
+}
+
+// ---- Comment voting ----
+
+export function useVoteComment(answerId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ commentId, value }: { commentId: string; value: 1 | -1 }) =>
+      api.post(`/v1/qa/comments/${commentId}/vote`, { value }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-comments", answerId] }),
+  })
+}
+
+export function useRemoveCommentVote(answerId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (commentId: string) => api.delete(`/v1/qa/comments/${commentId}/vote`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-comments", answerId] }),
+  })
+}

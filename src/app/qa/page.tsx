@@ -474,6 +474,22 @@ export default function QAPage() {
               )}
             </button>
           ))}
+          <Link href="/qa/following" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text/80 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+            <span className="text-neutral-400"><Bell className="w-4 h-4" /></span>
+            Following
+          </Link>
+          <Link href="/qa/trending" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text/80 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+            <span className="text-neutral-400"><TrendingUp className="w-4 h-4" /></span>
+            Trending
+          </Link>
+          <Link href="/qa/unanswered" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text/80 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+            <span className="text-neutral-400"><HelpCircle className="w-4 h-4" /></span>
+            Unanswered
+          </Link>
+          <Link href="/qa/saved" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text/80 hover:bg-neutral-50 dark:hover:bg-neutral-800">
+            <span className="text-neutral-400"><BookOpen className="w-4 h-4" /></span>
+            Saved
+          </Link>
         </div>
 
         {/* Communities / Topics */}
