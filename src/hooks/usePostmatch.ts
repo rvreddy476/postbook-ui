@@ -270,6 +270,41 @@ export function useBlockPostMatchUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['postmatch', 'feed'] })
       qc.invalidateQueries({ queryKey: ['postmatch', 'matches'] })
+      qc.invalidateQueries({ queryKey: ['postmatch', 'blocks'] })
+    },
+  })
+}
+
+// ── Block list ────────────────────────────────────────────────────────
+
+export type PostMatchBlock = {
+  blocked_user_id: string
+  reason?: string | null
+  created_at: string
+  blocked_user?: {
+    id: string
+    first_name?: string | null
+    display_name?: string | null
+    avatar_url?: string | null
+  }
+}
+
+export function usePostMatchBlocks() {
+  return useQuery<PostMatchBlock[]>({
+    queryKey: ['postmatch', 'blocks'],
+    queryFn: async () => (await postmatchApi.get('/api/v1/blocks')).data.data ?? [],
+  })
+}
+
+export function useUnblockPostMatchUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (blockedUserId: string) => {
+      await postmatchApi.delete(`/api/v1/blocks/${blockedUserId}`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['postmatch', 'blocks'] })
+      qc.invalidateQueries({ queryKey: ['postmatch', 'feed'] })
     },
   })
 }
