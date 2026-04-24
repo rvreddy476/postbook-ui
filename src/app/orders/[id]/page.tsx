@@ -94,8 +94,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </section>
       ) : null}
 
-      {cancellable ? (
-        <div>
+      <div className="flex flex-wrap gap-3">
+        {cancellable ? (
           <button
             onClick={() => {
               if (confirm('Cancel this order?')) cancel.mutate({ orderId: order.id })
@@ -104,8 +104,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           >
             Cancel Order
           </button>
-        </div>
-      ) : null}
+        ) : null}
+        {order.status === 'delivered' ? (
+          <>
+            <Link
+              href={`/orders/${order.id}/review`}
+              className="rounded border border-indigo-300 text-indigo-600 px-4 py-2 text-sm hover:bg-indigo-50"
+            >
+              Write a review
+            </Link>
+            <Link
+              href={`/orders/${order.id}/return`}
+              className="rounded border border-gray-300 text-gray-700 px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Return an item
+            </Link>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }

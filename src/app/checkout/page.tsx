@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart, useAddresses, useAddAddress, useCheckout } from '@/hooks/useCommerce'
+import { AddressForm } from '@/components/commerce/AddressForm'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -15,22 +16,11 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'prepaid' | 'cod'>('prepaid')
   const [couponCode, setCouponCode] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
-  const [form, setForm] = useState({
-    full_name: '', phone: '', address_line_1: '',
-    address_line_2: '', city: '', state: '', postal_code: '',
-  })
 
   const addrList = addresses ?? []
   if (!selectedAddr && addrList.length > 0) {
     const def = addrList.find((a) => a.is_default) ?? addrList[0]
     if (def) setSelectedAddr(def.id)
-  }
-
-  const submitAddress = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const created = await addAddress.mutateAsync(form)
-    if (created?.id) setSelectedAddr(created.id)
-    setShowAddForm(false)
   }
 
   const place = async () => {
@@ -88,38 +78,16 @@ export default function CheckoutPage() {
               + Add new address
             </button>
           ) : (
-            <form onSubmit={submitAddress} className="mt-4 grid grid-cols-2 gap-3">
-              <input required placeholder="Full name" value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className="border rounded px-3 py-2 col-span-2" />
-              <input required placeholder="Phone" value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="border rounded px-3 py-2 col-span-2" />
-              <input required placeholder="Address line 1" value={form.address_line_1}
-                onChange={(e) => setForm({ ...form, address_line_1: e.target.value })}
-                className="border rounded px-3 py-2 col-span-2" />
-              <input placeholder="Address line 2" value={form.address_line_2}
-                onChange={(e) => setForm({ ...form, address_line_2: e.target.value })}
-                className="border rounded px-3 py-2 col-span-2" />
-              <input required placeholder="City" value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="border rounded px-3 py-2" />
-              <input required placeholder="State" value={form.state}
-                onChange={(e) => setForm({ ...form, state: e.target.value })}
-                className="border rounded px-3 py-2" />
-              <input required placeholder="Postal code" value={form.postal_code}
-                onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
-                className="border rounded px-3 py-2" />
-              <div className="col-span-2 flex gap-2">
-                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded">
-                  Save
-                </button>
-                <button type="button" onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 rounded border">
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <div className="mt-4">
+              <AddressForm
+                onSubmit={async (v) => {
+                  const created = await addAddress.mutateAsync(v)
+                  if (created?.id) setSelectedAddr(created.id)
+                  setShowAddForm(false)
+                }}
+                onCancel={() => setShowAddForm(false)}
+              />
+            </div>
           )}
         </section>
 
