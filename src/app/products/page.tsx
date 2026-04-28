@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useCategories, useSellerProducts, type Product } from '@/hooks/useCommerce'
+import { useCategories, useProducts, type Product } from '@/hooks/useCommerce'
 import { ProductGrid, type ProductCardData } from '@/components/commerce/ProductGrid'
 
 function toCardData(p: Product): ProductCardData {
@@ -16,11 +16,15 @@ function toCardData(p: Product): ProductCardData {
 export default function ProductBrowsePage() {
   const { data: categories } = useCategories()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [sellerFilter, setSellerFilter] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [submittedQuery, setSubmittedQuery] = useState<string>('')
 
-  // Without a /v1/commerce/products endpoint, browse is scoped to a seller
-  // chosen via query string or typed in. Category chips act as a hint for filtering.
-  const { data: sellerProducts, isLoading } = useSellerProducts(sellerFilter || undefined)
+  const { data, isLoading } = useProducts({
+    category: selectedCategory ?? undefined,
+    q: submittedQuery || undefined,
+  })
+  const products = data?.items ?? []
+  const total = data?.total ?? 0
 
   return (
     <div className="mx-auto max-w-6xl p-6">
@@ -52,19 +56,57 @@ export default function ProductBrowsePage() {
         ))}
       </div>
 
-      <div className="mb-6">
+      <form
+        className="mb-6 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          setSubmittedQuery(searchQuery.trim())
+        }}
+      >
         <input
-          placeholder="Filter by seller ID (temporary — browse-by-category coming)"
-          value={sellerFilter}
-          onChange={(e) => setSellerFilter(e.target.value)}
-          className="w-full max-w-md border rounded px-3 py-2 text-sm"
+          placeholder="Search products"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 max-w-md border rounded px-3 py-2 text-sm"
         />
-      </div>
+        <button
+          type="submit"
+          className="px-4 py-2 rounded bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+        >
+          Search
+        </button>
+        {submittedQuery ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('')
+              setSubmittedQuery('')
+            }}
+            className="px-3 py-2 rounded text-sm text-gray-600 hover:text-gray-900"
+          >
+            Clear
+          </button>
+        ) : null}
+      </form>
+
+      {!isLoading && total > 0 ? (
+        <div className="mb-3 text-sm text-gray-500">
+          {total} product{total === 1 ? '' : 's'}
+          {selectedCategory ? ` in ${categories?.find((c) => c.id === selectedCategory)?.name ?? 'category'}` : ''}
+          {submittedQuery ? ` matching "${submittedQuery}"` : ''}
+        </div>
+      ) : null}
 
       <ProductGrid
-        products={(sellerProducts ?? []).map(toCardData)}
+        products={products.map(toCardData)}
         isLoading={isLoading}
-        emptyLabel={sellerFilter ? 'No products from this seller' : 'Enter a seller ID to browse their products'}
+        emptyLabel={
+          submittedQuery
+            ? `No products match "${submittedQuery}"`
+            : selectedCategory
+              ? 'No products in this category yet'
+              : 'No products available yet'
+        }
       />
     </div>
   )

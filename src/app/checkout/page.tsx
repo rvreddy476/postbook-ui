@@ -2,8 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCart, useAddresses, useAddAddress, useCheckout } from '@/hooks/useCommerce'
+import {
+  useCart,
+  useAddresses,
+  useAddAddress,
+  useCheckout,
+  useCreatePaymentIntent,
+  useConfirmPayment,
+} from '@/hooks/useCommerce'
 import { AddressForm } from '@/components/commerce/AddressForm'
+import { openRazorpayCheckout } from '@/lib/razorpay'
+
+const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ''
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -11,11 +21,15 @@ export default function CheckoutPage() {
   const { data: addresses } = useAddresses()
   const addAddress = useAddAddress()
   const checkout = useCheckout()
+  const createIntent = useCreatePaymentIntent()
+  const confirmPayment = useConfirmPayment()
 
   const [selectedAddr, setSelectedAddr] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'prepaid' | 'cod'>('prepaid')
   const [couponCode, setCouponCode] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const addrList = addresses ?? []
   if (!selectedAddr && addrList.length > 0) {
@@ -25,12 +39,81 @@ export default function CheckoutPage() {
 
   const place = async () => {
     if (!selectedAddr) return
-    const order = await checkout.mutateAsync({
-      address_id: selectedAddr,
-      payment_method: paymentMethod,
-      coupon_code: couponCode || undefined,
-    })
-    router.push(`/orders/${order.id}`)
+    setPaymentError(null)
+    setIsProcessing(true)
+    try {
+      // 1. Create the order. Backend reserves stock for prepaid (status =
+      //    payment_pending) or deducts immediately for COD (status = confirmed).
+      const order = await checkout.mutateAsync({
+        address_id: selectedAddr,
+        payment_method: paymentMethod,
+        coupon_code: couponCode || undefined,
+      })
+
+      // COD: payment is settled at delivery — go straight to the order page.
+      if (paymentMethod === 'cod') {
+        router.push(`/orders/${order.id}`)
+        return
+      }
+
+      // Prepaid: open Razorpay. If the public key isn't configured the
+      // payments-service is on StubGateway in dev — confirm immediately
+      // with a synthetic payment_id so the order completes locally.
+      if (!RAZORPAY_KEY_ID) {
+        await confirmPayment.mutateAsync({
+          order_id: order.id,
+          payment_id: `stub_${Date.now()}`,
+          gateway: 'stub',
+        })
+        router.push(`/orders/${order.id}`)
+        return
+      }
+
+      // 2. Create a payment intent at payments-service. Returns provider_ref
+      //    (Razorpay order_id) which checkout.js needs.
+      const intent = await createIntent.mutateAsync({
+        payee_id: order.id, // Internal accounting reference; not user-visible.
+        reference_type: 'order',
+        reference_id: order.id,
+        amount: order.final_amount,
+        currency: order.currency_code || 'INR',
+        method: 'razorpay',
+      })
+
+      if (!intent.provider_ref) {
+        throw new Error('Payment provider did not return an order id')
+      }
+
+      // 3. Open Razorpay checkout. Amount is paise — multiply rupees by 100.
+      const resp = await openRazorpayCheckout({
+        key: RAZORPAY_KEY_ID,
+        order_id: intent.provider_ref,
+        amount: Math.round(order.final_amount * 100),
+        currency: order.currency_code || 'INR',
+        name: 'Postbook',
+        description: `Order ${order.order_number}`,
+      })
+
+      // 4. Confirm with commerce-service. Webhook → consumer is the
+      //    resilient backup if the user closes the tab before this fires.
+      await confirmPayment.mutateAsync({
+        order_id: order.id,
+        payment_id: resp.razorpay_payment_id,
+        gateway: 'razorpay',
+      })
+
+      router.push(`/orders/${order.id}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Payment failed'
+      // payment_cancelled is a normal user action, not an error to scream about.
+      setPaymentError(
+        msg === 'payment_cancelled'
+          ? 'Payment was cancelled. Your cart is unchanged — you can try again.'
+          : msg,
+      )
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   if (!cart || cart.ItemCount === 0)
@@ -128,13 +211,16 @@ export default function CheckoutPage() {
           <span>₹{cart.Subtotal.toFixed(2)}</span>
         </div>
         <button
-          disabled={!selectedAddr || checkout.isPending}
+          disabled={!selectedAddr || isProcessing}
           onClick={place}
           className="mt-4 w-full rounded-lg bg-indigo-600 text-white py-3 font-medium disabled:bg-gray-300 hover:bg-indigo-700"
         >
-          {checkout.isPending ? 'Placing…' : paymentMethod === 'cod' ? 'Place COD Order' : 'Pay & Place Order'}
+          {isProcessing ? 'Processing…' : paymentMethod === 'cod' ? 'Place COD Order' : 'Pay & Place Order'}
         </button>
-        {checkout.error ? (
+        {paymentError ? (
+          <div className="mt-2 text-sm text-red-600">{paymentError}</div>
+        ) : null}
+        {checkout.error && !paymentError ? (
           <div className="mt-2 text-sm text-red-600">
             {(checkout.error as Error).message}
           </div>

@@ -176,6 +176,39 @@ export function useSellerProducts(sellerId: string | undefined, limit = 24, offs
   })
 }
 
+// useProducts hits the global product catalog — published + approved only.
+// Backed by GET /v1/commerce/products. Pagination is offset-based.
+export interface ProductListPage {
+  items: Product[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export function useProducts(opts: { category?: string; q?: string; limit?: number; offset?: number } = {}) {
+  const { category, q, limit = 24, offset = 0 } = opts
+  return useQuery<ProductListPage>({
+    queryKey: ['commerce', 'products', category ?? null, q ?? null, limit, offset],
+    queryFn: async () => {
+      const params: Record<string, string | number> = { limit, offset }
+      if (category) params.category = category
+      if (q) params.q = q
+      const res = (await api.get('/v1/commerce/products', { params })).data.data
+      // Tolerate both wrapped {items,total} and a bare array if a future
+      // backend variant returns one — keeps the hook resilient.
+      if (Array.isArray(res)) {
+        return { items: res, total: res.length, limit, offset }
+      }
+      return {
+        items: res?.items ?? [],
+        total: res?.total ?? 0,
+        limit: res?.limit ?? limit,
+        offset: res?.offset ?? offset,
+      }
+    },
+  })
+}
+
 export function useProduct(productId: string | undefined) {
   return useQuery<{ product: Product; variants: ProductVariant[] }>({
     queryKey: ['commerce', 'product', productId],
@@ -336,6 +369,62 @@ export function useCheckout() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['commerce', 'cart'] })
       qc.invalidateQueries({ queryKey: ['commerce', 'orders'] })
+    },
+  })
+}
+
+// ── Payments ──────────────────────────────────────────────────────────
+
+export type PaymentIntent = {
+  id: string
+  payer_id: string
+  payee_id: string
+  reference_type: string
+  reference_id: string
+  amount: number
+  currency: string
+  method: string
+  status: string
+  // provider_ref is the gateway-side order id (e.g. Razorpay's order_xxx).
+  // The frontend hands this to the Razorpay checkout dialog.
+  provider_ref?: string
+}
+
+export type CreatePaymentIntentInput = {
+  payee_id: string
+  reference_type: 'order'
+  reference_id: string
+  amount: number
+  currency?: string
+  method: 'razorpay' | 'upi' | 'card' | 'netbanking'
+  idempotency_key?: string
+}
+
+// Creates a payment intent at payments-service. Returns the intent including
+// `provider_ref`, which is the Razorpay order_id used by checkout.js to open
+// the payment dialog.
+export function useCreatePaymentIntent() {
+  return useMutation({
+    mutationFn: async (input: CreatePaymentIntentInput) =>
+      (await api.post('/v1/payments/intents', input)).data.data as PaymentIntent,
+  })
+}
+
+// Confirms a successful payment with commerce-service. This is the
+// synchronous happy-path: a Razorpay webhook → commerce-service Kafka
+// consumer is the resilient backup if the user closes the browser before
+// this fires.
+export function useConfirmPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { order_id: string; payment_id: string; gateway?: string }) =>
+      (await api.post(`/v1/commerce/orders/${input.order_id}/payment/confirm`, {
+        payment_id: input.payment_id,
+        gateway: input.gateway ?? 'razorpay',
+      })).data,
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['commerce', 'orders'] })
+      qc.invalidateQueries({ queryKey: ['commerce', 'order', vars.order_id] })
     },
   })
 }
