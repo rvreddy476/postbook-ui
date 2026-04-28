@@ -38,6 +38,27 @@ function extractHashtags(text: string): string[] {
 }
 
 /**
+ * Combines user-entered chip hashtags with hashtags inline in the caption.
+ * Returns a deduplicated, lowercased list capped at MAX_HASHTAGS — chips first
+ * (user-explicit), then any inline ones not already present.
+ */
+function mergeHashtags(chips: string[], caption: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of [...chips, ...extractHashtags(caption)]) {
+    const norm = raw.toLowerCase().startsWith("#")
+      ? raw.toLowerCase()
+      : `#${raw.toLowerCase()}`;
+    if (!seen.has(norm)) {
+      seen.add(norm);
+      out.push(norm);
+      if (out.length >= MAX_HASHTAGS) break;
+    }
+  }
+  return out;
+}
+
+/**
  * Classify video per spec v2.1:
  * - Flick: duration ≤ 180s AND (portrait OR square)
  * - LongVideo: duration > 180s (any orientation) OR landscape (any duration)
@@ -434,7 +455,10 @@ export function useUploadStudio(contentType: ContentType) {
    *  when the cover was just uploaded and form state hasn't caught up yet. */
   const saveDraftWithCover = useCallback(async (coverMediaIdOverride?: string) => {
     if (!form.draftId) return;
-    const hashtags = extractHashtags(form.caption);
+    // Merge: chip-entered hashtags survive even if the user hasn't typed them
+    // in the caption. Earlier code overwrote form.hashtags with caption-only
+    // extraction, silently wiping the chip input.
+    const hashtags = mergeHashtags(form.hashtags, form.caption);
     patch({ hashtags });
     const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
     try {
@@ -518,7 +542,7 @@ export function useUploadStudio(contentType: ContentType) {
       }
 
       // Direct create path (no draft)
-      const hashtags = extractHashtags(form.caption);
+      const hashtags = mergeHashtags(form.hashtags, form.caption);
       const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
       const reel = await createReel({
         text: form.caption,

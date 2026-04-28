@@ -482,10 +482,15 @@ export interface CreateReelInput {
 }
 
 export async function createReel(input: CreateReelInput): Promise<Reel> {
+  // The backend's CreatePostRequest has no `hashtags` field — post-service
+  // only indexes hashtags it can extract from `text`. So append any chip-input
+  // hashtags that aren't already inline before sending. Without this, the
+  // chip UI in DetailsStep is silently discarded.
+  const text = mergeHashtagsIntoText(input.text, input.hashtags ?? []);
   const body: Record<string, unknown> = {
-    text: input.text,
+    text,
     visibility: input.visibility ?? "public",
-    content_type: input.content_type ?? "video",
+    content_type: input.content_type ?? "long_video",
     media_ids: input.mediaIds,
     post_type: "video",
     app_origin: "postboek-web",
@@ -496,4 +501,23 @@ export async function createReel(input: CreateReelInput): Promise<Reel> {
   }
   const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", body);
   return postDetailToReel(res.data.data);
+}
+
+function mergeHashtagsIntoText(text: string, chips: string[]): string {
+  if (chips.length === 0) return text;
+  const inline = new Set(
+    (text.match(/#\w+/g) ?? []).map((t) => t.toLowerCase()),
+  );
+  const missing = chips.filter((tag) => {
+    const normalized = tag.toLowerCase().startsWith("#")
+      ? tag.toLowerCase()
+      : `#${tag.toLowerCase()}`;
+    return !inline.has(normalized);
+  });
+  if (missing.length === 0) return text;
+  const tagLine = missing
+    .map((t) => (t.startsWith("#") ? t : `#${t}`))
+    .join(" ");
+  const trimmed = text.trim();
+  return trimmed.length === 0 ? tagLine : `${trimmed}\n\n${tagLine}`;
 }
