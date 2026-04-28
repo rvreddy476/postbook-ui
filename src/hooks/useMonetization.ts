@@ -467,3 +467,279 @@ export function useDashboard() {
     staleTime: 30_000,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Tier 3c — Memberships (fan-side tier picker + entitlement check)
+// ---------------------------------------------------------------------------
+
+/** List a creator's active tiers — used by the fan-side tier picker on
+ * a creator's profile. Different from useMyTiers, which returns the
+ * caller's *own* tiers. */
+export function useCreatorTiers(creatorId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["monetization-creator-tiers", creatorId],
+    enabled: Boolean(creatorId),
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<RawCreatorTier[]>>(
+        `/v1/monetization/creators/${creatorId}/tiers`
+      );
+      return (res.data.data ?? []).map(normalizeTier);
+    },
+    staleTime: 60_000,
+  });
+}
+
+interface RawEntitlement {
+  subscriber_id: string;
+  creator_id: string;
+  allowed: boolean;
+  active_tier_id?: string | null;
+  active_price_paise?: number;
+  required_tier_id?: string | null;
+  required_price_paise?: number;
+  reason?: string;
+}
+
+export interface Entitlement {
+  allowed: boolean;
+  activeTierId?: string | null;
+  activePricePaise: number;
+  requiredTierId?: string | null;
+  requiredPricePaise: number;
+  reason?: string;
+}
+
+/** Check whether the current viewer is entitled to creator's content
+ * (optionally at a required tier). Used by the paywall preview to
+ * decide whether to show "Subscribe" or "You're a member at TIER". */
+export function useEntitlement(
+  creatorId: string | null | undefined,
+  requiredTierId?: string | null
+) {
+  return useQuery({
+    queryKey: ["monetization-entitlement", creatorId, requiredTierId ?? null],
+    enabled: Boolean(creatorId),
+    queryFn: async () => {
+      const params: Record<string, string> = { creator_id: creatorId! };
+      if (requiredTierId) params.tier_id = requiredTierId;
+      const res = await api.get<ApiResponse<RawEntitlement>>(
+        "/v1/monetization/entitlements",
+        { params }
+      );
+      const e = res.data.data;
+      return {
+        allowed: Boolean(e.allowed),
+        activeTierId: e.active_tier_id ?? null,
+        activePricePaise: e.active_price_paise ?? 0,
+        requiredTierId: e.required_tier_id ?? null,
+        requiredPricePaise: e.required_price_paise ?? 0,
+        reason: e.reason,
+      } satisfies Entitlement;
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Tier 3d — Tips
+// ---------------------------------------------------------------------------
+
+interface RawTip {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  amount_paise: number;
+  currency?: string;
+  message?: string;
+  post_id?: string | null;
+  stream_id?: string | null;
+  status?: string;
+  created_at: string;
+}
+
+export interface Tip {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  amountPaise: number;
+  currency: string;
+  message?: string;
+  postId?: string | null;
+  streamId?: string | null;
+  status: string;
+  createdAt: string;
+}
+
+function normalizeTip(raw: RawTip): Tip {
+  return {
+    id: raw.id,
+    senderId: raw.sender_id,
+    recipientId: raw.recipient_id,
+    amountPaise: raw.amount_paise,
+    currency: raw.currency ?? "INR",
+    message: raw.message,
+    postId: raw.post_id ?? null,
+    streamId: raw.stream_id ?? null,
+    status: raw.status ?? "completed",
+    createdAt: raw.created_at,
+  };
+}
+
+interface SendTipPayload {
+  recipientId: string;
+  amountPaise: number;
+  message?: string;
+  postId?: string | null;
+  streamId?: string | null;
+}
+
+/** Send a tip. On daily-cap (429) or charge failure (402), throws an
+ * axios error with the response body intact so the modal can render
+ * the message. */
+export function useSendTip() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: SendTipPayload) => {
+      const res = await api.post<ApiResponse<{ tip: RawTip }>>("/v1/monetization/tips", {
+        recipient_id: payload.recipientId,
+        amount_paise: payload.amountPaise,
+        message: payload.message ?? "",
+        post_id: payload.postId ?? null,
+        stream_id: payload.streamId ?? null,
+      });
+      return normalizeTip(res.data.data.tip);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["monetization-wallet"] });
+      qc.invalidateQueries({ queryKey: ["monetization-tips-sent"] });
+    },
+  });
+}
+
+export function useSentTips() {
+  return useInfiniteQuery({
+    queryKey: ["monetization-tips-sent"],
+    initialPageParam: "" as string,
+    queryFn: async ({ pageParam = "" }) => {
+      const params: Record<string, string> = {};
+      if (pageParam) params.cursor = pageParam;
+      const res = await api.get<ApiListResponse<RawTip>>("/v1/monetization/tips/sent", {
+        params,
+      });
+      return {
+        items: (res.data.data ?? []).map(normalizeTip),
+        nextCursor: res.data.meta?.next_cursor ?? "",
+      };
+    },
+    getNextPageParam: (last) => last.nextCursor || undefined,
+  });
+}
+
+export function useReceivedTips() {
+  return useInfiniteQuery({
+    queryKey: ["monetization-tips-received"],
+    initialPageParam: "" as string,
+    queryFn: async ({ pageParam = "" }) => {
+      const params: Record<string, string> = {};
+      if (pageParam) params.cursor = pageParam;
+      const res = await api.get<ApiListResponse<RawTip>>(
+        "/v1/monetization/tips/received",
+        { params }
+      );
+      return {
+        items: (res.data.data ?? []).map(normalizeTip),
+        nextCursor: res.data.meta?.next_cursor ?? "",
+      };
+    },
+    getNextPageParam: (last) => last.nextCursor || undefined,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Tier 3a — Creator Fund
+// ---------------------------------------------------------------------------
+
+interface RawCreatorFundStatus {
+  row?: {
+    creator_id: string;
+    status: string;
+    view_score_90d: number;
+    watch_time_ms_90d: number;
+    qualifying_content_count: number;
+    eligible_since?: string | null;
+    suspended_at?: string | null;
+    suspension_reason?: string;
+    last_evaluated_at: string;
+  } | null;
+  decision: {
+    status: string;
+    view_score_90d: number;
+    watch_time_ms_90d: number;
+    qualifying_content_count: number;
+    met_view_score_threshold: boolean;
+    met_watch_time_threshold: boolean;
+    met_content_count_threshold: boolean;
+    threshold_view_score: number;
+    threshold_watch_time_ms: number;
+    threshold_content_count: number;
+  };
+  platform_fee_bps: number;
+}
+
+export function useCreatorFundStatus() {
+  return useQuery({
+    queryKey: ["creator-fund-status"],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<RawCreatorFundStatus>>(
+        "/v1/monetization/creator-fund/status"
+      );
+      return res.data.data;
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useApplyCreatorFund() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post<ApiResponse<unknown>>(
+        "/v1/monetization/creator-fund/apply"
+      );
+      return res.data.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["creator-fund-status"] });
+      qc.invalidateQueries({ queryKey: ["creator-fund-earnings"] });
+    },
+  });
+}
+
+interface RawCreatorFundEarnings {
+  since_day: string;
+  until_day: string;
+  total_gross_paise: number;
+  total_net_paise: number;
+  total_views: number;
+  breakdown: Array<{
+    day_bucket: string;
+    content_type: string;
+    view_count: number;
+    gross_paise: number;
+    net_paise: number;
+  }>;
+}
+
+export function useCreatorFundEarnings(days: number = 30) {
+  return useQuery({
+    queryKey: ["creator-fund-earnings", days],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<RawCreatorFundEarnings>>(
+        "/v1/monetization/creator-fund/earnings",
+        { params: { days } }
+      );
+      return res.data.data;
+    },
+    staleTime: 60_000,
+  });
+}

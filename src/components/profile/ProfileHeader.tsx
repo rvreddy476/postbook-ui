@@ -27,11 +27,15 @@ import {
     Film,
     Clapperboard,
     Play,
+    Crown,
+    Coffee,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
+import TierPicker from "@/components/monetization/TierPicker"
+import TipComposer from "@/components/monetization/TipComposer"
 
 interface ProfileHeaderProps {
     profile: UserProfile
@@ -129,6 +133,9 @@ export function ProfileHeader({
     const isFollowing = relationship?.following ?? false
     const inCircle = relationship?.in_circle ?? false
     const canDM = relationship?.can_dm ?? false
+    // Tier 3 monetization modals
+    const [showTierPicker, setShowTierPicker] = useState(false)
+    const [showTipComposer, setShowTipComposer] = useState(false)
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, field }: { file: File; field: "avatar_media_id" | "cover_media_id" }) => {
@@ -364,6 +371,24 @@ export function ProfileHeader({
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Message
                                     </button>
+                                    {/* Tier 3c — Become a member */}
+                                    <button
+                                        onClick={() => setShowTierPicker(true)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950 transition-all shadow-sm"
+                                        title="Become a member"
+                                    >
+                                        <Crown className="w-3.5 h-3.5" />
+                                        Member
+                                    </button>
+                                    {/* Tier 3d — Tip */}
+                                    <button
+                                        onClick={() => setShowTipComposer(true)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950 transition-all shadow-sm"
+                                        title="Send a tip"
+                                    >
+                                        <Coffee className="w-3.5 h-3.5" />
+                                        Tip
+                                    </button>
                                 </>
                             )}
                         </div>
@@ -523,6 +548,21 @@ export function ProfileHeader({
                     </div>
                 )}
             </div>
+
+            {/* Tier 3c — Member tier picker modal */}
+            <TierPicker
+                creatorId={profile.id}
+                creatorName={profile.display_name || profile.username}
+                open={showTierPicker}
+                onClose={() => setShowTierPicker(false)}
+            />
+            {/* Tier 3d — Tip composer modal */}
+            <TipComposer
+                creatorId={profile.id}
+                creatorName={profile.display_name || profile.username}
+                open={showTipComposer}
+                onClose={() => setShowTipComposer(false)}
+            />
         </div>
     )
 }

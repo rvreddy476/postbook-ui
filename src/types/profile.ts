@@ -233,6 +233,13 @@ export interface PostDetail {
     is_repost?: boolean
     reposted_by?: string
     feed_content_type?: string
+    // Tier 3c — Membership gating. tier_required_id != null means
+    // this post is members-only at that tier (or higher). When
+    // body_redacted is true, the heavy fields (text, rich_text,
+    // media, poll) are blanked by the backend; render a paywall
+    // preview instead.
+    tier_required_id?: string | null
+    body_redacted?: boolean
 }
 
 // --- Stories ---

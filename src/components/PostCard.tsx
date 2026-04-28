@@ -12,6 +12,7 @@ import CommentSection from '@/components/CommentSection';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
+import PaywallPreview from '@/components/monetization/PaywallPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageCircle,
@@ -275,8 +276,18 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
+      {/* Tier 3c — Paywall preview if backend redacted the body. */}
+      {post.body_redacted && (
+        <div className="px-3 sm:px-4">
+          <PaywallPreview
+            creatorId={post.author_id}
+            tierRequiredId={post.tier_required_id ?? null}
+          />
+        </div>
+      )}
+
       {/* Post Text with clickable hashtags and @mentions */}
-      {post.text && (() => {
+      {!post.body_redacted && post.text && (() => {
         const bg = post.rich_text?.background;
         const textColor = post.rich_text?.text_color;
         const hasStyledBg = !!bg && !post.media?.length;
