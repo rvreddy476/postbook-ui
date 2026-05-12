@@ -2,11 +2,12 @@
 
 import React from 'react'
 import { useParams } from 'next/navigation'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import type { PostDetail } from '@/types/profile'
 import PostCard from '@/components/PostCard'
-import { Hash, Loader2, TrendingUp } from 'lucide-react'
+import { ArrowUp, Hash, Loader2, TrendingUp } from 'lucide-react'
+import { useHashtagLiveStream } from '@/hooks/useHashtagLiveStream'
 
 interface HashtagPostsResponse {
     data: PostDetail[]
@@ -33,6 +34,7 @@ function useHashtagPosts(tag: string) {
 export default function HashtagPage() {
     const params = useParams()
     const tag = params.tag as string
+    const queryClient = useQueryClient()
 
     const {
         data,
@@ -46,6 +48,16 @@ export default function HashtagPage() {
 
     const allPosts = data?.pages.flatMap((page) => page.data) ?? []
     const totalCount = allPosts.length
+
+    // Real-time SSE: post-service publishes on `hashtag:<tag>:new_post`
+    // for every new post that includes this tag. We render a pill at
+    // the top of the list whenever there's something newer than what's
+    // already paginated; tapping it refetches the first page.
+    const { newPostCount, acknowledge } = useHashtagLiveStream(tag)
+    const handleRefresh = () => {
+        acknowledge()
+        queryClient.invalidateQueries({ queryKey: ['hashtag-posts', tag] })
+    }
 
     return (
         <div className="min-h-screen bg-brand-bg">
@@ -119,6 +131,22 @@ export default function HashtagPage() {
                             </p>
                         </div>
                     </div>
+                )}
+
+                {/* Real-time "N new posts" pill — visible only while
+                    the SSE stream has reported posts we haven't loaded
+                    yet. Tap to refetch the first page. */}
+                {newPostCount > 0 && (
+                    <button
+                        type="button"
+                        onClick={handleRefresh}
+                        className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-105 active:scale-95"
+                    >
+                        <ArrowUp className="h-4 w-4" />
+                        {newPostCount === 1
+                            ? '1 new post'
+                            : `${newPostCount} new posts`}
+                    </button>
                 )}
 
                 {/* Posts List */}
