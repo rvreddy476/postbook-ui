@@ -5,7 +5,8 @@
 // one component. The composer uses these to anchor canonical tags
 // instead of letting users invent fresh near-duplicates.
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 
 export interface HashtagModel {
@@ -81,4 +82,40 @@ export function formatPostCount(n: number | undefined): string {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
     return `${n}`;
+}
+
+// Real-time trending updates. Opens an SSE connection to
+// /v1/hashtags/trending/stream and pushes every `trending` event into
+// the react-query cache for `["hashtags", "trending", limit]`. Mount
+// this anywhere the trending list is shown; the next render reads
+// the cached snapshot directly. The 30 s server-side debounce + the
+// shared cache key keep traffic flat regardless of how many tabs are
+// open.
+export function useLiveTrendingHashtags(limit = 12) {
+    const queryClient = useQueryClient();
+    useEffect(() => {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        const url = `${base}/v1/hashtags/trending/stream`;
+        const es = new EventSource(url);
+        const onTrending = (e: MessageEvent) => {
+            try {
+                const snap = JSON.parse(e.data) as {
+                    hashtags?: HashtagModel[];
+                    updated_at?: string;
+                };
+                const tags = snap.hashtags ?? [];
+                queryClient.setQueryData(
+                    ["hashtags", "trending", limit],
+                    tags.slice(0, limit),
+                );
+            } catch {
+                // Bad payload — let the next push correct us.
+            }
+        };
+        es.addEventListener("trending", onTrending);
+        return () => {
+            es.removeEventListener("trending", onTrending);
+            es.close();
+        };
+    }, [queryClient, limit]);
 }

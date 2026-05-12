@@ -7,7 +7,11 @@
 
 import { Loader2 } from "lucide-react";
 
-import { formatPostCount, useTrendingHashtags } from "@/hooks/useHashtags";
+import {
+    formatPostCount,
+    useLiveTrendingHashtags,
+    useTrendingHashtags,
+} from "@/hooks/useHashtags";
 
 interface Props {
     onTagSelected: (chip: string) => void;
@@ -26,6 +30,9 @@ export default function TrendingHashtagStrip({
     // candidates if the user already used some of the top tags.
     const fetchLimit = limit + (excluded?.size ?? 0);
     const { data, isLoading, isError } = useTrendingHashtags(fetchLimit);
+    // Subscribe to the SSE stream so trending updates land without
+    // waiting for the 5-min staleTime on the REST query.
+    useLiveTrendingHashtags(fetchLimit);
 
     if (isLoading) {
         return (
