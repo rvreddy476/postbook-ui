@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
+import TrendingHashtagStrip from "@/components/composer/TrendingHashtagStrip";
 import { Avatar } from "@/components/LetterAvatar";
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { useCreatePost } from "@/hooks/useFeedPosts";
+import { formatPostCount, useHashtagSearch } from "@/hooks/useHashtags";
 import api from "@/lib/api";
 import { uploadMedia } from "@/lib/mediaUpload";
 import { POST_CONTENT_TYPES } from "@/types/profile";
@@ -68,10 +70,130 @@ export default function CreatePostPage() {
   const [hashtagLoading, setHashtagLoading] = useState(false);
   const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
 
+  // Inline hashtag autocomplete. We scan back from the caret looking
+  // for `#token`; if found, `hashtagQuery` drives /v1/hashtags/search
+  // via the debounced state below. Tapping a suggestion splices the
+  // canonical tag back into the textarea, so users converge on
+  // existing tags instead of inventing near-duplicates.
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [hashtagQuery, setHashtagQuery] = useState("");
+  const [hashtagRange, setHashtagRange] = useState<{ start: number; end: number } | null>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(hashtagQuery), 220);
+    return () => window.clearTimeout(t);
+  }, [hashtagQuery]);
+  const { data: hashtagAuto = [], isLoading: hashtagAutoLoading } =
+    useHashtagSearch(debouncedQuery, 8);
+
+  // Tags already present in the caption — used to dedupe the trending
+  // strip so chips the user already chose drop out of the row.
+  const usedHashtags = useMemo(() => {
+    const out = new Set<string>();
+    for (const match of content.toLowerCase().matchAll(/#(\w{1,50})/g)) {
+      out.add(`#${match[1]}`);
+    }
+    return out;
+  }, [content]);
+
   const displayName = profile?.display_name || "User";
   const avatarUrl = profile?.avatar_media_id
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${profile.avatar_media_id}/serve`
     : undefined;
+
+  // Scan back from `caret` until we hit `#`. Token is active when
+  // `#` is preceded by start-of-text / whitespace and the run between
+  // `#` and the caret contains no whitespace. Returns the range so we
+  // can splice the chosen suggestion back over it.
+  const detectActiveHashtag = useCallback(
+    (text: string, caret: number): { query: string; start: number; end: number } | null => {
+      if (caret <= 0 || caret > text.length) return null;
+      let i = caret - 1;
+      while (i >= 0) {
+        const ch = text[i];
+        if (ch === "#") {
+          const prev = i === 0 ? "" : text[i - 1];
+          const atBoundary = i === 0 || prev === " " || prev === "\n" || prev === "\t";
+          if (!atBoundary) return null;
+          const query = text.slice(i + 1, caret);
+          if (/\s/.test(query)) return null;
+          return { query, start: i, end: caret };
+        }
+        if (ch === " " || ch === "\n" || ch === "\t") return null;
+        i -= 1;
+      }
+      return null;
+    },
+    [],
+  );
+
+  const handleTextareaChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const next = event.target.value;
+      setContent(next);
+      const caret = event.target.selectionStart ?? next.length;
+      const token = detectActiveHashtag(next, caret);
+      if (token) {
+        setHashtagQuery(token.query);
+        setHashtagRange({ start: token.start, end: token.end });
+      } else {
+        setHashtagQuery("");
+        setHashtagRange(null);
+      }
+    },
+    [detectActiveHashtag],
+  );
+
+  // Splices `chip` over the active `#token` (autocomplete tap) or
+  // appends it at the caret (trending-strip tap when no token is
+  // active). Always leaves a trailing space so the user can keep typing.
+  const insertHashtag = useCallback(
+    (chip: string) => {
+      const tag = chip.startsWith("#") ? chip : `#${chip}`;
+      const lower = tag.toLowerCase();
+      const replacement = `${tag} `;
+      setContent((current) => {
+        const ta = textareaRef.current;
+        const caret = ta?.selectionStart ?? current.length;
+        if (hashtagRange) {
+          // Replace the active `#token` with the canonical chip.
+          const before = current.slice(0, hashtagRange.start);
+          const after = current.slice(hashtagRange.end);
+          const next = `${before}${replacement}${after}`;
+          // Move caret to right after the inserted tag.
+          window.setTimeout(() => {
+            if (ta) {
+              const pos = before.length + replacement.length;
+              ta.setSelectionRange(pos, pos);
+              ta.focus();
+            }
+          }, 0);
+          return next;
+        }
+        // Idempotent insert from the trending strip — no-op if the
+        // tag is already in the caption.
+        if (current.toLowerCase().includes(lower)) return current;
+        const before = current.slice(0, caret);
+        const after = current.slice(caret);
+        const pad =
+          before.length === 0 || before.endsWith(" ") || before.endsWith("\n")
+            ? ""
+            : " ";
+        const next = `${before}${pad}${replacement}${after}`;
+        window.setTimeout(() => {
+          if (ta) {
+            const pos = before.length + pad.length + replacement.length;
+            ta.setSelectionRange(pos, pos);
+            ta.focus();
+          }
+        }, 0);
+        return next;
+      });
+      setHashtagQuery("");
+      setHashtagRange(null);
+    },
+    [hashtagRange],
+  );
 
   const handleImages = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,15 +365,89 @@ export default function CreatePostPage() {
               </div>
             </div>
 
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              maxLength={2000}
-              rows={6}
-              autoFocus
-              className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-brand-text placeholder:text-brand-text/30 outline-none"
-              placeholder="What's on your mind?"
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleTextareaChange}
+                onSelect={(event) => {
+                  const ta = event.target as HTMLTextAreaElement;
+                  const caret = ta.selectionStart ?? ta.value.length;
+                  const token = detectActiveHashtag(ta.value, caret);
+                  if (token) {
+                    setHashtagQuery(token.query);
+                    setHashtagRange({ start: token.start, end: token.end });
+                  } else {
+                    setHashtagQuery("");
+                    setHashtagRange(null);
+                  }
+                }}
+                onBlur={() => {
+                  // Hide the autocomplete a tick later so the click
+                  // on a suggestion still registers.
+                  window.setTimeout(() => {
+                    setHashtagQuery("");
+                    setHashtagRange(null);
+                  }, 150);
+                }}
+                maxLength={2000}
+                rows={6}
+                autoFocus
+                className="w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-brand-text placeholder:text-brand-text/30 outline-none"
+                placeholder="What's on your mind?"
+              />
+
+              {/* Inline #hashtag autocomplete. Mounted only while
+                  `#token` is active so the textarea height stays
+                  stable. Anchored below the field, max-height bounded
+                  so very long suggestion sets stay scrollable. */}
+              {hashtagRange && (hashtagAutoLoading || hashtagAuto.length > 0) && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-violet-100 bg-brand-card shadow-lg">
+                  {hashtagAutoLoading ? (
+                    <div className="flex items-center gap-2 p-3 text-[12px] text-brand-text/50">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Searching tags...
+                    </div>
+                  ) : (
+                    hashtagAuto.map((tag) => {
+                      const name = tag.display_name || tag.normalized_name;
+                      return (
+                        <button
+                          key={tag.normalized_name || name}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => insertHashtag(`#${name.toLowerCase()}`)}
+                          className="flex w-full items-center gap-2 border-b border-violet-50 px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-violet-50"
+                        >
+                          <Hash
+                            className={`h-3.5 w-3.5 ${
+                              tag.is_trending ? "text-violet-600" : "text-brand-text/40"
+                            }`}
+                          />
+                          <span className="flex-1 truncate text-[13px] font-medium text-brand-text">
+                            #{name}
+                          </span>
+                          <span className="text-[11px] text-brand-text/40">
+                            {tag.is_trending ? "🔥 " : ""}
+                            {formatPostCount(tag.post_count)} posts
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Trending tag strip — one-tap insertion at the caret.
+                Hidden when there's nothing to show or all top tags are
+                already in the caption. */}
+            <div className="mt-3">
+              <TrendingHashtagStrip
+                onTagSelected={insertHashtag}
+                excluded={usedHashtags}
+              />
+            </div>
 
             <div className="mt-3 space-y-2">
               <div className="flex items-center gap-2">
