@@ -90,7 +90,7 @@ export default function CheckoutPage() {
         order_id: intent.provider_ref,
         amount: Math.round(order.final_amount * 100),
         currency: order.currency_code || 'INR',
-        name: 'Postbook',
+        name: 'AtPost',
         description: `Order ${order.order_number}`,
       })
 

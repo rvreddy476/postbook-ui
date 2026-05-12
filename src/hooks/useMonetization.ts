@@ -244,16 +244,25 @@ function normalizeDashboard(raw?: RawDashboard | null): Dashboard {
   };
 }
 
-export function useWallet() {
+/** Read the caller's creator-earnings ledger row. Renamed 2026-04-30
+ * (Phase 2 §D4) from "wallet" to "creator ledger" to remove ambiguity
+ * with the upcoming consumer wallet. The hook name is kept as
+ * `useWallet` for now because dozens of creator-facing callers import
+ * it; in the same release we add `useCreatorLedger` as the canonical
+ * name and will remove `useWallet` after 2026-10-30. */
+export function useCreatorLedger() {
   return useQuery({
-    queryKey: ["monetization-wallet"],
+    queryKey: ["monetization-creator-ledger"],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<RawWallet | null>>("/v1/monetization/wallet");
+      const res = await api.get<ApiResponse<RawWallet | null>>("/v1/monetization/creator-ledger");
       return normalizeWallet(res.data.data);
     },
     staleTime: 30_000,
   });
 }
+
+/** @deprecated Use useCreatorLedger. Kept until 2026-10-30. */
+export const useWallet = useCreatorLedger;
 
 export function useTransactions(type?: string) {
   return useInfiniteQuery({
@@ -324,7 +333,7 @@ export function useRequestPayout() {
       return normalizeTransaction(res.data.data);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["monetization-wallet"] });
+      qc.invalidateQueries({ queryKey: ["monetization-creator-ledger"] });
       qc.invalidateQueries({ queryKey: ["monetization-payout-history"] });
       qc.invalidateQueries({ queryKey: ["monetization-transactions"] });
       qc.invalidateQueries({ queryKey: ["monetization-dashboard"] });
@@ -438,7 +447,7 @@ export function useSubscribe() {
       return res.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["monetization-wallet"] });
+      qc.invalidateQueries({ queryKey: ["monetization-creator-ledger"] });
       qc.invalidateQueries({ queryKey: ["monetization-transactions"] });
     },
   });
@@ -451,7 +460,7 @@ export function useUnsubscribe() {
       await api.delete(`/v1/monetization/subscribe/${creatorId}`);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["monetization-wallet"] });
+      qc.invalidateQueries({ queryKey: ["monetization-creator-ledger"] });
       qc.invalidateQueries({ queryKey: ["monetization-transactions"] });
     },
   });
@@ -610,7 +619,7 @@ export function useSendTip() {
       return normalizeTip(res.data.data.tip);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["monetization-wallet"] });
+      qc.invalidateQueries({ queryKey: ["monetization-creator-ledger"] });
       qc.invalidateQueries({ queryKey: ["monetization-tips-sent"] });
     },
   });

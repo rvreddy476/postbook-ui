@@ -31,8 +31,8 @@ const TYPE_CONFIG: Record<
   { title: string; section: string; icon: typeof Film; acceptHint: string; accept: string; aspect: string }
 > = {
   long:    { title: "Upload Video",        section: "Upload",  icon: Film,         acceptHint: "MP4, MOV, or WebM up to 10 GB",       accept: "video/*",                              aspect: "16/9" },
-  short:   { title: "Upload Flick / Clip", section: "Upload",  icon: Clapperboard, acceptHint: "Vertical MP4 or MOV, up to 3 min",    accept: "video/*",                              aspect: "9/16" },
-  reel:    { title: "Create Flick",        section: "Flicks",  icon: Sparkles,     acceptHint: "MP4, WebM, MOV — max 500 MB, 3 min",  accept: "video/mp4,video/webm,video/quicktime", aspect: "9/16" },
+  short:   { title: "Upload Reel / Clip",  section: "Upload",  icon: Clapperboard, acceptHint: "Vertical MP4 or MOV, up to 3 min",    accept: "video/*",                              aspect: "9/16" },
+  reel:    { title: "Create Reel",         section: "Reels",   icon: Sparkles,     acceptHint: "MP4, WebM, MOV — max 500 MB, 3 min",  accept: "video/mp4,video/webm,video/quicktime", aspect: "9/16" },
   podcast: { title: "Upload Podcast",      section: "Podcast", icon: Mic,          acceptHint: "MP3, M4A, WAV, or MP4 up to 2 GB",    accept: "video/*,audio/*",                      aspect: "1/1" },
 };
 

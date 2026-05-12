@@ -106,7 +106,7 @@ function FlicksRow({ videos }: { videos: PostTubeVideo[] }) {
           <Zap className="h-4 w-4 text-white" />
         </div>
         <div>
-          <h2 className="text-[17px] font-bold text-[#0F0D15] dark:text-[#EEEDF5]">Flicks</h2>
+          <h2 className="text-[17px] font-bold text-[#0F0D15] dark:text-[#EEEDF5]">Reels</h2>
           <p className="text-[11px] text-[#B0ADBE] dark:text-[#6B6980] -mt-0.5">Quick bites, big moments</p>
         </div>
       </div>

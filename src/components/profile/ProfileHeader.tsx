@@ -396,7 +396,7 @@ export function ProfileHeader({
 
                     {/* Right: Stats cards */}
                     <div className="hidden md:flex flex-col gap-3 self-end mb-1">
-                        {/* Postbook Stats */}
+                        {/* Feed Stats */}
                         <motion.div
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -436,7 +436,7 @@ export function ProfileHeader({
                                     {[
                                         { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs" },
                                         { icon: Film, label: "Videos", value: contentCounts.video, key: "videos" },
-                                        { icon: Clapperboard, label: "Flicks", value: contentCounts.reel, key: "flicks" },
+                                        { icon: Clapperboard, label: "Reels", value: contentCounts.reel, key: "flicks" },
                                     ].map((stat, i) => (
                                         <div key={stat.key} className="flex items-center">
                                             {i > 0 && <div className="h-7 w-px bg-zinc-700 mx-2" />}
@@ -493,7 +493,7 @@ export function ProfileHeader({
                                 {[
                                     { icon: Play, label: "Subs", value: channel.subscriber_count },
                                     { icon: Film, label: "Videos", value: contentCounts.video },
-                                    { icon: Clapperboard, label: "Flicks", value: contentCounts.reel },
+                                    { icon: Clapperboard, label: "Reels", value: contentCounts.reel },
                                 ].map((stat, i) => (
                                     <div key={stat.label} className="flex items-center">
                                         {i > 0 && <div className="h-5 w-px bg-zinc-700 mx-1" />}

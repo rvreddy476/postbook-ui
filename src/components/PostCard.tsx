@@ -12,6 +12,8 @@ import CommentSection from '@/components/CommentSection';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
+import { useDataSaver } from '@/hooks/useDataSaver';
+import { resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -53,6 +55,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
+  const { effective: dataSaver } = useDataSaver();
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -177,7 +180,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="relative">
             <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all flex-shrink-0">
               {avatar ? (
-                <img src={avatar} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
                   {avatarInitial}
@@ -413,18 +420,22 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   {isReel ? (
                     <>
                       <video
-                        src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve`}
+                        src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve${dataSaver ? "?quality=240p" : ""}`}
                         className="w-full h-full object-cover"
-                        autoPlay
+                        autoPlay={!dataSaver}
                         loop
                         muted
-                        preload="metadata"
+                        preload={dataSaver ? "none" : "metadata"}
                       />
                       <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-gradient-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
                             {avatar ? (
-                              <img src={avatar} className="w-full h-full object-cover" alt="" />
+                              <img
+                                src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
+                                className="w-full h-full object-cover"
+                                alt=""
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
                                 {avatarInitial}
@@ -450,7 +461,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               ) : (
                 <img
                   key={post.media![activeMediaIndex].media_id}
-                  src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve`}
+                  src={resolveImageUrl(
+                    `/v1/media/${post.media![activeMediaIndex].media_id}/serve`,
+                    { dataSaver, size: "large" },
+                  )}
                   alt=""
                   className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-brand-divider`}
                 />

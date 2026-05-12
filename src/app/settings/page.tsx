@@ -22,6 +22,7 @@ import {
     Database,
     Receipt,
     Flag,
+    Gauge,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -215,7 +216,7 @@ export default function SettingsPage() {
                         href="/settings/channel"
                         icon={<Tv className="h-4 w-4 text-brand-highlight" />}
                         label="Channel Settings"
-                        description="Postgram & Posttube channel, handle, branding, and links"
+                        description="Reels & Posttube channel, handle, branding, and links"
                     />
                     <SettingsLink
                         href="/settings/modules"
@@ -228,6 +229,12 @@ export default function SettingsPage() {
                         icon={<Clock className="h-4 w-4 text-brand-highlight" />}
                         label="Digital Wellbeing"
                         description="Screen time, focus mode & break reminders"
+                    />
+                    <SettingsLink
+                        href="/settings/data-saver"
+                        icon={<Gauge className="h-4 w-4 text-brand-highlight" />}
+                        label="Data saver"
+                        description="Lower-bandwidth mode for reels, Posttube, and feed media"
                     />
                     <SettingsLink
                         href="/settings/verification"

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 
-export type NotificationCategory = 'all' | 'activity' | 'mentions' | 'groups' | 'channels' | 'communities' | 'system'
+export type NotificationCategory = 'all' | 'activity' | 'mentions' | 'groups' | 'channels' | 'communities' | 'system' | 'qa'
 
 interface Notification {
   id: string

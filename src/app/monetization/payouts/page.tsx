@@ -472,7 +472,9 @@ export default function PayoutsPage() {
                 <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-sm mb-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Available Balance</p>
+                            {/* Phase 2 §D4: this is creator earnings (a pending payout),
+                                not a consumer wallet. Labelled accordingly. */}
+                            <p className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Pending payout</p>
                             {walletLoading ? (
                                 <div className="h-7 w-28 bg-[#F0E6DC] rounded-full animate-pulse" />
                             ) : (
@@ -501,7 +503,7 @@ export default function PayoutsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-[9px] font-black uppercase tracking-widest text-red-600">
-                                Wallet is frozen. Payouts are temporarily unavailable.
+                                Earnings are frozen. Payouts are temporarily unavailable.
                             </span>
                         </div>
                     )}

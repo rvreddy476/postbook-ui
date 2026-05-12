@@ -28,7 +28,7 @@ import type { UploadDetail } from "@/types/profile"
 
 const TABS = [
     { id: "videos" as const, label: "Videos", icon: Video },
-    { id: "flicks" as const, label: "Flicks", icon: Film },
+    { id: "flicks" as const, label: "Reels", icon: Film },
     { id: "posts" as const, label: "Posts", icon: FileText },
 ]
 
@@ -229,11 +229,11 @@ function FlicksTab() {
             { postId },
             {
                 onSuccess: () => {
-                    toast({ type: "success", title: "Deleted", description: "Flick removed." })
+                    toast({ type: "success", title: "Deleted", description: "Reel removed." })
                     setDeletingId(null)
                 },
                 onError: () => {
-                    toast({ type: "error", title: "Error", description: "Could not delete flick." })
+                    toast({ type: "error", title: "Error", description: "Could not delete reel." })
                     setDeletingId(null)
                 },
             },

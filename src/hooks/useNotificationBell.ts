@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import { useNotificationSocket } from "@/hooks/useNotificationSocket"
+import { useNotificationStream } from "@/hooks/useNotificationStream"
 import { playNotificationSound } from "@/hooks/useNotificationSound"
 
 export interface BellNotification {
@@ -34,7 +34,6 @@ export interface BellNotification {
 export function useNotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0)
     const [notifications, setNotifications] = useState<BellNotification[]>([])
-    const { on } = useNotificationSocket()
     const queryClient = useQueryClient()
     const mountedRef = useRef(true)
 
@@ -60,44 +59,33 @@ export function useNotificationBell() {
         }
     }, [])
 
-    // Listen for real-time notification events
-    useEffect(() => {
-        const unsub = on("notification", (data: any) => {
-            if (!mountedRef.current) return
+    // Listen for real-time notification events over the dedicated
+    // SSE stream. Replaces the previous WS multiplex path — SSE
+    // brings native Last-Event-ID replay so we no longer rely on
+    // mount-time REST refetch to catch up after a network drop.
+    useNotificationStream((data) => {
+        if (!mountedRef.current) return
 
-            const notif: BellNotification = {
-                notification_id: data.notification_id ?? data.id ?? crypto.randomUUID(),
-                type: data.type ?? data.notif_type ?? "notification",
-                actor_user_id: data.actor_user_id ?? "",
-                entity_type: data.entity_type ?? "",
-                entity_id: data.entity_id ?? "",
-                deep_link: data.deep_link,
-                is_read: false,
-                created_at: data.created_at ?? new Date().toISOString(),
-                title: data.title,
-                body: data.body,
-                image_url: data.image_url,
-                severity: data.severity ?? "normal",
-                channel_id: data.channel_id,
-                notif_type: data.notif_type,
-            }
+        const notif: BellNotification = {
+            notification_id: data.notification_id ?? crypto.randomUUID(),
+            type: data.event_type ?? "notification",
+            actor_user_id: data.actor_id ?? "",
+            entity_type: data.target_type ?? "",
+            entity_id: data.target_id ?? "",
+            deep_link: data.deep_link,
+            is_read: false,
+            created_at: data.created_at ?? new Date().toISOString(),
+            title: data.title,
+            body: data.body,
+            severity: "normal",
+        }
 
-            // Increment unread count
-            setUnreadCount((prev) => prev + 1)
-
-            // Prepend to list (keep max 50 in memory)
-            setNotifications((prev) => [notif, ...prev].slice(0, 50))
-
-            // Invalidate React Query caches so the full notification list refreshes
-            queryClient.invalidateQueries({ queryKey: ["activity-notifications"] })
-            queryClient.invalidateQueries({ queryKey: ["unread-count"] })
-
-            // Play sound
-            playNotificationSound()
-        })
-
-        return unsub
-    }, [on, queryClient])
+        setUnreadCount((prev) => prev + 1)
+        setNotifications((prev) => [notif, ...prev].slice(0, 50))
+        queryClient.invalidateQueries({ queryKey: ["activity-notifications"] })
+        queryClient.invalidateQueries({ queryKey: ["unread-count"] })
+        playNotificationSound()
+    })
 
     /** Mark a single notification as read (decrements unread count). */
     const markAsRead = useCallback(

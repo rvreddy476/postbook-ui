@@ -29,7 +29,7 @@ export default function SellerDashboardPage() {
             <div className="w-14 h-14 rounded-2xl bg-[#F5F0EB] border border-[#E8DDD3] flex items-center justify-center mx-auto mb-5">
               <span className="text-3xl">🛍️</span>
             </div>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">Start Selling on Postbook</h2>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">Start Selling on AtPost</h2>
             <p className="text-[#6B5544] mb-6 text-sm">Reach millions of users. Set up your shop in minutes.</p>
             <button
               onClick={() => router.push('/seller/onboarding')}

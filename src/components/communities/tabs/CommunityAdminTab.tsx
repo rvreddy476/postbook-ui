@@ -11,17 +11,20 @@ import {
   useCommunityModlog,
 } from '@/hooks/useCommunityAdmin'
 import { useBatchProfiles } from '@/hooks/useProfile'
+import CommunityQASettingsTab from '@/components/communities/CommunityQASettingsTab'
+import { HelpCircle } from 'lucide-react'
 
 interface Props {
   communityId: string
 }
 
-type Section = 'requests' | 'bans' | 'modlog'
+type Section = 'requests' | 'bans' | 'modlog' | 'qa'
 
 const sections: { key: Section; label: string; icon: React.ReactNode }[] = [
   { key: 'requests', label: 'Join Requests', icon: <Clock className="w-3.5 h-3.5" /> },
   { key: 'bans', label: 'Ban List', icon: <UserX className="w-3.5 h-3.5" /> },
   { key: 'modlog', label: 'Mod Log', icon: <Shield className="w-3.5 h-3.5" /> },
+  { key: 'qa', label: 'Q&A Settings', icon: <HelpCircle className="w-3.5 h-3.5" /> },
 ]
 
 export default function CommunityAdminTab({ communityId }: Props) {
@@ -49,6 +52,7 @@ export default function CommunityAdminTab({ communityId }: Props) {
       {active === 'requests' && <JoinRequestsSection communityId={communityId} />}
       {active === 'bans' && <BansSection communityId={communityId} />}
       {active === 'modlog' && <ModlogSection communityId={communityId} />}
+      {active === 'qa' && <CommunityQASettingsTab communityId={communityId} />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Groups | Postbook \u00b7 atpost',
+    title: 'Groups | AtPost',
 }
 
 export default function GroupsLayout({

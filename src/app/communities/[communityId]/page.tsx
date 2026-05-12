@@ -17,6 +17,7 @@ import CommunityFeedTab from '@/components/communities/tabs/CommunityFeedTab'
 import CommunityMembersTab from '@/components/communities/tabs/CommunityMembersTab'
 import CommunityAdminTab from '@/components/communities/tabs/CommunityAdminTab'
 import CommunityWikiTab from '@/components/communities/tabs/CommunityWikiTab'
+import CommunityQuestionsTab from '@/components/communities/CommunityQuestionsTab'
 import CommunityRightRail from '@/components/communities/CommunityRightRail'
 import { isAtLeast } from '@/lib/communityRoles'
 import {
@@ -37,17 +38,19 @@ import {
   Clock,
   PenLine,
   CalendarPlus,
+  HelpCircle,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import type { CommunityEvent, CommunityAnnouncement } from '@/types/communities'
 
-type NavSection = 'home' | 'announcements' | 'events' | 'members' | 'wiki' | 'about' | 'admin'
+type NavSection = 'home' | 'announcements' | 'events' | 'questions' | 'members' | 'wiki' | 'about' | 'admin'
 
 const allNavItems: { key: NavSection; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { key: 'home', label: 'Home Feed', icon: <Home className="w-4 h-4" /> },
   { key: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" /> },
   { key: 'events', label: 'Events', icon: <Calendar className="w-4 h-4" /> },
+  { key: 'questions', label: 'Questions', icon: <HelpCircle className="w-4 h-4" /> },
   { key: 'members', label: 'Members', icon: <Users className="w-4 h-4" /> },
   { key: 'wiki', label: 'Wiki', icon: <BookOpen className="w-4 h-4" /> },
   { key: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
@@ -154,7 +157,7 @@ export default function CommunityDetailPage() {
         />
 
         <div className="flex gap-6 mt-6">
-          {/* ─── Left Sidebar ─── */}
+          {/* Left Sidebar */}
           <div className="w-[240px] flex-shrink-0 hidden md:block">
             <div className="bg-white/60 dark:bg-brand-bg/60 backdrop-blur-xl rounded-3xl border border-brand-divider/60 p-5 sticky top-24 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
@@ -221,8 +224,6 @@ export default function CommunityDetailPage() {
                 </div>
               )}
 
-              {/* Replaced old New Post button with FAB logic below */}
-
               <nav className="space-y-1.5">
                 {navItems.map((item) => (
                   <button
@@ -242,7 +243,7 @@ export default function CommunityDetailPage() {
             </div>
           </div>
 
-          {/* ─── Mobile Tab Bar ─── */}
+          {/* Mobile Tab Bar */}
           <div className="md:hidden w-full mb-6 relative">
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 px-1">
               {navItems.map((item) => (
@@ -262,7 +263,7 @@ export default function CommunityDetailPage() {
             </div>
           </div>
 
-          {/* ─── Main Content ─── */}
+          {/* Main Content */}
           <div className="flex-1 min-w-0 bg-white/40 dark:bg-brand-bg/40 backdrop-blur-3xl rounded-[2.5rem] border border-brand-divider/50 p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] relative overflow-hidden">
             {activeNav === 'home' && (
               <CommunityFeedTab
@@ -305,7 +306,6 @@ export default function CommunityDetailPage() {
                   )}
                 </div>
 
-                {/* Create Event form */}
                 {showCreateEvent && (
                   <div className="bg-white border border-brand-divider rounded-2xl p-5 mb-4">
                     <div className="flex items-center justify-between mb-4">
@@ -477,6 +477,13 @@ export default function CommunityDetailPage() {
               </div>
             )}
 
+            {activeNav === 'questions' && (
+              <CommunityQuestionsTab
+                communityId={communityId}
+                viewerRole={community.viewer_role}
+              />
+            )}
+
             {activeNav === 'members' && (
               <CommunityMembersTab
                 communityId={communityId}
@@ -564,7 +571,7 @@ export default function CommunityDetailPage() {
             )}
           </div>
 
-          {/* ─── Right Rail ─── */}
+          {/* Right Rail */}
           <div className="w-[260px] flex-shrink-0 hidden lg:block">
             <CommunityRightRail communityId={communityId} viewerRole={community.viewer_role} />
           </div>
@@ -576,7 +583,7 @@ export default function CommunityDetailPage() {
           )}
         </AnimatePresence>
 
-        {/* ─── Floating Action Button (FAB) ─── */}
+        {/* Floating Action Button (FAB) */}
         {isMember && (
           <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end" ref={createMenuRef}>
             <AnimatePresence>

@@ -31,7 +31,7 @@ export function LandingHero() {
           className="inline-flex items-center gap-3 px-5 py-3 bg-brand-card border border-brand-divider rounded-2xl text-brand-text text-xs font-black uppercase tracking-widest hover:border-brand-accent transition-all group"
         >
           <span className="text-lg">🛍️</span>
-          <span>Sell on Postbook</span>
+          <span>Sell on AtPost</span>
           <svg className="h-3 w-3 text-brand-text/40 group-hover:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
           </svg>

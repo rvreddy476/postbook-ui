@@ -126,12 +126,12 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
                     <Film className="h-9 w-9 text-brand-text/30" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
-                    {isOwn ? "Share your first Flick on Postgram" : "No Flicks yet"}
+                    {isOwn ? "Share your first Reel" : "No Reels yet"}
                 </h3>
                 <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">
                     {isOwn
                         ? "Create short, engaging videos and grow your audience."
-                        : "When Flicks are posted, they will appear here."}
+                        : "When Reels are posted, they will appear here."}
                 </p>
                 {isOwn && (
                     <button
@@ -139,7 +139,7 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
                         className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-text hover:bg-brand-text text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-brand-text/20"
                     >
                         <Plus className="h-4 w-4" />
-                        Create Flick
+                        Create Reel
                     </button>
                 )}
             </div>

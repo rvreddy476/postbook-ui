@@ -43,7 +43,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
                 {thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
-                        alt={caption || "Flick"}
+                        alt={caption || "Reel"}
                         loading="lazy"
                         className="w-full h-full object-cover"
                     />
@@ -85,7 +85,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
                     className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-brand-text hover:bg-brand-text text-white text-xs font-semibold transition-colors duration-200"
                 >
                     <Film className="w-3 h-3" />
-                    View Flick
+                    View Reel
                 </Link>
             </div>
         </motion.div>

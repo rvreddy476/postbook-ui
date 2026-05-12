@@ -138,13 +138,13 @@ export function PrivacyTab() {
         <div className="divide-y divide-brand-secondary">
           <SettingsRow
             label="Allow Remix / Duet"
-            description="Let others create remixes or duets with your Postgram reels"
+            description="Let others create remixes or duets with your reels"
           >
             <Toggle enabled={allowRemix} onChange={setAllowRemix} />
           </SettingsRow>
           <SettingsRow
             label="Allow Downloads"
-            description="Let viewers download your Postgram reels"
+            description="Let viewers download your reels"
           >
             <Toggle enabled={allowDownload} onChange={setAllowDownload} />
           </SettingsRow>

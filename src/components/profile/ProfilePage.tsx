@@ -6,6 +6,7 @@ import { useAuthUser } from "@/store/auth"
 import { useAggregatedProfile } from "@/hooks/useAggregatedProfile"
 import { ProfileHeader } from "./ProfileHeader"
 import { ProfileTabs } from "./ProfileTabs"
+import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
 import { ConnectionsTab } from "./tabs/ConnectionsTab"
@@ -618,6 +619,11 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 </div>
             )}
 
+            {/* Q&A embed */}
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-8 mt-6">
+                <ProfileQASection userId={profile.id} />
+            </div>
+
             {/* Sentinel for sticky tabs */}
             <div ref={tabsSentinelRef} className="h-0" />
 
@@ -717,7 +723,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                                     <Clapperboard className="h-4 w-4 text-rose-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Flicks</p>
+                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Reels</p>
                                                     <p className="text-[10px] text-brand-text/60 font-medium">Short-form clips</p>
                                                 </div>
                                             </div>
@@ -796,7 +802,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 {contentCounts.reel > 0 && (
                                     <div className="flex items-center gap-2">
                                         <Clapperboard className="h-4 w-4 text-rose-500" />
-                                        <span className="text-sm font-bold">{contentCounts.reel} Flicks</span>
+                                        <span className="text-sm font-bold">{contentCounts.reel} Reels</span>
                                     </div>
                                 )}
                                 <Link

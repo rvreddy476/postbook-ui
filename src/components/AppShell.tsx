@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import NotificationToastHost from '@/components/notifications/NotificationToastHost';
 import Sidebar from '@/components/Sidebar';
 import { getSession, logoutUser } from '@/services/authService';
 import { connectToHub } from '@/services/messageService';
@@ -140,6 +141,12 @@ export default function AppShell({ children, activeTab: activeTabOverride }: App
       >
         {children}
       </div>
+
+      {/* Live notification toaster — listens to the same WS socket
+          useNotificationBell uses, debounces bursts, collapses by
+          collapse_key, falls back to a summary toast over the
+          summary threshold. */}
+      <NotificationToastHost />
     </div>
   );
 }

@@ -160,7 +160,7 @@ export function useUploadStudio(contentType: ContentType) {
           const isFlick = contentType === "reel" || contentType === "short";
           patch({
             uploadError: isFlick
-              ? `Flicks must be ${maxMin} minutes or less. This video is ${Math.ceil(dur / 60)} minutes. Upload it as a Video instead.`
+              ? `Reels must be ${maxMin} minutes or less. This video is ${Math.ceil(dur / 60)} minutes. Upload it as a Video instead.`
               : `Maximum duration is ${maxMin} minutes for ${meta.label}.`,
           });
           return;

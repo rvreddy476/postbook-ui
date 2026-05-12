@@ -10,7 +10,7 @@ interface ContentFilterBarProps {
 const filters: { key: ContentType; label: string }[] = [
     { key: "all", label: "All" },
     { key: "post", label: "Posts" },
-    { key: "reel", label: "Flicks" },
+    { key: "reel", label: "Reels" },
     { key: "video", label: "Videos" },
 ]
 

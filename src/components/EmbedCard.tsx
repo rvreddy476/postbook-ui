@@ -20,7 +20,7 @@ function fmtCount(n: number) {
 }
 
 /**
- * Renders a cross-posted video or flick embed in the Postbook feed.
+ * Renders a cross-posted video or reel embed in the AtPost feed.
  * Content types: video_embed, flick_embed
  * The embed_ref JSONB on the post contains the source video metadata.
  */
@@ -116,7 +116,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                 {/* Source module badge */}
                 <span className="absolute top-2 left-2 rounded-lg bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold text-white flex items-center gap-1">
                     {isFlick ? <Film className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    {sourceModule === "posttube" ? "PostTube" : sourceModule === "postgram" ? "Postgram" : sourceModule}
+                    {sourceModule === "posttube" ? "Posttube" : sourceModule === "postgram" ? "Reels" : sourceModule}
                 </span>
             </Link>
 
@@ -137,7 +137,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     <Link
                         href={watchUrl}
                         className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-brand-secondary hover:bg-brand-text/10 transition-colors"
-                        title="Open in PostTube"
+                        title="Open in Posttube"
                     >
                         <ExternalLink className="h-3.5 w-3.5 text-brand-highlight" />
                     </Link>
@@ -157,7 +157,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                     )}
                     {isFlick && (
                         <span className="ml-auto rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
-                            Flick
+                            Reel
                         </span>
                     )}
                 </div>

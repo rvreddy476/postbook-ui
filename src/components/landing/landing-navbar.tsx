@@ -16,7 +16,7 @@ export function LandingNavbar() {
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
           <Link href="/commerce" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
-            Sell on Postbook
+            Sell on AtPost
           </Link>
           <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Log In
@@ -50,7 +50,7 @@ export function LandingNavbar() {
               onClick={() => setIsOpen(false)}
               className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
             >
-              Sell on Postbook
+              Sell on AtPost
             </Link>
             <Link
               href="/login"

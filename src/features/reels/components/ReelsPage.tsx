@@ -9,6 +9,7 @@ import { HeaderBar } from "@/features/reels/components/HeaderBar";
 import { ReelIconSideNav } from "@/features/reels/components/ReelIconSideNav";
 import { ReelChannelInfo } from "@/features/reels/components/ReelChannelInfo";
 import { ReelStage } from "@/features/reels/components/ReelStage";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { ReelActionsPanel } from "@/features/reels/components/ReelActionsPanel";
 import { ReelCommentsPanel } from "@/features/reels/components/ReelCommentsPanel";
 import { ExpandedVideoOverlay } from "@/features/reels/components/ExpandedVideoOverlay";
@@ -75,6 +76,7 @@ export function ReelsPage() {
 
   /* ── data queries ────────────────────────────────── */
 
+  const { effective: dataSaver } = useDataSaver();
   const reelsQuery = useReelsFeed({ pageSize: 8 });
   const baseReels = useMemo(
     () => reelsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -351,10 +353,14 @@ export function ReelsPage() {
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = reelsQuery;
 
   useEffect(() => {
+    // Data-saver: never proactively fetch the next page. The user
+    // has to scroll to (or past) the last loaded reel before we
+    // load more — which mirrors the on-demand contract on mobile.
+    if (dataSaver) return;
     if (activeIndex >= reels.length - 3 && hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
     }
-  }, [activeIndex, reels.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [activeIndex, reels.length, hasNextPage, isFetchingNextPage, fetchNextPage, dataSaver]);
 
   /* ── view tracking ──────────────────────────────── */
 
@@ -484,6 +490,7 @@ export function ReelsPage() {
               reel={activeReel}
               active={!isExpanded}
               muted={isMuted}
+              dataSaver={dataSaver}
               onToggleMuted={() => setIsMuted((prev) => !prev)}
               onBoost={() => toggleBoostForReel(activeReel, true)}
               onExpand={() => setIsExpanded(true)}

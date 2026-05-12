@@ -8,14 +8,14 @@ import { Sparkles, Plus, Film, Clapperboard, Radio, Mic, PenSquare, Zap } from "
 const CREATE_OPTIONS = [
   {
     label: "Video",
-    description: "Upload a video to PostTube",
+    description: "Upload a video to Posttube",
     href: "/posttube/upload?type=long",
     icon: Film,
     gradient: "from-[#7C5CFC] to-[#5B3FD4]",
     hoverBg: "hover:bg-[#F0EEFF]",
   },
   {
-    label: "Flick / Clip",
+    label: "Reel / Clip",
     description: "Short vertical video with music & effects",
     href: "/posttube/upload?type=short",
     icon: Clapperboard,

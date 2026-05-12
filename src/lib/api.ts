@@ -86,6 +86,13 @@ api.interceptors.request.use((config) => {
         config.headers["X-CSRF-Token"] = ensureCsrfToken()
     }
 
+    // Mopedu admin: every request to /v1/rider/admin/* carries the rider:admin
+    // role header. Backend stubs this for now; production gateway will replace.
+    const rawUrl = typeof config.url === "string" ? config.url : ""
+    if (rawUrl.includes("/v1/rider/admin/")) {
+        config.headers["X-Admin-Role"] = "rider:admin"
+    }
+
     return config
 })
 

@@ -23,6 +23,7 @@ import { useToggleBookmark, useToggleTune, useTuneState } from "@/hooks/usePostA
 import { useToggleLike } from "@/hooks/usePostReaction";
 import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
 import { useChannelSubscription, useToggleChannelSubscription } from "@/hooks/useChannels";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { useVideoTracker } from "@/hooks/useVideoTracker";
 import api from "@/lib/api";
 import type { PostDetail } from "@/types/profile";
@@ -102,6 +103,15 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   const playbackEndedRef = useRef(false);
   const lastSavedPositionRef = useRef(0);
   const latestPlaybackRef = useRef({ positionMs: 0, durationMs: 0 });
+  const { effective: dataSaver } = useDataSaver();
+  // Data-saver: don't autoplay and don't kick off the HLS preload
+  // until the viewer clicks the poster. We use a manual "user
+  // tapped" flag rather than `autoPlay={false}` so the existing
+  // controls + tracker effects keep working.
+  const [userTappedPlay, setUserTappedPlay] = useState(false);
+  useEffect(() => {
+    setUserTappedPlay(false);
+  }, [videoId]);
 
   const videoQuery = useQuery({
     queryKey: ["posttube", "video", videoId],
@@ -449,6 +459,17 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/posttube/watch/${video.id}` : undefined;
   const subscribePending = subscriptionQuery.isLoading || toggleSubscription.isPending;
 
+  // Data-saver: bias the playback URL toward the lowest rendition
+  // and gate the `<video src>` until the viewer clicks the poster.
+  const rawPlaybackUrl = videoMetadataQuery.data?.playback_url || video.video_url || "";
+  const playbackUrl = (() => {
+    if (!rawPlaybackUrl) return undefined;
+    if (!dataSaver) return rawPlaybackUrl;
+    const sep = rawPlaybackUrl.includes("?") ? "&" : "?";
+    return `${rawPlaybackUrl}${sep}quality=240p`;
+  })();
+  const showPoster = dataSaver && !userTappedPlay;
+
   return (
     <PostTubeShell>
       <div className="h-full min-h-0 overflow-y-auto">
@@ -457,13 +478,13 @@ function WatchPageContent({ videoId }: WatchPageProps) {
             <div className="relative overflow-hidden rounded-xl bg-black aspect-video">
               <video
                 ref={videoRef}
-                src={videoMetadataQuery.data?.playback_url || video.video_url || undefined}
+                src={showPoster ? undefined : playbackUrl}
                 poster={video.thumbnail_url || undefined}
                 className="h-full w-full object-contain"
                 controls
-                autoPlay
+                autoPlay={!dataSaver}
                 playsInline
-                preload="auto"
+                preload={dataSaver ? "none" : "auto"}
               >
                 {(subtitleQuery.data ?? []).map((track, index) => (
                   <track
@@ -476,6 +497,34 @@ function WatchPageContent({ videoId }: WatchPageProps) {
                   />
                 ))}
               </video>
+              {showPoster ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserTappedPlay(true);
+                    // Kick playback once React has attached the new
+                    // `src`. The microtask queue is fine here — by
+                    // the time it runs the next render has flushed.
+                    queueMicrotask(() => {
+                      videoRef.current?.play().catch(() => undefined);
+                    });
+                  }}
+                  className="absolute inset-0 z-10 flex items-center justify-center bg-black/40"
+                  aria-label="Play video"
+                >
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/60 backdrop-blur-sm">
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                      aria-hidden="true"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                </button>
+              ) : null}
             </div>
 
             <h1 className="mt-3 text-[20px] font-bold leading-snug text-brand-text">{video.title}</h1>

@@ -20,12 +20,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Home | Postbook \u00b7 atpost',
-    template: '%s | atpost',
+    default: 'Home | AtPost',
+    template: '%s | AtPost',
   },
-  description: 'atpost is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
-  keywords: ['atpost', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
-  applicationName: 'atpost',
+  description: 'AtPost is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
+  keywords: ['AtPost', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
+  applicationName: 'AtPost',
   alternates: {
     canonical: '/',
   },
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'Home | Postbook \u00b7 atpost',
-    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
-    siteName: 'atpost',
+    title: 'Home | AtPost',
+    description: 'AtPost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    siteName: 'AtPost',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Home | Postbook \u00b7 atpost',
+    title: 'Home | AtPost',
     description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
   },
 };

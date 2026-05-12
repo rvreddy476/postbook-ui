@@ -47,7 +47,7 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5 text-sm text-brand-highlight">
                             <Clapperboard className="h-4 w-4 text-brand-text/60" />
-                            <span>Flicks</span>
+                            <span>Reels</span>
                         </div>
                         <span className="text-sm font-semibold text-brand-text">
                             {contentCounts.reel.toLocaleString()}

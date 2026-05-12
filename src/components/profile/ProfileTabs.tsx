@@ -34,7 +34,7 @@ const tabDefinitions: {
     { key: "connections", label: "My Circle", icon: CircleDot },
     { key: "posts", label: "Posts", icon: FileText },
     { key: "videos", label: "Videos", icon: Video, requiresContent: true },
-    { key: "flicks", label: "Flicks", icon: Film, requiresContent: true },
+    { key: "flicks", label: "Reels", icon: Film, requiresContent: true },
     { key: "stashed", label: "Stash", icon: Bookmark, selfOnly: true },
     { key: "portfolio", label: "Portfolio", icon: Briefcase },
 ]
