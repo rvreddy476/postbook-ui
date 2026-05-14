@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 
 import {
@@ -185,7 +185,12 @@ function PaymentCard({
   )
 }
 
-export default function MopeduPaymentsQueuePage() {
+// Next.js 14+ requires that any component reading useSearchParams sit
+// inside a Suspense boundary, otherwise `next build` fails the static
+// prerender pass with "useSearchParams() should be wrapped in a
+// suspense boundary". Splitting the content into a separate function
+// and wrapping it in <Suspense> is the upstream-recommended fix.
+function MopeduPaymentsQueueContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const status = searchParams?.get("status") ?? "pending"
@@ -274,5 +279,19 @@ export default function MopeduPaymentsQueuePage() {
         </p>
       )}
     </div>
+  )
+}
+
+export default function MopeduPaymentsQueuePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading payments queue…
+        </div>
+      }
+    >
+      <MopeduPaymentsQueueContent />
+    </Suspense>
   )
 }
