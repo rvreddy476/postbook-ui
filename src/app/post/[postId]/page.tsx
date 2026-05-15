@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { usePostDetail } from '@/hooks/useFeedPosts';
 import { usePostRoom } from '@/hooks/usePostRoom';
@@ -8,7 +8,7 @@ import PostCard from '@/components/PostCard';
 import CommentSection from '@/components/CommentSection';
 import { ArrowLeft } from 'lucide-react';
 
-export default function PostDetailPage() {
+function PostDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,4 +73,12 @@ export default function PostDetailPage() {
       </div>
     </div>
   );
+}
+
+export default function PostDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <PostDetailContent />
+    </Suspense>
+  )
 }

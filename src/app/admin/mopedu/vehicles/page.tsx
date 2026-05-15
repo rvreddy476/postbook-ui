@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { Loader2, X } from "lucide-react"
 
 import {
@@ -32,7 +32,7 @@ const STATUS_FILTERS: Array<{ key: string; label: string }> = [
   { key: "suspended", label: "Suspended" },
 ]
 
-export default function MopeduVehiclesQueuePage() {
+function MopeduVehiclesQueueContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const status = searchParams?.get("status") ?? "pending"
@@ -351,5 +351,20 @@ export default function MopeduVehiclesQueuePage() {
         </aside>
       </div>
     </div>
+  )
+}
+
+
+export default function MopeduVehiclesQueuePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading vehicles queue…
+        </div>
+      }
+    >
+      <MopeduVehiclesQueueContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { Suspense, useState, useCallback, useEffect, useRef } from 'react'
 import AppShell from '@/components/AppShell'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -110,7 +110,7 @@ function ErrorToast({ msg, onDismiss }: { msg: string; onDismiss: () => void }) 
 }
 
 /* ========== MAIN PAGE ========== */
-export default function ChannelDetailPage() {
+function ChannelDetailContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -519,5 +519,13 @@ export default function ChannelDetailPage() {
         {mutError && <ErrorToast msg={mutError} onDismiss={() => setMutError(null)} />}
       </AnimatePresence>
     </AppShell>
+  )
+}
+
+export default function ChannelDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChannelDetailContent />
+    </Suspense>
   )
 }

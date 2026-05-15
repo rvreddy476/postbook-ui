@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { Loader2, X } from "lucide-react"
 
 import {
@@ -33,7 +33,7 @@ const STATUS_FILTERS: Array<{ key: string; label: string }> = [
   { key: "expired", label: "Expired" },
 ]
 
-export default function MopeduDocumentsQueuePage() {
+function MopeduDocumentsQueueContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const status = searchParams?.get("status") ?? "pending"
@@ -315,5 +315,19 @@ export default function MopeduDocumentsQueuePage() {
         </aside>
       </div>
     </div>
+  )
+}
+
+export default function MopeduDocumentsQueuePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading documents queue…
+        </div>
+      }
+    >
+      <MopeduDocumentsQueueContent />
+    </Suspense>
   )
 }

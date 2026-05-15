@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { Loader2, Search } from "lucide-react"
 
 import { useMopeduPartners } from "@/hooks/useMopeduAdmin"
@@ -52,7 +52,7 @@ function Avatar({ src, name }: { src?: string; name: string }) {
   )
 }
 
-export default function MopeduPartnersPage() {
+function MopeduPartnersContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -279,5 +279,19 @@ export default function MopeduPartnersPage() {
         queues for cross-partner triage.
       </p>
     </div>
+  )
+}
+
+export default function MopeduPartnersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading partners…
+        </div>
+      }
+    >
+      <MopeduPartnersContent />
+    </Suspense>
   )
 }
