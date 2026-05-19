@@ -30,12 +30,12 @@ function buildWsUrl(token: string): string {
     // If an explicit API base URL is set, derive WS URL from it
     if (apiBase) {
         const wsBase = apiBase.replace(/^http/, "ws")
-        return `${wsBase}/v1/ws/notifications?token=${encodeURIComponent(token)}`
+        return `${wsBase}/v1/ws/notifications?access_token=${encodeURIComponent(token)}`
     }
 
     // Derive from current page origin (production behind cloudflared)
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:"
-    return `${proto}//${window.location.host}/v1/ws/notifications?token=${encodeURIComponent(token)}`
+    return `${proto}//${window.location.host}/v1/ws/notifications?access_token=${encodeURIComponent(token)}`
 }
 
 class NotificationSocket {
@@ -209,6 +209,33 @@ class NotificationSocket {
             this.connect()
         }, delay)
     }
+}
+
+/* ------------------------------------------------------------------ */
+/*  App-wide shared instance                                           */
+/* ------------------------------------------------------------------ */
+
+let sharedSocket: NotificationSocket | null = null
+
+/**
+ * getSharedNotificationSocket returns the process-wide realtime socket,
+ * creating and connecting it on first call once an auth token exists.
+ *
+ * One socket for the whole tab is deliberate: the WS gateway treats an
+ * open connection as the user's "online" presence, so the connection must
+ * live for the entire authenticated session — not per-component. Every
+ * consumer (notification bell, presence) shares this instance and just
+ * registers its own listener via `.on(...)`; none of them should call
+ * `disconnect()` on it.
+ */
+export function getSharedNotificationSocket(): NotificationSocket | null {
+    if (typeof window === "undefined") return null
+    if (sharedSocket) return sharedSocket
+    const token = getStoredAccessToken()
+    if (!token) return null
+    sharedSocket = new NotificationSocket(token)
+    sharedSocket.connect()
+    return sharedSocket
 }
 
 export default NotificationSocket

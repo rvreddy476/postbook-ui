@@ -90,7 +90,7 @@ export default function OnboardingPage() {
         const email = (pbUser as { email?: string; loginId?: string }).email ?? pbUser.loginId
         const ok = await ssoFromPostbook(pbUser.id, email)
         if (!ok) {
-          setError('Could not connect PostMatch to your AtPost account. Please try again.')
+          setError('Could not connect PostMatch to your VChat account. Please try again.')
           setBootstrapping(false)
           return
         }
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#222] border-t-rose-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#888] text-sm font-medium">Connecting PostMatch to your AtPost account…</p>
+          <p className="text-[#888] text-sm font-medium">Connecting PostMatch to your VChat account…</p>
         </div>
       </div>
     )

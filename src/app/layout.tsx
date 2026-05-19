@@ -20,12 +20,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Home | AtPost',
-    template: '%s | AtPost',
+    default: 'Home | VChat',
+    template: '%s | VChat',
   },
-  description: 'AtPost is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
-  keywords: ['AtPost', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
-  applicationName: 'AtPost',
+  description: 'VChat is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
+  keywords: ['VChat', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
+  applicationName: 'VChat',
   alternates: {
     canonical: '/',
   },
@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'Home | AtPost',
-    description: 'AtPost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
-    siteName: 'AtPost',
+    title: 'Home | VChat',
+    description: 'VChat is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    siteName: 'VChat',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Home | AtPost',
-    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    title: 'Home | VChat',
+    description: 'VChat is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
   },
 };
 
@@ -68,15 +68,15 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SocialMediaPosting',
-              'headline': 'atpost - Prismatic Social Network',
-              'description': 'atpost is a modern social experience with feed discovery, reels, and AI creator tools.',
+              'headline': 'VChat - Prismatic Social Network',
+              'description': 'VChat is a modern social experience with feed discovery, reels, and AI creator tools.',
               'author': {
                 '@type': 'Organization',
-                'name': 'atpost Team',
+                'name': 'VChat Team',
               },
               'publisher': {
                 '@type': 'Organization',
-                'name': 'atpost',
+                'name': 'VChat',
                 'logo': {
                   '@type': 'ImageObject',
                   'url': `${siteUrl}/logo.png`,

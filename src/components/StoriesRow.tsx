@@ -143,7 +143,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
                 onClick={() => handleFriendClick(index)}
               >
                 <div className={`relative w-24 h-36 rounded-2xl overflow-hidden border transition-all duration-500
-                  ${unviewed ? 'border-brand-accent shadow-lg shadow-brand-accent/20' : 'border-brand-divider'}
+                  ${unviewed ? 'border-fuchsia-500 shadow-lg shadow-fuchsia-500/30' : 'border-brand-divider'}
                   group-hover:shadow-[0_0_20px_rgba(48,47,44,0.1)] group-hover:border-brand-accent/50`}>
                   <img
                     src={group.authorAvatar}
@@ -164,7 +164,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
 
                   {/* Unseen dot */}
                   {unviewed && (
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-brand-accent rounded-full shadow-[0_0_10px_#b6a6ca] z-10" />
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-fuchsia-500 rounded-full shadow-[0_0_10px_#d946ef] z-10" />
                   )}
                 </div>
               </div>

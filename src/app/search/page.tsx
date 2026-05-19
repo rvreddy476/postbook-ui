@@ -153,7 +153,7 @@ function HintState() {
                 <Search className="w-7 h-7 text-white" />
             </div>
             <div className="text-center">
-                <p className="text-sm font-bold text-brand-text">Search PostBook</p>
+                <p className="text-sm font-bold text-brand-text">Search VChat</p>
                 <p className="text-xs text-brand-text/40 mt-1">Type at least 2 characters to begin</p>
             </div>
         </div>
@@ -202,7 +202,7 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
                     <Search className="w-7 h-7 text-white" />
                 </div>
                 <div className="text-center">
-                    <p className="text-sm font-bold text-brand-text">Search PostBook</p>
+                    <p className="text-sm font-bold text-brand-text">Search VChat</p>
                     <p className="text-xs text-brand-text/40 mt-1">Your recent and saved searches will appear here</p>
                 </div>
             </div>

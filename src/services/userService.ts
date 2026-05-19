@@ -67,12 +67,33 @@ export const fetchUsers = async (limit = 50, offset = 0): Promise<User[]> => {
     }
 };
 
+/**
+ * Fetch a user's circle (friends/connections) from graph-service.
+ *
+ * graph-service's `GET /v1/graph/connections/{id}` returns a bare array of
+ * user-id strings, so the ids are hydrated into full profiles via the batch
+ * endpoint before being mapped to the User shape.
+ */
 export const fetchCircleMembers = async (userId: string, limit = 50): Promise<User[]> => {
     try {
-        const res = await api.get(`/v1/profiles/${userId}/friends`, {
-            params: { limit, offset: 0 },
-        });
-        const items: ProfileItem[] = res.data?.data?.items ?? res.data?.items ?? [];
+        const res = await api.get<{ data: string[] }>(`/v1/graph/connections/${userId}`);
+        const ids = (res.data?.data ?? []).slice(0, limit);
+        if (ids.length === 0) return [];
+
+        const batch = await api.post('/v1/profiles/batch', { user_ids: ids });
+        const data = batch.data;
+        const items: ProfileItem[] = [];
+        if (data && typeof data === 'object') {
+            if (Array.isArray(data.profiles)) {
+                for (const p of data.profiles) items.push(p as ProfileItem);
+            } else {
+                for (const value of Object.values(data)) {
+                    if (value && typeof value === 'object' && 'user_id' in (value as Record<string, unknown>)) {
+                        items.push(value as ProfileItem);
+                    }
+                }
+            }
+        }
         const users = items.map(mapProfileToUser);
         return enrichWithPresence(users);
     } catch (err) {

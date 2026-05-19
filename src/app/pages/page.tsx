@@ -128,7 +128,7 @@ export default function PagesDiscoveryPage() {
                     className="flex items-center justify-between mb-6 px-5 py-4 bg-[#1A1A1A] rounded-2xl text-white hover:bg-[#3A2E26] transition"
                 >
                     <div>
-                        <p className="font-bold text-sm">Sell on AtPost</p>
+                        <p className="font-bold text-sm">Sell on VChat</p>
                         <p className="text-xs text-white/60 mt-0.5">Turn your business page into a storefront</p>
                     </div>
                     <span className="text-2xl">🛍️</span>

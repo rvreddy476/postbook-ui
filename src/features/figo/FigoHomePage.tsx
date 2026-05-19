@@ -463,7 +463,7 @@ function CheckoutPanel() {
       <div className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm">
         <p className="font-bold">Wallet coming soon</p>
         <p className="mt-1 text-neutral-500">
-          Pay COD or Online for now. The AtPost wallet launches in this Phase 2 sprint.
+          Pay COD or Online for now. The VChat wallet launches in this Phase 2 sprint.
         </p>
       </div>
       <button
@@ -1418,7 +1418,7 @@ export default function FigoHomePage() {
               FiGo - Food in GO
             </div>
             <h1 className="max-w-2xl text-4xl font-black leading-tight tracking-normal md:text-6xl">
-              Order food inside AtPost.
+              Order food inside VChat.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-neutral-600">
               Browse live restaurants, add dishes to a one-restaurant cart, apply

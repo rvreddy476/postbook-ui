@@ -14,6 +14,7 @@ import {
   Globe,
   Lock,
   Users,
+  ShieldCheck,
   ChevronDown,
   Palette,
   Plus,
@@ -33,7 +34,7 @@ interface CreatePortalProps {
   groupId?: string;
 }
 
-type PostVisibility = 'public' | 'followers' | 'private';
+type PostVisibility = 'public' | 'followers' | 'trusted' | 'private';
 
 // Background color presets for text posts
 const BG_PRESETS = [
@@ -239,11 +240,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const visIcons: Record<PostVisibility, React.ReactNode> = {
     public: <Globe className="w-3 h-3" />,
     followers: <Users className="w-3 h-3" />,
+    trusted: <ShieldCheck className="w-3 h-3" />,
     private: <Lock className="w-3 h-3" />,
   };
   const visLabels: Record<PostVisibility, string> = {
     public: 'Everyone',
     followers: 'Followers',
+    trusted: 'Trusted Circle',
     private: 'Only Me',
   };
 
@@ -293,7 +296,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               </button>
               {showVisMenu && (
                 <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-brand-divider rounded-xl shadow-xl py-1 min-w-[130px]">
-                  {(['public', 'followers', 'private'] as PostVisibility[]).map((v) => (
+                  {(['public', 'followers', 'trusted', 'private'] as PostVisibility[]).map((v) => (
                     <button
                       key={v}
                       onClick={() => { setVisibility(v); setShowVisMenu(false); }}

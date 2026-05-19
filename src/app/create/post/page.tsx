@@ -12,6 +12,7 @@ import {
   Lock,
   MapPin,
   PenSquare,
+  ShieldCheck,
   Sparkles,
   Users,
   X,
@@ -30,6 +31,7 @@ import { POST_CONTENT_TYPES } from "@/types/profile";
 const VISIBILITY = [
   { value: "public", label: "Public", icon: Globe },
   { value: "followers", label: "Followers", icon: Users },
+  { value: "trusted", label: "Trusted Circle", icon: ShieldCheck },
   { value: "private", label: "Only me", icon: Lock },
 ] as const;
 

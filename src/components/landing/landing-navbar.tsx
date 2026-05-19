@@ -10,13 +10,13 @@ export function LandingNavbar() {
     <nav className="fixed top-0 z-50 h-20 w-full border-b border-brand-divider px-4 backdrop-blur-2xl sm:px-8">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
         <Link href="/" className="group flex cursor-pointer items-center gap-3 sm:gap-4">
-          <span className="text-2xl font-black tracking-tighter text-brand-text">&#10022; atpost</span>
+          <span className="text-2xl font-black tracking-tighter text-brand-text">&#10022; VChat</span>
         </Link>
         
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
           <Link href="/commerce" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
-            Sell on AtPost
+            Sell on VChat
           </Link>
           <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Log In
@@ -50,7 +50,7 @@ export function LandingNavbar() {
               onClick={() => setIsOpen(false)}
               className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
             >
-              Sell on AtPost
+              Sell on VChat
             </Link>
             <Link
               href="/login"

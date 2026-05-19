@@ -65,15 +65,6 @@ export interface Follow {
     created_at: string
 }
 
-export interface Friendship {
-    id: string
-    requester_id: string
-    addressee_id: string
-    status: string
-    created_at: string
-    updated_at: string
-}
-
 export interface GraphCounts {
     follower_count: number
     following_count: number
@@ -98,11 +89,15 @@ export interface Relationship {
     // Follow axis (asymmetric)
     following: boolean
     followed_by: boolean
-    // Circle axis (mutual, requires acceptance)
+    // Connection axis (mutual, requires acceptance) — canonical graph-service
+    // fields. The backend renamed "friend" → "connection" (spec §3.2/§19);
+    // `connection_status` is one of: none, pending_sent, pending_received, accepted.
+    is_connection?: boolean
+    connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
+    // Circle axis (legacy/aggregated-profile shape, kept for UI compatibility)
     in_circle: boolean
     circle_request_sent: boolean
     circle_request_received: boolean
-    circle_request_id?: string
     // Block
     blocked: boolean
     blocked_by: boolean
@@ -122,14 +117,6 @@ export interface UserProfileBatchResponse {
 
 export interface RelationshipBatchResponse {
     relationships: Record<string, Relationship>
-}
-
-export interface FriendRequest {
-    sender_id: string
-    receiver_id: string
-    status: string
-    created_at: string
-    updated_at: string
 }
 
 /**

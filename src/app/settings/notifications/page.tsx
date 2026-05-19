@@ -311,7 +311,7 @@ export default function NotificationPreferencesPage() {
                     )}
                 </div>
                 <p className="mt-1 text-sm text-brand-highlight">
-                    Control how and when PostBook notifies you. Changes are saved automatically.
+                    Control how and when VChat notifies you. Changes are saved automatically.
                 </p>
             </div>
 
@@ -325,7 +325,7 @@ export default function NotificationPreferencesPage() {
                     <SectionCard
                         icon={<Bell className="h-6 w-6 text-brand-text/50" />}
                         title="Notification Channels"
-                        description="Choose which channels PostBook can use to reach you."
+                        description="Choose which channels VChat can use to reach you."
                         delay={0.05}
                     >
                         <div className="divide-y divide-brand-secondary">

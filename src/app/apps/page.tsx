@@ -214,7 +214,7 @@ export default function AppsPage() {
                     </div>
                     <div>
                         <h1 className="text-xl font-black text-brand-text tracking-tight">Mini Apps</h1>
-                        <p className="text-xs text-brand-text/40 font-medium">Discover apps built on AtPost</p>
+                        <p className="text-xs text-brand-text/40 font-medium">Discover apps built on VChat</p>
                     </div>
                     {/* Installed toggle */}
                     <button
@@ -265,7 +265,7 @@ export default function AppsPage() {
                     </div>
                     <h2 className="text-3xl font-black text-brand-text tracking-tight">Mini Apps</h2>
                     <p className="text-brand-text/60 mt-2 text-base max-w-sm mx-auto">
-                        Discover and install apps built on the AtPost platform
+                        Discover and install apps built on the VChat platform
                     </p>
                 </div>
             </div>

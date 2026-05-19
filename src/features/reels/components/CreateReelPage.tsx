@@ -1083,7 +1083,7 @@ function StepDetails({
                     onChange={() => patch({ license: "standard" })}
                     className="h-4 w-4 accent-slate-900"
                   />
-                  <span className="text-[13px] font-medium text-brand-text">Standard AtPost License</span>
+                  <span className="text-[13px] font-medium text-brand-text">Standard VChat License</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
                   <input

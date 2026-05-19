@@ -181,7 +181,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
           <a href="#" className="hover:text-brand-accent transition-colors">Privacy</a>
           <a href="#" className="hover:text-brand-accent transition-colors">Terms</a>
         </div>
-        <p>&copy; 2026 atpost</p>
+        <p>&copy; 2026 VChat</p>
       </footer>
     </div>
   );

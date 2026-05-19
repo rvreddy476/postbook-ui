@@ -479,20 +479,24 @@ export function ProfilePage({ username }: ProfilePageProps) {
         sendCircleRequest.mutate(profile.username || profile.id)
     }, [profile, sendCircleRequest])
 
+    // graph-service has no friendship id — accept/decline/cancel are keyed by
+    // the counterparty's user_id. For a profile you are viewing, that
+    // counterparty IS this profile (sender of an incoming request, or
+    // receiver of one you sent), so pass profile.id.
     const handleAcceptCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        acceptCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, acceptCircleRequest])
+        if (!profile || !relationship?.circle_request_received) return
+        acceptCircleRequest.mutate(profile.id)
+    }, [profile, relationship, acceptCircleRequest])
 
     const handleDeclineCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        declineCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, declineCircleRequest])
+        if (!profile || !relationship?.circle_request_received) return
+        declineCircleRequest.mutate(profile.id)
+    }, [profile, relationship, declineCircleRequest])
 
     const handleCancelCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        cancelCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, cancelCircleRequest])
+        if (!profile || !relationship?.circle_request_sent) return
+        cancelCircleRequest.mutate(profile.id)
+    }, [profile, relationship, cancelCircleRequest])
 
     const handleRemoveFromCircle = useCallback(() => setRemoveCircleDialogOpen(true), [])
 
@@ -682,84 +686,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         )}
                     </div>
 
-                    {/* Right sidebar — Studio Stats (30%) — only if creator content exists */}
+                    {/* Right sidebar — additional cards (mutual friends, links, completion) */}
                     {hasCreatorContent && (
                         <aside className="hidden lg:block flex-[3] shrink-0 space-y-4">
-                            {/* Studio Stats Card */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
-                            >
-                                <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3.5">
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">
-                                        Studio Stats
-                                    </h3>
-                                </div>
-
-                                <div className="p-5 space-y-4">
-                                    {contentCounts.video > 0 && (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-brand-text/10">
-                                                    <Film className="h-4 w-4 text-brand-text" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Posttube Videos</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">Long-form content</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.video.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {contentCounts.reel > 0 && (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-rose-50">
-                                                    <Clapperboard className="h-4 w-4 text-rose-500" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Reels</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">Short-form clips</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.reel.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {contentCounts.total > 0 && (
-                                        <div className="flex items-center justify-between pt-3 border-t border-brand-divider">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-amber-50">
-                                                    <Sparkles className="h-4 w-4 text-amber-500" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Total Sparks</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">All-time engagement</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.total.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <Link
-                                        href={`/posttube/channel/${profile.username}`}
-                                        className="flex items-center justify-center gap-2 mt-2 w-full py-3 rounded-xl bg-brand-text text-white text-xs font-black uppercase tracking-[0.2em] hover:bg-brand-text transition-all shadow-lg shadow-brand-text/20"
-                                    >
-                                        <ExternalLink className="w-3.5 h-3.5" />
-                                        View Channel
-                                    </Link>
-                                </div>
-                            </motion.div>
-
                             {/* Additional sidebar cards */}
                             {!isOwn && localUser && (
                                 <MutualFriendsCard
@@ -783,38 +712,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
                 {/* Mobile: sidebar cards below main content */}
                 <div className="lg:hidden mt-6 space-y-4">
-                    {hasCreatorContent && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
-                        >
-                            <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">Studio Stats</h3>
-                            </div>
-                            <div className="p-4 flex items-center justify-between gap-4">
-                                {contentCounts.video > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Film className="h-4 w-4 text-brand-text" />
-                                        <span className="text-sm font-bold">{contentCounts.video} Videos</span>
-                                    </div>
-                                )}
-                                {contentCounts.reel > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Clapperboard className="h-4 w-4 text-rose-500" />
-                                        <span className="text-sm font-bold">{contentCounts.reel} Reels</span>
-                                    </div>
-                                )}
-                                <Link
-                                    href={`/posttube/channel/${profile.username}`}
-                                    className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold"
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    Channel
-                                </Link>
-                            </div>
-                        </motion.div>
-                    )}
                     {!isOwn && localUser && (
                         <MutualFriendsCard
                             viewerId={localUser.id}

@@ -124,7 +124,7 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
           </div>
           <div>
             <p className="text-sm font-bold text-brand-text">Verified channel</p>
-            <p className="text-[11px] text-brand-text/40">Verified by AtPost</p>
+            <p className="text-[11px] text-brand-text/40">Verified by VChat</p>
           </div>
         </div>
       </div>

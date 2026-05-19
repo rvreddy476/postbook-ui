@@ -38,7 +38,7 @@ export default function FriendRequestsPage() {
           <div className="space-y-2">
             {items.map((r) => (
               <div
-                key={r.friendship_id}
+                key={r.user_id}
                 className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-4"
               >
                 <Link
@@ -61,14 +61,14 @@ export default function FriendRequestsPage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => accept.mutate(r.friendship_id)}
+                    onClick={() => accept.mutate(r.user_id)}
                     disabled={accept.isPending || reject.isPending}
                     className="bg-violet-600 text-white px-4 py-2 rounded text-sm disabled:bg-gray-300 hover:bg-violet-700"
                   >
                     Accept
                   </button>
                   <button
-                    onClick={() => reject.mutate(r.friendship_id)}
+                    onClick={() => reject.mutate(r.user_id)}
                     disabled={accept.isPending || reject.isPending}
                     className="border border-neutral-300 px-4 py-2 rounded text-sm hover:bg-neutral-50"
                   >

@@ -111,8 +111,8 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
         <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-2">
           <RadioOption
             name="license"
-            label="Standard atpost License"
-            description="Default license — you retain rights, atpost can distribute"
+            label="Standard VChat License"
+            description="Default license — you retain rights, VChat can distribute"
             checked={form.license === "standard"}
             onChange={() => patch({ license: "standard" })}
           />

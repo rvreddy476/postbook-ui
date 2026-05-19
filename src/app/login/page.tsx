@@ -161,11 +161,11 @@ function LoginForm() {
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-accent shadow-lg">
-                    <span className="text-lg font-black tracking-tighter text-brand-bg">PB</span>
+                    <span className="text-lg font-black tracking-tighter text-brand-bg">VC</span>
                   </div>
                   <div>
                     <h1 className="text-2xl font-black tracking-tight text-brand-text">
-                      atpost
+                      VChat
                     </h1>
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
                       Welcome Back

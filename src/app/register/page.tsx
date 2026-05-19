@@ -162,7 +162,7 @@ export default function RegisterPage() {
               >
                 <div className="mb-4 flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent shadow-lg">
-                    <span className="text-sm font-black tracking-tighter text-brand-bg">PB</span>
+                    <span className="text-sm font-black tracking-tighter text-brand-bg">VC</span>
                   </div>
                   <div>
                     <h1 className="text-xl font-black tracking-tight text-brand-text">Create Account</h1>

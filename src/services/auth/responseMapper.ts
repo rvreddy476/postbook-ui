@@ -96,7 +96,7 @@ export const mapAuthResponse = (payload: unknown, fallbackIdentifier: string): A
 
   const user: User = {
     id: userId,
-    name: fullName || displayName || username || email || phone || fallbackIdentifier || 'atpost User',
+    name: fullName || displayName || username || email || phone || fallbackIdentifier || 'VChat User',
     username: username || undefined,
     firstName,
     lastName,

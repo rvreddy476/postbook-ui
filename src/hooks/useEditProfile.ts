@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
-import type { UserProfile, UserLink, ProfileLink, Follow, Friendship } from "@/types/profile"
+import type { UserProfile, UserLink, ProfileLink, Follow } from "@/types/profile"
 
 // Backend returns user_id, frontend expects id — normalize once at the data layer
 function normalizeProfile(raw: Record<string, unknown>): UserProfile {
@@ -187,35 +187,6 @@ export function useUnfollowUser() {
     return useMutation({
         mutationFn: async (username: string) => {
             await api.delete(`/v1/profiles/${username}/follow`)
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["profile"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-    })
-}
-
-// Friend requests
-export function useSendFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (username: string) => {
-            const res = await api.post<{ data: Friendship }>(`/v1/profiles/${username}/friend-request`)
-            return res.data.data
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["profile"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-    })
-}
-
-export function useRespondToFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async ({ friendshipId, accept }: { friendshipId: string; accept: boolean }) => {
-            const res = await api.patch<{ data: Friendship }>(`/v1/profiles/friend-requests/${friendshipId}`, { accept })
-            return res.data.data
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["profile"] })

@@ -183,9 +183,9 @@ export function ProfileHeader({
                         onError={() => setCoverFails((n) => n + 1)}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-200 via-brand-text/10 to-teal-100" />
+                    <div className="w-full h-full bg-gradient-to-br from-brand-secondary via-brand-text/10 to-brand-secondary" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/10" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10" />
 
                 {/* Cover actions */}
                 <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -211,9 +211,9 @@ export function ProfileHeader({
                 </div>
             </div>
 
-            {/* 2. Three-column grid: Profile Pic | Intro | Social Graph */}
+            {/* 2. Identity row: Profile Pic | Intro | Stats — sits cleanly below the cover */}
             <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 lg:gap-10 -mt-16 pb-8 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start">
 
                     {/* Left: Profile Picture */}
                     <motion.div
@@ -222,7 +222,7 @@ export function ProfileHeader({
                         transition={{ duration: 0.3 }}
                         className="relative group justify-self-center md:justify-self-start z-10"
                     >
-                        <div className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 rounded-[1.5rem] sm:rounded-3xl overflow-hidden border-[4px] sm:border-[6px] border-white shadow-2xl bg-zinc-100 relative">
+                        <div className="h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 rounded-[1.5rem] sm:rounded-3xl overflow-hidden border-[4px] sm:border-[6px] border-brand-card shadow-xl bg-brand-secondary relative">
                             {resolvedAvatar ? (
                                 <img
                                     src={resolvedAvatar}
@@ -231,7 +231,7 @@ export function ProfileHeader({
                                     onError={() => setAvatarFails((n) => n + 1)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-white bg-gradient-to-br from-slate-400 to-slate-500 uppercase">
+                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-brand-card bg-gradient-to-br from-brand-text/70 to-brand-text uppercase">
                                     {(profile.display_name || "?").charAt(0)}
                                 </div>
                             )}
@@ -266,11 +266,11 @@ export function ProfileHeader({
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.05 }}
-                        className="space-y-2 text-center md:text-left pt-2"
+                        className="space-y-2.5 text-center md:text-left md:pt-[4.5rem]"
                     >
                         {/* Name + badges */}
                         <div className="flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
-                            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-brand-text">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text">
                                 {profile.display_name}
                             </h1>
                             {badges.map((badge) => {
@@ -295,19 +295,19 @@ export function ProfileHeader({
                         </div>
 
                         {/* Handle */}
-                        <p className="text-zinc-400 font-medium tracking-wide text-sm">@{profile.username}</p>
+                        <p className="text-brand-text/50 font-medium tracking-wide text-sm">@{profile.username}</p>
 
                         {/* Meta chips */}
-                        <div className="flex items-center gap-4 pt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 justify-center md:justify-start flex-wrap">
+                        <div className="flex items-center gap-x-4 gap-y-1.5 pt-1 text-xs font-medium text-brand-text/60 justify-center md:justify-start flex-wrap">
                             {profile.profession && (
                                 <span className="flex items-center gap-1.5">
-                                    <Briefcase size={12} />
+                                    <Briefcase size={13} className="text-violet-500" />
                                     {profile.profession}
                                 </span>
                             )}
                             {profile.location && (
                                 <span className="flex items-center gap-1.5">
-                                    <MapPin size={12} />
+                                    <MapPin size={13} className="text-rose-500" />
                                     {profile.location}
                                 </span>
                             )}
@@ -316,27 +316,27 @@ export function ProfileHeader({
                                     href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-teal-500 hover:text-teal-600 transition-colors"
+                                    className="flex items-center gap-1.5 text-sky-500 hover:text-sky-600 hover:underline transition-colors"
                                 >
-                                    <Globe size={12} />
+                                    <Globe size={13} />
                                     {profile.website.replace(/^https?:\/\//, "")}
                                 </a>
                             )}
                             {profile.created_at && (
                                 <span className="flex items-center gap-1.5">
-                                    <Calendar size={12} />
+                                    <Calendar size={13} className="text-amber-500" />
                                     {formatJoinDate(profile.created_at)}
                                 </span>
                             )}
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex items-center gap-2 pt-2 justify-center md:justify-start flex-wrap">
+                        <div className="flex items-center gap-2 pt-2.5 justify-center md:justify-start flex-wrap">
                             {isOwn ? (
                                 <>
                                     <button
                                         onClick={onEditProfile}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-black transition-colors shadow-lg"
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
                                     >
                                         <Settings className="w-3.5 h-3.5" />
                                         Edit Profile
@@ -394,157 +394,173 @@ export function ProfileHeader({
                         </div>
                     </motion.div>
 
-                    {/* Right: Stats cards */}
-                    <div className="hidden md:flex flex-col gap-3 self-end mb-1">
+                    {/* Right: Stats cards — unified card system */}
+                    <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-[4.5rem]">
                         {/* Feed Stats */}
                         <motion.div
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.1 }}
-                            className="flex justify-between items-center bg-zinc-50/80 backdrop-blur-sm p-5 rounded-2xl border border-black/5 gap-1"
+                            className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5"
                         >
-                            {[
-                                { icon: FileText, label: "Posts", value: contentCounts.total, key: "posts" },
-                                { icon: Heart, label: "Followers", value: graphCounts.follower_count, key: "followers" },
-                                { icon: UserPlus, label: "Following", value: graphCounts.following_count, key: "following" },
-                                { icon: Users, label: "Friends", value: graphCounts.friend_count, key: "friends" },
-                            ].map((stat, i) => (
-                                <div key={stat.key} className="flex items-center">
-                                    {i > 0 && <div className="h-8 w-px bg-black/5 mx-3" />}
-                                    <div className="text-center px-2">
-                                        <div className="flex items-center justify-center gap-1.5 text-zinc-400 mb-1">
-                                            <stat.icon size={13} />
-                                            <span className="text-[8px] font-bold uppercase tracking-[0.2em]">{stat.label}</span>
-                                        </div>
-                                        <p className="text-lg font-black text-brand-text tracking-tight">
+                            <div className="grid grid-cols-4 gap-2">
+                                {[
+                                    { icon: FileText, label: "Posts", value: contentCounts.total, key: "posts", color: "text-sky-500" },
+                                    { icon: Heart, label: "Followers", value: graphCounts.follower_count, key: "followers", color: "text-rose-500" },
+                                    { icon: UserPlus, label: "Following", value: graphCounts.following_count, key: "following", color: "text-amber-500" },
+                                    { icon: Users, label: "Friends", value: graphCounts.friend_count, key: "friends", color: "text-emerald-500" },
+                                ].map((stat) => (
+                                    <div key={stat.key} className="flex flex-col items-center text-center gap-1">
+                                        <stat.icon size={16} className={stat.color} />
+                                        <p className="text-lg font-black text-brand-text tracking-tight leading-none">
                                             {formatCount(stat.value)}
                                         </p>
+                                        <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-text/50">
+                                            {stat.label}
+                                        </span>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </motion.div>
 
-                        {/* PostTube Channel Stats */}
+                        {/* PostTube Channel Stats — same card system, subtle accent */}
                         {channel && (
                             <motion.div
                                 initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: 0.15 }}
-                                className="flex items-center bg-zinc-900 p-4 rounded-2xl border border-zinc-800 gap-1"
+                                className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5 border-l-[3px] border-l-violet-500"
                             >
-                                <div className="flex items-center gap-4 flex-1">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">
+                                        PostTube Channel
+                                    </span>
+                                    <Link
+                                        href={`/posttube/channel/${channel.handle}`}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        View
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
                                     {[
-                                        { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs" },
-                                        { icon: Film, label: "Videos", value: contentCounts.video, key: "videos" },
-                                        { icon: Clapperboard, label: "Reels", value: contentCounts.reel, key: "flicks" },
-                                    ].map((stat, i) => (
-                                        <div key={stat.key} className="flex items-center">
-                                            {i > 0 && <div className="h-7 w-px bg-zinc-700 mx-2" />}
-                                            <div className="text-center px-2">
-                                                <div className="flex items-center justify-center gap-1.5 text-zinc-500 mb-1">
-                                                    <stat.icon size={12} />
-                                                    <span className="text-[7px] font-bold uppercase tracking-[0.2em]">{stat.label}</span>
-                                                </div>
-                                                <p className="text-base font-black text-white tracking-tight">
-                                                    {formatCount(stat.value)}
-                                                </p>
-                                            </div>
+                                        { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs", color: "text-violet-500" },
+                                        { icon: Film, label: "Videos", value: contentCounts.video, key: "videos", color: "text-sky-500" },
+                                        { icon: Clapperboard, label: "Reels", value: contentCounts.reel, key: "flicks", color: "text-rose-500" },
+                                    ].map((stat) => (
+                                        <div key={stat.key} className="flex flex-col items-center text-center gap-1">
+                                            <stat.icon size={16} className={stat.color} />
+                                            <p className="text-lg font-black text-brand-text tracking-tight leading-none">
+                                                {formatCount(stat.value)}
+                                            </p>
+                                            <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-text/50">
+                                                {stat.label}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
-                                <Link
-                                    href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-[9px] font-black uppercase tracking-[0.15em] hover:bg-brand-text transition-all shadow-lg shadow-brand-text/30 shrink-0 ml-2"
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    View Channel
-                                </Link>
                             </motion.div>
                         )}
                     </div>
                 </div>
 
                 {/* Mobile: Social Graph (stacked below on small screens) */}
-                <div className="md:hidden space-y-3 mb-6 -mt-2">
-                    <div className="flex justify-between items-center bg-zinc-50/80 p-4 rounded-2xl border border-black/5">
-                        {[
-                            { icon: FileText, label: "Posts", value: contentCounts.total },
-                            { icon: Heart, label: "Followers", value: graphCounts.follower_count },
-                            { icon: UserPlus, label: "Following", value: graphCounts.following_count },
-                            { icon: Users, label: "Friends", value: graphCounts.friend_count },
-                        ].map((stat, i) => (
-                            <div key={stat.label} className="flex items-center">
-                                {i > 0 && <div className="h-6 w-px bg-black/5 mx-1" />}
-                                <div className="text-center px-1.5">
-                                    <div className="flex items-center justify-center gap-1 text-zinc-400 mb-0.5">
-                                        <stat.icon size={11} />
-                                        <span className="text-[7px] font-bold uppercase tracking-widest">{stat.label}</span>
-                                    </div>
-                                    <p className="text-base font-black text-brand-text">{formatCount(stat.value)}</p>
+                <div className="md:hidden space-y-3 mb-6">
+                    <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4">
+                        <div className="grid grid-cols-4 gap-2">
+                            {[
+                                { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
+                                { icon: Heart, label: "Followers", value: graphCounts.follower_count, color: "text-rose-500" },
+                                { icon: UserPlus, label: "Following", value: graphCounts.following_count, color: "text-amber-500" },
+                                { icon: Users, label: "Friends", value: graphCounts.friend_count, color: "text-emerald-500" },
+                            ].map((stat) => (
+                                <div key={stat.label} className="flex flex-col items-center text-center gap-1">
+                                    <stat.icon size={15} className={stat.color} />
+                                    <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
+                                    <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-brand-text/50">{stat.label}</span>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                     {/* Mobile: PostTube Channel Stats */}
                     {channel && (
-                        <div className="flex items-center justify-between bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                            <div className="flex items-center gap-3">
+                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4 border-l-[3px] border-l-violet-500">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
+                                <Link
+                                    href={`/posttube/channel/${channel.handle}`}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    View
+                                </Link>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
                                 {[
-                                    { icon: Play, label: "Subs", value: channel.subscriber_count },
-                                    { icon: Film, label: "Videos", value: contentCounts.video },
-                                    { icon: Clapperboard, label: "Reels", value: contentCounts.reel },
-                                ].map((stat, i) => (
-                                    <div key={stat.label} className="flex items-center">
-                                        {i > 0 && <div className="h-5 w-px bg-zinc-700 mx-1" />}
-                                        <div className="text-center px-1">
-                                            <div className="flex items-center justify-center gap-1 text-zinc-500 mb-0.5">
-                                                <stat.icon size={10} />
-                                                <span className="text-[7px] font-bold uppercase tracking-widest">{stat.label}</span>
-                                            </div>
-                                            <p className="text-sm font-black text-white">{formatCount(stat.value)}</p>
-                                        </div>
+                                    { icon: Play, label: "Subscribers", value: channel.subscriber_count, color: "text-violet-500" },
+                                    { icon: Film, label: "Videos", value: contentCounts.video, color: "text-sky-500" },
+                                    { icon: Clapperboard, label: "Reels", value: contentCounts.reel, color: "text-rose-500" },
+                                ].map((stat) => (
+                                    <div key={stat.label} className="flex flex-col items-center text-center gap-1">
+                                        <stat.icon size={15} className={stat.color} />
+                                        <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
+                                        <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-brand-text/50">{stat.label}</span>
                                     </div>
                                 ))}
                             </div>
-                            <Link
-                                href={`/posttube/channel/${channel.handle}`}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-brand-text text-white text-[8px] font-black uppercase tracking-wider"
-                            >
-                                <ExternalLink className="w-3 h-3" />
-                                Channel
-                            </Link>
                         </div>
                     )}
                 </div>
 
                 {/* 3. Bio Row */}
                 {profile.bio && (
-                    <div className="py-6 border-t border-black/5">
-                        <div className="max-w-2xl">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-3">Biography</h3>
-                            <p className="text-xl sm:text-2xl font-mono-display italic leading-relaxed text-zinc-700">
+                    <div className="pb-6">
+                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5 sm:p-6">
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
+                            <p className="text-[15px] not-italic font-normal leading-relaxed text-brand-text/80">
                                 {profile.bio}
                             </p>
+
+                            {/* Social links */}
+                            {links.length > 0 && (
+                                <div className="flex gap-2 flex-wrap mt-4 pt-4 border-t border-brand-divider">
+                                    {links.map((link) => (
+                                        <a
+                                            key={link.platform}
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-sm transition-all"
+                                        >
+                                            <ExternalLink className="w-3 h-3" />
+                                            {link.display_label || link.platform}
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
 
-                {/* Social links row */}
-                {links.length > 0 && (
-                    <div className="flex gap-2 pb-4 flex-wrap">
-                        {links.map((link) => (
-                            <a
-                                key={link.platform}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-100 text-xs font-semibold text-zinc-500 hover:text-zinc-700 hover:border-zinc-200 hover:shadow-sm transition-all"
-                            >
-                                <ExternalLink className="w-3 h-3" />
-                                {link.display_label || link.platform}
-                            </a>
-                        ))}
+                {/* Social links row — shown standalone when there is no bio */}
+                {!profile.bio && links.length > 0 && (
+                    <div className="pb-6">
+                        <div className="flex gap-2 flex-wrap">
+                            {links.map((link) => (
+                                <a
+                                    key={link.platform}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-sm transition-all"
+                                >
+                                    <ExternalLink className="w-3 h-3" />
+                                    {link.display_label || link.platform}
+                                </a>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

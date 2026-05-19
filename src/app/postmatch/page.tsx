@@ -43,7 +43,7 @@ export default function PostMatchLandingPage() {
             </div>
             <div>
               <p className="font-bold text-white text-sm leading-none">PostMatch</p>
-              <p className="text-[10px] text-rose-400 mt-0.5">by AtPost</p>
+              <p className="text-[10px] text-rose-400 mt-0.5">by VChat</p>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ export default function PostMatchLandingPage() {
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer className="border-t border-[#222] py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[#666]">
-          <p>© 2026 PostMatch · by AtPost</p>
+          <p>© 2026 PostMatch · by VChat</p>
           <div className="flex gap-6">
             <Link href="/postmatch/discover" className="hover:text-white transition">Discover</Link>
             <Link href="/postmatch/matches" className="hover:text-white transition">Matches</Link>

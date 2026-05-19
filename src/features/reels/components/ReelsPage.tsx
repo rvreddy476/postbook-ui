@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { HeaderBar } from "@/features/reels/components/HeaderBar";
-import { ReelIconSideNav } from "@/features/reels/components/ReelIconSideNav";
+import Sidebar from "@/components/Sidebar";
 import { ReelChannelInfo } from "@/features/reels/components/ReelChannelInfo";
 import { ReelStage } from "@/features/reels/components/ReelStage";
 import { useDataSaver } from "@/hooks/useDataSaver";
@@ -277,7 +277,7 @@ export function ReelsPage() {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "atpost Reel", url: shareUrl });
+        await navigator.share({ title: "VChat Reel", url: shareUrl });
         return;
       } catch {
         return;
@@ -417,7 +417,7 @@ export function ReelsPage() {
           onSearchSubmit={handleSearchSubmit}
         />
         <div className="flex flex-1">
-          <ReelIconSideNav />
+          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
           <div className="flex flex-1 items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-divider border-t-slate-500" />
@@ -438,7 +438,7 @@ export function ReelsPage() {
           onSearchSubmit={handleSearchSubmit}
         />
         <div className="flex flex-1">
-          <ReelIconSideNav />
+          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
           <div className="flex flex-1 items-center justify-center">
             <p className="text-[13px] text-brand-text/60">No reels available.</p>
           </div>
@@ -461,7 +461,7 @@ export function ReelsPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* Icon-only side nav */}
-        <ReelIconSideNav />
+        <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
 
         {/* Tight 3-section row: Info | Video | Actions — centered on page */}
         <main className="flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 pr-[400px]">

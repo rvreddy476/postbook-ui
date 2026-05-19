@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Reels | AtPost",
-  description: "Watch and discover short-form video content on AtPost Reels.",
+  title: "Reels | VChat",
+  description: "Watch and discover short-form video content on VChat Reels.",
 };
 
 export default function ReelsLayout({ children }: { children: React.ReactNode }) {

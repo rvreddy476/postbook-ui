@@ -312,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Create Post"
         >
-          <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
+          <div className="w-5 h-5 text-violet-400 group-hover:text-violet-300 transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
@@ -326,7 +326,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Messenger"
         >
-          <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
+          <div className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -345,7 +345,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'Reels' ? 'text-white dark:text-brand-accent' : ''}`}
           title="Reels"
         >
-          <div className={`w-5 h-5 ${activeTab === 'Reels' ? 'text-white dark:text-brand-accent' : 'text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent'}`}>
+          <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-fuchsia-300' : 'text-fuchsia-400 group-hover:text-fuchsia-300'}`}>
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
@@ -361,7 +361,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
           title="TV"
         >
-          <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
+          <div className="w-5 h-5 text-orange-400 group-hover:text-orange-300 transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -374,7 +374,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Events"
         >
-          <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
+          <div className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -388,7 +388,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          <div className="w-5 h-5 text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent transition-colors">
+          <div className="w-5 h-5 text-sky-300 group-hover:text-sky-200 transition-colors">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </div>
         </button>
@@ -400,7 +400,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-brand-accent' : ''}`}
             title="Notifications"
           >
-            <div className={`w-5 h-5 ${isNotifOpen ? 'text-white dark:text-brand-accent' : 'text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent'} transition-colors`}>
+            <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-rose-300' : 'text-rose-400 group-hover:text-rose-300'}`}>
               <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
@@ -500,8 +500,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                 <div className="flex items-center gap-2 mt-2">
                                   <button
                                     onClick={() => {
-                                      const username = actorUsername || notif.actor_user_id;
-                                      acceptFriend.mutate(username, {
+                                      // graph-service accept is keyed by the requester's
+                                      // user_id — actor_user_id is exactly that.
+                                      acceptFriend.mutate(notif.actor_user_id, {
                                         onSuccess: () => {
                                           setHandledIds(prev => new Set(prev).add(notif.notification_id));
                                           toast({ type: 'success', title: 'Friend request accepted' });
@@ -515,8 +516,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                   </button>
                                   <button
                                     onClick={() => {
-                                      const username = actorUsername || notif.actor_user_id;
-                                      rejectFriend.mutate(username, {
+                                      rejectFriend.mutate(notif.actor_user_id, {
                                         onSuccess: () => {
                                           setHandledIds(prev => new Set(prev).add(notif.notification_id));
                                           toast({ type: 'info', title: 'Friend request declined' });

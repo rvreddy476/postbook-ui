@@ -289,7 +289,7 @@ export function GeneralTab() {
                     <p className="font-bold">This affects all platforms</p>
                     <p className="mt-0.5">
                       Changing your handle updates all links and @mentions across
-                      AtPost, Reels, and Posttube. Old links will redirect for 30 days.
+                      VChat, Reels, and Posttube. Old links will redirect for 30 days.
                     </p>
                     <p className="mt-1.5 font-medium">
                       You can change your handle once every 30 days.
