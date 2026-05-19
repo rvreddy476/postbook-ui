@@ -151,7 +151,11 @@ export interface RenditionInfo {
 
 export interface ViewEvent {
   reel_id: string;
+  /** Author of the reel — sent as creator_id on the analytics event. */
+  creator_id: string;
   source: "feed" | "explore" | "profile" | "direct" | "audio_page";
+  /** Defaults to "reel" when omitted. */
+  content_type?: "reel" | "long_video";
   watched_ms: number;
   duration_ms: number;
   completed: boolean;

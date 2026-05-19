@@ -189,6 +189,8 @@ export interface PostDetail {
     media?: { media_id: string; kind: string }[]
     cover_media_id?: string
     counts?: { likes: number; comments: number; shares?: number }
+    /** Display view count from analytics-service (videos/reels). */
+    view_count?: number
     viewer_reaction?: string | null
     location?: string | null
     location_name?: string | null

@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   uploadMedia,
+  uploadMediaResumable,
+  RESUMABLE_UPLOAD_THRESHOLD,
   createDraft,
   updateDraft,
   publishDraft,
@@ -213,7 +215,13 @@ export function useUploadStudio(contentType: ContentType) {
       if (!form.videoFile) throw new Error("No video selected");
       patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
 
-      const mediaId = await uploadMedia(form.videoFile, (pct) => patch({ uploadProgress: pct }));
+      // Large videos take the resumable (chunked) path so a dropped
+      // connection costs one 5 MB part, not the whole upload.
+      const upload =
+        form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD
+          ? uploadMediaResumable
+          : uploadMedia;
+      const mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
       patch({ uploadPhase: "creating_draft", mediaId });
 
       let draftId: string | null = null;

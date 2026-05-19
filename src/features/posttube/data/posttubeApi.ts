@@ -103,7 +103,7 @@ export function postDetailToVideo(post: PostDetail, authorInfo?: ResolvedAuthorI
     channel_name: authorInfo?.name || post.author_id,
     channel_avatar_url: authorInfo?.avatarUrl || `https://api.dicebear.com/9.x/lorelei/svg?seed=${post.author_id}`,
     channel_subscriber_count: authorInfo?.subscriberCount ?? 0,
-    view_count: post.counts?.likes ?? 0,
+    view_count: post.view_count ?? 0,
     like_count: sparkCount,
     dislike_count: 0,
     comment_count: post.counts?.comments ?? 0,

@@ -364,47 +364,46 @@ export function ReelsPage() {
 
   /* ── view tracking ──────────────────────────────── */
 
-  const viewStartRef = useRef<{ reelId: string; startTime: number } | null>(null);
+  const viewStartRef = useRef<{
+    reelId: string;
+    creatorId: string;
+    durationMs: number;
+    startTime: number;
+  } | null>(null);
+
+  // Emit a play_end view event for whichever reel the viewer just left.
+  const flushPendingView = useCallback(() => {
+    const pending = viewStartRef.current;
+    if (!pending) return;
+    const watchedMs = Date.now() - pending.startTime;
+    if (watchedMs <= 1000) return;
+    void trackView({
+      reel_id: pending.reelId,
+      creator_id: pending.creatorId,
+      source: "feed",
+      content_type: "reel",
+      watched_ms: watchedMs,
+      duration_ms: pending.durationMs,
+      completed: watchedMs >= pending.durationMs * 0.95,
+    });
+  }, []);
 
   useEffect(() => {
-    if (viewStartRef.current) {
-      const { reelId, startTime } = viewStartRef.current;
-      const watchedMs = Date.now() - startTime;
-      if (watchedMs > 1000) {
-        const reel = reels.find((r) => r.reel_id === reelId);
-        const durationMs = (reel?.duration_seconds ?? 30) * 1000;
-        void trackView({
-          reel_id: reelId,
-          source: "feed",
-          watched_ms: watchedMs,
-          duration_ms: durationMs,
-          completed: watchedMs >= durationMs * 0.95,
-        });
-      }
-    }
+    flushPendingView();
     if (activeReel) {
-      viewStartRef.current = { reelId: activeReel.reel_id, startTime: Date.now() };
+      viewStartRef.current = {
+        reelId: activeReel.reel_id,
+        creatorId: activeReel.author_id,
+        durationMs: (activeReel.duration_seconds ?? 30) * 1000,
+        startTime: Date.now(),
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReel?.reel_id]);
 
   useEffect(() => {
-    return () => {
-      if (viewStartRef.current) {
-        const { reelId, startTime } = viewStartRef.current;
-        const watchedMs = Date.now() - startTime;
-        if (watchedMs > 1000) {
-          void trackView({
-            reel_id: reelId,
-            source: "feed",
-            watched_ms: watchedMs,
-            duration_ms: 30000,
-            completed: false,
-          });
-        }
-      }
-    };
-  }, []);
+    return () => flushPendingView();
+  }, [flushPendingView]);
 
   /* ── loading state ─────────────────────────────── */
 
