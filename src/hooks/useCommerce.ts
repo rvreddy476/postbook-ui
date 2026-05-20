@@ -56,6 +56,17 @@ export type Order = {
   status: string
   created_at: string
   updated_at: string
+  // Phase 5 — optional B2B fields. Retail orders have these as null/undefined.
+  organization_id?: string | null
+  po_number?: string | null
+  cost_center?: string | null
+  invoice_email?: string | null
+  approval_status?: 'not_required' | 'pending' | 'approved' | 'rejected' | null
+  approved_by_user_id?: string | null
+  approved_at?: string | null
+  approval_notes?: string | null
+  credit_terms_days?: number
+  payment_due_date?: string | null
 }
 
 export type Shipment = {
@@ -495,10 +506,16 @@ export function useSetDefaultAddress() {
 
 export type CheckoutInput = {
   address_id: string
-  payment_method: 'prepaid' | 'cod'
+  payment_method: 'prepaid' | 'cod' | 'credit'
   coupon_code?: string
   gift_message?: string
   idempotency_key?: string
+  // Phase 5 — optional B2B context. When organization_id is set the
+  // backend applies the org's approval threshold + credit terms.
+  organization_id?: string
+  po_number?: string
+  cost_center?: string
+  invoice_email?: string
 }
 
 export function useCheckout() {
@@ -843,6 +860,203 @@ export function useSellerCODRemittances(status: string = '') {
     queryFn: async () =>
       (await api.get('/v1/commerce/seller/cod-remittances', { params: status ? { status } : {} })).data
         .data,
+  })
+}
+
+// ── Phase 5 — B2B / Organizations ─────────────────────────────────────
+
+export type OrgRole = 'admin' | 'buyer' | 'approver' | 'finance'
+
+export type Organization = {
+  id: string
+  name: string
+  legal_name?: string | null
+  gstin?: string | null
+  pan?: string | null
+  billing_email?: string | null
+  billing_phone?: string | null
+  billing_address_id?: string | null
+  approval_threshold?: number | null
+  credit_terms_days: number
+  credit_limit?: number | null
+  status: string
+  created_by_user_id?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type OrganizationMember = {
+  id: string
+  organization_id: string
+  user_id: string
+  role: OrgRole
+  status: 'invited' | 'active' | 'removed'
+  invited_email?: string | null
+  invited_at: string
+  joined_at?: string | null
+}
+
+export type OrganizationInvite = {
+  id: string
+  organization_id: string
+  email: string
+  role: OrgRole
+  token: string
+  invited_by: string
+  expires_at: string
+  accepted_at?: string | null
+  created_at: string
+}
+
+export function useMyOrganizations() {
+  return useQuery<{ organizations: Organization[] }>({
+    queryKey: ['commerce', 'organizations', 'me'],
+    queryFn: async () => (await api.get('/v1/commerce/organizations/me')).data.data,
+  })
+}
+
+export function useOrganization(orgId: string | undefined) {
+  return useQuery<Organization>({
+    queryKey: ['commerce', 'organizations', orgId],
+    queryFn: async () => (await api.get(`/v1/commerce/organizations/${orgId}`)).data.data,
+    enabled: !!orgId,
+  })
+}
+
+export function useOrganizationMembers(orgId: string | undefined) {
+  return useQuery<{ members: OrganizationMember[] }>({
+    queryKey: ['commerce', 'organizations', orgId, 'members'],
+    queryFn: async () => (await api.get(`/v1/commerce/organizations/${orgId}/members`)).data.data,
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateOrganization() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: {
+      name: string
+      legal_name?: string
+      gstin?: string
+      pan?: string
+      billing_email?: string
+      billing_phone?: string
+      approval_threshold?: number
+      credit_terms_days?: number
+      credit_limit?: number
+    }) => (await api.post('/v1/commerce/organizations', payload)).data.data as Organization,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'organizations'] }),
+  })
+}
+
+export function useUpdateOrganization() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      orgId,
+      patch,
+    }: {
+      orgId: string
+      patch: Partial<Organization>
+    }) => (await api.patch(`/v1/commerce/organizations/${orgId}`, patch)).data.data,
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'organizations', vars.orgId] }),
+  })
+}
+
+export function useInviteOrgMember() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      orgId,
+      email,
+      role,
+    }: {
+      orgId: string
+      email: string
+      role: OrgRole
+    }) =>
+      (await api.post(`/v1/commerce/organizations/${orgId}/members`, { email, role })).data
+        .data as OrganizationInvite,
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'organizations', vars.orgId, 'members'] }),
+  })
+}
+
+export function useUpdateOrgMemberRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      orgId,
+      userId,
+      role,
+    }: {
+      orgId: string
+      userId: string
+      role: OrgRole
+    }) =>
+      api.patch(`/v1/commerce/organizations/${orgId}/members/${userId}`, { role }),
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'organizations', vars.orgId, 'members'] }),
+  })
+}
+
+export function useRemoveOrgMember() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ orgId, userId }: { orgId: string; userId: string }) =>
+      api.delete(`/v1/commerce/organizations/${orgId}/members/${userId}`),
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'organizations', vars.orgId, 'members'] }),
+  })
+}
+
+export function useAcceptOrgInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (token: string) =>
+      (await api.post(`/v1/commerce/organizations/invites/${token}/accept`)).data.data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'organizations'] }),
+  })
+}
+
+export function useOrgPendingApprovals(orgId: string | undefined) {
+  return useQuery<{ orders: Order[] }>({
+    queryKey: ['commerce', 'organizations', orgId, 'pending-approvals'],
+    queryFn: async () =>
+      (await api.get(`/v1/commerce/organizations/${orgId}/orders/pending-approval`)).data.data,
+    enabled: !!orgId,
+  })
+}
+
+export function useOrgOrders(orgId: string | undefined, status: string = '') {
+  return useQuery<{ orders: Order[] }>({
+    queryKey: ['commerce', 'organizations', orgId, 'orders', status],
+    queryFn: async () =>
+      (
+        await api.get(`/v1/commerce/organizations/${orgId}/orders`, {
+          params: status ? { status } : {},
+        })
+      ).data.data,
+    enabled: !!orgId,
+  })
+}
+
+export function useApproveOrgOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ orderId, notes }: { orderId: string; notes?: string }) =>
+      (await api.post(`/v1/commerce/orders/${orderId}/approve`, { notes })).data.data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'organizations'] }),
+  })
+}
+
+export function useRejectOrgOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) =>
+      (await api.post(`/v1/commerce/orders/${orderId}/reject`, { reason })).data.data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'organizations'] }),
   })
 }
 
