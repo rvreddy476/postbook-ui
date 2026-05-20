@@ -414,12 +414,32 @@ export function useCreatePaymentIntent() {
 // synchronous happy-path: a Razorpay webhook → commerce-service Kafka
 // consumer is the resilient backup if the user closes the browser before
 // this fires.
+// useConfirmPayment posts the signed Razorpay handler response to
+// commerce-service. The backend (Phase 0.1) requires the signature triple
+// so it can ask payments-service to HMAC-verify before marking the order
+// paid — the old `{payment_id, gateway}`-only shape is rejected as 400.
+//
+// `gateway: 'stub'` is only accepted when the backend was started with
+// PAYMENTS_ALLOW_STUB=true; production builds gate the stub path off
+// before calling this hook (see app/checkout/page.tsx).
 export function useConfirmPayment() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { order_id: string; payment_id: string; gateway?: string }) =>
+    mutationFn: async (input: {
+      order_id: string
+      payment_intent_id: string
+      razorpay_order_id: string
+      razorpay_payment_id: string
+      razorpay_signature: string
+      amount_minor: number
+      gateway?: string
+    }) =>
       (await api.post(`/v1/commerce/orders/${input.order_id}/payment/confirm`, {
-        payment_id: input.payment_id,
+        payment_intent_id: input.payment_intent_id,
+        razorpay_order_id: input.razorpay_order_id,
+        razorpay_payment_id: input.razorpay_payment_id,
+        razorpay_signature: input.razorpay_signature,
+        amount_minor: input.amount_minor,
         gateway: input.gateway ?? 'razorpay',
       })).data,
     onSuccess: (_, vars) => {
