@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -251,22 +251,39 @@ export function useCreateReview() {
 
 // ── Returns ───────────────────────────────────────────────────────────
 
+export interface CreateReturnItem {
+  order_item_id: string
+  seller_id: string
+  reason_code: string
+  reason_description?: string
+}
+
+// useCreateReturn supports both the legacy single-item shape and the
+// Phase-2.3 multi-item shape ({items:[...]}). The backend accepts both —
+// pass `items` for multi-item bulk creation, or the top-level fields for
+// a single-item create.
 export function useCreateReturn() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: {
-      order_id: string
-      order_item_id: string
-      seller_id: string
-      reason_code: string
-      reason_description?: string
-    }) =>
-      (await api.post(`/v1/commerce/orders/${input.order_id}/returns`, {
-        order_item_id: input.order_item_id,
-        seller_id: input.seller_id,
-        reason_code: input.reason_code,
-        reason_description: input.reason_description,
-      })).data.data as ReturnRequest,
+    mutationFn: async (
+      input:
+        | {
+            order_id: string
+            order_item_id: string
+            seller_id: string
+            reason_code: string
+            reason_description?: string
+          }
+        | {
+            order_id: string
+            items: CreateReturnItem[]
+            pickup_address_id?: string
+          },
+    ) => {
+      const { order_id, ...body } = input as { order_id: string } & Record<string, unknown>
+      const res = await api.post(`/v1/commerce/orders/${order_id}/returns`, body)
+      return res.data.data
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['commerce', 'returns'] })
       qc.invalidateQueries({ queryKey: ['commerce', 'orders'] })
@@ -278,6 +295,17 @@ export function useMyReturns() {
   return useQuery<ReturnRequest[]>({
     queryKey: ['commerce', 'returns'],
     queryFn: async () => (await api.get('/v1/commerce/me/returns')).data.data ?? [],
+  })
+}
+
+// useReturn fetches a single return by id — Phase 2.2. Replaces the
+// mobile "list /me/returns and find the one I want" workaround.
+export function useReturn(returnId: string | undefined) {
+  return useQuery<ReturnRequest>({
+    queryKey: ['commerce', 'return', returnId],
+    enabled: !!returnId,
+    queryFn: async () =>
+      (await api.get(`/v1/commerce/returns/${returnId}`)).data.data as ReturnRequest,
   })
 }
 
@@ -561,10 +589,53 @@ export function useConfirmPayment() {
   })
 }
 
+// OrderCard is the rich order-list shape returned by GET /v1/commerce/orders
+// (Phase 2.1). Adds item / seller counts and the first item so the customer
+// can tell orders apart without opening every one. Older Order callers stay
+// compatible because the extra fields are additive.
+export interface OrderCard {
+  id: string
+  order_number: string
+  final_amount: number
+  currency: string
+  payment_method?: string | null
+  payment_status: string
+  status: string
+  item_count: number
+  seller_count: number
+  first_product_id?: string | null
+  first_product_title?: string
+  created_at: string
+}
+
+// useOrders returns the first page of order cards. For paginated screens
+// use useInfiniteOrders below — keyset cursors avoid the offset COUNT(*)
+// table-scan the old offset/limit path forced on every page.
 export function useOrders() {
-  return useQuery<Order[]>({
+  return useQuery<OrderCard[]>({
     queryKey: ['commerce', 'orders'],
-    queryFn: async () => (await api.get('/v1/commerce/orders')).data.data ?? [],
+    queryFn: async () =>
+      ((await api.get('/v1/commerce/orders?limit=20')).data.data as OrderCard[]) ?? [],
+  })
+}
+
+// useInfiniteOrders threads next_cursor through getNextPageParam so the
+// customer order-list screen can scroll without re-counting the whole
+// orders table per page.
+export function useInfiniteOrders(pageSize = 20) {
+  return useInfiniteQuery<{ items: OrderCard[]; nextCursor: string | null }>({
+    queryKey: ['commerce', 'orders', 'infinite', pageSize],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams({ limit: String(pageSize) })
+      if (pageParam) params.set('cursor', String(pageParam))
+      const res = await api.get(`/v1/commerce/orders?${params.toString()}`)
+      return {
+        items: (res.data.data as OrderCard[]) ?? [],
+        nextCursor: (res.data.meta?.next_cursor as string | undefined) || null,
+      }
+    },
+    getNextPageParam: (last) => last.nextCursor,
   })
 }
 
