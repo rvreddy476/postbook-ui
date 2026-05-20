@@ -705,6 +705,147 @@ export function useSellerOrders() {
   })
 }
 
+// SellerOrderCard mirrors the Phase 4.2 commerce-service DTO — seller-scoped
+// items + their shipment in one payload so the fulfillment dashboard avoids
+// fanning out a separate request per order.
+export type FulfillmentStage = 'all' | 'unshipped' | 'in_transit' | 'delivered' | 'cancelled'
+
+export type SellerOrderCard = {
+  order: Order
+  items: OrderItem[]
+  shipment?: Shipment | null
+  seller_subtotal: number
+  delivery_address?: string | null // raw JSON snapshot, base64 or string
+}
+
+export function useSellerFulfillment(stage: FulfillmentStage = 'all') {
+  return useQuery<{ orders: SellerOrderCard[]; stage: FulfillmentStage }>({
+    queryKey: ['commerce', 'seller', 'fulfillment', stage],
+    queryFn: async () =>
+      (await api.get('/v1/commerce/seller/fulfillment', { params: { stage } })).data.data,
+  })
+}
+
+export function useSellerOrderDetail(orderId: string | undefined) {
+  return useQuery<SellerOrderCard>({
+    queryKey: ['commerce', 'seller', 'order', orderId],
+    queryFn: async () => (await api.get(`/v1/commerce/seller/orders/${orderId}`)).data.data,
+    enabled: !!orderId,
+  })
+}
+
+// ── Seller returns inbox (Phase 4.3) ──────────────────────────────────
+
+export type ReturnStatus = '' | 'requested' | 'approved' | 'rejected' | 'refunded'
+
+export type SellerReturnCard = {
+  return: {
+    id: string
+    order_id: string
+    order_item_id: string
+    customer_user_id: string
+    seller_id: string
+    reason_code: string
+    reason_description?: string | null
+    status: string
+    approved_at?: string | null
+    rejected_at?: string | null
+    rejection_reason?: string | null
+    requested_at: string
+    refund_amount?: number | null
+  }
+  order_item?: OrderItem
+  order?: Order
+}
+
+export function useSellerReturns(status: ReturnStatus = '') {
+  return useQuery<{ returns: SellerReturnCard[]; status: string }>({
+    queryKey: ['commerce', 'seller', 'returns', status],
+    queryFn: async () =>
+      (await api.get('/v1/commerce/seller/returns', { params: status ? { status } : {} })).data.data,
+  })
+}
+
+export function useReturnRefundPreview(returnId: string | undefined) {
+  return useQuery<{ refund_amount: number }>({
+    queryKey: ['commerce', 'return', returnId, 'refund-preview'],
+    queryFn: async () =>
+      (await api.get(`/v1/commerce/returns/${returnId}/refund-preview`)).data.data,
+    enabled: !!returnId,
+    retry: false,
+  })
+}
+
+export function useApproveReturn() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (returnId: string) =>
+      (await api.post(`/v1/commerce/returns/${returnId}/approve`)).data.data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'seller', 'returns'] }),
+  })
+}
+
+export function useRejectReturn() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ returnId, reason }: { returnId: string; reason: string }) =>
+      (await api.post(`/v1/commerce/returns/${returnId}/reject`, { reason })).data.data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'seller', 'returns'] }),
+  })
+}
+
+// ── Seller earnings (Phase 4.4) ───────────────────────────────────────
+
+export type SellerEarning = {
+  order_item_id: string
+  order_id: string
+  order_number: string
+  product_title: string
+  sku: string
+  quantity: number
+  gross_amount: number
+  commission_amount: number
+  platform_fee: number
+  tds_amount: number
+  net_amount: number
+  payment_method?: string | null
+  status: string
+  delivered_at?: string | null
+}
+
+export function useSellerEarnings(limit = 50, offset = 0) {
+  return useQuery<{ earnings: SellerEarning[] }>({
+    queryKey: ['commerce', 'seller', 'earnings', limit, offset],
+    queryFn: async () =>
+      (await api.get('/v1/commerce/seller/earnings', { params: { limit, offset } })).data.data,
+  })
+}
+
+export type SellerCODRemittance = {
+  id: string
+  shipment_id: string
+  order_id: string
+  seller_id: string
+  gross_amount: number
+  commission_amount: number
+  platform_fee: number
+  tds_amount: number
+  net_amount: number
+  currency_code: string
+  status: string
+  delivered_at: string
+  settled_at?: string | null
+}
+
+export function useSellerCODRemittances(status: string = '') {
+  return useQuery<{ items: SellerCODRemittance[]; total: number }>({
+    queryKey: ['commerce', 'seller', 'cod-remittances', status],
+    queryFn: async () =>
+      (await api.get('/v1/commerce/seller/cod-remittances', { params: status ? { status } : {} })).data
+        .data,
+  })
+}
+
 export function useBookShipment() {
   const qc = useQueryClient()
   return useMutation({

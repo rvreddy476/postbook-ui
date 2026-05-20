@@ -111,10 +111,11 @@ export default function SellerDashboardPage() {
 
           {/* Quick actions */}
           {isApproved && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <ActionCard title="Products" desc="Manage your product catalog" href="/seller/products" icon="📦" />
-              <ActionCard title="Orders" desc="View and fulfill orders" href="/seller/orders" icon="🧾" />
-              <ActionCard title="Payouts" desc="View earnings & payout history" href="/seller/payouts" icon="💳" />
+              <ActionCard title="Fulfillment" desc="Ship, label, track" href="/seller/fulfillment" icon="🚚" />
+              <ActionCard title="Returns" desc="Approve & resolve" href="/seller/returns" icon="↩️" />
+              <ActionCard title="Earnings" desc="Ledger & statements" href="/seller/earnings" icon="💰" />
             </div>
           )}
 
