@@ -308,6 +308,118 @@ export function useRemoveFromCart() {
   })
 }
 
+// useUpdateCartItem (Phase 1.2) — atomic set-to-N for a variant. Quantity
+// 0 deletes the line. Server upserts under a single row-level write, so
+// concurrent calls converge instead of racing (the old mobile delete+add
+// roundtrip could briefly empty the cart).
+export function useUpdateCartItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { variant_id: string; quantity: number }) =>
+      (
+        await api.patch(`/v1/commerce/cart/items/by-variant/${input.variant_id}`, {
+          quantity: input.quantity,
+        })
+      ).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'cart'] }),
+  })
+}
+
+// ── Checkout quote (Phase 1.1) ────────────────────────────────────────
+
+export interface QuoteItem {
+  variant_id: string
+  product_id: string
+  seller_id: string
+  product_title: string
+  sku?: string
+  quantity: number
+  unit_price: number
+  line_subtotal: number
+}
+
+export interface UnavailableQuoteItem {
+  variant_id: string
+  product_id: string
+  product_title: string
+  available: number
+  requested: number
+}
+
+export interface CheckoutQuote {
+  subtotal: number
+  coupon_discount: number
+  coupon_code?: string
+  shipping: number
+  tax: number
+  grand_total: number
+  currency: string
+  items: QuoteItem[]
+  unavailable_items: UnavailableQuoteItem[]
+  cod_eligible: boolean
+  serviceable: boolean
+  seller_ids: string[]
+}
+
+// useCheckoutQuote returns the server-authoritative pricing for the
+// current cart. Mobile + web must render this BEFORE "Place order" so the
+// client never recomputes prices locally — the audit found the mobile
+// commerce_repository was doing exactly that.
+export function useCheckoutQuote(input: {
+  address_id: string
+  payment_method: 'prepaid' | 'cod'
+  coupon_code?: string
+} | null) {
+  return useQuery<CheckoutQuote | null>({
+    queryKey: ['commerce', 'checkout-quote', input],
+    enabled: !!input,
+    queryFn: async () => {
+      if (!input) return null
+      const res = await api.post('/v1/commerce/checkout/quote', input)
+      return res.data.data as CheckoutQuote
+    },
+  })
+}
+
+// ── Serviceability (Phase 1.3) ────────────────────────────────────────
+
+export interface ServiceabilityResult {
+  serviceable: boolean
+  cod_supported: boolean
+  estimated_days: number
+  estimated_eta: string
+  courier: string
+  reason?: string
+}
+
+// useServiceability fetches the courier-backed serviceability for a
+// pincode + product. Replaces the mobile pincode heuristic — production
+// uses the seller's pickup pincode and the product weight.
+export function useServiceability(args: {
+  pincode: string
+  product_id: string
+  variant_id?: string
+  seller_id?: string
+  payment_method?: 'prepaid' | 'cod'
+} | null) {
+  return useQuery<ServiceabilityResult | null>({
+    queryKey: ['commerce', 'serviceability', args],
+    enabled: !!args && args.pincode.length === 6,
+    queryFn: async () => {
+      if (!args) return null
+      const params = new URLSearchParams({
+        pincode: args.pincode,
+        product_id: args.product_id,
+      })
+      if (args.variant_id) params.set('variant_id', args.variant_id)
+      if (args.seller_id) params.set('seller_id', args.seller_id)
+      if (args.payment_method) params.set('payment_method', args.payment_method)
+      const res = await api.get(`/v1/commerce/serviceability?${params.toString()}`)
+      return res.data.data as ServiceabilityResult
+    },
+  })
+}
+
 // ── Addresses ─────────────────────────────────────────────────────────
 
 export function useAddresses() {
