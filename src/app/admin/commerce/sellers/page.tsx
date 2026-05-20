@@ -1,8 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
+
+interface KYCCheck {
+  field: string
+  status: "valid" | "invalid" | "skipped"
+  message?: string
+  source: string
+}
+interface KYCReport {
+  checks: KYCCheck[]
+  all_valid: boolean
+}
 
 // X-Scopes is the same admin gate the existing /admin page uses; the
 // commerce-service doesn't enforce a role itself but the gateway does.
@@ -83,6 +94,33 @@ export default function AdminSellerQueuePage() {
     },
   })
 
+  // Phase 3.2 — run the configured KYC adapter against the seller's GSTIN /
+  // PAN / bank / UPI. The verdict updates verification_status server-side;
+  // the per-field report is shown inline so the admin can spot a "stub"
+  // source and refuse to approve without a production adapter.
+  const [kycReport, setKycReport] = useState<KYCReport | null>(null)
+  const [kycError, setKycError] = useState<string | null>(null)
+  const verifyKYC = useMutation({
+    mutationFn: async (id: string): Promise<KYCReport> =>
+      (await api.post(`/v1/commerce/internal/sellers/${id}/kyc/verify`, {}, { headers: ADMIN_HEADERS }))
+        .data.data,
+    onSuccess: (rep) => {
+      setKycReport(rep)
+      setKycError(null)
+      qc.invalidateQueries({ queryKey: ["admin", "commerce", "sellers", "queue"] })
+    },
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "KYC verification failed"
+      setKycReport(null)
+      setKycError(message)
+    },
+  })
+
+  useEffect(() => {
+    setKycReport(null)
+    setKycError(null)
+  }, [actionFor])
+
   const sellers = data?.sellers ?? []
 
   return (
@@ -153,6 +191,71 @@ export default function AdminSellerQueuePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold">Review seller</h2>
+
+            {/* KYC verification panel */}
+            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    KYC verification
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Runs GSTIN / PAN / bank / UPI checks via the configured adapter.
+                  </p>
+                </div>
+                <button
+                  onClick={() => actionFor && verifyKYC.mutate(actionFor)}
+                  disabled={verifyKYC.isPending}
+                  className="rounded-md border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-900 hover:bg-blue-100 disabled:opacity-40"
+                >
+                  {verifyKYC.isPending ? "Running…" : "Run KYC"}
+                </button>
+              </div>
+              {kycError && (
+                <p className="mt-2 text-xs text-red-600">{kycError}</p>
+              )}
+              {kycReport && (
+                <div className="mt-3 space-y-1.5">
+                  <div className="text-xs">
+                    Verdict:{" "}
+                    <span
+                      className={`font-bold ${kycReport.all_valid ? "text-emerald-700" : "text-red-700"}`}
+                    >
+                      {kycReport.all_valid ? "ALL VALID" : "INCOMPLETE"}
+                    </span>
+                  </div>
+                  {kycReport.checks.some((c) => c.source === "stub") && (
+                    <p className="text-[11px] text-amber-700">
+                      ⚠ At least one check used the <span className="font-mono">stub</span> adapter
+                      — format-only verification, no issuer lookup. Do not approve as fully
+                      verified.
+                    </p>
+                  )}
+                  <ul className="text-xs space-y-0.5">
+                    {kycReport.checks.map((c) => (
+                      <li key={c.field} className="flex items-center gap-2">
+                        <span className="font-mono uppercase text-gray-500 w-24">{c.field}</span>
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            c.status === "valid"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : c.status === "invalid"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                        <span className="text-gray-500">({c.source})</span>
+                        {c.message && (
+                          <span className="text-gray-400 truncate">— {c.message}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
 
             <div className="mt-4 space-y-3">
               <label className="block">

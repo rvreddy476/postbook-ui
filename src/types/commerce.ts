@@ -74,7 +74,16 @@ export interface DashboardStats {
   seller_status: SellerStatus
 }
 
-export type ProductStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'live' | 'hidden' | 'archived'
+export type ProductStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'live'
+  | 'hidden'
+  | 'archived'
+  | 'rejected'
+  | 'changes_requested'
 
 export interface Product {
   id: string

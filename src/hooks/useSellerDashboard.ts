@@ -40,26 +40,95 @@ export function useSubmitProduct() {
   })
 }
 
+// CreateProductPayload mirrors commerce-service `createProductReq` after the
+// Phase 3.1 expansion — every column the seller wizard exposes. Optional
+// fields are omitted from the JSON when empty so the backend treats them as
+// unset rather than zero-valued.
+export type CreateProductPayload = {
+  title: string
+  short_title?: string
+  description?: string
+  short_description?: string
+  category_id?: string
+  brand_id?: string
+  tax_class_id?: string
+  brand_name?: string
+  manufacturer_name?: string
+  product_type?: string
+  condition?: string
+  return_policy_type?: string
+  return_policy_days?: number
+  hsn_code?: string
+  primary_image_media_id?: string
+  video_media_id?: string
+  weight_grams?: number
+  length_cm?: number
+  width_cm?: number
+  height_cm?: number
+  country_of_origin?: string
+  warranty_info?: string
+  search_keywords?: string[]
+  meta_title?: string
+  meta_description?: string
+  variants: Array<{
+    sku: string
+    mrp: number
+    selling_price: number
+    stock_qty?: number
+    cost_price?: number
+    option_1_name?: string
+    option_1_value?: string
+    option_2_name?: string
+    option_2_value?: string
+    option_3_name?: string
+    option_3_value?: string
+  }>
+}
+
 export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: {
-      title: string
-      description?: string
-      category_id?: string
-      product_type?: string
-      variants: Array<{
-        sku: string
-        mrp: number
-        selling_price: number
-        stock_qty?: number
-        option_1_name?: string
-        option_1_value?: string
-      }>
-    }) => {
+    mutationFn: async (payload: CreateProductPayload) => {
       const res = await api.post<{ data: Product }>('/v1/commerce/products', payload)
       return res.data.data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['seller', 'products'] }),
+  })
+}
+
+// useAddProductMedia attaches an already-uploaded media asset to the
+// product's gallery. Used by the Phase 3.3 multi-step wizard after each
+// image/video upload completes — the server stores the gallery row, then
+// the wizard moves on to the next file.
+export function useAddProductMedia() {
+  return useMutation({
+    mutationFn: async (args: {
+      productId: string
+      mediaId: string
+      mediaType?: 'image' | 'video'
+      sortOrder?: number
+    }) => {
+      const { productId, mediaId, mediaType = 'image', sortOrder = 0 } = args
+      await api.post(`/v1/commerce/products/${productId}/media`, {
+        media_id: mediaId,
+        media_type: mediaType,
+        sort_order: sortOrder,
+      })
+    },
+  })
+}
+
+// useSetProductAttributes replaces the product's attribute set atomically.
+// Used at the end of the wizard with the key/value pairs the seller filled.
+export function useSetProductAttributes() {
+  return useMutation({
+    mutationFn: async (args: {
+      productId: string
+      attributes: Array<{ name: string; value: string; unit?: string }>
+    }) => {
+      await api.put(`/v1/commerce/products/${args.productId}/attributes`, {
+        attributes: args.attributes,
+      })
+    },
   })
 }
