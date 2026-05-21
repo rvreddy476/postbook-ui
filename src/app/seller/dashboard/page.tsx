@@ -116,6 +116,8 @@ export default function SellerDashboardPage() {
               <ActionCard title="Fulfillment" desc="Ship, label, track" href="/seller/fulfillment" icon="🚚" />
               <ActionCard title="Returns" desc="Approve & resolve" href="/seller/returns" icon="↩️" />
               <ActionCard title="Earnings" desc="Ledger & statements" href="/seller/earnings" icon="💰" />
+              <ActionCard title="Bulk Import" desc="Upload products by CSV" href="/seller/bulk-import" icon="⬆️" />
+              <ActionCard title="RFQ Inbox" desc="Custom quote requests" href="/seller/rfqs" icon="📝" />
             </div>
           )}
 

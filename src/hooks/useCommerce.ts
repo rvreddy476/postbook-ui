@@ -1092,3 +1092,257 @@ export function useInvoice(orderId: string | undefined) {
     retry: false,
   })
 }
+
+// ── Phase F2.1 — Variant tier pricing ─────────────────────────────────
+
+export type PriceTier = {
+  id: string
+  variant_id: string
+  min_qty: number
+  max_qty?: number | null
+  price: number
+  created_at: string
+  updated_at: string
+}
+
+export function usePriceTiers(variantId: string | undefined) {
+  return useQuery<{ tiers: PriceTier[] }>({
+    queryKey: ['commerce', 'variants', variantId, 'price-tiers'],
+    queryFn: async () =>
+      (await api.get(`/v1/commerce/variants/${variantId}/price-tiers`)).data.data,
+    enabled: !!variantId,
+  })
+}
+
+export function useSetPriceTiers() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      variantId,
+      tiers,
+    }: {
+      variantId: string
+      tiers: Array<{ min_qty: number; max_qty?: number | null; price: number }>
+    }) =>
+      (await api.put(`/v1/commerce/variants/${variantId}/price-tiers`, { tiers })).data.data,
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'variants', vars.variantId, 'price-tiers'] }),
+  })
+}
+
+// ── Phase F2.2 — RFQ (Request For Quote) ──────────────────────────────
+
+export type RFQ = {
+  id: string
+  buyer_user_id: string
+  organization_id?: string | null
+  seller_id: string
+  status: 'requested' | 'quoted' | 'accepted' | 'expired' | 'rejected' | 'cancelled'
+  message_text?: string | null
+  requested_at: string
+  expires_at: string
+  created_at: string
+}
+
+export type RFQItem = {
+  id: string
+  rfq_id: string
+  variant_id: string
+  quantity: number
+  notes?: string | null
+}
+
+export type RFQQuote = {
+  id: string
+  rfq_id: string
+  quoted_total: number
+  line_prices: Array<{
+    rfq_item_id: string
+    variant_id: string
+    quantity: number
+    unit_price: number
+    line_total: number
+  }>
+  validity_days: number
+  quoted_at: string
+  expires_at: string
+  accepted_at?: string | null
+  order_id?: string | null
+}
+
+export function useMyRFQs() {
+  return useQuery<{ rfqs: RFQ[] }>({
+    queryKey: ['commerce', 'rfqs', 'me'],
+    queryFn: async () => (await api.get('/v1/commerce/rfqs')).data.data,
+  })
+}
+
+export function useSellerRFQs(status: string = '') {
+  return useQuery<{ rfqs: RFQ[] }>({
+    queryKey: ['commerce', 'seller', 'rfqs', status],
+    queryFn: async () =>
+      (await api.get('/v1/commerce/seller/rfqs', { params: status ? { status } : {} })).data.data,
+  })
+}
+
+export function useRFQ(rfqId: string | undefined) {
+  return useQuery<{ rfq: RFQ; items: RFQItem[]; quotes: RFQQuote[] }>({
+    queryKey: ['commerce', 'rfqs', rfqId],
+    queryFn: async () => (await api.get(`/v1/commerce/rfqs/${rfqId}`)).data.data,
+    enabled: !!rfqId,
+  })
+}
+
+export function useCreateRFQ() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: {
+      seller_id: string
+      organization_id?: string
+      message?: string
+      items: Array<{ variant_id: string; quantity: number; notes?: string }>
+    }) =>
+      (await api.post('/v1/commerce/rfqs', payload)).data.data as { rfq: RFQ; items: RFQItem[] },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'rfqs'] }),
+  })
+}
+
+export function useSendRFQQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      rfqId,
+      validityDays,
+      linePrices,
+    }: {
+      rfqId: string
+      validityDays: number
+      linePrices: Array<{ rfq_item_id: string; unit_price: number }>
+    }) =>
+      (await api.post(`/v1/commerce/rfqs/${rfqId}/quote`, {
+        validity_days: validityDays,
+        line_prices: linePrices,
+      })).data.data as RFQQuote,
+    onSuccess: (_, vars) =>
+      qc.invalidateQueries({ queryKey: ['commerce', 'rfqs', vars.rfqId] }),
+  })
+}
+
+export function useAcceptRFQQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      rfqId,
+      quoteId,
+      addressId,
+      paymentMethod = 'prepaid',
+      poNumber,
+      costCenter,
+      invoiceEmail,
+    }: {
+      rfqId: string
+      quoteId: string
+      addressId: string
+      paymentMethod?: 'prepaid' | 'cod' | 'credit'
+      poNumber?: string
+      costCenter?: string
+      invoiceEmail?: string
+    }) =>
+      (await api.post(`/v1/commerce/rfqs/${rfqId}/quotes/${quoteId}/accept`, {
+        address_id: addressId,
+        payment_method: paymentMethod,
+        po_number: poNumber,
+        cost_center: costCenter,
+        invoice_email: invoiceEmail,
+      })).data.data as Order,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'rfqs'] }),
+  })
+}
+
+export function useRejectRFQ() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ rfqId, reason }: { rfqId: string; reason: string }) =>
+      api.post(`/v1/commerce/rfqs/${rfqId}/reject`, { reason }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commerce', 'rfqs'] }),
+  })
+}
+
+// ── Phase F2.3 — Bulk SKU upload ──────────────────────────────────────
+
+export type BulkImportJob = {
+  id: string
+  seller_id: string
+  filename: string
+  status:
+    | 'uploaded'
+    | 'validating'
+    | 'validation_failed'
+    | 'ready_to_import'
+    | 'importing'
+    | 'partially_imported'
+    | 'completed'
+    | 'failed'
+  total_rows: number
+  valid_rows: number
+  imported_rows: number
+  error_rows: number
+  error_file_id?: string | null
+  created_at: string
+  completed_at?: string | null
+}
+
+export function useBulkImportJobs() {
+  return useQuery<{ jobs: BulkImportJob[] }>({
+    queryKey: ['commerce', 'seller', 'bulk-import'],
+    queryFn: async () => (await api.get('/v1/commerce/seller/bulk-import')).data.data,
+  })
+}
+
+export function useBulkImportJob(jobId: string | undefined) {
+  return useQuery<BulkImportJob>({
+    queryKey: ['commerce', 'seller', 'bulk-import', jobId],
+    queryFn: async () => (await api.get(`/v1/commerce/seller/bulk-import/${jobId}`)).data.data,
+    enabled: !!jobId,
+    // Refetch every 2s while job is in flight so the UI sees progress.
+    refetchInterval: (q) => {
+      const data = q.state.data
+      if (!data) return false
+      return ['validating', 'importing'].includes(data.status) ? 2000 : false
+    },
+  })
+}
+
+export function useInitiateBulkUpload() {
+  return useMutation({
+    mutationFn: async (filename: string) =>
+      (await api.post('/v1/commerce/seller/bulk-import/presigned-url', { filename })).data.data as {
+        job_id: string
+        upload_url: string
+        job: BulkImportJob
+      },
+  })
+}
+
+export function useMarkBulkUploadComplete() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (jobId: string) =>
+      api.post(`/v1/commerce/seller/bulk-import/${jobId}/upload-complete`),
+    onSuccess: (_, jobId) => {
+      qc.invalidateQueries({ queryKey: ['commerce', 'seller', 'bulk-import', jobId] })
+      qc.invalidateQueries({ queryKey: ['commerce', 'seller', 'bulk-import'] })
+    },
+  })
+}
+
+export function useExecuteBulkImport() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (jobId: string) =>
+      api.post(`/v1/commerce/seller/bulk-import/${jobId}/execute`),
+    onSuccess: (_, jobId) => {
+      qc.invalidateQueries({ queryKey: ['commerce', 'seller', 'bulk-import', jobId] })
+    },
+  })
+}
