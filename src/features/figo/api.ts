@@ -404,11 +404,31 @@ export async function createFigoPaymentIntent(
   return res.data?.data
 }
 
+// P0.1 — the FiGo confirm-payment body MUST carry the Razorpay
+// signature triple for ONLINE orders. Backend now refuses to mark an
+// order paid without it (no more direct status PATCH from the
+// customer-facing path). Wallet/COD confirms keep working without
+// signature fields.
+export type ConfirmFigoPaymentInput = {
+  provider_payment_id?: string
+  provider_reference?: string
+  // Razorpay signature triple — required for ONLINE.
+  razorpay_order_id?: string
+  razorpay_payment_id?: string
+  razorpay_signature?: string
+  amount_minor?: number
+}
+
 export async function confirmFigoPayment(
   orderId: string,
-  input: { provider_payment_id?: string; provider_reference?: string } = {},
+  input: ConfirmFigoPaymentInput = {},
 ): Promise<FigoOrder> {
-  const res = await api.post(`/v1/food/orders/${orderId}/payments/confirm`, input)
+  const res = await api.post(`/v1/food/orders/${orderId}/payments/confirm`, input, {
+    // Idempotency key dedupes the confirm if Razorpay's callback +
+    // our explicit confirm fire concurrently (common race on
+    // production checkouts).
+    headers: { "Idempotency-Key": idempotencyKey() },
+  })
   return res.data?.data
 }
 

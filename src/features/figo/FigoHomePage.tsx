@@ -395,9 +395,19 @@ function CheckoutPanel() {
               description: `Order ${order.order_number}`,
               theme: { color: "#c2410c" },
             })
+            // P0.1 — backend refuses online confirm without the
+            // signature triple. The previous body only carried
+            // provider_payment_id / provider_reference and let the
+            // server force-update the payment intent to succeeded;
+            // now the server forwards the triple to payments-service
+            // for HMAC verification + amount check before persisting.
             await confirmFigoPayment(order.id, {
               provider_payment_id: payment.razorpay_payment_id,
               provider_reference: payment.razorpay_order_id,
+              razorpay_order_id: payment.razorpay_order_id,
+              razorpay_payment_id: payment.razorpay_payment_id,
+              razorpay_signature: payment.razorpay_signature,
+              amount_minor: Math.round(order.totals.final_amount * 100),
             })
           }
         }
