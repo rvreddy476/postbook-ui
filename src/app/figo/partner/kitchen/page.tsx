@@ -6,13 +6,18 @@
 // nearest-deadline first. Each row shows a live countdown until the
 // SLA-breach auto-reject worker (B1) trips. Accept / reject inline.
 //
-// Polling refresh runs at 5s (matches the existing pattern in
-// useFoodKitchenQueue). A future iteration can swap to SSE via the
-// realtime gateway — the per-restaurant topic
-// food.restaurant.{id}.orders is already published by food-service.
+// Two refresh paths run in parallel:
+//   1. 5-second poll via useFoodKitchenQueue's refetchInterval — the
+//      reconnect-recovery snapshot if SSE drops a frame or the gateway
+//      flaps.
+//   2. SSE on food.restaurant.{id}.orders via useFoodOrderStream —
+//      sub-100ms invalidation on a new order / cancellation /
+//      payment confirmation so the partner sees the row appear
+//      without waiting on the poll.
 
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 
 import {
   useFoodKitchenQueue,
@@ -20,6 +25,7 @@ import {
   usePartnerAcceptOrder,
   usePartnerRejectOrder,
 } from "@/hooks/useFoodAdmin"
+import { useFoodOrderStream } from "@/hooks/useFoodOrderStream"
 
 import { EmptyState, errorMessage } from "../../../admin/mopedu/_shared"
 
@@ -39,6 +45,15 @@ export default function KitchenQueuePage() {
   const accept = usePartnerAcceptOrder()
   const reject = usePartnerRejectOrder()
   const [reasons, setReasons] = useState<Record<string, string>>({})
+
+  // SSE push: invalidate the kitchen query the moment a food.order.*
+  // event lands. The query keys live under ['food','kitchen', id]
+  // (see useFoodAdmin.ts) — invalidating that family triggers an
+  // immediate refetch without disturbing the polling cadence.
+  const qc = useQueryClient()
+  useFoodOrderStream(restaurantId, () => {
+    qc.invalidateQueries({ queryKey: ["food", "kitchen"] })
+  })
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 lg:p-6">

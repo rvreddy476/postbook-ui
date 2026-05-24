@@ -219,6 +219,38 @@ export function useFoodDecideRefund() {
 
 // ── Item reviews (B7) ─────────────────────────────────────────────────────
 
+export function useFoodCustomerOrder(orderId: string | undefined) {
+  return useQuery({
+    queryKey: [KEY, 'order', orderId ?? ''] as const,
+    queryFn: () => foodApi.getCustomerOrder(orderId!),
+    enabled: Boolean(orderId),
+  })
+}
+
+export function useFoodItemReviews(
+  menuItemId: string | undefined,
+  limit = 50,
+) {
+  return useQuery({
+    queryKey: [KEY, 'item-reviews', menuItemId ?? '', limit] as const,
+    queryFn: () => foodApi.listItemReviews(menuItemId!, limit),
+    enabled: Boolean(menuItemId),
+  })
+}
+
+export function useFoodCreateItemReview() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: foodApi.CreateItemReviewInput) =>
+      foodApi.createItemReview(input),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: [KEY, 'item-reviews', vars.menuItemId] as const,
+      })
+    },
+  })
+}
+
 export function useFoodHideItemReview() {
   const qc = useQueryClient()
   return useMutation({

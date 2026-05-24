@@ -238,6 +238,73 @@ export async function getTicketWithMessages(ticketId: string): Promise<{
 
 // ── Item reviews (B7) ─────────────────────────────────────────────────────
 
+export interface CreateItemReviewInput {
+  orderId: string
+  menuItemId: string
+  rating: number
+  review?: string
+  photoUrls?: string[]
+}
+
+// Customer-facing review submit. The path takes the menu item id;
+// menu_item_id in the body must match. Backend enforces:
+//   - the order must be DELIVERED + owned by the caller,
+//   - the item must be part of the order,
+//   - UNIQUE (order, item, customer) — no duplicate reviews.
+export async function createItemReview(
+  in_: CreateItemReviewInput,
+): Promise<ItemReview> {
+  const { data } = await api.post<ApiEnvelope<ItemReview>>(
+    `/v1/food/menu-items/${in_.menuItemId}/reviews`,
+    {
+      order_id: in_.orderId,
+      menu_item_id: in_.menuItemId,
+      rating: in_.rating,
+      review: in_.review,
+      photo_urls: in_.photoUrls ?? [],
+    },
+  )
+  return unwrap(data)
+}
+
+// Public read — anyone can list reviews on a menu item (no headers).
+export async function listItemReviews(
+  menuItemId: string,
+  limit = 50,
+): Promise<ItemReview[]> {
+  const { data } = await api.get<ApiEnvelope<{ reviews: ItemReview[] }>>(
+    `/v1/food/menu-items/${menuItemId}/reviews`,
+    { params: { limit } },
+  )
+  return unwrap(data).reviews ?? []
+}
+
+// Customer-side order read used by the review-submission flow to
+// enumerate the order items the customer can rate.
+export interface CustomerOrderItem {
+  id: string
+  menu_item_id?: string
+  item_name_snapshot?: string
+  name?: string
+  quantity?: number
+}
+
+export interface CustomerOrder {
+  id: string
+  order_number?: string
+  status: string
+  items?: CustomerOrderItem[]
+}
+
+export async function getCustomerOrder(
+  orderId: string,
+): Promise<CustomerOrder> {
+  const { data } = await api.get<ApiEnvelope<CustomerOrder>>(
+    `/v1/food/orders/${orderId}`,
+  )
+  return unwrap(data)
+}
+
 export async function hideItemReview(reviewId: string): Promise<void> {
   await api.delete(`/v1/food/admin/item-reviews/${reviewId}`, {
     headers: ADMIN_HEADERS,
