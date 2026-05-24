@@ -21,6 +21,7 @@ import type {
   PaymentReconRow,
   PendingModerationItem,
   RefundCancelRow,
+  RefundRequest,
   RestaurantSLAReport,
   SupportTicket,
   TicketMessage,
@@ -157,6 +158,32 @@ export function useFoodTopFraud(params: foodApi.FraudTopParams = {}) {
 
 // ── Tickets + refunds (B6) ────────────────────────────────────────────────
 
+export function useFoodAdminTickets(params: foodApi.ListTicketsParams = {}) {
+  return useQuery<SupportTicket[]>({
+    queryKey: [
+      KEY,
+      'tickets',
+      'admin',
+      params.status ?? '',
+      params.limit ?? '',
+    ] as const,
+    queryFn: () => foodApi.listAdminTickets(params),
+  })
+}
+
+export function useFoodAdminRefunds(params: foodApi.ListTicketsParams = {}) {
+  return useQuery<RefundRequest[]>({
+    queryKey: [
+      KEY,
+      'refunds',
+      'admin',
+      params.status ?? '',
+      params.limit ?? '',
+    ] as const,
+    queryFn: () => foodApi.listAdminRefunds(params),
+  })
+}
+
 export function useFoodTicket(ticketId: string | undefined) {
   return useQuery<{ ticket: SupportTicket; messages: TicketMessage[] }>({
     queryKey: [KEY, 'ticket', ticketId ?? ''] as const,
@@ -203,6 +230,13 @@ export function useFoodHideItemReview() {
 }
 
 // ── Kitchen queue (B1) ────────────────────────────────────────────────────
+
+export function useFoodPartnerRestaurants() {
+  return useQuery({
+    queryKey: [KEY, 'partner', 'restaurants'] as const,
+    queryFn: () => foodApi.listPartnerRestaurants(),
+  })
+}
 
 export function useFoodKitchenQueue(restaurantId: string | undefined) {
   return useQuery<KitchenOrder[]>({

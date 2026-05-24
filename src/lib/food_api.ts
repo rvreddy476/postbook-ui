@@ -169,6 +169,37 @@ export async function getTopFraudUsers(
 
 // ── Tickets + refunds (B6) ────────────────────────────────────────────────
 
+export interface ListTicketsParams {
+  status?: string
+  limit?: number
+}
+
+export async function listAdminTickets(
+  params: ListTicketsParams = {},
+): Promise<SupportTicket[]> {
+  const q: Record<string, string> = {}
+  if (params.status) q.status = params.status
+  if (params.limit) q.limit = String(params.limit)
+  const { data } = await api.get<ApiEnvelope<{ tickets: SupportTicket[] }>>(
+    '/v1/food/admin/support/tickets',
+    { params: q, headers: ADMIN_HEADERS },
+  )
+  return unwrap(data).tickets ?? []
+}
+
+export async function listAdminRefunds(
+  params: ListTicketsParams = {},
+): Promise<RefundRequest[]> {
+  const q: Record<string, string> = {}
+  if (params.status) q.status = params.status
+  if (params.limit) q.limit = String(params.limit)
+  const { data } = await api.get<ApiEnvelope<{ refunds: RefundRequest[] }>>(
+    '/v1/food/admin/refunds',
+    { params: q, headers: ADMIN_HEADERS },
+  )
+  return unwrap(data).refunds ?? []
+}
+
 export async function setTicketStatus(
   ticketId: string,
   status: TicketStatus,
@@ -217,6 +248,26 @@ export async function hideItemReview(reviewId: string): Promise<void> {
 //
 // Partner-auth, not admin scope. Surfaced here for the partner ops
 // screen even though the rest of this module is admin-only.
+
+export interface PartnerRestaurant {
+  id: string
+  name: string
+  slug?: string
+  status?: string
+  city?: string
+  is_open?: boolean
+  is_accepting_orders?: boolean
+}
+
+export async function listPartnerRestaurants(): Promise<PartnerRestaurant[]> {
+  // No X-Scopes header — this is partner-auth (X-User-Id == owner_user_id).
+  const { data } = await api.get<
+    ApiEnvelope<{ items?: PartnerRestaurant[] } | PartnerRestaurant[]>
+  >('/v1/food/partner/restaurants')
+  const body = unwrap(data)
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
 
 export async function getKitchenQueue(
   restaurantId: string,
