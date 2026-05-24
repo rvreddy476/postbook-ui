@@ -220,6 +220,79 @@ export function useProducts(opts: { category?: string; q?: string; limit?: numbe
   })
 }
 
+// useInfiniteProducts is the cursor-paginated companion to useProducts.
+// Use this for infinite-scroll surfaces (browse, search results) — the
+// backend's keyset pagination stays O(log n) at any catalog depth, so
+// a long scroll session doesn't pay the OFFSET 1M penalty.
+//
+// Filters: min_price, max_price, min_rating, seller, in_stock_only.
+// Returns an InfiniteQuery; consumers should call fetchNextPage() when
+// the user scrolls past the current tail.
+export interface ProductListCursorPage {
+  items: Product[]
+  next_cursor: string
+  limit: number
+}
+
+export interface InfiniteProductsOpts {
+  category?: string
+  q?: string
+  limit?: number
+  minPrice?: number
+  maxPrice?: number
+  minRating?: number
+  sellerId?: string
+  inStockOnly?: boolean
+}
+
+export function useInfiniteProducts(opts: InfiniteProductsOpts = {}) {
+  const limit = opts.limit ?? 24
+  return useInfiniteQuery<ProductListCursorPage>({
+    queryKey: [
+      'commerce',
+      'products',
+      'cursor',
+      opts.category ?? null,
+      opts.q ?? null,
+      opts.minPrice ?? null,
+      opts.maxPrice ?? null,
+      opts.minRating ?? null,
+      opts.sellerId ?? null,
+      opts.inStockOnly ?? false,
+      limit,
+    ],
+    initialPageParam: '',
+    queryFn: async ({ pageParam }) => {
+      const params: Record<string, string | number> = { limit }
+      if (opts.category) params.category = opts.category
+      if (opts.q) params.q = opts.q
+      if (opts.minPrice && opts.minPrice > 0) params.min_price = opts.minPrice
+      if (opts.maxPrice && opts.maxPrice > 0) params.max_price = opts.maxPrice
+      if (opts.minRating && opts.minRating > 0) params.min_rating = opts.minRating
+      if (opts.sellerId) params.seller = opts.sellerId
+      if (opts.inStockOnly) params.in_stock = 'true'
+      // Empty pageParam = first page; the gateway treats it as no cursor.
+      if (typeof pageParam === 'string' && pageParam !== '') {
+        params.cursor = pageParam
+      } else {
+        // Explicit hint to the backend that we want cursor-mode response
+        // (items + next_cursor) even on page 1.
+        params.paginate = 'cursor'
+      }
+      const res = (await api.get('/v1/commerce/products', { params })).data.data
+      if (Array.isArray(res)) {
+        return { items: res, next_cursor: '', limit }
+      }
+      return {
+        items: res?.items ?? [],
+        next_cursor: res?.next_cursor ?? '',
+        limit: res?.limit ?? limit,
+      }
+    },
+    getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
+  })
+}
+
 export function useProduct(productId: string | undefined) {
   return useQuery<{ product: Product; variants: ProductVariant[] }>({
     queryKey: ['commerce', 'product', productId],

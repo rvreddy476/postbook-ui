@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { getSharedNotificationSocket } from "@/lib/notificationSocket"
 import type { Relationship, RelationshipBatchResponse, UserProfile } from "@/types/profile"
@@ -132,6 +132,71 @@ export function useFollowing(userId: string | undefined, limit = 20) {
             return res.data.data
         },
         enabled: !!userId,
+    })
+}
+
+// useInfiniteFollowers / useInfiniteFollowing — cursor-paginated for
+// celebrity scale (HG2). Keyset on (created_at, follow_id) stays
+// O(log n) past the 10k-offset wall the legacy hooks hit. Use these
+// for any infinite-scroll surface; the offset hooks above remain for
+// the small-list case where total counts matter.
+export interface FollowerCursorPage {
+    items: ConnectionUser[]
+    next_cursor: string
+    limit: number
+}
+
+export function useInfiniteFollowers(userId: string | undefined, limit = 20) {
+    return useInfiniteQuery<FollowerCursorPage>({
+        queryKey: ["connections", "followers", "cursor", userId, limit],
+        initialPageParam: "",
+        enabled: !!userId,
+        queryFn: async ({ pageParam }) => {
+            const params: Record<string, string | number> = { limit }
+            if (typeof pageParam === "string" && pageParam !== "") {
+                params.cursor = pageParam
+            } else {
+                params.paginate = "cursor"
+            }
+            const res = await api.get<{ data: FollowerCursorPage }>(
+                `/v1/profiles/${userId}/followers`,
+                { params },
+            )
+            const d = res.data.data
+            return {
+                items: d?.items ?? [],
+                next_cursor: d?.next_cursor ?? "",
+                limit: d?.limit ?? limit,
+            }
+        },
+        getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
+    })
+}
+
+export function useInfiniteFollowing(userId: string | undefined, limit = 20) {
+    return useInfiniteQuery<FollowerCursorPage>({
+        queryKey: ["connections", "following", "cursor", userId, limit],
+        initialPageParam: "",
+        enabled: !!userId,
+        queryFn: async ({ pageParam }) => {
+            const params: Record<string, string | number> = { limit }
+            if (typeof pageParam === "string" && pageParam !== "") {
+                params.cursor = pageParam
+            } else {
+                params.paginate = "cursor"
+            }
+            const res = await api.get<{ data: FollowerCursorPage }>(
+                `/v1/profiles/${userId}/following`,
+                { params },
+            )
+            const d = res.data.data
+            return {
+                items: d?.items ?? [],
+                next_cursor: d?.next_cursor ?? "",
+                limit: d?.limit ?? limit,
+            }
+        },
+        getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
     })
 }
 
