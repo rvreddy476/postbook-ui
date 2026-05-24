@@ -311,3 +311,62 @@ export function useDeleteAccount() {
         },
     })
 }
+
+/* ------------------------------------------------------------------ */
+/*  Login Anomaly Hooks (A13)                                          */
+/* ------------------------------------------------------------------ */
+
+// LoginAnomaly mirrors auth-service auth.login_anomalies. risk_score
+// 0-100; >=70 is a sign-in we revoked + still want the user to
+// acknowledge. acknowledged_at flips when the user dismisses the
+// entry from their inbox.
+export interface LoginAnomaly {
+    id: string
+    user_id: string
+    anomaly_type:
+        | "new_ip"
+        | "new_device"
+        | "new_country"
+        | "impossible_travel"
+        | "many_failed"
+        | "password_reset_used"
+        | "session_revoked"
+    ip?: string
+    user_agent?: string
+    device_id?: string
+    country_code?: string
+    metadata?: Record<string, unknown>
+    risk_score: number
+    challenged: boolean
+    acknowledged_at?: string | null
+    occurred_at: string
+}
+
+export function useLoginAnomalies() {
+    return useQuery({
+        queryKey: ["login-anomalies"],
+        queryFn: async (): Promise<LoginAnomaly[]> => {
+            const res = await api.get<{ data: LoginAnomaly[] }>("/v1/auth/security/anomalies")
+            return res.data.data ?? []
+        },
+        staleTime: 30 * 1000,
+    })
+}
+
+export function useAcknowledgeAnomaly() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: async (anomalyId: string): Promise<{ status: string }> => {
+            const res = await api.post<{ data: { status: string } }>(
+                `/v1/auth/security/anomalies/${anomalyId}/ack`,
+            )
+            return res.data.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["login-anomalies"] })
+        },
+        onError: (error) => {
+            console.error("[SecuritySettings]", "Failed to ack anomaly", error)
+        },
+    })
+}

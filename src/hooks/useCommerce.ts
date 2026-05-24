@@ -329,6 +329,34 @@ export function useCart() {
   })
 }
 
+// CouponPreview — commerce TODO M#1. Read-only preview of what a
+// coupon would do to the current cart total. No write side-effect;
+// the actual application happens at checkout.
+export interface CouponPreview {
+  coupon_code: string
+  coupon_discount: number
+  subtotal: number
+  grand_total: number
+  applied: boolean
+}
+
+export function useCouponPreview(code: string) {
+  return useQuery<CouponPreview>({
+    queryKey: ['commerce', 'cart', 'coupon-preview', code],
+    queryFn: async () => {
+      const res = await api.get<{ data: CouponPreview }>(
+        `/v1/commerce/cart/coupon-preview?code=${encodeURIComponent(code)}`,
+      )
+      return res.data.data
+    },
+    enabled: code.trim().length > 0,
+    retry: false,
+    // Coupon validation server-side is the canonical truth; don't
+    // hammer it with refetches.
+    staleTime: 30 * 1000,
+  })
+}
+
 export function useAddToCart() {
   const qc = useQueryClient()
   return useMutation({

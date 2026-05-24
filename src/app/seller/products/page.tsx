@@ -85,7 +85,13 @@ export default function SellerProductsPage() {
                         <td className="px-4 py-4 text-[#6B5544] text-sm">
                           {new Date(p.created_at).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-4 py-4 text-right space-x-3">
+                          <Link
+                            href={`/seller/products/${p.id}/variants`}
+                            className="text-[#8B5E3C] hover:text-[#1A1A1A] font-bold text-xs uppercase tracking-wider transition"
+                          >
+                            Variants
+                          </Link>
                           {(p.approval_status === 'draft' || p.approval_status === 'changes_requested') && (
                             <button
                               onClick={() => submitProduct.mutate(p.id)}

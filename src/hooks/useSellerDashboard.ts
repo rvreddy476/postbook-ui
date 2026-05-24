@@ -132,3 +132,98 @@ export function useSetProductAttributes() {
     },
   })
 }
+
+/* ------------------------------------------------------------------ */
+/*  Variant CRUD hooks (commerce TODO H#5)                            */
+/* ------------------------------------------------------------------ */
+
+export interface ProductVariantSummary {
+  id: string
+  product_id: string
+  sku: string
+  barcode?: string | null
+  option_1_name?: string | null
+  option_1_value?: string | null
+  option_2_name?: string | null
+  option_2_value?: string | null
+  option_3_name?: string | null
+  option_3_value?: string | null
+  mrp: number
+  selling_price: number
+  cost_price?: number | null
+  currency_code?: string
+  status: string
+  weight_grams?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
+export function useProductVariants(productId: string | undefined) {
+  return useQuery({
+    queryKey: ['seller', 'product', productId, 'variants'],
+    queryFn: async () => {
+      const res = await api.get<{ data: { items: ProductVariantSummary[] } }>(
+        `/v1/commerce/products/${productId}/variants`,
+      )
+      return res.data.data?.items ?? []
+    },
+    enabled: !!productId,
+  })
+}
+
+export type CreateVariantPayload = {
+  sku: string
+  barcode?: string
+  option_1_name?: string
+  option_1_value?: string
+  option_2_name?: string
+  option_2_value?: string
+  option_3_name?: string
+  option_3_value?: string
+  mrp: number
+  selling_price: number
+  cost_price?: number
+  currency_code?: string
+  weight_grams?: number
+}
+
+export function useAddProductVariant(productId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: CreateVariantPayload) => {
+      const res = await api.post<{ data: ProductVariantSummary }>(
+        `/v1/commerce/products/${productId}/variants`,
+        payload,
+      )
+      return res.data.data
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ['seller', 'product', productId, 'variants'] }),
+  })
+}
+
+export function useUpdateProductVariant(productId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { variantId: string; patch: Partial<CreateVariantPayload> & { status?: string } }) => {
+      const res = await api.patch<{ data: ProductVariantSummary }>(
+        `/v1/commerce/variants/${args.variantId}`,
+        args.patch,
+      )
+      return res.data.data
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ['seller', 'product', productId, 'variants'] }),
+  })
+}
+
+export function useArchiveProductVariant(productId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (variantId: string) => {
+      await api.delete(`/v1/commerce/variants/${variantId}`)
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ['seller', 'product', productId, 'variants'] }),
+  })
+}
