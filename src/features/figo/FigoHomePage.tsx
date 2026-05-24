@@ -45,6 +45,7 @@ import {
   fetchFigoAdminRestaurantSettlements,
   fetchFigoAssignmentTracking,
   acceptFigoDeliveryOffer,
+  fetchFigoBatchForOrder,
   fetchFigoCart,
   fetchFigoDeliveryAssignments,
   fetchFigoCurrentDeliveryAssignment,
@@ -519,6 +520,7 @@ function CheckoutPanel() {
       {tracking.data ? (
         <div className="mt-5 rounded-md border border-neutral-200 p-3 text-sm">
           <p className="font-black">Tracking {tracking.data.order_number}</p>
+          <BatchBanner orderId={trackingOrderId} />
           <div className="mt-3 space-y-2">
             {tracking.data.timeline.map((event, index) => (
               <div key={`${event.created_at}-${index}`} className="flex gap-2">
@@ -577,6 +579,32 @@ function RatingActions({ order }: { order: FigoOrder }) {
           <Star className="h-4 w-4 fill-orange-600" />
         </button>
       ))}
+    </div>
+  )
+}
+
+function BatchBanner({ orderId }: { orderId: string }) {
+  const batch = useQuery({
+    queryKey: ["figo", "delivery", "batch", orderId],
+    queryFn: () => fetchFigoBatchForOrder(orderId),
+    enabled: Boolean(orderId),
+    retry: false,
+  })
+  if (!batch.data || batch.data.members.length <= 1) {
+    return null
+  }
+  const me = batch.data.members.find((m) => m.order_id === orderId)
+  const stop = me?.sequence ?? 1
+  const total = batch.data.members.length
+  return (
+    <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs">
+      <p className="font-black text-amber-900">
+        Your order is being delivered alongside {total - 1} other order{total - 1 > 1 ? "s" : ""} nearby
+      </p>
+      <p className="mt-1 text-amber-800">
+        Your stop: <span className="font-black">{stop} of {total}</span>. The rider is making the trip in a single
+        bundle from the same restaurant — your ETA reflects the sequence.
+      </p>
     </div>
   )
 }
