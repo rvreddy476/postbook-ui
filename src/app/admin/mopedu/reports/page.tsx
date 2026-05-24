@@ -1,23 +1,33 @@
 "use client"
 
-// Mopedu admin reports — three tabs:
-//   • Revenue (by plan or city, date-bounded; KPIs + sortable table + bar chart + CSV export)
-//   • Partner retention (cohort_month → M1/M2/M3 active counts + percentages)
-//   • Customer cohort (cohort_month → M1/M2/M3 average rides per customer)
+// Mopedu admin reports — original three (Sprint 4) + five D2 tabs:
+//   • Revenue, Partner retention, Customer cohort.
+//   • D2: Matching health, Partner quality, Supply/demand, Safety,
+//     Partner compliance.
 
 import { useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 
 import {
   useMopeduCustomerCohortBookingRate,
+  useMopeduMatchingHealth,
   useMopeduPartnerCohortRetention,
+  useMopeduPartnerCompliance,
+  useMopeduPartnerQuality,
   useMopeduRevenueReport,
+  useMopeduSafetyReport,
+  useMopeduSupplyDemand,
 } from "@/hooks/useMopeduAdmin"
 import type {
   CustomerCohortBookingRate,
+  MatchingHealthRow,
   PartnerCohortRetention,
+  PartnerComplianceRow,
+  PartnerQualityRow,
   RevenueReport,
   RevenueReportRow,
+  SafetyIncidentReportRow,
+  SupplyDemandRow,
 } from "@/types/mopedu"
 
 import {
@@ -29,12 +39,25 @@ import {
   paiseToRupees,
 } from "../_shared"
 
-type ReportsTab = "revenue" | "partner_retention" | "customer_cohort"
+type ReportsTab =
+  | "revenue"
+  | "partner_retention"
+  | "customer_cohort"
+  | "matching_health"
+  | "partner_quality"
+  | "supply_demand"
+  | "safety"
+  | "partner_compliance"
 
 const TABS: Array<{ key: ReportsTab; label: string }> = [
   { key: "revenue", label: "Revenue" },
   { key: "partner_retention", label: "Partner retention" },
   { key: "customer_cohort", label: "Customer cohort" },
+  { key: "matching_health", label: "Matching health" },
+  { key: "partner_quality", label: "Partner quality" },
+  { key: "supply_demand", label: "Supply / demand" },
+  { key: "safety", label: "Safety" },
+  { key: "partner_compliance", label: "Compliance" },
 ]
 
 // ── Date helpers ──────────────────────────────────────────────────────────
@@ -94,6 +117,11 @@ export default function MopeduReportsPage() {
       {tab === "revenue" ? <RevenueTab /> : null}
       {tab === "partner_retention" ? <PartnerRetentionTab /> : null}
       {tab === "customer_cohort" ? <CustomerCohortTab /> : null}
+      {tab === "matching_health" ? <MatchingHealthTab /> : null}
+      {tab === "partner_quality" ? <PartnerQualityTab /> : null}
+      {tab === "supply_demand" ? <SupplyDemandTab /> : null}
+      {tab === "safety" ? <SafetyTab /> : null}
+      {tab === "partner_compliance" ? <PartnerComplianceTab /> : null}
     </div>
   )
 }
@@ -816,6 +844,384 @@ function ErrorCard({ message }: { message: string }) {
   return (
     <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
       {message}
+    </div>
+  )
+}
+
+// ── D2 helpers ────────────────────────────────────────────────────────────
+
+function defaultD2Window(): { from: string; to: string } {
+  const to = new Date()
+  const from = new Date()
+  from.setHours(from.getHours() - 24)
+  return { from: from.toISOString(), to: to.toISOString() }
+}
+
+function D2WindowPicker({
+  value,
+  onChange,
+}: {
+  value: { from: string; to: string }
+  onChange: (next: { from: string; to: string }) => void
+}) {
+  return (
+    <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-white p-3 text-sm">
+      <label className="flex flex-col">
+        <span className="text-xs text-gray-500">From</span>
+        <input
+          type="datetime-local"
+          value={value.from.slice(0, 16)}
+          onChange={(e) =>
+            onChange({ ...value, from: new Date(e.target.value).toISOString() })
+          }
+          className="rounded border border-gray-300 px-2 py-1"
+        />
+      </label>
+      <label className="flex flex-col">
+        <span className="text-xs text-gray-500">To</span>
+        <input
+          type="datetime-local"
+          value={value.to.slice(0, 16)}
+          onChange={(e) =>
+            onChange({ ...value, to: new Date(e.target.value).toISOString() })
+          }
+          className="rounded border border-gray-300 px-2 py-1"
+        />
+      </label>
+      <SecondaryButton onClick={() => onChange(defaultD2Window())}>
+        Last 24h
+      </SecondaryButton>
+    </div>
+  )
+}
+
+function downloadD2CSV(filename: string, rows: object[]) {
+  if (rows.length === 0) return
+  const keys = Object.keys(rows[0])
+  const escape = (v: unknown) => {
+    if (v === null || v === undefined) return ""
+    const s = String(v)
+    return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const header = keys.join(",")
+  const body = rows
+    .map((r) => keys.map((k) => escape((r as Record<string, unknown>)[k])).join(","))
+    .join("\n")
+  const blob = new Blob([header + "\n" + body], { type: "text/csv" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+interface D2QueryShape<T> {
+  data?: T[]
+  isLoading: boolean
+  error: unknown
+}
+
+function D2Shell<T extends object>({
+  query,
+  exportName,
+  emptyMessage,
+  children,
+}: {
+  query: D2QueryShape<T>
+  exportName: string
+  emptyMessage: string
+  children: React.ReactNode
+}) {
+  const rowCount = query.data?.length ?? 0
+  return (
+    <section className="space-y-3">
+      <div className="flex justify-end">
+        <PrimaryButton
+          onClick={() => downloadD2CSV(exportName, query.data ?? [])}
+          disabled={rowCount === 0}
+        >
+          Export CSV
+        </PrimaryButton>
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-brand-divider bg-white shadow-sm">
+        {query.isLoading ? (
+          <LoadingCard />
+        ) : query.error ? (
+          <ErrorCard message={errorMessage(query.error)} />
+        ) : rowCount === 0 ? (
+          <EmptyState title="No data" body={emptyMessage} />
+        ) : (
+          children
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ── Tab: matching health ──────────────────────────────────────────────────
+
+function MatchingHealthTab() {
+  const [win, setWin] = useState(defaultD2Window())
+  const q = useMopeduMatchingHealth(win)
+  return (
+    <div className="space-y-3">
+      <D2WindowPicker value={win} onChange={setWin} />
+      <D2Shell
+        query={q}
+        exportName="matching-health.csv"
+        emptyMessage="No rides requested in this window."
+      >
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-2">City</th>
+              <th className="px-3 py-2">Vehicle</th>
+              <th className="px-3 py-2">Rides</th>
+              <th className="px-3 py-2">No-candidate</th>
+              <th className="px-3 py-2">Avg time-to-first-offer (s)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(q.data ?? []).map((r: MatchingHealthRow, i: number) => (
+              <tr key={`${r.city_id}-${r.vehicle_type}-${i}`} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-mono text-xs">
+                  {r.city_id || "—"}
+                </td>
+                <td className="px-3 py-2">{r.vehicle_type}</td>
+                <td className="px-3 py-2">{r.rides_total}</td>
+                <td className="px-3 py-2">{r.no_candidate_count}</td>
+                <td className="px-3 py-2">
+                  {r.avg_time_to_first_offer_seconds == null
+                    ? "—"
+                    : r.avg_time_to_first_offer_seconds.toFixed(1)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </D2Shell>
+    </div>
+  )
+}
+
+// ── Tab: partner quality ──────────────────────────────────────────────────
+
+function PartnerQualityTab() {
+  const [win, setWin] = useState(defaultD2Window())
+  const q = useMopeduPartnerQuality(win)
+  return (
+    <div className="space-y-3">
+      <D2WindowPicker value={win} onChange={setWin} />
+      <D2Shell
+        query={q}
+        exportName="partner-quality.csv"
+        emptyMessage="No partners received an offer in this window."
+      >
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-2">Partner</th>
+              <th className="px-3 py-2">Received</th>
+              <th className="px-3 py-2">Accepted</th>
+              <th className="px-3 py-2">Rejected</th>
+              <th className="px-3 py-2">Expired</th>
+              <th className="px-3 py-2">Accept %</th>
+              <th className="px-3 py-2">No-show (30d)</th>
+              <th className="px-3 py-2">Rating (30d)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(q.data ?? []).map((r: PartnerQualityRow) => (
+              <tr key={r.partner_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-medium">{r.full_name || r.partner_id}</td>
+                <td className="px-3 py-2">{r.offers_received}</td>
+                <td className="px-3 py-2">{r.offers_accepted}</td>
+                <td className="px-3 py-2">{r.offers_rejected}</td>
+                <td className="px-3 py-2">{r.offers_expired}</td>
+                <td className="px-3 py-2">
+                  {r.acceptance_pct == null ? "—" : `${r.acceptance_pct.toFixed(1)}%`}
+                </td>
+                <td className="px-3 py-2">{r.no_show_count_30d}</td>
+                <td className="px-3 py-2">
+                  {r.avg_rating_30d ? r.avg_rating_30d.toFixed(2) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </D2Shell>
+    </div>
+  )
+}
+
+// ── Tab: supply / demand ──────────────────────────────────────────────────
+
+function SupplyDemandTab() {
+  const [win, setWin] = useState(defaultD2Window())
+  const q = useMopeduSupplyDemand(win)
+  return (
+    <div className="space-y-3">
+      <D2WindowPicker value={win} onChange={setWin} />
+      <D2Shell
+        query={q}
+        exportName="supply-demand.csv"
+        emptyMessage="No ride requests in this window."
+      >
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-2">City</th>
+              <th className="px-3 py-2">Hour</th>
+              <th className="px-3 py-2">Ride requests</th>
+              <th className="px-3 py-2">Online partners (avg)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(q.data ?? []).map((r: SupplyDemandRow, i: number) => (
+              <tr key={`${r.city_id}-${r.hour_bucket}-${i}`} className="hover:bg-gray-50">
+                <td className="px-3 py-2 font-mono text-xs">{r.city_id || "—"}</td>
+                <td className="px-3 py-2 text-xs">
+                  {new Date(r.hour_bucket).toLocaleString()}
+                </td>
+                <td className="px-3 py-2">{r.ride_requests}</td>
+                <td className="px-3 py-2">{r.online_partners_avg}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </D2Shell>
+    </div>
+  )
+}
+
+// ── Tab: safety incidents ─────────────────────────────────────────────────
+
+function SafetyTab() {
+  const [win, setWin] = useState(defaultD2Window())
+  const q = useMopeduSafetyReport(win)
+  return (
+    <div className="space-y-3">
+      <D2WindowPicker value={win} onChange={setWin} />
+      <D2Shell
+        query={q}
+        exportName="safety.csv"
+        emptyMessage="No safety incidents in this window."
+      >
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-2">Kind</th>
+              <th className="px-3 py-2">Severity</th>
+              <th className="px-3 py-2">Count</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(q.data ?? []).map((r: SafetyIncidentReportRow, i: number) => (
+              <tr key={`${r.kind}-${r.severity}-${i}`} className="hover:bg-gray-50">
+                <td className="px-3 py-2">{r.kind}</td>
+                <td className="px-3 py-2">
+                  <span
+                    className={classNames(
+                      "rounded px-2 py-0.5 text-xs font-semibold",
+                      r.severity === "critical"
+                        ? "bg-rose-100 text-rose-800"
+                        : r.severity === "high"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-gray-100 text-gray-700",
+                    )}
+                  >
+                    {r.severity}
+                  </span>
+                </td>
+                <td className="px-3 py-2">{r.count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </D2Shell>
+    </div>
+  )
+}
+
+// ── Tab: partner compliance (point-in-time + optional city) ───────────────
+
+function PartnerComplianceTab() {
+  const [city, setCity] = useState("")
+  const q = useMopeduPartnerCompliance(city || undefined)
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-white p-3 text-sm">
+        <label className="flex flex-col">
+          <span className="text-xs text-gray-500">City filter</span>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="e.g. Bengaluru"
+            className="rounded border border-gray-300 px-2 py-1"
+          />
+        </label>
+      </div>
+      <D2Shell
+        query={q}
+        exportName="partner-compliance.csv"
+        emptyMessage="No approved partners found."
+      >
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-2">Partner</th>
+              <th className="px-3 py-2">City</th>
+              <th className="px-3 py-2">Expired KYC docs</th>
+              <th className="px-3 py-2">Expired vehicle docs</th>
+              <th className="px-3 py-2">Oldest expiry</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(q.data ?? []).map((r: PartnerComplianceRow) => {
+              const totalExpired = r.expired_docs + r.expired_vehicle_docs
+              return (
+                <tr key={r.partner_id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 font-medium">
+                    {r.full_name || r.partner_id}
+                  </td>
+                  <td className="px-3 py-2">{r.city || "—"}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={
+                        r.expired_docs > 0
+                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          : ""
+                      }
+                    >
+                      {r.expired_docs}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={
+                        r.expired_vehicle_docs > 0
+                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          : ""
+                      }
+                    >
+                      {r.expired_vehicle_docs}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500">
+                    {r.oldest_expiry
+                      ? new Date(r.oldest_expiry).toLocaleDateString()
+                      : totalExpired === 0
+                        ? "—"
+                        : "—"}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </D2Shell>
     </div>
   )
 }

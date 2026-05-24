@@ -396,3 +396,48 @@ export type {
   SafetyIncidentStatus as MopeduSafetyIncidentStatus,
   SafetyIncidentSeverity as MopeduSafetyIncidentSeverity,
 }
+
+// ── D2 reports (Wave D2) ──────────────────────────────────────────────────
+// Mirrors Architecture/services/rider-service/internal/store/reports.go.
+
+export interface MatchingHealthRow {
+  city_id: string
+  vehicle_type: string
+  rides_total: number
+  no_candidate_count: number
+  avg_time_to_first_offer_seconds: number | null
+}
+
+export interface PartnerQualityRow {
+  partner_id: string
+  full_name: string
+  offers_received: number
+  offers_accepted: number
+  offers_rejected: number
+  offers_expired: number
+  acceptance_pct: number | null
+  no_show_count_30d: number
+  avg_rating_30d: number
+}
+
+export interface SupplyDemandRow {
+  city_id: string
+  hour_bucket: string
+  ride_requests: number
+  online_partners_avg: number
+}
+
+export interface SafetyIncidentReportRow {
+  kind: string
+  severity: string
+  count: number
+}
+
+export interface PartnerComplianceRow {
+  partner_id: string
+  full_name: string
+  city: string
+  expired_docs: number
+  expired_vehicle_docs: number
+  oldest_expiry?: string
+}

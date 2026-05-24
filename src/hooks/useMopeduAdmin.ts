@@ -36,6 +36,7 @@ import mopeduAdminApi, {
   type VehicleQueueRow,
   type ZoneCreateInput,
   type ZoneUpdateInput,
+  type D2WindowParams,
 } from '@/lib/mopedu_api'
 import type {
   AuditLog,
@@ -44,13 +45,18 @@ import type {
   CronRunRow,
   CustomerCohortBookingRate,
   FareRule,
+  MatchingHealthRow,
   MopeduDashboardCounts,
   MopeduLiveRide,
   MopeduPaginated,
   MopeduRideDetail,
   PartnerCohortRetention,
+  PartnerComplianceRow,
+  PartnerQualityRow,
   RevenueReport,
   RiderPartner,
+  SafetyIncidentReportRow,
+  SupplyDemandRow,
   Zone,
 } from '@/types/mopedu'
 
@@ -603,3 +609,47 @@ export function useMopeduCronRuns(params: ListCronRunsParams = {}) {
     staleTime: 30_000,
   })
 }
+
+// ── D2 reports (Wave D2) ──────────────────────────────────────────────────
+//
+// All five take an optional {from, to} ISO-8601 window (backend default:
+// last 24h). Compliance is point-in-time + optional city filter.
+
+const d2Key = (kind: string, params: D2WindowParams) =>
+  [KEY_ROOT, 'd2', kind, params.from ?? '', params.to ?? ''] as const
+
+export function useMopeduMatchingHealth(params: D2WindowParams = {}) {
+  return useQuery<MatchingHealthRow[]>({
+    queryKey: d2Key('matching-health', params),
+    queryFn: () => mopeduAdminApi.getMatchingHealth(params),
+  })
+}
+
+export function useMopeduPartnerQuality(params: D2WindowParams = {}) {
+  return useQuery<PartnerQualityRow[]>({
+    queryKey: d2Key('partner-quality', params),
+    queryFn: () => mopeduAdminApi.getPartnerQuality(params),
+  })
+}
+
+export function useMopeduSupplyDemand(params: D2WindowParams = {}) {
+  return useQuery<SupplyDemandRow[]>({
+    queryKey: d2Key('supply-demand', params),
+    queryFn: () => mopeduAdminApi.getSupplyDemand(params),
+  })
+}
+
+export function useMopeduSafetyReport(params: D2WindowParams = {}) {
+  return useQuery<SafetyIncidentReportRow[]>({
+    queryKey: d2Key('safety', params),
+    queryFn: () => mopeduAdminApi.getSafetyIncidentsReport(params),
+  })
+}
+
+export function useMopeduPartnerCompliance(city?: string) {
+  return useQuery<PartnerComplianceRow[]>({
+    queryKey: [KEY_ROOT, 'd2', 'compliance', city ?? ''] as const,
+    queryFn: () => mopeduAdminApi.getPartnerComplianceReport(city),
+  })
+}
+

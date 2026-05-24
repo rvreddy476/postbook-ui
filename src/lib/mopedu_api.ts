@@ -24,9 +24,14 @@ import type {
   MopeduPaginated,
   MopeduRide,
   MopeduRideDetail,
+  MatchingHealthRow,
   PartnerCohortRetention,
+  PartnerComplianceRow,
+  PartnerQualityRow,
   RevenueReport,
   RiderDocument,
+  SafetyIncidentReportRow,
+  SupplyDemandRow,
   RiderPartner,
   RiderVehicle,
   SafetyIncident,
@@ -668,6 +673,80 @@ const mopeduAdminApi = {
   getPartnerCohortRetention,
   getCustomerCohortBookingRate,
   getCronRuns,
+  // D2 reports (Wave D2)
+  getMatchingHealth,
+  getPartnerQuality,
+  getSupplyDemand,
+  getSafetyIncidentsReport,
+  getPartnerComplianceReport,
 }
 
 export default mopeduAdminApi
+
+// ── D2 reports (Wave D2) ──────────────────────────────────────────────────
+
+export interface D2WindowParams {
+  from?: string
+  to?: string
+}
+
+function windowQuery(params: D2WindowParams): Record<string, string> {
+  const q: Record<string, string> = {}
+  if (params.from) q.from = params.from
+  if (params.to) q.to = params.to
+  return q
+}
+
+export async function getMatchingHealth(
+  params: D2WindowParams = {},
+): Promise<MatchingHealthRow[]> {
+  const { data } = await api.get<{ data: { rows: MatchingHealthRow[] } }>(
+    '/v1/rider/admin/reports/matching-health',
+    { headers: ADMIN_HEADERS, params: windowQuery(params) },
+  )
+  return data.data.rows ?? []
+}
+
+export async function getPartnerQuality(
+  params: D2WindowParams = {},
+): Promise<PartnerQualityRow[]> {
+  const { data } = await api.get<{ data: { rows: PartnerQualityRow[] } }>(
+    '/v1/rider/admin/reports/partner-quality',
+    { headers: ADMIN_HEADERS, params: windowQuery(params) },
+  )
+  return data.data.rows ?? []
+}
+
+export async function getSupplyDemand(
+  params: D2WindowParams = {},
+): Promise<SupplyDemandRow[]> {
+  const { data } = await api.get<{ data: { rows: SupplyDemandRow[] } }>(
+    '/v1/rider/admin/reports/supply-demand',
+    { headers: ADMIN_HEADERS, params: windowQuery(params) },
+  )
+  return data.data.rows ?? []
+}
+
+export async function getSafetyIncidentsReport(
+  params: D2WindowParams = {},
+): Promise<SafetyIncidentReportRow[]> {
+  const { data } = await api.get<{
+    data: { rows: SafetyIncidentReportRow[] }
+  }>('/v1/rider/admin/reports/safety', {
+    headers: ADMIN_HEADERS,
+    params: windowQuery(params),
+  })
+  return data.data.rows ?? []
+}
+
+export async function getPartnerComplianceReport(
+  city?: string,
+): Promise<PartnerComplianceRow[]> {
+  const q: Record<string, string> = {}
+  if (city) q.city = city
+  const { data } = await api.get<{ data: { rows: PartnerComplianceRow[] } }>(
+    '/v1/rider/admin/reports/compliance',
+    { headers: ADMIN_HEADERS, params: q },
+  )
+  return data.data.rows ?? []
+}
