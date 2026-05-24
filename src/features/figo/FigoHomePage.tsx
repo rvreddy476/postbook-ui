@@ -44,9 +44,12 @@ import {
   fetchFigoAdminPendingRestaurants,
   fetchFigoAdminRestaurantSettlements,
   fetchFigoAssignmentTracking,
+  acceptFigoDeliveryOffer,
   fetchFigoCart,
   fetchFigoDeliveryAssignments,
   fetchFigoCurrentDeliveryAssignment,
+  fetchFigoMyDeliveryOffers,
+  rejectFigoDeliveryOffer,
   fetchFigoDeliveryEarnings,
   fetchFigoDeliveryHistory,
   fetchFigoDeliveryPartner,
@@ -850,6 +853,24 @@ function DeliveryOpsPanel() {
     queryFn: fetchFigoDeliveryPartner,
     retry: false,
   })
+  const pendingOffers = useQuery({
+    queryKey: ["figo", "delivery", "offers", "me"],
+    queryFn: fetchFigoMyDeliveryOffers,
+    // P2 batching: poll every 6s so a new fan-out lands in the rider's
+    // inbox quickly without a websocket. Offers expire at 25s so this
+    // is a safe cadence — half the TTL gives the rider ~3 ticks to
+    // see the offer before it auto-expires.
+    refetchInterval: 6000,
+    retry: false,
+  })
+  const acceptOffer = useMutation({
+    mutationFn: (offerId: string) => acceptFigoDeliveryOffer(offerId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["figo", "delivery"] }),
+  })
+  const rejectOffer = useMutation({
+    mutationFn: (offerId: string) => rejectFigoDeliveryOffer(offerId, ""),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["figo", "delivery", "offers"] }),
+  })
   const assignments = useQuery({
     queryKey: ["figo", "delivery", "assignments"],
     queryFn: fetchFigoDeliveryAssignments,
@@ -979,6 +1000,67 @@ function DeliveryOpsPanel() {
         ) : null}
       </div>
       <div className="rounded-lg border border-neutral-200 bg-white p-4">
+        <h2 className="mb-3 font-black">Pending offers</h2>
+        <div className="mb-5 grid gap-2">
+          {(pendingOffers.data ?? []).length === 0 ? (
+            <p className="text-sm text-neutral-500">No offers waiting. Stay online to be picked.</p>
+          ) : null}
+          {(pendingOffers.data ?? []).map((offer) => {
+            const isBatch = Boolean(offer.is_batch || offer.batch)
+            const memberCount = offer.batch?.members?.length ?? 1
+            return (
+              <div
+                key={offer.id}
+                className={
+                  isBatch
+                    ? "rounded-md border border-amber-300 bg-amber-50 p-3 text-sm"
+                    : "rounded-md border border-neutral-200 bg-white p-3 text-sm"
+                }
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black">
+                      {isBatch ? `Batch pickup · ${memberCount} orders` : "Single delivery offer"}
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-600">
+                      Expires {new Date(offer.expires_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  {isBatch ? (
+                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-900">
+                      Batch · same restaurant
+                    </span>
+                  ) : null}
+                </div>
+                {offer.batch?.members?.length ? (
+                  <ol className="mt-2 ml-4 list-decimal text-xs text-neutral-700">
+                    {offer.batch.members.map((m) => (
+                      <li key={m.order_id}>
+                        Stop {m.sequence}: order {m.order_id.slice(0, 8)}
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => acceptOffer.mutate(offer.id)}
+                    disabled={acceptOffer.isPending}
+                    className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-black text-white disabled:opacity-50"
+                  >
+                    {acceptOffer.isPending ? "Accepting..." : isBatch ? "Accept batch" : "Accept"}
+                  </button>
+                  <button
+                    onClick={() => rejectOffer.mutate(offer.id)}
+                    disabled={rejectOffer.isPending}
+                    className="rounded-md border border-neutral-200 px-3 py-2 text-xs font-black text-neutral-800 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
         <h2 className="mb-4 font-black">Delivery assignments</h2>
         {currentAssignment.data ? (
           <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">

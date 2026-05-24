@@ -598,6 +598,70 @@ export async function fetchFigoDeliveryEarnings(): Promise<FigoDeliveryEarnings>
   return res.data?.data
 }
 
+// ─── P2 delivery batching ───────────────────────────────────────────
+//
+// The batch-aware offer flow surfaces pending offers to a partner with
+// a `batch` block when 2-3 same-restaurant orders are bundled into one
+// pickup. Accepting the offer claims the whole batch atomically.
+
+export interface FigoBatchMember {
+  order_id: string
+  sequence: number
+}
+
+export interface FigoDeliveryBatch {
+  id: string
+  restaurant_id: string
+  status: "pending" | "assigned" | "cancelled" | "completed"
+  members: FigoBatchMember[]
+  created_at?: string
+  assigned_at?: string
+  completed_at?: string
+}
+
+export interface FigoDeliveryOfferEntry {
+  id: string
+  order_id: string
+  delivery_partner_id: string
+  status: string
+  distance_km?: number
+  expires_at: string
+  created_at: string
+  // When the offer covers a batch, the dispatch worker emits this
+  // alongside the offer so the rider UI can render the bundle without
+  // a second round-trip.
+  batch?: FigoDeliveryBatch
+  is_batch?: boolean
+}
+
+export async function fetchFigoMyDeliveryOffers(): Promise<FigoDeliveryOfferEntry[]> {
+  const res = await api.get("/v1/food/delivery/offers/me")
+  return res.data?.data?.offers ?? []
+}
+
+export async function acceptFigoDeliveryOffer(offerId: string): Promise<{ offer_id: string; status: string }> {
+  const res = await api.post(`/v1/food/delivery/offers/${offerId}/accept`, {})
+  return res.data?.data
+}
+
+export async function rejectFigoDeliveryOffer(offerId: string, reason = ""): Promise<{ offer_id: string; status: string }> {
+  const res = await api.post(`/v1/food/delivery/offers/${offerId}/reject`, { reason })
+  return res.data?.data
+}
+
+// fetchFigoBatchForOrder returns the batch payload (members + sequence)
+// for an order that's part of a multi-pickup batch, or null when the
+// order is dispatched solo. 404 → null so callers can render the
+// alongside-banner conditionally.
+export async function fetchFigoBatchForOrder(orderId: string): Promise<FigoDeliveryBatch | null> {
+  try {
+    const res = await api.get(`/v1/food/delivery/orders/${orderId}/batch`)
+    return res.data?.data ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchFigoDeliveryHistory(): Promise<FigoDeliveryAssignment[]> {
   const res = await api.get("/v1/food/delivery/history")
   return res.data?.data?.items ?? []
