@@ -25,6 +25,7 @@ import {
   useStartStream,
   visibilityErrorReason,
 } from "@/hooks/useLiveV2"
+import LiveChatOverlay from "@/components/live/LiveChatOverlay"
 
 // Broadcaster studio.
 //
@@ -234,6 +235,14 @@ export default function BroadcastPage() {
           <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500">
             <Radio className="h-3 w-3" /> Couldn't refresh stream metadata.
           </p>
+        )}
+
+        {/* Live chat overlay — visible during the actual broadcast.
+            Hidden during connect / error / ended states. */}
+        {isLive && streamId && (
+          <div className="mt-5">
+            <LiveChatOverlay streamId={streamId} className="h-[420px]" />
+          </div>
         )}
       </div>
     </div>

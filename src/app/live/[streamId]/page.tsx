@@ -26,6 +26,7 @@ import {
   visibilityErrorReason,
 } from "@/hooks/useLiveV2"
 import { useBatchProfiles } from "@/hooks/useProfile"
+import LiveChatOverlay from "@/components/live/LiveChatOverlay"
 
 export default function LiveViewerPage() {
   const params = useParams<{ streamId: string }>()
@@ -152,7 +153,7 @@ export default function LiveViewerPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg py-6 px-4">
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         <header className="mb-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-3">
             {stream.status === "live" && (
@@ -171,26 +172,42 @@ export default function LiveViewerPage() {
           )}
         </header>
 
-        {detailErrReason ? (
-          <VisibilityFallback message={detailErrReason.message} />
-        ) : phase === "denied" ? (
-          <VisibilityFallback message={errorMessage ?? "Access denied"} />
-        ) : stream.status === "scheduled" ? (
-          <ScheduledPanel scheduledAt={stream.scheduled_at} />
-        ) : stream.status === "ended" && stream.recording_url ? (
-          <VODPlayer url={stream.recording_url} />
-        ) : stream.status === "ended" ? (
-          <EndedPanel />
-        ) : stream.status === "failed" ? (
-          <FailedPanel />
-        ) : (
-          <LivePlayer
-            videoRef={videoElRef}
-            audioRef={audioElRef}
-            phase={phase}
-            errorMessage={errorMessage}
-          />
-        )}
+        {/* Two-column on desktop: video left, chat right. On mobile
+            the chat stacks below the player. */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            {detailErrReason ? (
+              <VisibilityFallback message={detailErrReason.message} />
+            ) : phase === "denied" ? (
+              <VisibilityFallback message={errorMessage ?? "Access denied"} />
+            ) : stream.status === "scheduled" ? (
+              <ScheduledPanel scheduledAt={stream.scheduled_at} />
+            ) : stream.status === "ended" && stream.recording_url ? (
+              <VODPlayer url={stream.recording_url} />
+            ) : stream.status === "ended" ? (
+              <EndedPanel />
+            ) : stream.status === "failed" ? (
+              <FailedPanel />
+            ) : (
+              <LivePlayer
+                videoRef={videoElRef}
+                audioRef={audioElRef}
+                phase={phase}
+                errorMessage={errorMessage}
+              />
+            )}
+          </div>
+          {/* Chat overlay — visible whenever the stream is currently
+              live AND the viewer has access (no denied / failed /
+              visibility-error panels). Hidden for scheduled / ended
+              states since there's nothing to talk about live. */}
+          {stream.status === "live" && phase !== "denied" && !detailErrReason && (
+            <LiveChatOverlay
+              streamId={stream.id}
+              className="h-[480px] lg:h-auto"
+            />
+          )}
+        </div>
       </div>
     </div>
   )

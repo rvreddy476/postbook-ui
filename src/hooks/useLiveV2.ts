@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   useInfiniteQuery,
   useMutation,
@@ -8,6 +9,7 @@ import {
 } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import api from "@/lib/api"
+import { getSharedNotificationSocket } from "@/lib/notificationSocket"
 
 // ── Types ─────────────────────────────────────────────────────────────
 //
@@ -239,4 +241,99 @@ export function visibilityErrorReason(err: unknown): {
     default:
       return null
   }
+}
+
+// ── Chat overlay (Phase A) ────────────────────────────────────────────
+//
+// REST surface from live-service-v2:
+//   GET  /v1/livestream/streams/:id/chat?limit=N  — replay buffer
+//   POST /v1/livestream/streams/:id/chat          — append
+// Live tail arrives via the shared notification socket using the
+// existing `subscribe_live_stream` message + `live_chat_message`
+// pub/sub event type.
+
+export interface LiveChatMessage {
+  id: string
+  stream_id: string
+  user_id: string
+  text: string
+  created_at: string
+}
+
+const chatKeys = {
+  list: (streamId: string) => [...liveV2Keys.all, "chat", streamId] as const,
+}
+
+// useLiveChatList — initial replay buffer + live-merge subscription.
+// Returns messages oldest-first so the UI just appends as new arrives.
+export function useLiveChatList(streamId: string | null | undefined, limit = 50) {
+  const qc = useQueryClient()
+  const query = useQuery<LiveChatMessage[]>({
+    queryKey: streamId ? chatKeys.list(streamId) : ["liveV2", "chat", "none"],
+    queryFn: async () => {
+      const res = await api.get(`/v1/livestream/streams/${streamId}/chat`, {
+        params: { limit },
+      })
+      const items = unwrap<LiveChatMessage[]>(res.data, [])
+      // Backend returns newest-first; we keep oldest-first locally so
+      // append-on-event is natural.
+      return [...items].reverse()
+    },
+    enabled: !!streamId,
+    staleTime: 0,
+  })
+
+  // Live-tail subscription. Subscribes to the ws-gateway's
+  // live:stream:{streamID} pub/sub channel via the existing
+  // subscribe_live_stream message and merges new messages into the
+  // query cache.
+  React.useEffect(() => {
+    if (!streamId) return
+    const sock = getSharedNotificationSocket()
+    if (!sock) return
+    // Tell the gateway to attach our connection to this stream's
+    // pub/sub channel.
+    sock.send({ type: "subscribe_live_stream", stream_id: streamId })
+    const unsub = sock.on("live_chat_message", (raw: unknown) => {
+      const env = raw as { payload?: LiveChatMessage } | LiveChatMessage
+      const msg =
+        typeof env === "object" && env && "payload" in env
+          ? (env as { payload?: LiveChatMessage }).payload
+          : (env as LiveChatMessage)
+      if (!msg || msg.stream_id !== streamId) return
+      qc.setQueryData<LiveChatMessage[]>(chatKeys.list(streamId), (prev) => {
+        const list = prev ?? []
+        // Dedup on id — the broadcaster's own send echoes back via
+        // pub/sub and we don't want the double-render.
+        if (list.some((m) => m.id === msg.id)) return list
+        return [...list, msg]
+      })
+    })
+    return () => {
+      unsub()
+      sock.send({ type: "unsubscribe_live_stream", stream_id: streamId })
+    }
+  }, [streamId, qc])
+
+  return query
+}
+
+// useSendLiveChat — appends a chat message. The broadcaster's own
+// message also arrives via the pub/sub echo; useLiveChatList's
+// id-dedup prevents the double-render.
+export function useSendLiveChat(streamId: string) {
+  const qc = useQueryClient()
+  return useMutation<LiveChatMessage, AxiosError, { text: string }>({
+    mutationFn: async ({ text }) => {
+      const res = await api.post(`/v1/livestream/streams/${streamId}/chat`, { text })
+      return unwrap<LiveChatMessage>(res.data, {} as LiveChatMessage)
+    },
+    onSuccess: (msg) => {
+      qc.setQueryData<LiveChatMessage[]>(chatKeys.list(streamId), (prev) => {
+        const list = prev ?? []
+        if (list.some((m) => m.id === msg.id)) return list
+        return [...list, msg]
+      })
+    },
+  })
 }
