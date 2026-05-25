@@ -2,12 +2,14 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   Camera,
   BarChart3,
   Hash,
   Loader2,
   MapPin,
+  Radio,
   Send,
   Smile,
   X,
@@ -63,6 +65,7 @@ const SWATCH_COLORS = [
 ];
 
 const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -535,6 +538,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Tags"
             >
               <Hash className="w-[18px] h-[18px]" />
+            </button>
+            {/* Go Live — handoff to the live-service-v2 broadcaster form. */}
+            <button
+              type="button"
+              onClick={() => { onClose(); router.push('/live/new'); }}
+              className="p-2 rounded-xl text-brand-text/40 hover:text-rose-600 hover:bg-rose-50 transition-all"
+              title="Go Live"
+            >
+              <Radio className="w-[18px] h-[18px]" />
             </button>
           </div>
 
