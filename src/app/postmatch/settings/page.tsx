@@ -8,6 +8,7 @@ type Row = { href: string; label: string; desc: string; icon: string }
 
 const ROWS: Row[] = [
   { href: '/postmatch/preferences', label: 'Preferences', desc: 'Age range, distance, intent, gender', icon: '💝' },
+  { href: '/postmatch/privacy', label: 'Privacy', desc: 'Incognito, blur, approximate location', icon: '🕶️' },
   { href: '/postmatch/likes', label: 'Likes received', desc: 'See who liked your profile', icon: '💌' },
   { href: '/postmatch/blocks', label: 'Blocked users', desc: 'People you have blocked', icon: '🛡️' },
   { href: '/postmatch/profile', label: 'Edit profile', desc: 'Name, bio, photos', icon: '👤' },

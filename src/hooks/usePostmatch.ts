@@ -510,3 +510,84 @@ export function useUnblockPostMatchUser() {
     },
   })
 }
+
+// ── §P1-3 privacy controls ────────────────────────────────────────
+
+export interface PostMatchPrivacy {
+  incognito: boolean
+  hide_last_active: boolean
+  approximate_location: boolean
+  verified_only_filter: boolean
+  blur_photos_until_match: boolean
+}
+
+export function usePostMatchPrivacy() {
+  return useQuery({
+    queryKey: ['postmatch', 'privacy'],
+    queryFn: async () => {
+      const res = await postmatchApi.get<{ data: PostMatchPrivacy }>('/v1/dating/profile/privacy')
+      return res.data.data
+    },
+    retry: false,
+  })
+}
+
+export function useUpdatePostMatchPrivacy() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: Partial<PostMatchPrivacy>) => {
+      const res = await postmatchApi.patch<{ data: PostMatchPrivacy }>(
+        '/v1/dating/profile/privacy',
+        payload,
+      )
+      return res.data.data
+    },
+    onSuccess: (data) => {
+      qc.setQueryData(['postmatch', 'privacy'], data)
+      qc.invalidateQueries({ queryKey: ['postmatch', 'feed'] })
+    },
+  })
+}
+
+// ── §P1-2 transparency ────────────────────────────────────────────
+
+export interface CandidateExplanation {
+  reasons: { kind: string; detail: string }[]
+  distance_km?: number
+  is_promoted: boolean
+}
+
+export function useExplainCandidate(targetUserId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['postmatch', 'explain', targetUserId],
+    queryFn: async () => {
+      const res = await postmatchApi.get<{ data: CandidateExplanation }>(
+        `/v1/dating/pulse/${targetUserId}/explain`,
+      )
+      return res.data.data
+    },
+    enabled: enabled && !!targetUserId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export interface MyPhotoEntry {
+  id: string
+  media_url: string
+  is_primary: boolean
+  moderation_status: 'pending' | 'approved' | 'rejected'
+  moderation_reason?: string
+  created_at: string
+}
+
+export function useMyPostMatchPhotos(status?: 'pending' | 'approved' | 'rejected') {
+  return useQuery({
+    queryKey: ['postmatch', 'photos', 'mine', status ?? 'all'],
+    queryFn: async () => {
+      const qs = status ? `?status=${status}` : ''
+      const res = await postmatchApi.get<{ data: MyPhotoEntry[] }>(`/v1/dating/photos/me${qs}`)
+      return res.data.data ?? []
+    },
+  })
+}

@@ -10,6 +10,7 @@ import {
   usePostMatchPreferences, useUpdatePostMatchPreferences,
   usePostMatchPhotos, useDeletePhoto,
   usePostMatchLogout,
+  useMyPostMatchPhotos,
 } from '@/hooks/usePostmatch'
 import type { Gender, LookingFor, RelationshipIntent } from '@/types/postmatch'
 
@@ -47,6 +48,9 @@ export default function PostMatchProfilePage() {
   const { data: profile, isLoading: loadingProfile } = usePostMatchProfile()
   const { data: prefs, isLoading: loadingPrefs } = usePostMatchPreferences()
   const { data: photos = [] } = usePostMatchPhotos()
+  // §P1-2 — surface the moderation_reason so the user knows *why* a
+  // photo was rejected, not just that it was rejected.
+  const { data: rejectedPhotos = [] } = useMyPostMatchPhotos('rejected')
   const updateProfile = useUpdatePostMatchProfile()
   const updatePrefs = useUpdatePostMatchPreferences()
   const deletePhoto = useDeletePhoto()
@@ -271,7 +275,30 @@ export default function PostMatchProfilePage() {
 
             {/* Photos tab */}
             {tab === 'photos' && (
-              <div className="bg-[#111] rounded-2xl border border-[#222] p-6">
+              <div className="bg-[#111] rounded-2xl border border-[#222] p-6 space-y-4">
+                {rejectedPhotos.length > 0 && (
+                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-400">⚠️</span>
+                      <h4 className="text-sm font-bold text-rose-300">
+                        {rejectedPhotos.length} photo{rejectedPhotos.length === 1 ? '' : 's'} rejected
+                      </h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {rejectedPhotos.map(r => (
+                        <li key={r.id} className="flex gap-3 text-xs">
+                          {r.media_url && (
+                            <img src={r.media_url} alt="" className="w-12 h-16 rounded object-cover flex-shrink-0 opacity-60" />
+                          )}
+                          <div className="flex-1">
+                            <div className="text-white/90">{r.moderation_reason || 'No reason provided.'}</div>
+                            <div className="text-[#888] mt-1">{new Date(r.created_at).toLocaleDateString()}</div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-3">
                   {photos.map(p => (
                     <div key={p.id} className="relative aspect-[3/4] rounded-xl overflow-hidden border-2 border-[#222]">

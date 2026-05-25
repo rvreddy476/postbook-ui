@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { checkPostMatchAuth, postmatchLoginRedirect } from '@/lib/postmatchGuard'
-import { useDiscoveryFeed, useMakeDecision, usePostMatchProfile, usePostMatchPhotos } from '@/hooks/usePostmatch'
+import { useDiscoveryFeed, useMakeDecision, usePostMatchProfile, usePostMatchPhotos, useExplainCandidate } from '@/hooks/usePostmatch'
 import type { DecisionResult } from '@/types/postmatch'
 import { TrustBadge } from '@/components/postmatch/TrustBadge'
 
@@ -20,6 +20,7 @@ export default function DiscoverPage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [showExplain, setShowExplain] = useState(false)
   const [decisionError, setDecisionError] = useState<string | null>(null)
 
   const primaryPhoto = myPhotos.find(p => p.is_primary)?.media_url
@@ -32,6 +33,9 @@ export default function DiscoverPage() {
 
   const cards = data?.items ?? []
   const current = cards[currentIndex]
+
+  // §P1-2 — fetch the explanation only when the modal is open.
+  const explain = useExplainCandidate(current?.user_id, showExplain)
 
   const handleDecision = useCallback(async (decision: 'like' | 'pass' | 'super_like') => {
     if (!current) return
@@ -79,6 +83,68 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Header primaryPhoto={primaryPhoto} name={myProfile?.first_name} showMenu={showMenu} setShowMenu={setShowMenu} router={router} />
+
+      {/* §P1-2 — Why am I seeing this profile? */}
+      {showExplain && current && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+          onClick={() => setShowExplain(false)}
+        >
+          <div
+            className="bg-[#111] rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-white">Why am I seeing {current.first_name}?</h3>
+              <button
+                onClick={() => setShowExplain(false)}
+                className="text-[#666] hover:text-white text-2xl leading-none"
+                aria-label="Close"
+              >×</button>
+            </div>
+            {explain.isLoading && (
+              <p className="text-sm text-[#888]">Looking up the match signals…</p>
+            )}
+            {explain.error && (
+              <p className="text-sm text-rose-400">Couldn&apos;t load the explanation.</p>
+            )}
+            {explain.data && (
+              <div className="space-y-2">
+                {explain.data.is_promoted && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                    <span className="text-amber-400 text-lg">⭐</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-amber-300">Boosted profile</div>
+                      <div className="text-xs text-amber-200/70">This profile is currently featured.</div>
+                    </div>
+                  </div>
+                )}
+                {explain.data.reasons.length === 0 ? (
+                  <p className="text-sm text-[#888]">
+                    Matches your preferences. No extra signals to surface.
+                  </p>
+                ) : (
+                  explain.data.reasons.map((r, i) => (
+                    <div key={`${r.kind}-${i}`} className="flex items-start gap-3 p-3 rounded-xl bg-[#1a1a1a]">
+                      <span className="text-rose-400 text-lg">•</span>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                          {r.kind.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-sm text-white/90">{r.detail}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <p className="pt-3 text-[10px] text-[#555] leading-relaxed">
+                  Matching uses your preferences and signals you&apos;ve shared.
+                  We never expose abuse-prevention details.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Match popup */}
       {matchPopup && (
@@ -150,6 +216,18 @@ export default function DiscoverPage() {
 
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+                {/* §P1-2 — Why am I seeing this profile? */}
+                <button
+                  type="button"
+                  aria-label="Why am I seeing this profile?"
+                  onClick={() => setShowExplain(true)}
+                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/75 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
 
                 {/* LIKE/NOPE stamps */}
                 {swipeDirection === 'right' && (
