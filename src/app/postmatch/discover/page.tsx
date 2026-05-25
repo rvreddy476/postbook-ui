@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { checkPostMatchAuth, postmatchLoginRedirect } from '@/lib/postmatchGuard'
 import { useDiscoveryFeed, useMakeDecision, usePostMatchProfile, usePostMatchPhotos } from '@/hooks/usePostmatch'
-import type { FeedItem, DecisionResult } from '@/types/postmatch'
+import type { DecisionResult } from '@/types/postmatch'
+import { TrustBadge } from '@/components/postmatch/TrustBadge'
 
 export default function DiscoverPage() {
   const router = useRouter()
@@ -19,6 +20,7 @@ export default function DiscoverPage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
 
   const primaryPhoto = myPhotos.find(p => p.is_primary)?.media_url
 
@@ -33,6 +35,7 @@ export default function DiscoverPage() {
 
   const handleDecision = useCallback(async (decision: 'like' | 'pass' | 'super_like') => {
     if (!current) return
+    setDecisionError(null)
     setSwipeDirection(decision === 'pass' ? 'left' : 'right')
 
     try {
@@ -43,14 +46,22 @@ export default function DiscoverPage() {
       if (result.result === 'matched') {
         setMatchPopup(result)
       }
-    } catch {
-      // silently continue
-    }
-
-    setTimeout(() => {
+      // P1-4 / §13: only advance the deck when the backend acknowledged
+      // the decision. On error we hold the card so the user can retry
+      // — see catch branch below.
+      setTimeout(() => {
+        setSwipeDirection(null)
+        setCurrentIndex(prev => prev + 1)
+      }, 300)
+    } catch (err) {
+      // Roll the swipe animation back and surface a banner. The card
+      // stays put so the user can retry the same decision.
+      const message =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
+        'Could not save your choice. Tap again to retry.'
       setSwipeDirection(null)
-      setCurrentIndex(prev => prev + 1)
-    }, 300)
+      setDecisionError(message)
+    }
   }, [current, makeDecision])
 
   // Loading state
@@ -171,6 +182,14 @@ export default function DiscoverPage() {
                           </span>
                         )}
                       </div>
+                      {/* Phase 1 — verification badges from candidate payload. */}
+                      <div className="mt-2">
+                        <TrustBadge
+                          trustTier={current.trust_tier}
+                          verificationState={current.verification_state}
+                          variant="compact"
+                        />
+                      </div>
                     </div>
                     {/* Info button */}
                     <button
@@ -265,6 +284,30 @@ export default function DiscoverPage() {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
               </button>
             </div>
+
+            {/* P1-4: held card + retry banner — surfaced when the
+                decision mutation fails. The card itself stays in place
+                so the user can re-tap their choice. */}
+            {decisionError && (
+              <div
+                role="alert"
+                className="mt-4 mx-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300 flex items-start gap-3"
+              >
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-bold">{decisionError}</p>
+                  <button
+                    type="button"
+                    onClick={() => setDecisionError(null)}
+                    className="mt-1 text-[10px] font-bold uppercase tracking-widest text-rose-200 hover:text-white transition"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Card counter */}
             <div className="text-center mt-4">

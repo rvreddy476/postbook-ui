@@ -15,7 +15,9 @@
 //     blocklist read yet. P1 work adds GET /v1/dating/safety/blocks.
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import postmatchApi, { savePostMatchTokens, savePostMatchSession, clearPostMatchAuth } from '@/lib/postmatchApi'
+import { getSharedNotificationSocket } from '@/lib/notificationSocket'
 import type {
   AuthTokens, SendOTPPayload, VerifyOTPPayload,
   PostMatchProfile, ProfileInput,
@@ -25,6 +27,7 @@ import type {
   PostMatchMatch,
   PostMatchConversation, PostMatchMessage, SendMessagePayload,
   ReportPayload, BlockPayload, LikeReceived,
+  MyReportEntry, MyReportsResult,
 } from '@/types/postmatch'
 
 // ── Auth ────────────────────────────────────────────────────────
@@ -280,8 +283,84 @@ export function usePostMatchMessages(conversationId: string | undefined, cursor?
       return { messages: res.data.data ?? [], nextCursor: res.data.meta?.next_cursor }
     },
     enabled: !!conversationId,
-    refetchInterval: 5000,
+    // P0-4 acceptance test A: WS subscription (usePostMatchLiveSubscription)
+    // is the primary live path. We keep a 15s safety-net poll so a missed
+    // socket event still surfaces eventually; the WS path normally beats it.
+    refetchInterval: 15000,
   })
+}
+
+/**
+ * P0-4 acceptance test A — wires the shared notification socket to push
+ * inbound chat messages into the `usePostMatchMessages` query cache for
+ * the open conversation, so the chat view updates live without polling.
+ *
+ * Server emits `message.new` (chat-service via ws-gateway). We filter to
+ * the open conversation_id and dedupe by message id before pushing into
+ * the cache. The 15 s safety-net poll above still runs, so a missed
+ * socket event is recovered eventually.
+ */
+export function usePostMatchLiveSubscription(conversationId: string | undefined) {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!conversationId) return
+    const sock = getSharedNotificationSocket()
+    if (!sock) return
+
+    const seenIds = new Set<string>()
+    const seenIdems = new Set<string>()
+
+    const handle = (raw: unknown) => {
+      const data = raw as Partial<PostMatchMessage> & {
+        conversation_id?: string
+        idempotency_key?: string
+      }
+      if (!data || data.conversation_id !== conversationId) return
+
+      const id = data.id ?? ''
+      const idem = data.idempotency_key ?? ''
+      if (id && seenIds.has(id)) return
+      if (idem && seenIdems.has(idem)) return
+      if (id) seenIds.add(id)
+      if (idem) seenIdems.add(idem)
+
+      const msg: PostMatchMessage = {
+        id: id || `ws-${Date.now()}`,
+        conversation_id: data.conversation_id!,
+        sender_user_id: data.sender_user_id ?? '',
+        message_type: (data.message_type as PostMatchMessage['message_type']) ?? 'text',
+        body_text: data.body_text ?? '',
+        media_key: data.media_key ?? undefined,
+        moderation_status: data.moderation_status ?? 'approved',
+        created_at: data.created_at ?? new Date().toISOString(),
+      }
+
+      // Push into every cached page for this conversation (cursor variants),
+      // matching the query key shape `['postmatch', 'messages', convId, cursor?]`.
+      qc.setQueriesData<{ messages: PostMatchMessage[]; nextCursor?: string }>(
+        { queryKey: ['postmatch', 'messages', conversationId] },
+        (prev) => {
+          if (!prev) return prev
+          // Idempotent merge — never duplicate a server-side id.
+          if (prev.messages.some((m) => m.id === msg.id)) return prev
+          return { ...prev, messages: [...prev.messages, msg] }
+        },
+      )
+      // Conversation list previews need to refresh too.
+      qc.invalidateQueries({ queryKey: ['postmatch', 'conversations'] })
+    }
+
+    // The chat-service emits `message.new`. Older builds of the gateway
+    // relabel inbound chat as just `message`; subscribe to both so we
+    // catch whichever the live build uses.
+    const off1 = sock.on('message.new', handle)
+    const off2 = sock.on('message', handle)
+
+    return () => {
+      off1()
+      off2()
+    }
+  }, [conversationId, qc])
 }
 
 export function useSendPostMatchMessage(conversationId: string) {
@@ -323,6 +402,74 @@ export function useBlockPostMatchUser() {
       qc.invalidateQueries({ queryKey: ['postmatch', 'matches'] })
       qc.invalidateQueries({ queryKey: ['postmatch', 'blocks'] })
     },
+  })
+}
+
+// ── Phase 1 — Safety center hooks ─────────────────────────────────────
+
+/**
+ * Panic shortcut — triggers the dating-service safety/panic flow which
+ * notifies Trust & Safety and shares a live-location session with the
+ * viewer's trusted contact (if one is configured).
+ */
+export function usePostMatchPanic() {
+  return useMutation({
+    mutationFn: async (location?: { lat?: number; lng?: number }) => {
+      await postmatchApi.post('/v1/dating/safety/panic', {
+        ...(location?.lat != null ? { location_lat: location.lat } : {}),
+        ...(location?.lng != null ? { location_lng: location.lng } : {}),
+      })
+    },
+  })
+}
+
+export interface SafeMeetInput {
+  with_user_id: string
+  when: string // ISO-8601 UTC
+  lat: number
+  lng: number
+  venue_name: string
+}
+
+/**
+ * Schedule a safe-meet. Premium-gated server-side; surfaces HTTP 402 when
+ * the viewer is on a free plan so the UI can swap to the upsell.
+ */
+export function useScheduleSafeMeet() {
+  return useMutation({
+    mutationFn: async (payload: SafeMeetInput) => {
+      const res = await postmatchApi.post('/v1/dating/safety/meet', payload)
+      return res.data?.data ?? res.data
+    },
+  })
+}
+
+// ── Phase 1 — My reports list ─────────────────────────────────────────
+
+/**
+ * Returns the list of reports the viewer filed plus their current status.
+ * If dating-service hasn't shipped `GET /v1/dating/safety/reports/me`
+ * (404/501), returns `endpoint_available: false` so the UI can render a
+ * "pending endpoint" banner instead of a generic error.
+ */
+export function useMyPostMatchReports() {
+  return useQuery<MyReportsResult>({
+    queryKey: ['postmatch', 'my-reports'],
+    queryFn: async () => {
+      try {
+        const res = await postmatchApi.get<{ data: MyReportEntry[] }>(
+          '/v1/dating/safety/reports/me',
+        )
+        return { items: res.data.data ?? [], endpoint_available: true }
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status
+        if (status === 404 || status === 501) {
+          return { items: [], endpoint_available: false }
+        }
+        throw err
+      }
+    },
+    retry: false,
   })
 }
 

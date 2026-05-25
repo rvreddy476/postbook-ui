@@ -155,6 +155,22 @@ export interface FeedItem {
   primary_photo?: { url: string; blurred: boolean }
   relationship_intent?: string
   occupation?: string
+  /**
+   * Phase 1 — surfaced by dating-service candidate payload to drive the
+   * <TrustBadge /> component. Both fields are optional: older builds of
+   * the deck endpoint don't include them.
+   */
+  trust_tier?: 'none' | 'email' | 'phone' | 'aadhaar' | 'vouched' | string
+  verification_state?: string[] | Record<string, boolean>
+}
+
+/**
+ * Match list row payload — the matches endpoint surfaces the same trust
+ * fields under `other_user`, so the badge can render there too.
+ */
+export interface MatchOtherUserTrust {
+  trust_tier?: string
+  verification_state?: string[] | Record<string, boolean>
 }
 
 export interface DecisionPayload {
@@ -233,4 +249,27 @@ export interface LikeReceived {
 export interface BlockPayload {
   blocked_user_id: string
   reason?: string
+}
+
+// ── Phase 1 — My Reports list ─────────────────────────────────────
+export interface MyReportEntry {
+  id: string
+  target_user_id: string
+  target_name?: string
+  category: string
+  status: 'submitted' | 'under_review' | 'investigating' | 'actioned' | 'resolved' | 'dismissed' | 'closed_no_action' | string
+  details?: string
+  created_at?: string
+  updated_at?: string
+  resolution_note?: string
+}
+
+export interface MyReportsResult {
+  items: MyReportEntry[]
+  /**
+   * `false` when dating-service hasn't shipped `GET /v1/dating/safety/reports/me`
+   * yet — the UI uses it to render a "pending endpoint" banner instead of an
+   * empty state.
+   */
+  endpoint_available: boolean
 }

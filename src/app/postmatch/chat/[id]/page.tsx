@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getPostMatchSession } from '@/lib/postmatchApi'
 import { checkPostMatchAuth, postmatchLoginRedirect } from '@/lib/postmatchGuard'
-import { usePostMatchMessages, useSendPostMatchMessage, usePostMatchConversations } from '@/hooks/usePostmatch'
+import { usePostMatchMessages, useSendPostMatchMessage, usePostMatchConversations, usePostMatchLiveSubscription } from '@/hooks/usePostmatch'
 
 export default function PostMatchChatPage() {
   const router = useRouter()
@@ -16,6 +16,10 @@ export default function PostMatchChatPage() {
   const { data, isLoading } = usePostMatchMessages(conversationId)
   const { data: conversations } = usePostMatchConversations()
   const sendMessage = useSendPostMatchMessage(conversationId)
+  // P0-4 acceptance test A — wire the shared WS to push inbound chats
+  // into the messages query cache so the view updates live without
+  // refresh. Falls back to the 15s safety poll if the socket is down.
+  usePostMatchLiveSubscription(conversationId)
 
   const [text, setText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
