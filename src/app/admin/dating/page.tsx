@@ -97,6 +97,14 @@ export default function DatingAdminDashboard() {
             cache invalidation + profile-state transition automatically.
           </li>
           <li>
+            Every report transition + photo flip writes one row to the
+            append-only <code>dating_admin_audit</code> log — visit the{' '}
+            <Link href="/admin/dating/audit" className="text-indigo-700 underline">
+              audit view
+            </Link>{' '}
+            to see who-did-what.
+          </li>
+          <li>
             Fake-account risk queue not built yet (§P0-7 — Phase 2). The
             scoring schema is documented in <code>PHASE_0_TEST_PLANS.md</code>.
           </li>
