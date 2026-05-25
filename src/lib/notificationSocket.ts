@@ -132,6 +132,23 @@ class NotificationSocket {
     }
 
     /**
+     * Send a typed envelope to the WS gateway. Used for client-originated
+     * messages like conversation.enter / conversation.heartbeat /
+     * conversation.leave / typing.start. Silently drops the send if the
+     * socket isn't open — the gateway also has heartbeat-based recovery
+     * so a missed beat isn't fatal.
+     */
+    send(payload: Record<string, unknown>): boolean {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false
+        try {
+            this.ws.send(JSON.stringify(payload))
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /**
      * Register a listener for a given event type.
      * Returns an unsubscribe function.
      *

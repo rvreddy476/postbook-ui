@@ -34,6 +34,8 @@ import {
   PinnedMessage,
 } from '@/services/messageService'
 import { getSession } from '@/services/authService'
+import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus, Paperclip,
   Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image
@@ -128,6 +130,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
   const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
+  // Mirror convIdRef into state so the M1 presence hook can react when the
+  // direct conversation is resolved (createOrGet is async on first open).
+  const [conversationId, setConversationId] = useState<string | null>(null)
 
   const convIdRef = useRef<string | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -135,6 +140,48 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const editInputRef = useRef<HTMLInputElement | null>(null)
   const lastTypingSentRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
+  const { data: presence } = useConversationPresence(conversationId)
+  const setTyping = useSetTyping(conversationId)
+
+  // Hydrate display names for "X is typing…" / active-now indicators.
+  // Self is filtered before passing to the batch hook to keep the payload
+  // tight (the batch endpoint is capped at 100 anyway) and to avoid
+  // requesting the viewer's own profile just to drop them later.
+  const remoteTypingIds = useMemo(
+    () => (presence?.typing_users ?? []).filter((id) => id !== myId),
+    [presence?.typing_users, myId]
+  )
+  const remoteActiveIds = useMemo(
+    () => (presence?.active_users ?? []).filter((id) => id !== myId),
+    [presence?.active_users, myId]
+  )
+  const presenceUserIds = useMemo(
+    () => Array.from(new Set([...remoteTypingIds, ...remoteActiveIds])),
+    [remoteTypingIds, remoteActiveIds]
+  )
+  const { data: presenceProfiles } = useBatchProfiles(presenceUserIds)
+
+  const formatNameList = useCallback(
+    (ids: string[]): string => {
+      const names = ids.map((id) => {
+        const profile = presenceProfiles?.get(id)
+        return (
+          profile?.display_name ||
+          profile?.username ||
+          // Fall back to the DM peer's name when the batch hook hasn't
+          // resolved yet — in a 1:1 chat that's the only "other" user.
+          (id === userId ? userName : 'Someone')
+        )
+      })
+      if (names.length === 0) return ''
+      if (names.length === 1) return names[0]
+      if (names.length === 2) return `${names[0]} and ${names[1]}`
+      return `${names[0]}, ${names[1]} and ${names.length - 2} more`
+    },
+    [presenceProfiles, userId, userName]
+  )
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -145,6 +192,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   // Init conversation & load messages
   useEffect(() => {
     let cancelled = false
+    setConversationId(null)
     const init = async () => {
       try {
         setLoading(true)
@@ -154,6 +202,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
+        if (!cancelled) setConversationId(conversationId)
         const msgRes = await fetchMessages(conversationId)
         const raw: BackendMessage[] = Array.isArray(msgRes.data) ? msgRes.data : []
         if (!cancelled) {
@@ -294,7 +343,11 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       lastTypingSentRef.current = now
       sendTypingIndicator(convIdRef.current).catch(() => { })
     }
-  }, [])
+    // M1: also push a `typing.start` over the persistent WS so other
+    // participants see the indicator instantly (the legacy HTTP POST
+    // above stays for back-compat). useSetTyping throttles to 3s.
+    setTyping()
+  }, [setTyping])
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
@@ -425,11 +478,32 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   }, [])
 
   const statusText = useMemo(() => {
-    if (typingUsers.size > 0) return 'typing...'
+    // Prefer the M1 polled rollup for typing — it's authoritative across
+    // tabs/devices — and fall back to the legacy local set for snappier
+    // first-keystroke feedback.
+    const anyTyping = remoteTypingIds.length > 0 || typingUsers.size > 0
+    if (anyTyping) {
+      if (presence?.is_big_group) return 'Someone is typing...'
+      const label = formatNameList(remoteTypingIds)
+      return label ? `${label} is typing...` : 'typing...'
+    }
+    if (presence && presence.active_count > 1) {
+      // The viewer themselves count toward active_count, so >1 means at
+      // least one peer is in the chat right now. For 1:1 chats this is a
+      // stronger signal than the global online dot.
+      return 'Active in chat'
+    }
     if (userOnline) return 'Active now'
     if (userLastSeen) return `Last seen ${userLastSeen}`
     return 'Offline'
-  }, [userOnline, userLastSeen, typingUsers])
+  }, [
+    userOnline,
+    userLastSeen,
+    typingUsers,
+    remoteTypingIds,
+    presence,
+    formatNameList,
+  ])
 
   const isGroupStart = (i: number) => i === 0 || messages[i].senderId !== messages[i - 1].senderId
   const isGroupEnd = (i: number) => i === messages.length - 1 || messages[i].senderId !== messages[i + 1].senderId
@@ -470,11 +544,33 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
           <div className="flex shrink-0 flex-col">
             <h3 className="text-[16px] font-extrabold tracking-tight text-brand-text">{userName}</h3>
-            <p className={`text-[12px] font-semibold tracking-wide ${typingUsers.size > 0 ? 'text-indigo-500' : userOnline ? 'text-emerald-500' : 'text-brand-text/60'
+            <p className={`text-[12px] font-semibold tracking-wide ${(remoteTypingIds.length > 0 || typingUsers.size > 0) ? 'text-indigo-500' : userOnline ? 'text-emerald-500' : 'text-brand-text/60'
               }`}>
               {statusText}
             </p>
           </div>
+
+          {/* M1 presence pill — count for big groups, avatar names
+              otherwise. Hidden when the only active user is the viewer. */}
+          {presence && remoteActiveIds.length > 0 && (
+            <div
+              className="hidden md:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100"
+              title={
+                presence.is_big_group
+                  ? `${presence.active_count} active in this conversation`
+                  : `Active now: ${formatNameList(remoteActiveIds)}`
+              }
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[11px] font-bold text-emerald-700">
+                {presence.is_big_group
+                  ? `${presence.active_count} active`
+                  : remoteActiveIds.length === 1
+                    ? `${formatNameList(remoteActiveIds)} active`
+                    : `${remoteActiveIds.length} active`}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5">
