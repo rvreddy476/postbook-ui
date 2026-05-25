@@ -1,21 +1,73 @@
 "use client"
 
-import React, { Suspense, useState, useEffect, useRef, useCallback } from "react"
+import React, { Suspense, useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
     Search, X, Loader2, Users, FileText, LayoutGrid, CheckCircle,
     ShoppingBag, Calendar, MessageSquare, Clock, Bookmark, Trash2,
+    Hash, Globe, Radio,
 } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useUniversalSearch, useAutocomplete, SearchType } from "@/hooks/useSearch"
+import {
+    useUniversalSearch,
+    useAutocomplete,
+    useMultiEntitySearch,
+    useRecordSearchClick,
+    SearchType,
+} from "@/hooks/useSearch"
+import type {
+    EntityType,
+    HashtagHit,
+    CommunityHit,
+    ChannelHit,
+    ProductHit,
+    UserHit,
+    PostHit,
+} from "@/types/search"
 import type { PostDetail } from "@/types/profile"
 import PostCard from "@/components/PostCard"
 import api from "@/lib/api"
 
 // ─── Extended tab types ───────────────────────────────────────────────────────
 
-type ExtendedSearchType = SearchType | "products" | "events" | "messages"
+// `ExtendedSearchType` now includes the six multi-entity buckets the
+// search-service ranked API returns (posts, users, hashtags, products,
+// communities, channels) plus the legacy core "all" tab and the
+// non-multi-entity tabs that still hit dedicated endpoints
+// (`events`, `messages`).
+type ExtendedSearchType =
+    | SearchType
+    | "products"
+    | "hashtags"
+    | "communities"
+    | "channels"
+    | "events"
+    | "messages"
+
+// Subset of ExtendedSearchType served by the multi-entity ranked API.
+// Used to gate click-tracking + cursor-paged "Show more" buttons.
+const MULTI_ENTITY_TYPES: ExtendedSearchType[] = [
+    "profiles",
+    "posts",
+    "hashtags",
+    "products",
+    "communities",
+    "channels",
+]
+
+// Map ExtendedSearchType → backend EntityType (the wire name).
+function toEntityType(t: ExtendedSearchType): EntityType | null {
+    switch (t) {
+        case "profiles": return "users"
+        case "posts": return "posts"
+        case "hashtags": return "hashtags"
+        case "products": return "products"
+        case "communities": return "communities"
+        case "channels": return "channels"
+        default: return null
+    }
+}
 
 // ─── Tab configuration ──────────────────────────────────────────────────────
 
@@ -29,6 +81,9 @@ const TABS: Tab[] = [
     { label: "All", type: "all", icon: <LayoutGrid className="w-4 h-4" /> },
     { label: "People", type: "profiles", icon: <Users className="w-4 h-4" /> },
     { label: "Posts", type: "posts", icon: <FileText className="w-4 h-4" /> },
+    { label: "Hashtags", type: "hashtags", icon: <Hash className="w-4 h-4" /> },
+    { label: "Communities", type: "communities", icon: <Globe className="w-4 h-4" /> },
+    { label: "Channels", type: "channels", icon: <Radio className="w-4 h-4" /> },
     { label: "Products", type: "products", icon: <ShoppingBag className="w-4 h-4" /> },
     { label: "Events", type: "events", icon: <Calendar className="w-4 h-4" /> },
     { label: "Messages", type: "messages", icon: <MessageSquare className="w-4 h-4" /> },
@@ -486,6 +541,241 @@ function MessagesTab({ query }: { query: string }) {
     )
 }
 
+// ─── Multi-entity tab content ────────────────────────────────────────────────
+//
+// Renders one bucket of the multi-entity ranked search response.
+// Supports per-entity "Show more" via the cursor returned by the
+// backend, and fires search-click analytics on every result tap.
+
+interface MultiEntityTabContentProps {
+    query: string
+    entity: EntityType
+    bucket: { items: any[]; next_cursor: string | null } | undefined
+    isLoading: boolean
+    isFetching: boolean
+    isFetchingMore: boolean
+    onFetchMore: () => void
+    onResultClick: (entity_type: EntityType, entity_id: string, position: number) => void
+}
+
+function MultiEntityTabContent({
+    query,
+    entity,
+    bucket,
+    isLoading,
+    isFetching,
+    isFetchingMore,
+    onFetchMore,
+    onResultClick,
+}: MultiEntityTabContentProps) {
+    if (query.length < 2) return <HintState />
+    if ((isLoading || isFetching) && !bucket) return <LoadingSkeleton />
+    const items = bucket?.items ?? []
+    if (items.length === 0) return <EmptyState query={query} />
+
+    const cursor = bucket?.next_cursor ?? null
+
+    return (
+        <div className="space-y-3">
+            <SectionHeading
+                icon={ENTITY_ICONS[entity]}
+                label={ENTITY_LABELS[entity]}
+                count={items.length}
+            />
+            <div className="space-y-3">
+                {items.map((item, idx) => (
+                    <EntityResultRow
+                        key={entityKey(entity, item)}
+                        entity={entity}
+                        item={item}
+                        position={idx}
+                        onClick={onResultClick}
+                    />
+                ))}
+            </div>
+            {cursor && (
+                <div className="pt-4 flex justify-center">
+                    <button
+                        onClick={onFetchMore}
+                        disabled={isFetchingMore}
+                        className="px-5 py-2.5 text-sm font-bold rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-text/5 text-brand-text transition-all disabled:opacity-60 flex items-center gap-2"
+                    >
+                        {isFetchingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {isFetchingMore ? "Loading…" : "Show more"}
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
+    posts: <FileText className="w-4 h-4" />,
+    users: <Users className="w-4 h-4" />,
+    hashtags: <Hash className="w-4 h-4" />,
+    products: <ShoppingBag className="w-4 h-4" />,
+    communities: <Globe className="w-4 h-4" />,
+    channels: <Radio className="w-4 h-4" />,
+}
+
+const ENTITY_LABELS: Record<EntityType, string> = {
+    posts: "Posts",
+    users: "People",
+    hashtags: "Hashtags",
+    products: "Products",
+    communities: "Communities",
+    channels: "Channels",
+}
+
+function entityKey(entity: EntityType, item: any): string {
+    switch (entity) {
+        case "posts": return (item as PostHit).post_id
+        case "users": return (item as UserHit).user_id
+        case "hashtags": return (item as HashtagHit).hashtag
+        case "products": return (item as ProductHit).product_id
+        case "communities": return (item as CommunityHit).community_id
+        case "channels": return (item as ChannelHit).channel_id
+    }
+}
+
+interface EntityResultRowProps {
+    entity: EntityType
+    item: any
+    position: number
+    onClick: (entity_type: EntityType, entity_id: string, position: number) => void
+}
+
+function EntityResultRow({ entity, item, position, onClick }: EntityResultRowProps) {
+    switch (entity) {
+        case "users": {
+            const u = item as UserHit
+            return (
+                <Link
+                    href={`/u/${u.username}`}
+                    onClick={() => onClick("users", u.user_id, position)}
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
+                >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white font-bold">
+                        {(u.display_name || u.username || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[15px] font-bold text-brand-text truncate">{u.display_name}</span>
+                            {u.is_verified && <CheckCircle className="w-4 h-4 text-blue-500 fill-current" />}
+                        </div>
+                        <p className="text-sm text-brand-text/40 truncate">@{u.username}</p>
+                        {u.bio && <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{u.bio}</p>}
+                    </div>
+                </Link>
+            )
+        }
+        case "posts": {
+            const p = item as PostHit
+            return (
+                <Link
+                    href={`/post/${p.post_id}`}
+                    onClick={() => onClick("posts", p.post_id, position)}
+                    className="block p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                >
+                    <p className="text-sm text-brand-text line-clamp-3">{p.text}</p>
+                    <div className="flex gap-4 mt-2 text-xs text-brand-text/40 font-semibold">
+                        <span>{p.like_count} likes</span>
+                        <span>{p.comment_count} comments</span>
+                        {p.author_username && <span>by @{p.author_username}</span>}
+                    </div>
+                </Link>
+            )
+        }
+        case "hashtags": {
+            const h = item as HashtagHit
+            return (
+                <Link
+                    href={`/hashtag/${encodeURIComponent(h.hashtag)}`}
+                    onClick={() => onClick("hashtags", h.hashtag, position)}
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <Hash className="w-6 h-6 text-brand-text/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-brand-text truncate">#{h.hashtag}</p>
+                        <p className="text-xs text-brand-text/40">{h.use_count.toLocaleString()} posts</p>
+                    </div>
+                </Link>
+            )
+        }
+        case "products": {
+            const p = item as ProductHit
+            return (
+                <Link
+                    href={`/commerce?product=${p.product_id}`}
+                    onClick={() => onClick("products", p.product_id, position)}
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-6 h-6 text-brand-text/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-brand-text truncate">{p.title}</p>
+                        {p.description && (
+                            <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-2">{p.description}</p>
+                        )}
+                        {typeof p.price === "number" && p.price > 0 && (
+                            <p className="text-sm font-bold text-brand-text mt-1.5">
+                                {p.price.toLocaleString()}
+                            </p>
+                        )}
+                    </div>
+                </Link>
+            )
+        }
+        case "communities": {
+            const c = item as CommunityHit
+            return (
+                <Link
+                    href={`/communities/${c.community_id}`}
+                    onClick={() => onClick("communities", c.community_id, position)}
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <Globe className="w-6 h-6 text-brand-text/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[15px] font-bold text-brand-text truncate">{c.name}</span>
+                            {c.is_verified && <CheckCircle className="w-4 h-4 text-blue-500 fill-current" />}
+                        </div>
+                        <p className="text-sm text-brand-text/40 truncate">@{c.handle} · {c.member_count.toLocaleString()} members</p>
+                        {c.description && <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{c.description}</p>}
+                    </div>
+                </Link>
+            )
+        }
+        case "channels": {
+            const ch = item as ChannelHit
+            return (
+                <Link
+                    href={`/channels/${ch.channel_id}`}
+                    onClick={() => onClick("channels", ch.channel_id, position)}
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                        <Radio className="w-6 h-6 text-brand-text/50" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[15px] font-bold text-brand-text truncate">{ch.name}</span>
+                            {ch.is_verified && <CheckCircle className="w-4 h-4 text-blue-500 fill-current" />}
+                        </div>
+                        <p className="text-sm text-brand-text/40 truncate">@{ch.handle} · {ch.subscriber_count.toLocaleString()} subscribers</p>
+                        {ch.description && <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{ch.description}</p>}
+                    </div>
+                </Link>
+            )
+        }
+    }
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 function SearchPageContent() {
@@ -548,11 +838,46 @@ function SearchPageContent() {
     )
     const { data: autocompleteResults } = useAutocomplete(inputValue)
 
+    // Multi-entity ranked search — drives the dedicated entity tabs
+    // (Hashtags, Communities, Channels, Products) plus per-bucket
+    // "Show more" pagination. We deliberately keep the legacy
+    // `useUniversalSearch` powering the "All" tab so the existing
+    // PostCard rendering keeps working unchanged; the dedicated tabs
+    // below pull from the multi-entity buckets instead.
+    const isMultiEntityTab = MULTI_ENTITY_TYPES.includes(activeType)
+    const requestedEntity = toEntityType(activeType)
+    const multiTypes = useMemo<EntityType[]>(
+        () => (requestedEntity ? [requestedEntity] : []),
+        [requestedEntity],
+    )
+    const {
+        data: multiData,
+        isLoading: multiLoading,
+        isFetching: multiFetching,
+        queryId,
+        fetchMore,
+        fetchingMore,
+    } = useMultiEntitySearch({
+        q: inputValue,
+        types: multiTypes,
+        enabled: isMultiEntityTab && requestedEntity !== null,
+    })
+
+    const recordClick = useRecordSearchClick()
+    const handleResultClick = useCallback(
+        (entity_type: EntityType, entity_id: string, position: number) => {
+            if (!queryId) return
+            recordClick.mutate({ query_id: queryId, entity_type, entity_id, position })
+        },
+        [queryId, recordClick],
+    )
+
     const profiles = data?.profiles ?? []
     const posts = data?.posts ?? []
     const hasResults = profiles.length > 0 || posts.length > 0
     const queryTooShort = inputValue.length < 2
-    const isExtendedTab = ["products", "events", "messages"].includes(activeType as string)
+    // Legacy non-multi-entity tabs that still hit dedicated endpoints.
+    const isLegacyExtendedTab = ["events", "messages"].includes(activeType as string)
 
     const hasAutocomplete = showDropdown && inputValue.length >= 1 && (autocompleteResults?.length ?? 0) > 0
 
@@ -584,10 +909,21 @@ function SearchPageContent() {
         }
     }
 
-    const handleAutocompleteClick = useCallback((username: string) => {
-        setShowDropdown(false)
-        router.push(`/u/${username}`)
-    }, [router])
+    // Multi-entity autocomplete dispatch — users → /u/:username,
+    // hashtags → /hashtag/:tag, communities → /communities/:id.
+    const handleAutocompleteSelect = useCallback(
+        (item: { kind: string; username?: string; hashtag?: string; community_id?: string }) => {
+            setShowDropdown(false)
+            if (item.kind === "user" && item.username) {
+                router.push(`/u/${item.username}`)
+            } else if (item.kind === "hashtag" && item.hashtag) {
+                router.push(`/hashtag/${encodeURIComponent(item.hashtag)}`)
+            } else if (item.kind === "community" && item.community_id) {
+                router.push(`/communities/${item.community_id}`)
+            }
+        },
+        [router],
+    )
 
     const handleSelectQuery = useCallback((q: string) => {
         setInputValue(q)
@@ -634,25 +970,55 @@ function SearchPageContent() {
                             </button>
                         )}
 
-                        {/* Autocomplete dropdown */}
+                        {/* Autocomplete dropdown — multi-entity (users / hashtags / communities) */}
                         {hasAutocomplete && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-60 overflow-y-auto z-50 border border-brand-divider">
-                                {autocompleteResults!.map((user) => (
-                                    <button
-                                        key={user.user_id}
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => handleAutocompleteClick(user.username)}
-                                        className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-brand-text/5 transition-colors text-left"
-                                    >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
-                                            {(user.display_name || user.username).charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-brand-text truncate">{user.display_name}</p>
-                                            <p className="text-xs text-brand-text/40 truncate">@{user.username}</p>
-                                        </div>
-                                    </button>
-                                ))}
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-72 overflow-y-auto z-50 border border-brand-divider">
+                                {autocompleteResults!.map((item, idx) => {
+                                    const key =
+                                        item.kind === "user"
+                                            ? `user-${item.user_id ?? idx}`
+                                            : item.kind === "hashtag"
+                                                ? `tag-${item.hashtag ?? idx}`
+                                                : `comm-${item.community_id ?? idx}`
+                                    const label =
+                                        item.kind === "user"
+                                            ? item.display_name ?? item.username ?? ""
+                                            : item.kind === "hashtag"
+                                                ? `#${item.hashtag ?? ""}`
+                                                : item.name ?? item.handle ?? ""
+                                    const sub =
+                                        item.kind === "user"
+                                            ? `@${item.username ?? ""}`
+                                            : item.kind === "hashtag"
+                                                ? "Hashtag"
+                                                : `@${item.handle ?? ""}`
+                                    const initial = (label || "?").charAt(0).toUpperCase()
+                                    const kindBadge =
+                                        item.kind === "user"
+                                            ? "Person"
+                                            : item.kind === "hashtag"
+                                                ? "Tag"
+                                                : "Community"
+                                    return (
+                                        <button
+                                            key={key}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => handleAutocompleteSelect(item)}
+                                            className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-brand-text/5 transition-colors text-left"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
+                                                {item.kind === "hashtag" ? "#" : initial}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-brand-text truncate">{label}</p>
+                                                <p className="text-xs text-brand-text/40 truncate">{sub}</p>
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 px-2 py-0.5 rounded-full border border-brand-divider">
+                                                {kindBadge}
+                                            </span>
+                                        </button>
+                                    )
+                                })}
                             </div>
                         )}
                     </div>
@@ -687,10 +1053,7 @@ function SearchPageContent() {
                     <HistoryAndSavedPanel onSelectQuery={handleSelectQuery} />
                 )}
 
-                {/* Extended tabs (products / events / messages) */}
-                {inputValue.length > 0 && activeType === "products" && (
-                    <ProductsTab query={inputValue} />
-                )}
+                {/* Legacy tabs that still hit dedicated endpoints */}
                 {inputValue.length > 0 && activeType === "events" && (
                     <EventsTab query={inputValue} />
                 )}
@@ -698,8 +1061,24 @@ function SearchPageContent() {
                     <MessagesTab query={inputValue} />
                 )}
 
-                {/* Core tabs (all / profiles / posts) */}
-                {inputValue.length > 0 && !isExtendedTab && (
+                {/* Multi-entity ranked tabs — one tab per entity bucket. */}
+                {inputValue.length > 0 && isMultiEntityTab && requestedEntity && (
+                    <MultiEntityTabContent
+                        query={inputValue}
+                        entity={requestedEntity}
+                        bucket={multiData?.results?.[requestedEntity] as any}
+                        isLoading={multiLoading}
+                        isFetching={multiFetching}
+                        isFetchingMore={!!fetchingMore[requestedEntity]}
+                        onFetchMore={() => fetchMore(requestedEntity)}
+                        onResultClick={handleResultClick}
+                    />
+                )}
+
+                {/* Core "All" tab — legacy universal search keeps the
+                    mixed People + Posts layout the existing PostCard
+                    component already understands. */}
+                {inputValue.length > 0 && !isMultiEntityTab && !isLegacyExtendedTab && (
                     <>
                         {/* Too short hint */}
                         {queryTooShort && <HintState />}
@@ -715,8 +1094,7 @@ function SearchPageContent() {
                         {/* Results */}
                         {!queryTooShort && hasResults && (
                             <div className="space-y-8">
-                                {/* People section */}
-                                {profiles.length > 0 && (activeType === "all" || activeType === "profiles") && (
+                                {profiles.length > 0 && (
                                     <section>
                                         <SectionHeading
                                             icon={<Users className="w-4 h-4" />}
@@ -731,8 +1109,7 @@ function SearchPageContent() {
                                     </section>
                                 )}
 
-                                {/* Posts section */}
-                                {posts.length > 0 && (activeType === "all" || activeType === "posts") && (
+                                {posts.length > 0 && (
                                     <section>
                                         <SectionHeading
                                             icon={<FileText className="w-4 h-4" />}
