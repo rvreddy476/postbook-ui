@@ -115,6 +115,8 @@ export const loginUser = async (
 ): Promise<{
   success: boolean;
   requires2FA?: boolean;
+  requiresStepUp?: boolean;
+  stepUpMethods?: ('email_otp' | 'totp')[];
   pendingToken?: string;
   userId?: string;
   error?: string;
@@ -133,6 +135,16 @@ export const loginUser = async (
       deviceId: getDeviceId(),
       platform: 'web',
     });
+
+    if (loginResult.requiresStepUp) {
+      return {
+        success: true,
+        requiresStepUp: true,
+        stepUpMethods: loginResult.stepUpMethods,
+        pendingToken: loginResult.pendingToken,
+        userId: loginResult.userId,
+      };
+    }
 
     if (loginResult.requires2FA) {
       return {
@@ -164,6 +176,40 @@ export const verify2FA = async (
     return { success: true, user };
   } catch (error) {
     console.error('[Auth] 2FA verification failed:', error);
+    return { success: false, error: toErrorMessage(error, 'Verification failed. Please try again.') };
+  }
+};
+
+// A13 anomaly step-up. Two surfaces — email and 2FA — share the same
+// response shape so the calling page can branch on the chosen method.
+export const verifyStepUpEmail = async (
+  pendingToken: string,
+  code: string,
+): Promise<{ success: boolean; error?: string; user?: User }> => {
+  if (!pendingToken || !code.trim()) {
+    return { success: false, error: 'Pending token and code are required.' };
+  }
+  try {
+    const user = await authRepository.verifyStepUpEmail(pendingToken, code.trim());
+    return { success: true, user };
+  } catch (error) {
+    console.error('[Auth] step-up email verify failed:', error);
+    return { success: false, error: toErrorMessage(error, 'Verification failed. Please try again.') };
+  }
+};
+
+export const verifyStepUp2FA = async (
+  pendingToken: string,
+  code: string,
+): Promise<{ success: boolean; error?: string; user?: User }> => {
+  if (!pendingToken || !code.trim()) {
+    return { success: false, error: 'Pending token and code are required.' };
+  }
+  try {
+    const user = await authRepository.verifyStepUp2FA(pendingToken, code.trim());
+    return { success: true, user };
+  } catch (error) {
+    console.error('[Auth] step-up 2FA verify failed:', error);
     return { success: false, error: toErrorMessage(error, 'Verification failed. Please try again.') };
   }
 };

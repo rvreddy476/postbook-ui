@@ -81,6 +81,21 @@ function LoginForm() {
       return;
     }
 
+    if (result.requiresStepUp) {
+      // A13 anomaly step-up. Forward the pending token + available
+      // methods to the dedicated page; never store these in URL state
+      // when sensitive, but the pending_token is one-shot + 5-min TTL
+      // server-side so query params are acceptable here.
+      const methods = (result.stepUpMethods ?? []).join(',');
+      const params = new URLSearchParams({
+        pending_token: result.pendingToken ?? '',
+        methods,
+        redirect: redirectTo,
+      });
+      router.push(`/auth/step-up?${params.toString()}`);
+      return;
+    }
+
     if (result.requires2FA) {
       setPendingToken(result.pendingToken || '');
       setUserId(result.userId || '');

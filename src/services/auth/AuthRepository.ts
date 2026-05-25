@@ -19,7 +19,7 @@ export class AuthRepository {
   async login(command: LoginCommand): Promise<LoginResult> {
     const loginResult = await this.strategy.login(command);
 
-    if (loginResult.requires2FA) {
+    if (loginResult.requires2FA || loginResult.requiresStepUp) {
       return loginResult;
     }
 
@@ -32,6 +32,18 @@ export class AuthRepository {
 
   async verify2FA(userId: string, code: string, pendingToken: string) {
     const authResult = await this.strategy.verify2FA(userId, code, pendingToken);
+    this.sessionStore.save(authResult);
+    return authResult.user;
+  }
+
+  async verifyStepUpEmail(pendingToken: string, code: string) {
+    const authResult = await this.strategy.verifyStepUpEmail(pendingToken, code);
+    this.sessionStore.save(authResult);
+    return authResult.user;
+  }
+
+  async verifyStepUp2FA(pendingToken: string, code: string) {
+    const authResult = await this.strategy.verifyStepUp2FA(pendingToken, code);
     this.sessionStore.save(authResult);
     return authResult.user;
   }
