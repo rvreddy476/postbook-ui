@@ -8,7 +8,7 @@
 // suspend/restrict actions.
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 
 const ADMIN_HEADERS = { 'X-Scopes': 'admin superadmin moderator' } as const
@@ -23,10 +23,13 @@ interface ReportRow {
   created_at: string
 }
 
+type AdminAction = 'dismiss' | 'resolved' | 'warn' | 'restrict' | 'suspend'
+
 const STATUSES = ['', 'submitted', 'under_review', 'investigating', 'actioned', 'resolved', 'dismissed', 'closed_no_action']
 const CATEGORIES = ['', 'underage', 'fake_profile', 'scam', 'inappropriate_photos', 'harassment', 'violence', 'other']
 
 export default function DatingReportsQueue() {
+  const qc = useQueryClient()
   const [status, setStatus] = useState('submitted')
   const [category, setCategory] = useState('')
 
@@ -43,6 +46,17 @@ export default function DatingReportsQueue() {
       const items = (res.data?.data?.items ?? res.data?.items ?? []) as ReportRow[]
       return items
     },
+  })
+
+  const act = useMutation({
+    mutationFn: async (vars: { reportId: string; targetId: string; action: AdminAction }) => {
+      await api.post(
+        `/v1/dating/admin/reports/${vars.reportId}/action`,
+        { action: vars.action, target_user_id: vars.targetId },
+        { headers: ADMIN_HEADERS },
+      )
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-dating-reports'] }),
   })
 
   return (
@@ -102,27 +116,65 @@ export default function DatingReportsQueue() {
                 <th className="px-3 py-2">Category</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Details</th>
+                <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="px-3 py-2 text-xs text-gray-600">
-                    {new Date(r.created_at).toLocaleString()}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    <div>{r.reporter_id.slice(0, 8)}</div>
-                    <div className="text-rose-600">→ {r.target_id.slice(0, 8)}</div>
-                  </td>
-                  <td className="px-3 py-2">{r.category.replace(/_/g, ' ')}</td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="px-3 py-2 max-w-md truncate text-gray-600" title={r.details}>
-                    {r.details}
-                  </td>
-                </tr>
-              ))}
+              {data.map((r) => {
+                const terminal = ['actioned', 'resolved', 'dismissed', 'closed_no_action'].includes(r.status)
+                return (
+                  <tr key={r.id} className="border-t align-top">
+                    <td className="px-3 py-2 text-xs text-gray-600">
+                      {new Date(r.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      <div>{r.reporter_id.slice(0, 8)}</div>
+                      <div className="text-rose-600">→ {r.target_id.slice(0, 8)}</div>
+                    </td>
+                    <td className="px-3 py-2">{r.category.replace(/_/g, ' ')}</td>
+                    <td className="px-3 py-2">
+                      <StatusPill status={r.status} />
+                    </td>
+                    <td className="px-3 py-2 max-w-md truncate text-gray-600" title={r.details}>
+                      {r.details}
+                    </td>
+                    <td className="px-3 py-2">
+                      {terminal ? (
+                        <span className="text-xs text-gray-400">—</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          <ActionButton
+                            label="Dismiss"
+                            tone="gray"
+                            disabled={act.isPending}
+                            onClick={() => act.mutate({ reportId: r.id, targetId: r.target_id, action: 'dismiss' })}
+                          />
+                          <ActionButton
+                            label="Warn"
+                            tone="amber"
+                            disabled={act.isPending}
+                            onClick={() => act.mutate({ reportId: r.id, targetId: r.target_id, action: 'warn' })}
+                          />
+                          <ActionButton
+                            label="Restrict"
+                            tone="orange"
+                            disabled={act.isPending}
+                            confirm
+                            onClick={() => act.mutate({ reportId: r.id, targetId: r.target_id, action: 'restrict' })}
+                          />
+                          <ActionButton
+                            label="Suspend"
+                            tone="rose"
+                            disabled={act.isPending}
+                            confirm
+                            onClick={() => act.mutate({ reportId: r.id, targetId: r.target_id, action: 'suspend' })}
+                          />
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -133,6 +185,44 @@ export default function DatingReportsQueue() {
         <code>POST /v1/dating/admin/reports/:id/action</code> in Phase 2.
       </p>
     </div>
+  )
+}
+
+function ActionButton({
+  label,
+  tone,
+  disabled,
+  onClick,
+  confirm,
+}: {
+  label: string
+  tone: 'gray' | 'amber' | 'orange' | 'rose'
+  disabled: boolean
+  onClick: () => void
+  confirm?: boolean
+}) {
+  const palette = {
+    gray: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+    amber: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
+    orange: 'bg-orange-100 text-orange-800 hover:bg-orange-200',
+    rose: 'bg-rose-100 text-rose-800 hover:bg-rose-200',
+  }[tone]
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        if (confirm) {
+          const ok = typeof window !== 'undefined' &&
+            window.confirm(`${label} the reported user? This action is logged.`)
+          if (!ok) return
+        }
+        onClick()
+      }}
+      className={`text-xs px-2 py-1 rounded ${palette} disabled:opacity-50`}
+    >
+      {label}
+    </button>
   )
 }
 
