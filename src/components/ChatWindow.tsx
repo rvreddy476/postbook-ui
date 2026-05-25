@@ -22,6 +22,7 @@ import { initiateCall } from '../services/callService';
 import { sendMediaMessage } from '../services/messageService';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useConversationPresence, useSetTyping } from '@/hooks/usePresence';
 import { Phone, Video, Send, Smile, MessageCircle, MoreHorizontal, Link2, Image, Mic, Camera, X, Minus, Maximize2, ArrowDownToLine } from 'lucide-react';
 import data from '@emoji-mart/data';
 const EmojiPicker = lazy(() => import('@emoji-mart/react'));
@@ -57,6 +58,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
 
   const { markConversationAsViewed, unmarkConversationAsViewed, markConversationRead, registerConversationMapping } = useNotifications();
   const convIdRef = useRef<string | null>(null);
+  // Mirror convIdRef into state so the M1 presence hook can react when
+  // initChat resolves the real conversation id. The ref is what the
+  // synchronous event handlers compare against; the state is what the
+  // hook subscribes to.
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  useConversationPresence(conversationId);
+  const setTyping = useSetTyping(conversationId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,6 +139,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
         const convResult = await getOrCreateDirectConversation(contact.id);
         const convId = convResult.data.conversation_id || convResult.data.id;
         convIdRef.current = convId;
+        setConversationId(convId);
 
         registerConversationMapping(contact.id, convId);
         markConversationAsViewed(convId);
@@ -482,6 +491,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                   value={input}
                   onChange={(e) => {
                     setInput(e.target.value);
+                    setTyping();
                     const now = Date.now();
                     if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
                       lastTypingSentRef.current = now;
