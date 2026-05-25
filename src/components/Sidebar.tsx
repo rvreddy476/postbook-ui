@@ -23,6 +23,7 @@ import {
   User,
   UserRoundPlus,
   Users,
+  Video,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -59,7 +60,12 @@ const primaryItems: Item[] = [
 ];
 
 // Everything else opens from the "More" button instead of overflowing.
+//
+// The Go Live entry sits here (rather than the primary rail) because the
+// composer also routes to /live/new; the sidebar entry adds a
+// discoverable surface for creators who don't open the post composer.
 const moreItems: Item[] = [
+  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-rose-400' },
   { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-emerald-400' },
   { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-rose-400' },
   { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-orange-400' },
