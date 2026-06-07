@@ -20,6 +20,10 @@ interface ReelPlayerProps {
   onToggleMuted: () => void;
   onBoost: () => void;
   onProgressChange?: (progressPercent: number) => void;
+  /** Absolute playhead in milliseconds. Fed to ProductTagOverlay so it
+   *  knows which tags are currently in-window. Same `timeupdate` event
+   *  drives both — no extra listener cost. */
+  onTimeUpdateMs?: (currentTimeMs: number) => void;
   onExpand?: () => void;
   onPlaybackStateChange?: (state: "loading" | "playing" | "error") => void;
 }
@@ -38,6 +42,7 @@ export function ReelPlayer({
   onToggleMuted,
   onBoost,
   onProgressChange,
+  onTimeUpdateMs,
   onExpand,
   onPlaybackStateChange,
 }: ReelPlayerProps) {
@@ -231,11 +236,12 @@ export function ReelPlayer({
     const onTimeUpdate = () => {
       if (!mediaElement.duration) return;
       onProgressChange?.((mediaElement.currentTime / mediaElement.duration) * 100);
+      onTimeUpdateMs?.(mediaElement.currentTime * 1000);
     };
 
     mediaElement.addEventListener("timeupdate", onTimeUpdate);
     return () => mediaElement.removeEventListener("timeupdate", onTimeUpdate);
-  }, [onProgressChange, videoUrl]);
+  }, [onProgressChange, onTimeUpdateMs, videoUrl]);
 
   useEffect(() => {
     return () => {
