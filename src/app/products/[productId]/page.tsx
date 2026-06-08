@@ -6,6 +6,7 @@ import {
   useProduct, useProductReviews, useAddToCart,
   type ProductVariant,
 } from '@/hooks/useCommerce'
+import { useAffiliateAttribution } from '@/hooks/useAffiliateAttribution'
 import { StarRating } from '@/components/ui/StarRating'
 
 export default function ProductDetailPage({ params }: { params: Promise<{ productId: string }> }) {
@@ -15,6 +16,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ produc
   const addToCart = useAddToCart()
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [qty, setQty] = useState(1)
+  // Captures ?via=<affiliate_code> on mount + persists in
+  // sessionStorage. Survives navigation through cart + checkout so
+  // commission attribution at order-create time reads it back via
+  // readAffiliateAttribution().
+  const via = useAffiliateAttribution()
 
   if (isLoading) return <div className="p-8">Loading product…</div>
   if (!data?.product) return <div className="p-8 text-red-600">Product not found</div>
@@ -41,6 +47,15 @@ export default function ProductDetailPage({ params }: { params: Promise<{ produc
       </div>
 
       <div className="space-y-4">
+        {via && (
+          // Affiliate-attribution surface — viewer arrived via an
+          // in-video product tag. The badge is informational; the
+          // value is captured + persisted by useAffiliateAttribution
+          // for the eventual order payload.
+          <div className="rounded-md bg-violet-50 px-3 py-2 text-xs font-medium text-violet-700">
+            Tracked as an affiliate referral
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-semibold">{product.title}</h1>
           {product.short_description ? (

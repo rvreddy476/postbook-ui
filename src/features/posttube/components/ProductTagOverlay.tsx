@@ -80,14 +80,14 @@ function ProductCard({
 
     const handleClick = async () => {
         await emitProductTagClick(postId, tag.id)
-        // Deep link to the commerce listing with the affiliate code
-        // attached. monetization-service.GetAffiliateLinkByCode resolves
-        // the click → conversion when the user buys. The actual code
-        // lives in the affiliate_link payload — we don't have it cached
-        // on the tag (the tag references the link by ID only), so we
-        // route through /v1/commerce/affiliate/:linkId which serves a
-        // 302 to the listing URL with ?via=<code>.
-        window.location.assign(`/commerce/affiliate/${tag.affiliate_link_id}`)
+        // Hit the public commerce redirect. It 302s to the canonical
+        // product page with ?via=<affiliate_code> attached so the
+        // eventual checkout can attribute commission. We use a top-
+        // level navigation (not router.push) because the redirect
+        // crosses a real HTTP hop — the gateway proxies to
+        // commerce-service, which proxies to monetization-service
+        // for the link metadata.
+        window.location.assign(`/v1/commerce/affiliate/${tag.affiliate_link_id}`)
     }
 
     const x = tag.position_x ?? 50 // default: dead centre
