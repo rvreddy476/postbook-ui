@@ -12,7 +12,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Disable Next.js telemetry in CI/CD
+# NEXT_PUBLIC_* are baked in at build time, so they must be set here, not
+# at `docker run`. Pass via `--build-arg NEXT_PUBLIC_API_BASE_URL=https://...`.
+ARG NEXT_PUBLIC_API_BASE_URL=""
+ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=""
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
