@@ -4,7 +4,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# --legacy-peer-deps: @emoji-mart/react declares React ^18 but works on
+# React 19 (which the rest of the app pins). Same workaround as local dev.
+RUN npm ci --no-audit --no-fund --legacy-peer-deps
 
 FROM node:20-alpine AS builder
 WORKDIR /app
