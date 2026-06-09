@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" style={{ colorScheme: 'dark' }}>
       <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(var(--foreground-rgb),0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(var(--foreground-rgb),0.06)_0px,_transparent_50%)]"></div>

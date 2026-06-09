@@ -222,7 +222,7 @@ export default function GrievancePage() {
                             type="url"
                             value={relatedContent}
                             onChange={(e) => setRelatedContent(e.target.value)}
-                            placeholder="https://atpost.com/post/..."
+                            placeholder="https://vchat.com/post/..."
                             className={inputClasses}
                         />
                     </div>
@@ -277,7 +277,7 @@ export default function GrievancePage() {
                         <p className="text-brand-highlight">VChat Platform</p>
                     </div>
                     <div className="text-sm text-brand-highlight">
-                        <p>Email: grievance@atpost.com</p>
+                        <p>Email: grievance@vchat.com</p>
                         <p>Response time: Within 48 hours</p>
                         <p>Escalation: Within 15 days of initial complaint</p>
                     </div>

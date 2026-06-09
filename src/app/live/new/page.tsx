@@ -80,7 +80,7 @@ export default function NewLiveStreamPage() {
     {
       value: "public",
       label: "Public",
-      sub: "Anyone on AtPost can watch",
+      sub: "Anyone on VChat can watch",
       icon: <Globe className="w-4 h-4" />,
     },
     {

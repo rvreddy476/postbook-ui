@@ -34,7 +34,7 @@ export default function LiveListPage() {
               Live now
             </h1>
             <p className="mt-1 text-xs text-brand-text/60">
-              Real-time broadcasts from creators across AtPost.
+              Real-time broadcasts from creators across VChat.
             </p>
           </div>
           <button

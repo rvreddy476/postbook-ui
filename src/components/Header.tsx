@@ -68,24 +68,15 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
 
   // Theme toggle state
-  const [theme, setTheme] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('postbook_theme') || 'light';
-    }
-    return 'light';
-  });
+  const [theme, setTheme] = useState<string>('dark');
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('postbook_theme', theme);
-  }, [theme]);
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('postbook_theme', 'dark');
+  }, []);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // Locked to dark mode for B&W theme
   };
 
   // Notification popup state
@@ -382,16 +373,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Events</span>
         </button>
 
-        {/* 5b. Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          <div className="w-5 h-5 text-sky-300 group-hover:text-sky-200 transition-colors">
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </div>
-        </button>
+
 
         {/* 6. Notifications */}
         <div className="relative" ref={notifRef}>
