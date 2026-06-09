@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.env.local
+.env.production.local
+*.log
+git_diff_names.txt
+git_log_5.txt
+tsc.log
+tsconfig.tsbuildinfo
+Dockerfile
+.dockerignore
+README.md
