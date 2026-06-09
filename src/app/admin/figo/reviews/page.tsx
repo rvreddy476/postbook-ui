@@ -10,7 +10,7 @@
 // admin endpoint (the store recomputes avg_rating + rating_count
 // atomically — cf. cf57a26).
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Loader2, Star } from "lucide-react"
 
@@ -21,7 +21,18 @@ import {
 
 import { EmptyState, errorMessage } from "../../mopedu/_shared"
 
+// Wrapper: useSearchParams() forces client-side bailout during SSG, which
+// Next 15 only allows inside a Suspense boundary. The actual page logic
+// is in FoodAdminReviewsBody below.
 export default function FoodAdminReviewsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading…</div>}>
+      <FoodAdminReviewsBody />
+    </Suspense>
+  )
+}
+
+function FoodAdminReviewsBody() {
   const sp = useSearchParams()
   const initialId = sp?.get("item") ?? ""
   const [menuItemId, setMenuItemId] = useState(initialId)

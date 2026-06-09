@@ -41,7 +41,7 @@ export function AvatarCoverSection({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => coverInputRef.current?.click()}
-                        className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 px-4 py-2 border border-blue-100 rounded-xl hover:bg-blue-50 transition-colors"
+                        className="text-[10px] font-black uppercase tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Replace Photo
                     </motion.button>
@@ -70,7 +70,7 @@ export function AvatarCoverSection({
                         <AnimatePresence>
                             {isCoverUploading ? (
                                 <div className="p-4 bg-brand-card/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white">
-                                    <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                                    <Loader2 className="w-6 h-6 text-brand-text animate-spin" />
                                 </div>
                             ) : (
                                 <motion.div
@@ -107,7 +107,7 @@ export function AvatarCoverSection({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => avatarInputRef.current?.click()}
-                        className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 px-4 py-2 border border-blue-100 rounded-xl hover:bg-blue-50 transition-colors"
+                        className="text-[10px] font-black uppercase tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Change Photo
                     </motion.button>
@@ -139,7 +139,7 @@ export function AvatarCoverSection({
                                         animate={{ opacity: 1 }}
                                         className="absolute inset-0 bg-brand-card/80 backdrop-blur-sm flex items-center justify-center"
                                     >
-                                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                                        <Loader2 className="w-8 h-8 animate-spin text-brand-text" />
                                     </motion.div>
                                 )}
                             </AnimatePresence>

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
-import type { BusinessPage, BusinessReview } from '@/types/profile'
+import type { BusinessPage, BusinessReview, PageDocument } from '@/types/profile'
 
 // --- Queries ---
 
@@ -65,7 +65,8 @@ export function usePageReviews(handle: string | undefined) {
 interface CreatePagePayload {
     page_handle: string
     page_name: string
-    category: string
+    page_type: string // required — one of the 13 canonical types
+    category?: string
     description?: string
     address?: string
     phone?: string
@@ -76,7 +77,6 @@ interface CreatePagePayload {
     booking_url?: string
     cover_media_id?: string
     avatar_media_id?: string
-    status?: 'draft' | 'active'
 }
 
 export function useCreatePage() {
@@ -120,11 +120,17 @@ export function useDeletePage() {
     })
 }
 
+interface FollowResult {
+    following: boolean
+    followerCount: number
+}
+
 export function useFollowPage(handle: string) {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: async (pageId: string) => {
-            await api.post(`/v1/pages/${pageId}/follow`)
+            const res = await api.post<{ data: FollowResult }>(`/v1/pages/${pageId}/follow`)
+            return res.data.data
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['pages', 'detail', handle] })
@@ -136,10 +142,55 @@ export function useUnfollowPage(handle: string) {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: async (pageId: string) => {
-            await api.delete(`/v1/pages/${pageId}/follow`)
+            const res = await api.delete<{ data: FollowResult }>(`/v1/pages/${pageId}/follow`)
+            return res.data.data
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['pages', 'detail', handle] })
+        },
+    })
+}
+
+// --- Verification documents + lifecycle ---
+
+export function usePageDocuments(handle: string | undefined, pageId: string | undefined, enabled = true) {
+    return useQuery({
+        queryKey: ['pages', 'documents', pageId],
+        queryFn: async () => {
+            const res = await api.get<{ data: PageDocument[] }>(`/v1/pages/${pageId}/documents`)
+            return res.data.data ?? []
+        },
+        enabled: enabled && !!pageId,
+    })
+}
+
+export function useAddPageDocument(handle: string) {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ pageId, documentType, documentUrl }: { pageId: string; documentType: string; documentUrl: string }) => {
+            const res = await api.post<{ data: PageDocument }>(`/v1/pages/${pageId}/documents`, {
+                document_type: documentType,
+                document_url: documentUrl,
+            })
+            return res.data.data
+        },
+        onSuccess: (_d, vars) => {
+            qc.invalidateQueries({ queryKey: ['pages', 'documents', vars.pageId] })
+            qc.invalidateQueries({ queryKey: ['pages', 'detail', handle] })
+        },
+    })
+}
+
+export function useSubmitPageForReview(handle: string) {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async (pageId: string) => {
+            const res = await api.post<{ data: { status: string } }>(`/v1/pages/${pageId}/submit-review`)
+            return res.data.data
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['pages', 'detail', handle] })
+            qc.invalidateQueries({ queryKey: ['pages', 'mine'] })
         },
     })
 }

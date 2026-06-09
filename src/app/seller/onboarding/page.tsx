@@ -195,10 +195,10 @@ export default function SellerOnboardingPage() {
         const page = await createPage.mutateAsync({
           page_handle: handle,
           page_name: pageName,
+          page_type: 'marketplace_seller',
           category,
           description,
           business_email: email,
-          status: 'draft',
         })
         pageId = page.id
         setDraftPage(page)

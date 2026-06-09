@@ -35,6 +35,7 @@ interface CreatePostPayload {
         background?: string
         text_color?: string
     } | null
+    hashtags?: string[]
 }
 
 export function useFeedPosts(userId: string | undefined) {

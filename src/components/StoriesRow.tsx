@@ -122,7 +122,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
         >
           {/* Add Story Card */}
           <div className="flex-shrink-0 cursor-pointer group" onClick={handleCreateClick}>
-            <div className="relative w-24 h-36 rounded-2xl overflow-hidden border border-dashed border-brand-divider bg-brand-card transition-all duration-500 group-hover:shadow-[0_0_20px_rgba(48,47,44,0.1)] group-hover:border-brand-accent/50">
+            <div className="relative w-24 h-36 rounded-2xl overflow-hidden border border-dashed border-brand-divider bg-brand-card transition-all duration-500 group-hover:shadow-[0_0_20px_rgba(var(--foreground-rgb),0.1)] group-hover:border-brand-accent/50">
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 group-hover:bg-brand-accent/10 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-brand-accent text-brand-bg flex items-center justify-center shadow-lg">
                   <Plus size={18} />
@@ -144,7 +144,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
               >
                 <div className={`relative w-24 h-36 rounded-2xl overflow-hidden border transition-all duration-500
                   ${unviewed ? 'border-fuchsia-500 shadow-lg shadow-fuchsia-500/30' : 'border-brand-divider'}
-                  group-hover:shadow-[0_0_20px_rgba(48,47,44,0.1)] group-hover:border-brand-accent/50`}>
+                  group-hover:shadow-[0_0_20px_rgba(var(--foreground-rgb),0.1)] group-hover:border-brand-accent/50`}>
                   <img
                     src={group.authorAvatar}
                     alt={group.authorName}

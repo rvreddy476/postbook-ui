@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import CallOverlay from '@/components/CallOverlay';
 import ChatWindow from '@/components/ChatWindow';
@@ -25,7 +25,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const PostBoekApp: React.FC = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<NavItem>('Home');
+  // Landing-page Direct Message card links to "/?tab=Chat"; respect that
+  // so the user lands on the chat surface instead of the default Home
+  // feed. Falls back to 'Home' when the param is missing or invalid.
+  const searchParams = useSearchParams();
+  const initialTab = (() => {
+    const raw = searchParams?.get('tab');
+    const allowed: NavItem[] = ['Home', 'Chat', 'Reels', 'Friends', 'Profile', 'Messenger', 'Shop', 'Ask', 'Pages'];
+    return raw && (allowed as string[]).includes(raw) ? (raw as NavItem) : 'Home';
+  })();
+  const [activeTab, setActiveTab] = useState<NavItem>(initialTab);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -257,7 +266,7 @@ const PostBoekApp: React.FC = () => {
           </main>
 
           {!isReelsMode && !isGroupMode && (
-            <aside className="hidden w-[300px] flex-col overflow-y-auto border-l border-brand-divider p-4 lg:flex">
+            <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-brand-divider p-4 lg:flex">
               <RightPanel onContactClick={handleContactClick} />
             </aside>
           )}

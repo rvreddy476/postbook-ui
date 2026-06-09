@@ -68,8 +68,8 @@ const SECTION_FIELDS: Record<AboutSection, FieldDef[]> = {
 
 const FAVORITE_CATEGORIES = [] as const
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
 
 // ─── Main Component ─────────────────────────────────────────────────
 
@@ -115,19 +115,19 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                 const sectionLabel = filterType === 'work' ? "Professional Entries" : filterType === 'education' ? "Academic Entries" : label
 
                 return (
-                    <div key={key} className={`rounded-[1.5rem] border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-brand-card border-blue-100 shadow-xl" : "bg-brand-card border-brand-divider"}`}>
+                    <div key={key} className={`rounded-[1.5rem] border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-brand-card border-brand-divider shadow-xl" : "bg-brand-card border-brand-divider"}`}>
                         <button
                             type="button"
                             onClick={() => setExpandedSection(isExpanded ? null : key)}
                             className="w-full flex items-center justify-between px-6 py-5 hover:bg-brand-secondary transition-colors"
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-blue-600 border-blue-500" : "bg-brand-secondary border-brand-divider"} border`}>
+                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-slate-950 border-brand-text" : "bg-brand-secondary border-brand-divider"} border`}>
                                     <Icon className={`w-4 h-4 ${isExpanded ? "text-white" : "text-brand-text/60"}`} />
                                 </div>
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
                                 {items.length > 0 && (
-                                    <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                    <span className="text-[10px] font-black bg-brand-secondary text-brand-text px-2 py-0.5 rounded-full">
                                         {items.length}
                                     </span>
                                 )}
@@ -290,7 +290,7 @@ function AddItemForm({
                 whileHover={{ x: 5 }}
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 hover:text-blue-700 mt-4 px-2"
+                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-brand-text hover:text-brand-text mt-4 px-2"
             >
                 <Plus className="w-4 h-4" />
                 Add New {filterType === 'work' ? "Professional Entry" : filterType === 'education' ? "Academic Entry" : "History Item"}
@@ -328,10 +328,10 @@ function AddItemForm({
         <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6 p-8 rounded-[2rem] bg-brand-card border border-blue-100 shadow-2xl mt-4 relative overflow-hidden"
+            className="space-y-6 p-8 rounded-[2rem] bg-brand-card border border-brand-divider shadow-2xl mt-4 relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-5">
-                <Sparkles className="w-20 h-20 text-blue-600" />
+                <Sparkles className="w-20 h-20 text-brand-text" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -384,7 +384,7 @@ function AddItemForm({
                                     type="checkbox"
                                     checked={!!formData[f.key]}
                                     onChange={(e) => setField(f.key, e.target.checked)}
-                                    className="w-5 h-5 rounded-lg border-brand-text/30 text-blue-600 focus:ring-blue-500/20"
+                                    className="w-5 h-5 rounded-lg border-brand-text/30 text-brand-text focus:ring-brand-text/20"
                                 />
                                 <span className="text-[11px] font-black text-brand-text uppercase tracking-widest">{fieldLabel}</span>
                             </label>
@@ -410,7 +410,7 @@ function AddItemForm({
                 <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
                     Cancel
                 </Button>
-                <Button className="h-12 px-10 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-600/20" onClick={handleSubmit} disabled={isAdding}>
+                <Button className="h-12 px-10 rounded-2xl bg-slate-950 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-slate-950/20" onClick={handleSubmit} disabled={isAdding}>
                     {isAdding ? "Adding..." : "Add Entry"}
                 </Button>
             </div>

@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import { Sparkles, Users, ChevronRight } from 'lucide-react';
 
 import { useAuthUser } from '@/store/auth';
-import { useFriendSuggestions, useSendFriendRequest } from '@/hooks/useConnections';
+import { useFriendSuggestions, useSendFriendRequest, useHideSuggestion } from '@/hooks/useConnections';
+import FriendCard from '@/components/FriendCard';
 import type { SuggestionUser } from '@/hooks/useConnections';
 import { useTrending } from '@/hooks/useSearch';
 import { User } from '../types';
@@ -42,6 +44,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
 
   const sendRequest = useSendFriendRequest();
+  const hideSuggestion = useHideSuggestion();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const handleAction = async (user: SuggestionUser) => {
@@ -54,79 +57,69 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
     }
   };
 
+  const handleRemove = (user: SuggestionUser) => {
+    hideSuggestion.mutate({ candidateUserId: user.user_id });
+  };
+
   const visibleSuggestions = suggestions ?? [];
 
   return (
     <div className="space-y-8 sticky top-28 h-fit">
       {/* Who to Follow / People you may know */}
       {(isLoading || visibleSuggestions.length > 0) && (
-        <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
-          <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Who to follow</h5>
+        <div className="rounded-3xl bg-[#EFEBE2] p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+                <Users className="h-3.5 w-3.5 text-[#111]" />
+              </div>
+              <h5 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#111]">
+                Suggestions for you
+              </h5>
+            </div>
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          </div>
 
           {isLoading ? (
-            <div className="space-y-6">
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-brand-secondary" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-20 rounded bg-brand-secondary" />
-                    <div className="h-2 w-16 rounded bg-brand-secondary" />
+                <div key={i} className="rounded-2xl bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-3 animate-pulse">
+                    <div className="h-14 w-14 rounded-full bg-[#F6F3EC]" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-24 rounded bg-[#F6F3EC]" />
+                      <div className="h-2 w-32 rounded bg-[#F6F3EC]" />
+                      <div className="h-7 w-full rounded-full bg-[#F6F3EC]" />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-3">
               <AnimatePresence>
                 {visibleSuggestions.map((user) => {
                   const isSent = sentIds.has(user.user_id);
-                  const hasAvatar = !!user.avatar_media_id;
-                  const avatarSrc = hasAvatar ? `/v1/media/${user.avatar_media_id}/serve` : null;
                   const isCeleb = isCelebOrBrand(user);
-                  const actionLabel = isSent ? 'Sent' : isCeleb ? 'Follow' : 'Add Friend';
-
+                  const primaryLabel = isSent ? 'Sent' : isCeleb ? 'Follow' : 'Add';
                   return (
-                    <motion.div
+                    <FriendCard
                       key={user.user_id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      className="flex items-center justify-between group"
-                    >
-                      <button
-                        onClick={() => router.push(`/u/${user.username || user.user_id}`)}
-                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                      >
-                        {/* Avatar: image or initial letter with random color */}
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider flex-shrink-0">
-                          {avatarSrc ? (
-                            <img src={avatarSrc} alt={user.display_name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-white text-sm font-black ${getInitialColor(user.user_id)}`}>
-                              {getInitial(user.display_name)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors truncate">{user.display_name}</h6>
-                          {user.username && (
-                            <p className="text-[10px] text-brand-text/40 uppercase tracking-widest truncate">@{user.username}</p>
-                          )}
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => handleAction(user)}
-                        disabled={isSent}
-                        className={`text-[10px] font-black tracking-widest uppercase transition-colors flex-shrink-0 ml-3 whitespace-nowrap ${
-                          isSent
-                            ? 'text-brand-text/30'
-                            : 'text-brand-accent hover:text-brand-text'
-                        }`}
-                      >
-                        {actionLabel}
-                      </button>
-                    </motion.div>
+                      userId={user.user_id}
+                      displayName={user.display_name}
+                      username={user.username}
+                      avatarMediaId={user.avatar_media_id}
+                      mutualFriendCount={user.mutual_friend_count}
+                      mutualFriendIds={user.mutual_friend_ids}
+                      reasonCodes={user.reason_codes}
+                      primaryLabel={primaryLabel}
+                      primaryDisabled={isSent}
+                      primaryLoading={sendRequest.isPending}
+                      onPrimary={() => handleAction(user)}
+                      secondaryLabel="Remove"
+                      onSecondary={() => handleRemove(user)}
+                      secondaryDisabled={hideSuggestion.isPending}
+                    />
                   );
                 })}
               </AnimatePresence>
@@ -135,9 +128,15 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
 
           <button
             onClick={() => router.push('/circle')}
-            className="w-full mt-8 py-3 bg-brand-bg text-brand-text text-[10px] font-black tracking-widest uppercase rounded-xl hover:bg-brand-accent hover:text-brand-bg transition-all"
+            className="mt-3 flex w-full items-center justify-between rounded-full bg-white px-4 py-3 shadow-sm transition hover:bg-[#F6F3EC]"
           >
-            Show More
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111] text-white">
+                <Users className="h-3.5 w-3.5" />
+              </div>
+              <span className="text-[12px] font-semibold text-[#111]">Show More</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-[#6b6b6b]" />
           </button>
         </div>
       )}

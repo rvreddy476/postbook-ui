@@ -2,31 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 48, 47, 44;
-  --background-start-rgb: 239, 237, 227;
-  --background-end-rgb: 239, 237, 227;
-  --prismatic-violet: #D8103F;
-  --prismatic-rose: #db2777;
+@import "../ui/theme.css";
 
-  /* Brand Colors — awesome / Paper & Asphalt */
-  /* hex #efede3 (Paper) */ --brand-bg: 239 237 227;
-  /* hex #302f2c (Asphalt) */ --brand-text: 48 47 44;
-  /* hex #302f2c (Asphalt) */ --brand-accent: 48 47 44;
-  /* hex #e5e3d9 */ --brand-secondary: 229 227 217;
-  /* hex #302f2c */ --brand-highlight: 48 47 44;
-  --brand-divider: rgba(48, 47, 44, 0.15);
-  /* hex #ffffff */ --brand-card: 255 255 255;
+:root {
+  --foreground-rgb: var(--theme-foreground-rgb);
+  --background-start-rgb: var(--theme-background-start-rgb);
+  --background-end-rgb: var(--theme-background-end-rgb);
+  --prismatic-violet: var(--theme-prismatic-violet);
+  --prismatic-rose: var(--theme-prismatic-rose);
+
+  --brand-bg: var(--theme-brand-bg);
+  --brand-text: var(--theme-brand-text);
+  --brand-accent: var(--theme-brand-accent);
+  --brand-secondary: var(--theme-brand-secondary);
+  --brand-highlight: var(--theme-brand-highlight);
+  --brand-divider: var(--theme-brand-divider);
+  --brand-card: var(--theme-brand-card);
 }
 
 .dark {
-  /* hex #302f2c (Asphalt) */ --brand-bg: 48 47 44;
-  /* hex #efede3 (Paper) */ --brand-text: 239 237 227;
-  /* hex #efede3 (Paper) */ --brand-accent: 239 237 227;
-  /* hex #3a3936 */ --brand-secondary: 58 57 54;
-  --brand-divider: rgba(239, 237, 227, 0.2);
-  /* hex #282725 (Deeper Asphalt) */ --brand-card: 40 39 37;
-  /* hex #efede3 */ --brand-highlight: 239 237 227;
+  --foreground-rgb: var(--theme-foreground-rgb);
+  --background-start-rgb: var(--theme-background-start-rgb);
+  --background-end-rgb: var(--theme-background-end-rgb);
+  --prismatic-violet: var(--theme-prismatic-violet);
+  --prismatic-rose: var(--theme-prismatic-rose);
+
+  --brand-bg: var(--theme-brand-bg);
+  --brand-text: var(--theme-brand-text);
+  --brand-accent: var(--theme-brand-accent);
+  --brand-secondary: var(--theme-brand-secondary);
+  --brand-highlight: var(--theme-brand-highlight);
+  --brand-divider: var(--theme-brand-divider);
+  --brand-card: var(--theme-brand-card);
 }
 
 html,
@@ -65,9 +72,9 @@ body {
 }
 
 .glass-panel {
-  background: rgba(239, 237, 227, 0.4);
+  background: rgba(var(--theme-glass-bg), 0.4);
   backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(48, 47, 44, 0.1);
+  border: 1px solid rgba(var(--theme-glass-border), 0.1);
   border-radius: 20px;
 }
 

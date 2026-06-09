@@ -4,6 +4,37 @@ import { use } from 'react'
 import Link from 'next/link'
 import { useOrder, useShipment, useInvoice, useCancelOrder } from '@/hooks/useCommerce'
 
+// Maps payment_status (server-side, from payments-service) to a label
+// + tailwind classes. P6/P7 introduced 'partially_refunded' — surface
+// it as a distinct amber state, not the same as a full refund.
+function paymentStatusUI(status: string): { label: string; cls: string; caption?: string } {
+  switch (status) {
+    case 'succeeded':
+      return { label: 'Paid', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200' }
+    case 'partially_refunded':
+      return {
+        label: 'Partially refunded',
+        cls: 'text-amber-800 bg-amber-50 border-amber-200',
+        caption: 'A partial refund has been issued for this order.',
+      }
+    case 'refunded':
+      return {
+        label: 'Refunded',
+        cls: 'text-gray-700 bg-gray-100 border-gray-200',
+        caption: 'The full order has been refunded.',
+      }
+    case 'failed':
+      return { label: 'Failed', cls: 'text-rose-700 bg-rose-50 border-rose-200' }
+    case 'pending':
+    case 'payment_pending':
+      return { label: 'Pending', cls: 'text-amber-700 bg-amber-50 border-amber-200' }
+    case 'disputed':
+      return { label: 'Disputed', cls: 'text-orange-700 bg-orange-50 border-orange-200' }
+    default:
+      return { label: status.replace(/_/g, ' '), cls: 'text-gray-700 bg-gray-50 border-gray-200' }
+  }
+}
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { data: order, isLoading } = useOrder(id)
@@ -15,6 +46,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   if (!order) return <div className="p-8 text-red-600">Order not found</div>
 
   const cancellable = ['payment_pending', 'confirmed', 'packed'].includes(order.status)
+  const payUI = paymentStatusUI(order.payment_status)
 
   return (
     <div className="mx-auto max-w-4xl p-6 space-y-6">
@@ -35,8 +67,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="text-xs uppercase text-gray-500">Payment</div>
-          <div className="text-lg font-semibold">{order.payment_status}</div>
-          <div className="text-sm text-gray-500">{order.payment_method ?? '-'}</div>
+          <div className="mt-1">
+            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold ${payUI.cls}`}>
+              {payUI.label}
+            </span>
+          </div>
+          <div className="text-sm text-gray-500 mt-1">{order.payment_method ?? '-'}</div>
+          {payUI.caption ? (
+            <div className="text-xs text-gray-500 mt-2">{payUI.caption}</div>
+          ) : null}
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="text-xs uppercase text-gray-500">Total</div>

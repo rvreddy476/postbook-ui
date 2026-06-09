@@ -61,14 +61,13 @@ const primaryItems: Item[] = [
 
 // Everything else opens from the "More" button instead of overflowing.
 //
-// The Go Live entry sits here (rather than the primary rail) because the
-// composer also routes to /live/new; the sidebar entry adds a
-// discoverable surface for creators who don't open the post composer.
+// Go Live sits right after PostTube — the post composer no longer hosts a
+// "go live" button, so this is the canonical entry point for creators.
 const moreItems: Item[] = [
-  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-rose-400' },
   { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-emerald-400' },
   { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-rose-400' },
   { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-orange-400' },
+  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-rose-400' },
   { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-blue-400' },
   { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-amber-400' },
   { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/commerce', color: 'text-green-400' },

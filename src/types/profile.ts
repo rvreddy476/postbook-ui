@@ -138,7 +138,18 @@ export type PostContentType = (typeof POST_CONTENT_TYPES)[keyof typeof POST_CONT
 /** UI-level content filter — values must match backend content_type column values. */
 export type ContentType = "all" | "post" | "reel" | "video" | "photo"
 export type AppPlatform = "postboek" | "posttube" | "postgram"
-export type ProfileTab = "posts" | "media" | "about" | "connections" | "videos" | "flicks" | "stashed" | "portfolio"
+export type ProfileTab =
+    | "posts"
+    | "media"
+    | "about"
+    | "connections"
+    | "videos"
+    | "flicks"
+    | "stashed"
+    | "portfolio"
+    | "qa"
+    | "orders"
+    | "bookings"
 
 export interface PollOption {
     id: string
@@ -445,8 +456,19 @@ export interface BusinessPage {
     follower_count: number
     is_following?: boolean
     faq?: unknown
-    status: 'draft' | 'active' | 'suspended'
+    status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'suspended' | 'disabled'
     seller_id?: string
+    // Follow-Only Pages lifecycle fields.
+    page_type?: string
+    verification_status?: string
+    rejection_reason?: string
+    // Computed envelope fields (returned by GET /v1/pages/:slug).
+    displayType?: string
+    viewerRole?: 'visitor' | 'owner' | 'admin' | 'editor' | 'viewer'
+    isOwner?: boolean
+    bannerMessage?: string
+    actions?: PageActions
+    actionButtons?: PageActionButton[]
     created_at: string
     updated_at: string
 }
@@ -457,6 +479,34 @@ export interface BusinessReview {
     reviewer_id: string
     rating: number
     review_text: string
+    created_at: string
+}
+
+export interface PageActions {
+    canFollow: boolean
+    canUnfollow: boolean
+    canManage: boolean
+    canMessage: boolean
+    canAddFriend: boolean // always false on a page
+    canEdit: boolean
+    canUploadDocument: boolean
+    canSubmitForReview: boolean
+}
+
+export interface PageActionButton {
+    id: string
+    label: string
+    primary?: boolean
+    gated: boolean
+}
+
+export interface PageDocument {
+    id: string
+    page_id: string
+    document_type: string
+    document_url: string
+    status: 'pending' | 'approved' | 'rejected'
+    rejection_reason?: string
     created_at: string
 }
 

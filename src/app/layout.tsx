@@ -59,7 +59,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(48,47,44,0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(48,47,44,0.06)_0px,_transparent_50%)]"></div>
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(var(--foreground-rgb),0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(var(--foreground-rgb),0.06)_0px,_transparent_50%)]"></div>
           <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-brand-secondary/10 blur-[120px]"></div>
         </div>
         <script

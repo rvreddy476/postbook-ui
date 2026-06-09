@@ -13,8 +13,8 @@ const ICON_OPTIONS = [
     "spotify", "twitch", "reddit", "email", "other",
 ]
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
 
 export function SocialLinksSection() {
     const { data: links, isLoading } = useProfileLinks()
@@ -68,7 +68,7 @@ export function SocialLinksSection() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="p-6 rounded-[2rem] bg-blue-50/50 border border-blue-100 shadow-inner space-y-4"
+                            className="p-6 rounded-[2rem] bg-brand-secondary/40/50 border border-brand-divider shadow-inner space-y-4"
                         >
                             <div className="grid grid-cols-[140px_1fr] gap-4">
                                 <select
@@ -99,7 +99,7 @@ export function SocialLinksSection() {
                                 <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-highlight font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
                                     Cancel
                                 </Button>
-                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-600/20">
+                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-slate-950 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-slate-950/20">
                                     {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Link"}
                                 </Button>
                             </div>
@@ -186,7 +186,7 @@ function LinkRow({
                     {link.is_pinned && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
                 </div>
                 <div className="flex items-center gap-3 mt-1.5 font-bold uppercase tracking-[0.05em]">
-                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-text/60 hover:text-blue-600 truncate flex items-center gap-1.5 transition-colors">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-text/60 hover:text-brand-text truncate flex items-center gap-1.5 transition-colors">
                         <ExternalLink className="w-3 h-3" />
                         {link.url}
                     </a>
@@ -201,7 +201,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onUpdate(link, { is_pinned: !link.is_pinned })}
-                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-blue-600 text-white" : "bg-brand-secondary text-brand-text/60 hover:bg-blue-50 hover:text-blue-600"}`}
+                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-slate-950 text-white" : "bg-brand-secondary text-brand-text/60 hover:bg-brand-secondary/40 hover:text-brand-text"}`}
                 >
                     <Pin className="w-4 h-4" />
                 </motion.button>
