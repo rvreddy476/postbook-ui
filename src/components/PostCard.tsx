@@ -445,7 +445,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Poll Section */}
       {pollData && (
         <div className="px-4 pb-3 space-y-2.5">
-          <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
+          {pollData.question && pollData.question.trim() !== (post.text ?? '').trim() && (
+            <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
+          )}
           {pollEnded && (
             <p className="text-xs text-red-500 font-medium">Poll ended</p>
           )}
