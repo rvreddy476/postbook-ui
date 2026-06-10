@@ -505,7 +505,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="relative">
         {/* Media Display */}
         {hasMedia && (
-          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : 'max-h-[70vh]'}`}>
+          // A fixed aspect ratio keeps the card height constant across all
+          // images/videos in the carousel (otherwise object-contain made the
+          // container resize on every "next" click as the source aspect changed).
+          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : 'aspect-[4/5] max-h-[70vh]'}`}>
             <div className="h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
