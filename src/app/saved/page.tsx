@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useCallback } from "react"
+import AppShell from "@/components/AppShell"
 import { useSavedItems, useCollections, useUnsaveItem } from "@/hooks/useSavedItems"
 import type { SavedItem, SavedCollection } from "@/types/profile"
 
@@ -267,8 +268,8 @@ export default function SavedPage() {
     }, [unsaveItem])
 
     return (
+        <AppShell>
         <div className="min-h-screen bg-brand-bg">
-            {/* Page content — no header wrapper needed; parent layout provides global header */}
             <div className="max-w-3xl mx-auto px-4 pt-10 pb-16">
 
                 {/* Page heading */}
@@ -397,5 +398,6 @@ export default function SavedPage() {
                 )}
             </div>
         </div>
+        </AppShell>
     )
 }
