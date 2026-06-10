@@ -6,7 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Sparkles, Users, ChevronRight } from 'lucide-react';
 
 import { useAuthUser } from '@/store/auth';
-import { useFriendSuggestions, useSendFriendRequest, useHideSuggestion } from '@/hooks/useConnections';
+import { useFriendSuggestions, useHubSuggestions, useSendFriendRequest, useHideSuggestion } from '@/hooks/useConnections';
 import FriendCard from '@/components/FriendCard';
 import type { SuggestionUser } from '@/hooks/useConnections';
 import { useTrending } from '@/hooks/useSearch';
@@ -31,16 +31,16 @@ function getInitial(name: string): string {
   return (name?.charAt(0) || '?').toUpperCase();
 }
 
-function isCelebOrBrand(user: SuggestionUser): boolean {
-  // Celebrity/brand/business accounts come from trending bucket or have specific reason codes
-  return user.source_bucket === 'trending' || user.source_bucket === 'celebrity' ||
-    (user.reason_codes ?? []).some(r => r === 'POPULAR' || r === 'CELEBRITY' || r === 'BRAND');
-}
+// isCelebOrBrand was a heuristic that decided between "Follow" and "Add"
+// based on source_bucket / reason_codes. Removed for relationship-separation
+// spec §6: user suggestions are friends-only ("Add Friend"), hub suggestions
+// are follows-only ("Follow"), and the two never share a widget.
 
 const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
   const router = useRouter();
   const authUser = useAuthUser();
   const { data: suggestions, isLoading } = useFriendSuggestions(authUser?.id, 6);
+  const { data: hubSuggestions } = useHubSuggestions(authUser?.id, 6);
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
 
   const sendRequest = useSendFriendRequest();
@@ -74,7 +74,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
                 <Users className="h-3.5 w-3.5 text-brand-text" />
               </div>
               <h5 className="text-[11px] font-bold uppercase tracking-[0.15em] text-brand-text">
-                Suggestions for you
+                People You May Know
               </h5>
             </div>
             <Sparkles className="h-3.5 w-3.5 text-amber-500" />
@@ -100,8 +100,9 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
               <AnimatePresence>
                 {visibleSuggestions.map((user) => {
                   const isSent = sentIds.has(user.user_id);
-                  const isCeleb = isCelebOrBrand(user);
-                  const primaryLabel = isSent ? 'Sent' : isCeleb ? 'Follow' : 'Add';
+                  // Spec §6.2: every row in People You May Know shows Add Friend.
+                  // Follow lives in the Suggested Hubs widget below.
+                  const primaryLabel = isSent ? 'Sent' : 'Add Friend';
                   return (
                     <FriendCard
                       key={user.user_id}
@@ -138,6 +139,46 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
             </div>
             <ChevronRight className="h-4 w-4 text-brand-text/60" />
           </button>
+        </div>
+      )}
+
+      {/* Suggested Hubs (spec §6.3) — entirely separate from People You May
+          Know above. Only renders when the hub-candidate generator returns
+          at least one approved hub; backend currently returns empty so this
+          stays hidden by default. */}
+      {(hubSuggestions ?? []).length > 0 && (
+        <div className="rounded-3xl bg-brand-card border border-brand-divider p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider shadow-sm">
+                <Sparkles className="h-3.5 w-3.5 text-brand-text" />
+              </div>
+              <h5 className="text-[11px] font-bold uppercase tracking-[0.15em] text-brand-text">
+                Suggested Hubs
+              </h5>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {(hubSuggestions ?? []).map((hub) => (
+              <FriendCard
+                key={hub.user_id}
+                userId={hub.user_id}
+                displayName={hub.display_name}
+                username={hub.username}
+                avatarMediaId={hub.avatar_media_id}
+                mutualFriendCount={0}
+                mutualFriendIds={[]}
+                reasonCodes={hub.reason_codes}
+                primaryLabel="Follow"
+                primaryDisabled={false}
+                primaryLoading={false}
+                onPrimary={() => router.push(`/page/${hub.username || hub.user_id}`)}
+                secondaryLabel="Remove"
+                onSecondary={() => hideSuggestion.mutate({ candidateUserId: hub.user_id, type: 'follow' })}
+                secondaryDisabled={hideSuggestion.isPending}
+              />
+            ))}
+          </div>
         </div>
       )}
 

@@ -413,9 +413,45 @@ export function useFriendSuggestions(userId: string | undefined, limit = 5) {
     return useQuery({
         queryKey: ["friend-suggestions", userId, limit],
         queryFn: async () => {
+            // Relationship-separation spec §2.4: explicit users-only endpoint.
+            // The legacy /v1/suggestions?type=friend still works but the
+            // typed /people route is the spec-blessed shape.
             const res = await api.get<{ data: SuggestionsApiResponse }>(
-                "/v1/suggestions",
-                { params: { type: "friend", limit } }
+                "/v1/suggestions/people",
+                { params: { limit } }
+            )
+            const items = res.data?.data?.items ?? []
+            return items.map((item): SuggestionUser => ({
+                user_id: item.candidate_user_id,
+                username: item.username,
+                display_name: item.display_name,
+                avatar_media_id: item.avatar_media_id,
+                score: item.score,
+                reason_codes: item.reason_codes,
+                explain_text: item.explain_text,
+                source_bucket: item.source_bucket,
+                mutual_friend_count: item.mutual_friend_count,
+                mutual_friend_ids: item.mutual_friend_ids,
+                is_fresh: item.is_fresh,
+                generated_at: item.generated_at,
+            }))
+        },
+        enabled: !!userId,
+        staleTime: 5 * 60 * 1000,
+    })
+}
+
+// useHubSuggestions feeds the "Suggested Hubs" sidebar widget — entirely
+// distinct from useFriendSuggestions per relationship-separation spec §6.
+// Backend returns approved hubs/pages (currently empty until the hub
+// candidate generator ships).
+export function useHubSuggestions(userId: string | undefined, limit = 5) {
+    return useQuery({
+        queryKey: ["hub-suggestions", userId, limit],
+        queryFn: async () => {
+            const res = await api.get<{ data: SuggestionsApiResponse }>(
+                "/v1/suggestions/hubs",
+                { params: { limit } }
             )
             const items = res.data?.data?.items ?? []
             return items.map((item): SuggestionUser => ({

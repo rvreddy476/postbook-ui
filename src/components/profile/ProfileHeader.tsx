@@ -16,8 +16,6 @@ import {
     ImageIcon,
     FileText,
     Users,
-    UserPlus,
-    Heart,
     Settings,
     MessageSquare,
     CheckCircle2,
@@ -94,8 +92,9 @@ export function ProfileHeader({
     graphCounts,
     contentCounts,
     channel,
-    onFollow,
-    onUnfollow,
+    // onFollow / onUnfollow stay in the props contract so callers don't
+    // break; user profile no longer renders Follow per spec §4.1, so the
+    // handlers are intentionally not destructured here.
     onSendCircleRequest,
     onAcceptCircleRequest,
     onDeclineCircleRequest,
@@ -157,7 +156,8 @@ export function ProfileHeader({
     const resolvedAvatar = avatarSources[avatarFails] ?? null
     const resolvedCover = coverSources[coverFails] ?? null
     const followsYou = relationship?.followed_by ?? false
-    const isFollowing = relationship?.following ?? false
+    // isFollowing removed alongside the Follow button — user profiles don't
+    // expose follower state per relationship-separation spec §4.1.
     const inCircle = relationship?.in_circle ?? false
     const canDM = relationship?.can_dm ?? false
     // Tier 3 monetization modals
@@ -379,20 +379,10 @@ export function ProfileHeader({
                                 </>
                             ) : (
                                 <>
-                                    <button
-                                        onClick={isFollowing ? onUnfollow : onFollow}
-                                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
-                                            isFollowing
-                                                ? "bg-brand-card border-2 border-brand-text/30 text-brand-text hover:bg-brand-text/5"
-                                                : "bg-brand-text text-brand-card hover:opacity-90"
-                                        }`}
-                                    >
-                                        {isFollowing ? (
-                                            <><Heart className="w-3.5 h-3.5" fill="currentColor" /> Following</>
-                                        ) : (
-                                            <><UserPlus className="w-3.5 h-3.5" /> Follow</>
-                                        )}
-                                    </button>
+                                    {/* Relationship-separation spec §3.2 / §4.1: user profiles
+                                        must never render a Follow button — friendship actions
+                                        (Add Friend / Friends / Accept / etc.) come through
+                                        ProfileActions. Follow lives on hub profile pages only. */}
                                     <button
                                         onClick={canDM ? onMessage : undefined}
                                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 transition-all ${
@@ -438,11 +428,12 @@ export function ProfileHeader({
                             transition={{ duration: 0.3, delay: 0.1 }}
                             className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5"
                         >
-                            <div className="grid grid-cols-4 gap-2">
+                            {/* Relationship-separation spec §4.1: user profile stats are
+                                Posts + Friends. Followers / Following live only on hub
+                                profile pages. */}
+                            <div className="grid grid-cols-2 gap-2">
                                 {[
                                     { icon: FileText, label: "Posts", value: contentCounts.total, key: "posts", color: "text-sky-500" },
-                                    { icon: Heart, label: "Followers", value: graphCounts.follower_count, key: "followers", color: "text-rose-500" },
-                                    { icon: UserPlus, label: "Following", value: graphCounts.following_count, key: "following", color: "text-amber-500" },
                                     { icon: Users, label: "Friends", value: graphCounts.friend_count, key: "friends", color: "text-emerald-500" },
                                 ].map((stat) => (
                                     <div key={stat.key} className="flex flex-col items-center text-center gap-1">
@@ -503,11 +494,10 @@ export function ProfileHeader({
                 {/* Mobile: Social Graph (stacked below on small screens) */}
                 <div className="md:hidden space-y-3 mb-6">
                     <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4">
-                        <div className="grid grid-cols-4 gap-2">
+                        {/* Spec §4.1 — Posts + Friends only on user profile. */}
+                        <div className="grid grid-cols-2 gap-2">
                             {[
                                 { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
-                                { icon: Heart, label: "Followers", value: graphCounts.follower_count, color: "text-rose-500" },
-                                { icon: UserPlus, label: "Following", value: graphCounts.following_count, color: "text-amber-500" },
                                 { icon: Users, label: "Friends", value: graphCounts.friend_count, color: "text-emerald-500" },
                             ].map((stat) => (
                                 <div key={stat.label} className="flex flex-col items-center text-center gap-1">
