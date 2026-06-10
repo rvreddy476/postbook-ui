@@ -172,8 +172,8 @@ function SuggestedSkeletons() {
 // ─── Main discover page ───────────────────────────────────────────────────────
 
 export default function DiscoverPage() {
-    const { data: trendingData, isLoading: trendingLoading, isError: trendingError } = useTrending()
-    const { data: suggestedData, isLoading: suggestedLoading, isError: suggestedError } = useSuggested()
+    const { data: trendingData, isLoading: trendingLoading } = useTrending()
+    const { data: suggestedData, isLoading: suggestedLoading } = useSuggested()
 
     const hashtags = trendingData?.trending ?? []
     const suggestedPosts = suggestedData?.posts ?? []
@@ -220,16 +220,12 @@ export default function DiscoverPage() {
 
                     {trendingLoading && <TrendingSkeletons />}
 
-                    {trendingError && (
-                        <ErrorCard message="Could not load trending topics. Please try again later." />
-                    )}
-
-                    {!trendingLoading && !trendingError && hashtags.length === 0 && (
+                    {!trendingLoading && hashtags.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                                 <Hash className="w-7 h-7 text-brand-text/30" />
                             </div>
-                            <p className="text-sm font-semibold text-brand-text/60">No trending topics right now</p>
+                            <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>
                         </div>
                     )}
 
@@ -277,16 +273,12 @@ export default function DiscoverPage() {
 
                     {suggestedLoading && <SuggestedSkeletons />}
 
-                    {suggestedError && (
-                        <ErrorCard message="Could not load suggested posts. Please try again later." />
-                    )}
-
-                    {!suggestedLoading && !suggestedError && suggestedPosts.length === 0 && (
+                    {!suggestedLoading && suggestedPosts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                                 <Sparkles className="w-7 h-7 text-brand-text/30" />
                             </div>
-                            <p className="text-sm font-semibold text-brand-text/60">No suggestions yet — explore more to get started</p>
+                            <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>
                         </div>
                     )}
 
