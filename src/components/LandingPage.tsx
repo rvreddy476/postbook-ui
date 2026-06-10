@@ -196,7 +196,7 @@ function SocialProof() {
         {PROOF_AVATARS.map((a, i) => (
           <div
             key={a.initials}
-            className="-ml-2.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#EFEBE2] text-[11px] font-medium first:ml-0"
+            className="-ml-2.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-50 text-[11px] font-medium first:ml-0"
             style={{ backgroundColor: a.bg, color: a.fg }}
           >
             {a.initials}
@@ -342,7 +342,7 @@ function StatusStrip() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen overflow-hidden bg-[#EFEBE2] font-sans text-black">
+    <div className="min-h-screen overflow-hidden bg-slate-50 font-sans text-black">
       <div className="mx-auto max-w-6xl overflow-hidden">
         <Navbar />
         <main className="px-7 pb-6 pt-9">

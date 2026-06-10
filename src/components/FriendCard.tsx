@@ -96,7 +96,7 @@ export default function FriendCard({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 8 }}
-      className="relative rounded-2xl bg-white px-4 py-3 shadow-sm border border-black/[0.03]"
+      className="relative rounded-2xl bg-brand-card px-4 py-3 shadow-sm border border-brand-divider"
     >
       {/* × dismiss in the top-right — invokes the secondary action
           (Remove/Delete). Floating outside the column flow. */}
@@ -106,11 +106,11 @@ export default function FriendCard({
         disabled={secondaryDisabled}
         aria-label={secondaryLabel}
         title={secondaryLabel}
-        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white text-[#6b6b6b] hover:bg-[#F6F3EC] disabled:opacity-40"
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-brand-divider bg-brand-secondary text-brand-text/60 hover:bg-brand-secondary/80 disabled:opacity-40"
       >
         <X className="h-3.5 w-3.5" />
       </button>
-
+ 
       <div className="flex items-start gap-3">
         <Link
           href={profileHref}
@@ -127,24 +127,24 @@ export default function FriendCard({
             )}
           </div>
         </Link>
-
+ 
         <div className="min-w-0 flex-1 pr-6">
           <Link href={profileHref}>
-            <div className="truncate text-[14px] font-bold leading-tight text-[#111] hover:text-[#2563EB] transition-colors">
+            <div className="truncate text-[14px] font-bold leading-tight text-brand-text hover:text-[#2563EB] transition-colors">
               {displayName}
             </div>
           </Link>
-
+ 
           {/* Reason rows — render whatever signals the candidate has. */}
           <div className="mt-1 space-y-0.5">
             {sameCity && (
-              <div className="flex items-center gap-1 text-[11.5px] text-[#6b6b6b]">
+              <div className="flex items-center gap-1 text-[11.5px] text-brand-text/60">
                 <MapPin className="h-3 w-3" />
                 Same city
               </div>
             )}
             {showMutual && (
-              <div className="flex items-center gap-1 text-[11.5px] text-[#6b6b6b]">
+              <div className="flex items-center gap-1 text-[11.5px] text-brand-text/60">
                 {mutualAvatars.length > 0 ? (
                   <div className="flex -space-x-1 mr-0.5">
                     {mutualAvatars.map((id) => {
@@ -152,7 +152,7 @@ export default function FriendCard({
                       return (
                         <div
                           key={id}
-                          className="h-3.5 w-3.5 overflow-hidden rounded-full border border-white bg-[#F6F3EC]"
+                          className="h-3.5 w-3.5 overflow-hidden rounded-full border border-brand-card bg-brand-secondary"
                         >
                           {mSrc ? (
                             <img src={mSrc} alt="" className="h-full w-full object-cover" />
@@ -168,19 +168,19 @@ export default function FriendCard({
               </div>
             )}
             {!sameCity && !showMutual && username && (
-              <div className="text-[11.5px] text-[#aaa]">@{username}</div>
+              <div className="text-[11.5px] text-brand-text/40">@{username}</div>
             )}
           </div>
         </div>
       </div>
-
+ 
       {/* Action row — dark primary button stretches the full card width. */}
       <div className="mt-3">
         <button
           type="button"
           onClick={onPrimary}
           disabled={primaryDisabled || primaryLoading}
-          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-[#111] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#222] disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-[13px] font-semibold text-brand-bg transition hover:opacity-90 disabled:opacity-40"
         >
           <PrimaryIcon className="h-3.5 w-3.5" />
           {primaryLoading ? '…' : primaryLabel}

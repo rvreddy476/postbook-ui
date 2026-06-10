@@ -29,6 +29,8 @@ import {
     Play,
     Crown,
     Coffee,
+    Sun,
+    Moon,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -114,6 +116,31 @@ export function ProfileHeader({
     const badges = getBadges(profile.badge_flags)
     const [avatarFails, setAvatarFails] = useState(0)
     const [coverFails, setCoverFails] = useState(0)
+    const [theme, setTheme] = useState<string>("light")
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("postbook_theme") || "light"
+            setTheme(stored)
+        }
+    }, [])
+
+    const toggleTheme = () => {
+        const next = theme === "dark" ? "light" : "dark"
+        setTheme(next)
+        if (typeof window !== "undefined") {
+            localStorage.setItem("postbook_theme", next)
+            if (next === "dark") {
+                document.documentElement.classList.add("dark")
+                document.documentElement.classList.remove("light")
+                document.documentElement.style.colorScheme = "dark"
+            } else {
+                document.documentElement.classList.add("light")
+                document.documentElement.classList.remove("dark")
+                document.documentElement.style.colorScheme = "light"
+            }
+        }
+    }
 
     useEffect(() => { setAvatarFails(0) }, [profile.avatar_media_id])
     useEffect(() => { setCoverFails(0) }, [profile.cover_media_id])
@@ -341,6 +368,14 @@ export function ProfileHeader({
                                         <Settings className="w-3.5 h-3.5" />
                                         Edit Profile
                                     </button>
+                                    <button
+                                        onClick={toggleTheme}
+                                        type="button"
+                                        className="flex items-center justify-center p-2.5 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-sm"
+                                        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                    >
+                                        {theme === "dark" ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-amber-600" />}
+                                    </button>
                                 </>
                             ) : (
                                 <>
@@ -349,7 +384,7 @@ export function ProfileHeader({
                                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
                                             isFollowing
                                                 ? "bg-brand-card border-2 border-brand-text/30 text-brand-text hover:bg-brand-text/5"
-                                                : "bg-brand-text text-white hover:bg-brand-text"
+                                                : "bg-brand-text text-brand-card hover:opacity-90"
                                         }`}
                                     >
                                         {isFollowing ? (

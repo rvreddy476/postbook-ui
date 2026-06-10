@@ -23,7 +23,7 @@ export function ContentFilterBar({ activeFilter, onFilterChange }: ContentFilter
                     onClick={() => onFilterChange(filter.key)}
                     className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                         activeFilter === filter.key
-                            ? "bg-slate-900 text-white shadow-sm"
+                            ? "bg-brand-text text-brand-card shadow-sm"
                             : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary border border-brand-divider"
                     }`}
                 >

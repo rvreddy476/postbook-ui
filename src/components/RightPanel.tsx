@@ -67,13 +67,13 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
     <div className="space-y-8 sticky top-28 h-fit">
       {/* Who to Follow / People you may know */}
       {(isLoading || visibleSuggestions.length > 0) && (
-        <div className="rounded-3xl bg-[#EFEBE2] p-4 shadow-sm">
+        <div className="rounded-3xl bg-brand-card border border-brand-divider p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
-                <Users className="h-3.5 w-3.5 text-[#111]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider shadow-sm">
+                <Users className="h-3.5 w-3.5 text-brand-text" />
               </div>
-              <h5 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#111]">
+              <h5 className="text-[11px] font-bold uppercase tracking-[0.15em] text-brand-text">
                 Suggestions for you
               </h5>
             </div>
@@ -83,13 +83,13 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-2xl bg-white p-4 shadow-sm">
+                <div key={i} className="rounded-2xl bg-brand-card border border-brand-divider p-4 shadow-sm">
                   <div className="flex items-center gap-3 animate-pulse">
-                    <div className="h-14 w-14 rounded-full bg-[#F6F3EC]" />
+                    <div className="h-14 w-14 rounded-full bg-brand-secondary" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3 w-24 rounded bg-[#F6F3EC]" />
-                      <div className="h-2 w-32 rounded bg-[#F6F3EC]" />
-                      <div className="h-7 w-full rounded-full bg-[#F6F3EC]" />
+                      <div className="h-3 w-24 rounded bg-brand-secondary" />
+                      <div className="h-2 w-32 rounded bg-brand-secondary" />
+                      <div className="h-7 w-full rounded-full bg-brand-secondary" />
                     </div>
                   </div>
                 </div>
@@ -128,15 +128,15 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
 
           <button
             onClick={() => router.push('/circle')}
-            className="mt-3 flex w-full items-center justify-between rounded-full bg-white px-4 py-3 shadow-sm transition hover:bg-[#F6F3EC]"
+            className="mt-3 flex w-full items-center justify-between rounded-full bg-brand-secondary border border-brand-divider px-4 py-3 shadow-sm transition hover:bg-brand-secondary/80"
           >
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111] text-white">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-text text-brand-bg">
                 <Users className="h-3.5 w-3.5" />
               </div>
-              <span className="text-[12px] font-semibold text-[#111]">Show More</span>
+              <span className="text-[12px] font-semibold text-brand-text">Show More</span>
             </div>
-            <ChevronRight className="h-4 w-4 text-[#6b6b6b]" />
+            <ChevronRight className="h-4 w-4 text-brand-text/60" />
           </button>
         </div>
       )}

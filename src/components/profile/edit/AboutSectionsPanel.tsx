@@ -122,8 +122,8 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                             className="w-full flex items-center justify-between px-6 py-5 hover:bg-brand-secondary transition-colors"
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-slate-950 border-brand-text" : "bg-brand-secondary border-brand-divider"} border`}>
-                                    <Icon className={`w-4 h-4 ${isExpanded ? "text-white" : "text-brand-text/60"}`} />
+                                <div className={`p-2 rounded-xl ${isExpanded ? "bg-brand-text border-brand-text" : "bg-brand-secondary border-brand-divider"} border`}>
+                                    <Icon className={`w-4 h-4 ${isExpanded ? "text-brand-card" : "text-brand-text/60"}`} />
                                 </div>
                                 <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
                                 {items.length > 0 && (
@@ -410,7 +410,7 @@ function AddItemForm({
                 <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
                     Cancel
                 </Button>
-                <Button className="h-12 px-10 rounded-2xl bg-slate-950 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-slate-950/20" onClick={handleSubmit} disabled={isAdding}>
+                <Button className="h-12 px-10 rounded-2xl bg-brand-text text-brand-card font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-text/10" onClick={handleSubmit} disabled={isAdding}>
                     {isAdding ? "Adding..." : "Add Entry"}
                 </Button>
             </div>

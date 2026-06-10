@@ -111,6 +111,19 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -388,14 +401,14 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       className="mx-3 w-full max-w-[720px]"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-[#EFEBE2] shadow-2xl">
+      <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between px-6 pt-5">
           <div>
-            <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#6b6b6b]">
+            <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-brand-text/60">
               Compose
             </div>
-            <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-[#111]">
+            <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-brand-text">
               CREATE <span className="text-[#2563EB]">POST</span>
             </div>
           </div>
@@ -403,7 +416,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#111] transition-transform hover:scale-105 active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider text-brand-text transition-transform hover:scale-105 active:scale-95"
           >
             <X className="h-[18px] w-[18px]" />
           </button>
@@ -415,11 +428,11 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <img
               src={avatarSrc}
               alt=""
-              className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-sm"
+              className="h-11 w-11 rounded-full border-2 border-brand-secondary object-cover shadow-sm"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[14px] font-medium text-[#111]">{displayName}</div>
-              <div className="mt-0.5 text-[11px] text-[#6b6b6b]">{handle}</div>
+              <div className="truncate text-[14px] font-medium text-brand-text">{displayName}</div>
+              <div className="mt-0.5 text-[11px] text-brand-text/60">{handle}</div>
             </div>
           </div>
 
@@ -427,11 +440,11 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <button
               type="button"
               onClick={() => setShowVisMenu((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-[#111] shadow-sm transition hover:shadow"
+              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-brand-text shadow-sm transition hover:bg-brand-secondary/80"
             >
               <VisIcon className="h-3.5 w-3.5 text-[#2563EB]" />
               {visOption.label}
-              <ChevronDown className="h-3 w-3 text-[#6b6b6b]" />
+              <ChevronDown className="h-3 w-3 text-brand-text/60" />
             </button>
             <AnimatePresence>
               {showVisMenu && (
@@ -440,7 +453,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-black/5 bg-white shadow-xl"
+                  className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xl"
                 >
                   {VIS_OPTIONS.map((opt) => {
                     const Icon = opt.Icon;
@@ -451,7 +464,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                         type="button"
                         onClick={() => { setVisibility(opt.value); setShowVisMenu(false); }}
                         className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium transition-colors ${
-                          active ? 'bg-[#F6F3EC] text-[#2563EB]' : 'text-[#111] hover:bg-[#F6F3EC]'
+                          active ? 'bg-brand-secondary text-[#2563EB]' : 'text-brand-text hover:bg-brand-secondary'
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />
@@ -471,21 +484,21 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {(mood || location) && (
             <div className="flex flex-wrap gap-1.5 px-6 pt-3">
               {mood && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-sm">
                   <Smile className="h-3 w-3" />
                   {mood}
-                  <button onClick={() => setMood(null)} className="text-[#aaa] hover:text-[#111]">
+                  <button onClick={() => setMood(null)} className="text-brand-text/40 hover:text-brand-text">
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               )}
               {location && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-sm">
                   <MapPin className="h-3 w-3" />
                   {location}
                   <button
                     onClick={() => { setLocation(''); setShowLocation(false); }}
-                    className="text-[#aaa] hover:text-[#111]"
+                    className="text-brand-text/40 hover:text-brand-text"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -499,11 +512,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {!showPoll && (
           <div className="px-6 pt-4">
             <div
-              className="rounded-[20px] p-5 transition-colors duration-300"
-              style={{
-                backgroundColor: hasColorBg ? background! : '#ffffff',
-                color: hasColorBg && onDark ? '#ffffff' : '#111',
-              }}
+              className={`rounded-[20px] p-5 transition-colors duration-300 ${
+                hasColorBg ? '' : 'bg-brand-secondary border border-brand-divider text-brand-text'
+              }`}
+              style={hasColorBg ? {
+                backgroundColor: background!,
+                color: onDark ? '#ffffff' : '#111',
+              } : undefined}
             >
               <textarea
                 ref={textareaRef}
@@ -517,8 +532,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 maxLength={maxChars}
                 className={`w-full resize-none bg-transparent outline-none ${
                   hasColorBg
-                    ? `text-center text-[18px] font-semibold leading-relaxed ${onDark ? 'text-white placeholder:text-white/60' : 'text-[#111] placeholder:text-[#666]'}`
-                    : 'text-[17px] leading-[1.5] text-[#111] placeholder:text-[#aaa]'
+                    ? `text-center text-[18px] font-semibold leading-relaxed ${onDark ? 'text-white placeholder:text-white/60' : 'text-neutral-900 placeholder:text-neutral-900/60'}`
+                    : 'text-[17px] leading-[1.5] text-brand-text placeholder:text-brand-text/45'
                 } ${pollQuestionError ? 'ring-1 ring-rose-500 rounded' : ''}`}
                 style={hasColorBg && onDark ? { color: '#ffffff' } : undefined}
               />
@@ -553,7 +568,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   ))}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-black/10 transition hover:border-[#2563EB] hover:bg-[#F6F3EC]"
+                    className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-brand-divider transition hover:border-[#2563EB] hover:bg-brand-secondary"
                   >
                     <Plus className="h-5 w-5 text-[#aaa]" />
                   </button>
@@ -566,16 +581,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {/* Poll editor */}
           {showPoll && (
             <div className="px-6 pt-3">
-              <div className="rounded-[18px] bg-white px-4 py-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
                 <PollEditor
                   poll={poll}
                   onChange={(next) => {
                     setPoll(next);
-                    // Clear errors as the user edits, so they don't linger.
                     if (Object.keys(pollOptionErrors).length > 0) setPollOptionErrors({});
                   }}
                   accentColor="#2563EB"
-                  isDarkMode={false}
+                  isDarkMode={isDark}
                   optionErrors={pollOptionErrors}
                   question={text}
                   onQuestionChange={(next) => {
@@ -591,10 +605,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {/* Mood picker */}
           {showMood && (
             <div className="px-6 pt-3">
-              <div className="rounded-[18px] bg-white px-3 py-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-3 py-3">
                 <MoodActivityPicker
                   accentColor="#2563EB"
-                  isDarkMode={false}
+                  isDarkMode={isDark}
                   onSelect={(m) => { setMood(m); setShowMood(false); }}
                   onClose={() => setShowMood(false)}
                 />
@@ -605,16 +619,16 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {/* Location input */}
           {showLocation && (
             <div className="px-6 pt-3">
-              <div className="flex items-center gap-2 rounded-[18px] bg-white px-4 py-3">
+              <div className="flex items-center gap-2 rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
                 <MapPin className="h-3.5 w-3.5 text-[#1D9E75]" />
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Where are you?"
-                  className="flex-1 bg-transparent text-[12px] text-[#111] placeholder:text-[#aaa] outline-none"
+                  className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
                   autoFocus
                 />
-                <button onClick={() => setShowLocation(false)} className="text-[#aaa] hover:text-[#111]">
+                <button onClick={() => setShowLocation(false)} className="text-brand-text/40 hover:text-brand-text">
                   <X className="h-3 w-3" />
                 </button>
               </div>
@@ -624,33 +638,32 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {/* Hashtag input — chips, never injects raw `#` into the post text. */}
           {showHashtagInput && (
             <div className="px-6 pt-3">
-              <div className="rounded-[18px] bg-white px-4 py-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Hash className="h-3.5 w-3.5 text-[#2563EB]" />
                   <input
-                    value={hashtagDraft}
-                    onChange={(e) => setHashtagDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
-                        if (hashtagDraft.trim()) {
-                          e.preventDefault();
-                          commitHashtagDraft();
-                        }
-                      } else if (e.key === 'Backspace' && !hashtagDraft && hashtags.length > 0) {
-                        // Pop the last chip on Backspace when input is empty.
-                        setHashtags((prev) => prev.slice(0, -1));
-                      }
-                    }}
-                    onBlur={() => {
-                      if (hashtagDraft.trim()) commitHashtagDraft();
-                    }}
-                    placeholder="Enter hashtags and press Enter"
-                    className="flex-1 bg-transparent text-[12px] text-[#111] placeholder:text-[#aaa] outline-none"
-                    autoFocus
-                  />
+                     value={hashtagDraft}
+                     onChange={(e) => setHashtagDraft(e.target.value)}
+                     onKeyDown={(e) => {
+                       if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+                         if (hashtagDraft.trim()) {
+                           e.preventDefault();
+                           commitHashtagDraft();
+                         }
+                       } else if (e.key === 'Backspace' && !hashtagDraft && hashtags.length > 0) {
+                         setHashtags((prev) => prev.slice(0, -1));
+                       }
+                     }}
+                     onBlur={() => {
+                       if (hashtagDraft.trim()) commitHashtagDraft();
+                     }}
+                     placeholder="Enter hashtags and press Enter"
+                     className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
+                     autoFocus
+                   />
                   <button
                     onClick={() => setShowHashtagInput(false)}
-                    className="text-[#aaa] hover:text-[#111]"
+                    className="text-brand-text/40 hover:text-brand-text"
                     aria-label="Close hashtag input"
                   >
                     <X className="h-3 w-3" />
@@ -661,7 +674,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                     {hashtags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-[#F6F3EC] px-2.5 py-1 text-[11px] font-medium text-[#2563EB]"
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-card border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#2563EB]"
                       >
                         #{tag}
                         <button
@@ -687,16 +700,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           )}
         </div>
 
-        {/* Action bar */}
         <div className="flex flex-shrink-0 items-center justify-between gap-3 px-6 py-4">
-          <div className="flex gap-1.5 rounded-full bg-white p-1.5 shadow-sm">
+          <div className="flex gap-1.5 rounded-full bg-brand-secondary border border-brand-divider p-1.5 shadow-sm">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={files.length >= 10}
               aria-label="Add photo"
               title="Add photo"
-              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-[#F6F3EC] disabled:opacity-30"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card disabled:opacity-30"
             >
               <ImagePlus className="h-[18px] w-[18px] text-[#378ADD]" />
             </button>
@@ -708,7 +720,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               }}
               aria-label="Add poll"
               title="Add poll"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-[#F6F3EC] ${showPoll ? 'bg-[#F6F3EC]' : ''}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showPoll ? 'bg-brand-card' : ''}`}
             >
               <BarChart3 className="h-[18px] w-[18px] text-[#EF9F27]" />
             </button>
@@ -717,7 +729,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               onClick={() => setShowMood((v) => !v)}
               aria-label="Mood / Activity"
               title="Mood / Activity"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-[#F6F3EC] ${showMood || mood ? 'bg-[#F6F3EC]' : ''}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showMood || mood ? 'bg-brand-card' : ''}`}
             >
               <Smile className="h-[18px] w-[18px] text-[#D4537E]" />
             </button>
@@ -726,7 +738,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               onClick={() => setShowLocation((v) => !v)}
               aria-label="Location"
               title="Location"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-[#F6F3EC] ${showLocation || location ? 'bg-[#F6F3EC]' : ''}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showLocation || location ? 'bg-brand-card' : ''}`}
             >
               <MapPin className="h-[18px] w-[18px] text-[#1D9E75]" />
             </button>
@@ -735,7 +747,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               onClick={() => setShowHashtagInput((v) => !v)}
               aria-label="Add hashtag"
               title="Add hashtag"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-[#F6F3EC] ${showHashtagInput || hashtags.length > 0 ? 'bg-[#F6F3EC]' : ''}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card' : ''}`}
             >
               <Hash className="h-[18px] w-[18px] text-[#2563EB]" />
             </button>
@@ -761,7 +773,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.96 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-full right-0 z-30 mb-3 rounded-2xl border border-black/5 bg-white px-5 pb-4 pt-3 shadow-xl"
+                    className="absolute bottom-full right-0 z-30 mb-3 rounded-2xl border border-brand-divider bg-brand-card px-5 pb-4 pt-3 shadow-xl"
                   >
                     {!isTextOnly && (
                       <div className="mb-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-700">
@@ -770,7 +782,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                       </div>
                     )}
                     <div className="mb-2 flex items-center justify-between gap-6">
-                      <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#6b6b6b]">
+                      <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-brand-text/60">
                         Background
                       </div>
                       <button
@@ -834,15 +846,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                             type="button"
                             aria-label={noneSwatch.label}
                             onClick={() => {
-                              setBackground(null);
-                              setShowBackgroundPicker(false);
+                               setBackground(null);
+                               setShowBackgroundPicker(false);
                             }}
                             className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-sm transition-transform hover:scale-125"
                             style={{
                               left: arcWidth / 2 - 14,
                               top: arcHeight - 8,
                               background:
-                                'repeating-conic-gradient(#e0ddd2 0% 25%, #fff 0% 50%) 50% / 8px 8px',
+                                'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
                               outline: background === null ? '2px solid #2563EB' : 'none',
                               outlineOffset: background === null ? '1px' : 0,
                             }}
@@ -860,9 +872,9 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex items-center gap-2.5 rounded-full bg-[#111] px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-white transition hover:bg-[#222] disabled:opacity-40"
+            className="flex items-center gap-2.5 rounded-full bg-brand-text px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-brand-bg transition hover:opacity-90 disabled:opacity-40"
           >
-            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-white/15">
+            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand-bg/15">
               {isSubmitting ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
@@ -874,7 +886,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         {/* Footer status bar */}
-        <div className="flex flex-shrink-0 items-center justify-between bg-black/[0.03] px-6 py-3 text-[10px] font-medium uppercase tracking-[0.1em] text-[#6b6b6b]">
+        <div className="flex flex-shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-brand-text/60">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-[#1D9E75]" />
             {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}

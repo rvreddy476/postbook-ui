@@ -59,8 +59,8 @@ export function AvatarCoverSection({
                             onError={() => setCoverBroken(true)}
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                            <Image className="w-12 h-12 text-brand-secondary" />
+                        <div className="w-full h-full bg-gradient-to-br from-brand-secondary via-brand-card/40 to-brand-secondary flex items-center justify-center">
+                            <Image className="w-12 h-12 text-brand-highlight/30" />
                         </div>
                     )}
 
@@ -69,14 +69,14 @@ export function AvatarCoverSection({
                     <div className="absolute bottom-6 right-6">
                         <AnimatePresence>
                             {isCoverUploading ? (
-                                <div className="p-4 bg-brand-card/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white">
+                                <div className="p-4 bg-brand-card/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-brand-divider">
                                     <Loader2 className="w-6 h-6 text-brand-text animate-spin" />
                                 </div>
                             ) : (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     whileHover={{ opacity: 1, scale: 1 }}
-                                    className="p-4 bg-brand-card/10 backdrop-blur-2xl border border-white/20 rounded-2xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all"
+                                    className="p-4 bg-brand-card/10 backdrop-blur-2xl border border-brand-divider rounded-2xl text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all"
                                 >
                                     <Image className="w-6 h-6" />
                                 </motion.div>
@@ -127,7 +127,7 @@ export function AvatarCoverSection({
                                     onError={() => setAvatarBroken(true)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-secondary uppercase italic">
+                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-highlight/50 bg-gradient-to-br from-brand-secondary to-brand-card uppercase italic">
                                     {displayName.charAt(0)}
                                 </div>
                             )}
@@ -146,7 +146,7 @@ export function AvatarCoverSection({
 
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-slate-900/5 transition-colors" />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="p-3 bg-brand-card/40 backdrop-blur-md rounded-2xl border border-white shadow-xl">
+                                <div className="p-3 bg-brand-card/40 backdrop-blur-md rounded-2xl border border-brand-divider shadow-xl">
                                     <Camera className="w-6 h-6 text-brand-text" />
                                 </div>
                             </div>

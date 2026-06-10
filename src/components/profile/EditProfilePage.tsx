@@ -186,7 +186,7 @@ export function EditProfilePage() {
                     <Button
                         onClick={handleSaveProfile}
                         disabled={updateProfile.isPending}
-                        className="h-14 px-8 rounded-[1.5rem] bg-slate-950 hover:bg-slate-900 text-white shadow-2xl shadow-slate-950/20 group"
+                        className="h-14 px-8 rounded-[1.5rem] bg-brand-text text-brand-card hover:opacity-90 shadow-xl shadow-brand-text/10 group"
                     >
                         {updateProfile.isPending ? (
                             <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -227,15 +227,15 @@ export function EditProfilePage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`w-full group relative flex items-center gap-3 p-3 rounded-[1.25rem] transition-all duration-300 ${isActive
-                                    ? "bg-slate-950 text-white shadow-xl shadow-slate-950/20"
+                                    ? "bg-brand-text text-brand-card shadow-xl shadow-brand-text/10"
                                     : "bg-brand-card/50 hover:bg-brand-card text-brand-highlight border border-brand-divider/50 hover:border-brand-divider"
                                     }`}
                             >
                                 <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-brand-secondary group-hover:bg-brand-secondary"}`}>
-                                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-brand-text/60 group-hover:text-brand-text"}`} />
+                                    <Icon className={`w-4 h-4 ${isActive ? "text-brand-card" : "text-brand-text/60 group-hover:text-brand-text"}`} />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-white" : "text-brand-text"}`}>{tab.label}</div>
+                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
                                 </div>
                                 {isActive && (
                                     <motion.div layoutId="active-indicator" className="absolute right-3 text-white">
@@ -248,7 +248,7 @@ export function EditProfilePage() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-white rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
+                <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-brand-divider rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-secondary/30 via-brand-card to-brand-secondary/20 -z-10" />
 
                     <AnimatePresence mode="wait">

@@ -68,15 +68,35 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
 
   // Theme toggle state
-  const [theme, setTheme] = useState<string>('dark');
+  const [theme, setTheme] = useState<string>('light');
 
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('postbook_theme', 'dark');
+    const stored = localStorage.getItem('postbook_theme') || 'light';
+    setTheme(stored);
+    if (stored === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
   }, []);
 
   const toggleTheme = () => {
-    // Locked to dark mode for B&W theme
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('postbook_theme', next);
+    if (next === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
   };
 
   // Notification popup state
@@ -549,6 +569,20 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             )}
           </AnimatePresence>
         </div>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300 mr-1"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          <div className="w-5 h-5 text-amber-500 group-hover:text-amber-400 transition-colors">
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </div>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </span>
+        </button>
 
         {/* 7. Profile */}
         <div className="relative ml-1 sm:ml-2" ref={dropdownRef}>

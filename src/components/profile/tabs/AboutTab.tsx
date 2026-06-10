@@ -42,7 +42,7 @@ function SectionCard({ children, delay = 0 }: { children: React.ReactNode; delay
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay }}
-            className="rounded-2xl border border-[#DED9D1]/60 bg-[#DED9D1]/[0.79] p-6"
+            className="rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm hover:shadow-md transition-shadow"
         >
             {children}
         </motion.div>
@@ -52,10 +52,10 @@ function SectionCard({ children, delay = 0 }: { children: React.ReactNode; delay
 function SectionHeader({ icon: Icon, title }: { icon: typeof Briefcase; title: string }) {
     return (
         <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-2 rounded-xl bg-brand-card/80 border border-[#DED9D1]">
-                <Icon className="w-4 h-4 text-zinc-600" />
+            <div className="p-2 rounded-xl bg-brand-secondary border border-brand-divider">
+                <Icon className="w-4 h-4 text-brand-text/70" />
             </div>
-            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-700">{title}</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.25em] text-brand-text">{title}</h3>
         </div>
     )
 }
@@ -63,16 +63,16 @@ function SectionHeader({ icon: Icon, title }: { icon: typeof Briefcase; title: s
 function InfoRow({ icon: Icon, label, value, isLink }: { icon: typeof Briefcase; label: string; value: string; isLink?: boolean }) {
     return (
         <div className="flex items-start gap-3 py-2.5">
-            <Icon className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
+            <Icon className="w-4 h-4 text-brand-highlight/40 mt-0.5 shrink-0" />
             <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-0.5">{label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-highlight/60 mb-0.5">{label}</p>
                 {isLink ? (
-                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-brand-text hover:underline flex items-center gap-1">
+                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-brand-accent hover:underline flex items-center gap-1">
                         {value.replace(/^https?:\/\//, "")}
                         <ExternalLink className="w-3 h-3" />
                     </a>
                 ) : (
-                    <p className="text-sm font-medium text-zinc-800">{value}</p>
+                    <p className="text-sm font-medium text-brand-text">{value}</p>
                 )}
             </div>
         </div>
@@ -80,7 +80,7 @@ function InfoRow({ icon: Icon, label, value, isLink }: { icon: typeof Briefcase;
 }
 
 function EmptyHint({ text }: { text: string }) {
-    return <p className="text-xs text-zinc-400 italic pl-1">{text}</p>
+    return <p className="text-xs text-brand-highlight/60 italic pl-1">{text}</p>
 }
 
 function str(v: unknown): string {
@@ -118,7 +118,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
             <SectionCard delay={0}>
                 <SectionHeader icon={User} title="Overview" />
                 {profile.bio && (
-                    <p className="font-mono-display text-lg italic leading-relaxed text-zinc-700 mb-5 pl-1">
+                    <p className="font-mono-display text-lg italic leading-relaxed text-brand-text/80 mb-5 pl-1">
                         &ldquo;{profile.bio}&rdquo;
                     </p>
                 )}
@@ -148,8 +148,8 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                     {profile.website && <InfoRow icon={Globe} label="Website" value={profile.website} isLink />}
                 </div>
                 {profile.cta_label && profile.cta_url && (
-                    <div className="mt-4 pt-4 border-t border-[#DED9D1]/80">
-                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-xs font-bold uppercase tracking-[0.15em] hover:bg-brand-text transition-colors shadow-sm">
+                    <div className="mt-4 pt-4 border-t border-brand-divider">
+                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-[0.15em] hover:opacity-90 transition-all shadow-sm">
                             {profile.cta_label}
                             <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -170,26 +170,26 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                             return (
                                 <div key={item.item_id} className="flex gap-4">
                                     <div className="mt-2 shrink-0">
-                                        <div className="w-3 h-3 rounded-full bg-zinc-300 ring-4 ring-[#DED9D1]/60" />
+                                        <div className="w-3 h-3 rounded-full bg-brand-highlight/30 ring-4 ring-brand-secondary" />
                                     </div>
-                                    <div className="flex-1 pb-4 border-b border-[#DED9D1]/50 last:border-0">
-                                        <p className="text-sm font-bold text-zinc-900">{str(d.title) || "Untitled"}</p>
-                                        <p className="text-xs text-zinc-500 mt-0.5">
+                                    <div className="flex-1 pb-4 border-b border-brand-divider last:border-0">
+                                        <p className="text-sm font-bold text-brand-text">{str(d.title) || "Untitled"}</p>
+                                        <p className="text-xs text-brand-text/70 mt-0.5">
                                             {str(d.subtitle)}
-                                            {d.industry ? <span className="text-zinc-400"> &middot; {str(d.industry)}</span> : null}
+                                            {d.industry ? <span className="text-brand-text/50"> &middot; {str(d.industry)}</span> : null}
                                         </p>
                                         {d.employment_type ? (
-                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-brand-card/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
+                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-brand-highlight/60 bg-brand-secondary px-2 py-0.5 rounded-md border border-brand-divider">
                                                 {str(d.employment_type).replace(/_/g, " ")}
                                             </span>
                                         ) : null}
-                                        {dateRange ? <p className="text-[10px] text-zinc-400 mt-1.5 font-medium">{dateRange}</p> : null}
+                                        {dateRange ? <p className="text-[10px] text-brand-text/50 mt-1.5 font-medium">{dateRange}</p> : null}
                                         {d.location ? (
-                                            <p className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-1">
+                                            <p className="text-[10px] text-brand-text/50 mt-0.5 flex items-center gap-1">
                                                 <MapPin className="w-3 h-3" /> {str(d.location)}
                                             </p>
                                         ) : null}
-                                        {d.description ? <p className="text-xs text-zinc-600 mt-2 leading-relaxed">{str(d.description)}</p> : null}
+                                        {d.description ? <p className="text-xs text-brand-text/80 mt-2 leading-relaxed">{str(d.description)}</p> : null}
                                         {d.is_current ? (
                                             <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-brand-text bg-brand-text/10 px-2 py-0.5 rounded-md">
                                                 <Target className="w-3 h-3" /> Current
@@ -218,24 +218,24 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                             return (
                                 <div key={item.item_id} className="flex gap-4">
                                     <div className="mt-2 shrink-0">
-                                        <div className="w-3 h-3 rounded-full bg-zinc-300 ring-4 ring-[#DED9D1]/60" />
+                                        <div className="w-3 h-3 rounded-full bg-brand-highlight/30 ring-4 ring-brand-secondary" />
                                     </div>
-                                    <div className="flex-1 pb-4 border-b border-[#DED9D1]/50 last:border-0">
-                                        <p className="text-sm font-bold text-zinc-900">{str(d.title) || "Untitled"}</p>
-                                        <p className="text-xs text-zinc-500 mt-0.5">{str(d.subtitle)}</p>
+                                    <div className="flex-1 pb-4 border-b border-brand-divider last:border-0">
+                                        <p className="text-sm font-bold text-brand-text">{str(d.title) || "Untitled"}</p>
+                                        <p className="text-xs text-brand-text/70 mt-0.5">{str(d.subtitle)}</p>
                                         {d.field_of_study ? (
-                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500 bg-brand-card/60 px-2 py-0.5 rounded-md border border-[#DED9D1]/40">
+                                            <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-widest text-brand-highlight/60 bg-brand-secondary px-2 py-0.5 rounded-md border border-brand-divider">
                                                 <BookOpen className="w-3 h-3 inline mr-1" />
                                                 {str(d.field_of_study)}
                                             </span>
                                         ) : null}
                                         {dateRange ? <p className="text-[10px] text-zinc-400 mt-1.5 font-medium">{dateRange}</p> : null}
                                         {d.location ? (
-                                            <p className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-1">
+                                            <p className="text-[10px] text-brand-text/50 mt-0.5 flex items-center gap-1">
                                                 <MapPin className="w-3 h-3" /> {str(d.location)}
                                             </p>
                                         ) : null}
-                                        {d.description ? <p className="text-xs text-zinc-600 mt-2 leading-relaxed">{str(d.description)}</p> : null}
+                                        {d.description ? <p className="text-xs text-brand-text/80 mt-2 leading-relaxed">{str(d.description)}</p> : null}
                                         {d.is_current ? (
                                             <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold uppercase tracking-widest text-brand-text bg-brand-text/10 px-2 py-0.5 rounded-md">
                                                 <Target className="w-3 h-3" /> Currently Enrolled
@@ -265,16 +265,16 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                             return (
                                 <div key={item.item_id} className="flex gap-4">
                                     <div className="mt-2 shrink-0">
-                                        <div className="w-3 h-3 rounded-full bg-zinc-300 ring-4 ring-[#DED9D1]/60" />
+                                        <div className="w-3 h-3 rounded-full bg-brand-highlight/30 ring-4 ring-brand-secondary" />
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-sm font-bold text-zinc-900">{str(d.title)}</p>
-                                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 bg-brand-card/60 px-1.5 py-0.5 rounded border border-[#DED9D1]/40">{entryType}</span>
+                                            <p className="text-sm font-bold text-brand-text">{str(d.title)}</p>
+                                            <span className="text-[8px] font-bold uppercase tracking-widest text-brand-highlight/60 bg-brand-secondary px-1.5 py-0.5 rounded border border-brand-divider">{entryType}</span>
                                         </div>
-                                        {d.subtitle ? <p className="text-xs text-zinc-500 mt-0.5">{str(d.subtitle)}</p> : null}
-                                        {dateRange ? <p className="text-[10px] text-zinc-400 mt-1 font-medium">{dateRange}</p> : null}
-                                        {d.description ? <p className="text-xs text-zinc-600 mt-1.5 leading-relaxed">{str(d.description)}</p> : null}
+                                        {d.subtitle ? <p className="text-xs text-brand-text/70 mt-0.5">{str(d.subtitle)}</p> : null}
+                                        {dateRange ? <p className="text-[10px] text-brand-text/50 mt-1 font-medium">{dateRange}</p> : null}
+                                        {d.description ? <p className="text-xs text-brand-text/80 mt-1.5 leading-relaxed">{str(d.description)}</p> : null}
                                     </div>
                                 </div>
                             )
@@ -345,27 +345,27 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                 {allLinks.length > 0 || socialLinks.length > 0 ? (
                     <div className="space-y-3">
                         {allLinks.map((link) => (
-                            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-card/50 transition-colors group">
-                                <div className="w-9 h-9 rounded-lg bg-brand-card/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
-                                    <span className="text-[8px] font-black text-zinc-400 uppercase">{(link.icon || link.category || "web").slice(0, 3)}</span>
+                            <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-secondary/50 transition-colors group">
+                                <div className="w-9 h-9 rounded-lg bg-brand-secondary border border-brand-divider flex items-center justify-center shrink-0">
+                                    <span className="text-[8px] font-black text-brand-text/60 uppercase">{(link.icon || link.category || "web").slice(0, 3)}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-zinc-800 truncate">{link.title}</p>
-                                    <p className="text-[10px] text-zinc-400 truncate">{link.url}</p>
+                                    <p className="text-sm font-semibold text-brand-text truncate">{link.title}</p>
+                                    <p className="text-[10px] text-brand-text/50 truncate">{link.url}</p>
                                 </div>
-                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-brand-text transition-colors shrink-0" />
+                                <ExternalLink className="w-3.5 h-3.5 text-brand-highlight/30 group-hover:text-brand-text transition-colors shrink-0" />
                             </a>
                         ))}
                         {socialLinks.map((link) => (
-                            <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-card/50 transition-colors group">
-                                <div className="w-9 h-9 rounded-lg bg-brand-card/80 border border-[#DED9D1] flex items-center justify-center shrink-0">
-                                    <span className="text-[8px] font-black text-zinc-400 uppercase">{link.platform.slice(0, 3)}</span>
+                            <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-brand-secondary/50 transition-colors group">
+                                <div className="w-9 h-9 rounded-lg bg-brand-secondary border border-brand-divider flex items-center justify-center shrink-0">
+                                    <span className="text-[8px] font-black text-brand-text/60 uppercase">{link.platform.slice(0, 3)}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-zinc-800 truncate">{link.display_label || link.platform}</p>
-                                    <p className="text-[10px] text-zinc-400 truncate">{link.url}</p>
+                                    <p className="text-sm font-semibold text-brand-text truncate">{link.display_label || link.platform}</p>
+                                    <p className="text-[10px] text-brand-text/50 truncate">{link.url}</p>
                                 </div>
-                                <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-brand-text transition-colors shrink-0" />
+                                <ExternalLink className="w-3.5 h-3.5 text-brand-highlight/30 group-hover:text-brand-text transition-colors shrink-0" />
                             </a>
                         ))}
                     </div>
@@ -392,7 +392,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
 
             {isLoading && (
                 <div className="space-y-4">
-                    {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl bg-[#DED9D1]/40 animate-pulse" />)}
+                    {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl bg-brand-secondary/40 animate-pulse" />)}
                 </div>
             )}
         </div>

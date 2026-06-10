@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { SocialLinksSection } from "./SocialLinksSection"
 import { useAuthUser } from "@/store/auth"
@@ -39,6 +40,32 @@ const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-
 
 export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionProps) {
     const authUser = useAuthUser()
+    const [localTheme, setLocalTheme] = useState<string>("light")
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("postbook_theme") || "light"
+            setLocalTheme(stored)
+        }
+    }, [])
+
+    const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const next = e.target.value
+        setLocalTheme(next)
+        if (typeof window !== "undefined") {
+            localStorage.setItem("postbook_theme", next)
+            if (next === "dark") {
+                document.documentElement.classList.add("dark")
+                document.documentElement.classList.remove("light")
+                document.documentElement.style.colorScheme = "dark"
+            } else {
+                document.documentElement.classList.add("light")
+                document.documentElement.classList.remove("dark")
+                document.documentElement.style.colorScheme = "light"
+            }
+        }
+    }
+
     const handle = (field: keyof BasicInfoForm) =>
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
             onChange(field, e.target.value)
@@ -133,10 +160,17 @@ export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionPr
                         </select>
                     </Field>
 
+                    <Field label="Theme Mode" description="Switch between Light and Dark mode">
+                        <select value={localTheme} onChange={handleThemeChange} className={selectBase}>
+                            <option value="light">Light Mode</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </Field>
+
                     <Field label="Theme Color" description="Your profile accent">
                         <div className="flex items-center gap-4">
                             <div
-                                className="w-12 h-12 rounded-2xl border-4 border-white shadow-xl flex-shrink-0"
+                                className="w-12 h-12 rounded-2xl border-4 border-brand-divider shadow-xl flex-shrink-0"
                                 style={{ backgroundColor: form.profile_theme_color || "#1A73E8" }}
                             />
                             <Input

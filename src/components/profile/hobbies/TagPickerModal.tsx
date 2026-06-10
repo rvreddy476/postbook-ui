@@ -132,7 +132,7 @@ export function TagPickerModal({
                         onClick={() => setActiveCategory(null)}
                         className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                             activeCategory === null
-                                ? "bg-slate-900 text-white"
+                                ? "bg-brand-text text-brand-card"
                                 : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                         }`}
                     >
@@ -145,7 +145,7 @@ export function TagPickerModal({
                             onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
                                 activeCategory === cat.id
-                                    ? "bg-slate-900 text-white"
+                                    ? "bg-brand-text text-brand-card"
                                     : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
                             }`}
                         >
@@ -161,7 +161,7 @@ export function TagPickerModal({
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="flex flex-wrap gap-1.5 p-3 bg-blue-50/50 rounded-xl border border-blue-100"
+                            className="flex flex-wrap gap-1.5 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
                         >
                             {selected.map((tag, i) => (
                                 <motion.span

@@ -99,7 +99,7 @@ export function SocialLinksSection() {
                                 <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-highlight font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
                                     Cancel
                                 </Button>
-                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-slate-950 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-slate-950/20">
+                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-text/10">
                                     {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Link"}
                                 </Button>
                             </div>
@@ -161,7 +161,7 @@ function LinkRow({
                 <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputBase} />
                 <div className="flex gap-2 justify-end pt-2">
                     <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-text/60 font-bold uppercase tracking-widest text-[10px]" onClick={() => setEditing(false)}>Cancel</Button>
-                    <Button size="sm" className="h-10 px-8 rounded-xl bg-slate-900 text-white font-black uppercase tracking-widest text-[10px]" onClick={handleSave}>
+                    <Button size="sm" className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black uppercase tracking-widest text-[10px]" onClick={handleSave}>
                         Update
                     </Button>
                 </div>
@@ -201,7 +201,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onUpdate(link, { is_pinned: !link.is_pinned })}
-                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-slate-950 text-white" : "bg-brand-secondary text-brand-text/60 hover:bg-brand-secondary/40 hover:text-brand-text"}`}
+                    className={`p-2.5 rounded-xl transition-all ${link.is_pinned ? "bg-brand-text text-brand-card" : "bg-brand-secondary text-brand-text/60 hover:bg-brand-secondary/40 hover:text-brand-text"}`}
                 >
                     <Pin className="w-4 h-4" />
                 </motion.button>
@@ -209,7 +209,7 @@ function LinkRow({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setEditing(true)}
-                    className="p-2.5 bg-brand-secondary text-brand-text/60 rounded-xl hover:bg-slate-900 hover:text-white transition-all"
+                    className="p-2.5 bg-brand-secondary text-brand-text/60 rounded-xl hover:bg-brand-text hover:text-brand-card transition-all"
                 >
                     <LinkIcon className="w-4 h-4" />
                 </motion.button>
