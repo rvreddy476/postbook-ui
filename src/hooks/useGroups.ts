@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueries, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { Group, GroupMember, GroupInvite, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
@@ -631,4 +631,40 @@ export function useDeleteGroupPostV2() {
       qc.invalidateQueries({ queryKey: ["group", groupId] })
     },
   })
+}
+
+// === MYSPACE AGGREGATED FEED ===
+
+export type MySpaceFeedPost = GroupPostV2 & { group: Group }
+
+// Merge the latest posts from every group the viewer has joined into one
+// reverse-chronological "Your feed" stream. There is no backend aggregate
+// endpoint yet, so this fans out one feed/v2 request per joined group
+// (capped) and merges client-side. Each query keeps the
+// ["group-feed-v2", groupId] key prefix so the existing spark/stash/echo/
+// delete mutations invalidate these caches too.
+const MYSPACE_FEED_GROUP_CAP = 12
+
+export function useMySpacesFeed(groups: Group[] | undefined) {
+  const targets = (groups ?? []).slice(0, MYSPACE_FEED_GROUP_CAP)
+  const results = useQueries({
+    queries: targets.map((g) => ({
+      queryKey: ["group-feed-v2", g.id, "myspace"],
+      queryFn: async () => {
+        const res = await api.get<GroupPostsV2Response>(`/v1/groups/${g.id}/feed/v2`, {
+          params: { limit: 10, offset: 0 },
+        })
+        return res.data.data ?? []
+      },
+      staleTime: 15_000,
+      refetchInterval: 30_000,
+    })),
+  })
+
+  const isLoading = targets.length > 0 && results.some((r) => r.isLoading)
+  const posts: MySpaceFeedPost[] = results
+    .flatMap((r, i) => (r.data ?? []).map((p) => ({ ...p, group: targets[i] })))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  return { posts, isLoading }
 }
