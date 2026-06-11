@@ -2,29 +2,35 @@
 
 import React, { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '@/components/AppShell'
 import RightPanel from '@/components/RightPanel'
+import CreatePortal from '@/components/CreatePortal'
 import {
   useMyGroups,
   useDiscoverGroups,
   useGroupSearch,
   useMySpacesFeed,
+  useMyInvites,
+  useAcceptInvite,
+  useRejectInvite,
   useSparkGroupPostV2,
   useUnsparkGroupPostV2,
   useStashGroupPostV2,
   useUnstashGroupPostV2,
   useRecordGroupPostView,
   useDeleteGroupPostV2,
-  type MySpaceFeedPost,
 } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
-import { Search, Plus, Users, Compass, Newspaper, MessageCircle } from 'lucide-react'
+import type { Group, GroupPostV2 } from '@/types/groups'
+import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X } from 'lucide-react'
 import Link from 'next/link'
 
-type View = 'feed' | 'discover' | 'your-groups'
+type View = 'feed' | 'discover' | 'your-groups' | 'invites'
 
 function lastActive(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -58,14 +64,27 @@ function GroupAvatar({ avatarMediaId, name, size = 'w-10 h-10' }: { avatarMediaI
 
 export default function GroupsPage() {
   const router = useRouter()
+  const qc = useQueryClient()
   const authUser = useAuthUser()
   const [view, setView] = useState<View>('feed')
   const [searchQuery, setSearchQuery] = useState('')
+  const [composeGroup, setComposeGroup] = useState<Group | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
   const { data: searchResults } = useGroupSearch(searchQuery)
-  const { posts: feedPosts, isLoading: feedLoading } = useMySpacesFeed(myGroups)
+  const { data: invites } = useMyInvites()
+  const {
+    data: feedData,
+    isLoading: feedLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useMySpacesFeed()
+
+  const acceptInvite = useAcceptInvite()
+  const rejectInvite = useRejectInvite()
 
   // Engagement mutations — same set GroupFeedTab uses, parameterized per group.
   const sparkMut = useSparkGroupPostV2()
@@ -74,6 +93,18 @@ export default function GroupsPage() {
   const unstashMut = useUnstashGroupPostV2()
   const viewMut = useRecordGroupPostView()
   const deleteMut = useDeleteGroupPostV2()
+  const refreshFeed = () => qc.invalidateQueries({ queryKey: ['myspace-feed'] })
+
+  const groupsById = useMemo(() => {
+    const map = new Map<string, Group>()
+    for (const g of myGroups ?? []) map.set(g.id, g)
+    return map
+  }, [myGroups])
+
+  const feedPosts = useMemo(
+    () => feedData?.pages.flatMap((page) => page.data) ?? [],
+    [feedData],
+  )
 
   // Enrich feed posts with author name/avatar
   const authorIds = useMemo(() => [...new Set(feedPosts.map((p) => p.author_id))], [feedPosts])
@@ -95,40 +126,50 @@ export default function GroupsPage() {
   )
 
   const searching = searchQuery.trim().length >= 2
+  const inviteCount = invites?.length ?? 0
 
-  const navItems: { key: View; label: string; icon: React.ReactNode }[] = [
+  const navItems: { key: View; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'feed', label: 'Your feed', icon: <Newspaper className="w-[18px] h-[18px]" /> },
     { key: 'discover', label: 'Discover', icon: <Compass className="w-[18px] h-[18px]" /> },
     { key: 'your-groups', label: 'Your groups', icon: <Users className="w-[18px] h-[18px]" /> },
+    { key: 'invites', label: 'Invites', icon: <Mail className="w-[18px] h-[18px]" />, badge: inviteCount },
   ]
 
-  const renderFeedPost = (post: MySpaceFeedPost) => {
-    const role = post.group.viewer_role
+  const switchView = (v: View) => {
+    setView(v)
+    setSearchQuery('')
+  }
+
+  const renderFeedPost = (post: GroupPostV2 & { author_name?: string; author_avatar_url?: string }) => {
+    const group = groupsById.get(post.group_id)
+    const role = group?.viewer_role
     const isAdmin = role === 'owner' || role === 'admin' || role === 'moderator'
     return (
-      <div key={`${post.group.id}-${post.id}`}>
+      <div key={post.id}>
         {/* Group attribution strip — which space this post came from */}
         <Link
-          href={`/groups/${post.group.id}`}
+          href={`/groups/${post.group_id}`}
           className="flex items-center gap-2 px-1 pb-1.5 group/attr w-fit"
         >
-          <GroupAvatar avatarMediaId={post.group.avatar_media_id} name={post.group.name} size="w-5 h-5" />
+          <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Group'} size="w-5 h-5" />
           <span className="text-xs font-bold text-brand-text/60 group-hover/attr:text-brand-text transition-colors">
-            {post.group.name}
+            {group?.name ?? 'View group'}
           </span>
         </Link>
         <GroupPostCard
           post={post}
-          groupId={post.group.id}
+          groupId={post.group_id}
           isAdmin={isAdmin}
           isAuthor={authUser?.id === post.author_id}
-          onSpark={(gId, postId) => sparkMut.mutate({ groupId: gId, postId })}
-          onUnspark={(gId, postId) => unsparkMut.mutate({ groupId: gId, postId })}
-          onStash={(gId, postId) => stashMut.mutate({ groupId: gId, postId })}
-          onUnstash={(gId, postId) => unstashMut.mutate({ groupId: gId, postId })}
+          onSpark={(gId, postId) => sparkMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
+          onUnspark={(gId, postId) => unsparkMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
+          onStash={(gId, postId) => stashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
+          onUnstash={(gId, postId) => unstashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
           onView={(gId, postId) => viewMut.mutate({ groupId: gId, postId })}
           onDelete={(postId) => {
-            if (confirm('Delete this post?')) deleteMut.mutate({ groupId: post.group.id, postId })
+            if (confirm('Delete this post?')) {
+              deleteMut.mutate({ groupId: post.group_id, postId }, { onSuccess: refreshFeed })
+            }
           }}
         />
       </div>
@@ -191,13 +232,99 @@ export default function GroupsPage() {
     )
   }
 
+  const renderInvites = () => {
+    if (!invites || invites.length === 0) {
+      return emptyState('No invites', 'You have no pending group invitations')
+    }
+    return (
+      <div className="space-y-2">
+        {invites.map((invite) => (
+          <div
+            key={invite.id}
+            className="flex items-center gap-3.5 rounded-xl border border-brand-divider bg-brand-card p-4"
+          >
+            <GroupAvatar avatarMediaId={invite.group_avatar_media_id} name={invite.group_name} size="w-12 h-12" />
+            <div className="min-w-0 flex-1">
+              <Link href={`/groups/${invite.group_id}`} className="block truncate text-sm font-bold text-brand-text hover:underline">
+                {invite.group_name}
+              </Link>
+              <p className="text-xs text-brand-text/40">
+                {invite.group_member_count} member{invite.group_member_count === 1 ? '' : 's'} · invited{' '}
+                {new Date(invite.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+            <button
+              onClick={() => acceptInvite.mutate(invite.id)}
+              disabled={acceptInvite.isPending}
+              className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Accept
+            </button>
+            <button
+              onClick={() => rejectInvite.mutate(invite.id)}
+              disabled={rejectInvite.isPending}
+              className="flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
+            >
+              <X className="h-3.5 w-3.5" />
+              Decline
+            </button>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderFeed = () => {
+    if (feedLoading || loadingMy) return feedSkeleton
+    return (
+      <div className="space-y-5">
+        {/* Composer — pick one of your groups, then the standard portal */}
+        {myGroups && myGroups.length > 0 && (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-sm transition-all group"
+          >
+            <div className="w-9 h-9 rounded-full bg-brand-text/8 flex items-center justify-center group-hover:bg-brand-text/12 transition-all">
+              <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
+            </div>
+            <span className="group-hover:text-brand-text transition-colors">Write something to a group...</span>
+          </button>
+        )}
+
+        {!myGroups || myGroups.length === 0 ? (
+          emptyState('Your feed is empty', 'Join groups to see their latest posts here')
+        ) : enrichedPosts.length === 0 ? (
+          emptyState('No recent activity', 'Posts from your groups will show up here')
+        ) : (
+          <>
+            {enrichedPosts.map(renderFeedPost)}
+            {hasNextPage && (
+              <div className="flex justify-center pt-2 pb-4">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="px-6 py-2.5 bg-brand-card rounded-xl font-bold text-xs text-brand-highlight hover:text-brand-text hover:shadow-md transition-all border border-brand-divider disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? 'Loading...' : 'Load more posts'}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    )
+  }
+
   const middleTitle = searching
     ? `Results for "${searchQuery.trim()}"`
     : view === 'feed'
       ? 'Recent activity'
       : view === 'discover'
         ? 'Discover groups'
-        : 'Your groups'
+        : view === 'invites'
+          ? 'Group invites'
+          : 'Your groups'
 
   return (
     <AppShell>
@@ -237,10 +364,7 @@ export default function GroupsPage() {
             {navItems.map((item) => (
               <button
                 key={item.key}
-                onClick={() => {
-                  setView(item.key)
-                  setSearchQuery('')
-                }}
+                onClick={() => switchView(item.key)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
                   view === item.key && !searching
                     ? 'bg-brand-text/8 text-brand-text'
@@ -255,6 +379,11 @@ export default function GroupsPage() {
                   {item.icon}
                 </span>
                 {item.label}
+                {!!item.badge && (
+                  <span className="ml-auto rounded-full bg-brand-highlight/15 px-2 py-0.5 text-[11px] font-black text-brand-highlight">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -273,10 +402,7 @@ export default function GroupsPage() {
             <div className="mb-2 flex items-center justify-between px-1">
               <p className="text-[13px] font-bold text-brand-text/70">Groups you&apos;ve joined</p>
               <button
-                onClick={() => {
-                  setView('your-groups')
-                  setSearchQuery('')
-                }}
+                onClick={() => switchView('your-groups')}
                 className="text-xs font-bold text-brand-highlight transition-colors hover:text-brand-text"
               >
                 See all
@@ -318,27 +444,25 @@ export default function GroupsPage() {
           </div>
         </aside>
 
-        {/* ── Middle: feed / discover / your groups / search ─────────── */}
+        {/* ── Middle: feed / discover / your groups / invites / search ── */}
         <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-[680px]">
             <h2 className="mb-4 px-1 text-[17px] font-[800] tracking-tight text-brand-text">{middleTitle}</h2>
 
             {/* Mobile-only view switcher (left rail hidden below md) */}
-            <div className="mb-4 flex items-center gap-2 md:hidden">
+            <div className="mb-4 flex items-center gap-2 overflow-x-auto scrollbar-hide md:hidden">
               {navItems.map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => {
-                    setView(item.key)
-                    setSearchQuery('')
-                  }}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  onClick={() => switchView(item.key)}
+                  className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
                     view === item.key && !searching
                       ? 'bg-brand-text text-brand-bg'
                       : 'bg-brand-text/8 text-brand-text/60'
                   }`}
                 >
                   {item.label}
+                  {!!item.badge && ` (${item.badge})`}
                 </button>
               ))}
             </div>
@@ -346,15 +470,7 @@ export default function GroupsPage() {
             {searching ? (
               renderGroupList(searchResults, false, false, 'No groups found', 'Try a different search term')
             ) : view === 'feed' ? (
-              feedLoading || loadingMy ? (
-                feedSkeleton
-              ) : !myGroups || myGroups.length === 0 ? (
-                emptyState('Your feed is empty', 'Join groups to see their latest posts here')
-              ) : enrichedPosts.length === 0 ? (
-                emptyState('No recent activity', 'Posts from your groups will show up here')
-              ) : (
-                <div className="space-y-5">{enrichedPosts.map(renderFeedPost)}</div>
-              )
+              renderFeed()
             ) : view === 'discover' ? (
               renderGroupList(
                 discoverGroups,
@@ -363,6 +479,8 @@ export default function GroupsPage() {
                 'Nothing to discover',
                 'No groups to discover right now. Check back later!',
               )
+            ) : view === 'invites' ? (
+              renderInvites()
             ) : (
               renderGroupList(
                 myGroups,
@@ -380,6 +498,64 @@ export default function GroupsPage() {
           <RightPanel onContactClick={() => router.push('/messenger')} />
         </aside>
       </div>
+
+      {/* Group picker — choose where the post goes */}
+      <AnimatePresence>
+        {pickerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+            onClick={(e) => e.target === e.currentTarget && setPickerOpen(false)}
+          >
+            <div className="w-[400px] max-w-[calc(100vw-2rem)] rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-2xl">
+              <h3 className="mb-3 text-sm font-black text-brand-text">Post to a group</h3>
+              <div className="max-h-[320px] space-y-0.5 overflow-y-auto">
+                {(myGroups ?? []).map((group) => (
+                  <button
+                    key={group.id}
+                    onClick={() => {
+                      setComposeGroup(group)
+                      setPickerOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-brand-text/5"
+                  >
+                    <GroupAvatar avatarMediaId={group.avatar_media_id} name={group.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-bold text-brand-text">{group.name}</p>
+                      <p className="truncate text-[11px] text-brand-text/40">
+                        {group.member_count} member{group.member_count === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Composer portal for the chosen group */}
+      <AnimatePresence>
+        {composeGroup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+            onClick={(e) => e.target === e.currentTarget && setComposeGroup(null)}
+          >
+            <CreatePortal
+              onClose={() => {
+                setComposeGroup(null)
+                refreshFeed()
+              }}
+              groupId={composeGroup.id}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppShell>
   )
 }

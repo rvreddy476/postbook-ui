@@ -1,8 +1,8 @@
 "use client"
 
-import { useQuery, useQueries, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { Group, GroupMember, GroupInvite, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
+import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
 interface GroupsResponse { data: Group[] }
 interface GroupResponse { data: Group }
@@ -291,6 +291,8 @@ export function useAcceptInvite() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-groups"] })
+      qc.invalidateQueries({ queryKey: ["my-invites"] })
+      qc.invalidateQueries({ queryKey: ["myspace-feed"] })
     },
   })
 }
@@ -301,6 +303,9 @@ export function useRejectInvite() {
     mutationFn: async (inviteId: string) => {
       const res = await api.post(`/v1/groups/invites/${inviteId}/reject`)
       return res.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-invites"] })
     },
   })
 }
@@ -637,34 +642,38 @@ export function useDeleteGroupPostV2() {
 
 export type MySpaceFeedPost = GroupPostV2 & { group: Group }
 
-// Merge the latest posts from every group the viewer has joined into one
-// reverse-chronological "Your feed" stream. There is no backend aggregate
-// endpoint yet, so this fans out one feed/v2 request per joined group
-// (capped) and merges client-side. Each query keeps the
-// ["group-feed-v2", groupId] key prefix so the existing spark/stash/echo/
-// delete mutations invalidate these caches too.
-const MYSPACE_FEED_GROUP_CAP = 12
-
-export function useMySpacesFeed(groups: Group[] | undefined) {
-  const targets = (groups ?? []).slice(0, MYSPACE_FEED_GROUP_CAP)
-  const results = useQueries({
-    queries: targets.map((g) => ({
-      queryKey: ["group-feed-v2", g.id, "myspace"],
-      queryFn: async () => {
-        const res = await api.get<GroupPostsV2Response>(`/v1/groups/${g.id}/feed/v2`, {
-          params: { limit: 10, offset: 0 },
-        })
-        return res.data.data ?? []
-      },
-      staleTime: 15_000,
-      refetchInterval: 30_000,
-    })),
+// Aggregated reverse-chronological feed across every group the viewer has
+// joined — served by GET /v1/groups/feed (group-service joins on the
+// viewer's memberships) with limit/offset pagination.
+export function useMySpacesFeed() {
+  return useInfiniteQuery({
+    queryKey: ["myspace-feed"],
+    queryFn: async ({ pageParam = 0 }) => {
+      const res = await api.get<GroupPostsV2Response>(`/v1/groups/feed`, {
+        params: { limit: 20, offset: pageParam },
+      })
+      return { data: res.data.data ?? [], offset: pageParam as number }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.length < 20) return undefined
+      return (lastPage.offset as number) + 20
+    },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
+}
 
-  const isLoading = targets.length > 0 && results.some((r) => r.isLoading)
-  const posts: MySpaceFeedPost[] = results
-    .flatMap((r, i) => (r.data ?? []).map((p) => ({ ...p, group: targets[i] })))
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+// === MY INVITES ===
 
-  return { posts, isLoading }
+interface MyInvitesResponse { data: GroupInviteDetail[] }
+
+export function useMyInvites() {
+  return useQuery({
+    queryKey: ["my-invites"],
+    queryFn: async () => {
+      const res = await api.get<MyInvitesResponse>(`/v1/groups/invites/my`)
+      return res.data.data ?? []
+    },
+  })
 }

@@ -51,6 +51,12 @@ export interface GroupInvite {
   expires_at?: string
 }
 
+export interface GroupInviteDetail extends GroupInvite {
+  group_name: string
+  group_avatar_media_id?: string
+  group_member_count: number
+}
+
 export interface GroupPost {
   group_id: string
   post_id: string
