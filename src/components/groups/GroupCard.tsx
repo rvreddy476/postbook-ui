@@ -76,7 +76,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
         if (data?.status === 'pending' || group.join_mode === 'request' || privacy === 'private') {
           setToast('Request sent! Waiting for admin approval.')
         } else {
-          setToast('You joined the group!')
+          setToast('You joined the space!')
         }
       },
       onError: () => setToast('Failed to join. Try again.'),
@@ -86,7 +86,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
   const handleLeave = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (confirm('Leave this group?')) {
+    if (confirm('Leave this space?')) {
       leaveGroup.mutate(group.id)
     }
     setShowDropdown(false)

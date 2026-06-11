@@ -207,8 +207,8 @@ export default function CreateGroupPage() {
           <div className="w-16 h-16 rounded-full bg-brand-text flex items-center justify-center mx-auto mb-6">
             <Check className="w-8 h-8 text-brand-bg" />
           </div>
-          <h1 className="text-2xl font-[800] text-brand-text mb-2" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>Group Created!</h1>
-          <p className="text-sm text-brand-text/60 mb-8">Your group is ready. Start inviting members and sharing content.</p>
+          <h1 className="text-2xl font-[800] text-brand-text mb-2" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>Space Created!</h1>
+          <p className="text-sm text-brand-text/60 mb-8">Your space is ready. Start inviting members and sharing content.</p>
           <button
             onClick={() => router.push(`/groups/${createdGroupId}`)}
             className="px-8 py-3 bg-brand-text text-brand-bg font-bold rounded-xl hover:opacity-90 transition-opacity"
@@ -239,8 +239,8 @@ export default function CreateGroupPage() {
                     completed
                       ? 'bg-brand-text/10 text-brand-text'
                       : active
-                      ? 'bg-white border-2 border-brand-text ring-4 ring-brand-text/15 text-brand-text'
-                      : 'bg-white border border-brand-divider text-brand-text/30'
+                      ? 'bg-brand-card border-2 border-brand-text ring-4 ring-brand-text/15 text-brand-text'
+                      : 'bg-brand-card border border-brand-divider text-brand-text/30'
                   }`}
                 >
                   {completed ? <Check className="w-4 h-4" /> : s}
@@ -255,19 +255,19 @@ export default function CreateGroupPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-[800] text-brand-text mb-1" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>Name & Type</h1>
-              <p className="text-sm text-brand-text/60">Choose a name, type, and category for your group</p>
+              <p className="text-sm text-brand-text/60">Choose a name, type, and category for your space</p>
             </div>
 
             {/* Group Name */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-2">Group Name</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-2">Space Name</label>
               <div className="relative">
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Enter group name..."
-                  className="w-full px-4 py-3 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                  className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
                   maxLength={100}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-brand-text/30">{name.length}/100</span>
@@ -284,7 +284,7 @@ export default function CreateGroupPage() {
                   value={handle}
                   onChange={(e) => { setHandleTouched(true); setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')) }}
                   placeholder="group-handle"
-                  className="w-full pl-8 pr-10 py-3 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                  className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
                   maxLength={50}
                 />
                 {handle.length >= 3 && (
@@ -304,7 +304,7 @@ export default function CreateGroupPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Type</label>
               <div className="space-y-2.5">
                 {([
-                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can find and see group content' },
+                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can find and see space content' },
                   { value: 'restricted' as const, icon: Shield, label: 'Private', desc: 'Anyone can find, but content is members-only' },
                   { value: 'private' as const, icon: Lock, label: 'Hidden', desc: 'Hidden from search, invite-only' },
                 ] as const).map(({ value, icon: Icon, label, desc }) => (
@@ -315,7 +315,7 @@ export default function CreateGroupPage() {
                     className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
                       privacyLevel === value
                         ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-white hover:border-brand-text/30'
+                        : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                     }`}
                   >
                     <Icon className={`w-5 h-5 ${privacyLevel === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
@@ -340,7 +340,7 @@ export default function CreateGroupPage() {
                     className={`flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ${
                       category === cat.label
                         ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-white hover:border-brand-text/30'
+                        : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                     }`}
                   >
                     <span className="text-lg">{cat.emoji}</span>
@@ -357,7 +357,7 @@ export default function CreateGroupPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-[800] text-brand-text mb-1" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>Appearance & Details</h1>
-              <p className="text-sm text-brand-text/60">Customize your group look and add details</p>
+              <p className="text-sm text-brand-text/60">Customize your space's look and add details</p>
             </div>
 
             {/* === Cover Image Section === */}
@@ -380,7 +380,7 @@ export default function CreateGroupPage() {
                 )}
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-brand-text/0 group-hover:bg-brand-text/10 transition-colors flex items-center justify-center">
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-brand-text bg-white/80 px-3 py-1.5 rounded-lg">
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-brand-text bg-brand-card/80 px-3 py-1.5 rounded-lg">
                     Change cover
                   </span>
                 </div>
@@ -439,14 +439,14 @@ export default function CreateGroupPage() {
                   value={coverEmoji}
                   onChange={(e) => setCoverEmoji(e.target.value.slice(0, 2))}
                   placeholder="Type an emoji for cover..."
-                  className="w-full px-4 py-2.5 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                  className="w-full px-4 py-2.5 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
                 />
               </div>
             </div>
 
             {/* === Group Icon Section === */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Group Icon</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Space Icon</label>
               <div className="flex items-start gap-4">
                 {/* Icon preview */}
                 <div
@@ -465,7 +465,7 @@ export default function CreateGroupPage() {
                     <Upload className="w-5 h-5 text-brand-text/20" />
                   )}
                   {/* Edit badge */}
-                  <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white border border-brand-divider flex items-center justify-center shadow-sm">
+                  <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-brand-card border border-brand-divider flex items-center justify-center shadow-sm">
                     <Pencil className="w-3 h-3 text-brand-text/60" />
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export default function CreateGroupPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What is this group about?"
-                  className="w-full px-4 py-3 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 resize-none"
+                  className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 resize-none"
                   rows={4}
                   maxLength={500}
                 />
@@ -526,7 +526,7 @@ export default function CreateGroupPage() {
                 <label className="text-xs font-bold uppercase tracking-wider text-brand-text/50">Topic Tags</label>
                 <span className="text-[11px] text-brand-text/30">{tags.length}/5 tags</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 bg-white border border-brand-divider rounded-2xl min-h-[44px] focus-within:ring-2 focus-within:ring-brand-text/10">
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 bg-brand-card border border-brand-divider rounded-2xl min-h-[44px] focus-within:ring-2 focus-within:ring-brand-text/10">
                 {tags.map((tag, i) => (
                   <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-bg rounded-lg text-xs font-bold text-brand-text">
                     #{tag}
@@ -562,9 +562,9 @@ export default function CreateGroupPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="City, Country"
-                className="w-full px-4 py-3 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
               />
-              <p className="text-[11px] text-brand-text/30 mt-1">Helps nearby people discover your group</p>
+              <p className="text-[11px] text-brand-text/30 mt-1">Helps nearby people discover your space</p>
             </div>
           </div>
         )}
@@ -574,7 +574,7 @@ export default function CreateGroupPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-[800] text-brand-text mb-1" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>Rules & Settings</h1>
-              <p className="text-sm text-brand-text/60">Control who can post, invite, and set group rules</p>
+              <p className="text-sm text-brand-text/60">Control who can post, invite, and set space rules</p>
             </div>
 
             {/* Who can post */}
@@ -582,7 +582,7 @@ export default function CreateGroupPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Who can post</label>
               <div className="space-y-2">
                 {([
-                  { value: 'all_members' as const, label: 'All members', desc: 'Anyone in the group can create posts' },
+                  { value: 'all_members' as const, label: 'All members', desc: 'Anyone in the space can create posts' },
                   { value: 'admins_mods' as const, label: 'Admins & mods only', desc: 'Only admins and moderators can post' },
                   { value: 'approval' as const, label: 'Anyone but needs approval', desc: 'Members can post, but posts require admin approval' },
                 ] as const).map(({ value, label, desc }) => (
@@ -593,7 +593,7 @@ export default function CreateGroupPage() {
                     className={`w-full flex items-start gap-3 p-3.5 rounded-2xl border transition-all text-left ${
                       whoCanPost === value
                         ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-white hover:border-brand-text/30'
+                        : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                     }`}
                   >
                     <div className={`w-4 h-4 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -625,7 +625,7 @@ export default function CreateGroupPage() {
                     className={`w-full flex items-start gap-3 p-3.5 rounded-2xl border transition-all text-left ${
                       whoCanInvite === value
                         ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-white hover:border-brand-text/30'
+                        : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                     }`}
                   >
                     <div className={`w-4 h-4 mt-0.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -661,7 +661,7 @@ export default function CreateGroupPage() {
                         value={q}
                         onChange={(e) => updateQuestion(i, e.target.value)}
                         placeholder={`Question ${i + 1}...`}
-                        className="flex-1 px-4 py-2.5 bg-white border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                        className="flex-1 px-4 py-2.5 bg-brand-card border border-brand-divider rounded-2xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
                       />
                       <button onClick={() => removeQuestion(i)} className="p-1.5 text-brand-text/40 hover:text-brand-text transition-colors">
                         <X className="w-4 h-4" />
@@ -676,7 +676,7 @@ export default function CreateGroupPage() {
             {/* Group Rules */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-xs font-bold uppercase tracking-wider text-brand-text/50">Group Rules</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-brand-text/50">Space Rules</label>
                 {rules.length < 10 && (
                   <button type="button" onClick={addRule} className="text-xs font-bold text-brand-text hover:underline">+ Add Rule</button>
                 )}
@@ -686,7 +686,7 @@ export default function CreateGroupPage() {
               ) : (
                 <div className="space-y-3">
                   {rules.map((rule, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-brand-divider p-4">
+                    <div key={i} className="bg-brand-card rounded-2xl border border-brand-divider p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-bold text-brand-text/40">Rule {i + 1}</span>
                         <button type="button" onClick={() => removeRule(i)} className="text-brand-text/40 hover:text-brand-text">
@@ -715,7 +715,7 @@ export default function CreateGroupPage() {
             </div>
 
             {/* Review summary */}
-            <div className="bg-white rounded-2xl border border-brand-divider p-5 space-y-3">
+            <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/50">Review</h3>
               <div className="grid grid-cols-2 gap-y-2 text-sm">
                 <span className="text-brand-text/40">Name</span><span className="font-bold text-brand-text">{name}</span>
@@ -762,7 +762,7 @@ export default function CreateGroupPage() {
               {createGroup.isPending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>
               ) : (
-                <>Create Group</>
+                <>Create Space</>
               )}
             </button>
           )}
