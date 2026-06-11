@@ -270,7 +270,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-brand-bg shadow-2xl transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
+    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-brand-card border border-brand-divider shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
       {/* Chat Header */}
       <header
         className="flex h-16 shrink-0 items-center justify-between border-b border-brand-divider px-5 cursor-pointer"
@@ -312,8 +312,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto p-5">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50">
-                  <MessageCircle className="h-8 w-8 text-indigo-500/70" />
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-500/15 ring-1 ring-indigo-200/60 dark:ring-indigo-400/30">
+                  <MessageCircle className="h-8 w-8 text-indigo-500/70 dark:text-indigo-300" />
                 </div>
                 <p className="text-sm font-extrabold text-brand-text">Start a conversation</p>
                 <p className="mt-1 text-[12px] font-medium text-brand-text/60">Say hello to {contact.name}</p>
