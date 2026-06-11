@@ -10,7 +10,7 @@ import {
   Bookmark,
   Briefcase,
   Film,
-  Globe2,
+  // Globe2, // Communities feature disabled
   HelpCircle,
   Home,
   LayoutGrid,
@@ -54,9 +54,11 @@ const primaryItems: Item[] = [
   { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-sky-400' },
   { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-fuchsia-400' },
   { id: 'Circle', label: 'Circle', icon: UserRoundPlus, href: '/circle', color: 'text-emerald-400' },
-  { id: 'Groups', label: 'Groups', icon: Users, href: '/groups', color: 'text-amber-400' },
+  { id: 'Groups', label: 'MySpace', icon: Users, href: '/groups', color: 'text-amber-400' },
   { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels', color: 'text-rose-400' },
-  { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-violet-400' },
+  // Communities feature disabled — consolidated into Groups ("MySpace").
+  // Service + pages kept; only the entry points are hidden.
+  // { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-violet-400' },
 ];
 
 // Everything else opens from the "More" button instead of overflowing.

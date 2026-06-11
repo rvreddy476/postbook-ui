@@ -82,7 +82,8 @@ const TABS: Tab[] = [
     { label: "People", type: "profiles", icon: <Users className="w-4 h-4" /> },
     { label: "Posts", type: "posts", icon: <FileText className="w-4 h-4" /> },
     { label: "Hashtags", type: "hashtags", icon: <Hash className="w-4 h-4" /> },
-    { label: "Communities", type: "communities", icon: <Globe className="w-4 h-4" /> },
+    // Communities feature disabled — tab hidden, render code kept below.
+    // { label: "Communities", type: "communities", icon: <Globe className="w-4 h-4" /> },
     { label: "Channels", type: "channels", icon: <Radio className="w-4 h-4" /> },
     { label: "Products", type: "products", icon: <ShoppingBag className="w-4 h-4" /> },
     { label: "Events", type: "events", icon: <Calendar className="w-4 h-4" /> },
@@ -879,7 +880,9 @@ function SearchPageContent() {
     // Legacy non-multi-entity tabs that still hit dedicated endpoints.
     const isLegacyExtendedTab = ["events", "messages"].includes(activeType as string)
 
-    const hasAutocomplete = showDropdown && inputValue.length >= 1 && (autocompleteResults?.length ?? 0) > 0
+    // Communities feature disabled — drop community hits from autocomplete.
+    const visibleAutocomplete = (autocompleteResults ?? []).filter((i) => i.kind !== "community")
+    const hasAutocomplete = showDropdown && inputValue.length >= 1 && visibleAutocomplete.length > 0
 
     const handleTabChange = (type: ExtendedSearchType) => {
         setActiveType(type)
@@ -973,7 +976,7 @@ function SearchPageContent() {
                         {/* Autocomplete dropdown — multi-entity (users / hashtags / communities) */}
                         {hasAutocomplete && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-brand-card shadow-lg rounded-lg max-h-72 overflow-y-auto z-50 border border-brand-divider">
-                                {autocompleteResults!.map((item, idx) => {
+                                {visibleAutocomplete.map((item, idx) => {
                                     const key =
                                         item.kind === "user"
                                             ? `user-${item.user_id ?? idx}`

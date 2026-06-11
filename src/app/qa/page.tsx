@@ -486,7 +486,7 @@ export default function QAPage() {
         </div>
 
         <div className="px-3 py-4 flex-1">
-          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-2">Communities</p>
+          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-2">Topics</p>
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <input
@@ -513,7 +513,7 @@ export default function QAPage() {
               </Link>
             ))}
             {filteredTopics?.length === 0 && (
-              <p className="text-xs text-neutral-400 px-2 py-3 text-center">No communities found</p>
+              <p className="text-xs text-neutral-400 px-2 py-3 text-center">No topics found</p>
             )}
           </div>
         </div>

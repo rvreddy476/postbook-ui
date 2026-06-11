@@ -44,7 +44,7 @@ export default function GroupsPage() {
   const isLoading = tab === 'my-groups' ? loadingMy : loadingDiscover
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'my-groups', label: 'My Groups', icon: <Users className="w-4 h-4" /> },
+    { key: 'my-groups', label: 'My Spaces', icon: <Users className="w-4 h-4" /> },
     { key: 'discover', label: 'Discover', icon: <Compass className="w-4 h-4" /> },
     { key: 'invites', label: 'Invites', icon: <Mail className="w-4 h-4" /> },
     { key: 'suggested', label: 'Suggested', icon: <Sparkles className="w-4 h-4" /> },
@@ -87,7 +87,7 @@ export default function GroupsPage() {
       {/* Header: Title + Create Group button */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[26px] font-[800] tracking-tight text-brand-text" style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}>
-          Groups
+          MySpace
         </h1>
         <Link
           href="/groups/create"
