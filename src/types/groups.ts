@@ -24,6 +24,9 @@ export interface Group {
   status?: 'active' | 'archived' | 'deleted'
   pending_request_count?: number
   viewer_role?: 'owner' | 'admin' | 'moderator' | 'member' | 'pending' | 'outsider' | 'banned'
+  // Discover personalization (GET /v1/groups/discover)
+  friends_in_group?: number
+  reasons?: string[]
 }
 
 export interface GroupMember {
