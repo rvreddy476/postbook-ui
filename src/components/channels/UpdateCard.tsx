@@ -422,7 +422,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
   }
 
   return (
-    <div ref={cardRef} className={`bg-white border border-brand-divider rounded-2xl transition-all ${
+    <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-all ${
       isUrgent ? 'border-l-4 border-l-amber-500' : ''
     } ${update.is_pinned ? 'ring-1 ring-brand-text/10' : ''}`}>
 
@@ -466,7 +466,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {overflowOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 {isOwner && (
                   <>
                     <button onClick={() => { onEdit?.(update); setOverflowOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
@@ -586,7 +586,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
                 {echoCount > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(echoCount)}</span>}
               </button>
               {showEchoMenu && (
-                <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+                <div className="absolute bottom-full mb-1 left-0 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                   <button onClick={() => handleRepost('feed')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
                     <Repeat2 className="w-3.5 h-3.5" /> {echoed ? 'Undo echo' : 'Echo to feed'}
                   </button>

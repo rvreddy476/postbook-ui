@@ -41,7 +41,7 @@ export default function CommunityAdminTab({ communityId }: Props) {
             key={s.key}
             onClick={() => setActive(s.key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              active === s.key ? 'bg-brand-text text-brand-bg' : 'bg-white border border-brand-divider text-brand-text/60 hover:bg-brand-bg'
+              active === s.key ? 'bg-brand-text text-brand-bg' : 'bg-brand-card border border-brand-divider text-brand-text/60 hover:bg-brand-bg'
             }`}
           >
             {s.icon} {s.label}
@@ -82,7 +82,7 @@ function JoinRequestsSection({ communityId }: { communityId: string }) {
         const avatar = profile?.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : undefined
 
         return (
-          <div key={req.id} className="flex items-center gap-3 p-3 bg-white border border-brand-divider rounded-xl">
+          <div key={req.id} className="flex items-center gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-brand-bg flex items-center justify-center shrink-0">
               {avatar ? (
                 <img src={avatar} alt="" className="w-full h-full object-cover" />
@@ -133,7 +133,7 @@ function BansSection({ communityId }: { communityId: string }) {
   return (
     <div className="space-y-2">
       {(bans as any[]).map((ban: any) => (
-        <div key={ban.user_id || ban.id} className="flex items-center gap-3 p-3 bg-white border border-brand-divider rounded-xl">
+        <div key={ban.user_id || ban.id} className="flex items-center gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl">
           <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
             <UserX className="w-5 h-5 text-red-400" />
           </div>
@@ -177,7 +177,7 @@ function ModlogSection({ communityId }: { communityId: string }) {
       {entries.map(entry => {
         const color = actionColors[entry.action] ?? 'text-brand-text/60 bg-brand-bg'
         return (
-          <div key={entry.id} className="flex items-start gap-3 p-3 bg-white border border-brand-divider rounded-xl">
+          <div key={entry.id} className="flex items-start gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
               <AlertCircle className="w-4 h-4" />
             </div>
@@ -202,7 +202,7 @@ function LoadingSkeleton({ count }: { count: number }) {
   return (
     <div className="space-y-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 bg-white border border-brand-divider rounded-xl animate-pulse">
+        <div key={i} className="flex items-center gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl animate-pulse">
           <div className="w-10 h-10 rounded-full bg-brand-bg" />
           <div className="flex-1"><div className="h-3 w-32 bg-brand-bg rounded mb-1" /><div className="h-2 w-20 bg-brand-bg rounded" /></div>
         </div>

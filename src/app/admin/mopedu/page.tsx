@@ -45,7 +45,7 @@ const TONE_CLASSES: Record<NonNullable<KpiCardProps["tone"]>, string> = {
 
 function KpiCard({ label, value, icon: Icon, tone = "neutral", loading }: KpiCardProps) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-white px-4 py-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-sm">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-text/45">
           {label}
@@ -189,7 +189,7 @@ export default function MopeduOverviewPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+        <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-brand-text">
             Quick actions
           </h2>
@@ -241,7 +241,7 @@ export default function MopeduOverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+        <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-brand-text">
             Pending verifications
           </h2>

@@ -78,7 +78,7 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
   ]
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl overflow-hidden">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl overflow-hidden">
       {/* Cover image (120px) */}
       <div className="h-[120px] relative overflow-hidden">
         {bannerSrc ? (
@@ -135,7 +135,7 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
                     <ChevronDown className="w-3 h-3" />
                   </button>
                   {dropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                       <button className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 transition-colors w-full text-left">
                         <BellOff className="w-3.5 h-3.5" />
                         Mute

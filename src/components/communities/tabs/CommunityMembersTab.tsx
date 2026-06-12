@@ -86,7 +86,7 @@ export default function CommunityMembersTab({ communityId, viewerRole }: Props) 
     return (
       <div className="space-y-2">
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="flex items-center gap-3 p-3 bg-white border border-brand-divider rounded-xl animate-pulse">
+          <div key={i} className="flex items-center gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl animate-pulse">
             <div className="w-10 h-10 rounded-full bg-brand-bg" />
             <div className="flex-1"><div className="h-3 w-24 bg-brand-bg rounded mb-1" /><div className="h-2 w-16 bg-brand-bg rounded" /></div>
           </div>
@@ -104,7 +104,7 @@ export default function CommunityMembersTab({ communityId, viewerRole }: Props) 
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-              filter === f.key ? 'bg-brand-text text-brand-bg' : 'bg-white border border-brand-divider text-brand-text/60 hover:bg-brand-bg'
+              filter === f.key ? 'bg-brand-text text-brand-bg' : 'bg-brand-card border border-brand-divider text-brand-text/60 hover:bg-brand-bg'
             }`}
           >
             {f.label}
@@ -120,7 +120,7 @@ export default function CommunityMembersTab({ communityId, viewerRole }: Props) 
           placeholder="Search members..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-divider rounded-xl text-sm placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 text-brand-text"
+          className="w-full pl-10 pr-4 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 text-brand-text"
         />
       </div>
 
@@ -176,7 +176,7 @@ function MemberRow({ member, communityId, viewerRole, canAdmin }: {
   }, [menuOpen])
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-brand-divider">
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-brand-card border border-brand-divider">
       <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
         {member.avatar_url ? (
           <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -205,7 +205,7 @@ function MemberRow({ member, communityId, viewerRole, canAdmin }: {
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 {isAtLeast(viewerRole, 'admin') && member.role === 'member' && (
                   <button onClick={() => { changeRole.mutate({ userId: member.user_id, role: 'moderator' }); setMenuOpen(false) }}
                     className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">

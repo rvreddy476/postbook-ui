@@ -116,7 +116,7 @@ export default function MopeduAdminLayout({
     <main className="min-h-screen bg-brand-bg">
       <div className="mx-auto flex w-full max-w-[1400px] gap-6 px-4 py-6 md:px-6">
         <aside className="hidden w-64 shrink-0 md:block">
-          <div className="sticky top-6 rounded-2xl border border-brand-divider bg-white px-3 py-4 shadow-sm">
+          <div className="sticky top-6 rounded-2xl border border-brand-divider bg-brand-card px-3 py-4 shadow-sm">
             <div className="px-2 pb-3">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
                 Internal Console
@@ -167,7 +167,7 @@ export default function MopeduAdminLayout({
             })}
           </nav>
 
-          <header className="mb-5 rounded-2xl border border-brand-divider bg-white px-5 py-4 shadow-sm">
+          <header className="mb-5 rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
               Mopedu admin
             </p>

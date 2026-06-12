@@ -126,7 +126,7 @@ export default function CommunityQASettingsTab({ communityId }: Props) {
           onChange={e => set('welcome_message', e.target.value)}
           rows={3}
           placeholder="A short note that appears on the Ask page for this community."
-          className="w-full px-3 py-2 rounded-xl border border-brand-divider bg-white dark:bg-brand-bg text-sm text-brand-text focus:outline-none focus:border-brand-text/40"
+          className="w-full px-3 py-2 rounded-xl border border-brand-divider bg-brand-card dark:bg-brand-bg text-sm text-brand-text focus:outline-none focus:border-brand-text/40"
         />
       </div>
 

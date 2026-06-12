@@ -52,7 +52,7 @@ const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl overflow-hidden">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl overflow-hidden">
       <div className="px-5 py-3.5 border-b border-brand-divider">
         <h3 className="text-sm font-bold text-brand-text">{title}</h3>
       </div>

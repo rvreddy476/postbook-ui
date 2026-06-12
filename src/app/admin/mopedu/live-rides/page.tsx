@@ -82,7 +82,7 @@ export default function MopeduLiveRidesPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
-        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
             <p className="text-xs font-semibold text-brand-text/70">
               Live rides
@@ -178,7 +178,7 @@ export default function MopeduLiveRidesPage() {
         {/* Side panel */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
           {selected ? (
-            <div className="rounded-2xl border border-brand-divider bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">

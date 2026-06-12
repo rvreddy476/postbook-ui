@@ -128,7 +128,7 @@ function TextArea({ value, onChange, placeholder, maxLength, rows = 4, className
 function RichTextToolbar() {
   const btn = "w-7 h-7 rounded flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors"
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-white rounded-t-xl">
+    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-brand-card rounded-t-xl">
       <button type="button" className={btn} title="Bold"><Bold className="w-3.5 h-3.5" /></button>
       <button type="button" className={btn} title="Italic"><Italic className="w-3.5 h-3.5" /></button>
       <button type="button" className={btn} title="Underline"><Underline className="w-3.5 h-3.5" /></button>
@@ -457,7 +457,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
   const avatarSrc = channel.avatar_media_id ? `/v1/media/${channel.avatar_media_id}/serve` : null
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl overflow-hidden">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2.5">
@@ -810,7 +810,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
               <ChevronDown className="w-2.5 h-2.5" />
             </button>
             {showSchedule && (
-              <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-brand-divider rounded-xl shadow-lg p-3 z-50 space-y-2">
+              <div className="absolute bottom-full mb-2 left-0 w-64 bg-brand-card border border-brand-divider rounded-xl shadow-lg p-3 z-50 space-y-2">
                 <label className="flex items-center gap-2 text-xs text-brand-text cursor-pointer">
                   <input type="radio" name="sched" checked={schedule.type === 'now'} onChange={() => setSchedule({ type: 'now' })} /> Post now
                 </label>

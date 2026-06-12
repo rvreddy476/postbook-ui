@@ -93,7 +93,7 @@ export default function MopeduAuditLogsPage() {
     <div className="space-y-5">
       <form
         onSubmit={applyFilters}
-        className="rounded-2xl border border-brand-divider bg-white px-4 py-3 shadow-sm"
+        className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm"
       >
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <input
@@ -145,7 +145,7 @@ export default function MopeduAuditLogsPage() {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
         {list.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

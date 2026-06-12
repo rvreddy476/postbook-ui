@@ -24,6 +24,7 @@ import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
+import SpaceView from '@/components/groups/SpaceView'
 import type { Group, GroupPostV2 } from '@/types/groups'
 import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X, Megaphone } from 'lucide-react'
 import Link from 'next/link'
@@ -67,6 +68,9 @@ export default function GroupsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [composeGroup, setComposeGroup] = useState<Group | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // A space picked from the rail opens in the middle column while the
+  // rail stays put; cleared whenever the user switches views.
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null)
 
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
@@ -135,6 +139,7 @@ export default function GroupsPage() {
   const switchView = (v: View) => {
     setView(v)
     setSearchQuery('')
+    setSelectedSpaceId(null)
   }
 
   const renderFeedPost = (post: GroupPostV2 & { author_name?: string; author_avatar_url?: string }) => {
@@ -363,14 +368,14 @@ export default function GroupsPage() {
                 key={item.key}
                 onClick={() => switchView(item.key)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
-                  view === item.key && !searching
+                  view === item.key && !searching && !selectedSpaceId
                     ? 'bg-brand-text/8 text-brand-text'
                     : 'text-brand-text/60 hover:bg-brand-text/5 hover:text-brand-text'
                 }`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    view === item.key && !searching ? 'bg-brand-text text-brand-bg' : 'bg-brand-text/8 text-brand-text/60'
+                    view === item.key && !searching && !selectedSpaceId ? 'bg-brand-text text-brand-bg' : 'bg-brand-text/8 text-brand-text/60'
                   }`}
                 >
                   {item.icon}
@@ -420,17 +425,27 @@ export default function GroupsPage() {
             ) : myGroups && myGroups.length > 0 ? (
               <div className="space-y-0.5">
                 {myGroups.map((group) => (
-                  <Link
+                  <button
                     key={group.id}
-                    href={`/groups/${group.id}`}
-                    className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-brand-text/5"
+                    onClick={() => {
+                      setSelectedSpaceId(group.id)
+                      setSearchQuery('')
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors ${
+                      selectedSpaceId === group.id
+                        ? 'bg-brand-text/8 ring-1 ring-brand-text/15'
+                        : 'hover:bg-brand-text/5'
+                    }`}
                   >
                     <GroupAvatar avatarMediaId={group.avatar_media_id} name={group.name} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-bold text-brand-text">{group.name}</p>
+                      <p className={`truncate text-[13px] font-bold ${selectedSpaceId === group.id ? 'text-brand-text' : 'text-brand-text'}`}>{group.name}</p>
                       <p className="truncate text-[11px] text-brand-text/40">{lastActive(group.updated_at)}</p>
                     </div>
-                  </Link>
+                    {selectedSpaceId === group.id && (
+                      <span className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-highlight" />
+                    )}
+                  </button>
                 ))}
               </div>
             ) : (
@@ -441,8 +456,13 @@ export default function GroupsPage() {
           </div>
         </aside>
 
-        {/* ── Middle: feed / discover / my spaces / invites / search ── */}
+        {/* ── Middle: selected space / feed / discover / my spaces / invites ── */}
         <main className="min-w-0 flex-1 px-4 pt-5 pb-16 lg:px-6">
+          {selectedSpaceId ? (
+            <div className="mx-auto max-w-[720px]">
+              <SpaceView key={selectedSpaceId} groupId={selectedSpaceId} />
+            </div>
+          ) : (
           <div className="mx-auto max-w-[680px]">
             <h2 className="mb-4 px-1 text-[17px] font-[800] tracking-tight text-brand-text">{middleTitle}</h2>
 
@@ -453,7 +473,7 @@ export default function GroupsPage() {
                   key={item.key}
                   onClick={() => switchView(item.key)}
                   className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
-                    view === item.key && !searching
+                    view === item.key && !searching && !selectedSpaceId
                       ? 'bg-brand-text text-brand-bg'
                       : 'bg-brand-text/8 text-brand-text/60'
                   }`}
@@ -488,6 +508,7 @@ export default function GroupsPage() {
               )
             )}
           </div>
+          )}
         </main>
 
         {/* ── Right rail: reserved for ads / sponsored placements ────── */}

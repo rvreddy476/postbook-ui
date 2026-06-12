@@ -81,7 +81,7 @@ function MopeduVehiclesQueueContent() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-white px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((f) => {
             const active = status === f.key
@@ -105,7 +105,7 @@ function MopeduVehiclesQueueContent() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
-        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
           {list.isLoading ? (
             <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -213,7 +213,7 @@ function MopeduVehiclesQueueContent() {
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
           {selected ? (
-            <div className="rounded-2xl border border-brand-divider bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">

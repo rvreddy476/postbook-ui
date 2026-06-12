@@ -28,7 +28,7 @@ export default function CommunityRightRail({ communityId }: Props) {
     <div className="space-y-4 sticky top-24">
       {/* Admins & Moderators */}
       {adminMods.length > 0 && (
-        <div className="bg-white border border-brand-divider rounded-2xl p-4">
+        <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
             <Shield className="w-3.5 h-3.5" /> Admins & Mods
           </h4>
@@ -63,7 +63,7 @@ export default function CommunityRightRail({ communityId }: Props) {
 
       {/* Community Rules */}
       {community?.rules && community.rules.length > 0 && (
-        <div className="bg-white border border-brand-divider rounded-2xl p-4">
+        <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
             <BookOpen className="w-3.5 h-3.5" /> Rules
           </h4>
@@ -83,7 +83,7 @@ export default function CommunityRightRail({ communityId }: Props) {
 
       {/* About snippet */}
       {community && (
-        <div className="bg-white border border-brand-divider rounded-2xl p-4">
+        <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
             <Users className="w-3.5 h-3.5" /> About
           </h4>

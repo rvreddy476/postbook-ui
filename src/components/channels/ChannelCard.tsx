@@ -66,7 +66,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
   }, [dropdownOpen])
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl px-4 py-3 hover:bg-brand-secondary/30 transition-all duration-200">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl px-4 py-3 hover:bg-brand-secondary/30 transition-all duration-200">
       <div className="flex items-center gap-3.5">
         {/* Channel icon */}
         <Link href={`/channels/${channel.id}`} className="flex-shrink-0">
@@ -128,7 +128,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1 overflow-hidden">
                   <Link
                     href={`/channels/${channel.id}`}
                     className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 transition-colors"

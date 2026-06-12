@@ -239,7 +239,7 @@ export default function SubscribersTab({
           <Users className="w-4 h-4 text-brand-text/40" />
           <div className="h-4 w-32 bg-brand-secondary/50 rounded animate-pulse" />
         </div>
-        <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
+        <div className="bg-brand-card border border-brand-divider rounded-xl overflow-hidden">
           <SkeletonRow />
           <SkeletonRow />
           <SkeletonRow />
@@ -256,7 +256,7 @@ export default function SubscribersTab({
           <Users className="w-4 h-4 text-brand-text/50" />
           <h3 className="text-sm font-bold text-brand-text">{countLabel}</h3>
         </div>
-        <div className="bg-white border border-brand-divider rounded-xl p-8 text-center">
+        <div className="bg-brand-card border border-brand-divider rounded-xl p-8 text-center">
           <Users className="w-10 h-10 text-brand-text/15 mx-auto mb-3" />
           <p className="text-sm font-semibold text-brand-text/50">No subscribers yet</p>
           <p className="text-xs text-brand-text/35 mt-1">Share your channel to start growing your audience</p>
@@ -282,13 +282,13 @@ export default function SubscribersTab({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search subscribers..."
-            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-white text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-shadow"
+            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-shadow"
           />
         </div>
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setSortOpen(o => !o)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-brand-divider bg-white text-xs font-medium text-brand-text/60 hover:text-brand-text transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs font-medium text-brand-text/60 hover:text-brand-text transition-colors"
           >
             {sortLabels[sort]}
             <ChevronDown className="w-3 h-3" />
@@ -361,7 +361,7 @@ export default function SubscribersTab({
 
       {/* Subscriber list */}
       {filtered.length > 0 ? (
-        <div className="bg-white border border-brand-divider rounded-xl overflow-hidden">
+        <div className="bg-brand-card border border-brand-divider rounded-xl overflow-hidden">
           {filtered.map(member => {
             const name = getName(member.user_id)
             const handle = getHandle(member.user_id)
@@ -396,7 +396,7 @@ export default function SubscribersTab({
           })}
         </div>
       ) : (
-        <div className="bg-white border border-brand-divider rounded-xl p-8 text-center">
+        <div className="bg-brand-card border border-brand-divider rounded-xl p-8 text-center">
           <Search className="w-8 h-8 text-brand-text/15 mx-auto mb-2" />
           <p className="text-sm font-semibold text-brand-text/50">No matching subscribers</p>
           <p className="text-xs text-brand-text/35 mt-1">Try a different search term</p>

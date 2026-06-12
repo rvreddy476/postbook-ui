@@ -307,7 +307,7 @@ export default function CommunityDetailPage() {
                 </div>
 
                 {showCreateEvent && (
-                  <div className="bg-white border border-brand-divider rounded-2xl p-5 mb-4">
+                  <div className="bg-brand-card border border-brand-divider rounded-2xl p-5 mb-4">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-bold text-brand-text">New Event</h3>
                       <button onClick={() => setShowCreateEvent(false)} className="p-1 text-brand-text/40 hover:text-brand-text">

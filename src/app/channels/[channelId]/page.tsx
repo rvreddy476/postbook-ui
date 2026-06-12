@@ -358,7 +358,7 @@ function ChannelDetailContent() {
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {showMoreMenu && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                           <button onClick={() => { navigator.clipboard.writeText(window.location.href); setShowMoreMenu(false) }} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Copy className="w-3.5 h-3.5" /> Copy channel link</button>
                           <button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Share2 className="w-3.5 h-3.5" /> Share channel</button>
                           <button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Eye className="w-3.5 h-3.5" /> View as subscriber</button>
@@ -422,7 +422,7 @@ function ChannelDetailContent() {
               <>
                 {/* Composer */}
                 {can.publish(role) && !showComposer && (
-                  <button onClick={() => setShowComposer(true)} className="w-full flex items-center gap-3 bg-white border border-brand-divider rounded-2xl px-4 py-3 hover:bg-brand-secondary/30 transition-colors text-left">
+                  <button onClick={() => setShowComposer(true)} className="w-full flex items-center gap-3 bg-brand-card border border-brand-divider rounded-2xl px-4 py-3 hover:bg-brand-secondary/30 transition-colors text-left">
                     <div className="w-9 h-9 rounded-lg bg-brand-secondary flex items-center justify-center"><Plus className="w-4 h-4 text-brand-text/40" /></div>
                     <span className="text-sm text-brand-text/40">Write an update...</span>
                   </button>

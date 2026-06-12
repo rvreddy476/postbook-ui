@@ -91,7 +91,7 @@ export default function MopeduReportsPage() {
   const [tab, setTab] = useState<ReportsTab>("revenue")
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-white px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           {TABS.map((t) => {
             const active = tab === t.key
@@ -198,7 +198,7 @@ function RevenueTab() {
       />
 
       {report.isLoading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-white py-12 text-sm text-brand-text/60 shadow-sm">
+        <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-sm">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading…
         </div>
@@ -247,7 +247,7 @@ function RevenueFilters({
   canExport: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
       <div className="flex flex-wrap items-end gap-3">
         <FilterField label="Group by">
           <select
@@ -316,7 +316,7 @@ function KpiCard({
   hint?: string
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-white px-5 py-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
         {label}
       </p>
@@ -339,7 +339,7 @@ function RevenueBarChart({ rows }: { rows: RevenueReportRow[] }) {
   const max = top[0]?.fare_total_paise ?? 0
   if (top.length === 0) return null
   return (
-    <div className="rounded-2xl border border-brand-divider bg-white px-5 py-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
         Top 5 by fare total
       </p>
@@ -382,7 +382,7 @@ function RevenueTable({
   onSort: (k: SortKey) => void
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
@@ -604,7 +604,7 @@ function PartnerRetentionDisplay({ data }: { data: PartnerCohortRetention }) {
         value={data.cohort_size.toLocaleString()}
         hint={`Cohort month: ${data.cohort_month}`}
       />
-      <div className="rounded-2xl border border-brand-divider bg-white px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
           Active partners — retention
         </p>
@@ -708,7 +708,7 @@ function CustomerCohortDisplay({
         value={data.cohort_size.toLocaleString()}
         hint={`Cohort month: ${data.cohort_month}`}
       />
-      <div className="rounded-2xl border border-brand-divider bg-white px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
           Average rides per customer
         </p>
@@ -762,7 +762,7 @@ function CohortFilter({
   helperText?: string
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
       <div className="flex flex-wrap items-end gap-3">
         <FilterField label="Cohort month">
           <input
@@ -833,7 +833,7 @@ function FilterField({
 
 function LoadingCard() {
   return (
-    <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-white py-12 text-sm text-brand-text/60 shadow-sm">
+    <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-sm">
       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       Loading…
     </div>
@@ -865,7 +865,7 @@ function D2WindowPicker({
   onChange: (next: { from: string; to: string }) => void
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-white p-3 text-sm">
+    <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
       <label className="flex flex-col">
         <span className="text-xs text-gray-500">From</span>
         <input
@@ -944,7 +944,7 @@ function D2Shell<T extends object>({
           Export CSV
         </PrimaryButton>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-brand-divider bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
         {query.isLoading ? (
           <LoadingCard />
         ) : query.error ? (
@@ -1151,7 +1151,7 @@ function PartnerComplianceTab() {
   const q = useMopeduPartnerCompliance(city || undefined)
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-white p-3 text-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
         <label className="flex flex-col">
           <span className="text-xs text-gray-500">City filter</span>
           <input

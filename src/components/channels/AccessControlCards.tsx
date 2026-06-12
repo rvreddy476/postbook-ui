@@ -43,7 +43,7 @@ export function LockedUpdateCard({ update, channelName, onSubscribe }: {
   const emoji = typeEmojis[update.update_type] || typeEmojis.announcement
 
   return (
-    <div className="relative overflow-hidden bg-white border border-brand-divider rounded-2xl">
+    <div className="relative overflow-hidden bg-brand-card border border-brand-divider rounded-2xl">
       {/* Visible header */}
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between mb-2">

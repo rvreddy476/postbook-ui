@@ -187,7 +187,7 @@ export default function MopeduPartnerDetailPage() {
       </Link>
 
       {/* Header */}
-      <div className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             {partner.profile_photo_url ? (
@@ -306,7 +306,7 @@ export default function MopeduPartnerDetailPage() {
       {/* Three columns */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Profile */}
-        <section className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+        <section className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-brand-text">Profile</h3>
           <dl className="space-y-2 text-sm">
             <DefRow label="Type" value={partner.partner_type.replace(/_/g, " ")} />
@@ -355,7 +355,7 @@ export default function MopeduPartnerDetailPage() {
         </section>
 
         {/* KYC documents */}
-        <section className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+        <section className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-brand-text">
             KYC documents
           </h3>
@@ -383,7 +383,7 @@ export default function MopeduPartnerDetailPage() {
         </section>
 
         {/* Vehicles + payments */}
-        <section className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+        <section className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-brand-text">
             Vehicles & payments
           </h3>
@@ -447,7 +447,7 @@ export default function MopeduPartnerDetailPage() {
       </div>
 
       {/* Recent rides */}
-      <section className="rounded-2xl border border-brand-divider bg-white px-5 py-5 shadow-sm">
+      <section className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-brand-text">
             Recent rides (last 10)
