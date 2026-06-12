@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
-import { getSession, getOAuthUrl, loginUser, verify2FA } from '@/services/authService';
-import OAuthButtons from '@/components/auth/OAuthButtons';
+import { getSession, loginUser, verify2FA } from '@/services/authService';
 
 type Screen = 'login' | '2fa';
 
@@ -159,9 +158,31 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
-      <div className="w-full max-w-md">
-        <div className="relative overflow-hidden rounded-[2rem] border border-brand-divider bg-brand-card p-7 shadow-lg sm:p-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
+      {/* Ambient monochrome glows */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/[0.06] blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/[0.05] blur-[160px]" />
+      {/* Hairline ring accent behind the card */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/[0.04]" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="relative w-full max-w-md"
+      >
+        {/* Brand mark above the card */}
+        <div className="mb-7 flex flex-col items-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-accent shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+            <span className="text-xl font-black tracking-tighter text-brand-bg">VC</span>
+          </div>
+          <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-text">VChat</h1>
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text/40">
+            Connect · Share · Create
+          </p>
+        </div>
+
+        <div className="relative overflow-hidden rounded-[1.75rem] border border-brand-divider bg-brand-card/80 p-7 shadow-2xl backdrop-blur-xl sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             {screen === 'login' && (
               <motion.div
@@ -174,18 +195,9 @@ function LoginForm() {
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
                 {/* Header */}
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-accent shadow-lg">
-                    <span className="text-lg font-black tracking-tighter text-brand-bg">VC</span>
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-black tracking-tight text-brand-text">
-                      VChat
-                    </h1>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
-                      Welcome Back
-                    </p>
-                  </div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-black tracking-tight text-brand-text">Welcome back</h2>
+                  <p className="mt-1 text-sm text-brand-text/50">Sign in to continue to your feed.</p>
                 </div>
 
                 {/* Error */}
@@ -206,13 +218,13 @@ function LoginForm() {
                 </AnimatePresence>
 
                 {/* Form */}
-                <form className="space-y-3" onSubmit={handleSubmit}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   <div className="space-y-1.5">
                     <label
                       className="text-xs font-semibold text-brand-text/60"
                       htmlFor="loginId"
                     >
-                      Mail or phone number for login
+                      Email or phone number
                     </label>
                     <input
                       id="loginId"
@@ -220,7 +232,7 @@ function LoginForm() {
                       value={loginId}
                       onChange={(e) => setLoginId(e.target.value)}
                       placeholder="you@example.com or 9876543210"
-                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
                       required
                     />
                   </div>
@@ -247,7 +259,7 @@ function LoginForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="********"
-                        className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 pr-11 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
                         required
                       />
                       <button
@@ -269,24 +281,21 @@ function LoginForm() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 hover:scale-[1.01] disabled:opacity-60"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {isLoading ? 'Logging in...' : 'Login'}
+                    {isLoading ? 'Signing in...' : 'Sign In'}
                   </button>
                 </form>
 
-                {/* OAuth Buttons */}
-                <OAuthButtons label="or continue with" />
-
                 {/* Register link */}
-                <div className="mt-5 text-center text-sm text-brand-text/60">
-                  <span>Don&apos;t have account? </span>
+                <div className="mt-6 border-t border-brand-divider pt-5 text-center text-sm text-brand-text/60">
+                  <span>New to VChat? </span>
                   <Link
                     href="/register"
-                    className="font-bold text-brand-accent hover:text-brand-text"
+                    className="font-bold text-brand-accent hover:underline"
                   >
-                    Create One
+                    Create an account
                   </Link>
                 </div>
               </motion.div>
@@ -404,7 +413,12 @@ function LoginForm() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-text/30">
+          &copy; 2026 VChat
+        </p>
+      </motion.div>
     </div>
   );
 }
