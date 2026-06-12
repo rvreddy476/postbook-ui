@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
-import { useBatchRelationships } from '@/hooks/useConnections'
+import { useBatchRelationships, useSendFriendRequest } from '@/hooks/useConnections'
 import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile'
 import { useAuthUser } from '@/store/auth'
 import ChatWindow from '@/components/ChatWindow'
@@ -90,11 +90,13 @@ function MemberCard({
       {/* Relationship CTA (Add friend / Message / Requested) */}
       {cta}
 
-      {/* Role Badge */}
-      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${badge.color} ${badge.bgColor}`}>
-        {badge.icon}
-        {badge.label}
-      </div>
+      {/* Role tag — admins/mods only; regular members carry no badge */}
+      {member.role !== 'member' && (
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${badge.color} ${badge.bgColor}`}>
+          {badge.icon}
+          {badge.label}
+        </div>
+      )}
 
       {/* Admin Actions */}
       {canManageThis && (
@@ -196,6 +198,8 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   const banMember = useBanMember()
   const followUser = useFollowUser()
   const unfollowUser = useUnfollowUser()
+  const sendRequest = useSendFriendRequest()
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set())
 
   const isOwner = currentUserRole === 'owner'
   const isAdmin = currentUserRole === 'admin' || isOwner
@@ -227,45 +231,97 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   const setOverride = (userId: string, val: boolean) =>
     setFollowOverride((prev) => new Map(prev).set(userId, val))
 
-  // FB model: everyone gets a Follow/Following toggle + Message.
-  // Friends auto-follow on accept, so they naturally show "Following".
+  // CTA matrix (DB-driven via the graph relationships batch):
+  //   creator / hub / page  -> Follow/Following toggle only (no Message)
+  //   user, already friend  -> "Following" state + Message
+  //   user, request pending -> Requested / Respond
+  //   user, not friend      -> Add friend
   const ctaFor = (m: GroupMember): React.ReactNode => {
     if (!authUser || m.user_id === authUser.id) return null
+    const prof = profileMap?.get(m.user_id) as (Record<string, unknown> | undefined)
+    const isPage = (prof?.entityType ?? prof?.entity_type) === 'page'
     const rel = relMap?.get(m.user_id)
+    const isFriend = !!rel?.is_connection || rel?.connection_status === 'accepted'
     const following = followOverride.get(m.user_id) ?? !!rel?.following
 
-    const handleToggleFollow = () => {
-      const target = m.username || m.user_id
-      if (following) {
-        setOverride(m.user_id, false)
-        unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
-      } else {
-        setOverride(m.user_id, true)
-        followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
+    if (isPage) {
+      const handleToggleFollow = () => {
+        const target = m.username || m.user_id
+        if (following) {
+          setOverride(m.user_id, false)
+          unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
+        } else {
+          setOverride(m.user_id, true)
+          followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
+        }
       }
-    }
-
-    return (
-      <div className="flex items-center gap-1.5">
+      return (
         <button
           onClick={handleToggleFollow}
           className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
             following
               ? 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
-              : 'border border-brand-divider text-brand-text hover:bg-brand-text/5'
+              : 'bg-brand-text text-brand-bg hover:opacity-90'
           }`}
         >
           {following ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
           {following ? 'Following' : 'Follow'}
         </button>
+      )
+    }
+
+    if (isFriend) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/60">
+            <Check className="w-3.5 h-3.5" />
+            Following
+          </span>
+          <button
+            onClick={() => openChat(m)}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            Message
+          </button>
+        </div>
+      )
+    }
+
+    if (rel?.connection_status === 'pending_sent' || sentIds.has(m.user_id)) {
+      return (
+        <span className="rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/50">
+          Requested
+        </span>
+      )
+    }
+    if (rel?.connection_status === 'pending_received') {
+      return (
         <button
-          onClick={() => openChat(m)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90"
+          onClick={() => router.push('/settings/friend-requests')}
+          className="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5"
         >
-          <MessageCircle className="w-3.5 h-3.5" />
-          Message
+          Respond
         </button>
-      </div>
+      )
+    }
+    return (
+      <button
+        onClick={async () => {
+          if (sentIds.has(m.user_id)) return
+          try {
+            await sendRequest.mutateAsync(m.username || m.user_id)
+            setSentIds((prev) => new Set(prev).add(m.user_id))
+          } catch {
+            // surfaced by the mutation
+          }
+        }}
+        disabled={sendRequest.isPending}
+        className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+      >
+        <UserPlus className="w-3.5 h-3.5" />
+        Add friend
+      </button>
     )
   }
 
@@ -313,10 +369,11 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     })
   }, [enrichedMembers, searchQuery])
 
-  const sections = useMemo(() => {
-    const adminsMods = filtered.filter(m => m.role === 'owner' || m.role === 'admin' || m.role === 'moderator')
-    const regularMembers = filtered.filter(m => m.role === 'member')
-    return { adminsMods, regularMembers }
+  // One flat list under a single "Members" heading — admins sort first
+  // and carry their role tag; regular members get no badge at all.
+  const ordered = useMemo(() => {
+    const rank = (r: string) => (r === 'owner' ? 0 : r === 'admin' ? 1 : r === 'moderator' ? 2 : 3)
+    return [...filtered].sort((a, b) => rank(a.role) - rank(b.role))
   }, [filtered])
 
   if (isLoading) {
@@ -362,51 +419,26 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
         />
       </div>
 
-      {/* Admins & Moderators Section */}
-      {sections.adminsMods.length > 0 && (
-        <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
-            Admins & Moderators ({sections.adminsMods.length})
-          </h3>
-          <div className="space-y-2">
-            {sections.adminsMods.map(member => (
-              <MemberCard
-                key={member.user_id}
-                member={member}
-                canManage={canManage}
-                isAdmin={isAdmin}
-                onRoleChange={handleRoleChange}
-                onRemove={handleRemove}
-                onBan={handleBan}
-                cta={ctaFor(member)}
-              />
-            ))}
-          </div>
+      {/* Members — single heading, admins first */}
+      <div>
+        <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
+          Members ({ordered.length})
+        </h3>
+        <div className="space-y-2">
+          {ordered.map(member => (
+            <MemberCard
+              key={member.user_id}
+              member={member}
+              canManage={canManage}
+              isAdmin={isAdmin}
+              onRoleChange={handleRoleChange}
+              onRemove={handleRemove}
+              onBan={handleBan}
+              cta={ctaFor(member)}
+            />
+          ))}
         </div>
-      )}
-
-      {/* Members Section */}
-      {sections.regularMembers.length > 0 && (
-        <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
-            Members ({sections.regularMembers.length})
-          </h3>
-          <div className="space-y-2">
-            {sections.regularMembers.map(member => (
-              <MemberCard
-                key={member.user_id}
-                member={member}
-                canManage={canManage}
-                isAdmin={isAdmin}
-                onRoleChange={handleRoleChange}
-                onRemove={handleRemove}
-                onBan={handleBan}
-                cta={ctaFor(member)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       {filtered.length === 0 && searchQuery && (
         <div className="text-center py-12">
