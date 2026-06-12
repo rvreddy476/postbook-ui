@@ -31,11 +31,13 @@ interface HeaderProps {
   setActiveTab: (tab: NavItem) => void;
   onCreateClick: () => void;
   onLogout: () => void;
+  /** Span the full viewport width (pages that hide the icon rail). */
+  fullWidth?: boolean;
   onToggleContactList: () => void;
   navExpanded?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, onCreateClick, onLogout, onToggleContactList, navExpanded = false }) => {
+const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, onCreateClick, onLogout, onToggleContactList, navExpanded = false, fullWidth = false }) => {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -280,8 +282,18 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   };
 
   return (
-    <header className={`fixed top-0 z-[100] h-20 bg-brand-text text-brand-bg border-b border-brand-divider dark:bg-brand-bg dark:text-brand-text px-6 flex items-center justify-between transition-all duration-500 ${navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
-      {/* Desktop Search */}
+    <header className={`fixed top-0 z-[100] h-20 bg-brand-text text-brand-bg border-b border-brand-divider dark:bg-brand-bg dark:text-brand-text px-6 flex items-center justify-between transition-all duration-500 ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+      {/* Brand mark + Desktop Search */}
+      <div className="flex items-center gap-4">
+        {/* VC logo — constant on every route */}
+        <button
+          onClick={() => router.push('/')}
+          title="VChat Home"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500 shadow-lg transition-transform hover:scale-105 active:scale-95"
+        >
+          <span className="text-sm font-black tracking-tighter text-white">VC</span>
+        </button>
+
       <div className="hidden md:flex items-center" ref={searchRef}>
         <div className="relative w-64 group">
           <input
@@ -305,6 +317,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             {renderSearchResults()}
           </AnimatePresence>
         </div>
+      </div>
       </div>
 
       {/* Mac-Style Navigation Group */}

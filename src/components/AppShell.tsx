@@ -126,6 +126,7 @@ export default function AppShell({ children, activeTab: activeTabOverride, hideS
         onLogout={handleLogout}
         onToggleContactList={handleChatOpen}
         navExpanded={navExpanded}
+        fullWidth={hideSidebar}
       />
 
       {!hideSidebar && (
