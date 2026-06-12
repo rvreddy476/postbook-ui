@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
-import { useBatchRelationships, useSendFriendRequest } from '@/hooks/useConnections'
+import { useBatchRelationships } from '@/hooks/useConnections'
+import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile'
 import { useAuthUser } from '@/store/auth'
 import ChatWindow from '@/components/ChatWindow'
 import {
   Crown, ShieldCheck, Wrench, UserMinus, Search, Shield,
-  MoreHorizontal, ChevronDown, Ban, MessageCircle, UserPlus
+  MoreHorizontal, ChevronDown, Ban, MessageCircle, UserPlus, Check
 } from 'lucide-react'
 import type { GroupMember } from '@/types/groups'
 import type { User } from '@/types'
@@ -186,13 +187,15 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   const router = useRouter()
   const authUser = useAuthUser()
   const [searchQuery, setSearchQuery] = useState('')
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [chats, setChats] = useState<User[]>([])
+  // Optimistic overrides while the relationships batch refetches.
+  const [followOverride, setFollowOverride] = useState<Map<string, boolean>>(new Map())
   const { data: members, isLoading } = useGroupMembers(groupId, 100)
   const updateRole = useUpdateMemberRole()
   const removeMember = useRemoveMember()
   const banMember = useBanMember()
-  const sendRequest = useSendFriendRequest()
+  const followUser = useFollowUser()
+  const unfollowUser = useUnfollowUser()
 
   const isOwner = currentUserRole === 'owner'
   const isAdmin = currentUserRole === 'admin' || isOwner
@@ -221,24 +224,40 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   }
   const closeChat = (id: string) => setChats((prev) => prev.filter((c) => c.id !== id))
 
-  const handleAddFriend = async (m: GroupMember) => {
-    if (sentIds.has(m.user_id)) return
-    try {
-      await sendRequest.mutateAsync(m.username || m.user_id)
-      setSentIds((prev) => new Set(prev).add(m.user_id))
-    } catch {
-      // surfaced by the mutation
-    }
-  }
+  const setOverride = (userId: string, val: boolean) =>
+    setFollowOverride((prev) => new Map(prev).set(userId, val))
 
-  // FB-style relationship CTA: friends get Message, strangers get
-  // Add friend, in-flight requests show their state.
+  // FB model: everyone gets a Follow/Following toggle + Message.
+  // Friends auto-follow on accept, so they naturally show "Following".
   const ctaFor = (m: GroupMember): React.ReactNode => {
     if (!authUser || m.user_id === authUser.id) return null
     const rel = relMap?.get(m.user_id)
-    const isFriend = rel?.is_connection || rel?.connection_status === 'accepted'
-    if (isFriend) {
-      return (
+    const following = followOverride.get(m.user_id) ?? !!rel?.following
+
+    const handleToggleFollow = () => {
+      const target = m.username || m.user_id
+      if (following) {
+        setOverride(m.user_id, false)
+        unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
+      } else {
+        setOverride(m.user_id, true)
+        followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
+      }
+    }
+
+    return (
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handleToggleFollow}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+            following
+              ? 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
+              : 'border border-brand-divider text-brand-text hover:bg-brand-text/5'
+          }`}
+        >
+          {following ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+          {following ? 'Following' : 'Follow'}
+        </button>
         <button
           onClick={() => openChat(m)}
           className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90"
@@ -246,34 +265,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
           <MessageCircle className="w-3.5 h-3.5" />
           Message
         </button>
-      )
-    }
-    if (rel?.connection_status === 'pending_sent' || sentIds.has(m.user_id)) {
-      return (
-        <span className="flex items-center gap-1.5 rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/50">
-          Requested
-        </span>
-      )
-    }
-    if (rel?.connection_status === 'pending_received') {
-      return (
-        <button
-          onClick={() => router.push('/settings/friend-requests')}
-          className="flex items-center gap-1.5 rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5"
-        >
-          Respond
-        </button>
-      )
-    }
-    return (
-      <button
-        onClick={() => handleAddFriend(m)}
-        disabled={sendRequest.isPending}
-        className="flex items-center gap-1.5 rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
-      >
-        <UserPlus className="w-3.5 h-3.5" />
-        Add friend
-      </button>
+      </div>
     )
   }
 
