@@ -26,7 +26,7 @@ import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
 import SpaceView from '@/components/groups/SpaceView'
 import type { Group, GroupPostV2 } from '@/types/groups'
-import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X, Megaphone } from 'lucide-react'
+import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 type View = 'feed' | 'discover' | 'your-groups' | 'invites'
@@ -147,17 +147,25 @@ export default function GroupsPage() {
     const role = group?.viewer_role
     const isAdmin = role === 'owner' || role === 'admin' || role === 'moderator'
     return (
-      <div key={post.id}>
-        {/* Group attribution strip — which space this post came from */}
-        <Link
-          href={`/groups/${post.group_id}`}
-          className="flex items-center gap-2 px-1 pb-1.5 group/attr w-fit"
+      <div key={post.id} className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+        {/* Space header — the outer card identifies the space, the
+            user's post card sits inset below it. */}
+        <button
+          onClick={() => setSelectedSpaceId(post.group_id)}
+          className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-brand-text/5"
         >
-          <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Group'} size="w-5 h-5" />
-          <span className="text-xs font-bold text-brand-text/60 group-hover/attr:text-brand-text transition-colors">
-            {group?.name ?? 'View group'}
-          </span>
-        </Link>
+          <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Space'} size="w-8 h-8" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-bold text-brand-text">{group?.name ?? 'View space'}</p>
+            {group && (
+              <p className="text-[11px] text-brand-text/40">
+                {group.member_count} member{group.member_count === 1 ? '' : 's'}
+              </p>
+            )}
+          </div>
+          <ChevronRight className="h-4 w-4 flex-shrink-0 text-brand-text/30" />
+        </button>
+        <div className="border-t border-brand-divider bg-brand-secondary/40 p-3">
         <GroupPostCard
           post={post}
           groupId={post.group_id}
@@ -174,6 +182,7 @@ export default function GroupsPage() {
             }
           }}
         />
+        </div>
       </div>
     )
   }

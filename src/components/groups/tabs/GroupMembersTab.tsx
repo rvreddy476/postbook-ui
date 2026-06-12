@@ -219,7 +219,9 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     }
   }
 
-  // Filter and group by role
+  // Filter and group by role. Depend on enrichedMembers (not the raw
+  // members) so names refresh when the batch profiles land — a stale
+  // dep here showed "Unknown" for everyone.
   const filtered = useMemo(() => {
     if (!enrichedMembers) return []
     const q = searchQuery.toLowerCase().trim()
@@ -228,7 +230,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       return (m.display_name?.toLowerCase().includes(q)) ||
         (m.username?.toLowerCase().includes(q))
     })
-  }, [members, searchQuery])
+  }, [enrichedMembers, searchQuery])
 
   const sections = useMemo(() => {
     const adminsMods = filtered.filter(m => m.role === 'owner' || m.role === 'admin' || m.role === 'moderator')
