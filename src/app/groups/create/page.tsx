@@ -5,12 +5,11 @@ import AppShell from '@/components/AppShell'
 import { useRouter } from 'next/navigation'
 import { useCreateGroup, useCheckHandle } from '@/hooks/useGroups'
 import {
-  Globe, Lock, Eye, EyeOff, Loader2, ArrowLeft,
+  Globe, Lock, Shield, TriangleAlert, Loader2, ArrowLeft,
   MessageSquare, Users, Image as ImageIcon, Info, ScrollText, Smile, ImagePlus,
 } from 'lucide-react'
 
-type Privacy = 'public' | 'private'
-type Visibility = 'visible' | 'hidden'
+type SpaceKind = 'public' | 'restricted' | 'private'
 
 const COVER_GRADIENTS = [
   'from-amber-100 to-orange-50',
@@ -37,8 +36,8 @@ export default function CreateSpacePage() {
   const createGroup = useCreateGroup()
 
   const [name, setName] = useState('')
-  const [privacy, setPrivacy] = useState<Privacy>('public')
-  const [visibility, setVisibility] = useState<Visibility>('visible')
+  const [kind, setKind] = useState<SpaceKind>('public')
+  const [isMature, setIsMature] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handle = slugify(name)
@@ -46,13 +45,12 @@ export default function CreateSpacePage() {
 
   const canCreate = name.trim().length >= 3 && handle.length >= 3 && !createGroup.isPending
 
-  // Map FB-style privacy/visibility onto the backend model:
-  //   Public            → public      / open
-  //   Private + Visible → restricted  / request (findable, approval to join)
-  //   Private + Hidden  → private     / invite_only (only members find it)
-  const privacyLevel: 'public' | 'restricted' | 'private' =
-    privacy === 'public' ? 'public' : visibility === 'visible' ? 'restricted' : 'private'
-  const joinMode = privacy === 'public' ? 'open' : visibility === 'visible' ? 'request' : 'invite_only'
+  // Reddit-style kinds map onto the backend model:
+  //   Public     → public     / open        (anyone views + contributes)
+  //   Restricted → restricted / request     (anyone views, approved users contribute)
+  //   Private    → private    / invite_only (only approved users view + contribute)
+  const privacyLevel = kind
+  const joinMode = kind === 'public' ? 'open' : kind === 'restricted' ? 'request' : 'invite_only'
 
   const handleCreate = async () => {
     if (!canCreate) return
@@ -72,6 +70,7 @@ export default function CreateSpacePage() {
         join_mode: joinMode,
         who_can_post: 'all_members',
         who_can_invite: 'all_members',
+        is_mature: isMature,
         idempotency_key: `create-${Date.now()}`,
       })
       router.push(`/groups/${group.id}`)
@@ -82,8 +81,8 @@ export default function CreateSpacePage() {
 
   const coverGrad = COVER_GRADIENTS[(name.charCodeAt(0) || 0) % COVER_GRADIENTS.length]
   const previewName = name.trim() || 'Your space name'
-  const privacyLabel = privacy === 'public' ? 'Public' : 'Private'
-  const PrivacyIcon = privacy === 'public' ? Globe : Lock
+  const privacyLabel = kind === 'public' ? 'Public' : kind === 'restricted' ? 'Restricted' : 'Private'
+  const PrivacyIcon = kind === 'public' ? Globe : kind === 'restricted' ? Shield : Lock
 
   return (
     <AppShell hideSidebar>
@@ -137,71 +136,67 @@ export default function CreateSpacePage() {
             )}
           </div>
 
-          {/* Privacy */}
+          {/* What kind of space is this? */}
           <div className="mt-5">
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-text/50">
-              Choose privacy
+              What kind of space is this?
             </label>
             <div className="space-y-2">
               {(
                 [
-                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can see who is in the space and what they post.' },
-                  { value: 'private' as const, icon: Lock, label: 'Private', desc: 'Only members can see who is in the space and what they post.' },
+                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can view, post, and comment in this space.' },
+                  { value: 'restricted' as const, icon: Shield, label: 'Restricted', desc: 'Anyone can view, but only approved members can contribute.' },
+                  { value: 'private' as const, icon: Lock, label: 'Private', desc: 'Only approved members can view and contribute.' },
                 ]
               ).map(({ value, icon: Icon, label, desc }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setPrivacy(value)}
+                  onClick={() => setKind(value)}
                   className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${
-                    privacy === value
+                    kind === value
                       ? 'border-brand-text bg-brand-text/5'
                       : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                   }`}
                 >
-                  <Icon className={`mt-0.5 h-[18px] w-[18px] flex-shrink-0 ${privacy === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
-                  <span>
+                  <Icon className={`mt-0.5 h-[18px] w-[18px] flex-shrink-0 ${kind === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
+                  <span className="flex-1">
                     <span className="block text-sm font-bold text-brand-text">{label}</span>
                     <span className="block text-xs leading-snug text-brand-text/50">{desc}</span>
                   </span>
+                  <span
+                    className={`mt-1 h-4 w-4 flex-shrink-0 rounded-full border-2 ${
+                      kind === value ? 'border-brand-text bg-brand-text' : 'border-brand-text/25'
+                    }`}
+                  />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Visibility — only meaningful for private spaces */}
-          {privacy === 'private' && (
-            <div className="mt-5">
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-text/50">
-                Visibility
-              </label>
-              <div className="space-y-2">
-                {(
-                  [
-                    { value: 'visible' as const, icon: Eye, label: 'Visible', desc: 'Anyone can find this space; joining needs approval.' },
-                    { value: 'hidden' as const, icon: EyeOff, label: 'Hidden', desc: 'Only members can find this space. Invite-only.' },
-                  ]
-                ).map(({ value, icon: Icon, label, desc }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setVisibility(value)}
-                    className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${
-                      visibility === value
-                        ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
-                    }`}
-                  >
-                    <Icon className={`mt-0.5 h-[18px] w-[18px] flex-shrink-0 ${visibility === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
-                    <span>
-                      <span className="block text-sm font-bold text-brand-text">{label}</span>
-                      <span className="block text-xs leading-snug text-brand-text/50">{desc}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Mature (18+) */}
+          <button
+            type="button"
+            onClick={() => setIsMature(!isMature)}
+            className="mt-5 flex w-full items-center gap-3 rounded-xl border border-brand-divider p-3.5 text-left transition-all hover:border-brand-text/30"
+          >
+            <TriangleAlert className="h-[18px] w-[18px] flex-shrink-0 text-brand-text/40" />
+            <span className="flex-1">
+              <span className="block text-sm font-bold text-brand-text">Mature (18+)</span>
+              <span className="block text-xs leading-snug text-brand-text/50">Users must be over 18 to view and contribute.</span>
+            </span>
+            <span
+              className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                isMature ? 'bg-brand-text' : 'bg-brand-text/15'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-bg shadow transition-all ${
+                  isMature ? 'left-[22px]' : 'left-0.5'
+                }`}
+              />
+            </span>
+          </button>
 
           <div className="flex-1" />
 
@@ -241,6 +236,9 @@ export default function CreateSpacePage() {
                   {privacyLabel} space
                   <span className="text-brand-text/25">·</span>
                   1 member
+                  {isMature && (
+                    <span className="ml-1 rounded-md border border-brand-divider px-1.5 py-0.5 text-[10px] font-black text-brand-text/60">18+</span>
+                  )}
                 </p>
               </div>
 
@@ -286,18 +284,16 @@ export default function CreateSpacePage() {
                   <p className="text-sm font-bold text-brand-text">About</p>
                   <p className="mt-2 flex items-start gap-2 text-xs leading-snug text-brand-text/50">
                     <PrivacyIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                    {privacy === 'public'
-                      ? 'Anyone can see who is in the space and what they post.'
-                      : 'Only members can see who is in the space and what they post.'}
+                    {kind === 'public'
+                      ? 'Anyone can view, post, and comment in this space.'
+                      : kind === 'restricted'
+                        ? 'Anyone can view, but only approved members can contribute.'
+                        : 'Only approved members can view and contribute.'}
                   </p>
-                  {privacy === 'private' && (
+                  {isMature && (
                     <p className="mt-2 flex items-start gap-2 text-xs leading-snug text-brand-text/50">
-                      {visibility === 'visible' ? (
-                        <Eye className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                      ) : (
-                        <EyeOff className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                      )}
-                      {visibility === 'visible' ? 'Anyone can find this space.' : 'Only members can find this space.'}
+                      <TriangleAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      Users must be over 18 to view and contribute.
                     </p>
                   )}
                 </div>

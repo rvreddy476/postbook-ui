@@ -251,7 +251,7 @@ export default function GroupDetailPage() {
                     className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 transition-all"
                   >
                     <Plus className="w-4 h-4" />
-                    New Post
+                    Create Post
                   </button>
                   <button
                     onClick={() => setShowInvite(true)}

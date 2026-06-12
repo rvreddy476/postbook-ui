@@ -127,6 +127,9 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
             {privacy.charAt(0).toUpperCase() + privacy.slice(1)} space
             <span className="text-brand-text/25">·</span>
             <strong className="font-bold text-brand-text/70">{formatCount(group.member_count)}</strong> members
+            {group.is_mature && (
+              <span className="ml-1 rounded-md border border-brand-divider px-1.5 py-0.5 text-[10px] font-black text-brand-text/60">18+</span>
+            )}
           </p>
         </div>
 
@@ -139,7 +142,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
                 className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
-                New Post
+                Create Post
               </button>
               <button
                 onClick={() => setShowInvite(true)}

@@ -186,6 +186,7 @@ export function useCreateGroup() {
       location?: string
       language?: string
       idempotency_key?: string
+      is_mature?: boolean
     }) => {
       const res = await api.post<GroupResponse>("/v1/groups", payload)
       return res.data.data
