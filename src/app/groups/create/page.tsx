@@ -73,7 +73,9 @@ export default function CreateSpacePage() {
         is_mature: isMature,
         idempotency_key: `create-${Date.now()}`,
       })
-      router.push(`/groups/${group.id}`)
+      // Land back on MySpace with the new space selected in the rail
+      // and opened in the middle column.
+      router.push(`/groups?space=${group.id}`)
     } catch {
       setError('Could not create the space. Try a different name.')
     }

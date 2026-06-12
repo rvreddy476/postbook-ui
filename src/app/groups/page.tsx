@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '@/components/AppShell'
@@ -61,7 +62,18 @@ function GroupAvatar({ avatarMediaId, name, size = 'w-10 h-10' }: { avatarMediaI
   )
 }
 
+// useSearchParams needs a Suspense boundary for static prerendering.
 export default function GroupsPage() {
+  return (
+    <Suspense>
+      <GroupsPageInner />
+    </Suspense>
+  )
+}
+
+function GroupsPageInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const qc = useQueryClient()
   const authUser = useAuthUser()
   const [view, setView] = useState<View>('feed')
@@ -70,7 +82,12 @@ export default function GroupsPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   // A space picked from the rail opens in the middle column while the
   // rail stays put; cleared whenever the user switches views.
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null)
+  // ?space=<id> (e.g. right after creating a space) preselects it.
+  const spaceParam = searchParams.get('space')
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(spaceParam)
+  useEffect(() => {
+    if (spaceParam) setSelectedSpaceId(spaceParam)
+  }, [spaceParam])
 
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
@@ -140,6 +157,8 @@ export default function GroupsPage() {
     setView(v)
     setSearchQuery('')
     setSelectedSpaceId(null)
+    // Drop a lingering ?space= param so a refresh stays on this view.
+    if (spaceParam) router.replace('/groups', { scroll: false })
   }
 
   const renderFeedPost = (post: GroupPostV2 & { author_name?: string; author_avatar_url?: string }) => {
