@@ -421,14 +421,22 @@ export function useUpdateGroupRules() {
   })
 }
 
+export interface GroupMediaItem {
+  post_id: string
+  author_id: string
+  content_type: string
+  attachments: string[]
+  created_at: string
+}
+
 export function useGroupMedia(groupId: string | undefined) {
   return useInfiniteQuery({
     queryKey: ["group-media", groupId],
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await api.get<GroupPostsResponse>(`/v1/groups/${groupId}/media`, {
+      const res = await api.get<{ data: GroupMediaItem[] }>(`/v1/groups/${groupId}/media`, {
         params: { limit: 30, offset: pageParam },
       })
-      return { data: res.data.data, offset: pageParam as number }
+      return { data: res.data.data ?? [], offset: pageParam as number }
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
