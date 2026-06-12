@@ -95,7 +95,7 @@ export function TrimControls({
           <h3 className="text-[14px] font-semibold text-brand-text">Trim Video</h3>
         </div>
         <div className="flex items-center gap-2 text-[12px] text-brand-highlight">
-          {saving && <span className="text-blue-500">Saving...</span>}
+          {saving && <span className="text-brand-text/60">Saving...</span>}
           <span>Duration: {effectiveDuration}s</span>
         </div>
       </div>
@@ -112,7 +112,7 @@ export function TrimControls({
             step={100}
             value={startMs}
             onChange={(e) => handleStartChange(Number(e.target.value))}
-            className="w-full accent-blue-600"
+            className="w-full accent-brand-text"
           />
         </div>
 
@@ -127,14 +127,14 @@ export function TrimControls({
             step={100}
             value={endMs}
             onChange={(e) => handleEndChange(Number(e.target.value))}
-            className="w-full accent-blue-600"
+            className="w-full accent-brand-text"
           />
         </div>
 
         {/* Visual timeline bar */}
         <div className="relative h-2 rounded-full bg-brand-secondary overflow-hidden">
           <div
-            className="absolute top-0 h-full bg-blue-500/30 rounded-full"
+            className="absolute top-0 h-full bg-brand-text/30 rounded-full"
             style={{
               left: `${(startMs / maxMs) * 100}%`,
               width: `${((endMs - startMs) / maxMs) * 100}%`,

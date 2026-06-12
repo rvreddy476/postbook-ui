@@ -126,13 +126,13 @@ export function CoverFrameSelector({
             step={100}
             value={scrubMs}
             onChange={(e) => setScrubMs(Number(e.target.value))}
-            className="w-full accent-blue-600"
+            className="w-full accent-brand-text"
           />
           <button
             type="button"
             onClick={handleScrubCommit}
             disabled={saving}
-            className="w-full rounded-lg bg-blue-600 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-brand-text py-2 text-[13px] font-semibold text-brand-bg transition-colors hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Extracting..." : "Extract Frame"}
           </button>

@@ -459,7 +459,7 @@ export default function GroupsPage() {
         {/* ── Middle: selected space / feed / discover / my spaces / invites ── */}
         <main className="min-w-0 flex-1 px-4 pt-5 pb-16 lg:px-6">
           {selectedSpaceId ? (
-            <div className="mx-auto max-w-[720px]">
+            <div className="mx-auto max-w-[960px]">
               <SpaceView key={selectedSpaceId} groupId={selectedSpaceId} />
             </div>
           ) : (
@@ -511,8 +511,9 @@ export default function GroupsPage() {
           )}
         </main>
 
-        {/* ── Right rail: reserved for ads / sponsored placements ────── */}
-        <aside className="sticky top-0 hidden h-[calc(100vh-5rem)] w-[320px] flex-shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 lg:flex">
+        {/* ── Right rail: ads / sponsored — hidden while a space is open
+               so the space content uses the full width ──────────────── */}
+        <aside className={`sticky top-0 h-[calc(100vh-5rem)] w-[320px] flex-shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 ${selectedSpaceId ? 'hidden' : 'hidden lg:flex'}`}>
           <p className="px-1 text-[11px] font-black uppercase tracking-widest text-brand-text/40">Sponsored</p>
           <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
             <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-brand-text/5">

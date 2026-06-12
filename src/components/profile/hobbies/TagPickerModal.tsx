@@ -161,7 +161,7 @@ export function TagPickerModal({
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="flex flex-wrap gap-1.5 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
+                            className="flex flex-wrap gap-1.5 p-3 bg-brand-text/5 rounded-xl border border-brand-divider"
                         >
                             {selected.map((tag, i) => (
                                 <motion.span
@@ -200,7 +200,7 @@ export function TagPickerModal({
                                         onClick={() => toggleTag(tag)}
                                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
                                             isSelected
-                                                ? "bg-blue-600 text-white border-blue-600"
+                                                ? "bg-brand-text text-brand-bg border-brand-text"
                                                 : isExisting
                                                   ? "bg-brand-secondary text-brand-text/30 border-brand-divider cursor-not-allowed"
                                                   : `${getCategoryColor(tag.category)} hover:shadow-sm cursor-pointer`
@@ -263,7 +263,7 @@ export function TagPickerModal({
                     <Button
                         onClick={handleConfirm}
                         disabled={selected.length === 0}
-                        className="h-10 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-blue-600/20"
+                        className="h-10 px-6 rounded-xl bg-brand-text hover:opacity-90 text-brand-bg text-xs font-bold uppercase tracking-widest shadow-lg shadow-black/10"
                     >
                         Add {selected.length > 0 ? `(${selected.length})` : ""}
                     </Button>

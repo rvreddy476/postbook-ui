@@ -85,7 +85,7 @@ export function CategoryOverride({
           disabled={saving}
           className={`flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition-colors ${
             selected === "long_video"
-              ? "bg-blue-600 text-white"
+              ? "bg-brand-text text-brand-bg"
               : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
           }`}
         >
@@ -104,7 +104,7 @@ export function CategoryOverride({
       )}
 
       {saving && (
-        <p className="mt-2 text-[11px] text-blue-500">Updating...</p>
+        <p className="mt-2 text-[11px] text-brand-text/60">Updating...</p>
       )}
     </div>
   );

@@ -636,13 +636,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
-                  ? 'bg-blue-600 text-white shadow-blue-600/30'
+                  ? 'bg-brand-text text-brand-bg shadow-black/10'
                   : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-brand-text/80'}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
