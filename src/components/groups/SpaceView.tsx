@@ -9,13 +9,14 @@ import GroupAboutTab from '@/components/groups/tabs/GroupAboutTab'
 import GroupRulesTab from '@/components/groups/tabs/GroupRulesTab'
 import GroupMediaTab from '@/components/groups/tabs/GroupMediaTab'
 import GroupInviteModal from '@/components/groups/GroupInviteModal'
+import SpaceManagePanel from '@/components/groups/SpaceManagePanel'
 import { useGroupDetails, useJoinGroup } from '@/hooks/useGroups'
 import {
   Users, MessageSquare, Image as ImageIcon, ScrollText, Info,
-  Globe, Lock, Shield, Plus, UserPlus, Check, Clock, ExternalLink,
+  Globe, Lock, Shield, Plus, UserPlus, Check, Clock, ExternalLink, Wrench,
 } from 'lucide-react'
 
-type SpaceTab = 'discussion' | 'about' | 'people' | 'media' | 'rules'
+type SpaceTab = 'discussion' | 'about' | 'people' | 'media' | 'rules' | 'manage'
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -77,6 +78,8 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
     { key: 'people', label: 'People', icon: <Users className="w-4 h-4" /> },
     { key: 'media', label: 'Media', icon: <ImageIcon className="w-4 h-4" /> },
     { key: 'rules', label: 'Rules', icon: <ScrollText className="w-4 h-4" /> },
+    // Lean admin toolkit — only for owners/admins.
+    ...(isAdmin ? [{ key: 'manage' as const, label: 'Manage', icon: <Wrench className="w-4 h-4" /> }] : []),
   ]
 
   return (
@@ -198,6 +201,9 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
         {tab === 'people' && <GroupMembersTab groupId={group.id} currentUserRole={viewerRole} />}
         {tab === 'media' && <GroupMediaTab groupId={group.id} />}
         {tab === 'rules' && <GroupRulesTab groupId={group.id} isAdmin={isAdmin} />}
+        {tab === 'manage' && isAdmin && (
+          <SpaceManagePanel groupId={group.id} onOpenRules={() => setTab('rules')} />
+        )}
       </div>
 
       {/* Modals */}
