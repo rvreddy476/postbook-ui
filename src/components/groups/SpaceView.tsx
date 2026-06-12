@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import CreatePortal from '@/components/CreatePortal'
 import GroupFeedTab from '@/components/groups/tabs/GroupFeedTab'
 import GroupMembersTab from '@/components/groups/tabs/GroupMembersTab'
@@ -9,11 +9,10 @@ import GroupAboutTab from '@/components/groups/tabs/GroupAboutTab'
 import GroupRulesTab from '@/components/groups/tabs/GroupRulesTab'
 import GroupMediaTab from '@/components/groups/tabs/GroupMediaTab'
 import GroupInviteModal from '@/components/groups/GroupInviteModal'
-import SpaceManagePanel from '@/components/groups/SpaceManagePanel'
-import { useGroupDetails, useJoinGroup } from '@/hooks/useGroups'
+import { useGroupDetails, useGroupByHandle, useJoinGroup } from '@/hooks/useGroups'
 import {
   Users, MessageSquare, Image as ImageIcon, ScrollText, Info,
-  Globe, Lock, Shield, Plus, UserPlus, Check, Clock, ExternalLink, Wrench,
+  Globe, Lock, Shield, Plus, UserPlus, Check, Clock, Wrench,
 } from 'lucide-react'
 
 type SpaceTab = 'discussion' | 'about' | 'people' | 'media' | 'rules' | 'manage'
@@ -43,12 +42,20 @@ interface SpaceViewProps {
  * MySpace left rail stays in place. The standalone /groups/[id] route
  * keeps working for deep links; this is the in-page experience.
  */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default function SpaceView({ groupId }: SpaceViewProps) {
+  const router = useRouter()
   const [tab, setTab] = useState<SpaceTab>('discussion')
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
 
-  const { data: group, isLoading } = useGroupDetails(groupId)
+  // groupId may be a UUID or a handle (deep links pass either through).
+  const isUUID = UUID_REGEX.test(groupId)
+  const { data: groupById, isLoading: loadingById } = useGroupDetails(isUUID ? groupId : undefined)
+  const { data: groupByHandle, isLoading: loadingByHandle } = useGroupByHandle(!isUUID ? groupId : undefined)
+  const group = groupById ?? groupByHandle
+  const isLoading = isUUID ? loadingById : loadingByHandle
   const joinGroup = useJoinGroup()
 
   if (isLoading || !group) {
@@ -180,13 +187,6 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
               {joinGroup.isPending ? 'Joining...' : 'Join Space'}
             </button>
           )}
-          <Link
-            href={`/groups/${group.id}`}
-            title="Open full page"
-            className="rounded-xl border border-brand-divider p-2 text-brand-text/50 transition-colors hover:bg-brand-text/5 hover:text-brand-text"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Link>
         </div>
       </div>
 
@@ -196,7 +196,13 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
           {tabs.map((t) => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                if (t.key === 'manage') {
+                  router.push(`/groups/${group.id}/settings`)
+                  return
+                }
+                setTab(t.key)
+              }}
               className={`relative flex items-center gap-1.5 whitespace-nowrap px-4 py-3 text-sm font-semibold transition-colors ${
                 tab === t.key ? 'text-brand-text' : 'text-brand-text/45 hover:text-brand-text/70'
               }`}
@@ -220,9 +226,6 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
         {tab === 'people' && <GroupMembersTab groupId={group.id} currentUserRole={viewerRole} />}
         {tab === 'media' && <GroupMediaTab groupId={group.id} />}
         {tab === 'rules' && <GroupRulesTab groupId={group.id} isAdmin={isAdmin} />}
-        {tab === 'manage' && isAdmin && (
-          <SpaceManagePanel groupId={group.id} onOpenRules={() => setTab('rules')} />
-        )}
       </div>
 
       {/* Modals */}

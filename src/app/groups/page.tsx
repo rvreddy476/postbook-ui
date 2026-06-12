@@ -461,7 +461,7 @@ function GroupsPageInner() {
                     }}
                     className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors ${
                       selectedSpaceId === group.id
-                        ? 'bg-brand-text/8 ring-1 ring-brand-text/15'
+                        ? 'bg-emerald-500/10 ring-1 ring-emerald-500/40'
                         : 'hover:bg-brand-text/5'
                     }`}
                   >
@@ -471,7 +471,7 @@ function GroupsPageInner() {
                       <p className="truncate text-[11px] text-brand-text/40">{lastActive(group.updated_at)}</p>
                     </div>
                     {selectedSpaceId === group.id && (
-                      <span className="h-2 w-2 flex-shrink-0 rounded-full bg-brand-highlight" />
+                      <span className="h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500" />
                     )}
                   </button>
                 ))}
