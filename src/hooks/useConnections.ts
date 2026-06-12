@@ -654,9 +654,25 @@ export function useBatchRelationships(viewerId: string, targetIds: string[]) {
                 viewer_id: viewerId,
                 target_ids: capped,
             })
+            // graph-service returns a bare { "<uuid>": {...} } map (no
+            // envelope); tolerate a wrapped shape too. Wire field names
+            // differ from the UI Relationship type, so normalize:
+            // follows -> following, is_connection -> is_connection/accepted.
+            const raw = ((res.data as unknown as { relationships?: Record<string, unknown> }).relationships
+                ?? (res.data as unknown)) as Record<string, Record<string, unknown>>
             const map = new Map<string, Relationship>()
-            for (const [userId, rel] of Object.entries(res.data.relationships)) {
-                map.set(userId, rel)
+            for (const [userId, rel] of Object.entries(raw ?? {})) {
+                if (!rel || typeof rel !== 'object') continue
+                const isConnection = !!rel.is_connection
+                map.set(userId, {
+                    following: !!(rel.follows ?? rel.following),
+                    followed_by: !!rel.followed_by,
+                    is_connection: isConnection,
+                    connection_status: isConnection ? 'accepted' : (rel.connection_status as Relationship['connection_status']) ?? 'none',
+                    in_circle: isConnection,
+                    circle_request_sent: false,
+                    circle_request_received: false,
+                } as Relationship)
             }
             return map
         },
