@@ -87,7 +87,7 @@ export default function GroupSettingsPage() {
       <AppShell>
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <h2 className="text-xl font-bold text-brand-text">Access Denied</h2>
-          <p className="mt-2 text-sm text-brand-text/60">Only group owners and admins can access settings.</p>
+          <p className="mt-2 text-sm text-brand-text/60">Only space owners and admins can access settings.</p>
           <button onClick={() => router.back()} className="mt-4 text-sm font-bold text-brand-text hover:underline">
             Go Back
           </button>
@@ -125,7 +125,7 @@ export default function GroupSettingsPage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      setError('Failed to save group settings. Please try again.')
+      setError('Failed to save space settings. Please try again.')
     }
   }
 
@@ -147,7 +147,7 @@ export default function GroupSettingsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-black text-brand-text">Group Settings</h1>
+          <h1 className="text-2xl font-black text-brand-text">Space Settings</h1>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
@@ -166,7 +166,7 @@ export default function GroupSettingsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
+                  <span className="rounded-full bg-brand-card/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
                     Change cover
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export default function GroupSettingsPage() {
 
               <div className="space-y-2">
                 <p className="text-sm font-bold text-brand-text">Avatar</p>
-                <p className="text-xs leading-relaxed text-brand-text/60">Update the square icon shown in group cards and headers.</p>
+                <p className="text-xs leading-relaxed text-brand-text/60">Update the square icon shown in space cards and headers.</p>
                 <button
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
@@ -219,7 +219,7 @@ export default function GroupSettingsPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Group Name</label>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Space Name</label>
               <input
                 type="text"
                 value={name}
@@ -286,14 +286,14 @@ export default function GroupSettingsPage() {
 
         <div className="mt-8 rounded-2xl border border-rose-200 bg-brand-card p-6">
           <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-rose-600">Danger Zone</h3>
-          <p className="mb-4 text-xs text-brand-text/60">Deleting this group is permanent and cannot be undone. All posts, members, and data will be lost.</p>
+          <p className="mb-4 text-xs text-brand-text/60">Deleting this space is permanent and cannot be undone. All posts, members, and data will be lost.</p>
           <button
             onClick={handleDelete}
             disabled={deleteGroup.isPending}
             className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-600 transition-all hover:bg-rose-100 disabled:opacity-50"
           >
             {deleteGroup.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-            {deleteGroup.isPending ? 'Deleting...' : 'Delete Group'}
+            {deleteGroup.isPending ? 'Deleting...' : 'Delete Space'}
           </button>
         </div>
       </div>

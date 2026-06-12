@@ -31,7 +31,7 @@ export default function GroupMediaTab({ groupId }: GroupMediaTabProps) {
           <ImageIcon className="w-8 h-8 text-brand-secondary" />
         </div>
         <p className="text-sm font-semibold text-brand-text/60">No media yet</p>
-        <p className="text-xs text-brand-text/30 mt-1">Photos and videos shared in this group will appear here.</p>
+        <p className="text-xs text-brand-text/30 mt-1">Photos and videos shared in this space will appear here.</p>
       </div>
     )
   }

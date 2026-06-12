@@ -43,7 +43,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-brand-text">Edit Group Rules</h3>
+          <h3 className="text-sm font-bold text-brand-text">Edit Space Rules</h3>
           <div className="flex gap-2">
             <button
               onClick={() => setEditing(false)}
@@ -123,7 +123,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-brand-text">Group Rules</h3>
+        <h3 className="text-sm font-bold text-brand-text">Space Rules</h3>
         {isAdmin && (
           <button
             onClick={() => setEditing(true)}
@@ -141,7 +141,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
           </div>
           <p className="text-sm font-semibold text-brand-text/60">No rules set</p>
           <p className="text-xs text-brand-text/30 mt-1">
-            {isAdmin ? 'Add rules to set expectations for your group members.' : 'This group hasn\'t set any rules yet.'}
+            {isAdmin ? 'Add rules to set expectations for your space members.' : 'This space hasn\'t set any rules yet.'}
           </p>
           {isAdmin && (
             <button

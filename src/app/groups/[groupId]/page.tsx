@@ -104,12 +104,12 @@ export default function GroupDetailPage() {
 
   const handleJoin = () => joinGroup.mutate(group!.id)
   const handleLeave = () => {
-    if (confirm('Are you sure you want to leave this group?')) {
+    if (confirm('Are you sure you want to leave this space?')) {
       leaveGroup.mutate(group!.id)
     }
   }
   const handleDelete = () => {
-    if (confirm('Delete this group? This cannot be undone.')) {
+    if (confirm('Delete this space? This cannot be undone.')) {
       deleteGroup.mutate(group!.id, { onSuccess: () => router.push('/groups') })
     }
   }
@@ -141,8 +141,8 @@ export default function GroupDetailPage() {
         <div className="w-16 h-16 rounded-2xl bg-brand-text/5 mx-auto mb-4 flex items-center justify-center">
           <Users className="w-8 h-8 text-brand-text/20" />
         </div>
-        <h2 className="text-xl font-bold text-brand-text">Group not found</h2>
-        <p className="text-brand-text/60 mt-2 text-sm max-w-sm mx-auto">This group may have been deleted or you don&apos;t have access.</p>
+        <h2 className="text-xl font-bold text-brand-text">Space not found</h2>
+        <p className="text-brand-text/60 mt-2 text-sm max-w-sm mx-auto">This space may have been deleted or you don&apos;t have access.</p>
       </div>
       </AppShell>
     )
@@ -150,7 +150,6 @@ export default function GroupDetailPage() {
 
   const privacy = group.privacy_level ?? 'public'
   const coverSrc = group.cover_media_id ? `/v1/media/${group.cover_media_id}/serve` : null
-  const avatarSrc = group.avatar_media_id ? `/v1/media/${group.avatar_media_id}/serve` : null
 
   const coverGradients = [
     'from-amber-100 to-orange-50',
@@ -160,17 +159,8 @@ export default function GroupDetailPage() {
     'from-rose-100 to-red-50',
     'from-indigo-100 to-blue-50',
   ]
-  const avatarGradients = [
-    'from-amber-200 to-orange-100',
-    'from-blue-200 to-cyan-100',
-    'from-emerald-200 to-teal-100',
-    'from-purple-200 to-pink-100',
-    'from-rose-200 to-red-100',
-    'from-indigo-200 to-blue-100',
-  ]
   const nameHash = group.name.charCodeAt(0) % coverGradients.length
   const coverGrad = coverGradients[nameHash]
-  const avatarGrad = avatarGradients[nameHash]
 
   const tabs: { key: DetailTab; label: string; icon: React.ReactNode }[] = [
     { key: 'feed', label: 'Feed', icon: <MessageSquare className="w-4 h-4" /> },
@@ -211,22 +201,10 @@ export default function GroupDetailPage() {
         </button>
       </div>
 
-      {/* Group header: avatar (-36px overlap), name, meta, actions */}
-      <div className="relative z-10 mx-auto -mt-8 max-w-4xl px-4 sm:-mt-9">
+      {/* Space header: name, meta, actions — no profile photo for spaces,
+          the cover image is the identity. */}
+      <div className="relative z-10 mx-auto mt-4 max-w-4xl px-4">
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Avatar — overlapping cover */}
-          <div className="h-[64px] w-[64px] shrink-0 rounded-[22px] border border-white/80 bg-white/95 p-[2px] shadow-lg sm:h-[72px] sm:w-[72px]">
-            <div className="h-full w-full overflow-hidden rounded-[18px] bg-brand-text/5">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${avatarGrad} text-xl font-black text-white sm:text-2xl`}>
-                  {group.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Identity block */}
           <div className="flex-1 min-w-0 pt-1 sm:pt-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -295,7 +273,7 @@ export default function GroupDetailPage() {
                     <button
                       onClick={() => setShowEdit(true)}
                       className="p-2 border border-brand-divider text-brand-text rounded-xl hover:bg-brand-text/5 transition-all"
-                      title="Edit Group"
+                      title="Edit Space"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
@@ -319,15 +297,15 @@ export default function GroupDetailPage() {
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                     {showOverflow && (
-                      <div className="absolute right-0 top-full z-50 mt-2 min-w-[11rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-brand-divider bg-white py-1 shadow-lg">
+                      <div className="absolute right-0 top-full z-50 mt-2 min-w-[11rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-lg">
                         {isAdmin && (
                           <button onClick={() => { setShowEdit(true); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
-                            <Pencil className="w-4 h-4" /> Edit Group
+                            <Pencil className="w-4 h-4" /> Edit Space
                           </button>
                         )}
                         {isAdmin && (
                           <button onClick={() => { router.push(`/groups/${group.id}/settings`); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
-                            <Settings className="w-4 h-4" /> Group Settings
+                            <Settings className="w-4 h-4" /> Space Settings
                           </button>
                         )}
                         <button onClick={() => setShowOverflow(false)} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
@@ -337,14 +315,14 @@ export default function GroupDetailPage() {
                           <Link2 className="w-4 h-4" /> Copy Link
                         </button>
                         <button onClick={() => { handleLeave(); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text transition-colors hover:bg-brand-text/5">
-                          <LogOut className="w-4 h-4" /> Leave Group
+                          <LogOut className="w-4 h-4" /> Leave Space
                         </button>
                         <button onClick={() => setShowOverflow(false)} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-brand-text/60 transition-colors hover:bg-brand-text/5">
                           <Flag className="w-4 h-4" /> Report
                         </button>
                         {isOwner && (
                           <button onClick={() => { handleDelete(); setShowOverflow(false); }} className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-text/5">
-                            <Trash2 className="w-4 h-4" /> Delete Group
+                            <Trash2 className="w-4 h-4" /> Delete Space
                           </button>
                         )}
                       </div>
@@ -372,7 +350,7 @@ export default function GroupDetailPage() {
                   className="flex items-center gap-2 px-6 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   <Users className="w-4 h-4" />
-                  {joinGroup.isPending ? 'Joining...' : 'Join Group'}
+                  {joinGroup.isPending ? 'Joining...' : 'Join Space'}
                 </button>
               )}
             </div>
@@ -388,7 +366,7 @@ export default function GroupDetailPage() {
       )}
 
       {/* Tab bar */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-brand-divider mt-6">
+      <div className="sticky top-0 z-20 bg-brand-card/95 backdrop-blur-sm border-b border-brand-divider mt-6">
         <div className="max-w-5xl mx-auto px-4">
           <nav className="flex items-center gap-0 overflow-x-auto scrollbar-hide -mb-px">
             {tabs.map((tab) => (
@@ -441,7 +419,7 @@ export default function GroupDetailPage() {
             <aside className="hidden lg:block space-y-4">
               {/* Admins & Mods card */}
               {enrichedAdmins.length > 0 && (
-                <div className="bg-white border border-brand-divider rounded-2xl p-4">
+                <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Admins & Mods</h3>
                   <div className="space-y-2.5">
                     {enrichedAdmins.slice(0, 5).map(m => {
@@ -472,14 +450,14 @@ export default function GroupDetailPage() {
               )}
 
               {/* People you may know card — placeholder */}
-              <div className="bg-white border border-brand-divider rounded-2xl p-4">
+              <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">People you may know</h3>
                 <p className="text-xs text-brand-text/40">Suggestions coming soon</p>
               </div>
 
               {/* Rules condensed card */}
               {rules && rules.length > 0 && (
-                <div className="bg-white border border-brand-divider rounded-2xl p-4">
+                <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/50">Rules</h3>
                     <button onClick={() => setActiveTab('rules')} className="text-[10px] font-bold text-brand-text hover:underline">View All</button>

@@ -272,7 +272,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
   const contentType = post.content_type || 'text'
 
   return (
-    <div ref={cardRef} className={`bg-white border border-brand-divider rounded-2xl transition-all ${
+    <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-all ${
       post.is_pinned ? 'ring-1 ring-brand-text/10' : ''
     }`}>
       {/* Pinned indicator */}
@@ -313,7 +313,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {overflowOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 {(isAdmin || isAuthor) && onPin && (
                   <button onClick={() => { onPin(post.id, !post.is_pinned); setOverflowOpen(false) }}
                     className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
@@ -412,7 +412,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
               {echoCount > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(echoCount)}</span>}
             </button>
             {showEchoMenu && (
-              <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute bottom-full mb-1 left-0 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 <button onClick={() => handleRepost('feed')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
                   <Repeat2 className="w-3.5 h-3.5" /> {echoed ? 'Undo echo' : 'Echo to feed'}
                 </button>
