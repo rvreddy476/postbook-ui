@@ -23,9 +23,12 @@ interface GroupFeedTabProps {
   groupId: string
   isMember: boolean
   viewerRole?: string
+  /** Hide the inline compose box — for surfaces where a New Post
+   *  button in the header already covers it. */
+  hideComposer?: boolean
 }
 
-export default function GroupFeedTab({ groupId, isMember, viewerRole }: GroupFeedTabProps) {
+export default function GroupFeedTab({ groupId, isMember, viewerRole, hideComposer = false }: GroupFeedTabProps) {
   const [showCreate, setShowCreate] = useState(false)
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
   const authUser = useAuthUser()
@@ -98,7 +101,7 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole }: GroupFee
   return (
     <div className="space-y-4">
       {/* Compose Box */}
-      {isMember && (
+      {isMember && !hideComposer && (
         <button
           onClick={() => setShowCreate(true)}
           className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-sm transition-all group"
@@ -106,7 +109,7 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole }: GroupFee
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-secondary to-brand-secondary flex items-center justify-center group-hover:from-brand-text/10 group-hover:to-brand-text/5 transition-all">
             <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
           </div>
-          <span className="group-hover:text-brand-highlight transition-colors">Write something to the group...</span>
+          <span className="group-hover:text-brand-highlight transition-colors">Write something to your space...</span>
         </button>
       )}
 

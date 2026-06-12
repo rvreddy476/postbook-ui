@@ -96,50 +96,59 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
         )}
       </div>
 
-      {/* Identity + actions */}
-      <div className="mt-4 px-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2
-              className="truncate text-xl font-[800] tracking-tight text-brand-text sm:text-2xl"
-              style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
-            >
-              {group.name}
-            </h2>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-brand-text/50">
-              <PrivacyIcon className="h-3.5 w-3.5" />
-              {privacy.charAt(0).toUpperCase() + privacy.slice(1)} space
-              <span className="text-brand-text/25">·</span>
-              <strong className="font-bold text-brand-text/70">{formatCount(group.member_count)}</strong> members
-            </p>
-          </div>
-          <Link
-            href={`/groups/${group.id}`}
-            title="Open full page"
-            className="mt-1 rounded-xl border border-brand-divider p-2 text-brand-text/50 transition-colors hover:bg-brand-text/5 hover:text-brand-text"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Link>
+      {/* Identity + actions — one compact row: avatar · name/meta · actions */}
+      <div className="mt-4 flex flex-wrap items-center gap-3 px-1">
+        {/* Space avatar */}
+        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
+          {group.avatar_media_id ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/v1/media/${group.avatar_media_id}/serve`}
+              alt={group.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg font-black text-brand-text/50">
+              {group.name.charAt(0).toUpperCase()}
+            </div>
+          )}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        {/* Name + meta */}
+        <div className="min-w-0">
+          <h2
+            className="truncate text-lg font-[800] tracking-tight text-brand-text sm:text-xl"
+            style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
+          >
+            {group.name}
+          </h2>
+          <p className="flex items-center gap-1.5 text-[13px] text-brand-text/50">
+            <PrivacyIcon className="h-3.5 w-3.5" />
+            {privacy.charAt(0).toUpperCase() + privacy.slice(1)} space
+            <span className="text-brand-text/25">·</span>
+            <strong className="font-bold text-brand-text/70">{formatCount(group.member_count)}</strong> members
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           {isMember ? (
             <>
               <button
                 onClick={() => setShowCreatePost(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90"
+                className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
                 New Post
               </button>
               <button
                 onClick={() => setShowInvite(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-divider px-4 py-2 text-sm font-semibold text-brand-text transition-all hover:bg-brand-text/5"
+                className="flex items-center gap-1.5 rounded-xl border border-brand-divider px-3.5 py-2 text-sm font-semibold text-brand-text transition-all hover:bg-brand-text/5"
               >
                 <UserPlus className="h-4 w-4" />
                 Invite
               </button>
-              <span className="flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-4 py-2 text-sm font-semibold text-brand-text/60">
+              <span className="flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-3.5 py-2 text-sm font-semibold text-brand-text/60">
                 <Check className="h-4 w-4" />
                 Joined
               </span>
@@ -148,7 +157,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
             <button
               onClick={() => joinGroup.mutate(group.id)}
               disabled={joinGroup.isPending}
-              className="flex items-center gap-2 rounded-xl border border-brand-divider px-6 py-2 text-sm font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-brand-divider px-5 py-2 text-sm font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
             >
               <Clock className="h-4 w-4" />
               {joinGroup.isPending ? 'Requesting...' : 'Request to Join'}
@@ -162,12 +171,19 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
             <button
               onClick={() => joinGroup.mutate(group.id)}
               disabled={joinGroup.isPending}
-              className="flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
             >
               <Users className="h-4 w-4" />
               {joinGroup.isPending ? 'Joining...' : 'Join Space'}
             </button>
           )}
+          <Link
+            href={`/groups/${group.id}`}
+            title="Open full page"
+            className="rounded-xl border border-brand-divider p-2 text-brand-text/50 transition-colors hover:bg-brand-text/5 hover:text-brand-text"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 
@@ -195,7 +211,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
       {/* Tab content */}
       <div className="mt-4">
         {tab === 'discussion' && (
-          <GroupFeedTab groupId={group.id} isMember={isMember} viewerRole={viewerRole} />
+          <GroupFeedTab groupId={group.id} isMember={isMember} viewerRole={viewerRole} hideComposer />
         )}
         {tab === 'about' && <GroupAboutTab group={group} />}
         {tab === 'people' && <GroupMembersTab groupId={group.id} currentUserRole={viewerRole} />}

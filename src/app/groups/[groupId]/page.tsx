@@ -410,7 +410,7 @@ export default function GroupDetailPage() {
             {/* Main content */}
             <div>
               {activeTab === 'feed' && resolvedId && (
-                <GroupFeedTab groupId={resolvedId} isMember={isMember} viewerRole={viewerRole} />
+                <GroupFeedTab groupId={resolvedId} isMember={isMember} viewerRole={viewerRole} hideComposer />
               )}
               {activeTab === 'about' && <GroupAboutTab group={group} />}
             </div>
