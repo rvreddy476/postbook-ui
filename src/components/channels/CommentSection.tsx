@@ -167,7 +167,7 @@ const ActionMenu: React.FC<{
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-6 z-50 w-40 rounded-xl bg-white shadow-lg border border-brand-divider overflow-hidden"
+      className="absolute right-0 top-6 z-50 w-40 rounded-xl bg-brand-card shadow-lg border border-brand-divider overflow-hidden"
     >
       {items.map((item) => (
         <button

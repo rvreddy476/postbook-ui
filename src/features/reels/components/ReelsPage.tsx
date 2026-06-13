@@ -6,9 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { HeaderBar } from "@/features/reels/components/HeaderBar";
-import { ReelIconSideNav } from "@/features/reels/components/ReelIconSideNav";
+import Sidebar from "@/components/Sidebar";
 import { ReelChannelInfo } from "@/features/reels/components/ReelChannelInfo";
 import { ReelStage } from "@/features/reels/components/ReelStage";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { ReelActionsPanel } from "@/features/reels/components/ReelActionsPanel";
 import { ReelCommentsPanel } from "@/features/reels/components/ReelCommentsPanel";
 import { ExpandedVideoOverlay } from "@/features/reels/components/ExpandedVideoOverlay";
@@ -75,6 +76,7 @@ export function ReelsPage() {
 
   /* ── data queries ────────────────────────────────── */
 
+  const { effective: dataSaver } = useDataSaver();
   const reelsQuery = useReelsFeed({ pageSize: 8 });
   const baseReels = useMemo(
     () => reelsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -275,7 +277,7 @@ export function ReelsPage() {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "atpost Reel", url: shareUrl });
+        await navigator.share({ title: "VChat Reel", url: shareUrl });
         return;
       } catch {
         return;
@@ -351,54 +353,57 @@ export function ReelsPage() {
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = reelsQuery;
 
   useEffect(() => {
+    // Data-saver: never proactively fetch the next page. The user
+    // has to scroll to (or past) the last loaded reel before we
+    // load more — which mirrors the on-demand contract on mobile.
+    if (dataSaver) return;
     if (activeIndex >= reels.length - 3 && hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
     }
-  }, [activeIndex, reels.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [activeIndex, reels.length, hasNextPage, isFetchingNextPage, fetchNextPage, dataSaver]);
 
   /* ── view tracking ──────────────────────────────── */
 
-  const viewStartRef = useRef<{ reelId: string; startTime: number } | null>(null);
+  const viewStartRef = useRef<{
+    reelId: string;
+    creatorId: string;
+    durationMs: number;
+    startTime: number;
+  } | null>(null);
+
+  // Emit a play_end view event for whichever reel the viewer just left.
+  const flushPendingView = useCallback(() => {
+    const pending = viewStartRef.current;
+    if (!pending) return;
+    const watchedMs = Date.now() - pending.startTime;
+    if (watchedMs <= 1000) return;
+    void trackView({
+      reel_id: pending.reelId,
+      creator_id: pending.creatorId,
+      source: "feed",
+      content_type: "reel",
+      watched_ms: watchedMs,
+      duration_ms: pending.durationMs,
+      completed: watchedMs >= pending.durationMs * 0.95,
+    });
+  }, []);
 
   useEffect(() => {
-    if (viewStartRef.current) {
-      const { reelId, startTime } = viewStartRef.current;
-      const watchedMs = Date.now() - startTime;
-      if (watchedMs > 1000) {
-        const reel = reels.find((r) => r.reel_id === reelId);
-        const durationMs = (reel?.duration_seconds ?? 30) * 1000;
-        void trackView({
-          reel_id: reelId,
-          source: "feed",
-          watched_ms: watchedMs,
-          duration_ms: durationMs,
-          completed: watchedMs >= durationMs * 0.95,
-        });
-      }
-    }
+    flushPendingView();
     if (activeReel) {
-      viewStartRef.current = { reelId: activeReel.reel_id, startTime: Date.now() };
+      viewStartRef.current = {
+        reelId: activeReel.reel_id,
+        creatorId: activeReel.author_id,
+        durationMs: (activeReel.duration_seconds ?? 30) * 1000,
+        startTime: Date.now(),
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReel?.reel_id]);
 
   useEffect(() => {
-    return () => {
-      if (viewStartRef.current) {
-        const { reelId, startTime } = viewStartRef.current;
-        const watchedMs = Date.now() - startTime;
-        if (watchedMs > 1000) {
-          void trackView({
-            reel_id: reelId,
-            source: "feed",
-            watched_ms: watchedMs,
-            duration_ms: 30000,
-            completed: false,
-          });
-        }
-      }
-    };
-  }, []);
+    return () => flushPendingView();
+  }, [flushPendingView]);
 
   /* ── loading state ─────────────────────────────── */
 
@@ -411,7 +416,7 @@ export function ReelsPage() {
           onSearchSubmit={handleSearchSubmit}
         />
         <div className="flex flex-1">
-          <ReelIconSideNav />
+          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
           <div className="flex flex-1 items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-divider border-t-slate-500" />
@@ -432,7 +437,7 @@ export function ReelsPage() {
           onSearchSubmit={handleSearchSubmit}
         />
         <div className="flex flex-1">
-          <ReelIconSideNav />
+          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
           <div className="flex flex-1 items-center justify-center">
             <p className="text-[13px] text-brand-text/60">No reels available.</p>
           </div>
@@ -455,7 +460,7 @@ export function ReelsPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* Icon-only side nav */}
-        <ReelIconSideNav />
+        <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
 
         {/* Tight 3-section row: Info | Video | Actions — centered on page */}
         <main className="flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 pr-[400px]">
@@ -484,6 +489,7 @@ export function ReelsPage() {
               reel={activeReel}
               active={!isExpanded}
               muted={isMuted}
+              dataSaver={dataSaver}
               onToggleMuted={() => setIsMuted((prev) => !prev)}
               onBoost={() => toggleBoostForReel(activeReel, true)}
               onExpand={() => setIsExpanded(true)}

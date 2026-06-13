@@ -26,9 +26,8 @@ import {
 import type { ModuleName, ModuleProfile } from "@/types/profile"
 
 const MODULE_OPTIONS: { id: ModuleName; label: string; description: string; color: string }[] = [
-    { id: "postbook", label: "Postbook", description: "Social feed & text posts", color: "violet" },
-    { id: "posttube", label: "PostTube", description: "Long-form video platform", color: "red" },
-    { id: "postgram", label: "Postgram", description: "Photos & short-form video", color: "amber" },
+    { id: "postbook", label: "Feed", description: "Social feed & text posts", color: "violet" },
+    { id: "posttube", label: "Posttube", description: "Long-form video platform", color: "red" },
 ]
 
 function ModuleCard({

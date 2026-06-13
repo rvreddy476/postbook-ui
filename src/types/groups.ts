@@ -24,6 +24,10 @@ export interface Group {
   status?: 'active' | 'archived' | 'deleted'
   pending_request_count?: number
   viewer_role?: 'owner' | 'admin' | 'moderator' | 'member' | 'pending' | 'outsider' | 'banned'
+  is_mature?: boolean
+  // Discover personalization (GET /v1/groups/discover)
+  friends_in_group?: number
+  reasons?: string[]
 }
 
 export interface GroupMember {
@@ -49,6 +53,12 @@ export interface GroupInvite {
   created_at: string
   updated_at: string
   expires_at?: string
+}
+
+export interface GroupInviteDetail extends GroupInvite {
+  group_name: string
+  group_avatar_media_id?: string
+  group_member_count: number
 }
 
 export interface GroupPost {

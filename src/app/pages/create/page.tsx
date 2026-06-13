@@ -3,12 +3,8 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCreatePage } from '@/hooks/useBusinessPages'
+import { PAGE_TYPES, PAGE_TYPE_BY_VALUE } from '@/lib/pageTypes'
 import { ChevronLeft, Loader2 } from 'lucide-react'
-
-const CATEGORIES = [
-    'Restaurant', 'Cafe', 'Retail', 'Services', 'Health',
-    'Beauty', 'Education', 'Tech', 'Entertainment', 'Other',
-]
 
 export default function CreateBusinessPage() {
     const router = useRouter()
@@ -17,6 +13,7 @@ export default function CreateBusinessPage() {
     const [form, setForm] = useState({
         page_handle: '',
         page_name: '',
+        page_type: '',
         category: '',
         description: '',
         address: '',
@@ -32,11 +29,13 @@ export default function CreateBusinessPage() {
     const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
+    const selectedType = PAGE_TYPE_BY_VALUE[form.page_type]
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
-        if (!form.page_handle.trim() || !form.page_name.trim() || !form.category) {
-            setError('Handle, name, and category are required.')
+        if (!form.page_handle.trim() || !form.page_name.trim() || !form.page_type) {
+            setError('Handle, name, and page type are required.')
             return
         }
         createPage.mutate(
@@ -108,18 +107,37 @@ export default function CreateBusinessPage() {
 
                     <div>
                         <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">
-                            Category <span className="text-red-400">*</span>
+                            Page Type <span className="text-red-400">*</span>
                         </label>
                         <select
-                            value={form.category}
-                            onChange={set('category')}
+                            value={form.page_type}
+                            onChange={set('page_type')}
                             className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
                         >
-                            <option value="">Select a category</option>
-                            {CATEGORIES.map((c) => (
-                                <option key={c} value={c}>{c}</option>
+                            <option value="">Select a page type</option>
+                            {PAGE_TYPES.map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
                             ))}
                         </select>
+                        {selectedType && (
+                            <p className="text-xs text-[#7B5B3A]/70 mt-1.5">
+                                {selectedType.description}
+                                {selectedType.requiredDocuments.length > 0 && (
+                                    <> Requires: {selectedType.requiredDocuments.map((d) => d.replace(/_/g, ' ')).join(', ')}.</>
+                                )}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">Category (optional)</label>
+                        <input
+                            type="text"
+                            value={form.category}
+                            onChange={set('category')}
+                            placeholder="e.g. Italian restaurant"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                        />
                     </div>
 
                     <div>

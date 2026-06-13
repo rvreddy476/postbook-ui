@@ -13,6 +13,7 @@ const statusLabel: Record<string, { label: string; color: string }> = {
   live: { label: 'Live', color: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
   hidden: { label: 'Hidden', color: 'bg-[#F5F0EB] text-[#6B5544] border border-[#E8DDD3]' },
   rejected: { label: 'Rejected', color: 'bg-red-50 text-red-700 border border-red-200' },
+  changes_requested: { label: 'Changes Requested', color: 'bg-orange-50 text-orange-800 border border-orange-200' },
   archived: { label: 'Archived', color: 'bg-[#F5F0EB] text-[#6B5544]/50 border border-[#E8DDD3]' },
 }
 
@@ -84,14 +85,20 @@ export default function SellerProductsPage() {
                         <td className="px-4 py-4 text-[#6B5544] text-sm">
                           {new Date(p.created_at).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          {p.approval_status === 'draft' && (
+                        <td className="px-4 py-4 text-right space-x-3">
+                          <Link
+                            href={`/seller/products/${p.id}/variants`}
+                            className="text-[#8B5E3C] hover:text-[#1A1A1A] font-bold text-xs uppercase tracking-wider transition"
+                          >
+                            Variants
+                          </Link>
+                          {(p.approval_status === 'draft' || p.approval_status === 'changes_requested') && (
                             <button
                               onClick={() => submitProduct.mutate(p.id)}
                               disabled={submitProduct.isPending}
                               className="text-[#8B5E3C] hover:text-[#1A1A1A] font-bold text-xs uppercase tracking-wider disabled:opacity-50 transition"
                             >
-                              Submit for Review
+                              {p.approval_status === 'changes_requested' ? 'Resubmit' : 'Submit for Review'}
                             </button>
                           )}
                         </td>

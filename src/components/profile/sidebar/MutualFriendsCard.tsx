@@ -61,7 +61,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                 <div className="h-4 w-28 bg-brand-secondary rounded mb-3" />
                 <div className="flex -space-x-2 mb-2">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="w-8 h-8 rounded-full bg-brand-secondary border-2 border-white" />
+                        <div key={i} className="w-8 h-8 rounded-full bg-brand-secondary border-2 border-brand-card" />
                     ))}
                 </div>
                 <div className="h-3 w-48 bg-brand-secondary rounded" />
@@ -100,7 +100,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                 {displayProfiles.slice(0, 6).map((profile) => (
                     <div
                         key={profile.id}
-                        className="w-8 h-8 rounded-full border-2 border-white bg-brand-secondary overflow-hidden shrink-0"
+                        className="w-8 h-8 rounded-full border-2 border-brand-card bg-brand-secondary overflow-hidden shrink-0"
                     >
                         {profile.avatar_media_id ? (
                             <img

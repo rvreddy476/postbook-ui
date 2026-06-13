@@ -155,7 +155,7 @@ export default function CreateChannelPage() {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={100}
                 placeholder="My Awesome Channel"
-                className="w-full px-4 py-3 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
               />
               <p className="text-[11px] text-brand-text/30 mt-1 text-right">{name.length}/100</p>
             </div>
@@ -171,7 +171,7 @@ export default function CreateChannelPage() {
                   value={handle}
                   onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                   placeholder="mychannel"
-                  className="w-full pl-8 pr-10 py-3 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+                  className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
                 />
                 {handle.length >= 3 && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -234,7 +234,7 @@ export default function CreateChannelPage() {
                 maxLength={300}
                 placeholder="What is this channel about?"
                 rows={3}
-                className="w-full px-4 py-3 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all resize-none"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all resize-none"
               />
               <p className="text-[11px] text-brand-text/30 mt-1 text-right">{description.length}/300</p>
             </div>
@@ -321,7 +321,7 @@ export default function CreateChannelPage() {
                     className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
                       commentMode === opt.value
                         ? 'border-brand-text bg-brand-text/5'
-                        : 'border-brand-divider bg-white hover:bg-brand-secondary/30'
+                        : 'border-brand-divider bg-brand-card hover:bg-brand-secondary/30'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -342,7 +342,7 @@ export default function CreateChannelPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between bg-white border border-brand-divider rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between bg-brand-card border border-brand-divider rounded-xl px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-brand-text">Allow Echo / Forward</p>
                 <p className="text-xs text-brand-text/50 mt-0.5">Subscribers can echo updates to their feed</p>
@@ -362,7 +362,7 @@ export default function CreateChannelPage() {
               </button>
             </div>
 
-            <div className="bg-white border border-brand-divider rounded-xl px-4 py-3 space-y-3">
+            <div className="bg-brand-card border border-brand-divider rounded-xl px-4 py-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-brand-text">Paid Channel</p>

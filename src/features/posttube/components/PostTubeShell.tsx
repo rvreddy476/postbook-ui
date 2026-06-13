@@ -10,28 +10,15 @@ import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
 /* ── Dark mode hook ───────────────────────────────────── */
 
 function useDarkMode() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("posttube-dark");
-    if (stored === "true") {
-      setDark(true);
-      document.documentElement.classList.add("dark");
-    }
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("posttube-dark", "true");
   }, []);
 
   const toggle = useCallback(() => {
-    setDark((prev) => {
-      const next = !prev;
-      if (next) {
-        document.documentElement.classList.add("dark");
-        localStorage.setItem("posttube-dark", "true");
-      } else {
-        document.documentElement.classList.remove("dark");
-        localStorage.setItem("posttube-dark", "false");
-      }
-      return next;
-    });
+    // Locked to dark mode for B&W theme
   }, []);
 
   return { dark, toggle };
@@ -115,15 +102,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
 
         {/* Right: Dark toggle + Create + Notifications + Profile */}
         <div className="flex w-[240px] shrink-0 items-center justify-end gap-1.5">
-          {/* Dark mode toggle */}
-          <button
-            type="button"
-            onClick={onToggleDark}
-            className="relative flex h-10 w-10 items-center justify-center rounded-2xl text-[#8B8B9E] dark:text-[#6B6980] transition-all hover:bg-[#F0EEFF] dark:hover:bg-[#2A2740] hover:text-[#7C5CFC]"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
-          </button>
+
 
           <CreateButton />
 

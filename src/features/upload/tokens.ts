@@ -69,8 +69,8 @@ export const STEP_META: Record<StepId, { label: string; description: string }> =
 };
 
 export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLabel: string; icon: string; aspect: string; maxDuration: number; maxSize: number }> = {
-  reel:    { label: "Flick",         platformLabel: "Postgram Flicks", icon: "sparkles", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
-  short:   { label: "Flick / Clip",  platformLabel: "Posttube Flicks", icon: "clapperboard", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
+  reel:    { label: "Reel",          platformLabel: "Reels",           icon: "sparkles", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
+  short:   { label: "Reel / Clip",   platformLabel: "Posttube Reels",  icon: "clapperboard", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
   long:    { label: "Video",         platformLabel: "Posttube",        icon: "film",          aspect: "16/9", maxDuration: 43200, maxSize: 10 * 1024 * 1024 * 1024 },
   podcast: { label: "Podcast",       platformLabel: "Posttube",        icon: "mic",           aspect: "1/1",  maxDuration: 28800, maxSize: 2 * 1024 * 1024 * 1024 },
 };

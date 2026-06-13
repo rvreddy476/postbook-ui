@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import NotificationToastHost from '@/components/notifications/NotificationToastHost';
 import Sidebar from '@/components/Sidebar';
 import { getSession, logoutUser } from '@/services/authService';
 import { connectToHub } from '@/services/messageService';
@@ -11,6 +12,9 @@ import { NavItem, User } from '@/types';
 interface AppShellProps {
   children: React.ReactNode;
   activeTab?: NavItem;
+  /** Hide the icon rail — for pages that bring their own left panel
+   *  (e.g. MySpace). The header stays. */
+  hideSidebar?: boolean;
 }
 
 function routeForTab(tab: NavItem, currentUser: User | null): string | null {
@@ -45,7 +49,7 @@ function routeForTab(tab: NavItem, currentUser: User | null): string | null {
   }
 }
 
-export default function AppShell({ children, activeTab: activeTabOverride }: AppShellProps) {
+export default function AppShell({ children, activeTab: activeTabOverride, hideSidebar = false }: AppShellProps) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<NavItem>(activeTabOverride ?? 'Home');
@@ -122,24 +126,33 @@ export default function AppShell({ children, activeTab: activeTabOverride }: App
         onLogout={handleLogout}
         onToggleContactList={handleChatOpen}
         navExpanded={navExpanded}
+        fullWidth={hideSidebar}
       />
 
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={handleNavChange}
-        onChatClick={handleChatOpen}
-        onNotificationsClick={handleNotificationsOpen}
-        expanded={navExpanded}
-        setExpanded={setNavExpanded}
-      />
+      {!hideSidebar && (
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={handleNavChange}
+          onChatClick={handleChatOpen}
+          onNotificationsClick={handleNotificationsOpen}
+          expanded={navExpanded}
+          setExpanded={setNavExpanded}
+        />
+      )}
 
       <div
         className={`relative h-full overflow-y-auto pt-20 transition-all duration-500 ${
-          navExpanded ? 'md:pl-64' : 'md:pl-16'
+          hideSidebar ? '' : navExpanded ? 'md:pl-64' : 'md:pl-16'
         }`}
       >
         {children}
       </div>
+
+      {/* Live notification toaster — listens to the same WS socket
+          useNotificationBell uses, debounces bursts, collapses by
+          collapse_key, falls back to a summary toast over the
+          summary threshold. */}
+      <NotificationToastHost />
     </div>
   );
 }

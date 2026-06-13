@@ -55,11 +55,12 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
                     <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Wallet Frozen</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Earnings Frozen</span>
                 </div>
             )}
 
-            {/* Header */}
+            {/* Header — labelled "Creator earnings" (Phase 2 §D4) so
+                fans/creators do not confuse this with the consumer wallet. */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -67,16 +68,16 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
                     </svg>
                 </div>
                 <div>
-                    <h2 className="text-sm font-black text-[#3C2415]">Wallet</h2>
-                    <p className="text-[9px] font-bold text-[#7B5B3A] uppercase tracking-widest">Your earnings overview</p>
+                    <h2 className="text-sm font-black text-[#3C2415]">Creator earnings</h2>
+                    <p className="text-[9px] font-bold text-[#7B5B3A] uppercase tracking-widest">Earnings ledger overview</p>
                 </div>
             </div>
 
             {/* Stats grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Balance */}
+                {/* Available to withdraw */}
                 <div className="bg-[#FAF5F0] rounded-xl p-4 border border-[#F0E6DC]">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Available Balance</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Available to withdraw</p>
                     <p className="text-xl font-black text-[#3C2415]">{formatAmount(wallet.balance, wallet.currency)}</p>
                 </div>
 

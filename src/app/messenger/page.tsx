@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession } from '@/services/authService'
-import { NotificationProvider } from '@/contexts/NotificationContext'
 import PostbookMessenger from '@/components/messenger/PostbookMessenger'
 import type { User } from '@/types'
 
@@ -26,9 +25,8 @@ export default function MessengerPage() {
     return <div className="h-screen bg-brand-secondary" />
   }
 
-  return (
-    <NotificationProvider currentUserId={currentUser.id} onOpenChat={() => {}}>
-      <PostbookMessenger />
-    </NotificationProvider>
-  )
+  // NotificationProvider is now mounted app-wide (see app/providers.tsx),
+  // so PostbookMessenger reads the same shared unread state as every
+  // other screen — no per-page provider needed.
+  return <PostbookMessenger />
 }

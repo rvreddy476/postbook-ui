@@ -195,10 +195,10 @@ export default function SellerOnboardingPage() {
         const page = await createPage.mutateAsync({
           page_handle: handle,
           page_name: pageName,
+          page_type: 'marketplace_seller',
           category,
           description,
           business_email: email,
-          status: 'draft',
         })
         pageId = page.id
         setDraftPage(page)
@@ -335,7 +335,7 @@ export default function SellerOnboardingPage() {
         <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-brand-bg px-4 py-8">
           <div className="max-w-md w-full bg-brand-card rounded-2xl shadow-lg border border-brand-divider p-8 text-center animate-fadeIn">
             <h1 className="text-2xl font-black text-brand-text mb-2 tracking-tight">Seller Onboarding</h1>
-            <p className="text-brand-text/50 mb-8 text-sm font-medium">Launch your store on Postbook today.</p>
+            <p className="text-brand-text/50 mb-8 text-sm font-medium">Launch your store on VChat today.</p>
             <div className="text-left space-y-2.5 mb-8 bg-brand-bg/50 rounded-xl p-5 border border-brand-divider">
               {STEPS.map((s, i) => (
                 <div key={s.id} className="flex items-center gap-3">

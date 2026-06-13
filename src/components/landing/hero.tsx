@@ -9,6 +9,7 @@ interface FeatureCardProps {
   title: string;
   desc: string;
   color: FeatureColor;
+  href: string;
   icon: React.ReactNode;
 }
 
@@ -31,7 +32,7 @@ export function LandingHero() {
           className="inline-flex items-center gap-3 px-5 py-3 bg-brand-card border border-brand-divider rounded-2xl text-brand-text text-xs font-black uppercase tracking-widest hover:border-brand-accent transition-all group"
         >
           <span className="text-lg">🛍️</span>
-          <span>Sell on Postbook</span>
+          <span>Sell on VChat</span>
           <svg className="h-3 w-3 text-brand-text/40 group-hover:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
           </svg>
@@ -41,8 +42,9 @@ export function LandingHero() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6">
         <FeatureCard
           title="Video Stream"
-          desc="Professional 4K lossless quality."
+          desc="Go live to your followers with LiveKit-powered HD streaming."
           color="blue"
+          href="/live"
           icon={
             <path
               strokeLinecap="round"
@@ -54,8 +56,9 @@ export function LandingHero() {
         />
         <FeatureCard
           title="Short Reels"
-          desc="Fast-paced global narratives."
+          desc="Vertical 60-second videos with native AI moderation."
           color="rose"
+          href="/reels"
           icon={
             <>
               <path
@@ -70,8 +73,9 @@ export function LandingHero() {
         />
         <FeatureCard
           title="Direct Message"
-          desc="Instant, gold-standard chats."
+          desc="Real-time WebSocket chat with read receipts and presence."
           color="amber"
+          href="/?tab=Chat"
           icon={
             <path
               strokeLinecap="round"
@@ -83,8 +87,9 @@ export function LandingHero() {
         />
         <FeatureCard
           title="Monetize"
-          desc="Professional career tools."
+          desc="Tiered subscriptions, COD-and-UPI payouts, full earnings ledger."
           color="emerald"
+          href="/monetization"
           icon={
             <path
               strokeLinecap="round"
@@ -99,7 +104,7 @@ export function LandingHero() {
   );
 }
 
-function FeatureCard({ title, desc, color, icon }: FeatureCardProps) {
+function FeatureCard({ title, desc, color, href, icon }: FeatureCardProps) {
   const colorClasses: Record<FeatureColor, { bg: string; shadow: string; hover: string }> = {
     blue: {
       bg: 'from-blue-500 to-blue-700',
@@ -126,7 +131,10 @@ function FeatureCard({ title, desc, color, icon }: FeatureCardProps) {
   const c = colorClasses[color];
 
   return (
-    <div className={`group rounded-3xl border border-brand-divider bg-brand-card p-4 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:shadow-2xl ${c.hover}`}>
+    <Link
+      href={href}
+      className={`group block rounded-3xl border border-brand-divider bg-brand-card p-4 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:-translate-y-1 hover:border-brand-accent/50 hover:shadow-2xl ${c.hover}`}
+    >
       <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg transition-transform group-hover:scale-110 ${c.bg} ${c.shadow}`}>
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {icon}
@@ -134,6 +142,12 @@ function FeatureCard({ title, desc, color, icon }: FeatureCardProps) {
       </div>
       <h3 className="mb-1 text-[11px] font-black uppercase tracking-widest text-brand-text">{title}</h3>
       <p className="text-[10px] font-bold leading-tight text-brand-text/60">{desc}</p>
-    </div>
+      <div className="mt-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] text-brand-text/40 transition-colors group-hover:text-brand-text">
+        Open
+        <svg className="h-2.5 w-2.5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </Link>
   );
 }

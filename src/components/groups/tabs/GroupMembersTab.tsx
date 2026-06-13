@@ -2,13 +2,19 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
+import { useBatchRelationships, useSendFriendRequest } from '@/hooks/useConnections'
+import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile'
+import { useAuthUser } from '@/store/auth'
+import ChatWindow from '@/components/ChatWindow'
 import {
   Crown, ShieldCheck, Wrench, UserMinus, Search, Shield,
-  MoreHorizontal, ChevronDown, Ban
+  MoreHorizontal, ChevronDown, Ban, MessageCircle, UserPlus, Check
 } from 'lucide-react'
 import type { GroupMember } from '@/types/groups'
+import type { User } from '@/types'
 
 interface GroupMembersTabProps {
   groupId: string
@@ -29,6 +35,7 @@ function MemberCard({
   onRoleChange,
   onRemove,
   onBan,
+  cta,
 }: {
   member: GroupMember
   canManage: boolean
@@ -36,6 +43,7 @@ function MemberCard({
   onRoleChange: (member: GroupMember, newRole: string) => void
   onRemove: (member: GroupMember) => void
   onBan: (member: GroupMember) => void
+  cta?: React.ReactNode
 }) {
   const [showMenu, setShowMenu] = useState(false)
   const badge = roleConfig[member.role] || roleConfig.member
@@ -79,11 +87,16 @@ function MemberCard({
         </div>
       </div>
 
-      {/* Role Badge */}
-      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${badge.color} ${badge.bgColor}`}>
-        {badge.icon}
-        {badge.label}
-      </div>
+      {/* Relationship CTA (Add friend / Message / Requested) */}
+      {cta}
+
+      {/* Role tag — admins/mods only; regular members carry no badge */}
+      {member.role !== 'member' && (
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${badge.color} ${badge.bgColor}`}>
+          {badge.icon}
+          {badge.label}
+        </div>
+      )}
 
       {/* Admin Actions */}
       {canManageThis && (
@@ -173,11 +186,20 @@ function MemberCard({
 }
 
 export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembersTabProps) {
+  const router = useRouter()
+  const authUser = useAuthUser()
   const [searchQuery, setSearchQuery] = useState('')
+  const [chats, setChats] = useState<User[]>([])
+  // Optimistic overrides while the relationships batch refetches.
+  const [followOverride, setFollowOverride] = useState<Map<string, boolean>>(new Map())
   const { data: members, isLoading } = useGroupMembers(groupId, 100)
   const updateRole = useUpdateMemberRole()
   const removeMember = useRemoveMember()
   const banMember = useBanMember()
+  const followUser = useFollowUser()
+  const unfollowUser = useUnfollowUser()
+  const sendRequest = useSendFriendRequest()
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set())
 
   const isOwner = currentUserRole === 'owner'
   const isAdmin = currentUserRole === 'admin' || isOwner
@@ -187,6 +209,121 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   // Batch-fetch profiles for all members
   const memberUserIds = useMemo(() => members?.map(m => m.user_id) ?? [], [members])
   const { data: profileMap } = useBatchProfiles(memberUserIds)
+  // Viewer <-> member relationships drive the per-row CTA.
+  const { data: relMap } = useBatchRelationships(authUser?.id ?? '', memberUserIds)
+
+  const openChat = (m: GroupMember) => {
+    setChats((prev) => {
+      if (prev.some((c) => c.id === m.user_id)) return prev
+      const contact: User = {
+        id: m.user_id,
+        name: m.display_name || m.username || 'Member',
+        username: m.username || m.user_id,
+        avatar: m.avatar_media_id ? `/v1/media/${m.avatar_media_id}/serve` : '',
+        isOnline: false,
+      }
+      const next = [contact, ...prev]
+      return next.length > 3 ? next.slice(0, 3) : next
+    })
+  }
+  const closeChat = (id: string) => setChats((prev) => prev.filter((c) => c.id !== id))
+
+  const setOverride = (userId: string, val: boolean) =>
+    setFollowOverride((prev) => new Map(prev).set(userId, val))
+
+  // CTA matrix (DB-driven via the graph relationships batch):
+  //   creator / hub / page  -> Follow/Following toggle only (no Message)
+  //   user, already friend  -> "Following" state + Message
+  //   user, request pending -> Requested / Respond
+  //   user, not friend      -> Add friend
+  const ctaFor = (m: GroupMember): React.ReactNode => {
+    if (!authUser || m.user_id === authUser.id) return null
+    const prof = profileMap?.get(m.user_id) as (Record<string, unknown> | undefined)
+    const isPage = (prof?.entityType ?? prof?.entity_type) === 'page'
+    const rel = relMap?.get(m.user_id)
+    const isFriend = !!rel?.is_connection || rel?.connection_status === 'accepted'
+    const following = followOverride.get(m.user_id) ?? !!rel?.following
+
+    if (isPage) {
+      const handleToggleFollow = () => {
+        const target = m.username || m.user_id
+        if (following) {
+          setOverride(m.user_id, false)
+          unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
+        } else {
+          setOverride(m.user_id, true)
+          followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
+        }
+      }
+      return (
+        <button
+          onClick={handleToggleFollow}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+            following
+              ? 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
+              : 'bg-brand-text text-brand-bg hover:opacity-90'
+          }`}
+        >
+          {following ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+          {following ? 'Following' : 'Follow'}
+        </button>
+      )
+    }
+
+    if (isFriend) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/60">
+            <Check className="w-3.5 h-3.5" />
+            Following
+          </span>
+          <button
+            onClick={() => openChat(m)}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            Message
+          </button>
+        </div>
+      )
+    }
+
+    if (rel?.connection_status === 'pending_sent' || sentIds.has(m.user_id)) {
+      return (
+        <span className="rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/50">
+          Requested
+        </span>
+      )
+    }
+    if (rel?.connection_status === 'pending_received') {
+      return (
+        <button
+          onClick={() => router.push('/settings/friend-requests')}
+          className="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5"
+        >
+          Respond
+        </button>
+      )
+    }
+    return (
+      <button
+        onClick={async () => {
+          if (sentIds.has(m.user_id)) return
+          try {
+            await sendRequest.mutateAsync(m.username || m.user_id)
+            setSentIds((prev) => new Set(prev).add(m.user_id))
+          } catch {
+            // surfaced by the mutation
+          }
+        }}
+        disabled={sendRequest.isPending}
+        className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+      >
+        <UserPlus className="w-3.5 h-3.5" />
+        Add friend
+      </button>
+    )
+  }
 
   // Enrich members with profile data
   const enrichedMembers = useMemo(() => {
@@ -219,7 +356,9 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     }
   }
 
-  // Filter and group by role
+  // Filter and group by role. Depend on enrichedMembers (not the raw
+  // members) so names refresh when the batch profiles land — a stale
+  // dep here showed "Unknown" for everyone.
   const filtered = useMemo(() => {
     if (!enrichedMembers) return []
     const q = searchQuery.toLowerCase().trim()
@@ -228,12 +367,13 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       return (m.display_name?.toLowerCase().includes(q)) ||
         (m.username?.toLowerCase().includes(q))
     })
-  }, [members, searchQuery])
+  }, [enrichedMembers, searchQuery])
 
-  const sections = useMemo(() => {
-    const adminsMods = filtered.filter(m => m.role === 'owner' || m.role === 'admin' || m.role === 'moderator')
-    const regularMembers = filtered.filter(m => m.role === 'member')
-    return { adminsMods, regularMembers }
+  // One flat list under a single "Members" heading — admins sort first
+  // and carry their role tag; regular members get no badge at all.
+  const ordered = useMemo(() => {
+    const rank = (r: string) => (r === 'owner' ? 0 : r === 'admin' ? 1 : r === 'moderator' ? 2 : 3)
+    return [...filtered].sort((a, b) => rank(a.role) - rank(b.role))
   }, [filtered])
 
   if (isLoading) {
@@ -279,55 +419,39 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
         />
       </div>
 
-      {/* Admins & Moderators Section */}
-      {sections.adminsMods.length > 0 && (
-        <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
-            Admins & Moderators ({sections.adminsMods.length})
-          </h3>
-          <div className="space-y-2">
-            {sections.adminsMods.map(member => (
-              <MemberCard
-                key={member.user_id}
-                member={member}
-                canManage={canManage}
-                isAdmin={isAdmin}
-                onRoleChange={handleRoleChange}
-                onRemove={handleRemove}
-                onBan={handleBan}
-              />
-            ))}
-          </div>
+      {/* Members — single heading, admins first */}
+      <div>
+        <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
+          Members ({ordered.length})
+        </h3>
+        <div className="space-y-2">
+          {ordered.map(member => (
+            <MemberCard
+              key={member.user_id}
+              member={member}
+              canManage={canManage}
+              isAdmin={isAdmin}
+              onRoleChange={handleRoleChange}
+              onRemove={handleRemove}
+              onBan={handleBan}
+              cta={ctaFor(member)}
+            />
+          ))}
         </div>
-      )}
-
-      {/* Members Section */}
-      {sections.regularMembers.length > 0 && (
-        <div>
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
-            Members ({sections.regularMembers.length})
-          </h3>
-          <div className="space-y-2">
-            {sections.regularMembers.map(member => (
-              <MemberCard
-                key={member.user_id}
-                member={member}
-                canManage={canManage}
-                isAdmin={isAdmin}
-                onRoleChange={handleRoleChange}
-                onRemove={handleRemove}
-                onBan={handleBan}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       {filtered.length === 0 && searchQuery && (
         <div className="text-center py-12">
           <p className="text-sm text-brand-text/60">No members matching &ldquo;{searchQuery}&rdquo;</p>
         </div>
       )}
+
+      {/* Floating chat dock - Message opens an in-place ChatWindow. */}
+      <div className="fixed bottom-0 right-4 z-[1500] flex items-end gap-3">
+        {chats.map((c) => (
+          <ChatWindow key={c.id} contact={c} onClose={() => closeChat(c.id)} />
+        ))}
+      </div>
     </div>
   )
 }

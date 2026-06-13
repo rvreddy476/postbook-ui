@@ -26,7 +26,7 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
             <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-5 py-3">
                 <div className="flex items-center gap-2">
                     <Film className="h-4 w-4 text-white" />
-                    <span className="text-sm font-bold text-white">Creator on atpost</span>
+                    <span className="text-sm font-bold text-white">Creator on VChat</span>
                 </div>
             </div>
 
@@ -47,7 +47,7 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5 text-sm text-brand-highlight">
                             <Clapperboard className="h-4 w-4 text-brand-text/60" />
-                            <span>Flicks</span>
+                            <span>Reels</span>
                         </div>
                         <span className="text-sm font-semibold text-brand-text">
                             {contentCounts.reel.toLocaleString()}

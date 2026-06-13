@@ -238,9 +238,9 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     <Link href="/">
                         <div className="flex items-center gap-3 cursor-pointer group">
                             <div className="w-9 h-9 orchid-gradient rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-brand-text/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
-                                <span className="text-white font-black text-base tracking-tighter">PB</span>
+                                <span className="text-white font-black text-base tracking-tighter">VC</span>
                             </div>
-                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">atpost</span>
+                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">VChat</span>
                         </div>
                     </Link>
                 </div>
@@ -383,8 +383,9 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     <div className="flex items-center gap-2 mt-2">
                                                                         <button
                                                                             onClick={() => {
-                                                                                const username = actorUsername || notif.actor_user_id;
-                                                                                acceptFriend.mutate(username, {
+                                                                                // graph-service accept is keyed by the
+                                                                                // requester's user_id — actor_user_id is exactly that.
+                                                                                acceptFriend.mutate(notif.actor_user_id, {
                                                                                     onSuccess: () => {
                                                                                         setHandledIds(prev => new Set(prev).add(notif.notification_id));
                                                                                         toast({ type: 'success', title: 'Friend request accepted' });
@@ -398,8 +399,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                         </button>
                                                                         <button
                                                                             onClick={() => {
-                                                                                const username = actorUsername || notif.actor_user_id;
-                                                                                rejectFriend.mutate(username, {
+                                                                                rejectFriend.mutate(notif.actor_user_id, {
                                                                                     onSuccess: () => {
                                                                                         setHandledIds(prev => new Set(prev).add(notif.notification_id));
                                                                                         toast({ type: 'info', title: 'Friend request declined' });

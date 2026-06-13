@@ -166,7 +166,7 @@ export default function MyChannelPage() {
           <div className="mt-6 flex items-center gap-1 border-b border-brand-divider">
             {([
               { id: "videos" as Tab, label: "Videos", icon: Video, count: videos.length },
-              { id: "flicks" as Tab, label: "Flicks", icon: Film, count: flicks.length },
+              { id: "flicks" as Tab, label: "Reels", icon: Film, count: flicks.length },
             ]).map((t) => (
               <button
                 key={t.id}

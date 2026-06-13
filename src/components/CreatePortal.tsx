@@ -1,23 +1,52 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Camera,
   BarChart3,
-  Hash,
-  Loader2,
-  MapPin,
-  Send,
-  Smile,
-  X,
-  Globe,
-  Lock,
-  Users,
   ChevronDown,
-  Palette,
+  Globe,
+  Hash,
+  ImagePlus,
+  Loader2,
+  Lock,
+  MapPin,
   Plus,
+  Send,
+  ShieldCheck,
+  Smile,
+  Users,
+  X,
 } from 'lucide-react';
+
+/**
+ * Multi-colored flower-petal icon on a dark square — used as the
+ * "Design background" trigger in the composer. Six overlapping
+ * translucent circles ring a center disc; arranged so the colors
+ * blend like the iOS Shortcuts icon the user referenced.
+ */
+const FlowerPaletteIcon: React.FC<{ size?: number; className?: string }> = ({ size = 22, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 32 32"
+    className={className}
+    aria-hidden="true"
+  >
+    <rect width="32" height="32" rx="9" fill="#0E0E10" />
+    <g style={{ mixBlendMode: 'screen' }} transform="translate(16 16)">
+      {/* 6 petals around a center, each rotated 60° apart */}
+      <circle cx="0" cy="-6" r="6" fill="#FF4F8B" opacity="0.92" />
+      <circle cx="5.2" cy="-3" r="6" fill="#FFB13E" opacity="0.92" />
+      <circle cx="5.2" cy="3" r="6" fill="#FFE54B" opacity="0.92" />
+      <circle cx="0" cy="6" r="6" fill="#4ED96B" opacity="0.92" />
+      <circle cx="-5.2" cy="3" r="6" fill="#3AC7FF" opacity="0.92" />
+      <circle cx="-5.2" cy="-3" r="6" fill="#A862FF" opacity="0.92" />
+      {/* center highlight */}
+      <circle cx="0" cy="0" r="2.4" fill="#FFFFFF" opacity="0.55" />
+    </g>
+  </svg>
+);
 
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useCreatePost } from '@/hooks/useFeedPosts';
@@ -33,32 +62,29 @@ interface CreatePortalProps {
   groupId?: string;
 }
 
-type PostVisibility = 'public' | 'followers' | 'private';
+type PostVisibility = 'public' | 'followers' | 'trusted' | 'private';
 
-// Background color presets for text posts
-const BG_PRESETS = [
-  null, // no background (default)
-  { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', text: '#fff' },
-  { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', text: '#5a2d3a' },
-  { bg: 'linear-gradient(135deg, #0c3483 0%, #a2b6df 100%)', text: '#fff' },
-  { bg: '#1a1a2e', text: '#e0e0ff' },
-  { bg: '#2d1b69', text: '#e8d5ff' },
-  { bg: '#1b4332', text: '#d8f3dc' },
-  { bg: '#7f1d1d', text: '#fecaca' },
+// Rainbow palette, ROYGBIV-ordered so the picker can lay them out as
+// a half-circle. No black/dark-near-black swatches by request — the
+// `dark` flag still tells the textarea to flip text colour to white
+// for the deeper hues (deep red, deep blue, indigo, deep green).
+const BACKGROUNDS: { value: string | null; label: string; dark?: boolean }[] = [
+  { value: null, label: 'No background' },
+  { value: '#E63946', label: 'Red', dark: true },
+  { value: '#F58F47', label: 'Orange' },
+  { value: '#FFD23F', label: 'Yellow' },
+  { value: '#4ED96B', label: 'Green' },
+  { value: '#3AC7FF', label: 'Sky' },
+  { value: '#2563EB', label: 'Blue', dark: true },
+  { value: '#A862FF', label: 'Indigo', dark: true },
+  { value: '#FF4F8B', label: 'Pink', dark: true },
 ];
 
-// Swatch colors for the gradient preview circles
-const SWATCH_COLORS = [
-  'transparent',
-  '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a',
-  '#a18cd1', '#fccb90', '#ff9a9e', '#0c3483',
-  '#1a1a2e', '#2d1b69', '#1b4332', '#7f1d1d',
+const VIS_OPTIONS: { value: PostVisibility; label: string; Icon: typeof Globe }[] = [
+  { value: 'public', label: 'Everyone', Icon: Globe },
+  { value: 'followers', label: 'Followers', Icon: Users },
+  { value: 'trusted', label: 'Trusted', Icon: ShieldCheck },
+  { value: 'private', label: 'Only me', Icon: Lock },
 ];
 
 const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
@@ -73,16 +99,33 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [showLocation, setShowLocation] = useState(false);
   const [showPoll, setShowPoll] = useState(false);
   const [poll, setPoll] = useState<PollState>({ options: ['', ''], duration: '1d', allowMultiple: false });
-  const [bgIndex, setBgIndex] = useState(0); // 0 = no background
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [customColor, setCustomColor] = useState('#667eea');
+  const [pollOptionErrors, setPollOptionErrors] = useState<Record<number, string>>({});
+  const [pollQuestionError, setPollQuestionError] = useState<string | null>(null);
+  // Hashtag chips — kept separate from the main text so we never inject raw "#" characters there.
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [showHashtagInput, setShowHashtagInput] = useState(false);
+  const [hashtagDraft, setHashtagDraft] = useState('');
+  const [background, setBackground] = useState<string | null>(null);
+  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useMyProfile();
   const createPost = useCreatePost();
@@ -92,28 +135,30 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     ? `/v1/media/${profile.avatar_media_id}/serve`
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User';
   const displayName = profile?.display_name || 'User';
-  const firstName = displayName.split(' ')[0];
+  const handle = profile?.username ? `@${profile.username}` : '@you';
+  const firstName = displayName.split(' ')[0] || 'you';
 
-  const activeBg = BG_PRESETS[bgIndex] ?? null;
-  const hasColorBg = activeBg !== null;
+  const bgSwatch = BACKGROUNDS.find((b) => b.value === background) ?? BACKGROUNDS[0];
+  const onDark = !!bgSwatch.dark;
   const isTextOnly = files.length === 0 && !showPoll;
+  const hasColorBg = background !== null && isTextOnly;
 
   const validPollOptions = poll.options.filter((o) => o.trim()).length >= 2;
   const canPost = Boolean(text.trim() || files.length > 0 || (showPoll && validPollOptions));
   const charCount = text.length;
-  const maxChars = 3000;
+  const maxChars = 2000;
 
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      const maxH = hasColorBg && isTextOnly ? 160 : 200;
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, maxH)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 220)}px`;
     }
-  }, [text, hasColorBg, isTextOnly]);
+  }, [text]);
 
   useEffect(() => {
-    setTimeout(() => textareaRef.current?.focus(), 100);
+    const t = window.setTimeout(() => textareaRef.current?.focus(), 100);
+    return () => window.clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -128,10 +173,46 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
 
-  // Reset bg when media/poll added
+  // Drop background when media or poll is added — colored backgrounds are
+  // text-only by design.
   useEffect(() => {
-    if (files.length > 0 || showPoll) setBgIndex(0);
+    if (files.length > 0 || showPoll) {
+      setBackground(null);
+      setShowBackgroundPicker(false);
+    }
   }, [files.length, showPoll]);
+
+  // Normalize: strip leading #, trim, drop spaces/punct that aren't word chars,
+  // lowercase. "  #Design ! " → "design".
+  const normalizeTag = (raw: string): string =>
+    raw
+      .trim()
+      .replace(/^#+/, '')
+      .replace(/[^\p{L}\p{N}_]/gu, '')
+      .toLowerCase();
+
+  const commitHashtagDraft = useCallback(() => {
+    const parts = hashtagDraft.split(/[\s,]+/).map(normalizeTag).filter(Boolean);
+    if (parts.length === 0) {
+      setHashtagDraft('');
+      return;
+    }
+    setHashtags((prev) => {
+      const seen = new Set(prev);
+      const next = [...prev];
+      for (const t of parts) {
+        if (!seen.has(t)) {
+          next.push(t);
+          seen.add(t);
+        }
+      }
+      return next.slice(0, 30);
+    });
+    setHashtagDraft('');
+  }, [hashtagDraft]);
+
+  const removeHashtag = (tag: string) =>
+    setHashtags((prev) => prev.filter((t) => t !== tag));
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
@@ -145,6 +226,53 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const handleSubmit = useCallback(async () => {
     if (!canPost || isSubmitting) return;
+
+    // Frontend poll validation — never let an invalid poll hit the backend.
+    if (showPoll) {
+      const optionErrors: Record<number, string> = {};
+      const trimmedOptions = poll.options.map((o) => o.trim());
+      const seen = new Map<string, number>();
+      trimmedOptions.forEach((o, idx) => {
+        if (!o) {
+          optionErrors[idx] = 'Please enter this option.';
+        } else {
+          const lower = o.toLowerCase();
+          if (seen.has(lower)) {
+            optionErrors[idx] = 'Duplicate option — please change or remove.';
+            optionErrors[seen.get(lower)!] = 'Duplicate option — please change or remove.';
+          } else {
+            seen.set(lower, idx);
+          }
+        }
+      });
+      const validCount = trimmedOptions.filter((o) => o && Object.keys(optionErrors).every((k) => Number(k) !== trimmedOptions.indexOf(o))).length;
+      const hasQuestion = text.trim().length > 0;
+
+      const issues: string[] = [];
+      if (!hasQuestion) {
+        setPollQuestionError('Please enter poll question.');
+        issues.push('question');
+      } else {
+        setPollQuestionError(null);
+      }
+      if (validCount < 2) issues.push('options');
+
+      if (issues.length > 0 || Object.keys(optionErrors).length > 0) {
+        setPollOptionErrors(optionErrors);
+        const msg =
+          issues.length === 2
+            ? 'Please provide the poll question and at least two poll options.'
+            : !hasQuestion
+              ? 'Please enter poll question.'
+              : validCount < 2
+                ? 'Please provide at least two poll options.'
+                : 'Please fix the highlighted poll fields.';
+        setError(msg);
+        return;
+      }
+      setPollOptionErrors({});
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -192,13 +320,37 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           }
         : null;
 
-      // Build rich_text with background color if selected (text-only posts only)
-      const richText = (hasColorBg && isTextOnly && activeBg)
-        ? { background: activeBg.bg, text_color: activeBg.text }
+      const richText = hasColorBg && background
+        ? { background, text_color: onDark ? '#ffffff' : '#111111' }
         : null;
 
+      // Merge any pending hashtag draft so users who type then click POST
+      // without pressing Enter don't lose their tag.
+      const finalHashtags = (() => {
+        if (!hashtagDraft.trim()) return hashtags;
+        const draftParts = hashtagDraft.split(/[\s,]+/).map(normalizeTag).filter(Boolean);
+        const out = [...hashtags];
+        const seen = new Set(out);
+        for (const t of draftParts) {
+          if (!seen.has(t)) {
+            out.push(t);
+            seen.add(t);
+          }
+        }
+        return out.slice(0, 30);
+      })();
+
+      // Backend extracts hashtags from the post body via regex, so we
+      // append the chip-entered tags to the wire text. The user's typing
+      // surface stays free of stray "#" characters; only the persisted
+      // body (and the rendered post) carries them.
+      const tagSuffix = finalHashtags.length > 0
+        ? ' ' + finalHashtags.map((t) => `#${t}`).join(' ')
+        : '';
+      const wireText = (text.trim() + tagSuffix).trim();
+
       const payload = {
-        text: text.trim(),
+        text: wireText,
         visibility,
         content_type: contentType,
         media_ids: mediaIds,
@@ -208,6 +360,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         location: location.trim() || null,
         poll: pollPayload,
         rich_text: richText,
+        hashtags: finalHashtags.length > 0 ? finalHashtags : undefined,
       };
 
       if (groupId) {
@@ -226,7 +379,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [canPost, createGroupPost, createPost, files, groupId, isSubmitting, location, mood, onClose, poll, showPoll, text, visibility]);
+  }, [background, canPost, createGroupPost, createPost, files, groupId, hashtagDraft, hashtags, hasColorBg, isSubmitting, location, mood, onClose, onDark, poll, showPoll, text, visibility]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -236,318 +389,511 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [handleSubmit]);
 
-  const visIcons: Record<PostVisibility, React.ReactNode> = {
-    public: <Globe className="w-3 h-3" />,
-    followers: <Users className="w-3 h-3" />,
-    private: <Lock className="w-3 h-3" />,
-  };
-  const visLabels: Record<PostVisibility, string> = {
-    public: 'Everyone',
-    followers: 'Followers',
-    private: 'Only Me',
-  };
-
-  // Accent color derived from selected background
-  const accentGradient = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  const visOption = VIS_OPTIONS.find((v) => v.value === visibility) ?? VIS_OPTIONS[0];
+  const VisIcon = visOption.Icon;
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 12 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96, y: 12 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-3 w-full max-w-[520px]"
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      className="mx-3 w-full max-w-[720px]"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative flex flex-col overflow-hidden rounded-2xl border border-white/20 bg-brand-card shadow-[0_25px_60px_-12px_rgba(102,126,234,0.25)] max-h-[85vh]">
-        {/* Header — subtle gradient accent */}
-        <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-          style={{ background: accentGradient }}
-        >
-          <h2 className="text-sm font-bold text-white">Create Post</h2>
+      <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
+        {/* Header */}
+        <div className="flex flex-shrink-0 items-center justify-between px-6 pt-5">
+          <div>
+            <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-brand-text/60">
+              Compose
+            </div>
+            <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-brand-text">
+              CREATE <span className="text-[#2563EB]">POST</span>
+            </div>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+            aria-label="Close"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider text-brand-text transition-transform hover:scale-105 active:scale-95"
           >
-            <X className="w-4 h-4" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-
-        {/* Author row */}
-        <div className="px-4 pt-3 flex items-center gap-2.5">
-          <img src={avatarSrc} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-200" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-brand-text truncate">{displayName}</p>
-            <div className="relative">
-              <button
-                onClick={() => setShowVisMenu(!showVisMenu)}
-                className="flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-50 to-blue-50 text-[10px] font-semibold text-purple-600 hover:from-purple-100 hover:to-blue-100 transition-all"
-              >
-                {visIcons[visibility]}
-                {visLabels[visibility]}
-                <ChevronDown className="w-2.5 h-2.5" />
-              </button>
-              {showVisMenu && (
-                <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-brand-divider rounded-xl shadow-xl py-1 min-w-[130px]">
-                  {(['public', 'followers', 'private'] as PostVisibility[]).map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => { setVisibility(v); setShowVisMenu(false); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium hover:bg-purple-50 transition-colors ${visibility === v ? 'text-purple-600' : 'text-brand-text/60'}`}
-                    >
-                      {visIcons[v]}
-                      {visLabels[v]}
-                    </button>
-                  ))}
-                </div>
-              )}
+        {/* User row */}
+        <div className="flex flex-shrink-0 items-center justify-between px-6 pt-5">
+          <div className="flex items-center gap-3">
+            <img
+              src={avatarSrc}
+              alt=""
+              className="h-11 w-11 rounded-full border-2 border-brand-secondary object-cover shadow-sm"
+            />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-[14px] font-medium text-brand-text">{displayName}</div>
+              <div className="mt-0.5 text-[11px] text-brand-text/60">{handle}</div>
             </div>
+          </div>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowVisMenu((v) => !v)}
+              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-brand-text shadow-sm transition hover:bg-brand-secondary/80"
+            >
+              <VisIcon className="h-3.5 w-3.5 text-[#2563EB]" />
+              {visOption.label}
+              <ChevronDown className="h-3 w-3 text-brand-text/60" />
+            </button>
+            <AnimatePresence>
+              {showVisMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xl"
+                >
+                  {VIS_OPTIONS.map((opt) => {
+                    const Icon = opt.Icon;
+                    const active = opt.value === visibility;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { setVisibility(opt.value); setShowVisMenu(false); }}
+                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium transition-colors ${
+                          active ? 'bg-brand-secondary text-[#2563EB]' : 'text-brand-text hover:bg-brand-secondary'
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* Mood / Location chips */}
-        {(mood || location) && (
-          <div className="px-4 pt-2 flex flex-wrap gap-1.5">
-            {mood && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200/50">
-                {mood}
-                <button onClick={() => setMood(null)} className="hover:text-amber-900"><X className="w-2.5 h-2.5" /></button>
-              </span>
-            )}
-            {location && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 text-[10px] font-semibold text-blue-600 ring-1 ring-blue-200/50">
-                <MapPin className="w-2.5 h-2.5" />
-                {location}
-                <button onClick={() => { setLocation(''); setShowLocation(false); }} className="hover:text-blue-800"><X className="w-2.5 h-2.5" /></button>
-              </span>
-            )}
-          </div>
-        )}
+        {/* Scrollable middle */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* Mood / Location chips */}
+          {(mood || location) && (
+            <div className="flex flex-wrap gap-1.5 px-6 pt-3">
+              {mood && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-sm">
+                  <Smile className="h-3 w-3" />
+                  {mood}
+                  <button onClick={() => setMood(null)} className="text-brand-text/40 hover:text-brand-text">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {location && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-sm">
+                  <MapPin className="h-3 w-3" />
+                  {location}
+                  <button
+                    onClick={() => { setLocation(''); setShowLocation(false); }}
+                    className="text-brand-text/40 hover:text-brand-text"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
 
-        {/* Textarea — with optional colored background */}
-        <div className="px-4 pt-3 pb-1">
-          {hasColorBg && isTextOnly ? (
+          {/* Composition card — hidden in poll mode since the poll editor
+              has its own dedicated Question input. */}
+          {!showPoll && (
+          <div className="px-6 pt-4">
             <div
-              className="rounded-xl p-4 min-h-[140px] flex items-center justify-center transition-all"
-              style={{ background: activeBg.bg }}
+              className={`rounded-[20px] p-5 transition-colors duration-300 ${
+                hasColorBg ? '' : 'bg-brand-secondary border border-brand-divider text-brand-text'
+              }`}
+              style={hasColorBg ? {
+                backgroundColor: background!,
+                color: onDark ? '#ffffff' : '#111',
+              } : undefined}
             >
               <textarea
                 ref={textareaRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={`What's on your mind, ${firstName}?`}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  if (pollQuestionError) setPollQuestionError(null);
+                }}
+                placeholder={showPoll ? 'Ask a question…' : `What's on your mind, ${firstName}?`}
                 rows={3}
-                className="w-full resize-none bg-transparent text-center text-[18px] font-semibold leading-relaxed placeholder:opacity-50 outline-none"
-                style={{ color: activeBg.text }}
+                maxLength={maxChars}
+                className={`w-full resize-none bg-transparent outline-none ${
+                  hasColorBg
+                    ? `text-center text-[18px] font-semibold leading-relaxed ${onDark ? 'text-white placeholder:text-white/60' : 'text-neutral-900 placeholder:text-neutral-900/60'}`
+                    : 'text-[17px] leading-[1.5] text-brand-text placeholder:text-brand-text/45'
+                } ${pollQuestionError ? 'ring-1 ring-rose-500 rounded' : ''}`}
+                style={hasColorBg && onDark ? { color: '#ffffff' } : undefined}
               />
+              {pollQuestionError && (
+                <div className="mt-1 text-[11px] font-medium text-rose-600">{pollQuestionError}</div>
+              )}
+
+              {/* Media previews */}
+              {previews.length > 0 && (
+                <div
+                  className={`mt-3 grid gap-1.5 ${
+                    previews.length === 1 ? 'grid-cols-2' : previews.length <= 4 ? 'grid-cols-3' : 'grid-cols-4'
+                  }`}
+                >
+                  {previews.map((url, idx) => (
+                    <div
+                      key={idx}
+                      className="relative aspect-square overflow-hidden rounded-lg bg-black/5"
+                    >
+                      {files[idx]?.type.startsWith('video') ? (
+                        <video src={url} className="h-full w-full object-cover" muted />
+                      ) : (
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      )}
+                      <button
+                        onClick={() => removeFile(idx)}
+                        className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-brand-divider transition hover:border-[#2563EB] hover:bg-brand-secondary"
+                  >
+                    <Plus className="h-5 w-5 text-[#aaa]" />
+                  </button>
+                </div>
+              )}
             </div>
-          ) : (
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={showPoll ? 'Ask a question...' : `What's on your mind, ${firstName}?`}
-              rows={3}
-              className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-brand-text placeholder:text-brand-text/35 outline-none"
-            />
+          </div>
           )}
-          {charCount > maxChars * 0.8 && (
-            <div className="flex justify-end mt-1">
-              <span className={`text-[10px] font-mono ${charCount > maxChars ? 'text-red-500' : 'text-brand-text/30'}`}>
-                {charCount}/{maxChars}
-              </span>
+
+          {/* Poll editor */}
+          {showPoll && (
+            <div className="px-6 pt-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
+                <PollEditor
+                  poll={poll}
+                  onChange={(next) => {
+                    setPoll(next);
+                    if (Object.keys(pollOptionErrors).length > 0) setPollOptionErrors({});
+                  }}
+                  accentColor="#2563EB"
+                  isDarkMode={isDark}
+                  optionErrors={pollOptionErrors}
+                  question={text}
+                  onQuestionChange={(next) => {
+                    setText(next);
+                    if (pollQuestionError) setPollQuestionError(null);
+                  }}
+                  questionError={pollQuestionError}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Mood picker */}
+          {showMood && (
+            <div className="px-6 pt-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-3 py-3">
+                <MoodActivityPicker
+                  accentColor="#2563EB"
+                  isDarkMode={isDark}
+                  onSelect={(m) => { setMood(m); setShowMood(false); }}
+                  onClose={() => setShowMood(false)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Location input */}
+          {showLocation && (
+            <div className="px-6 pt-3">
+              <div className="flex items-center gap-2 rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
+                <MapPin className="h-3.5 w-3.5 text-[#1D9E75]" />
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Where are you?"
+                  className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
+                  autoFocus
+                />
+                <button onClick={() => setShowLocation(false)} className="text-brand-text/40 hover:text-brand-text">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Hashtag input — chips, never injects raw `#` into the post text. */}
+          {showHashtagInput && (
+            <div className="px-6 pt-3">
+              <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Hash className="h-3.5 w-3.5 text-[#2563EB]" />
+                  <input
+                     value={hashtagDraft}
+                     onChange={(e) => setHashtagDraft(e.target.value)}
+                     onKeyDown={(e) => {
+                       if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+                         if (hashtagDraft.trim()) {
+                           e.preventDefault();
+                           commitHashtagDraft();
+                         }
+                       } else if (e.key === 'Backspace' && !hashtagDraft && hashtags.length > 0) {
+                         setHashtags((prev) => prev.slice(0, -1));
+                       }
+                     }}
+                     onBlur={() => {
+                       if (hashtagDraft.trim()) commitHashtagDraft();
+                     }}
+                     placeholder="Enter hashtags and press Enter"
+                     className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
+                     autoFocus
+                   />
+                  <button
+                    onClick={() => setShowHashtagInput(false)}
+                    className="text-brand-text/40 hover:text-brand-text"
+                    aria-label="Close hashtag input"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                {hashtags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {hashtags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-card border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#2563EB]"
+                      >
+                        #{tag}
+                        <button
+                          onClick={() => removeHashtag(tag)}
+                          className="text-[#2563EB]/60 hover:text-[#2563EB]"
+                          aria-label={`Remove #${tag}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="mx-6 mt-3 rounded-xl bg-rose-50 px-3 py-2 text-[12px] font-medium text-rose-700">
+              {error}
             </div>
           )}
         </div>
 
-        {/* Color picker strip — only for text-only posts */}
-        {isTextOnly && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center gap-1.5">
-              {SWATCH_COLORS.map((color, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setBgIndex(idx)}
-                  className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${bgIndex === idx ? 'border-purple-500 scale-110 shadow-md' : 'border-brand-divider hover:scale-105'}`}
-                  style={{
-                    background: color === 'transparent'
-                      ? 'repeating-conic-gradient(#e5e7eb 0% 25%, white 0% 50%) 50% / 10px 10px'
-                      : color,
-                  }}
-                  title={idx === 0 ? 'No background' : `Color ${idx}`}
-                />
-              ))}
-              {/* Custom color via native picker */}
-              <button
-                onClick={() => colorInputRef.current?.click()}
-                className={`w-6 h-6 rounded-full border-2 border-dashed border-brand-text/20 flex items-center justify-center hover:border-purple-400 transition-all flex-shrink-0 ${bgIndex >= BG_PRESETS.length ? 'border-purple-500 scale-110' : ''}`}
-                title="Custom color"
-              >
-                <Palette className="w-3 h-3 text-brand-text/40" />
-              </button>
-              <input
-                ref={colorInputRef}
-                type="color"
-                value={customColor}
-                onChange={(e) => {
-                  const c = e.target.value;
-                  setCustomColor(c);
-                  // Compute text color based on luminance
-                  const r = parseInt(c.slice(1, 3), 16);
-                  const g = parseInt(c.slice(3, 5), 16);
-                  const b = parseInt(c.slice(5, 7), 16);
-                  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                  const textColor = lum > 0.5 ? '#1a1a2e' : '#ffffff';
-                  // Push to end of presets or update
-                  if (BG_PRESETS.length <= 14) {
-                    BG_PRESETS.push({ bg: c, text: textColor });
-                  } else {
-                    BG_PRESETS[14] = { bg: c, text: textColor };
-                  }
-                  setBgIndex(14);
-                }}
-                className="hidden"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Media previews — compact grid */}
-        {previews.length > 0 && (
-          <div className="px-4 pb-2">
-            <div className={`grid gap-1.5 ${previews.length === 1 ? 'grid-cols-2' : previews.length <= 4 ? 'grid-cols-3' : 'grid-cols-4'}`}>
-              {previews.map((url, idx) => (
-                <div key={idx} className="relative rounded-lg overflow-hidden aspect-square bg-brand-text/5 ring-1 ring-brand-divider">
-                  {files[idx]?.type.startsWith('video') ? (
-                    <video src={url} className="w-full h-full object-cover" muted />
-                  ) : (
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                  )}
-                  <button
-                    onClick={() => removeFile(idx)}
-                    className="absolute top-1 right-1 p-0.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              {/* Add more media button */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="aspect-square rounded-lg border-2 border-dashed border-brand-text/15 flex items-center justify-center hover:border-purple-400 hover:bg-purple-50/50 transition-all"
-              >
-                <Plus className="w-5 h-5 text-brand-text/30" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Poll editor */}
-        {showPoll && (
-          <div className="px-4 pb-2">
-            <PollEditor poll={poll} onChange={setPoll} accentColor="#7c3aed" isDarkMode={false} />
-          </div>
-        )}
-
-        {/* Mood picker */}
-        {showMood && (
-          <div className="px-4 pb-2">
-            <div className="border border-purple-100 rounded-xl p-2 bg-gradient-to-br from-purple-50/50 to-pink-50/50">
-              <MoodActivityPicker
-                accentColor="#7c3aed"
-                isDarkMode={false}
-                onSelect={(m) => { setMood(m); setShowMood(false); }}
-                onClose={() => setShowMood(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Location input */}
-        {showLocation && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center gap-2 border border-blue-100 rounded-xl px-3 py-2.5 bg-gradient-to-r from-blue-50/50 to-cyan-50/50">
-              <MapPin className="w-3.5 h-3.5 text-blue-400" />
-              <input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Where are you?"
-                className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/40 outline-none"
-                autoFocus
-              />
-              <button onClick={() => setShowLocation(false)} className="text-brand-text/40 hover:text-brand-text">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="mx-4 mb-2 px-3 py-2 bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 rounded-xl text-[11px] font-semibold text-rose-600">
-            {error}
-          </div>
-        )}
-
-        </div>{/* end scrollable content area */}
-
-        {/* Footer: toolbar + post button — always visible */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-brand-divider bg-gradient-to-r from-slate-50/50 to-purple-50/30 flex-shrink-0">
-          <div className="flex items-center gap-0.5">
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 px-6 py-4">
+          <div className="flex gap-1.5 rounded-full bg-brand-secondary border border-brand-divider p-1.5 shadow-sm">
             <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className={`p-2 rounded-xl transition-all ${files.length > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-brand-text/40 hover:text-emerald-600 hover:bg-emerald-50'}`}
-              title="Add media"
+              disabled={files.length >= 10}
+              aria-label="Add photo"
+              title="Add photo"
+              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card disabled:opacity-30"
             >
-              <Camera className="w-[18px] h-[18px]" />
+              <ImagePlus className="h-[18px] w-[18px] text-[#378ADD]" />
             </button>
             <button
-              onClick={() => { setShowPoll(!showPoll); if (showPoll) setPoll({ options: ['', ''], duration: '1d', allowMultiple: false }); }}
-              className={`p-2 rounded-xl transition-all ${showPoll ? 'text-orange-600 bg-orange-50' : 'text-brand-text/40 hover:text-orange-600 hover:bg-orange-50'}`}
+              type="button"
+              onClick={() => {
+                setShowPoll((v) => !v);
+                if (showPoll) setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
+              }}
+              aria-label="Add poll"
               title="Add poll"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showPoll ? 'bg-brand-card' : ''}`}
             >
-              <BarChart3 className="w-[18px] h-[18px]" />
+              <BarChart3 className="h-[18px] w-[18px] text-[#EF9F27]" />
             </button>
             <button
-              onClick={() => setShowMood(!showMood)}
-              className={`p-2 rounded-xl transition-all ${mood ? 'text-amber-600 bg-amber-50' : 'text-brand-text/40 hover:text-amber-600 hover:bg-amber-50'}`}
+              type="button"
+              onClick={() => setShowMood((v) => !v)}
+              aria-label="Mood / Activity"
               title="Mood / Activity"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showMood || mood ? 'bg-brand-card' : ''}`}
             >
-              <Smile className="w-[18px] h-[18px]" />
+              <Smile className="h-[18px] w-[18px] text-[#D4537E]" />
             </button>
             <button
-              onClick={() => setShowLocation(!showLocation)}
-              className={`p-2 rounded-xl transition-all ${location ? 'text-blue-600 bg-blue-50' : 'text-brand-text/40 hover:text-blue-600 hover:bg-blue-50'}`}
+              type="button"
+              onClick={() => setShowLocation((v) => !v)}
+              aria-label="Location"
               title="Location"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showLocation || location ? 'bg-brand-card' : ''}`}
             >
-              <MapPin className="w-[18px] h-[18px]" />
+              <MapPin className="h-[18px] w-[18px] text-[#1D9E75]" />
             </button>
             <button
-              onClick={() => {}}
-              className="p-2 rounded-xl text-brand-text/40 hover:text-pink-600 hover:bg-pink-50 transition-all"
-              title="Tags"
+              type="button"
+              onClick={() => setShowHashtagInput((v) => !v)}
+              aria-label="Add hashtag"
+              title="Add hashtag"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card' : ''}`}
             >
-              <Hash className="w-[18px] h-[18px]" />
+              <Hash className="h-[18px] w-[18px] text-[#2563EB]" />
             </button>
+            {/* Design: paints the textarea card background. Disabled when
+                media or a poll is present (color backgrounds are text-only
+                by design). */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowBackgroundPicker((v) => !v)}
+                aria-label="Design"
+                title="Design background"
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 ${
+                  showBackgroundPicker || background ? 'ring-2 ring-offset-1 ring-[#2563EB]' : ''
+                }`}
+              >
+                <FlowerPaletteIcon size={26} />
+              </button>
+              <AnimatePresence>
+                {showBackgroundPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full right-0 z-30 mb-3 rounded-2xl border border-brand-divider bg-brand-card px-5 pb-4 pt-3 shadow-xl"
+                  >
+                    {!isTextOnly && (
+                      <div className="mb-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-700">
+                        Backgrounds work only on text-only posts. Remove
+                        any media or poll first.
+                      </div>
+                    )}
+                    <div className="mb-2 flex items-center justify-between gap-6">
+                      <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-brand-text/60">
+                        Background
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBackground(null);
+                          setShowBackgroundPicker(false);
+                        }}
+                        className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#2563EB] hover:underline"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    {/* Rainbow half-arc: swatches arrayed across the top
+                        of a circle so they trace a smile-shaped arc. The
+                        arc's radius / arc-degrees feel right for ~8 colours;
+                        the null/no-bg swatch sits centred underneath the
+                        peak as the "neutral" pick. */}
+                    {(() => {
+                      const swatches = BACKGROUNDS.filter((s) => s.value !== null);
+                      const noneSwatch = BACKGROUNDS.find((s) => s.value === null)!;
+                      const radius = 80;
+                      const arcSpan = 160; // degrees
+                      const start = 180 + (180 - arcSpan) / 2; // left of arc
+                      const arcWidth = radius * 2 + 28;
+                      const arcHeight = radius + 26;
+                      return (
+                        <div
+                          className="relative mx-auto"
+                          style={{ width: arcWidth, height: arcHeight }}
+                        >
+                          {swatches.map((swatch, idx) => {
+                            const t = swatches.length === 1 ? 0.5 : idx / (swatches.length - 1);
+                            const angle = start + t * arcSpan;
+                            const rad = (angle * Math.PI) / 180;
+                            const cx = arcWidth / 2 + radius * Math.cos(rad);
+                            const cy = arcHeight + radius * Math.sin(rad);
+                            const selected = swatch.value === background;
+                            return (
+                              <button
+                                key={swatch.label}
+                                type="button"
+                                aria-label={swatch.label}
+                                onClick={() => {
+                                  setBackground(swatch.value);
+                                  setShowBackgroundPicker(false);
+                                }}
+                                className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-sm transition-transform hover:scale-125"
+                                style={{
+                                  left: cx - 14,
+                                  top: cy - 14,
+                                  background: swatch.value!,
+                                  outline: selected ? '2px solid #2563EB' : 'none',
+                                  outlineOffset: selected ? '1px' : 0,
+                                }}
+                              />
+                            );
+                          })}
+                          {/* No-background (transparent) swatch in the center, below the arc peak */}
+                          <button
+                            type="button"
+                            aria-label={noneSwatch.label}
+                            onClick={() => {
+                               setBackground(null);
+                               setShowBackgroundPicker(false);
+                            }}
+                            className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-sm transition-transform hover:scale-125"
+                            style={{
+                              left: arcWidth / 2 - 14,
+                              top: arcHeight - 8,
+                              background:
+                                'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
+                              outline: background === null ? '2px solid #2563EB' : 'none',
+                              outlineOffset: background === null ? '1px' : 0,
+                            }}
+                          />
+                        </div>
+                      );
+                    })()}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-purple-300/30"
-            style={{ background: accentGradient }}
+            className="flex items-center gap-2.5 rounded-full bg-brand-text px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-brand-bg transition hover:opacity-90 disabled:opacity-40"
           >
-            {isSubmitting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Send className="w-3.5 h-3.5" />
-            )}
-            {isSubmitting ? 'Posting...' : 'Post'}
+            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand-bg/15">
+              {isSubmitting ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Send className="h-3 w-3" />
+              )}
+            </span>
+            {isSubmitting ? 'POSTING' : 'POST'}
           </button>
+        </div>
+
+        {/* Footer status bar */}
+        <div className="flex flex-shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-brand-text/60">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#1D9E75]" />
+            {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}
+          </div>
+          <div>
+            {charCount.toLocaleString()} / {maxChars.toLocaleString()}
+          </div>
         </div>
 
         <input

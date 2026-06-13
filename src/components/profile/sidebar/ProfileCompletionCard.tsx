@@ -91,7 +91,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                                 cy={size / 2}
                                 r={radius}
                                 fill="none"
-                                stroke="#f1f5f9"
+                                stroke="rgba(var(--brand-text), 0.08)"
                                 strokeWidth={strokeWidth}
                             />
                             {/* Progress arc */}
@@ -100,7 +100,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                                 cy={size / 2}
                                 r={radius}
                                 fill="none"
-                                stroke="#7c3aed"
+                                stroke="var(--prismatic-violet)"
                                 strokeWidth={strokeWidth}
                                 strokeLinecap="round"
                                 strokeDasharray={circumference}
@@ -141,7 +141,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
 
                 <button
                     onClick={onEditProfile}
-                    className="mt-4 w-full py-2 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text transition-colors"
+                    className="mt-4 w-full py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
                 >
                     Edit Profile
                 </button>

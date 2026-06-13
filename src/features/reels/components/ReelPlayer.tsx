@@ -14,9 +14,16 @@ interface ReelPlayerProps {
   loadingHint?: string;
   errorTitle?: string;
   errorHint?: string;
+  /** When true, suppress autoplay and require an explicit user tap before
+   *  fetching video bytes. Used by data-saver mode (recon §F.2). */
+  suppressAutoplay?: boolean;
   onToggleMuted: () => void;
   onBoost: () => void;
   onProgressChange?: (progressPercent: number) => void;
+  /** Absolute playhead in milliseconds. Fed to ProductTagOverlay so it
+   *  knows which tags are currently in-window. Same `timeupdate` event
+   *  drives both — no extra listener cost. */
+  onTimeUpdateMs?: (currentTimeMs: number) => void;
   onExpand?: () => void;
   onPlaybackStateChange?: (state: "loading" | "playing" | "error") => void;
 }
@@ -31,9 +38,11 @@ export function ReelPlayer({
   loadingHint,
   errorTitle,
   errorHint,
+  suppressAutoplay = false,
   onToggleMuted,
   onBoost,
   onProgressChange,
+  onTimeUpdateMs,
   onExpand,
   onPlaybackStateChange,
 }: ReelPlayerProps) {
@@ -45,6 +54,10 @@ export function ReelPlayer({
   const [isHovered, setIsHovered] = useState(false);
   const [volume, setVolume] = useState(1);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  // Data-saver: until the viewer taps the play overlay we never
+  // attach a video source. Resets whenever the URL changes (next
+  // reel scrolled into view).
+  const [userTappedPlay, setUserTappedPlay] = useState(false);
 
   const [coverSrc, setCoverSrc] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -53,6 +66,7 @@ export function ReelPlayer({
     setCoverSrc(null);
     setVideoPlaying(false);
     setPlaybackError(null);
+    setUserTappedPlay(false);
     onPlaybackStateChange?.("loading");
 
     if (posterUrl) {
@@ -124,6 +138,15 @@ export function ReelPlayer({
     if (!currentElement) return;
     const mediaElement: HTMLVideoElement = currentElement;
 
+    // Data-saver gate: defer attaching the source — and therefore
+    // any HLS network calls — until the viewer taps the play
+    // overlay. Without this we would still kick off a manifest
+    // request on every reel that scrolls into view.
+    if (suppressAutoplay && !userTappedPlay) {
+      sourceReadyRef.current = false;
+      return;
+    }
+
     let mounted = true;
     let hlsInstance: { destroy: () => void } | null = null;
     const isHls = videoUrl.includes(".m3u8");
@@ -172,7 +195,7 @@ export function ReelPlayer({
       mediaElement.removeAttribute("src");
       mediaElement.load();
     };
-  }, [active, onPlaybackStateChange, videoUrl]);
+  }, [active, onPlaybackStateChange, videoUrl, suppressAutoplay, userTappedPlay]);
 
   useEffect(() => {
     const mediaElement = videoRef.current;
@@ -190,6 +213,12 @@ export function ReelPlayer({
     const mediaElement = videoRef.current;
     if (!mediaElement) return;
     if (active) {
+      if (suppressAutoplay && !userTappedPlay) {
+        // Keep paused until the user opts in.
+        mediaElement.pause();
+        setIsPaused(false);
+        return;
+      }
       if (sourceReadyRef.current) {
         mediaElement.play().catch(() => undefined);
       }
@@ -198,7 +227,7 @@ export function ReelPlayer({
     }
     mediaElement.pause();
     setVideoPlaying(false);
-  }, [active, videoUrl]);
+  }, [active, videoUrl, suppressAutoplay, userTappedPlay]);
 
   useEffect(() => {
     const mediaElement = videoRef.current;
@@ -207,11 +236,12 @@ export function ReelPlayer({
     const onTimeUpdate = () => {
       if (!mediaElement.duration) return;
       onProgressChange?.((mediaElement.currentTime / mediaElement.duration) * 100);
+      onTimeUpdateMs?.(mediaElement.currentTime * 1000);
     };
 
     mediaElement.addEventListener("timeupdate", onTimeUpdate);
     return () => mediaElement.removeEventListener("timeupdate", onTimeUpdate);
-  }, [onProgressChange, videoUrl]);
+  }, [onProgressChange, onTimeUpdateMs, videoUrl]);
 
   useEffect(() => {
     return () => {
@@ -279,6 +309,22 @@ export function ReelPlayer({
         className={"h-full w-full " + (contain ? "object-contain" : "object-cover")}
         onClick={handleClick}
       />
+
+      {suppressAutoplay && !userTappedPlay ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setUserTappedPlay(true);
+          }}
+          className="absolute inset-0 z-[3] flex items-center justify-center bg-black/35"
+          aria-label="Play video"
+        >
+          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/50 backdrop-blur-sm">
+            <Play className="ml-1 h-7 w-7 text-white" fill="white" />
+          </span>
+        </button>
+      ) : null}
 
       <AnimatePresence>
         {showCover ? (

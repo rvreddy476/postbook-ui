@@ -57,7 +57,7 @@ function ListSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3, 4, 5].map(i => (
-        <div key={i} className="bg-white border border-brand-divider rounded-2xl px-4 py-3 animate-pulse">
+        <div key={i} className="bg-brand-card border border-brand-divider rounded-2xl px-4 py-3 animate-pulse">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-xl bg-brand-secondary" />
             <div className="flex-1 space-y-2">
@@ -112,7 +112,7 @@ function FeaturedCard({ channel, onSubscribe }: { channel: BroadcastChannel; onS
   const gradient = pickColor(channel.name)
   return (
     <Link href={`/channels/${channel.id}`} className="flex-shrink-0 w-[160px]">
-      <div className="bg-white border border-brand-divider rounded-2xl p-3 hover:bg-brand-secondary/30 transition-all h-full flex flex-col items-center text-center">
+      <div className="bg-brand-card border border-brand-divider rounded-2xl p-3 hover:bg-brand-secondary/30 transition-all h-full flex flex-col items-center text-center">
         <div className="w-14 h-14 rounded-xl overflow-hidden mb-2">
           {avatarSrc ? (
             <img src={avatarSrc} alt={channel.name} className="w-full h-full object-cover" />
@@ -146,7 +146,7 @@ function BroadcastCard({ channel }: { channel: BroadcastChannel }) {
     : null
   const gradient = pickColor(channel.name)
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl px-4 py-3">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl px-4 py-3">
       <div className="flex items-center gap-3.5">
         <Link href={`/channels/${channel.id}`} className="flex-shrink-0">
           <div className="w-12 h-12 rounded-xl overflow-hidden">
@@ -311,7 +311,7 @@ export default function ChannelsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search channels..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
           />
         </div>
       )}

@@ -65,15 +65,6 @@ export interface Follow {
     created_at: string
 }
 
-export interface Friendship {
-    id: string
-    requester_id: string
-    addressee_id: string
-    status: string
-    created_at: string
-    updated_at: string
-}
-
 export interface GraphCounts {
     follower_count: number
     following_count: number
@@ -98,11 +89,15 @@ export interface Relationship {
     // Follow axis (asymmetric)
     following: boolean
     followed_by: boolean
-    // Circle axis (mutual, requires acceptance)
+    // Connection axis (mutual, requires acceptance) — canonical graph-service
+    // fields. The backend renamed "friend" → "connection" (spec §3.2/§19);
+    // `connection_status` is one of: none, pending_sent, pending_received, accepted.
+    is_connection?: boolean
+    connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
+    // Circle axis (legacy/aggregated-profile shape, kept for UI compatibility)
     in_circle: boolean
     circle_request_sent: boolean
     circle_request_received: boolean
-    circle_request_id?: string
     // Block
     blocked: boolean
     blocked_by: boolean
@@ -124,14 +119,6 @@ export interface RelationshipBatchResponse {
     relationships: Record<string, Relationship>
 }
 
-export interface FriendRequest {
-    sender_id: string
-    receiver_id: string
-    status: string
-    created_at: string
-    updated_at: string
-}
-
 /**
  * Backend content types for posts (matches post-service validation).
  * - post: text/photo/article posts
@@ -151,7 +138,18 @@ export type PostContentType = (typeof POST_CONTENT_TYPES)[keyof typeof POST_CONT
 /** UI-level content filter — values must match backend content_type column values. */
 export type ContentType = "all" | "post" | "reel" | "video" | "photo"
 export type AppPlatform = "postboek" | "posttube" | "postgram"
-export type ProfileTab = "posts" | "media" | "about" | "connections" | "videos" | "flicks" | "stashed" | "portfolio"
+export type ProfileTab =
+    | "posts"
+    | "media"
+    | "about"
+    | "connections"
+    | "videos"
+    | "flicks"
+    | "stashed"
+    | "portfolio"
+    | "qa"
+    | "orders"
+    | "bookings"
 
 export interface PollOption {
     id: string
@@ -202,6 +200,8 @@ export interface PostDetail {
     media?: { media_id: string; kind: string }[]
     cover_media_id?: string
     counts?: { likes: number; comments: number; shares?: number }
+    /** Display view count from analytics-service (videos/reels). */
+    view_count?: number
     viewer_reaction?: string | null
     location?: string | null
     location_name?: string | null
@@ -233,6 +233,13 @@ export interface PostDetail {
     is_repost?: boolean
     reposted_by?: string
     feed_content_type?: string
+    // Tier 3c — Membership gating. tier_required_id != null means
+    // this post is members-only at that tier (or higher). When
+    // body_redacted is true, the heavy fields (text, rich_text,
+    // media, poll) are blanked by the backend; render a paywall
+    // preview instead.
+    tier_required_id?: string | null
+    body_redacted?: boolean
 }
 
 // --- Stories ---
@@ -449,8 +456,19 @@ export interface BusinessPage {
     follower_count: number
     is_following?: boolean
     faq?: unknown
-    status: 'draft' | 'active' | 'suspended'
+    status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'suspended' | 'disabled'
     seller_id?: string
+    // Follow-Only Pages lifecycle fields.
+    page_type?: string
+    verification_status?: string
+    rejection_reason?: string
+    // Computed envelope fields (returned by GET /v1/pages/:slug).
+    displayType?: string
+    viewerRole?: 'visitor' | 'owner' | 'admin' | 'editor' | 'viewer'
+    isOwner?: boolean
+    bannerMessage?: string
+    actions?: PageActions
+    actionButtons?: PageActionButton[]
     created_at: string
     updated_at: string
 }
@@ -461,6 +479,34 @@ export interface BusinessReview {
     reviewer_id: string
     rating: number
     review_text: string
+    created_at: string
+}
+
+export interface PageActions {
+    canFollow: boolean
+    canUnfollow: boolean
+    canManage: boolean
+    canMessage: boolean
+    canAddFriend: boolean // always false on a page
+    canEdit: boolean
+    canUploadDocument: boolean
+    canSubmitForReview: boolean
+}
+
+export interface PageActionButton {
+    id: string
+    label: string
+    primary?: boolean
+    gated: boolean
+}
+
+export interface PageDocument {
+    id: string
+    page_id: string
+    document_type: string
+    document_url: string
+    status: 'pending' | 'approved' | 'rejected'
+    rejection_reason?: string
     created_at: string
 }
 

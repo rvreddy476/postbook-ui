@@ -713,6 +713,49 @@ export const removeMemberFromConversation = async (conversationId: string, userI
   });
 };
 
+/**
+ * Message Requests (spec §3.3) — conversations that arrive in the
+ * "Requests" folder until the recipient accepts or declines them.
+ */
+export interface ConversationMember {
+  user_id: string;
+  role?: string;
+  display_name?: string;
+  avatar_media_id?: string;
+}
+
+export interface Conversation {
+  id: string;
+  type: string;
+  title?: string | null;
+  created_by?: string | null;
+  is_request?: boolean;
+  members?: ConversationMember[];
+  last_message?: Message | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Lists conversations sitting in the Requests folder (is_request = true). */
+export const fetchMessageRequests = async (limit = 50, offset = 0) => {
+  const query = new URLSearchParams({ limit: limit.toString(), offset: offset.toString() });
+  return chatClient.request(`/requests?${query.toString()}`);
+};
+
+/** Accepts a message request, promoting the conversation to the main inbox. */
+export const acceptMessageRequest = async (conversationId: string) => {
+  return chatClient.request(`/conversations/${conversationId}/requests/accept`, {
+    method: 'POST',
+  });
+};
+
+/** Declines a message request. */
+export const declineMessageRequest = async (conversationId: string) => {
+  return chatClient.request(`/conversations/${conversationId}/requests/decline`, {
+    method: 'POST',
+  });
+};
+
 export const subscribeToMessages = (cb: (m: Message) => void) => {
   localListeners.add(cb);
 

@@ -11,8 +11,6 @@ import React, {
 } from "react"
 import { subscribeToMessages, fetchConversations, fetchMessages, Message } from "@/services/messageService"
 import { playNotificationSound } from "@/hooks/useNotificationSound"
-import { useGlobalToast } from "@/contexts/ToastContext"
-import { MessageToastContent } from "@/components/ui/MessageToast"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -67,12 +65,13 @@ function saveState(state: UnreadState) {
 
 interface ProviderProps {
     currentUserId: string
-    onOpenChat: (contact: { id: string; name: string; avatar: string }) => void
+    /** Deprecated — the new-message toast was removed; kept optional so
+     *  existing callers that still pass it don't break. */
+    onOpenChat?: (contact: { id: string; name: string; avatar: string }) => void
     children: React.ReactNode
 }
 
-export function NotificationProvider({ currentUserId, onOpenChat, children }: ProviderProps) {
-    const toast = useGlobalToast()
+export function NotificationProvider({ currentUserId, children }: ProviderProps) {
     const [state, setState] = useState<UnreadState>(loadState)
     const [viewedConversations, setViewedConversations] = useState<Set<string>>(new Set())
     const [soundEnabled, setSoundEnabled] = useState(true)
@@ -134,39 +133,15 @@ export function NotificationProvider({ currentUserId, onOpenChat, children }: Pr
                 return next
             })
 
-            // Play sound
+            // Sound only — the on-screen "new message" toast was removed
+            // (it showed a raw user-id and duplicated the unread badges).
             if (soundEnabled) {
                 playNotificationSound()
             }
-
-            // Show toast
-            const senderAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_id}`
-            const preview = msg.text || "(media)"
-            const time = new Date(msg.created_at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-            })
-
-            toast({
-                type: "info",
-                title: "New message",
-                customContent: (
-                    <MessageToastContent
-                        senderAvatar={senderAvatar}
-                        senderName={msg.sender_id.slice(0, 8)}
-                        messagePreview={preview}
-                        timestamp={time}
-                        onClick={() =>
-                            onOpenChat({ id: msg.sender_id, name: msg.sender_id.slice(0, 8), avatar: senderAvatar })
-                        }
-                    />
-                ),
-            })
         })
 
         return unsub
-    }, [currentUserId, soundEnabled, toast, onOpenChat, persistState])
+    }, [currentUserId, soundEnabled, persistState])
 
     /* ---- Offline recovery on mount ---- */
     useEffect(() => {

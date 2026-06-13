@@ -51,6 +51,7 @@ export function postDetailToReel(post: PostDetail): Reel {
     like_count: post.counts?.likes ?? 0,
     comment_count: post.counts?.comments ?? 0,
     share_count: post.counts?.shares ?? 0,
+    view_count: post.view_count ?? 0,
     viewer_has_boosted: !!post.viewer_reaction,
     viewer_has_saved: !!post.is_bookmarked,
   };
@@ -204,8 +205,69 @@ export async function sharePost(
    VIEW TRACKING
    ═══════════════════════════════════════════════════════════ */
 
+// One analytics session per browser tab. The backend dedups a "view"
+// per (session_id, content_id), so a stable id means re-watching the
+// same reel in one session counts once — and a loop feed that recycles
+// the same reels never inflates the count.
+let analyticsSessionId: string | null = null;
+function analyticsSession(): string {
+  if (analyticsSessionId) return analyticsSessionId;
+  try {
+    const stored = sessionStorage.getItem("vchat_av_session");
+    if (stored) {
+      analyticsSessionId = stored;
+      return stored;
+    }
+    const fresh = crypto.randomUUID();
+    sessionStorage.setItem("vchat_av_session", fresh);
+    analyticsSessionId = fresh;
+    return fresh;
+  } catch {
+    // sessionStorage unavailable (SSR / privacy mode) — fall back to
+    // a process-lifetime id.
+    analyticsSessionId = crypto.randomUUID();
+    return analyticsSessionId;
+  }
+}
+
+/**
+ * Records a finished reel view. Posts a `play_end` event to the generic
+ * analytics ingest endpoint (`POST /v1/analytics/events`), which batches
+ * it to Kafka where the VideoViewConsumer applies the display-view rules
+ * and increments the Redis view counter.
+ *
+ * `viewer_id` is intentionally left blank — the server attributes the
+ * view to the authenticated X-User-Id the gateway stamps on the event.
+ */
 export async function trackView(event: ViewEvent): Promise<void> {
-  await api.post("/v1/analytics/reel-view", event).catch(() => {});
+  const percentViewed =
+    event.duration_ms > 0
+      ? Math.min(100, (event.watched_ms / event.duration_ms) * 100)
+      : 0;
+  const payload = {
+    content_id: event.reel_id,
+    creator_id: event.creator_id,
+    viewer_id: "",
+    session_id: analyticsSession(),
+    content_type: event.content_type ?? "reel",
+    content_duration_ms: event.duration_ms,
+    watched_ms_total: event.watched_ms,
+    max_continuous_watch_ms: event.watched_ms,
+    percent_viewed: percentViewed,
+    loop_count: 0,
+    end_reason: event.completed ? "ended" : "swipe_next",
+    surface: event.source,
+    country: "",
+    device_id_hash: "",
+    is_autoplay: true,
+  };
+  await api
+    .post("/v1/analytics/events", {
+      events: [
+        { type: "play_end", payload, timestamp: new Date().toISOString() },
+      ],
+    })
+    .catch(() => {});
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -272,6 +334,72 @@ export async function uploadMedia(
   await uploadToPresignedUrl(init.upload_url, file, onProgress);
   await confirmUpload(init.media_id);
   return init.media_id;
+}
+
+/* ── Resumable (chunked) upload ───────────────────────────── */
+
+// Files at or above this size use the resumable multipart path; smaller
+// ones use the single-shot presigned PUT (one round trip, no overhead).
+export const RESUMABLE_UPLOAD_THRESHOLD = 20 * 1024 * 1024; // 20 MB
+
+interface ResumableInitResult {
+  upload_id: string;
+  media_id: string;
+  chunk_size: number;
+  total_parts: number;
+}
+
+// POSTs one part's bytes, retrying a few times so a dropped connection
+// costs a single part's re-send rather than the whole upload.
+async function uploadPartWithRetry(
+  uploadId: string,
+  partNumber: number,
+  chunk: Blob,
+  maxAttempts = 3
+): Promise<void> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await api.post(`/v1/media/upload/resumable/${uploadId}/chunk`, chunk, {
+        params: { part_number: partNumber },
+        headers: { "Content-Type": "application/octet-stream" },
+      });
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * Uploads a file via the resumable multipart API: init → upload each
+ * part (with per-part retry) → complete. Resilient to dropped
+ * connections — only the failed part is re-sent, not the whole file.
+ */
+export async function uploadMediaResumable(
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<string> {
+  const fileType = file.type.startsWith("video/") ? "video" : "image";
+  const initRes = await api.post<ApiResponse<ResumableInitResult>>(
+    "/v1/media/upload/resumable/init",
+    { file_type: fileType, mime_type: file.type, total_bytes: file.size }
+  );
+  const { upload_id, media_id, chunk_size, total_parts } = initRes.data.data;
+
+  for (let part = 1; part <= total_parts; part++) {
+    const start = (part - 1) * chunk_size;
+    const slice = file.slice(start, Math.min(start + chunk_size, file.size));
+    await uploadPartWithRetry(upload_id, part, slice);
+    onProgress?.(Math.round((part / total_parts) * 100));
+  }
+
+  await api.post(`/v1/media/upload/resumable/${upload_id}/complete`);
+  return media_id;
 }
 
 /** Upload a data URL (e.g. canvas-extracted cover frame) as an image and return the media ID. */
@@ -482,10 +610,15 @@ export interface CreateReelInput {
 }
 
 export async function createReel(input: CreateReelInput): Promise<Reel> {
+  // The backend's CreatePostRequest has no `hashtags` field — post-service
+  // only indexes hashtags it can extract from `text`. So append any chip-input
+  // hashtags that aren't already inline before sending. Without this, the
+  // chip UI in DetailsStep is silently discarded.
+  const text = mergeHashtagsIntoText(input.text, input.hashtags ?? []);
   const body: Record<string, unknown> = {
-    text: input.text,
+    text,
     visibility: input.visibility ?? "public",
-    content_type: input.content_type ?? "video",
+    content_type: input.content_type ?? "long_video",
     media_ids: input.mediaIds,
     post_type: "video",
     app_origin: "postboek-web",
@@ -496,4 +629,23 @@ export async function createReel(input: CreateReelInput): Promise<Reel> {
   }
   const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", body);
   return postDetailToReel(res.data.data);
+}
+
+function mergeHashtagsIntoText(text: string, chips: string[]): string {
+  if (chips.length === 0) return text;
+  const inline = new Set(
+    (text.match(/#\w+/g) ?? []).map((t) => t.toLowerCase()),
+  );
+  const missing = chips.filter((tag) => {
+    const normalized = tag.toLowerCase().startsWith("#")
+      ? tag.toLowerCase()
+      : `#${tag.toLowerCase()}`;
+    return !inline.has(normalized);
+  });
+  if (missing.length === 0) return text;
+  const tagLine = missing
+    .map((t) => (t.startsWith("#") ? t : `#${t}`))
+    .join(" ");
+  const trimmed = text.trim();
+  return trimmed.length === 0 ? tagLine : `${trimmed}\n\n${tagLine}`;
 }

@@ -71,7 +71,7 @@ function truncateText(text: string, max: number): string {
 /* ===== Skeleton Loader ===== */
 function DraftCardSkeleton() {
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4 animate-pulse">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 animate-pulse">
       <div className="flex items-center gap-2 mb-3">
         <div className="h-5 w-24 bg-brand-secondary rounded-full" />
         <div className="ml-auto h-4 w-16 bg-brand-secondary rounded" />
@@ -135,7 +135,7 @@ function DraftCard({
 
   return (
     <>
-      <div className="group bg-white border border-brand-divider rounded-2xl p-4 transition-all hover:shadow-sm">
+      <div className="group bg-brand-card border border-brand-divider rounded-2xl p-4 transition-all hover:shadow-sm">
         {/* Top row: type badge + status badge */}
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-secondary text-brand-text/60 text-[10px] font-semibold rounded-full capitalize">
@@ -282,7 +282,7 @@ export default function DraftsTab({
     return (
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-brand-text">Drafts &amp; Scheduled</h3>
-        <div className="bg-white border border-brand-divider rounded-2xl p-8 text-center">
+        <div className="bg-brand-card border border-brand-divider rounded-2xl p-8 text-center">
           <FileText className="w-10 h-10 text-brand-text/15 mx-auto mb-3" />
           <p className="text-sm font-semibold text-brand-text/50">No drafts</p>
           <p className="text-xs text-brand-text/35 mt-1">

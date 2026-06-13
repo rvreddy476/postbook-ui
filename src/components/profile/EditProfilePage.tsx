@@ -170,13 +170,13 @@ export function EditProfilePage() {
                         whileHover={{ scale: 1.1, x: -5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => router.back()}
-                        className="p-4 bg-brand-card shadow-xl border border-brand-divider rounded-[1.5rem] text-brand-highlight hover:text-blue-600 transition-colors"
+                        className="p-4 bg-brand-card shadow-xl border border-brand-divider rounded-[1.5rem] text-brand-highlight hover:text-brand-text transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </motion.button>
                     <div>
                         <h1 className="text-4xl font-black text-brand-text tracking-tighter uppercase italic">
-                            Edit <span className="text-blue-600">Profile</span>
+                            Edit <span className="text-brand-highlight">Profile</span>
                         </h1>
                         <p className="text-xs font-bold text-brand-text/60 uppercase tracking-[0.3em] mt-1">Manage your presence and details</p>
                     </div>
@@ -186,7 +186,7 @@ export function EditProfilePage() {
                     <Button
                         onClick={handleSaveProfile}
                         disabled={updateProfile.isPending}
-                        className="h-14 px-8 rounded-[1.5rem] bg-slate-950 hover:bg-slate-900 text-white shadow-2xl shadow-slate-950/20 group"
+                        className="h-14 px-8 rounded-[1.5rem] bg-brand-text text-brand-card hover:opacity-90 shadow-xl shadow-brand-text/10 group"
                     >
                         {updateProfile.isPending ? (
                             <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -227,15 +227,15 @@ export function EditProfilePage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`w-full group relative flex items-center gap-3 p-3 rounded-[1.25rem] transition-all duration-300 ${isActive
-                                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20"
+                                    ? "bg-brand-text text-brand-card shadow-xl shadow-brand-text/10"
                                     : "bg-brand-card/50 hover:bg-brand-card text-brand-highlight border border-brand-divider/50 hover:border-brand-divider"
                                     }`}
                             >
-                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-brand-secondary group-hover:bg-blue-50"}`}>
-                                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-brand-text/60 group-hover:text-blue-600"}`} />
+                                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-brand-card/20" : "bg-brand-secondary group-hover:bg-brand-secondary"}`}>
+                                    <Icon className={`w-4 h-4 ${isActive ? "text-brand-card" : "text-brand-text/60 group-hover:text-brand-text"}`} />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-white" : "text-brand-text"}`}>{tab.label}</div>
+                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
                                 </div>
                                 {isActive && (
                                     <motion.div layoutId="active-indicator" className="absolute right-3 text-white">
@@ -248,8 +248,8 @@ export function EditProfilePage() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-white rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 via-white to-blue-50/50 -z-10" />
+                <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-brand-divider rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-secondary/30 via-brand-card to-brand-secondary/20 -z-10" />
 
                     <AnimatePresence mode="wait">
                         <motion.div

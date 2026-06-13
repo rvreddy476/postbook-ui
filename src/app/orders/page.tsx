@@ -41,7 +41,7 @@ export default function OrdersPage() {
               <div>
                 <div className="font-medium">Order {o.order_number}</div>
                 <div className="text-sm text-gray-500">
-                  {new Date(o.created_at).toLocaleDateString()} · {o.currency_code} {o.final_amount.toFixed(2)}
+                  {new Date(o.created_at).toLocaleDateString()} · {o.currency} {o.final_amount.toFixed(2)}
                 </div>
               </div>
               <span

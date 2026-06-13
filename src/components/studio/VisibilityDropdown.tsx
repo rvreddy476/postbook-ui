@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export type PostVisibility = 'public' | 'followers' | 'private';
 
 const VIS_OPTIONS: { id: PostVisibility; icon: React.ReactNode; label: string; sub: string }[] = [
-  { id: 'public', icon: <Globe className="w-3.5 h-3.5" />, label: 'Public', sub: 'Anyone on Postbook' },
+  { id: 'public', icon: <Globe className="w-3.5 h-3.5" />, label: 'Public', sub: 'Anyone on VChat' },
   { id: 'followers', icon: <Users className="w-3.5 h-3.5" />, label: 'Followers', sub: 'People who follow you' },
   { id: 'private', icon: <Lock className="w-3.5 h-3.5" />, label: 'Only me', sub: 'Save as private draft' },
 ];

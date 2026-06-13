@@ -22,7 +22,7 @@ const HOW_IT_WORKS = [
   {
     step: '04',
     title: 'Upload products & start selling',
-    desc: 'List your catalog and reach millions of users on Postbook.',
+    desc: 'List your catalog and reach millions of users on VChat.',
   },
 ]
 
@@ -37,7 +37,7 @@ const BENEFITS = [
 
 const FAQS = [
   {
-    q: 'Who can sell on Postbook?',
+    q: 'Who can sell on VChat?',
     a: 'Any individual, home business, retailer, or brand. You need a business page and valid KYC documents.',
   },
   {
@@ -68,10 +68,10 @@ export default function CommerceLandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-white font-black text-sm">
-              PB
+              VC
             </div>
             <div>
-              <p className="font-bold text-[#1A1A1A] text-sm leading-none">Postbook Commerce</p>
+              <p className="font-bold text-[#1A1A1A] text-sm leading-none">VChat Commerce</p>
               <p className="text-[10px] text-[#6B5544] mt-0.5">For businesses, sellers, and partners</p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function CommerceLandingPage() {
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-24">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD3] rounded-full text-sm text-[#4A3728] mb-8 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          Sell products. Build your brand. Grow on Postbook.
+          Sell products. Build your brand. Grow on VChat.
         </div>
 
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[#1A1A1A] leading-[1.05] tracking-tight max-w-4xl mb-6">
@@ -204,7 +204,7 @@ export default function CommerceLandingPage() {
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-5xl font-black text-[#1A1A1A] mb-4">Ready to start selling?</h2>
-          <p className="text-[#6B5544] mb-10">Join thousands of sellers growing their business on Postbook.</p>
+          <p className="text-[#6B5544] mb-10">Join thousands of sellers growing their business on VChat.</p>
           <Link
             href={startHref}
             className="inline-block px-10 py-4 bg-[#1A1A1A] text-white font-bold rounded-2xl hover:bg-[#3A2E26] transition text-sm shadow-lg shadow-black/10"
@@ -217,7 +217,7 @@ export default function CommerceLandingPage() {
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer className="border-t border-[#E8DDD3] py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[#6B5544]">
-          <p>© 2026 Postbook Commerce · atpost</p>
+          <p>© 2026 VChat Commerce</p>
           <div className="flex gap-6">
             <Link href="/seller/dashboard" className="hover:text-[#1A1A1A] transition">Seller Dashboard</Link>
             <Link href="/pages" className="hover:text-[#1A1A1A] transition">Business Pages</Link>

@@ -12,7 +12,7 @@ const TVGallery: React.FC = () => {
         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand-text text-white rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
           <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 8l6 4-6 4V8z" /><path d="M2 7v10a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2z" /></svg>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-brand-text tracking-tighter uppercase italic">atpost TV</h2>
+        <h2 className="text-2xl sm:text-3xl font-black text-brand-text tracking-tighter uppercase italic">VChat TV</h2>
       </div>
 
       {VIDEOS.length === 0 ? (

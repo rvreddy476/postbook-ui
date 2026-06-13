@@ -174,7 +174,7 @@ const ActionMenu: React.FC<{
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-6 z-50 w-40 rounded-xl bg-white shadow-lg border border-brand-divider overflow-hidden"
+      className="absolute right-0 top-6 z-50 w-40 rounded-xl bg-brand-card shadow-lg border border-brand-divider overflow-hidden"
     >
       {items.map((item) => (
         <button
@@ -277,7 +277,7 @@ const InlineReplyInput: React.FC<{
               </button>
               {showEmoji && (
                 <div className="absolute bottom-8 right-0 z-50">
-                  <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-2xl shadow-xl border border-brand-divider flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
+                  <Suspense fallback={<div className="w-[352px] h-[435px] bg-brand-card rounded-2xl shadow-xl border border-brand-divider flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
                     <EmojiPicker data={emojiData} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
                   </Suspense>
                 </div>
@@ -501,7 +501,7 @@ const CommentRow: React.FC<{
           <span className="text-[12px] text-red-700 flex-1">Delete this comment?</span>
           <button
             onClick={() => setConfirmDelete(false)}
-            className="text-[12px] font-medium text-brand-text/60 px-2.5 py-1 rounded-full hover:bg-white transition"
+            className="text-[12px] font-medium text-brand-text/60 px-2.5 py-1 rounded-full hover:bg-brand-secondary transition"
           >
             Cancel
           </button>
@@ -891,7 +891,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
   const overLimit = charsLeft < 0
 
   return (
-    <div className="bg-white rounded-b-2xl">
+    <div className="bg-brand-card rounded-b-2xl">
       {/* Header */}
       <div className="flex items-center justify-between pb-2">
         <h3 className="text-[14px] font-bold text-brand-text flex items-center gap-1.5">
@@ -911,7 +911,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                 onClick={() => setSort(mode)}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition ${
                   sort === mode
-                    ? 'bg-white text-brand-text shadow-sm'
+                    ? 'bg-brand-card text-brand-text shadow-sm'
                     : 'text-brand-text/50 hover:text-brand-text'
                 }`}
               >
@@ -954,7 +954,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                 </button>
                 {showMainEmoji && (
                   <div className="absolute bottom-10 right-0 z-50">
-                    <Suspense fallback={<div className="w-[352px] h-[435px] bg-white rounded-2xl shadow-xl border border-brand-divider flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
+                    <Suspense fallback={<div className="w-[352px] h-[435px] bg-brand-card rounded-2xl shadow-xl border border-brand-divider flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
                       <EmojiPicker data={emojiData} onEmojiSelect={handleMainEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
                     </Suspense>
                   </div>

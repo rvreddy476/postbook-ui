@@ -1,8 +1,36 @@
 "use client"
 
 import React, { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import AppShell from "@/components/AppShell"
 import { useSavedItems, useCollections, useUnsaveItem } from "@/hooks/useSavedItems"
+import { usePostDetail } from "@/hooks/useFeedPosts"
+import { useUserProfile } from "@/hooks/useEditProfile"
 import type { SavedItem, SavedCollection } from "@/types/profile"
+
+// ---------------------------------------------------------------------------
+// Routing + label helpers
+// ---------------------------------------------------------------------------
+
+const REEL_TYPES = new Set(["reel", "short", "flick"])
+
+function contentRoute(post: { id: string; content_type?: string } | undefined, fallbackId: string): string {
+    if (!post) return `/post/${fallbackId}`
+    const t = post.content_type
+    if (t && REEL_TYPES.has(t)) return `/reels?postId=${post.id}`
+    if (t === "video") return `/posttube/watch?v=${post.id}`
+    return `/post/${post.id}`
+}
+
+function contentLabel(post: { content_type?: string } | undefined): string {
+    const t = post?.content_type
+    if (!t) return "Post"
+    if (REEL_TYPES.has(t)) return "Reels"
+    if (t === "video") return "Video"
+    if (t === "article") return "Article"
+    if (t === "poll") return "Poll"
+    return "Post"
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,61 +124,104 @@ interface SavedItemCardProps {
 }
 
 function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
-    const badgeColor = targetTypeBadgeColor(item.target_type)
+    const router = useRouter()
+    const { data: post } = usePostDetail(item.target_id)
+    const { data: author } = useUserProfile(post?.author_id)
+
+    const route = contentRoute(post as { id: string; content_type?: string } | undefined, item.target_id)
+    const label = contentLabel(post)
+    const authorName = author?.display_name || "Unknown"
+    const authorAvatar = author?.avatar_media_id ? `/v1/media/${author.avatar_media_id}/serve` : null
+    const firstMedia = post?.media?.[0]
+    const thumbnailUrl = firstMedia ? `/v1/media/${firstMedia.media_id}/serve` : null
+    const isVideoMedia = firstMedia?.kind === "video"
+    const title = post?.title || post?.text || "Untitled"
+
+    const handleNavigate = useCallback(() => {
+        router.push(route)
+    }, [router, route])
+
+    const stop = (e: React.MouseEvent) => e.stopPropagation()
 
     return (
-        <div className="group bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-300">
-            <div className="flex items-start gap-4">
-                {/* Type icon */}
-                <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${badgeColor}`}>
-                    {targetTypeIcon(item.target_type)}
+        <div
+            onClick={handleNavigate}
+            className="group bg-brand-card rounded-2xl border border-brand-divider overflow-hidden shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-300 cursor-pointer"
+        >
+            <div className="flex items-stretch gap-4 p-4">
+                {/* Thumbnail */}
+                <div className="relative flex-shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-brand-secondary">
+                    {thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-brand-text/30">
+                            {targetTypeIcon(item.target_type)}
+                        </div>
+                    )}
+                    {isVideoMedia && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7L8 5z" />
+                                </svg>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 space-y-1.5">
-                    {/* Type + Collection row */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${badgeColor}`}>
-                            {item.target_type}
-                        </span>
-                        {item.collection_name && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
-                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                </svg>
-                                {item.collection_name}
-                            </span>
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                    <h3 className="text-base font-semibold text-brand-text line-clamp-2">{title}</h3>
+                    <p className="text-xs text-brand-text/60">
+                        {label} · {authorName}
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-auto">
+                        {authorAvatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={authorAvatar} alt="" className="w-5 h-5 rounded-full object-cover ring-2 ring-blue-500/40" />
+                        ) : (
+                            <div className="w-5 h-5 rounded-full bg-brand-secondary ring-2 ring-blue-500/40" />
                         )}
+                        <span className="text-xs text-brand-text/60">
+                            Saved from <span className="font-semibold text-brand-text">{authorName}&apos;s {label.toLowerCase()}</span>
+                        </span>
                     </div>
 
-                    {/* Target ID */}
-                    <p className="text-[11px] font-bold text-brand-text truncate">
-                        <span className="text-brand-text/60 font-medium">ID: </span>
-                        <span className="font-mono">{item.target_id}</span>
-                    </p>
-
-                    {/* Timestamp */}
-                    <p className="text-[9px] font-bold text-brand-text/60 uppercase tracking-widest">
-                        Saved {formatTimeAgo(item.created_at)}
-                    </p>
+                    <div className="flex items-center gap-2 pt-2" onClick={stop}>
+                        <button
+                            type="button"
+                            onClick={() => onUnsave(item.id)}
+                            disabled={isPending}
+                            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-secondary text-brand-text hover:bg-brand-text/10 active:scale-95 transition-all disabled:opacity-50"
+                            title="Remove from Saved"
+                        >
+                            {isPending ? "Removing..." : "Add to Collection"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleNavigate}
+                            className="w-10 h-10 rounded-xl bg-brand-secondary text-brand-text hover:bg-brand-text/10 active:scale-95 transition-all flex items-center justify-center"
+                            title="Open"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onUnsave(item.id)}
+                            disabled={isPending}
+                            className="w-10 h-10 rounded-xl bg-brand-secondary text-brand-text hover:bg-rose-500/20 hover:text-rose-400 active:scale-95 transition-all flex items-center justify-center"
+                            title="Unsave"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-
-                {/* Unsave button */}
-                <button
-                    onClick={() => onUnsave(item.id)}
-                    disabled={isPending}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-brand-divider text-brand-highlight bg-brand-card hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove from saved"
-                >
-                    {isPending ? (
-                        <div className="w-3 h-3 border-2 border-rose-300 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
-                    )}
-                    Unsave
-                </button>
             </div>
         </div>
     )
@@ -267,8 +338,8 @@ export default function SavedPage() {
     }, [unsaveItem])
 
     return (
+        <AppShell>
         <div className="min-h-screen bg-brand-bg">
-            {/* Page content — no header wrapper needed; parent layout provides global header */}
             <div className="max-w-3xl mx-auto px-4 pt-10 pb-16">
 
                 {/* Page heading */}
@@ -397,5 +468,6 @@ export default function SavedPage() {
                 )}
             </div>
         </div>
+        </AppShell>
     )
 }

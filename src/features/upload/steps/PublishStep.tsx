@@ -193,7 +193,7 @@ export function PublishStep({ form, patch, showErrors, publishError, retryProces
         )}
       </div>
 
-      {/* ── Cross-post to Postbook ── */}
+      {/* ── Cross-post to Feed ── */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7C5CFC]/10">
@@ -201,14 +201,14 @@ export function PublishStep({ form, patch, showErrors, publishError, retryProces
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-[#1A1A1A]">Cross-post</h3>
-            <p className="text-[11px] text-[#9E9E9E]">Also share to your Postbook feed</p>
+            <p className="text-[11px] text-[#9E9E9E]">Also share to your Feed</p>
           </div>
         </div>
         <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[13px] font-medium text-[#1A1A1A]">Publish to Postbook</p>
-              <p className="mt-0.5 text-[11px] text-[#9E9E9E]">Share as a post on your Postbook feed</p>
+              <p className="text-[13px] font-medium text-[#1A1A1A]">Publish to Feed</p>
+              <p className="mt-0.5 text-[11px] text-[#9E9E9E]">Share as a post on your Feed</p>
             </div>
             <button
               type="button"

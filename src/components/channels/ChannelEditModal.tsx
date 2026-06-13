@@ -350,7 +350,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
                       onChange={(event) => setPrice(event.target.value)}
                       min="0"
                       step="0.01"
-                      className="w-full rounded-xl border border-brand-divider bg-white px-4 py-3 pl-8 text-sm focus:border-brand-text/50 focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 pl-8 text-sm focus:border-brand-text/50 focus:outline-none focus:ring-2 focus:ring-brand-text/30"
                       placeholder="4.99"
                     />
                   </div>

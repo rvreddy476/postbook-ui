@@ -24,7 +24,7 @@ export default function GroupPostComposer({ groupId, channels }: GroupPostCompos
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-brand-divider p-4">
+    <div className="bg-brand-card rounded-2xl border border-brand-divider p-4">
       <p className="text-[10px] font-extrabold text-brand-text/40 uppercase tracking-widest mb-3">
         Share with the group
       </p>

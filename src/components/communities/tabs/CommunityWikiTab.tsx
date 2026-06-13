@@ -40,7 +40,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
     return (
       <div className="space-y-2">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white border border-brand-divider rounded-xl p-4 animate-pulse">
+          <div key={i} className="bg-brand-card border border-brand-divider rounded-xl p-4 animate-pulse">
             <div className="h-4 w-32 bg-brand-bg rounded mb-2" />
             <div className="h-3 w-48 bg-brand-bg rounded" />
           </div>
@@ -103,7 +103,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
               onSaved={slug => { setSelectedSlug(slug); setShowEditor(false) }}
             />
           ) : selectedPage ? (
-            <div className="bg-white border border-brand-divider rounded-2xl p-5">
+            <div className="bg-brand-card border border-brand-divider rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-brand-text">{selectedPage.title}</h3>
                 {canEdit && (
@@ -181,7 +181,7 @@ function WikiEditor({ communityId, editingPage, onClose, onSaved }: {
   const isPending = createPage.isPending || updatePage.isPending
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-5">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-brand-text">{editingPage ? 'Edit Page' : 'New Wiki Page'}</h3>
         <button onClick={onClose} className="text-brand-text/40 hover:text-brand-text"><X className="w-4 h-4" /></button>

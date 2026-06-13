@@ -50,11 +50,14 @@ export function useToggleLike() {
             qc.setQueriesData({ queryKey: ["profile-posts"] }, updatePost)
         },
         onSettled: (_data, _err, postId) => {
-            // Sync from server after toggle — PostCard handles optimistic UI locally
-            qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
-            qc.invalidateQueries({ queryKey: ["profile-posts"] })
-            qc.invalidateQueries({ queryKey: ["post-detail", postId] })
+            // Mark feed caches stale without forcing a refetch — the
+            // optimistic onMutate update is already correct, so refetching
+            // would cause the list to remount and the page to "shake".
+            // Next natural refetch (focus, mount, manual) picks up server state.
+            qc.invalidateQueries({ queryKey: ["home-feed"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["feed-posts"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["post-detail", postId], refetchType: "none" })
         },
     })
 }
@@ -104,11 +107,13 @@ export function useToggleReaction() {
             qc.setQueriesData({ queryKey: ["profile-posts"] }, updatePost)
         },
         onSettled: (_data, _err, { postId }) => {
-            qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
-            qc.invalidateQueries({ queryKey: ["profile-posts"] })
-            qc.invalidateQueries({ queryKey: ["post-detail", postId] })
-            qc.invalidateQueries({ queryKey: ["reaction-counts", postId] })
+            // No refetch — onMutate already wrote optimistic state. Marking
+            // stale lets natural refetch triggers sync later.
+            qc.invalidateQueries({ queryKey: ["home-feed"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["feed-posts"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["post-detail", postId], refetchType: "none" })
+            qc.invalidateQueries({ queryKey: ["reaction-counts", postId], refetchType: "none" })
         },
     })
 }

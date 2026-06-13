@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PostTube | Postbook \u00b7 atpost",
-  description: "Watch long-form video content on PostTube.",
+  title: "Posttube | VChat",
+  description: "Watch long-form video content on Posttube.",
 };
 
 export default function PostTubeLayout({ children }: { children: React.ReactNode }) {

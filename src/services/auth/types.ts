@@ -25,10 +25,17 @@ export interface AuthResult {
   refreshToken?: string;
 }
 
+export type StepUpMethod = 'email_otp' | 'totp';
+
 export interface LoginResult {
   requires2FA: boolean;
+  requiresStepUp?: boolean;
   pendingToken?: string;
   userId?: string;
+  // Methods available when requiresStepUp=true (A13). Server fills based
+  // on what's actually configured for the user: email-OTP needs a
+  // verified email; totp needs 2FA enabled on the account.
+  stepUpMethods?: StepUpMethod[];
   authResult?: AuthResult;
 }
 
@@ -37,4 +44,6 @@ export interface AuthStrategy {
   register(command: RegisterCommand): Promise<AuthResult>;
   login(command: LoginCommand): Promise<LoginResult>;
   verify2FA(userId: string, code: string, pendingToken: string): Promise<AuthResult>;
+  verifyStepUpEmail(pendingToken: string, code: string): Promise<AuthResult>;
+  verifyStepUp2FA(pendingToken: string, code: string): Promise<AuthResult>;
 }

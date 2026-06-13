@@ -38,7 +38,7 @@ import {
 
 type NavSection = 'for-you' | 'answer-requests' | 'drafts'
 
-/* ─── Ask Modal ──────────────────────────────────────────────── */
+/* Ask Modal */
 function AskModal({ onClose }: { onClose: () => void }) {
   const router = useRouter()
   const [title, setTitle] = useState('')
@@ -176,7 +176,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-/* ─── Question Card (social feed style) ─────────────────────── */
+/* Question Card */
 function QuestionCard({ q, passed, onPass }: { q: QuestionSummary; passed: boolean; onPass: (id: string) => void }) {
   const router = useRouter()
   const [upvoted, setUpvoted] = useState(false)
@@ -223,7 +223,6 @@ function QuestionCard({ q, passed, onPass }: { q: QuestionSummary; passed: boole
 
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 mb-3 hover:shadow-sm transition-shadow">
-      {/* Header: author + follow + dismiss */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
@@ -254,14 +253,12 @@ function QuestionCard({ q, passed, onPass }: { q: QuestionSummary; passed: boole
         </div>
       </div>
 
-      {/* Question title */}
       <Link href={`/qa/questions/${q.id}`}>
         <h3 className="text-[15px] font-bold text-brand-text leading-snug hover:text-ask transition-colors mb-2.5 line-clamp-3">
           {q.title}
         </h3>
       </Link>
 
-      {/* Tags */}
       {q.tags && q.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {q.tags.slice(0, 4).map(tag => (
@@ -270,7 +267,6 @@ function QuestionCard({ q, passed, onPass }: { q: QuestionSummary; passed: boole
         </div>
       )}
 
-      {/* Engagement footer */}
       <div className="flex items-center gap-0.5 pt-2.5 border-t border-brand-divider/60">
         <button onClick={handleUpvote}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
@@ -369,7 +365,7 @@ function QuestionFeed({ questions, isLoading, passedIds, onPass }: {
   )
 }
 
-/* ─── Answer Requests Feed ───────────────────────────────────── */
+/* Answer Requests Feed */
 function AnswerRequestCard({ req }: { req: AnswerRequest }) {
   return (
     <div className="bg-brand-card border-b border-brand-divider px-5 py-5">
@@ -393,7 +389,7 @@ function AnswerRequestCard({ req }: { req: AnswerRequest }) {
   )
 }
 
-/* ─── Main Page ──────────────────────────────────────────────── */
+/* Main Page */
 export default function QAPage() {
   const router = useRouter()
   const [section, setSection] = useState<NavSection>('for-you')
@@ -424,15 +420,14 @@ export default function QAPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-[#f8f9fa] dark:bg-neutral-950 font-sans">
 
-      {/* ── Left sidebar ──────────────────────────────────── */}
+      {/* Left sidebar */}
       <aside className="hidden md:flex flex-col w-60 shrink-0 h-full bg-brand-card border-r border-brand-divider overflow-y-auto">
-        {/* Branding */}
         <div className="px-4 pt-5 pb-4">
           <button
             onClick={() => router.push('/')}
             className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors mb-4"
           >
-            <ChevronLeft className="w-3.5 h-3.5" /> Back to Postbook
+            <ChevronLeft className="w-3.5 h-3.5" /> Back to Feed
           </button>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-ask">
@@ -442,7 +437,6 @@ export default function QAPage() {
           </div>
         </div>
 
-        {/* Add Question */}
         <div className="px-4 pb-4">
           <button
             onClick={() => setShowAskModal(true)}
@@ -452,7 +446,6 @@ export default function QAPage() {
           </button>
         </div>
 
-        {/* Questions nav */}
         <div className="px-3 pb-4 border-b border-brand-divider">
           <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-1">Questions</p>
           {navItems.map(item => (
@@ -492,9 +485,8 @@ export default function QAPage() {
           </Link>
         </div>
 
-        {/* Communities / Topics */}
         <div className="px-3 py-4 flex-1">
-          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-2">Communities</p>
+          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-2">Topics</p>
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <input
@@ -521,31 +513,37 @@ export default function QAPage() {
               </Link>
             ))}
             {filteredTopics?.length === 0 && (
-              <p className="text-xs text-neutral-400 px-2 py-3 text-center">No communities found</p>
+              <p className="text-xs text-neutral-400 px-2 py-3 text-center">No topics found</p>
             )}
           </div>
         </div>
       </aside>
 
-      {/* ── Main content ──────────────────────────────────── */}
+      {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {/* Header bar */}
         <div className="bg-brand-card border-b border-brand-divider sticky top-0 z-20 px-5 py-3.5 flex items-center justify-between">
           <div>
             <h1 className="text-base font-bold text-brand-text">
               {navItems.find(n => n.key === section)?.label}
             </h1>
           </div>
-          {/* Mobile: Add Question */}
-          <button
-            onClick={() => setShowAskModal(true)}
-            className="md:hidden flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-semibold bg-ask hover:bg-ask-hover shadow-sm active:scale-95 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" /> Ask
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/qa/search"
+              aria-label="Search Q&A"
+              className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-700 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+            </Link>
+            <button
+              onClick={() => setShowAskModal(true)}
+              className="md:hidden flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-semibold bg-ask hover:bg-ask-hover shadow-sm active:scale-95 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" /> Ask
+            </button>
+          </div>
         </div>
 
-        {/* Feed */}
         {section === 'for-you' && (
           <QuestionFeed
             questions={answerQueue}
@@ -572,7 +570,7 @@ export default function QAPage() {
               <div className="text-center py-24 text-neutral-400">
                 <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="font-semibold text-base">No answer requests</p>
-                <p className="text-sm mt-1">When someone requests your expertise, it'll appear here.</p>
+                <p className="text-sm mt-1">When someone requests your expertise, it&apos;ll appear here.</p>
               </div>
             )}
           </>
@@ -587,9 +585,8 @@ export default function QAPage() {
         )}
       </main>
 
-      {/* ── Right sidebar ─────────────────────────────────── */}
+      {/* Right sidebar */}
       <aside className="hidden lg:flex flex-col w-72 shrink-0 h-full border-l border-brand-divider bg-brand-card overflow-y-auto p-5">
-        {/* Topics you know about */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-brand-text">Topics you know about</h3>
@@ -612,7 +609,7 @@ export default function QAPage() {
                 <HelpCircle className="w-7 h-7 text-neutral-400" />
               </div>
               <p className="text-sm font-semibold text-brand-text/80 mb-1">No topics yet</p>
-              <p className="text-xs text-neutral-400 mb-3">You'll get better questions if you add more specific topics.</p>
+              <p className="text-xs text-neutral-400 mb-3">You&apos;ll get better questions if you add more specific topics.</p>
               <Link href="/qa/profile/me">
                 <button className="px-5 py-2 rounded-full border-2 border-ask text-ask text-sm font-semibold hover:bg-ask-light transition-colors">
                   Add topics
@@ -622,7 +619,6 @@ export default function QAPage() {
           )}
         </div>
 
-        {/* Trending section */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-neutral-500" />

@@ -38,9 +38,12 @@ import {
     useTrustDevice,
     useForgotPassword,
     useDeleteAccount,
+    useLoginAnomalies,
+    useAcknowledgeAnomaly,
     type Setup2FAResponse,
     type Session,
     type TrustedDevice,
+    type LoginAnomaly,
 } from "@/hooks/useSecurity"
 
 /* ------------------------------------------------------------------ */
@@ -700,6 +703,131 @@ function DeleteAccountDialog({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Login Anomaly Item                                                 */
+/* ------------------------------------------------------------------ */
+
+function anomalyLabel(type: LoginAnomaly["anomaly_type"]): string {
+    switch (type) {
+        case "new_ip":
+            return "Signed in from a new IP"
+        case "new_device":
+            return "Signed in from a new device"
+        case "new_country":
+            return "Signed in from a new country"
+        case "impossible_travel":
+            return "Impossible-travel alert"
+        case "many_failed":
+            return "Multiple failed sign-in attempts"
+        case "password_reset_used":
+            return "Password reset used"
+        case "session_revoked":
+            return "We blocked a suspicious sign-in"
+        default:
+            return "Security alert"
+    }
+}
+
+function anomalyTone(risk: number, ackd: boolean): {
+    border: string
+    bg: string
+    icon: string
+    chip: string
+} {
+    if (ackd) {
+        return {
+            border: "border-[#F0E6DC]",
+            bg: "bg-brand-card",
+            icon: "text-[#7B5B3A]",
+            chip: "bg-[#FAF5F0] text-[#7B5B3A]",
+        }
+    }
+    if (risk >= 70) {
+        return {
+            border: "border-rose-200",
+            bg: "bg-rose-50",
+            icon: "text-rose-600",
+            chip: "bg-rose-100 text-rose-700",
+        }
+    }
+    if (risk >= 30) {
+        return {
+            border: "border-amber-200",
+            bg: "bg-amber-50",
+            icon: "text-amber-600",
+            chip: "bg-amber-100 text-amber-700",
+        }
+    }
+    return {
+        border: "border-[#F0E6DC]",
+        bg: "bg-brand-card",
+        icon: "text-[#D4A574]",
+        chip: "bg-[#FAF5F0] text-[#7B5B3A]",
+    }
+}
+
+function AnomalyItem({
+    anomaly,
+    onAck,
+    isAcking,
+}: {
+    anomaly: LoginAnomaly
+    onAck: (id: string) => void
+    isAcking: boolean
+}) {
+    const ackd = !!anomaly.acknowledged_at
+    const tone = anomalyTone(anomaly.risk_score, ackd)
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className={`flex items-start gap-4 rounded-xl border ${tone.border} ${tone.bg} px-4 py-3`}
+        >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/60">
+                <AlertTriangle className={`h-5 w-5 ${tone.icon}`} />
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-[#3C2415]">
+                        {anomalyLabel(anomaly.anomaly_type)}
+                    </p>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tone.chip}`}>
+                        Risk {anomaly.risk_score}
+                    </span>
+                    {ackd && (
+                        <span className="shrink-0 rounded-full bg-[#FAF5F0] px-2 py-0.5 text-[10px] font-bold text-[#7B5B3A]">
+                            Acknowledged
+                        </span>
+                    )}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#7B5B3A]">
+                    {anomaly.ip ? <span>IP {anomaly.ip}</span> : null}
+                    {anomaly.user_agent ? <span className="truncate max-w-[200px]">{parseUserAgent(anomaly.user_agent)}</span> : null}
+                    <span>{formatDate(anomaly.occurred_at)}</span>
+                </div>
+                {anomaly.anomaly_type === "session_revoked" && !ackd ? (
+                    <p className="mt-2 text-xs text-rose-700">
+                        We revoked a sign-in that didn&apos;t match this device. If it wasn&apos;t you, change your password now.
+                    </p>
+                ) : null}
+            </div>
+            {!ackd ? (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onAck(anomaly.id)}
+                    disabled={isAcking}
+                    className="shrink-0 text-[#3C2415] hover:bg-white/60"
+                >
+                    {isAcking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Dismiss"}
+                </Button>
+            ) : null}
+        </motion.div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Session Item                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -881,6 +1009,35 @@ export default function SecuritySettingsPage() {
     const trustDevice = useTrustDevice()
     const [removingDeviceId, setRemovingDeviceId] = useState<string | null>(null)
 
+    // Login anomaly inbox (A13). High-risk + unacknowledged entries
+    // render at the top of the page as a banner.
+    const { data: anomalies, isLoading: anomaliesLoading } = useLoginAnomalies()
+    const ackAnomaly = useAcknowledgeAnomaly()
+    const [ackingId, setAckingId] = useState<string | null>(null)
+    const handleAck = useCallback(
+        (id: string) => {
+            setAckingId(id)
+            ackAnomaly.mutate(id, {
+                onSettled: () => setAckingId(null),
+                onError: (err) => {
+                    const message =
+                        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                        "Failed to dismiss alert."
+                    toast({ type: "error", title: "Error", description: message })
+                },
+            })
+        },
+        [ackAnomaly, toast],
+    )
+    const pendingAnomalies = useMemo(
+        () => (anomalies ?? []).filter((a) => !a.acknowledged_at),
+        [anomalies],
+    )
+    const highRiskUnacked = useMemo(
+        () => pendingAnomalies.filter((a) => a.risk_score >= 70),
+        [pendingAnomalies],
+    )
+
     const currentSessionId = useMemo(() => {
         if (!sessions || sessions.length === 0) return null
         const sorted = [...sessions].sort(
@@ -1058,6 +1215,91 @@ export default function SecuritySettingsPage() {
                         Manage your account security, two-factor authentication, and active sessions.
                     </p>
                 </div>
+
+                {/* High-risk unack banner — surfaces above everything else
+                    when we revoked a suspicious sign-in. */}
+                {highRiskUnacked.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-2xl border border-rose-300 bg-rose-50 p-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-rose-800">
+                                    {highRiskUnacked.length === 1
+                                        ? "We blocked a suspicious sign-in"
+                                        : `${highRiskUnacked.length} suspicious sign-ins blocked`}
+                                </p>
+                                <p className="mt-0.5 text-xs text-rose-700">
+                                    If any of these weren&apos;t you, change your password now and revoke other sessions below.
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --------------------------------------------------------- */}
+                {/*  Security Alerts Inbox (A13)                              */}
+                {/* --------------------------------------------------------- */}
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                >
+                    <div className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
+                                <AlertTriangle className="h-6 w-6 text-[#D4A574]" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-lg font-bold text-[#3C2415]">Security Alerts</h2>
+                                    {pendingAnomalies.length > 0 && (
+                                        <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">
+                                            {pendingAnomalies.length} new
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                    Where you&apos;ve signed in from. We&apos;ll flag anything unusual so you can confirm or revoke.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 space-y-2">
+                            {anomaliesLoading && (
+                                <div className="space-y-2">
+                                    <ItemSkeleton />
+                                    <ItemSkeleton />
+                                </div>
+                            )}
+
+                            {!anomaliesLoading && (!anomalies || anomalies.length === 0) && (
+                                <div className="py-6 text-center">
+                                    <ShieldCheck className="mx-auto h-10 w-10 text-emerald-300" />
+                                    <p className="mt-2 text-sm font-medium text-[#7B5B3A]">
+                                        No security alerts. Your account looks healthy.
+                                    </p>
+                                </div>
+                            )}
+
+                            {!anomaliesLoading && anomalies && anomalies.length > 0 && (
+                                <AnimatePresence mode="popLayout">
+                                    {anomalies.slice(0, 10).map((a) => (
+                                        <AnomalyItem
+                                            key={a.id}
+                                            anomaly={a}
+                                            onAck={handleAck}
+                                            isAcking={ackingId === a.id}
+                                        />
+                                    ))}
+                                </AnimatePresence>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
 
                 {/* --------------------------------------------------------- */}
                 {/*  Two-Factor Authentication Card                           */}

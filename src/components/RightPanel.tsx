@@ -1,151 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Calendar, Newspaper, Play, TrendingUp } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
-import { useAuthUser } from '@/store/auth';
-import { useFriendSuggestions, useSendFriendRequest } from '@/hooks/useConnections';
-import type { SuggestionUser } from '@/hooks/useConnections';
 import { useTrending } from '@/hooks/useSearch';
+import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { User } from '../types';
 
 interface RightPanelProps {
   onContactClick: (contact: User) => void;
 }
 
-const AVATAR_COLORS = [
-  'bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500',
-  'bg-purple-500', 'bg-cyan-500', 'bg-pink-500', 'bg-indigo-500',
-  'bg-teal-500', 'bg-orange-500',
-];
-
-function getInitialColor(id: string): string {
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+function formatViews(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
 }
 
-function getInitial(name: string): string {
-  return (name?.charAt(0) || '?').toUpperCase();
-}
+const ROTATE_MS = 12_000;
 
-function isCelebOrBrand(user: SuggestionUser): boolean {
-  // Celebrity/brand/business accounts come from trending bucket or have specific reason codes
-  return user.source_bucket === 'trending' || user.source_bucket === 'celebrity' ||
-    (user.reason_codes ?? []).some(r => r === 'POPULAR' || r === 'CELEBRITY' || r === 'BRAND');
-}
-
-const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
+/**
+ * Home right rail. Friend suggestions moved inline into the feed
+ * (PeopleYouMayKnowStrip) — this panel now hosts a rotating stack of
+ * content cards: Trending, PostTube trending videos, Events, News.
+ * Every ROTATE_MS the top card moves to the back so the rail keeps
+ * changing without user input.
+ */
+const RightPanel: React.FC<RightPanelProps> = () => {
   const router = useRouter();
-  const authUser = useAuthUser();
-  const { data: suggestions, isLoading } = useFriendSuggestions(authUser?.id, 6);
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
+  const { data: tubeFeed } = useQuery({
+    queryKey: ['posttube-trending-rail'],
+    queryFn: () => getCategoryFeed('trending', { limit: 3 }),
+    staleTime: 120_000,
+  });
 
-  const sendRequest = useSendFriendRequest();
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [rotation, setRotation] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setRotation((r) => r + 1), ROTATE_MS);
+    return () => clearInterval(t);
+  }, []);
 
-  const handleAction = async (user: SuggestionUser) => {
-    if (sentIds.has(user.user_id)) return;
-    try {
-      await sendRequest.mutateAsync(user.username || user.user_id);
-      setSentIds((prev) => new Set(prev).add(user.user_id));
-    } catch {
-      // Handled by mutation
-    }
-  };
+  const tubeVideos = tubeFeed?.items ?? [];
+  const trends = trendingData?.trending ?? [];
 
-  const visibleSuggestions = suggestions ?? [];
-
-  return (
-    <div className="space-y-8 sticky top-28 h-fit">
-      {/* Who to Follow / People you may know */}
-      {(isLoading || visibleSuggestions.length > 0) && (
-        <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
-          <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Who to follow</h5>
-
-          {isLoading ? (
-            <div className="space-y-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-brand-secondary" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-20 rounded bg-brand-secondary" />
-                    <div className="h-2 w-16 rounded bg-brand-secondary" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <AnimatePresence>
-                {visibleSuggestions.map((user) => {
-                  const isSent = sentIds.has(user.user_id);
-                  const hasAvatar = !!user.avatar_media_id;
-                  const avatarSrc = hasAvatar ? `/v1/media/${user.avatar_media_id}/serve` : null;
-                  const isCeleb = isCelebOrBrand(user);
-                  const actionLabel = isSent ? 'Sent' : isCeleb ? 'Follow' : 'Add Friend';
-
-                  return (
-                    <motion.div
-                      key={user.user_id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      className="flex items-center justify-between group"
-                    >
-                      <button
-                        onClick={() => router.push(`/u/${user.username || user.user_id}`)}
-                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                      >
-                        {/* Avatar: image or initial letter with random color */}
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider flex-shrink-0">
-                          {avatarSrc ? (
-                            <img src={avatarSrc} alt={user.display_name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-white text-sm font-black ${getInitialColor(user.user_id)}`}>
-                              {getInitial(user.display_name)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors truncate">{user.display_name}</h6>
-                          {user.username && (
-                            <p className="text-[10px] text-brand-text/40 uppercase tracking-widest truncate">@{user.username}</p>
-                          )}
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => handleAction(user)}
-                        disabled={isSent}
-                        className={`text-[10px] font-black tracking-widest uppercase transition-colors flex-shrink-0 ml-3 whitespace-nowrap ${
-                          isSent
-                            ? 'text-brand-text/30'
-                            : 'text-brand-accent hover:text-brand-text'
-                        }`}
-                      >
-                        {actionLabel}
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          )}
-
-          <button
-            onClick={() => router.push('/circle')}
-            className="w-full mt-8 py-3 bg-brand-bg text-brand-text text-[10px] font-black tracking-widest uppercase rounded-xl hover:bg-brand-accent hover:text-brand-bg transition-all"
-          >
-            Show More
-          </button>
-        </div>
-      )}
-
-      {/* Trending Topics */}
-      {(trendingLoading || (trendingData?.trending ?? []).length > 0) && (
-        <div className="bg-brand-card border border-brand-divider rounded-3xl p-6 shadow-sm">
-          <h5 className="text-[10px] font-black tracking-widest uppercase text-brand-text/60 mb-6">Trending Topics</h5>
+  const cards: { key: string; node: React.ReactNode }[] = [
+    {
+      key: 'trending',
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-brand-text/50" />
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Trending</h5>
+          </div>
           {trendingLoading ? (
             <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
@@ -155,33 +65,139 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="space-y-4">
-              {(trendingData?.trending ?? []).slice(0, 5).map((trend) => (
+          ) : trends.length > 0 ? (
+            <div className="space-y-3.5">
+              {trends.slice(0, 5).map((trend) => (
                 <button
                   key={trend.hashtag}
                   onClick={() => router.push(`/hashtag/${trend.hashtag}`)}
-                  className="group cursor-pointer block text-left w-full"
+                  className="group block w-full cursor-pointer text-left"
                 >
-                  <h6 className="text-xs font-bold text-brand-text group-hover:text-brand-accent transition-colors">#{trend.hashtag}</h6>
-                  <p className="text-[10px] text-brand-text/40 uppercase tracking-widest">
+                  <h6 className="text-xs font-bold text-brand-text transition-colors group-hover:text-brand-accent">#{trend.hashtag}</h6>
+                  <p className="text-[10px] uppercase tracking-widest text-brand-text/40">
                     {trend.score >= 1000 ? `${(trend.score / 1000).toFixed(1)}k` : Math.round(trend.score)} posts
                   </p>
                 </button>
               ))}
             </div>
+          ) : (
+            <p className="text-xs text-brand-text/40">Nothing trending yet — start a conversation.</p>
           )}
         </div>
-      )}
+      ),
+    },
+    {
+      key: 'posttube',
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Play className="h-4 w-4 text-brand-text/50" />
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">PostTube Trending</h5>
+            </div>
+            <a
+              href="/posttube"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[10px] font-bold uppercase tracking-widest text-brand-highlight hover:text-brand-text"
+            >
+              More
+            </a>
+          </div>
+          {tubeVideos.length > 0 ? (
+            <div className="space-y-3">
+              {tubeVideos.map((v) => (
+                <a
+                  key={v.id}
+                  href={`/posttube/watch/${v.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex gap-3"
+                >
+                  <div className="relative h-14 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
+                    {v.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={v.thumbnail_url} alt={v.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Play className="h-5 w-5 text-brand-text/30" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-xs font-bold leading-snug text-brand-text transition-colors group-hover:text-brand-accent">
+                      {v.title || 'Untitled video'}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] text-brand-text/40">
+                      {v.channel_name} · {formatViews(v.view_count)} views
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-brand-text/40">No trending videos right now.</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'events',
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-brand-text/50" />
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Events</h5>
+          </div>
+          <p className="text-xs leading-relaxed text-brand-text/50">
+            Events from your spaces will show up here — meetups, lives, and launches near you.
+          </p>
+          <button
+            onClick={() => router.push('/groups')}
+            className="mt-3 rounded-full border border-brand-divider bg-brand-secondary px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-text/70 transition hover:bg-brand-secondary/80"
+          >
+            Browse spaces
+          </button>
+        </div>
+      ),
+    },
+    {
+      key: 'news',
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <Newspaper className="h-4 w-4 text-brand-text/50" />
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">News</h5>
+          </div>
+          <p className="text-xs leading-relaxed text-brand-text/50">
+            A daily digest of what&apos;s happening across VChat is on its way. Until then, the
+            trending tags above are the pulse.
+          </p>
+        </div>
+      ),
+    },
+  ];
+
+  // Rotate: every tick the front card moves to the back.
+  const shift = rotation % cards.length;
+  const ordered = [...cards.slice(shift), ...cards.slice(0, shift)];
+
+  return (
+    <div className="sticky top-28 h-fit space-y-5">
+      {ordered.map((card) => (
+        <motion.div key={card.key} layout transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+          {card.node}
+        </motion.div>
+      ))}
 
       {/* Footer */}
-      <footer className="px-6 text-[10px] text-brand-text/40 uppercase tracking-[0.2em] space-y-2">
+      <footer className="space-y-2 px-6 text-[10px] uppercase tracking-[0.2em] text-brand-text/40">
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <a href="#" className="hover:text-brand-accent transition-colors">About</a>
-          <a href="#" className="hover:text-brand-accent transition-colors">Privacy</a>
-          <a href="#" className="hover:text-brand-accent transition-colors">Terms</a>
+          <a href="#" className="transition-colors hover:text-brand-accent">About</a>
+          <a href="#" className="transition-colors hover:text-brand-accent">Privacy</a>
+          <a href="#" className="transition-colors hover:text-brand-accent">Terms</a>
         </div>
-        <p>&copy; 2026 atpost</p>
+        <p>&copy; 2026 VChat</p>
       </footer>
     </div>
   );

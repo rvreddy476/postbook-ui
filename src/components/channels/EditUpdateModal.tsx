@@ -119,7 +119,7 @@ function WarningBanner({ variant, children }: { variant: 'warning' | 'info'; chi
 function RichTextToolbar() {
   const btn = 'w-7 h-7 rounded flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors'
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-white rounded-t-xl">
+    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-brand-card rounded-t-xl">
       <button type="button" className={btn} title="Bold"><Bold className="w-3.5 h-3.5" /></button>
       <button type="button" className={btn} title="Italic"><Italic className="w-3.5 h-3.5" /></button>
       <button type="button" className={btn} title="Underline"><Underline className="w-3.5 h-3.5" /></button>
@@ -309,7 +309,7 @@ export default function EditUpdateModal({
           className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl"
         >
           {/* ===== Header ===== */}
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-divider bg-white px-6 py-4 rounded-t-2xl">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-divider bg-brand-card px-6 py-4 rounded-t-2xl">
             <div className="flex items-center gap-2">
               {typeIcon}
               <h2 className="text-lg font-black text-brand-text">
@@ -507,7 +507,7 @@ export default function EditUpdateModal({
           </div>
 
           {/* ===== Footer ===== */}
-          <div className="sticky bottom-0 flex items-center gap-3 border-t border-brand-divider bg-white px-6 py-4 rounded-b-2xl">
+          <div className="sticky bottom-0 flex items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4 rounded-b-2xl">
             <button
               type="button"
               onClick={onClose}

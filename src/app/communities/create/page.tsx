@@ -193,7 +193,7 @@ export default function CreateCommunityPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Frontend Developers"
-                className="w-full px-4 py-3 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
               />
             </div>
 
@@ -210,7 +210,7 @@ export default function CreateCommunityPage() {
                   value={handle}
                   onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase())}
                   placeholder="frontend-devs"
-                  className="w-full pl-8 pr-4 py-3 bg-white border border-brand-divider rounded-xl text-sm font-mono text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                  className="w-full pl-8 pr-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm font-mono text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                 />
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function CreateCommunityPage() {
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
                       category === cat.label
                         ? 'bg-brand-text text-brand-bg border-brand-text'
-                        : 'bg-white border-brand-divider text-brand-text hover:bg-brand-bg'
+                        : 'bg-brand-card border-brand-divider text-brand-text hover:bg-brand-bg'
                     }`}
                   >
                     <span className="text-xl">{cat.emoji}</span>
@@ -249,7 +249,7 @@ export default function CreateCommunityPage() {
                     className={`w-full text-left p-3 rounded-xl border transition-all ${
                       communityType === t.value
                         ? 'border-brand-text bg-brand-bg'
-                        : 'border-brand-divider bg-white hover:bg-brand-bg'
+                        : 'border-brand-divider bg-brand-card hover:bg-brand-bg'
                     }`}
                   >
                     <p className="text-sm font-semibold text-brand-text">{t.label}</p>
@@ -281,7 +281,7 @@ export default function CreateCommunityPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tell people what your community is about..."
                 rows={4}
-                className="w-full px-4 py-3 bg-white border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 resize-none"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 resize-none"
               />
               <p className="text-[11px] text-brand-text/40 mt-1">
                 {description.length}/500 characters
@@ -302,7 +302,7 @@ export default function CreateCommunityPage() {
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="w-full h-32 rounded-xl border-2 border-dashed border-brand-divider bg-white hover:bg-brand-bg transition-colors flex items-center justify-center overflow-hidden"
+                className="w-full h-32 rounded-xl border-2 border-dashed border-brand-divider bg-brand-card hover:bg-brand-bg transition-colors flex items-center justify-center overflow-hidden"
               >
                 {coverPreview ? (
                   <img src={coverPreview} alt="Community cover preview" className="w-full h-full object-cover" />
@@ -327,7 +327,7 @@ export default function CreateCommunityPage() {
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="w-20 h-20 rounded-2xl border-2 border-dashed border-brand-divider bg-white hover:bg-brand-bg transition-colors flex items-center justify-center overflow-hidden"
+                className="w-20 h-20 rounded-2xl border-2 border-dashed border-brand-divider bg-brand-card hover:bg-brand-bg transition-colors flex items-center justify-center overflow-hidden"
               >
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Community avatar preview" className="w-full h-full object-cover" />
@@ -369,7 +369,7 @@ export default function CreateCommunityPage() {
                     className={`w-full text-left p-3 rounded-xl border transition-all ${
                       joinMode === jm.value
                         ? 'border-brand-text bg-brand-bg'
-                        : 'border-brand-divider bg-white hover:bg-brand-bg'
+                        : 'border-brand-divider bg-brand-card hover:bg-brand-bg'
                     }`}
                   >
                     <p className="text-sm font-semibold text-brand-text">{jm.label}</p>
@@ -394,7 +394,7 @@ export default function CreateCommunityPage() {
                       value={rule}
                       onChange={(e) => updateRule(i, e.target.value)}
                       placeholder={`Rule ${i + 1}`}
-                      className="flex-1 px-3 py-2 bg-white border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                      className="flex-1 px-3 py-2 bg-brand-card border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20"
                     />
                     {rules.length > 1 && (
                       <button

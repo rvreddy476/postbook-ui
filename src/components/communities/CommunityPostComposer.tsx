@@ -50,7 +50,7 @@ export default function CommunityPostComposer({ communityId }: CommunityPostComp
     return (
       <button
         onClick={() => setExpanded(true)}
-        className="w-full bg-white border border-brand-divider rounded-2xl px-4 py-3.5 text-left text-sm text-brand-text/40 hover:border-brand-text/20 transition-colors"
+        className="w-full bg-brand-card border border-brand-divider rounded-2xl px-4 py-3.5 text-left text-sm text-brand-text/40 hover:border-brand-text/20 transition-colors"
       >
         Share with the community...
       </button>
@@ -58,7 +58,7 @@ export default function CommunityPostComposer({ communityId }: CommunityPostComp
   }
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
       {/* Content type toggle */}
       <div className="flex items-center gap-2 mb-3">
         <button

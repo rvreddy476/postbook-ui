@@ -1,19 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
 import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
-import { fetchConversations, subscribeToPresenceUpdates } from '@/services/messageService'
+import {
+  fetchConversations,
+  subscribeToPresenceUpdates,
+  acceptMessageRequest,
+  declineMessageRequest,
+  type Conversation,
+} from '@/services/messageService'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
 import {
-  Search, Users, MessageCircle, Plus, Settings, Hash,
-  Globe, Lock, Shield, ChevronRight, Send
+  Search, Users, MessageCircle, Plus, Settings, Hash, Home,
+  Globe, Lock, Shield, ChevronRight, Send, MailQuestion, Check, X
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -56,15 +63,17 @@ function EmptyState() {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function PostbookMessenger() {
-  const [contactTab, setContactTab] = useState<'friends' | 'groups'>('friends')
+  const router = useRouter()
+  const [contactTab, setContactTab] = useState<'friends' | 'groups' | 'requests'>('friends')
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [friends, setFriends] = useState<User[]>([])
-  const [conversations, setConversations] = useState<any[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null)
 
   const currentUser = getSession()
   const { data: myGroups } = useMyGroups()
@@ -89,13 +98,22 @@ export default function PostbookMessenger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const loadConversations = useCallback(async () => {
+    try {
+      const result = await fetchConversations(50)
+      setConversations((result.data ?? []) as Conversation[])
+    } catch (err) {
+      console.error('Failed to fetch conversations:', err)
+    }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
         const result = await fetchConversations(50)
         if (cancelled) return
-        setConversations(result.data ?? [])
+        setConversations((result.data ?? []) as Conversation[])
       } catch (err) {
         console.error('Failed to fetch conversations:', err)
       }
@@ -120,11 +138,18 @@ export default function PostbookMessenger() {
 
   const getLastMessage = useCallback(
     (userId: string): { text: string; time: string; unread: number } | null => {
+      // Main inbox only — request conversations are surfaced in the
+      // dedicated "Requests" folder (spec §3.3) and excluded here.
       const conv = conversations.find(
-        (c: any) => c.participants?.includes(userId) || c.other_user_id === userId
+        (c) =>
+          !c.is_request &&
+          (c.members?.some((m) => m.user_id === userId) ||
+            (c as { participants?: string[] }).participants?.includes(userId) ||
+            (c as { other_user_id?: string }).other_user_id === userId)
       )
       if (!conv) return null
-      const lastMsg = conv.last_message ?? conv.lastMessage
+      const lastMsg =
+        conv.last_message ?? (conv as { lastMessage?: typeof conv.last_message }).lastMessage
       if (!lastMsg) return null
       const msgTime = lastMsg.created_at || lastMsg.ts || ''
       let timeDisplay = ''
@@ -171,6 +196,38 @@ export default function PostbookMessenger() {
     [myGroups, activeGroupId]
   )
 
+  // Message Requests folder (spec §3.3) — conversations awaiting the
+  // recipient's accept/decline decision, kept out of the main inbox.
+  const requestConversations = useMemo(
+    () => conversations.filter((c) => c.is_request === true),
+    [conversations]
+  )
+
+  // Resolves the counterparty of a 1:1 request conversation into a
+  // User-shaped object for display and for opening the DM on accept.
+  const requestPeer = useCallback(
+    (conv: Conversation): User => {
+      const other = conv.members?.find((m) => m.user_id !== currentUser?.id)
+      const member = other ?? conv.members?.[0]
+      return {
+        id: member?.user_id ?? '',
+        name: member?.display_name || conv.title || 'Message request',
+        avatar: member?.avatar_media_id
+          ? `/v1/media/${member.avatar_media_id}/serve`
+          : '',
+      }
+    },
+    [currentUser?.id]
+  )
+
+  const filteredRequests = useMemo(() => {
+    if (!search.trim()) return requestConversations
+    const q = search.toLowerCase()
+    return requestConversations.filter((c) =>
+      requestPeer(c).name.toLowerCase().includes(q)
+    )
+  }, [requestConversations, search, requestPeer])
+
   const handleFriendClick = useCallback((friend: User) => {
     setActiveDm(friend)
     setActiveGroupId(null)
@@ -188,6 +245,50 @@ export default function PostbookMessenger() {
     setActiveDm(null)
     setActiveGroupId(null)
   }, [])
+
+  const handleAcceptRequest = useCallback(
+    async (conv: Conversation) => {
+      if (pendingRequestId) return
+      setPendingRequestId(conv.id)
+      try {
+        await acceptMessageRequest(conv.id)
+        await loadConversations()
+        showToast('Request accepted')
+        // Promote into the main inbox by opening the conversation.
+        const peer = requestPeer(conv)
+        if (peer.id) {
+          setContactTab('friends')
+          setActiveDm(peer)
+          setActiveGroupId(null)
+          setShowCreateGroup(false)
+        }
+      } catch (err) {
+        console.error('Failed to accept message request:', err)
+        showToast('Could not accept request')
+      } finally {
+        setPendingRequestId(null)
+      }
+    },
+    [pendingRequestId, loadConversations, showToast, requestPeer]
+  )
+
+  const handleDeclineRequest = useCallback(
+    async (conv: Conversation) => {
+      if (pendingRequestId) return
+      setPendingRequestId(conv.id)
+      try {
+        await declineMessageRequest(conv.id)
+        await loadConversations()
+        showToast('Request declined')
+      } catch (err) {
+        console.error('Failed to decline message request:', err)
+        showToast('Could not decline request')
+      } finally {
+        setPendingRequestId(null)
+      }
+    },
+    [pendingRequestId, loadConversations, showToast]
+  )
 
   const friendsUnreadTotal = useMemo(
     () => friends.reduce((sum, f) => sum + getUnreadCountForUser(f.id), 0),
@@ -218,8 +319,21 @@ export default function PostbookMessenger() {
                   <h1 className="text-[17px] font-bold text-brand-text tracking-tight">Messenger</h1>
                   <p className="text-[11px] text-brand-text/60 font-medium">{currentUser.name}</p>
                 </div>
-                <button className="w-8 h-8 rounded-lg bg-brand-secondary hover:bg-brand-secondary flex items-center justify-center text-brand-text/60 hover:text-brand-highlight transition-all">
-                  <Settings className="w-4 h-4" />
+                <button
+                  onClick={() => router.push('/')}
+                  aria-label="Back to home"
+                  title="Home"
+                  className="w-9 h-9 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-text/70 hover:text-brand-text hover:bg-brand-divider transition-all"
+                >
+                  <Home className="w-[18px] h-[18px]" />
+                </button>
+                <button
+                  onClick={() => router.push('/settings')}
+                  aria-label="Settings"
+                  title="Settings"
+                  className="w-9 h-9 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-text/70 hover:text-brand-text hover:bg-brand-divider transition-all"
+                >
+                  <Settings className="w-[18px] h-[18px]" />
                 </button>
               </>
             )}
@@ -239,9 +353,14 @@ export default function PostbookMessenger() {
 
           {/* Tab switcher */}
           <div className="flex p-1 rounded-xl bg-brand-secondary">
-            {(['friends', 'groups'] as const).map((tab) => {
+            {(['friends', 'requests', 'groups'] as const).map((tab) => {
               const isActive = contactTab === tab
-              const badge = tab === 'friends' ? friendsUnreadTotal : 0
+              const badge =
+                tab === 'friends'
+                  ? friendsUnreadTotal
+                  : tab === 'requests'
+                    ? requestConversations.length
+                    : 0
               return (
                 <button
                   key={tab}
@@ -254,10 +373,12 @@ export default function PostbookMessenger() {
                 >
                   {tab === 'friends' ? (
                     <MessageCircle className="w-3.5 h-3.5" />
+                  ) : tab === 'requests' ? (
+                    <MailQuestion className="w-3.5 h-3.5" />
                   ) : (
                     <Users className="w-3.5 h-3.5" />
                   )}
-                  {tab === 'friends' ? 'Messages' : 'Groups'}
+                  {tab === 'friends' ? 'Messages' : tab === 'requests' ? 'Requests' : 'Groups'}
                   {badge > 0 && (
                     <span className="text-[9px] font-bold bg-brand-text text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
                       {badge}
@@ -283,7 +404,7 @@ export default function PostbookMessenger() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-0.5">
+              <div className="space-y-1.5">
                 {filteredFriends.map((friend) => {
                   const isActive = activeDm?.id === friend.id
                   const avatarUrl = friend.avatar && (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
@@ -295,7 +416,7 @@ export default function PostbookMessenger() {
                     <button
                       key={friend.id}
                       onClick={() => handleFriendClick(friend)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all group ${
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
                         isActive
                           ? 'bg-brand-accent/5 border border-brand-divider'
                           : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
@@ -304,15 +425,15 @@ export default function PostbookMessenger() {
                       <Avatar user={friend} size={42} showStatus avatarUrl={avatarUrl} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-xs font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
+                          <span className={`text-sm font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
                             {friend.name}
                           </span>
                           {lastMsg?.time && (
-                            <span className="text-[9px] text-brand-text/40 font-bold uppercase shrink-0 ml-2">{lastMsg.time}</span>
+                            <span className="text-[10px] text-brand-text/40 font-bold uppercase shrink-0 ml-2">{lastMsg.time}</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-[10px] text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
+                          <span className="text-xs text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
                             {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
@@ -323,6 +444,62 @@ export default function PostbookMessenger() {
                         </div>
                       </div>
                     </button>
+                  )
+                })}
+              </div>
+            )
+          ) : contactTab === 'requests' ? (
+            /* Message Requests list (spec §3.3) */
+            filteredRequests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <MailQuestion className="w-10 h-10 text-brand-secondary mb-2" />
+                <p className="text-[13px] font-medium text-brand-text/60">
+                  {search ? 'No requests match your search' : 'No message requests'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {filteredRequests.map((conv) => {
+                  const peer = requestPeer(conv)
+                  const avatarUrl =
+                    peer.avatar && (peer.avatar.startsWith('http') || peer.avatar.startsWith('/'))
+                      ? peer.avatar
+                      : undefined
+                  const lastMsg = conv.last_message?.text
+                  const busy = pendingRequestId === conv.id
+                  return (
+                    <div
+                      key={conv.id}
+                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-transparent hover:border-brand-divider hover:bg-brand-accent/5 transition-all"
+                    >
+                      <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-bold truncate block text-brand-text">
+                          {peer.name}
+                        </span>
+                        <span className="text-xs text-brand-text/60 truncate block tracking-wide leading-tight mt-0.5">
+                          {lastMsg || 'Wants to send you a message'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleAcceptRequest(conv)}
+                          disabled={busy}
+                          aria-label="Accept request"
+                          className="w-8 h-8 rounded-lg bg-brand-accent text-brand-bg flex items-center justify-center transition-all disabled:opacity-50"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeclineRequest(conv)}
+                          disabled={busy}
+                          aria-label="Decline request"
+                          className="w-8 h-8 rounded-lg bg-brand-secondary text-brand-text/60 hover:text-brand-text flex items-center justify-center transition-all disabled:opacity-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
@@ -338,7 +515,7 @@ export default function PostbookMessenger() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-0.5">
+                <div className="space-y-1.5">
                   {filteredGroups.map((group) => {
                     const isActive = activeGroupId === group.id
                     const groupColor = getGroupColor(group.id)
@@ -351,7 +528,7 @@ export default function PostbookMessenger() {
                       <button
                         key={group.id}
                         onClick={() => handleGroupClick(group.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all group ${
+                        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
                           isActive
                             ? 'bg-brand-accent/5 border border-brand-divider'
                             : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
@@ -375,7 +552,7 @@ export default function PostbookMessenger() {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className={`text-xs font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
+                            <span className={`text-sm font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
                               {group.name}
                             </span>
                             {privacy === 'private' && <Lock className="w-3 h-3 text-brand-text/30 shrink-0" />}

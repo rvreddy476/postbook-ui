@@ -76,7 +76,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
         if (data?.status === 'pending' || group.join_mode === 'request' || privacy === 'private') {
           setToast('Request sent! Waiting for admin approval.')
         } else {
-          setToast('You joined the group!')
+          setToast('You joined the space!')
         }
       },
       onError: () => setToast('Failed to join. Try again.'),
@@ -86,7 +86,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
   const handleLeave = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (confirm('Leave this group?')) {
+    if (confirm('Leave this space?')) {
       leaveGroup.mutate(group.id)
     }
     setShowDropdown(false)
@@ -95,7 +95,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
   return (
     <Link
       href={`/groups/${group.handle || group.id}`}
-      className="group/card flex items-center gap-3.5 p-3 rounded-xl border border-brand-divider bg-white hover:border-brand-text/15 hover:shadow-sm transition-all relative"
+      className="group/card flex items-center gap-3.5 p-3 rounded-xl border border-brand-divider bg-brand-card hover:border-brand-text/15 hover:shadow-sm transition-all relative"
     >
       {/* Avatar */}
       <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
@@ -132,6 +132,12 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
             {formatCount(group.post_count)} posts
           </span>
         </div>
+        {/* Why this space is suggested (discover ranking reasons) */}
+        {group.reasons && group.reasons.length > 0 && (
+          <p className="mt-0.5 truncate text-[11px] font-semibold text-brand-highlight">
+            {group.reasons[0]}
+          </p>
+        )}
       </div>
 
       {/* Action */}
@@ -146,7 +152,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
               Joined
             </button>
             {showDropdown && (
-              <div className="absolute right-0 top-full z-50 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-brand-divider bg-white py-0.5 shadow-lg">
+              <div className="absolute right-0 top-full z-50 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-brand-divider bg-brand-card py-0.5 shadow-lg">
                 <button
                   onClick={handleLeave}
                   className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50"

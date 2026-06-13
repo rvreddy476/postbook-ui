@@ -9,15 +9,25 @@ interface ReelStageProps {
   reel: Reel;
   active: boolean;
   muted: boolean;
+  /** When true, append `?quality=240p` to the playback URL and
+   *  suppress autoplay (data-saver mode, recon §F.2). */
+  dataSaver?: boolean;
   onToggleMuted: () => void;
   onBoost: () => void;
   onExpand?: () => void;
+}
+
+function withQualityHint(url: string, dataSaver: boolean): string {
+  if (!dataSaver || !url) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}quality=240p`;
 }
 
 export function ReelStage({
   reel,
   active,
   muted,
+  dataSaver = false,
   onToggleMuted,
   onBoost,
   onExpand,
@@ -28,10 +38,11 @@ export function ReelStage({
     <div className="relative flex h-full items-center justify-center">
       <section className="relative h-full aspect-[9/16] max-w-[480px] overflow-hidden rounded-[18px] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.04)]">
         <ReelPlayer
-          videoUrl={reel.video_url}
+          videoUrl={withQualityHint(reel.video_url, dataSaver)}
           posterUrl={reel.thumbnail_url}
           muted={muted}
           active={active}
+          suppressAutoplay={dataSaver}
           onToggleMuted={onToggleMuted}
           onBoost={onBoost}
           onProgressChange={setProgress}

@@ -56,6 +56,17 @@ const getUserId = (): string | null => {
     }
 }
 
+/**
+ * Public accessor for the current user's ID. Returns null when no
+ * session is active. Reads from the same storage slot used by the
+ * axios interceptor so the value is consistent across surfaces.
+ *
+ * Components subscribe to session changes via SESSION_CHANGE_EVENT
+ * if they need to react; the snapshot returned by this function is
+ * a point-in-time read.
+ */
+export const getCurrentUserId = getUserId
+
 const ensureCsrfToken = (): string => {
     if (typeof document === "undefined") return ""
     const match = document.cookie.split("; ").find((c) => c.startsWith("csrf_token="))
@@ -84,6 +95,13 @@ api.interceptors.request.use((config) => {
     if (config.method && ["post", "put", "delete", "patch"].includes(config.method.toLowerCase())) {
         config.headers["X-Requested-With"] = "XMLHttpRequest"
         config.headers["X-CSRF-Token"] = ensureCsrfToken()
+    }
+
+    // Mopedu admin: every request to /v1/rider/admin/* carries the rider:admin
+    // role header. Backend stubs this for now; production gateway will replace.
+    const rawUrl = typeof config.url === "string" ? config.url : ""
+    if (rawUrl.includes("/v1/rider/admin/")) {
+        config.headers["X-Admin-Role"] = "rider:admin"
     }
 
     return config

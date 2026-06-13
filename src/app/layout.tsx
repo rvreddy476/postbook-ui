@@ -20,12 +20,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Home | Postbook \u00b7 atpost',
-    template: '%s | atpost',
+    default: 'Home | VChat',
+    template: '%s | VChat',
   },
-  description: 'atpost is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
-  keywords: ['atpost', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
-  applicationName: 'atpost',
+  description: 'VChat is a prismatic social platform for creators with immersive feeds, reels, AI-assisted creation, and live chat.',
+  keywords: ['VChat', 'social network', 'creator platform', 'AI creator', 'reels', 'community'],
+  applicationName: 'VChat',
   alternates: {
     canonical: '/',
   },
@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'Home | Postbook \u00b7 atpost',
-    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
-    siteName: 'atpost',
+    title: 'Home | VChat',
+    description: 'VChat is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    siteName: 'VChat',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Home | Postbook \u00b7 atpost',
-    description: 'atpost is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
+    title: 'Home | VChat',
+    description: 'VChat is a modern social experience with feed discovery, short-form video, creator tools, and profile-centric community.',
   },
 };
 
@@ -56,10 +56,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light" style={{ colorScheme: 'light' }}>
       <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const stored = localStorage.getItem('postbook_theme');
+                  const theme = stored === 'dark' ? 'dark' : 'light';
+                  document.documentElement.className = theme;
+                  document.documentElement.style.colorScheme = theme;
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(48,47,44,0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(48,47,44,0.06)_0px,_transparent_50%)]"></div>
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(var(--foreground-rgb),0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(var(--foreground-rgb),0.06)_0px,_transparent_50%)]"></div>
           <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-brand-secondary/10 blur-[120px]"></div>
         </div>
         <script
@@ -68,15 +82,15 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SocialMediaPosting',
-              'headline': 'atpost - Prismatic Social Network',
-              'description': 'atpost is a modern social experience with feed discovery, reels, and AI creator tools.',
+              'headline': 'VChat - Prismatic Social Network',
+              'description': 'VChat is a modern social experience with feed discovery, reels, and AI creator tools.',
               'author': {
                 '@type': 'Organization',
-                'name': 'atpost Team',
+                'name': 'VChat Team',
               },
               'publisher': {
                 '@type': 'Organization',
-                'name': 'atpost',
+                'name': 'VChat',
                 'logo': {
                   '@type': 'ImageObject',
                   'url': `${siteUrl}/logo.png`,

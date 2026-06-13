@@ -30,7 +30,7 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
           <h3 className="text-sm font-bold text-amber-800">
             {requests.length} Pending {requests.length === 1 ? 'Request' : 'Requests'}
           </h3>
-          <p className="text-[11px] text-amber-500">People waiting to join your group</p>
+          <p className="text-[11px] text-amber-500">People waiting to join your space</p>
         </div>
       </div>
 

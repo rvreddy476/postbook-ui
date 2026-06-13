@@ -45,7 +45,7 @@ function AnalyticsCard({ channel }: { channel: BroadcastChannel }) {
   ]
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
       <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50 mb-3">
         Channel Analytics
       </p>
@@ -86,7 +86,7 @@ function QuickSettingsCard({
   ]
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
       <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50 mb-3">
         Quick Settings
       </p>
@@ -117,14 +117,14 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
 
   if (channel.is_verified) {
     return (
-      <div className="bg-white border border-brand-divider rounded-2xl p-4">
+      <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
             <BadgeCheck className="w-4.5 h-4.5 text-emerald-600" />
           </div>
           <div>
             <p className="text-sm font-bold text-brand-text">Verified channel</p>
-            <p className="text-[11px] text-brand-text/40">Verified by AtPost</p>
+            <p className="text-[11px] text-brand-text/40">Verified by VChat</p>
           </div>
         </div>
       </div>
@@ -132,7 +132,7 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
   }
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
       <p className="text-sm font-bold text-brand-text mb-1">Apply for verified badge</p>
       <p className="text-[11px] text-brand-text/50 mb-3">
         Reach 1,000 subscribers to become eligible for verification.
@@ -152,7 +152,7 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
 
 function VisitorAboutCard({ channel }: { channel: BroadcastChannel }) {
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-4 space-y-4">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 space-y-4">
       <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50">About</p>
 
       {channel.description && (

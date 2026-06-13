@@ -212,7 +212,7 @@ function PendingRequestsList() {
                         <Button
                             size="sm"
                             variant="default"
-                            onClick={() => acceptMutation.mutate(req.friendship_id)}
+                            onClick={() => acceptMutation.mutate(req.user_id)}
                             disabled={acceptMutation.isPending}
                         >
                             <Check className="h-4 w-4" />
@@ -220,7 +220,7 @@ function PendingRequestsList() {
                         <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => rejectMutation.mutate(req.friendship_id)}
+                            onClick={() => rejectMutation.mutate(req.user_id)}
                             disabled={rejectMutation.isPending}
                         >
                             <X className="h-4 w-4" />

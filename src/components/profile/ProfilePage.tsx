@@ -1,11 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthUser } from "@/store/auth"
 import { useAggregatedProfile } from "@/hooks/useAggregatedProfile"
 import { ProfileHeader } from "./ProfileHeader"
 import { ProfileTabs } from "./ProfileTabs"
+import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
 import { ConnectionsTab } from "./tabs/ConnectionsTab"
@@ -42,8 +43,10 @@ import {
     X,
     Plus,
     Loader2,
+    ShoppingBag,
+    CalendarCheck,
 } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -349,6 +352,39 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
     )
 }
 
+function ComingSoonTab({
+    icon,
+    title,
+    description,
+    accent,
+}: {
+    icon: ReactNode
+    title: string
+    description: string
+    accent: string
+}) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className={`relative overflow-hidden rounded-3xl border border-brand-divider bg-gradient-to-br ${accent} px-6 py-16 text-center`}
+        >
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-card shadow-sm">
+                {icon}
+            </div>
+            <h3 className="mt-6 text-xl font-bold text-brand-text">{title}</h3>
+            <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
+                {description}
+            </p>
+            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-text shadow-sm">
+                <Sparkles className="w-3 h-3" />
+                Coming soon
+            </span>
+        </motion.div>
+    )
+}
+
 export function ProfilePage({ username }: ProfilePageProps) {
     const localUser = useAuthUser()
     const router = useRouter()
@@ -478,20 +514,24 @@ export function ProfilePage({ username }: ProfilePageProps) {
         sendCircleRequest.mutate(profile.username || profile.id)
     }, [profile, sendCircleRequest])
 
+    // graph-service has no friendship id — accept/decline/cancel are keyed by
+    // the counterparty's user_id. For a profile you are viewing, that
+    // counterparty IS this profile (sender of an incoming request, or
+    // receiver of one you sent), so pass profile.id.
     const handleAcceptCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        acceptCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, acceptCircleRequest])
+        if (!profile || !relationship?.circle_request_received) return
+        acceptCircleRequest.mutate(profile.id)
+    }, [profile, relationship, acceptCircleRequest])
 
     const handleDeclineCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        declineCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, declineCircleRequest])
+        if (!profile || !relationship?.circle_request_received) return
+        declineCircleRequest.mutate(profile.id)
+    }, [profile, relationship, declineCircleRequest])
 
     const handleCancelCircleRequest = useCallback(() => {
-        if (!relationship?.circle_request_id) return
-        cancelCircleRequest.mutate(relationship.circle_request_id)
-    }, [relationship, cancelCircleRequest])
+        if (!profile || !relationship?.circle_request_sent) return
+        cancelCircleRequest.mutate(profile.id)
+    }, [profile, relationship, cancelCircleRequest])
 
     const handleRemoveFromCircle = useCallback(() => setRemoveCircleDialogOpen(true), [])
 
@@ -652,108 +692,64 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 <div className={`flex gap-6 ${hasCreatorContent ? "" : ""}`}>
                     {/* Main content — 70% or 100% */}
                     <div className={`min-w-0 ${hasCreatorContent ? "flex-[7]" : "flex-1"}`}>
-                        {activeTab === "posts" && (
-                            <CreationsTab userId={profile.id} platform="postboek" />
-                        )}
-                        {activeTab === "about" && <AboutTab profile={profile} links={links} />}
-                        {activeTab === "connections" && (
-                            <ConnectionsTab
-                                userId={profile.id}
-                                graphCounts={graphCounts}
-                                platform="postboek"
-                                isOwn={isOwn}
-                            />
-                        )}
-                        {activeTab === "videos" && (
-                            <VideosTab userId={profile.id} isOwn={isOwn} />
-                        )}
-                        {activeTab === "flicks" && (
-                            <FlicksTab userId={profile.id} isOwn={isOwn} />
-                        )}
-                        {activeTab === "stashed" && <StashedTab userId={profile.id} />}
-                        {activeTab === "portfolio" && (
-                            <PortfolioTabContent userId={profile.id} isOwn={isOwn} />
-                        )}
-                    </div>
-
-                    {/* Right sidebar — Studio Stats (30%) — only if creator content exists */}
-                    {hasCreatorContent && (
-                        <aside className="hidden lg:block flex-[3] shrink-0 space-y-4">
-                            {/* Studio Stats Card */}
+                        <AnimatePresence mode="wait">
                             <motion.div
+                                key={activeTab}
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.22, ease: "easeOut" }}
                             >
-                                <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3.5">
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">
-                                        Studio Stats
-                                    </h3>
-                                </div>
-
-                                <div className="p-5 space-y-4">
-                                    {contentCounts.video > 0 && (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-brand-text/10">
-                                                    <Film className="h-4 w-4 text-brand-text" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Posttube Videos</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">Long-form content</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.video.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {contentCounts.reel > 0 && (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-rose-50">
-                                                    <Clapperboard className="h-4 w-4 text-rose-500" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Flicks</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">Short-form clips</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.reel.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {contentCounts.total > 0 && (
-                                        <div className="flex items-center justify-between pt-3 border-t border-brand-divider">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl bg-amber-50">
-                                                    <Sparkles className="h-4 w-4 text-amber-500" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">Total Sparks</p>
-                                                    <p className="text-[10px] text-brand-text/60 font-medium">All-time engagement</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-lg font-black text-brand-text">
-                                                {contentCounts.total.toLocaleString()}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    <Link
-                                        href={`/posttube/channel/${profile.username}`}
-                                        className="flex items-center justify-center gap-2 mt-2 w-full py-3 rounded-xl bg-brand-text text-white text-xs font-black uppercase tracking-[0.2em] hover:bg-brand-text transition-all shadow-lg shadow-brand-text/20"
-                                    >
-                                        <ExternalLink className="w-3.5 h-3.5" />
-                                        View Channel
-                                    </Link>
-                                </div>
+                                {activeTab === "posts" && (
+                                    <CreationsTab userId={profile.id} platform="postboek" />
+                                )}
+                                {activeTab === "about" && (
+                                    <AboutTab profile={profile} links={links} />
+                                )}
+                                {activeTab === "connections" && (
+                                    <ConnectionsTab
+                                        userId={profile.id}
+                                        graphCounts={graphCounts}
+                                        platform="postboek"
+                                        isOwn={isOwn}
+                                    />
+                                )}
+                                {activeTab === "qa" && (
+                                    <ProfileQASection userId={profile.id} />
+                                )}
+                                {activeTab === "videos" && (
+                                    <VideosTab userId={profile.id} isOwn={isOwn} />
+                                )}
+                                {activeTab === "flicks" && (
+                                    <FlicksTab userId={profile.id} isOwn={isOwn} />
+                                )}
+                                {activeTab === "orders" && (
+                                    <ComingSoonTab
+                                        icon={<ShoppingBag className="w-10 h-10 text-emerald-500" />}
+                                        title="Orders"
+                                        description="Your purchase history, deliveries, and order tracking will live here."
+                                        accent="from-emerald-50 to-emerald-100/40"
+                                    />
+                                )}
+                                {activeTab === "bookings" && (
+                                    <ComingSoonTab
+                                        icon={<CalendarCheck className="w-10 h-10 text-blue-500" />}
+                                        title="Bookings"
+                                        description="Appointments, reservations, and scheduled sessions will appear here."
+                                        accent="from-blue-50 to-blue-100/40"
+                                    />
+                                )}
+                                {activeTab === "stashed" && <StashedTab userId={profile.id} />}
+                                {activeTab === "portfolio" && (
+                                    <PortfolioTabContent userId={profile.id} isOwn={isOwn} />
+                                )}
                             </motion.div>
+                        </AnimatePresence>
+                    </div>
 
+                    {/* Right sidebar — additional cards (mutual friends, links, completion) */}
+                    {hasCreatorContent && (
+                        <aside className="hidden lg:block flex-[3] shrink-0 space-y-4">
                             {/* Additional sidebar cards */}
                             {!isOwn && localUser && (
                                 <MutualFriendsCard
@@ -777,38 +773,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
                 {/* Mobile: sidebar cards below main content */}
                 <div className="lg:hidden mt-6 space-y-4">
-                    {hasCreatorContent && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
-                        >
-                            <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 px-5 py-3">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">Studio Stats</h3>
-                            </div>
-                            <div className="p-4 flex items-center justify-between gap-4">
-                                {contentCounts.video > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Film className="h-4 w-4 text-brand-text" />
-                                        <span className="text-sm font-bold">{contentCounts.video} Videos</span>
-                                    </div>
-                                )}
-                                {contentCounts.reel > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Clapperboard className="h-4 w-4 text-rose-500" />
-                                        <span className="text-sm font-bold">{contentCounts.reel} Flicks</span>
-                                    </div>
-                                )}
-                                <Link
-                                    href={`/posttube/channel/${profile.username}`}
-                                    className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold"
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    Channel
-                                </Link>
-                            </div>
-                        </motion.div>
-                    )}
                     {!isOwn && localUser && (
                         <MutualFriendsCard
                             viewerId={localUser.id}

@@ -6,12 +6,18 @@ import { useToggleLike, useToggleReaction } from '@/hooks/usePostReaction';
 import ReactionPicker from '@/components/ReactionPicker';
 import Link from 'next/link';
 import { useToggleBookmark, useTogglePin } from '@/hooks/usePostActions';
+import { useMuteUser } from '@/hooks/useMuting';
+import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
+import { useDataSaver } from '@/hooks/useDataSaver';
+import api from '@/lib/api';
+import { resolveImageUrl } from '@/lib/imageUrl';
+import PaywallPreview from '@/components/monetization/PaywallPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageCircle,
@@ -24,8 +30,13 @@ import {
   Bookmark,
   Pin,
   Check,
-  Link2,
   Repeat2,
+  Flag,
+  EyeOff,
+  Heart,
+  UserMinus,
+  UserX,
+  Code,
 } from 'lucide-react';
 
 interface PostCardProps {
@@ -52,12 +63,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
+  const { effective: dataSaver } = useDataSaver();
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +77,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const reactionMutation = useToggleReaction();
   const bookmarkMutation = useToggleBookmark();
   const togglePinMutation = useTogglePin();
+  const muteMutation = useMuteUser();
+  const blockMutation = useBlockUser();
   const castVoteMutation = useCastVote();
 
   const { data: authorProfile } = useUserProfile(post.author_id);
@@ -100,16 +113,61 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setIsMoreOpen(false);
   };
 
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/post/${post.id}`;
-    navigator.clipboard.writeText(url);
-    setLinkCopied(true);
-    setIsMoreOpen(false);
-    setTimeout(() => setLinkCopied(false), 2000);
-  };
-
   const handleShare = () => {
     setShowShareDialog(true);
+  };
+
+  const handleReport = () => {
+    setIsMoreOpen(false);
+    const reason = prompt('Why are you reporting this post? (spam, abuse, hate, other)');
+    if (!reason) return;
+    void api
+      .post(`/v1/posts/${post.id}/report`, { reason })
+      .then(() => alert('Thanks — our team will review this post.'))
+      .catch(() => alert('Sorry — we could not submit your report. Try again later.'));
+  };
+
+  const handleNotInterested = () => {
+    setIsMoreOpen(false);
+    void api
+      .post(`/v1/feed/not-interested`, { post_id: post.id })
+      .then(() => alert("Got it — we'll show you less like this."))
+      .catch(() => alert("We couldn't apply that preference right now."));
+  };
+
+  const handleMuteAuthor = () => {
+    setIsMoreOpen(false);
+    if (!confirm(`Hide all posts from ${name}?`)) return;
+    muteMutation.mutate(
+      { muted_id: post.author_id },
+      {
+        onSuccess: () =>
+          alert(`Muted. You won't see posts from ${name} anymore.`),
+      },
+    );
+  };
+
+  const handleBlockAuthor = () => {
+    setIsMoreOpen(false);
+    const username = authorProfile?.username;
+    if (!username) {
+      alert("Can't block — author info is still loading. Try again.");
+      return;
+    }
+    if (!confirm(`Block @${username}? You won't see each other's content.`))
+      return;
+    blockMutation.mutate(username, {
+      onSuccess: () => alert(`Blocked @${username}.`),
+    });
+  };
+
+  const handleEmbed = () => {
+    setIsMoreOpen(false);
+    const iframe = `<iframe src="${window.location.origin}/post/${post.id}/embed" width="550" height="420" frameborder="0" allowfullscreen></iframe>`;
+    navigator.clipboard
+      .writeText(iframe)
+      .then(() => alert("Embed code copied to clipboard."))
+      .catch(() => alert("Could not copy embed code."));
   };
 
   const handleVote = (optionId: string) => {
@@ -176,7 +234,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="relative">
             <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all flex-shrink-0">
               {avatar ? (
-                <img src={avatar} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
                   {avatarInitial}
@@ -231,28 +293,64 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="absolute right-0 mt-1 w-36 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1 z-[100]"
+                className="absolute right-0 mt-1 w-64 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1.5 z-[100]"
               >
-                <button onClick={handleBookmark} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-amber-500 text-amber-500' : 'text-brand-text/40'}`} />
-                  <span className="text-[13px] text-brand-text font-medium">
-                    {bookmarked ? 'Unsave' : 'Save'}
-                  </span>
-                </button>
+                {!isOwnPost && (
+                  <>
+                    <button onClick={handleNotInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <EyeOff className="w-4 h-4 text-brand-text/60 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-brand-text font-medium">Not interested</div>
+                        <div className="text-[11px] text-brand-text/50">Less of these posts.</div>
+                      </div>
+                    </button>
+
+                    <button onClick={handleMuteAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <UserMinus className="w-4 h-4 text-brand-text/60 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-brand-text font-medium">Hide all from {name}</div>
+                        <div className="text-[11px] text-brand-text/50">Stop seeing their posts.</div>
+                      </div>
+                    </button>
+
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
+                    <button onClick={handleEmbed} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <Code className="w-4 h-4 text-brand-text/60 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-brand-text font-medium">Embed</div>
+                        <div className="text-[11px] text-brand-text/50">Copy iframe code.</div>
+                      </div>
+                    </button>
+
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
+                    <button onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-rose-50 transition-colors text-left">
+                      <Flag className="w-4 h-4 text-rose-500 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-rose-600 font-medium">Report</div>
+                        <div className="text-[11px] text-rose-600/60">We won't tell {name}.</div>
+                      </div>
+                    </button>
+
+                    <button onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-rose-50 transition-colors text-left">
+                      <UserX className="w-4 h-4 text-rose-500 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-rose-600 font-medium">Block {name}</div>
+                        <div className="text-[11px] text-rose-600/60">No more contact, either way.</div>
+                      </div>
+                    </button>
+                  </>
+                )}
 
                 {isOwnPost && (
                   <button onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                    <Pin className={`w-3.5 h-3.5 ${post.is_pinned ? 'fill-blue-500 text-blue-500' : 'text-brand-text/40'}`} />
+                    <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-blue-500 text-blue-500' : 'text-brand-text/40'}`} />
                     <span className="text-[13px] text-brand-text font-medium">
                       {post.is_pinned ? 'Unpin' : 'Pin'}
                     </span>
                   </button>
                 )}
-
-                <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                  <Link2 className="w-3.5 h-3.5 text-brand-text/40" />
-                  <span className="text-[13px] text-brand-text font-medium">Copy link</span>
-                </button>
 
                 {isOwnPost && (
                   <>
@@ -275,8 +373,18 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
+      {/* Tier 3c — Paywall preview if backend redacted the body. */}
+      {post.body_redacted && (
+        <div className="px-3 sm:px-4">
+          <PaywallPreview
+            creatorId={post.author_id}
+            tierRequiredId={post.tier_required_id ?? null}
+          />
+        </div>
+      )}
+
       {/* Post Text with clickable hashtags and @mentions */}
-      {post.text && (() => {
+      {!post.body_redacted && post.text && (() => {
         const bg = post.rich_text?.background;
         const textColor = post.rich_text?.text_color;
         const hasStyledBg = !!bg && !post.media?.length;
@@ -337,7 +445,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Poll Section */}
       {pollData && (
         <div className="px-4 pb-3 space-y-2.5">
-          <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
+          {pollData.question && pollData.question.trim() !== (post.text ?? '').trim() && (
+            <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
+          )}
           {pollEnded && (
             <p className="text-xs text-red-500 font-medium">Poll ended</p>
           )}
@@ -395,25 +505,33 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="relative">
         {/* Media Display */}
         {hasMedia && (
-          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : 'max-h-[70vh]'}`}>
+          // For carousels we lock the box to the first image's height so the
+          // card doesn't shrink/grow on "next" clicks (object-contain made it
+          // resize when images had different aspect ratios). Single-image
+          // posts keep the original natural sizing.
+          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
             <div className="h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
                   {isReel ? (
                     <>
                       <video
-                        src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve`}
+                        src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve${dataSaver ? "?quality=240p" : ""}`}
                         className="w-full h-full object-cover"
-                        autoPlay
+                        autoPlay={!dataSaver}
                         loop
                         muted
-                        preload="metadata"
+                        preload={dataSaver ? "none" : "metadata"}
                       />
                       <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-gradient-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
                             {avatar ? (
-                              <img src={avatar} className="w-full h-full object-cover" alt="" />
+                              <img
+                                src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
+                                className="w-full h-full object-cover"
+                                alt=""
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
                                 {avatarInitial}
@@ -439,7 +557,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               ) : (
                 <img
                   key={post.media![activeMediaIndex].media_id}
-                  src={`/v1/media/${post.media![activeMediaIndex].media_id}/serve`}
+                  src={resolveImageUrl(
+                    `/v1/media/${post.media![activeMediaIndex].media_id}/serve`,
+                    { dataSaver, size: "large" },
+                  )}
                   alt=""
                   className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-brand-divider`}
                 />
@@ -515,13 +636,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
-                  ? 'bg-blue-600 text-white shadow-blue-600/30'
+                  ? 'bg-brand-text text-brand-bg shadow-black/10'
                   : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-blue-600' : 'text-brand-text/80'}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
@@ -559,38 +680,37 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className="px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between border-t border-brand-divider">
+          <div className="px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
+            {/* Like / Love */}
+            {!post.no_likes && (
+              <button onClick={toggleLike} aria-label="Like"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${liked ? 'text-rose-500 bg-rose-50' : 'text-brand-text/60 hover:text-rose-500 hover:bg-rose-50/60'}`}>
+                <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
+                <span className="text-[12px] font-semibold">{likesCount > 0 ? likesCount : 'Like'}</span>
+              </button>
+            )}
+
             {/* Comment */}
             {!post.no_comments && (
               <button onClick={() => setShowComments(!showComments)} aria-label="Comment"
-                className={`flex items-center gap-1.5 transition-all ${showComments ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${showComments ? 'text-blue-600 bg-blue-50' : 'text-brand-text/60 hover:text-blue-600 hover:bg-blue-50/60'}`}>
                 <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
-                {commentsCount > 0 && <span className="text-[11px] font-mono">{commentsCount}</span>}
+                <span className="text-[12px] font-semibold">{commentsCount > 0 ? commentsCount : 'Comment'}</span>
               </button>
             )}
 
-            {/* Echo (was Repost/Share) */}
-            <button onClick={handleShare} aria-label="Echo"
-              className="flex items-center gap-1.5 text-brand-text/40 hover:text-brand-text transition-all">
+            {/* Repost — opens ShareDialog with quote + media support */}
+            <button onClick={handleShare} aria-label="Repost"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-brand-text/60 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all">
               <Repeat2 className="w-[18px] h-[18px]" />
-              {sharesCount > 0 && <span className="text-[11px] font-mono">{sharesCount}</span>}
+              <span className="text-[12px] font-semibold">{sharesCount > 0 ? sharesCount : 'Repost'}</span>
             </button>
 
-            {/* Spark (was Like/Heart) */}
-            {!post.no_likes && (
-              <button onClick={toggleLike} aria-label="Spark"
-                className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
-                <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-[18px] h-[18px]">
-                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
-                </svg>
-                {likesCount > 0 && <span className="text-[11px] font-mono">{likesCount}</span>}
-              </button>
-            )}
-
-            {/* Stash (was Bookmark) */}
-            <button onClick={handleBookmark} aria-label="Stash"
-              className={`transition-all ${bookmarked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+            {/* Save (Bookmark) */}
+            <button onClick={handleBookmark} aria-label="Save"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${bookmarked ? 'text-amber-600 bg-amber-50' : 'text-brand-text/60 hover:text-amber-600 hover:bg-amber-50/60'}`}>
               <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+              <span className="text-[12px] font-semibold">{bookmarked ? 'Saved' : 'Save'}</span>
             </button>
           </div>
         )}

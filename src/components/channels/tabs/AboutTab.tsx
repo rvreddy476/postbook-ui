@@ -49,7 +49,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
   const isManager = role === 'owner' || role === 'editor'
 
   return (
-    <div className="bg-white border border-brand-divider rounded-2xl p-5 space-y-6">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-5 space-y-6">
       {/* Description */}
       {channel.description && (
         <div>

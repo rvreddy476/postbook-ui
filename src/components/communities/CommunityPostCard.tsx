@@ -197,7 +197,7 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
   const roleBadge = authorRole && ROLE_BADGE_CONFIG[authorRole]
 
   return (
-    <div ref={cardRef} className={`bg-white border border-brand-divider rounded-2xl transition-all ${post.is_pinned ? 'ring-1 ring-brand-text/10' : ''}`}>
+    <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-all ${post.is_pinned ? 'ring-1 ring-brand-text/10' : ''}`}>
       {/* Pinned */}
       {post.is_pinned && (
         <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold uppercase tracking-widest px-4 pt-3 pb-0">
@@ -262,7 +262,7 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {overflowOpen && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/communities/${communityId}`); setOverflowOpen(false) }}
                   className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
                   <Copy className="w-3.5 h-3.5" /> Copy link
@@ -358,7 +358,7 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
               {post.echo_count > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(post.echo_count)}</span>}
             </button>
             {showEchoMenu && (
-              <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute bottom-full mb-1 left-0 w-48 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
                 <button onClick={() => handleEcho('copy')} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
                   <Copy className="w-3.5 h-3.5" /> Copy link
                 </button>

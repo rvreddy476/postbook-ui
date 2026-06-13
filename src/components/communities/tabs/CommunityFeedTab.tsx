@@ -76,7 +76,7 @@ export default function CommunityFeedTab({ communityId, isMember, viewerRole }: 
     return (
       <div className="space-y-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white border border-brand-divider rounded-2xl p-4 animate-pulse">
+          <div key={i} className="bg-brand-card border border-brand-divider rounded-2xl p-4 animate-pulse">
             <div className="flex items-center gap-2.5 mb-3">
               <div className="w-9 h-9 rounded-full bg-brand-bg" />
               <div className="flex-1">

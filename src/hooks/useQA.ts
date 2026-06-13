@@ -15,6 +15,9 @@ import type {
   AnswerRequest,
   QAListResponse,
   QASingleResponse,
+  CommunityQASettings,
+  QuestionDraft,
+  AnswerDraft,
 } from "@/types/qa"
 
 // ---- Feeds ----
@@ -163,6 +166,8 @@ export function useCreateQuestion() {
       tags: string[]
       visibility?: string
       language?: string
+      community_id?: string
+      is_anonymous?: boolean
     }) => {
       const res = await api.post<QASingleResponse<Question>>("/v1/qa/questions", params)
       return res.data.data
@@ -170,6 +175,7 @@ export function useCreateQuestion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["qa-home"] })
       qc.invalidateQueries({ queryKey: ["qa-my-questions"] })
+      qc.invalidateQueries({ queryKey: ["qa-community-questions"] })
     },
   })
 }
@@ -177,7 +183,13 @@ export function useCreateQuestion() {
 export function useUpdateQuestion(questionId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (params: { title?: string; body?: string; body_html?: string }) => {
+    mutationFn: async (params: {
+      title?: string
+      body?: string
+      body_html?: string
+      community_id?: string
+      is_anonymous?: boolean
+    }) => {
       const res = await api.put<QASingleResponse<Question>>(`/v1/qa/questions/${questionId}`, params)
       return res.data.data
     },
@@ -275,7 +287,7 @@ export function useAnswers(questionId: string | undefined, sort = "votes") {
 export function useCreateAnswer(questionId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (params: { body: string; body_html: string }) => {
+    mutationFn: async (params: { body: string; body_html: string; is_anonymous?: boolean }) => {
       const res = await api.post<QASingleResponse<Answer>>(`/v1/qa/questions/${questionId}/answers`, params)
       return res.data.data
     },
@@ -647,8 +659,8 @@ export function useSavedAnswers(limit = 20) {
 export function useVoteComment(answerId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ commentId, value }: { commentId: string; value: 1 | -1 }) =>
-      api.post(`/v1/qa/comments/${commentId}/vote`, { value }),
+    mutationFn: async ({ commentId, voteType }: { commentId: string; voteType: "up" | "down" }) =>
+      api.post(`/v1/qa/comments/${commentId}/vote`, { vote_type: voteType }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-comments", answerId] }),
   })
 }
@@ -658,5 +670,238 @@ export function useRemoveCommentVote(answerId: string) {
   return useMutation({
     mutationFn: async (commentId: string) => api.delete(`/v1/qa/comments/${commentId}/vote`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-comments", answerId] }),
+  })
+}
+
+// ---- Community Q&A ----
+
+export function useCommunityQuestions(communityId: string | undefined, sort = "new", limit = 30) {
+  return useQuery({
+    queryKey: ["qa-community-questions", communityId, sort],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QuestionSummary>>(
+        `/v1/qa/communities/${communityId}/questions`,
+        { params: { sort, limit } },
+      )
+      return res.data.data
+    },
+    enabled: !!communityId,
+    staleTime: 30_000,
+  })
+}
+
+export function useCommunityQASettings(communityId: string | undefined) {
+  return useQuery({
+    queryKey: ["qa-community-settings", communityId],
+    queryFn: async () => {
+      const res = await api.get<QASingleResponse<CommunityQASettings>>(
+        `/v1/qa/communities/${communityId}/qa-settings`,
+      )
+      return res.data.data
+    },
+    enabled: !!communityId,
+    staleTime: 60_000,
+  })
+}
+
+export function useUpdateCommunityQASettings(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: Partial<CommunityQASettings>) => {
+      const res = await api.put<QASingleResponse<CommunityQASettings>>(
+        `/v1/qa/communities/${communityId}/qa-settings`,
+        params,
+      )
+      return res.data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["qa-community-settings", communityId] })
+    },
+  })
+}
+
+export function usePinCommunityQuestion(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (questionId: string) => {
+      await api.post(`/v1/qa/communities/${communityId}/questions/${questionId}/pin`)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-community-questions", communityId] }),
+  })
+}
+
+export function useUnpinCommunityQuestion(communityId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (questionId: string) => {
+      await api.delete(`/v1/qa/communities/${communityId}/questions/${questionId}/pin`)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-community-questions", communityId] }),
+  })
+}
+
+export function useCommunityPopularTopics(communityId: string | undefined, limit = 10) {
+  return useQuery({
+    queryKey: ["qa-community-popular-topics", communityId],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QATopic>>(
+        `/v1/qa/communities/${communityId}/topics/popular`,
+        { params: { limit } },
+      )
+      return res.data.data
+    },
+    enabled: !!communityId,
+    staleTime: 60_000,
+  })
+}
+
+// ---- Search ----
+
+export function useQASearch(params: {
+  q: string
+  communityId?: string
+  topicId?: string
+  enabled?: boolean
+}) {
+  const { q, communityId, topicId, enabled = true } = params
+  return useQuery({
+    queryKey: ["qa-search", q, communityId, topicId],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QuestionSummary>>("/v1/qa/search", {
+        params: { q, community_id: communityId, topic_id: topicId },
+      })
+      return res.data.data
+    },
+    enabled: enabled && q.trim().length >= 2,
+    staleTime: 30_000,
+  })
+}
+
+// ---- Drafts: Questions ----
+
+export function useQuestionDrafts() {
+  return useQuery({
+    queryKey: ["qa-question-drafts"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<QuestionDraft>>("/v1/qa/drafts/questions")
+      return res.data.data
+    },
+    staleTime: 15_000,
+  })
+}
+
+export function useUpsertQuestionDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: {
+      id?: string
+      title?: string
+      body?: string
+      body_html?: string
+      topic_ids?: string[]
+      tags?: string[]
+      community_id?: string
+      is_anonymous?: boolean
+    }) => {
+      if (params.id) {
+        const { id, ...payload } = params
+        const res = await api.post<QASingleResponse<QuestionDraft>>(
+          `/v1/qa/drafts/questions/${id}`,
+          payload,
+        )
+        return res.data.data
+      }
+      const res = await api.post<QASingleResponse<QuestionDraft>>("/v1/qa/drafts/questions", params)
+      return res.data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-question-drafts"] }),
+  })
+}
+
+export function useDeleteQuestionDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (draftId: string) => {
+      await api.delete(`/v1/qa/drafts/questions/${draftId}`)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-question-drafts"] }),
+  })
+}
+
+export function useQuestionDraft(draftId: string | undefined) {
+  return useQuery({
+    queryKey: ["qa-question-draft", draftId],
+    queryFn: async () => {
+      const res = await api.get<QASingleResponse<QuestionDraft>>(`/v1/qa/drafts/questions/${draftId}`)
+      return res.data.data
+    },
+    enabled: !!draftId,
+    staleTime: 0,
+  })
+}
+
+// ---- Drafts: Answers ----
+
+export function useAnswerDrafts() {
+  return useQuery({
+    queryKey: ["qa-answer-drafts"],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<AnswerDraft>>("/v1/qa/drafts/answers")
+      return res.data.data
+    },
+    staleTime: 15_000,
+  })
+}
+
+export function useUpsertAnswerDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: {
+      id?: string
+      question_id: string
+      body?: string
+      body_html?: string
+    }) => {
+      if (params.id) {
+        const { id, ...payload } = params
+        const res = await api.post<QASingleResponse<AnswerDraft>>(
+          `/v1/qa/drafts/answers/${id}`,
+          payload,
+        )
+        return res.data.data
+      }
+      const res = await api.post<QASingleResponse<AnswerDraft>>("/v1/qa/drafts/answers", params)
+      return res.data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-answer-drafts"] }),
+  })
+}
+
+export function useDeleteAnswerDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (draftId: string) => {
+      await api.delete(`/v1/qa/drafts/answers/${draftId}`)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["qa-answer-drafts"] }),
+  })
+}
+
+// ---- Aliases ----
+
+// useUserBadges is an alias for useContributorBadges for the badge list pattern.
+export const useUserBadges = useContributorBadges
+
+export function useUserAnswers(userId: string | undefined, limit = 20) {
+  return useQuery({
+    queryKey: ["qa-user-answers", userId],
+    queryFn: async () => {
+      const res = await api.get<QAListResponse<Answer>>(`/v1/qa/profile/${userId}/answers`, {
+        params: { limit },
+      })
+      return res.data.data
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
   })
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Smile, Hash, Loader2 } from 'lucide-react';
 import PostCard from './PostCard';
+import PeopleYouMayKnowStrip from './PeopleYouMayKnowStrip';
 import Link from 'next/link';
 import { useHomeFeed } from '@/hooks/useFeedPosts';
 import { useMyProfile } from '@/hooks/useEditProfile';
@@ -296,8 +297,15 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
           </div>
         )}
 
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+        {posts.map((post, i) => (
+          <React.Fragment key={post.id}>
+            <PostCard post={post} />
+            {/* People-you-may-know strips woven into the feed (FB-style):
+                one after the 3rd post (or after the last post on short
+                feeds), another deeper down showing different people. */}
+            {i === Math.min(2, posts.length - 1) && <PeopleYouMayKnowStrip />}
+            {i === 14 && <PeopleYouMayKnowStrip offset={10} />}
+          </React.Fragment>
         ))}
 
         {hasNextPage && (

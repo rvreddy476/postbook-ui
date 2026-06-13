@@ -37,11 +37,11 @@ export default function GroupAboutTab({ group }: GroupAboutTabProps) {
   const privacyInfo = () => {
     switch (group.privacy_level) {
       case 'restricted':
-        return { icon: <Shield className="w-4 h-4 text-amber-400" />, label: 'Restricted Group', desc: 'Anyone can find this group, but content is for members only' }
+        return { icon: <Shield className="w-4 h-4 text-amber-400" />, label: 'Restricted Space', desc: 'Anyone can find this space, but content is for members only' }
       case 'private':
-        return { icon: <Lock className="w-4 h-4 text-rose-400" />, label: 'Private Group', desc: 'Only invited members can find and join this group' }
+        return { icon: <Lock className="w-4 h-4 text-rose-400" />, label: 'Private Space', desc: 'Only invited members can find and join this space' }
       default:
-        return { icon: <Globe className="w-4 h-4 text-emerald-400" />, label: 'Public Group', desc: 'Anyone can find, join, and see posts in this group' }
+        return { icon: <Globe className="w-4 h-4 text-emerald-400" />, label: 'Public Space', desc: 'Anyone can find, join, and see posts in this space' }
     }
   }
 

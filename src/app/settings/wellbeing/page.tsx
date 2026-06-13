@@ -352,7 +352,7 @@ function BedtimeModeCard() {
         <SectionCard
             icon={<Moon className="h-6 w-6 text-brand-text/50" />}
             title="Bedtime Mode"
-            description="Silence Postbook during your sleep hours."
+            description="Silence VChat during your sleep hours."
             delay={0.2}
         >
             <div className="space-y-4">
@@ -539,7 +539,7 @@ function ScreenTimeCard() {
         <SectionCard
             icon={<Clock className="h-6 w-6 text-brand-text/50" />}
             title="Screen Time"
-            description="Your Postbook usage over the last 7 days."
+            description="Your VChat usage over the last 7 days."
             delay={0.05}
         >
             {isLoading ? (
@@ -583,7 +583,7 @@ export default function WellbeingPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-brand-text">Digital Wellbeing</h1>
                     <p className="text-sm text-brand-highlight">
-                        Manage your time and mental health on Postbook
+                        Manage your time and mental health on VChat
                     </p>
                 </div>
             </div>

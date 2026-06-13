@@ -163,11 +163,11 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
           </div>
         )}
 
-        {/* ── Publish to Postbook ── */}
+        {/* ── Publish to Feed ── */}
         <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[12px] font-semibold text-[#1A1A1A]">Publish to Postbook</p>
+              <p className="text-[12px] font-semibold text-[#1A1A1A]">Publish to Feed</p>
               <p className="text-[10px] text-[#9E9E9E] mt-0.5">Cross-post to your feed</p>
             </div>
             <button

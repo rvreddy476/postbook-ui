@@ -151,7 +151,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                 className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-brand-card px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Go to {isLongVideo ? "PostTube" : "Flicks"}
+                Go to {isLongVideo ? "Posttube" : "Reels"}
               </Link>
               <button
                 type="button"

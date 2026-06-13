@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Ask · atpost',
+  title: 'Ask · VChat',
   description: 'Ask questions, share knowledge.',
 }
 

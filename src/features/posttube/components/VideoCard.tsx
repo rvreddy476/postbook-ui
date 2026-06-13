@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Play, Eye, Zap, MessageCircle, Bookmark, Share2 } from "lucide-react";
 import type { PostTubeVideo } from "../types";
+import { useDataSaver } from "@/hooks/useDataSaver";
+import { resolveImageUrl } from "@/lib/imageUrl";
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -57,9 +59,16 @@ function VideoThumbnail({
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  const { effective: dataSaver } = useDataSaver();
 
   const hasThumbnail = thumbnailUrl && !imgFailed;
-  const hasVideoFallback = videoUrl && !videoFailed && !hasThumbnail;
+  // Data-saver: skip the autoplay-on-no-thumbnail video fallback —
+  // it would still emit a metadata range request to the CDN.
+  const hasVideoFallback =
+    !dataSaver && videoUrl && !videoFailed && !hasThumbnail;
+  const resolvedThumb = hasThumbnail
+    ? resolveImageUrl(thumbnailUrl, { dataSaver, size: "medium" })
+    : "";
 
   return (
     <>
@@ -79,7 +88,7 @@ function VideoThumbnail({
       )}
       {hasThumbnail && (
         <img
-          src={thumbnailUrl}
+          src={resolvedThumb}
           alt=""
           className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
           loading="lazy"
@@ -220,7 +229,17 @@ interface VideoCardProps {
 
 export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   const duration = fmtDuration(video.duration_seconds);
-  const [spotlightActive, setSpotlightActive] = useState(false);
+  const { effective: dataSaver } = useDataSaver();
+  // Data-saver: never run the hover-spotlight preview — it would
+  // otherwise lazily fetch a few seconds of video on every hover.
+  const [spotlightActive, setSpotlightActiveState] = useState(false);
+  const setSpotlightActive = (value: boolean) => {
+    if (dataSaver) {
+      setSpotlightActiveState(false);
+      return;
+    }
+    setSpotlightActiveState(value);
+  };
   const resumePosition = typeof video.resume_position_ms === "number"
     ? Math.max(0, Math.floor(video.resume_position_ms / 1000))
     : 0;

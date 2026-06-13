@@ -183,7 +183,7 @@ export default function CommunitiesPage() {
             {[1, 2, 3, 4, 5, 6].map((index) => (
               <div
                 key={index}
-                className="flex items-center gap-3.5 p-3 bg-white border border-brand-divider rounded-xl animate-pulse"
+                className="flex items-center gap-3.5 p-3 bg-brand-card border border-brand-divider rounded-xl animate-pulse"
               >
                 <div className="w-12 h-12 rounded-xl bg-brand-text/5 flex-shrink-0" />
                 <div className="flex-1 space-y-2">

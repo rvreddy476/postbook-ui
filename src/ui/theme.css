@@ -1,0 +1,83 @@
+/* ==========================================================================
+   Centralized Theme Definitions (postbook-ui design system)
+   Allows easy switching and extension of themes.
+   ========================================================================== */
+
+/* 1. X Platform Theme (Active default) */
+:root {
+  --theme-foreground-rgb: 15, 20, 25;
+  --theme-background-start-rgb: 255, 255, 255;
+  --theme-background-end-rgb: 255, 255, 255;
+  --theme-prismatic-violet: #0f1419;
+  --theme-prismatic-rose: #0f1419;
+
+  --theme-brand-bg: 255 255 255;
+  --theme-brand-text: 15 20 25;
+  --theme-brand-accent: 15 20 25;
+  --theme-brand-secondary: 247 249 249;
+  --theme-brand-highlight: 15 20 25;
+  --theme-brand-divider: rgba(15, 20, 25, 0.1);
+  --theme-brand-card: 255 255 255;
+
+  --theme-glass-bg: 255, 255, 255;
+  --theme-glass-border: 15, 20, 25;
+}
+
+.dark {
+  --theme-foreground-rgb: 247, 249, 249;
+  --theme-background-start-rgb: 0, 0, 0;
+  --theme-background-end-rgb: 0, 0, 0;
+  --theme-prismatic-violet: #f7f9f9;
+  --theme-prismatic-rose: #f7f9f9;
+
+  --theme-brand-bg: 0 0 0;
+  --theme-brand-text: 247 249 249;
+  --theme-brand-accent: 247 249 249;
+  --theme-brand-secondary: 22 24 28;
+  --theme-brand-highlight: 247 249 249;
+  --theme-brand-divider: rgba(247, 249, 249, 0.15);
+  --theme-brand-card: 0 0 0;
+
+  --theme-glass-bg: 0, 0, 0;
+  --theme-glass-border: 247, 249, 249;
+}
+
+/* 2. Paper & Asphalt Theme (Preserved for quick switching)
+   To activate, apply `.theme-paper-asphalt` to the root <html> or <body> element. */
+.theme-paper-asphalt {
+  --theme-foreground-rgb: 48, 47, 44;
+  --theme-background-start-rgb: 239, 237, 227;
+  --theme-background-end-rgb: 239, 237, 227;
+  --theme-prismatic-violet: #D8103F;
+  --theme-prismatic-rose: #db2777;
+
+  --theme-brand-bg: 239 237 227;
+  --theme-brand-text: 48 47 44;
+  --theme-brand-accent: 48 47 44;
+  --theme-brand-secondary: 229 227 217;
+  --theme-brand-highlight: 48 47 44;
+  --theme-brand-divider: rgba(48, 47, 44, 0.15);
+  --theme-brand-card: 255 255 255;
+
+  --theme-glass-bg: 239, 237, 227;
+  --theme-glass-border: 48, 47, 44;
+}
+
+.theme-paper-asphalt.dark, .dark .theme-paper-asphalt {
+  --theme-foreground-rgb: 239, 237, 227;
+  --theme-background-start-rgb: 48, 47, 44;
+  --theme-background-end-rgb: 48, 47, 44;
+  --theme-prismatic-violet: #D8103F;
+  --theme-prismatic-rose: #db2777;
+
+  --theme-brand-bg: 48 47 44;
+  --theme-brand-text: 239 237 227;
+  --theme-brand-accent: 239 237 227;
+  --theme-brand-secondary: 58 57 54;
+  --theme-brand-divider: rgba(239, 237, 227, 0.2);
+  --theme-brand-card: 40 39 37;
+  --theme-brand-highlight: 239 237 227;
+
+  --theme-glass-bg: 48, 47, 44;
+  --theme-glass-border: 239, 237, 227;
+}

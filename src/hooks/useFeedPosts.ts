@@ -11,7 +11,7 @@ interface PostsResponse {
 
 interface CreatePostPayload {
     text: string
-    visibility: "public" | "followers" | "private"
+    visibility: "public" | "followers" | "trusted" | "private"
     content_type: string
     media_ids?: string[]
     feeling?: string | null
@@ -35,6 +35,7 @@ interface CreatePostPayload {
         background?: string
         text_color?: string
     } | null
+    hashtags?: string[]
 }
 
 export function useFeedPosts(userId: string | undefined) {

@@ -2,7 +2,7 @@
 
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { Group, GroupMember, GroupInvite, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
+import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
 interface GroupsResponse { data: Group[] }
 interface GroupResponse { data: Group }
@@ -186,6 +186,7 @@ export function useCreateGroup() {
       location?: string
       language?: string
       idempotency_key?: string
+      is_mature?: boolean
     }) => {
       const res = await api.post<GroupResponse>("/v1/groups", payload)
       return res.data.data
@@ -291,6 +292,8 @@ export function useAcceptInvite() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-groups"] })
+      qc.invalidateQueries({ queryKey: ["my-invites"] })
+      qc.invalidateQueries({ queryKey: ["myspace-feed"] })
     },
   })
 }
@@ -301,6 +304,9 @@ export function useRejectInvite() {
     mutationFn: async (inviteId: string) => {
       const res = await api.post(`/v1/groups/invites/${inviteId}/reject`)
       return res.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-invites"] })
     },
   })
 }
@@ -415,14 +421,22 @@ export function useUpdateGroupRules() {
   })
 }
 
+export interface GroupMediaItem {
+  post_id: string
+  author_id: string
+  content_type: string
+  attachments: string[]
+  created_at: string
+}
+
 export function useGroupMedia(groupId: string | undefined) {
   return useInfiniteQuery({
     queryKey: ["group-media", groupId],
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await api.get<GroupPostsResponse>(`/v1/groups/${groupId}/media`, {
+      const res = await api.get<{ data: GroupMediaItem[] }>(`/v1/groups/${groupId}/media`, {
         params: { limit: 30, offset: pageParam },
       })
-      return { data: res.data.data, offset: pageParam as number }
+      return { data: res.data.data ?? [], offset: pageParam as number }
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
@@ -629,6 +643,46 @@ export function useDeleteGroupPostV2() {
     onSuccess: (_, { groupId }) => {
       qc.invalidateQueries({ queryKey: ["group-feed-v2", groupId] })
       qc.invalidateQueries({ queryKey: ["group", groupId] })
+    },
+  })
+}
+
+// === MYSPACE AGGREGATED FEED ===
+
+export type MySpaceFeedPost = GroupPostV2 & { group: Group }
+
+// Aggregated reverse-chronological feed across every group the viewer has
+// joined — served by GET /v1/groups/feed (group-service joins on the
+// viewer's memberships) with limit/offset pagination.
+export function useMySpacesFeed() {
+  return useInfiniteQuery({
+    queryKey: ["myspace-feed"],
+    queryFn: async ({ pageParam = 0 }) => {
+      const res = await api.get<GroupPostsV2Response>(`/v1/groups/feed`, {
+        params: { limit: 20, offset: pageParam },
+      })
+      return { data: res.data.data ?? [], offset: pageParam as number }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.length < 20) return undefined
+      return (lastPage.offset as number) + 20
+    },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+// === MY INVITES ===
+
+interface MyInvitesResponse { data: GroupInviteDetail[] }
+
+export function useMyInvites() {
+  return useQuery({
+    queryKey: ["my-invites"],
+    queryFn: async () => {
+      const res = await api.get<MyInvitesResponse>(`/v1/groups/invites/my`)
+      return res.data.data ?? []
     },
   })
 }

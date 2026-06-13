@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { checkPostMatchAuth, postmatchLoginRedirect } from '@/lib/postmatchGuard'
-import { useDiscoveryFeed, useMakeDecision, usePostMatchProfile, usePostMatchPhotos } from '@/hooks/usePostmatch'
-import type { FeedItem, DecisionResult } from '@/types/postmatch'
+import { useDiscoveryFeed, useMakeDecision, usePostMatchProfile, usePostMatchPhotos, useExplainCandidate } from '@/hooks/usePostmatch'
+import type { DecisionResult } from '@/types/postmatch'
+import { TrustBadge } from '@/components/postmatch/TrustBadge'
 
 export default function DiscoverPage() {
   const router = useRouter()
@@ -19,6 +20,8 @@ export default function DiscoverPage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [showExplain, setShowExplain] = useState(false)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
 
   const primaryPhoto = myPhotos.find(p => p.is_primary)?.media_url
 
@@ -31,8 +34,12 @@ export default function DiscoverPage() {
   const cards = data?.items ?? []
   const current = cards[currentIndex]
 
+  // §P1-2 — fetch the explanation only when the modal is open.
+  const explain = useExplainCandidate(current?.user_id, showExplain)
+
   const handleDecision = useCallback(async (decision: 'like' | 'pass' | 'super_like') => {
     if (!current) return
+    setDecisionError(null)
     setSwipeDirection(decision === 'pass' ? 'left' : 'right')
 
     try {
@@ -43,14 +50,22 @@ export default function DiscoverPage() {
       if (result.result === 'matched') {
         setMatchPopup(result)
       }
-    } catch {
-      // silently continue
-    }
-
-    setTimeout(() => {
+      // P1-4 / §13: only advance the deck when the backend acknowledged
+      // the decision. On error we hold the card so the user can retry
+      // — see catch branch below.
+      setTimeout(() => {
+        setSwipeDirection(null)
+        setCurrentIndex(prev => prev + 1)
+      }, 300)
+    } catch (err) {
+      // Roll the swipe animation back and surface a banner. The card
+      // stays put so the user can retry the same decision.
+      const message =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ??
+        'Could not save your choice. Tap again to retry.'
       setSwipeDirection(null)
-      setCurrentIndex(prev => prev + 1)
-    }, 300)
+      setDecisionError(message)
+    }
   }, [current, makeDecision])
 
   // Loading state
@@ -68,6 +83,68 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Header primaryPhoto={primaryPhoto} name={myProfile?.first_name} showMenu={showMenu} setShowMenu={setShowMenu} router={router} />
+
+      {/* §P1-2 — Why am I seeing this profile? */}
+      {showExplain && current && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+          onClick={() => setShowExplain(false)}
+        >
+          <div
+            className="bg-[#111] rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-white">Why am I seeing {current.first_name}?</h3>
+              <button
+                onClick={() => setShowExplain(false)}
+                className="text-[#666] hover:text-white text-2xl leading-none"
+                aria-label="Close"
+              >×</button>
+            </div>
+            {explain.isLoading && (
+              <p className="text-sm text-[#888]">Looking up the match signals…</p>
+            )}
+            {explain.error && (
+              <p className="text-sm text-rose-400">Couldn&apos;t load the explanation.</p>
+            )}
+            {explain.data && (
+              <div className="space-y-2">
+                {explain.data.is_promoted && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                    <span className="text-amber-400 text-lg">⭐</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-amber-300">Boosted profile</div>
+                      <div className="text-xs text-amber-200/70">This profile is currently featured.</div>
+                    </div>
+                  </div>
+                )}
+                {explain.data.reasons.length === 0 ? (
+                  <p className="text-sm text-[#888]">
+                    Matches your preferences. No extra signals to surface.
+                  </p>
+                ) : (
+                  explain.data.reasons.map((r, i) => (
+                    <div key={`${r.kind}-${i}`} className="flex items-start gap-3 p-3 rounded-xl bg-[#1a1a1a]">
+                      <span className="text-rose-400 text-lg">•</span>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                          {r.kind.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-sm text-white/90">{r.detail}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <p className="pt-3 text-[10px] text-[#555] leading-relaxed">
+                  Matching uses your preferences and signals you&apos;ve shared.
+                  We never expose abuse-prevention details.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Match popup */}
       {matchPopup && (
@@ -140,6 +217,18 @@ export default function DiscoverPage() {
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
+                {/* §P1-2 — Why am I seeing this profile? */}
+                <button
+                  type="button"
+                  aria-label="Why am I seeing this profile?"
+                  onClick={() => setShowExplain(true)}
+                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/75 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+
                 {/* LIKE/NOPE stamps */}
                 {swipeDirection === 'right' && (
                   <div className="absolute top-8 left-6 border-4 border-emerald-400 rounded-xl px-5 py-2 rotate-[-20deg]">
@@ -170,6 +259,14 @@ export default function DiscoverPage() {
                             {current.occupation}
                           </span>
                         )}
+                      </div>
+                      {/* Phase 1 — verification badges from candidate payload. */}
+                      <div className="mt-2">
+                        <TrustBadge
+                          trustTier={current.trust_tier}
+                          verificationState={current.verification_state}
+                          variant="compact"
+                        />
                       </div>
                     </div>
                     {/* Info button */}
@@ -265,6 +362,30 @@ export default function DiscoverPage() {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
               </button>
             </div>
+
+            {/* P1-4: held card + retry banner — surfaced when the
+                decision mutation fails. The card itself stays in place
+                so the user can re-tap their choice. */}
+            {decisionError && (
+              <div
+                role="alert"
+                className="mt-4 mx-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300 flex items-start gap-3"
+              >
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-bold">{decisionError}</p>
+                  <button
+                    type="button"
+                    onClick={() => setDecisionError(null)}
+                    className="mt-1 text-[10px] font-bold uppercase tracking-widest text-rose-200 hover:text-white transition"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Card counter */}
             <div className="text-center mt-4">

@@ -29,7 +29,7 @@ export default function SellerDashboardPage() {
             <div className="w-14 h-14 rounded-2xl bg-[#F5F0EB] border border-[#E8DDD3] flex items-center justify-center mx-auto mb-5">
               <span className="text-3xl">🛍️</span>
             </div>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">Start Selling on Postbook</h2>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">Start Selling on VChat</h2>
             <p className="text-[#6B5544] mb-6 text-sm">Reach millions of users. Set up your shop in minutes.</p>
             <button
               onClick={() => router.push('/seller/onboarding')}
@@ -111,10 +111,13 @@ export default function SellerDashboardPage() {
 
           {/* Quick actions */}
           {isApproved && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <ActionCard title="Products" desc="Manage your product catalog" href="/seller/products" icon="📦" />
-              <ActionCard title="Orders" desc="View and fulfill orders" href="/seller/orders" icon="🧾" />
-              <ActionCard title="Payouts" desc="View earnings & payout history" href="/seller/payouts" icon="💳" />
+              <ActionCard title="Fulfillment" desc="Ship, label, track" href="/seller/fulfillment" icon="🚚" />
+              <ActionCard title="Returns" desc="Approve & resolve" href="/seller/returns" icon="↩️" />
+              <ActionCard title="Earnings" desc="Ledger & statements" href="/seller/earnings" icon="💰" />
+              <ActionCard title="Bulk Import" desc="Upload products by CSV" href="/seller/bulk-import" icon="⬆️" />
+              <ActionCard title="RFQ Inbox" desc="Custom quote requests" href="/seller/rfqs" icon="📝" />
             </div>
           )}
 

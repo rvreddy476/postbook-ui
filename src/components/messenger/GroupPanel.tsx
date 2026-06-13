@@ -8,6 +8,7 @@ import { Avatar, getInitials, getGroupColor } from './shared'
 import CreatePortal from '@/components/CreatePortal'
 import GroupCreateModal from '@/components/groups/GroupCreateModal'
 import { useGroupDetails, useGroupMembers, useGroupFeed } from '@/hooks/useGroups'
+import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { createGroupConversation, toggleReaction, updateConversation, leaveConversation, addMemberToConversation } from '@/services/messageService'
 import { getSession } from '@/services/authService'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
@@ -74,6 +75,10 @@ function ChatView({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const chat = useChat(activeConvId ?? null, myId)
+  // M1: track who's actively viewing this group chat + drive
+  // conversation.enter/heartbeat/leave + typing.start.
+  useConversationPresence(activeConvId ?? null)
+  const setTyping = useSetTyping(activeConvId ?? null)
 
   // Sync if parent passes a new conversationId
   useEffect(() => {
@@ -535,7 +540,7 @@ function ChatView({
             <div className="flex-1 relative">
               <input
                 value={chat.input}
-                onChange={e => chat.handleInputChange(e.target.value)}
+                onChange={e => { chat.handleInputChange(e.target.value); setTyping(); }}
                 onKeyDown={e => { if (e.key === 'Enter') chat.handleSend(); if (e.key === 'Escape' && chat.replyingTo) chat.setReplyingTo(null) }}
                 placeholder="Type a message..."
                 className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none transition-all focus:bg-brand-card focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary placeholder:text-brand-text/60"

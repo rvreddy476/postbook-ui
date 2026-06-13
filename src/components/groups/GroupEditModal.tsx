@@ -114,7 +114,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
         className="mx-4 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-card shadow-xl"
       >
         <div className="flex items-center justify-between border-b border-brand-divider px-6 py-4">
-          <h2 className="text-lg font-black text-brand-text">Edit Group</h2>
+          <h2 className="text-lg font-black text-brand-text">Edit Space</h2>
           <button onClick={onClose} className="p-1 text-brand-text/60 transition-colors hover:text-brand-highlight">
             <X className="h-5 w-5" />
           </button>
@@ -135,7 +135,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
+                <span className="rounded-full bg-brand-card/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
                   Change cover
                 </span>
               </div>
@@ -188,7 +188,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Group Name</label>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Space Name</label>
             <input
               type="text"
               value={name}

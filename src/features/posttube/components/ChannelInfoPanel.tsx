@@ -70,8 +70,8 @@ export function ChannelInfoPanel({
           onClick={onToggleSubscribe}
           className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition ${
             subscribed
-              ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+              ? "bg-brand-text/8 text-brand-text/70 hover:bg-brand-text/12"
+              : "bg-brand-text text-brand-bg hover:opacity-90"
           }`}
         >
           {subscribed ? "Subscribed" : "Subscribe"}
