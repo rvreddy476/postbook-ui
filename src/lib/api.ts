@@ -44,6 +44,14 @@ const clearStoredAuth = () => {
     window.dispatchEvent(new Event(SESSION_CHANGE_EVENT))
 }
 
+// Removes only the expired access/refresh tokens — does NOT touch the session
+// user record and does NOT fire session-changed. Keeps the user visually logged
+// in while preventing stale tokens from being sent on future requests.
+const clearExpiredTokens = () => {
+    if (!canUseStorage()) return
+    localStorage.removeItem(TOKEN_KEY)
+}
+
 const getUserId = (): string | null => {
     if (!canUseStorage()) return null
     try {
@@ -78,7 +86,7 @@ const ensureCsrfToken = (): string => {
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "",
-    withCredentials: true,
+    withCredentials: false,
 })
 
 api.interceptors.request.use((config) => {
@@ -127,8 +135,12 @@ async function refreshAccessToken(): Promise<RefreshResult> {
         }
 
         const payload = await res.json()
-        const tokens = payload?.data?.tokens ?? payload?.tokens ?? payload
-        const newAccess = tokens?.access_token ?? tokens?.accessToken
+        // Match the same extraction order as responseMapper.ts:getTokens()
+        // Handles: { data: { access_token } }, { data: { tokens: { access_token } } },
+        //          { tokens: { access_token } }, { access_token }
+        const primary = payload?.data ?? payload?.result ?? payload
+        const tokens = primary?.tokens ?? primary
+        const newAccess = tokens?.access_token ?? tokens?.accessToken ?? tokens?.token
         const newRefresh = tokens?.refresh_token ?? tokens?.refreshToken
 
         if (newAccess) {
@@ -156,6 +168,7 @@ api.interceptors.response.use(
             }
 
             const result = await refreshPromise
+
             if (result === "success") {
                 const newToken = getAccessToken()
                 if (newToken) {
@@ -164,11 +177,9 @@ api.interceptors.response.use(
                 return api(originalRequest)
             }
 
-            if (result === "invalid") {
-                clearStoredAuth()
-            }
+            clearExpiredTokens()
         } else if (error.response?.status === 401) {
-            clearStoredAuth()
+            clearExpiredTokens()
         }
 
         return Promise.reject(error)

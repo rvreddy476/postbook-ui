@@ -176,10 +176,10 @@ function SpotlightPreview({
           playing ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       />
-      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-brand-card/20 dark:bg-brand-card/10 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
+      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-brand-card/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
         <div
           ref={barRef}
-          className="h-full bg-gradient-to-r from-[#F97066] to-[#7C5CFC]"
+          className="h-full bg-brand-accent"
           style={{ width: "0%" }}
         />
       </div>
@@ -195,7 +195,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0F0D15]/60 text-white/90 backdrop-blur-md transition-all hover:bg-[#7C5CFC] hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
         title="Spark"
       >
         <Zap className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0F0D15]/60 text-white/90 backdrop-blur-md transition-all hover:bg-[#7C5CFC] hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
         title="Stash"
       >
         <Bookmark className="h-3.5 w-3.5" />
@@ -211,7 +211,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0F0D15]/60 text-white/90 backdrop-blur-md transition-all hover:bg-[#7C5CFC] hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
         title="Echo"
       >
         <Share2 className="h-3.5 w-3.5" />
@@ -252,44 +252,44 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
     return (
       <Link
         href={`/posttube/watch/${video.id}`}
-        className="spotlight-card group flex gap-3.5 rounded-2xl p-2.5 bg-brand-card dark:bg-[#1C1A28] transition-all duration-300 hover:shadow-[0_8px_40px_-8px_rgba(124,92,252,0.2)]"
+        className="spotlight-card group flex gap-3.5 rounded-2xl p-2.5 bg-brand-card transition-all duration-300 hover:shadow-md"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
-        <div className="relative w-[220px] shrink-0 overflow-hidden rounded-xl bg-[#1A1430] aspect-video">
+        <div className="relative w-[220px] shrink-0 overflow-hidden rounded-xl bg-brand-secondary aspect-video">
           <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
           <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
           {duration && (
-            <span className={`absolute bottom-2 right-2 z-10 rounded-lg bg-[#0F0D15]/80 px-2 py-0.5 text-[10px] font-bold text-white/90 tracking-wide backdrop-blur-sm transition-opacity duration-300 ${spotlightActive ? "opacity-0" : "opacity-100"}`}>
+            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-brand-accent/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-sm transition-opacity duration-300">
               {duration}
             </span>
           )}
         </div>
         <div className="min-w-0 flex-1 py-1">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-[#0F0D15] dark:text-[#EEEDF5] group-hover:text-[#7C5CFC] transition-colors">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-brand-accent transition-colors">
             {video.title}
           </h3>
-          <p className="mt-1.5 text-[11px] text-[#8B8B9E] dark:text-[#6B6980]">{video.channel_name}</p>
+          <p className="mt-1.5 text-[11px] text-brand-text/60">{video.channel_name}</p>
           {hasResumeState && (
             <div className="mt-3">
-              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6B5FC7] dark:text-[#A78BFA]">
+              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-text/75">
                 <span>Resume at {fmtDuration(resumePosition)}</span>
                 <span>{Math.round(resumePercent)}%</span>
               </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#F0EEFF] dark:bg-[#2A2740]">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-brand-secondary">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#F59E0B] via-[#F97066] to-[#7C5CFC]"
+                  className="h-full rounded-full bg-brand-accent"
                   style={{ width: `${Math.max(8, resumePercent)}%` }}
                 />
               </div>
               {video.last_watched_at && (
-                <p className="mt-1.5 text-[10px] text-[#B0ADBE] dark:text-[#555368]">
+                <p className="mt-1.5 text-[10px] text-brand-text/50">
                   Watched {timeAgo(video.last_watched_at)}
                 </p>
               )}
             </div>
           )}
-          <p className="text-[11px] text-[#B0ADBE] dark:text-[#555368]">{fmtViews(video.view_count)} · {timeAgo(video.published_at)}</p>
+          <p className="text-[11px] text-brand-text/50">{fmtViews(video.view_count)} · {timeAgo(video.published_at)}</p>
         </div>
       </Link>
     );
@@ -300,23 +300,23 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   return (
     <Link
       href={`/posttube/watch/${video.id}`}
-      className="spotlight-card group flex flex-col rounded-2xl bg-brand-card dark:bg-[#1C1A28] p-3 transition-all duration-300"
+      className="spotlight-card group flex flex-col rounded-2xl bg-brand-card p-3 transition-all duration-300"
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
       style={{
         transform: spotlightActive ? "scale(1.03) translateY(-4px)" : "scale(1) translateY(0)",
         boxShadow: spotlightActive
           ? isDark
-            ? "0 20px 60px -12px rgba(124, 92, 252, 0.35), 0 0 0 1px rgba(124, 92, 252, 0.15)"
-            : "0 20px 60px -12px rgba(124, 92, 252, 0.25), 0 0 0 1px rgba(124, 92, 252, 0.08)"
+            ? "0 20px 60px -12px rgba(255, 255, 255, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.15)"
+            : "0 20px 60px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)"
           : isDark
             ? "0 1px 3px -1px rgba(0, 0, 0, 0.3)"
-            : "0 1px 3px -1px rgba(15, 13, 21, 0.04)",
+            : "0 1px 3px -1px rgba(0, 0, 0, 0.04)",
         zIndex: spotlightActive ? 10 : 1,
       }}
     >
       {/* Thumbnail */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#1A1430]" style={{ aspectRatio: "16/9" }}>
+      <div className="relative overflow-hidden rounded-2xl bg-brand-secondary" style={{ aspectRatio: "16/9" }}>
         <VideoThumbnail
           thumbnailUrl={video.thumbnail_url}
           videoUrl={video.video_url}
@@ -327,22 +327,22 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
         <QuickActions visible={spotlightActive} />
 
         {duration && (
-          <span className={`absolute bottom-3 right-3 z-10 rounded-xl bg-[#0F0D15]/75 px-2.5 py-1 text-[11px] font-bold text-white tracking-wider backdrop-blur-md transition-opacity duration-300 ${spotlightActive ? "opacity-0" : "opacity-100"}`}>
+          <span className="absolute bottom-3 right-3 z-10 rounded-xl bg-brand-accent/80 px-2.5 py-1 text-[11px] font-bold text-brand-bg tracking-wider backdrop-blur-md transition-opacity duration-300">
             {duration}
           </span>
         )}
 
         <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100"}`}>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F0D15]/40 via-transparent to-transparent" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/95 dark:bg-brand-card/90 shadow-[0_8px_32px_-8px_rgba(124,92,252,0.4)] backdrop-blur-xl">
-            <Play className="ml-0.5 h-6 w-6 fill-[#7C5CFC] text-[#7C5CFC]" />
+          <div className="absolute inset-0 bg-brand-accent/10" />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card shadow-md backdrop-blur-xl">
+            <Play className="ml-0.5 h-6 w-6 fill-brand-accent text-brand-accent" />
           </div>
         </div>
 
         {video.view_count >= 100 && (
-          <div className={`absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-xl bg-[#0F0D15]/60 px-2 py-1 backdrop-blur-md transition-opacity duration-300 ${spotlightActive ? "opacity-0" : "opacity-100"}`}>
-            <Eye className="h-3 w-3 text-[#F59E0B]" />
-            <span className="text-[10px] font-bold text-white/90">{fmtViews(video.view_count).replace(" views", "")}</span>
+          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-xl bg-brand-accent/80 px-2 py-1 backdrop-blur-md">
+            <Eye className="h-3 w-3 text-brand-bg" />
+            <span className="text-[10px] font-bold text-brand-bg">{fmtViews(video.view_count).replace(" views", "")}</span>
           </div>
         )}
       </div>
@@ -353,23 +353,23 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
           <img
             src={video.channel_avatar_url}
             alt=""
-            className="h-10 w-10 shrink-0 rounded-xl bg-[#F0EEFF] dark:bg-[#2A2740] object-cover ring-2 ring-[#EEEDF5] dark:ring-[#2A2740] shadow-sm"
+            className="h-10 w-10 shrink-0 rounded-xl bg-brand-secondary object-cover ring-2 ring-brand-divider shadow-sm"
             loading="lazy"
           />
-          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] ring-2 ring-white dark:ring-[#1C1A28] flex items-center justify-center">
-            <Zap className="h-2 w-2 text-white" />
+          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-brand-accent text-brand-bg ring-2 ring-brand-bg flex items-center justify-center">
+            <Zap className="h-2 w-2 text-brand-bg" />
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#0F0D15] dark:text-[#EEEDF5] group-hover:text-[#7C5CFC] transition-colors">
+          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text group-hover:text-brand-accent transition-colors">
             {video.title}
           </h3>
-          <p className="mt-1 text-[12px] text-[#8B8B9E] dark:text-[#6B6980] group-hover:text-[#7C5CFC]/70 transition-colors">
+          <p className="mt-1 text-[12px] text-brand-text/60 group-hover:text-brand-accent/85 transition-colors">
             {video.channel_name}
           </p>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-[#B0ADBE] dark:text-[#555368]">
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-brand-text/50">
             {video.like_count > 0 && (
-              <span className="flex items-center gap-0.5 text-[#F59E0B]">
+              <span className="flex items-center gap-0.5 text-brand-text/70">
                 <Zap className="h-3 w-3" />
                 <span className="font-semibold">{fmtSparks(video.like_count)}</span>
               </span>
@@ -381,7 +381,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
               </span>
             )}
             <span>{fmtViews(video.view_count)}</span>
-            <span className="text-[#D8D6E2] dark:text-[#3A3650]">·</span>
+            <span className="text-brand-divider">·</span>
             <span>{timeAgo(video.published_at)}</span>
           </div>
         </div>

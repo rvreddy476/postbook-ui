@@ -9,7 +9,6 @@ import {
     MessageSquare,
     Settings,
     Share2,
-    Clock,
     Users,
     MoreHorizontal,
     Shield,
@@ -25,6 +24,7 @@ import {
     MinusCircle,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
 
 interface ProfileActionsProps {
     isOwn: boolean
@@ -258,56 +258,17 @@ export function ProfileActions({
                     )}
                 </Button>
 
-                {/* Circle (Friend) */}
-                {inCircle ? (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-sm font-semibold"
-                        onClick={() => setMenuOpen(true)}
-                    >
-                        <Users className="mr-1.5 h-4 w-4" />
-                        Friends
-                    </Button>
-                ) : circleRequestSent ? (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl border-amber-200 text-amber-600 hover:bg-amber-50 text-sm font-semibold"
-                        onClick={onCancelCircleRequest}
-                    >
-                        <Clock className="mr-1.5 h-4 w-4" />
-                        Requested
-                    </Button>
-                ) : circleRequestReceived ? (
-                    <div className="flex gap-1">
-                        <Button
-                            size="sm"
-                            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
-                            onClick={onAcceptCircleRequest}
-                        >
-                            Accept
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl border-brand-divider text-sm font-semibold"
-                            onClick={onDeclineCircleRequest}
-                        >
-                            Decline
-                        </Button>
-                    </div>
-                ) : (
-                    <Button
-                        onClick={onSendCircleRequest}
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl border-brand-divider text-brand-text hover:border-brand-text/20 hover:bg-brand-text/5 text-sm font-semibold"
-                    >
-                        <UserPlus className="mr-1.5 h-4 w-4" />
-                        Add Friend
-                    </Button>
-                )}
+                <FriendRequestButton
+                    targetUserId={username ?? ""}
+                    targetUsername={username}
+                    relationship={relationship}
+                    className="inline-flex h-8 items-center justify-center gap-1 rounded-xl border border-brand-divider px-3 text-sm font-semibold text-brand-text transition-all hover:border-brand-text/20 hover:bg-brand-text/5 disabled:opacity-50"
+                    sentClassName="border-amber-200 text-amber-600 hover:bg-amber-50"
+                    friendClassName="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    acceptClassName="inline-flex h-8 items-center justify-center rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50"
+                    declineClassName="inline-flex h-8 items-center justify-center rounded-xl border border-brand-divider px-3 text-sm font-semibold transition-all hover:bg-brand-text/5 disabled:opacity-50"
+                    onFriendsClick={() => setMenuOpen(true)}
+                />
 
                 {/* Message */}
                 <Button

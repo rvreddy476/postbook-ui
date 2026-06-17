@@ -25,17 +25,30 @@ function getStoredAccessToken(): string | null {
 function buildWsUrl(token: string): string {
     if (typeof window === "undefined") return ""
 
+    const explicitBase = process.env.NEXT_PUBLIC_WS_BASE_URL ?? ""
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? ""
+    const path = `/v1/ws/notifications?access_token=${encodeURIComponent(token)}`
 
-    // If an explicit API base URL is set, derive WS URL from it
+    if (explicitBase) {
+        return `${explicitBase.replace(/\/+$/, "")}${path}`
+    }
+
+    // If an explicit API base URL is set, derive WS URL from it.
     if (apiBase) {
-        const wsBase = apiBase.replace(/^http/, "ws")
-        return `${wsBase}/v1/ws/notifications?access_token=${encodeURIComponent(token)}`
+        const wsBase = apiBase.replace(/^http/, "ws").replace(/\/+$/, "")
+        return `${wsBase}${path}`
+    }
+
+    // Next rewrites can proxy HTTP /v1 calls, but not browser WebSocket
+    // upgrades. In local dev, connect directly to chat-ws-gateway.
+    const { hostname } = window.location
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return `ws://${hostname}:8093${path}`
     }
 
     // Derive from current page origin (production behind cloudflared)
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:"
-    return `${proto}//${window.location.host}/v1/ws/notifications?access_token=${encodeURIComponent(token)}`
+    return `${proto}//${window.location.host}${path}`
 }
 
 class NotificationSocket {

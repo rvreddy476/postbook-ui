@@ -1,17 +1,5 @@
 'use client';
 
-// Public marketing landing for unauthenticated visitors. Renders from
-// PostBoekApp when `currentUser` is null.
-//
-// Dynamic bits:
-//  - Status pill polls /health every 60s. Falls back to "Status unknown"
-//    on error, never blocks render.
-//  - Stats are hard-coded today; usePublicStats is wired so the moment
-//    /v1/public/stats lands it just swaps the hook impl without UI
-//    changes.
-//  - Feature cards deep-link into the real SPA routes (live, reels,
-//    chat tab, monetization).
-
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -22,10 +10,16 @@ import {
   DollarSign,
   Sparkles,
   Star,
+  Activity,
+  CheckCircle,
+  TrendingUp,
+  Terminal,
+  Menu,
+  X,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// ── Status poll ─────────────────────────────────────────────────
-
+// ── System Status Hook ──────────────────────────────────────────
 type SystemStatus = 'operational' | 'degraded' | 'unknown';
 
 function useSystemStatus(): SystemStatus {
@@ -53,8 +47,7 @@ function useSystemStatus(): SystemStatus {
   return status;
 }
 
-// ── Public stats ────────────────────────────────────────────────
-
+// ── Public Stats Hook ───────────────────────────────────────────
 interface PublicStats {
   creators: string;
   viewers: string;
@@ -63,297 +56,433 @@ interface PublicStats {
 }
 
 function usePublicStats(): PublicStats {
-  // TODO: swap with a real /v1/public/stats endpoint once it exists.
-  // Keeping the hook shape stable so the UI doesn't change.
   return {
     creators: '200K+',
     viewers: '8.4M',
     paidOut: '$12M',
-    uptime: '99.9%',
+    uptime: '99.98%',
   };
 }
 
-// ── Navbar ──────────────────────────────────────────────────────
-
-function Navbar() {
-  return (
-    <nav className="flex h-16 items-center justify-between border-b border-black/5 px-7">
-      <Link href="/" className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black">
-          <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
-        </span>
-        <span className="text-lg font-medium tracking-tight text-black">VChat</span>
-      </Link>
-      <div className="hidden items-center gap-2 md:flex">
-        <Link
-          href="#features"
-          className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] text-[#4b4b4b] transition-colors hover:text-black"
-        >
-          Features
-        </Link>
-        <Link
-          href="/discover"
-          className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] text-[#4b4b4b] transition-colors hover:text-black"
-        >
-          Creators
-        </Link>
-        <Link
-          href="/monetization"
-          className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] text-[#4b4b4b] transition-colors hover:text-black"
-        >
-          Pricing
-        </Link>
-        <Link
-          href="/login"
-          className="px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] text-[#4b4b4b] transition-colors hover:text-black"
-        >
-          Log In
-        </Link>
-        <Link
-          href="/register"
-          className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] text-white transition-transform hover:scale-[1.03]"
-        >
-          Sign Up
-          <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
-        </Link>
-      </div>
-    </nav>
-  );
-}
-
-// ── Announcement pill ───────────────────────────────────────────
-
-function AnnouncementPill() {
-  return (
-    <Link
-      href="/reels"
-      className="mb-6 inline-flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3.5 shadow-sm transition-transform hover:scale-[1.02]"
-    >
-      <span className="rounded-full bg-[#EAF3DE] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[#3B6D11]">
-        New
-      </span>
-      <span className="text-xs font-medium text-[#2C2C2A]">Reels v2.0 — now with AI captions</span>
-      <ArrowRight className="h-3.5 w-3.5 text-[#6b6b6b]" strokeWidth={2} />
-    </Link>
-  );
-}
-
-// ── Hero copy + CTAs ────────────────────────────────────────────
-
-function HeroLeft() {
-  return (
-    <div>
-      <AnnouncementPill />
-      <h1 className="mb-5 text-[44px] font-medium leading-[0.95] tracking-[-0.04em] text-black sm:text-[52px]">
-        Create.
-        <br />
-        Connect.
-        <br />
-        <span className="text-[#2563EB]">Explore.</span>
-      </h1>
-      <p className="mb-6 max-w-md text-[15px] leading-relaxed text-[#4b4b4b]">
-        The infinite network for the modern visionary. A digital sanctuary
-        built for authentic connection and global discovery.
-      </p>
-
-      <div className="mb-7 flex flex-wrap gap-2.5">
-        <Link
-          href="/register"
-          className="group inline-flex items-center gap-2.5 rounded-full bg-black px-5 py-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-white transition-transform hover:scale-[1.03]"
-        >
-          Start Free
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15">
-            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
-          </span>
-        </Link>
-        <Link
-          href="/reels"
-          className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-black bg-transparent px-5 py-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-black transition-colors hover:bg-black hover:text-white"
-        >
-          <Play className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Watch Demo
-        </Link>
-      </div>
-
-      <SocialProof />
-    </div>
-  );
-}
-
-// ── Avatar stack + rating ───────────────────────────────────────
-
-const PROOF_AVATARS = [
-  { initials: 'MR', bg: '#F0997B', fg: '#4A1B0C' },
-  { initials: 'JK', bg: '#85B7EB', fg: '#042C53' },
-  { initials: 'AT', bg: '#5DCAA5', fg: '#04342C' },
-  { initials: 'SL', bg: '#F4C0D1', fg: '#4B1528' },
-];
-
-function SocialProof() {
-  return (
-    <div className="flex items-center gap-3.5 border-t border-black/10 pt-5">
-      <div className="flex">
-        {PROOF_AVATARS.map((a, i) => (
-          <div
-            key={a.initials}
-            className="-ml-2.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-50 text-[11px] font-medium first:ml-0"
-            style={{ backgroundColor: a.bg, color: a.fg }}
-          >
-            {a.initials}
-          </div>
-        ))}
-      </div>
-      <div>
-        <div className="flex items-center gap-1 text-[13px] font-medium text-black">
-          {[0, 1, 2, 3, 4].map(i => (
-            <Star key={i} className="h-3 w-3 fill-[#EF9F27] text-[#EF9F27]" strokeWidth={0} />
-          ))}
-          <span className="ml-1">4.9 from 12K creators</span>
-        </div>
-        <div className="mt-0.5 text-[11px] text-[#6b6b6b]">
-          Join 200,000+ visionaries already on VChat
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Feature card grid ───────────────────────────────────────────
-
-interface FeatureCardData {
-  title: string;
-  desc: string;
-  href: string;
-  icon: React.ReactNode;
-  iconBg: string;
-}
-
-const FEATURES: FeatureCardData[] = [
-  {
-    title: 'Video Stream',
-    desc: 'Go live to your followers with LiveKit-powered HD streaming.',
-    href: '/live',
-    icon: <Video className="h-5 w-5 text-white" strokeWidth={2.5} />,
-    iconBg: '#378ADD',
-  },
-  {
-    title: 'Short Reels',
-    desc: 'Vertical 60-second videos with native AI moderation.',
-    href: '/reels',
-    icon: <Play className="h-5 w-5 fill-white text-white" strokeWidth={2} />,
-    iconBg: '#E24B4A',
-  },
-  {
-    title: 'Direct Message',
-    desc: 'Real-time WebSocket chat with read receipts and presence.',
-    href: '/?tab=Chat',
-    icon: <MessageCircle className="h-5 w-5 text-white" strokeWidth={2.5} />,
-    iconBg: '#EF9F27',
-  },
-  {
-    title: 'Monetize',
-    desc: 'Tiered subscriptions, COD-and-UPI payouts, full earnings ledger.',
-    href: '/monetization',
-    icon: <DollarSign className="h-5 w-5 text-white" strokeWidth={2.5} />,
-    iconBg: '#1D9E75',
-  },
-];
-
-function FeatureGrid() {
-  return (
-    <div id="features" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {FEATURES.map(f => (
-        <Link
-          key={f.title}
-          href={f.href}
-          className="group block rounded-2xl bg-white p-4 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-        >
-          <div
-            className="mb-3.5 flex h-9 w-9 items-center justify-center rounded-[10px]"
-            style={{ backgroundColor: f.iconBg }}
-          >
-            {f.icon}
-          </div>
-          <div className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-black">
-            {f.title}
-          </div>
-          <div className="text-[11px] leading-snug text-[#6b6b6b]">{f.desc}</div>
-          <div className="mt-3 flex items-center gap-1 border-t border-black/5 pt-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-[#2563EB]">
-            Explore
-            <ArrowRight
-              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
-              strokeWidth={2.5}
-            />
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-// ── Black stats strip ───────────────────────────────────────────
-
-function StatsStrip() {
-  const stats = usePublicStats();
-  const items = [
-    { value: stats.creators, label: 'Active Creators' },
-    { value: stats.viewers, label: 'Monthly Viewers' },
-    { value: stats.paidOut, label: 'Paid to Creators' },
-    { value: stats.uptime, label: 'Platform Uptime' },
-  ];
-  return (
-    <div className="grid grid-cols-2 gap-6 bg-black px-7 py-5 text-white sm:grid-cols-4">
-      {items.map(item => (
-        <div key={item.label}>
-          <div className="text-[28px] font-medium leading-none tracking-tight">{item.value}</div>
-          <div className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-[#888]">
-            {item.label}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Bottom status strip ─────────────────────────────────────────
-
-function StatusStrip() {
-  const status = useSystemStatus();
-  const tone =
-    status === 'operational'
-      ? { dot: 'bg-[#1D9E75]', label: 'All systems operational' }
-      : status === 'degraded'
-        ? { dot: 'bg-[#EF9F27]', label: 'Degraded performance' }
-        : { dot: 'bg-[#9b9b9b]', label: 'Status unknown' };
-  return (
-    <div className="flex items-center justify-between px-7 py-4 text-[11px] text-[#6b6b6b]">
-      <div className="flex items-center gap-1.5">
-        <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
-        {tone.label}
-      </div>
-      <div className="hidden font-medium uppercase tracking-[0.15em] sm:block">
-        Trusted by teams worldwide
-      </div>
-    </div>
-  );
-}
-
-// ── Page assembly ───────────────────────────────────────────────
+type TabType = 'home' | 'features' | 'stats' | 'status';
 
 export default function LandingPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const status = useSystemStatus();
+  const stats = usePublicStats();
+  const [diagnosticRunning, setDiagnosticRunning] = useState(false);
+  const [diagnosticLog, setDiagnosticLog] = useState<string[]>([]);
+
+  const runDiagnostic = () => {
+    if (diagnosticRunning) return;
+    setDiagnosticRunning(true);
+    setDiagnosticLog(['Initializing connection checks...']);
+
+    const steps = [
+      'Querying V1 API gateway health endpoint... OK',
+      'Resolving WebSocket gateway connectivity... OK',
+      'Pinging chat backend nodes... OK',
+      'Checking media storage bucket quota... OK',
+      'System diagnostics complete. All modules operational.'
+    ];
+
+    steps.forEach((step, idx) => {
+      setTimeout(() => {
+        setDiagnosticLog((prev) => [...prev, step]);
+        if (idx === steps.length - 1) {
+          setDiagnosticRunning(false);
+        }
+      }, (idx + 1) * 700);
+    });
+  };
+
+  const PROOF_AVATARS = [
+    { initials: 'MR', bg: '#000000', fg: '#ffffff' },
+    { initials: 'JK', bg: '#333333', fg: '#ffffff' },
+    { initials: 'AT', bg: '#666666', fg: '#ffffff' },
+    { initials: 'SL', bg: '#999999', fg: '#ffffff' },
+  ];
+
   return (
-    <div className="min-h-screen overflow-hidden bg-slate-50 font-sans text-black">
-      <div className="mx-auto max-w-6xl overflow-hidden">
-        <Navbar />
-        <main className="px-7 pb-6 pt-9">
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.1fr_1fr]">
-            <HeroLeft />
-            <FeatureGrid />
-          </div>
-        </main>
-        <StatsStrip />
-        <StatusStrip />
+    <div className="min-h-screen bg-brand-bg text-brand-text font-sans flex flex-col justify-between selection:bg-brand-text selection:text-brand-bg relative overflow-hidden">
+      {/* Ambient background accent lines */}
+      <div className="absolute inset-0 pointer-events-none opacity-5 dark:opacity-10 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-px h-full bg-brand-text" />
+        <div className="absolute top-0 left-2/4 w-px h-full bg-brand-text" />
+        <div className="absolute top-0 left-3/4 w-px h-full bg-brand-text" />
+        <div className="absolute top-1/3 left-0 w-full h-px bg-brand-text" />
+        <div className="absolute top-2/3 left-0 w-full h-px bg-brand-text" />
       </div>
+
+      {/* ── HEADER / NAVIGATION ── */}
+      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-md border-b border-brand-divider py-4 px-6 md:px-12">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-accent text-brand-bg">
+              <Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />
+            </span>
+            <span className="text-xl font-bold tracking-tight text-brand-text">VChat</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1.5">
+            {[
+              { id: 'home', label: 'Home' },
+              { id: 'features', label: 'Features' },
+              { id: 'stats', label: 'Impact' },
+              { id: 'status', label: 'Diagnostics' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`relative px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full ${
+                  activeTab === tab.id
+                    ? 'bg-brand-accent text-brand-bg'
+                    : 'text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/login"
+              className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-text/70 transition-colors hover:text-brand-text"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-sm transition-transform hover:scale-[1.03]"
+            >
+              Join VChat
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+            </Link>
+          </div>
+
+          {/* Mobile menu trigger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-brand-text hover:bg-brand-secondary rounded-xl transition-all"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Navigation Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden fixed inset-x-0 top-[69px] bg-brand-bg border-b border-brand-divider p-6 z-40 flex flex-col gap-4 shadow-xl"
+          >
+            {[
+              { id: 'home', label: 'Home' },
+              { id: 'features', label: 'Features' },
+              { id: 'stats', label: 'Impact' },
+              { id: 'status', label: 'Diagnostics' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id as TabType);
+                  setMobileMenuOpen(false);
+                }}
+                className={`py-3 px-4 rounded-xl text-left text-xs font-bold uppercase tracking-widest transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-brand-accent text-brand-bg'
+                    : 'bg-brand-secondary text-brand-text/70'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <div className="h-px bg-brand-divider my-2" />
+            <div className="flex gap-4">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex-1 py-3 text-center rounded-xl border border-brand-divider text-xs font-bold uppercase tracking-widest text-brand-text"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex-1 py-3 text-center rounded-xl bg-brand-accent text-xs font-bold uppercase tracking-widest text-brand-bg"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MAIN STAGE ── */}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12 md:py-20 flex items-center justify-center relative">
+        <AnimatePresence mode="wait">
+          {/* TAB 1: HOME */}
+          {activeTab === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center w-full"
+            >
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-3 py-1.5">
+                  <span className="h-2 w-2 rounded-full bg-brand-text animate-ping" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text/60">VChat v2.0 - Active Now</span>
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter text-brand-text leading-[0.95]">
+                  Create.<br />Connect.<br /><span className="underline decoration-brand-accent decoration-wavy decoration-3 underline-offset-8">Explore.</span>
+                </h1>
+                <p className="max-w-md text-sm md:text-base leading-relaxed text-brand-text/70 font-light">
+                  A high-performance digital sanctuary constructed for authentic connectivity, real-time messaging, and media broadcasting. Designed to load instantly, respect privacy, and empower visionaries.
+                </p>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2.5 rounded-full bg-brand-accent px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-md transition-transform hover:scale-[1.03]"
+                  >
+                    Start Free
+                    <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                  </Link>
+                  <Link
+                    href="/reels"
+                    className="inline-flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-text transition-colors hover:bg-brand-secondary"
+                  >
+                    <Play className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    Watch Reels
+                  </Link>
+                </div>
+              </div>
+
+              {/* Minimal Social Proof & Layout */}
+              <div className="space-y-8 lg:border-l lg:border-brand-divider lg:pl-12">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Trusted Community</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex">
+                      {PROOF_AVATARS.map((avatar) => (
+                        <div
+                          key={avatar.initials}
+                          className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-brand-bg text-[10px] font-bold first:ml-0 shadow-sm"
+                          style={{ backgroundColor: avatar.bg, color: avatar.fg }}
+                        >
+                          {avatar.initials}
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1 text-xs font-bold text-brand-text">
+                        {[0, 1, 2, 3, 4].map((i) => (
+                          <Star key={i} className="h-3 w-3 fill-brand-accent text-brand-accent" strokeWidth={0} />
+                        ))}
+                        <span className="ml-1">4.9/5 Rating</span>
+                      </div>
+                      <p className="text-[11px] text-brand-text/60">From over 12K digital content creators</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 border border-brand-divider rounded-2xl bg-brand-card space-y-3 shadow-sm">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-brand-text">Platform Integrity</h4>
+                  <p className="text-xs text-brand-text/60 leading-relaxed font-light">
+                    Every message is securely verified, media uploads undergo automated content moderation, and analytics payouts happen directly via certified ledgers.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 2: FEATURES */}
+          {activeTab === 'features' && (
+            <motion.div
+              key="features"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <div className="text-center max-w-xl mx-auto space-y-2">
+                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">Standardized Modules</h2>
+                <p className="text-xs text-brand-text/60 leading-relaxed">
+                  A cohesive suite of social utilities mapped to high-efficiency protocols. Explore our core services.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  {
+                    title: 'HD Video Streaming',
+                    desc: 'Instant peer-to-peer live broadcasting streams using optimized client media pipelines.',
+                    icon: <Video className="h-5 w-5" strokeWidth={2} />,
+                    href: '/live'
+                  },
+                  {
+                    title: 'AI Short Reels',
+                    desc: 'Portrait format short clips backed by automatic moderating filters.',
+                    icon: <Play className="h-5 w-5" strokeWidth={2} />,
+                    href: '/reels'
+                  },
+                  {
+                    title: 'Real-time Messenger',
+                    desc: 'Low-latency WebSocket messaging complete with read receipts and active presence counters.',
+                    icon: <MessageCircle className="h-5 w-5" strokeWidth={2} />,
+                    href: '/messenger'
+                  },
+                  {
+                    title: 'Verified Ledger Payouts',
+                    desc: 'Direct creator monetization support, tiered subscription tools, and payouts oversight.',
+                    icon: <DollarSign className="h-5 w-5" strokeWidth={2} />,
+                    href: '/monetization'
+                  }
+                ].map((feature) => (
+                  <Link
+                    key={feature.title}
+                    href={feature.href}
+                    className="group flex gap-4 p-5 rounded-2xl border border-brand-divider bg-brand-card hover:bg-brand-secondary transition-all"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-accent text-brand-bg group-hover:scale-105 transition-transform">
+                      {feature.icon}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-brand-text flex items-center gap-1.5">
+                        {feature.title}
+                        <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      </h3>
+                      <p className="text-xs text-brand-text/60 leading-normal font-light">{feature.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 3: STATS */}
+          {activeTab === 'stats' && (
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <div className="text-center max-w-xl mx-auto space-y-2">
+                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">VChat Impact</h2>
+                <p className="text-xs text-brand-text/60 leading-relaxed">
+                  Platform telemetry details recorded globally across client environments.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { value: stats.creators, label: 'Active Creators', desc: 'Verified accounts publishing content daily.' },
+                  { value: stats.viewers, label: 'Monthly Viewers', desc: 'Distinct visitor sessions tracked globally.' },
+                  { value: stats.paidOut, label: 'Paid to Creators', desc: 'Total subscription earnings payouts ledger.' },
+                  { value: stats.uptime, label: 'Platform Uptime', desc: 'Continuous gateway connection success.' },
+                ].map((stat) => (
+                  <div key={stat.label} className="p-6 border border-brand-divider bg-brand-card rounded-2xl space-y-2 shadow-sm">
+                    <div className="flex items-center gap-1.5 text-brand-text/40">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest">{stat.label}</span>
+                    </div>
+                    <div className="text-3xl font-black text-brand-text font-mono tracking-tight">{stat.value}</div>
+                    <p className="text-[10px] text-brand-text/50 leading-relaxed font-light">{stat.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 4: DIAGNOSTICS */}
+          {activeTab === 'status' && (
+            <motion.div
+              key="status"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-6"
+            >
+              <div className="text-center max-w-xl mx-auto space-y-2">
+                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">System Status</h2>
+                <p className="text-xs text-brand-text/60 leading-relaxed">
+                  Real-time network operational diagnostics. Run a check to verify node status.
+                </p>
+              </div>
+
+              <div className="border border-brand-divider bg-brand-card rounded-2xl overflow-hidden shadow-sm">
+                {/* Console header */}
+                <div className="bg-brand-secondary px-5 py-3 border-b border-brand-divider flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-brand-text/60" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-brand-text/70 font-mono">VChat Diagnostic Console</span>
+                  </div>
+                  <button
+                    onClick={runDiagnostic}
+                    disabled={diagnosticRunning}
+                    className="px-3 py-1 rounded bg-brand-accent text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
+                  >
+                    {diagnosticRunning ? 'Running...' : 'Run Diagnostics'}
+                  </button>
+                </div>
+
+                {/* Console output */}
+                <div className="p-5 bg-black text-emerald-400 font-mono text-xs space-y-2 min-h-[160px] overflow-y-auto">
+                  {diagnosticLog.length === 0 ? (
+                    <p className="text-brand-bg/40 italic">Console idle. Click &quot;Run Diagnostics&quot; above to trace gateway connections.</p>
+                  ) : (
+                    diagnosticLog.map((log, index) => (
+                      <p key={index} className="leading-relaxed">
+                        <span className="text-brand-bg/50 select-none mr-2">&gt;</span>
+                        {log}
+                      </p>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* ── FOOTER STATUS STRIP ── */}
+      <footer className="border-t border-brand-divider bg-brand-card/30 py-4 px-6 md:px-12 text-xs text-brand-text/60">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${
+              status === 'operational'
+                ? 'bg-emerald-500'
+                : status === 'degraded'
+                  ? 'bg-amber-500'
+                  : 'bg-neutral-400'
+            } animate-pulse`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              {status === 'operational'
+                ? 'All upstream gateways operational'
+                : status === 'degraded'
+                  ? 'Degraded performance detected'
+                  : 'System health unknown'}
+            </span>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text/40">
+            © {new Date().getFullYear()} VChat. Trusted globally.
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

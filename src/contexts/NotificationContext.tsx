@@ -145,9 +145,13 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
 
     /* ---- Offline recovery on mount ---- */
     useEffect(() => {
+        // No user = nothing to recover
+        if (!currentUserId) return
+
         const recoverOffline = async () => {
             try {
-                const convResult = await fetchConversations(50)
+                // background=true: a stale/expired token must NOT force-logout here
+                const convResult = await fetchConversations(50, undefined, true)
                 const conversations = convResult.data ?? []
 
                 for (const conv of conversations) {
@@ -157,7 +161,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
                     const lastSeen = stateRef.current.lastSeenTimestamps[convId]
 
                     // Fetch latest message
-                    const msgResult = await fetchMessages(convId, 1)
+                    const msgResult = await fetchMessages(convId, 1, undefined, true)
                     const msgs: Message[] = msgResult.data ?? []
                     if (msgs.length === 0) continue
 
@@ -169,7 +173,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
                     // If we've never seen this convo or there are newer messages
                     if (!lastSeen || new Date(latestMsg.created_at) > new Date(lastSeen)) {
                         // Fetch up to 30 messages and count unread
-                        const batchResult = await fetchMessages(convId, 30)
+                        const batchResult = await fetchMessages(convId, 30, undefined, true)
                         const batch: Message[] = batchResult.data ?? []
                         let unreadCount = 0
                         for (const m of batch) {
@@ -195,7 +199,11 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
                     }
                 }
             } catch (err) {
-                console.error("Offline recovery failed:", err)
+                // Silently ignore — expired token or network error during recovery
+                // should never kick the user out of the app.
+                if (process.env.NODE_ENV === 'development') {
+                    console.warn("Offline recovery skipped:", (err as Error).message)
+                }
             }
         }
 

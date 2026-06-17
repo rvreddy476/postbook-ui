@@ -21,7 +21,7 @@ const STEP_ICONS: Record<StepId, typeof FileText> = {
 
 export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepClick }: HorizontalStepsProps) {
   return (
-    <div className="flex items-center gap-1 border-b border-[#E8E6E1] bg-brand-card px-6 py-0">
+    <div className="flex items-center gap-1 border-b border-brand-text/10 bg-brand-card px-6 py-0">
       {steps.map((stepId, idx) => {
         const meta = STEP_META[stepId];
         const Icon = STEP_ICONS[stepId];
@@ -35,10 +35,10 @@ export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepCl
             onClick={() => onStepClick(stepId)}
             className={`relative flex items-center gap-2 px-4 py-3 text-[13px] font-medium transition-colors ${
               isActive
-                ? "text-[#7C5CFC]"
+                ? "text-brand-text"
                 : isDone
                 ? "text-[#2BB5A0]"
-                : "text-[#9E9E9E] hover:text-[#6B6B6B]"
+                : "text-brand-text/50 hover:text-brand-text/60"
             }`}
           >
             {/* Indicator */}
@@ -47,23 +47,23 @@ export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepCl
                 <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
               </div>
             ) : (
-              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#7C5CFC]" : "text-[#BFBFBF]"}`} />
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-brand-text" : "text-brand-text/30"}`} />
             )}
 
             <span>{meta.label}</span>
 
             {/* Active underline */}
             {isActive && (
-              <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#7C5CFC]" />
+              <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-brand-text" />
             )}
           </button>
         );
       })}
 
       {/* Completion indicator on right */}
-      <div className="ml-auto flex items-center gap-2 text-[11px] text-[#9E9E9E]">
+      <div className="ml-auto flex items-center gap-2 text-[11px] text-brand-text/50">
         <span>{currentStepIndex}/{steps.length}</span>
-        <div className="h-1 w-16 rounded-full bg-[#E8E6E1] overflow-hidden">
+        <div className="h-1 w-16 rounded-full bg-brand-text/10 overflow-hidden">
           <div
             className="h-full rounded-full bg-[#2BB5A0] transition-all duration-300"
             style={{ width: `${(currentStepIndex / steps.length) * 100}%` }}

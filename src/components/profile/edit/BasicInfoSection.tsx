@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
+import { DobPicker } from "@/components/ui/dob-picker"
 import { SocialLinksSection } from "./SocialLinksSection"
 import { useAuthUser } from "@/store/auth"
 
@@ -99,8 +100,12 @@ export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionPr
                         </select>
                     </Field>
 
-                    <Field label="Birthday" description="Your date of birth (dd-mm-yyyy)">
-                        <Input type="date" value={form.dob} onChange={handle("dob")} className={inputBase} />
+                    <Field label="Birthday" description="Select your date of birth">
+                        <DobPicker
+                            value={form.dob}
+                            onChange={(val) => onChange("dob", val)}
+                            selectClassName={`h-12 ${selectBase}`}
+                        />
                     </Field>
 
                     <Field label="Profession" description="What you do for work">
@@ -152,52 +157,11 @@ export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionPr
 
             {variant === "visual" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Field label="Account Type" description="How you use the app">
-                        <select value={form.category} onChange={handle("category")} className={selectBase}>
-                            <option value="personal">Personal</option>
-                            <option value="creator">Creator</option>
-                            <option value="business">Business</option>
-                        </select>
-                    </Field>
-
                     <Field label="Theme Mode" description="Switch between Light and Dark mode">
                         <select value={localTheme} onChange={handleThemeChange} className={selectBase}>
                             <option value="light">Light Mode</option>
                             <option value="dark">Dark Mode</option>
                         </select>
-                    </Field>
-
-                    <Field label="Theme Color" description="Your profile accent">
-                        <div className="flex items-center gap-4">
-                            <div
-                                className="w-12 h-12 rounded-2xl border-4 border-brand-divider shadow-xl flex-shrink-0"
-                                style={{ backgroundColor: form.profile_theme_color || "#1A73E8" }}
-                            />
-                            <Input
-                                value={form.profile_theme_color}
-                                onChange={handle("profile_theme_color")}
-                                placeholder="#1A73E8"
-                                maxLength={7}
-                                className={inputBase}
-                            />
-                        </div>
-                    </Field>
-
-                    <Field label="Button Text" description="Action button on profile">
-                        <select value={form.cta_label} onChange={handle("cta_label")} className={selectBase}>
-                            <option value="">None</option>
-                            <option value="Book">Book</option>
-                            <option value="Shop">Shop</option>
-                            <option value="Hire Me">Hire Me</option>
-                            <option value="Contact">Contact</option>
-                            <option value="Donate">Donate</option>
-                            <option value="Subscribe">Subscribe</option>
-                            <option value="Visit">Visit</option>
-                        </select>
-                    </Field>
-
-                    <Field label="Button Link" description="Where the button goes">
-                        <Input value={form.cta_url} onChange={handle("cta_url")} className={inputBase} placeholder="https://..." />
                     </Field>
                 </div>
             )}

@@ -104,7 +104,7 @@ export function CommentList({
             >
               <article
                 className={`rounded-2xl px-3 py-2 transition ${
-                  highlight ? "bg-blue-50 shadow-[0_0_24px_rgba(37,99,235,0.2)]" : "border border-brand-divider bg-brand-secondary"
+                  highlight ? "bg-brand-card shadow-[0_0_24px_rgba(0,0,0,0.12)]" : "border border-brand-divider bg-brand-secondary"
                 }`}
               >
                 <div className="flex items-center gap-2">

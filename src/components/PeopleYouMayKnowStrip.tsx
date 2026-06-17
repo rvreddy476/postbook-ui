@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Users, X } from 'lucide-react';
+import { Users, X } from 'lucide-react';
 
 import { useAuthUser } from '@/store/auth';
 import {
   useFriendSuggestions,
-  useSendFriendRequest,
   useHideSuggestion,
   type SuggestionUser,
 } from '@/hooks/useConnections';
+import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
 
 const AVATAR_GRADIENTS = [
   'from-rose-400 to-orange-400',
@@ -40,22 +40,10 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   const router = useRouter();
   const authUser = useAuthUser();
   const { data: suggestions } = useFriendSuggestions(authUser?.id, 20);
-  const sendRequest = useSendFriendRequest();
   const hideSuggestion = useHideSuggestion();
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const visible = (suggestions ?? []).slice(offset, offset + 10);
   if (visible.length === 0) return null;
-
-  const handleAdd = async (user: SuggestionUser) => {
-    if (sentIds.has(user.user_id)) return;
-    try {
-      await sendRequest.mutateAsync(user.username || user.user_id);
-      setSentIds((prev) => new Set(prev).add(user.user_id));
-    } catch {
-      // surfaced by the mutation
-    }
-  };
 
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-sm">
@@ -74,7 +62,6 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
 
       <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
         {visible.map((user) => {
-          const isSent = sentIds.has(user.user_id);
           const name = user.display_name || user.username || 'Someone';
           return (
             <div
@@ -119,18 +106,15 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                     ? `${user.mutual_friend_count} mutual friend${user.mutual_friend_count === 1 ? '' : 's'}`
                     : `@${user.username ?? ''}`}
                 </p>
-                <button
-                  onClick={() => handleAdd(user)}
-                  disabled={isSent || sendRequest.isPending}
-                  className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all ${
-                    isSent
-                      ? 'bg-brand-text/8 text-brand-text/50'
-                      : 'bg-brand-text text-brand-bg hover:opacity-90'
-                  } disabled:opacity-60`}
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  {isSent ? 'Sent' : 'Add friend'}
-                </button>
+                <FriendRequestButton
+                  targetUserId={user.user_id}
+                  targetUsername={user.username}
+                  addLabel="Add friend"
+                  showIncomingActions={false}
+                  allowCancel={false}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-text px-2 py-2 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-60"
+                  sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
+                />
               </div>
             </div>
           );

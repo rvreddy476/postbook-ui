@@ -63,17 +63,17 @@ export default function TrendingHashtagStrip({
             )}
             <div className="flex flex-wrap gap-1.5">
                 {tags.map((tag) => {
-                    const name = tag.display_name || tag.normalized_name;
-                    const chip = `#${name.toLowerCase()}`;
+                    const rawName = (tag.display_name || tag.normalized_name || '').replace(/^#/, '');
+                    const chip = `#${rawName.toLowerCase()}`;
                     return (
                         <button
-                            key={tag.normalized_name || name}
+                            key={tag.normalized_name || rawName}
                             type="button"
                             onClick={() => onTagSelected(chip)}
                             className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-600 transition-colors hover:bg-violet-100"
                             title={`${formatPostCount(tag.post_count)} posts`}
                         >
-                            #{name}
+                            #{rawName}
                         </button>
                     );
                 })}

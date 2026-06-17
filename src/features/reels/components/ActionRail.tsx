@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bookmark, Flame, MessageCircle, MoreHorizontal, Share2 } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, MoreHorizontal, Share2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface ActionRailProps {
@@ -26,6 +26,7 @@ function formatCount(value: number) {
 
 function RailButton({
   active,
+  loved,
   label,
   count,
   icon,
@@ -33,12 +34,18 @@ function RailButton({
   badge,
 }: {
   active?: boolean;
+  loved?: boolean;
   label: string;
   count?: number;
   icon: ReactNode;
   onClick: () => void;
   badge?: number;
 }) {
+  const stateClass = loved
+    ? "bg-rose-500/15 text-rose-500"
+    : active
+      ? "bg-brand-text text-brand-bg shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
+      : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/70";
   return (
     <div className="flex w-full flex-col items-center gap-1">
       <motion.button
@@ -47,12 +54,9 @@ function RailButton({
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         type="button"
         onClick={onClick}
-        className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 ${
-          active
-            ? "bg-slate-900 text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-            : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
-        }`}
-        aria-label={label}
+        aria-pressed={loved}
+        className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 ${stateClass}`}
+        aria-label={loved ? `${label}d` : label}
       >
         {icon}
         {badge && badge > 0 ? (
@@ -75,10 +79,10 @@ export function ActionRail(props: ActionRailProps) {
     <aside className="flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <RailButton
-          active={props.boosted}
-          label="Boost"
+          label="Love"
+          loved={props.boosted}
           count={props.likeCount}
-          icon={<Flame className="h-[19px] w-[19px]" />}
+          icon={<Heart className={`h-[19px] w-[19px] ${props.boosted ? "fill-rose-500 text-rose-500" : ""}`} />}
           onClick={props.onBoost}
         />
         <RailButton

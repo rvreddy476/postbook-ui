@@ -1,43 +1,75 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MoreHorizontal, Flag, MessageSquareWarning, Ban } from "lucide-react";
+import {
+  MoreHorizontal,
+  AlignLeft,
+  ListPlus,
+  Captions,
+  Settings,
+  CircleSlash,
+  CircleX,
+  Flag,
+  MessageSquareWarning,
+} from "lucide-react";
+import type { ReactNode } from "react";
 
 interface MoreMenuProps {
   onReport: () => void;
   onFeedback: () => void;
   onDontRecommend: () => void;
+  onDescription?: () => void;
+  onSaveToPlaylist?: () => void;
+  onCaptions?: () => void;
+  onQuality?: () => void;
+  onNotInterested?: () => void;
 }
 
-export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProps) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+interface MenuItem {
+  icon: ReactNode;
+  label: string;
+  onClick?: () => void;
+  danger?: boolean;
+}
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+export function MoreMenu({
+  onReport,
+  onFeedback,
+  onDontRecommend,
+  onDescription,
+  onSaveToPlaylist,
+  onCaptions,
+  onQuality,
+  onNotInterested,
+}: MoreMenuProps) {
+  const [open, setOpen] = useState(false);
+
+  const items: MenuItem[] = [
+    { icon: <AlignLeft className="h-[18px] w-[18px]" />, label: "Description", onClick: onDescription },
+    { icon: <ListPlus className="h-[18px] w-[18px]" />, label: "Save to playlist", onClick: onSaveToPlaylist },
+    { icon: <Captions className="h-[18px] w-[18px]" />, label: "Captions", onClick: onCaptions },
+    { icon: <Settings className="h-[18px] w-[18px]" />, label: "Quality", onClick: onQuality },
+    { icon: <CircleSlash className="h-[18px] w-[18px]" />, label: "Not interested", onClick: onNotInterested },
+    { icon: <CircleX className="h-[18px] w-[18px]" />, label: "Don't recommend this channel", onClick: onDontRecommend },
+    { icon: <Flag className="h-[18px] w-[18px]" />, label: "Report", onClick: onReport },
+    { icon: <MessageSquareWarning className="h-[18px] w-[18px]" />, label: "Send feedback", onClick: onFeedback },
+  ];
+
+  const select = (item: MenuItem) => {
+    setOpen(false);
+    item.onClick?.();
+  };
 
   return (
-    <div className="relative" ref={menuRef}>
+    <>
       <motion.button
         whileTap={{ scale: 0.93 }}
         whileHover={{ scale: 1.04 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
-          open
-            ? "bg-slate-900 text-white"
-            : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
-        }`}
+        onClick={() => setOpen(true)}
+        className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 bg-brand-secondary text-brand-highlight transition-all duration-150 hover:bg-brand-secondary/70"
         aria-label="More"
       >
         <span className="flex h-7 w-7 items-center justify-center">
@@ -49,49 +81,51 @@ export function MoreMenu({ onReport, onFeedback, onDontRecommend }: MoreMenuProp
       <AnimatePresence>
         {open ? (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 z-50 w-[220px] overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-lg"
+            className="fixed inset-0 z-[100] flex items-end justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
           >
-            <button
-              type="button"
-              onClick={() => {
-                onReport();
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-brand-text transition hover:bg-brand-secondary"
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+
+            {/* Bottom sheet */}
+            <motion.div
+              role="menu"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 360, damping: 34 }}
+              className="relative w-full max-w-[480px] rounded-t-2xl border-t border-brand-divider bg-brand-card pb-[max(env(safe-area-inset-bottom),16px)] pt-2 shadow-2xl"
             >
-              <Flag className="h-4 w-4 text-brand-text/60" />
-              Report
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onFeedback();
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-brand-text transition hover:bg-brand-secondary"
-            >
-              <MessageSquareWarning className="h-4 w-4 text-brand-text/60" />
-              Send feedback
-            </button>
-            <div className="mx-3 my-1 h-px bg-brand-secondary" />
-            <button
-              type="button"
-              onClick={() => {
-                onDontRecommend();
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-[13px] text-red-600 transition hover:bg-red-50"
-            >
-              <Ban className="h-4 w-4 text-red-400" />
-              Don&apos;t recommend this channel
-            </button>
+              {/* Grab handle */}
+              <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-brand-text/20" />
+
+              <div className="py-1">
+                {items.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => select(item)}
+                    className={`flex w-full items-center gap-5 px-5 py-3.5 text-left text-[15px] transition active:bg-brand-secondary hover:bg-brand-secondary ${
+                      item.danger ? "text-rose-500" : "text-brand-text"
+                    }`}
+                  >
+                    <span className={item.danger ? "text-rose-500" : "text-brand-text/80"}>{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

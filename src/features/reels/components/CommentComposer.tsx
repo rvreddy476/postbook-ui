@@ -46,14 +46,14 @@ export function CommentComposer({
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder={placeholder}
-        className="h-[42px] flex-1 rounded-full bg-[#F5F5F7] px-4 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none transition-all focus:bg-brand-secondary focus:shadow-[0_0_0_2px_rgba(0,0,0,0.04)]"
+        className="h-[42px] flex-1 rounded-full bg-brand-secondary px-4 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none transition-all focus:bg-brand-card focus:ring-1 focus:ring-brand-divider focus:shadow-[0_0_0_2px_rgba(0,0,0,0.04)]"
       />
       <button
         type="submit"
         disabled={!hasValue || pending}
         className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
           hasValue && !pending
-            ? "bg-slate-900 text-white shadow-sm hover:bg-brand-text"
+            ? "bg-brand-text text-brand-bg shadow-sm hover:opacity-90"
             : "bg-brand-secondary text-brand-text/30 cursor-not-allowed"
         }`}
         aria-label="Send comment"

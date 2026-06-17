@@ -23,17 +23,26 @@ export class HttpClientError extends Error {
 }
 
 const getErrorMessage = (payload: unknown, fallback: string) => {
-  if (!payload || typeof payload !== 'object') {
-    return fallback;
-  }
+  if (!payload || typeof payload !== 'object') return fallback;
 
   const source = payload as Record<string, unknown>;
-  const candidates = ['message', 'error', 'detail', 'description'];
-  for (const key of candidates) {
+
+  // Top-level string fields
+  for (const key of ['message', 'detail', 'description']) {
     const value = source[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value;
-    }
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+
+  // Nested envelope: { error: { message, code } }  — our standard API format
+  const nested = source['error'];
+  if (nested && typeof nested === 'object') {
+    const nestedMsg = (nested as Record<string, unknown>)['message'];
+    if (typeof nestedMsg === 'string' && nestedMsg.trim()) return nestedMsg.trim();
+  }
+
+  // error as top-level string fallback
+  if (typeof source['error'] === 'string' && (source['error'] as string).trim()) {
+    return (source['error'] as string).trim();
   }
 
   return fallback;

@@ -15,7 +15,7 @@ export function EngageStep({ form, patch }: EngageStepProps) {
       {/* ── Comments ── */}
       <div>
         <SectionHeader title="Comments" subtitle="Control who can comment and how comments are moderated" />
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-4">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 p-4">
           <ToggleRow
             label="Allow Comments"
             description="Let viewers leave comments on this content"
@@ -24,9 +24,9 @@ export function EngageStep({ form, patch }: EngageStepProps) {
           />
           {form.commentsEnabled && (
             <>
-              <div className="border-t border-[#F0EEE9] my-1" />
+              <div className="border-t border-brand-secondary my-1" />
               <div className="py-2">
-                <p className="text-[12px] font-semibold text-[#6B6B6B] mb-2">Who can comment</p>
+                <p className="text-[12px] font-semibold text-brand-text/60 mb-2">Who can comment</p>
                 <StudioSelect
                   value={form.commentAccess}
                   onChange={(v) => patch({ commentAccess: v as StudioFormState["commentAccess"] })}
@@ -37,9 +37,9 @@ export function EngageStep({ form, patch }: EngageStepProps) {
                   ]}
                 />
               </div>
-              <div className="border-t border-[#F0EEE9] my-1" />
+              <div className="border-t border-brand-secondary my-1" />
               <div className="py-2">
-                <p className="text-[12px] font-semibold text-[#6B6B6B] mb-2">Comment moderation</p>
+                <p className="text-[12px] font-semibold text-brand-text/60 mb-2">Comment moderation</p>
                 <StudioSelect
                   value={form.commentModeration}
                   onChange={(v) => patch({ commentModeration: v as StudioFormState["commentModeration"] })}
@@ -59,7 +59,7 @@ export function EngageStep({ form, patch }: EngageStepProps) {
       {/* ── Sparks (Likes) ── */}
       <div>
         <SectionHeader title="Sparks" subtitle="Allow viewers to react with Sparks" />
-        <div className="rounded-xl border border-[#E8E6E1] p-4">
+        <div className="rounded-xl border border-brand-text/10 p-4">
           <ToggleRow
             label="Show Spark Count"
             description="Display the number of sparks this content receives"
@@ -72,7 +72,7 @@ export function EngageStep({ form, patch }: EngageStepProps) {
       {/* ── Remixing ── */}
       <div>
         <SectionHeader title="Remixing" subtitle="Allow others to use your content in their own creations" />
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-2">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 p-2">
           <RadioOption
             name="remix"
             label="Allow remixing"

@@ -58,13 +58,33 @@ const getDeviceId = () => {
   }
 };
 
+const CODE_MESSAGES: Record<string, string> = {
+  USER_EXISTS:          'An account with this email or phone already exists. Try logging in instead.',
+  EMAIL_EXISTS:         'This email is already registered. Try logging in instead.',
+  PHONE_EXISTS:         'This phone number is already registered. Try logging in instead.',
+  AUTH_FAILED:          'Incorrect email/phone or password. Please try again.',
+  INVALID_CREDENTIALS:  'Incorrect email/phone or password. Please try again.',
+  ACCOUNT_LOCKED:       'Your account has been locked. Please contact support.',
+  ACCOUNT_DISABLED:     'Your account has been disabled. Please contact support.',
+  RATE_LIMITED:         'Too many attempts. Please wait a moment and try again.',
+  RATE_LIMIT_EXCEEDED:  'Too many attempts. Please wait a moment and try again.',
+  INVALID_TOKEN:        'Your session has expired. Please log in again.',
+  TOKEN_EXPIRED:        'Your session has expired. Please log in again.',
+  UNAUTHORIZED:         'You are not authorised to perform this action.',
+}
+
 const toErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof HttpClientError) {
+    // Log for debugging — never show request ID to users
     if (error.requestId) {
-      console.error(`[Auth] Request ${error.requestId} failed: ${error.message}`, error.details);
-      return `${error.message} (Request: ${error.requestId})`;
+      console.error(`[Auth] Request ${error.requestId} failed:`, error.message, error.details);
     }
-    return error.message;
+    // Map known backend error codes to friendly messages
+    const details = error.details as Record<string, unknown> | undefined;
+    const code = (details?.error as Record<string, unknown> | undefined)?.code as string | undefined;
+    if (code && CODE_MESSAGES[code]) return CODE_MESSAGES[code];
+    // Fall back to the message extracted from the response body
+    return error.message || fallback;
   }
 
   if (error instanceof Error && error.message) {

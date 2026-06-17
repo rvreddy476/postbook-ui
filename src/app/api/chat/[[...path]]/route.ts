@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const CHAT_BACKEND_URL = process.env.CHAT_BACKEND_URL || 'http://localhost:8092/v1/chat';
+const normalizeChatBackendUrl = (raw: string) => {
+    const trimmed = raw.replace(/\/+$/, '');
+    return trimmed.endsWith('/v1/chat') ? trimmed : `${trimmed}/v1/chat`;
+};
+
+const CHAT_BACKEND_URL = normalizeChatBackendUrl(process.env.CHAT_BACKEND_URL || 'http://localhost:8092/v1/chat');
 const AUTH_SERVICE_URL =
     process.env.AUTH_SERVICE_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -9,6 +14,7 @@ const AUTH_SERVICE_URL =
 const CHAT_SECRET =
     process.env.CHAT_PROXY_SIGNING_SECRET ??
     (process.env.NODE_ENV === 'development' ? 'dev_secret_change_me' : '');
+const CHAT_JWT_KID = process.env.JWT_KID || 'v1';
 
 type RouteParams = { params: Promise<{ path?: string[] }> };
 
@@ -106,7 +112,7 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
             user_id: uid,
             exp: Math.floor(Date.now() / 1000) + (24 * 3600)
         };
-        const headerEncoded = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+        const headerEncoded = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT", kid: CHAT_JWT_KID })).toString("base64url");
         const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
         const sig = crypto.createHmac("sha256", CHAT_SECRET).update(`${headerEncoded}.${payloadEncoded}`).digest("base64url");
         return `${headerEncoded}.${payloadEncoded}.${sig}`;

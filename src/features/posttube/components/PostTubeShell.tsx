@@ -39,8 +39,8 @@ function NavIcon({ href, icon, label, active }: NavIconProps) {
       href={href}
       className={`group relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-200 ${
         active
-          ? "bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] text-white shadow-[0_4px_12px_-2px_rgba(124,92,252,0.4)]"
-          : "text-[#8B8B9E] dark:text-[#6B6980] hover:bg-[#F0EEFF] dark:hover:bg-[#2A2740] hover:text-[#7C5CFC]"
+          ? "bg-gradient-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)]"
+          : "text-[#8B8B9E] dark:text-[#6B6980] hover:bg-brand-secondary dark:hover:bg-[#2A2740] hover:text-brand-text"
       }`}
       aria-label={label}
     >
@@ -72,7 +72,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
             href="/posttube"
             className="group flex items-center gap-2.5 transition-all hover:opacity-90"
           >
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] shadow-[0_2px_8px_-1px_rgba(124,92,252,0.35)]">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-text to-black shadow-[0_2px_8px_-1px_rgba(0,0,0,0.35)]">
               <Tv2 className="h-[18px] w-[18px] text-white" />
               <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#F59E0B] ring-2 ring-white dark:ring-[#13111C]" />
             </div>
@@ -86,7 +86,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
         {/* Center: Search */}
         <div className="flex flex-1 justify-center">
           <form onSubmit={onSubmit} className="w-[min(540px,48vw)]">
-            <div className={`relative rounded-2xl transition-all duration-300 ${searchFocused ? "shadow-[0_0_0_3px_rgba(124,92,252,0.12)]" : ""}`}>
+            <div className={`relative rounded-2xl transition-all duration-300 ${searchFocused ? "shadow-[0_0_0_3px_rgba(0,0,0,0.12)]" : ""}`}>
               <Search className="pointer-events-none absolute left-4 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-[#B0ADBE] dark:text-[#6B6980]" />
               <input
                 value={search}
@@ -94,7 +94,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 placeholder="Search videos, creators, topics..."
-                className="h-11 w-full rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-[#F8F7FC] dark:bg-[#1C1A28] pl-11 pr-4 text-[13px] text-[#0F0D15] dark:text-[#EEEDF5] placeholder:text-[#B0ADBE] dark:placeholder:text-[#6B6980] outline-none transition-all duration-300 focus:border-[#7C5CFC]/30 focus:bg-brand-card dark:focus:bg-[#221F32]"
+                className="h-11 w-full rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-[#F8F7FC] dark:bg-[#1C1A28] pl-11 pr-4 text-[13px] text-[#0F0D15] dark:text-[#EEEDF5] placeholder:text-[#B0ADBE] dark:placeholder:text-[#6B6980] outline-none transition-all duration-300 focus:border-brand-text/30 focus:bg-brand-card dark:focus:bg-[#221F32]"
               />
             </div>
           </form>
@@ -108,7 +108,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
 
           <button
             type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-2xl text-[#8B8B9E] dark:text-[#6B6980] transition-all hover:bg-[#F0EEFF] dark:hover:bg-[#2A2740] hover:text-[#7C5CFC]"
+            className="relative flex h-10 w-10 items-center justify-center rounded-2xl text-[#8B8B9E] dark:text-[#6B6980] transition-all hover:bg-brand-secondary dark:hover:bg-[#2A2740] hover:text-brand-text"
             aria-label="Notifications"
           >
             <Bell className="h-[18px] w-[18px]" />

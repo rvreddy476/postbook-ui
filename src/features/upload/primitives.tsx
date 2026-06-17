@@ -8,8 +8,8 @@ import { ChevronDown, Info, X } from "lucide-react";
 export function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-4">
-      <h3 className="text-[14px] font-bold text-[#1A1A1A]">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-[12px] text-[#9E9E9E]">{subtitle}</p>}
+      <h3 className="text-[14px] font-bold text-brand-text">{title}</h3>
+      {subtitle && <p className="mt-0.5 text-[12px] text-brand-text/50">{subtitle}</p>}
     </div>
   );
 }
@@ -29,12 +29,12 @@ export function FieldLabel({
 }) {
   return (
     <label className="mb-1.5 flex items-center justify-between">
-      <span className="text-[12px] font-semibold text-[#6B6B6B]">
+      <span className="text-[12px] font-semibold text-brand-text/60">
         {label}
-        {required && <span className="ml-0.5 text-[#E8527A]">*</span>}
+        {required && <span className="ml-0.5 text-rose-500">*</span>}
       </span>
-      {counter && <span className="text-[11px] text-[#BFBFBF]">{counter}</span>}
-      {hint && !counter && <span className="text-[11px] text-[#9E9E9E]">{hint}</span>}
+      {counter && <span className="text-[11px] text-brand-text/30">{counter}</span>}
+      {hint && !counter && <span className="text-[11px] text-brand-text/50">{hint}</span>}
     </label>
   );
 }
@@ -57,8 +57,8 @@ export function ToggleSwitch({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFC]/40 disabled:cursor-not-allowed disabled:opacity-40 ${
-        checked ? "bg-[#7C5CFC]" : "bg-[#E8E6E1]"
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/40 disabled:cursor-not-allowed disabled:opacity-40 ${
+        checked ? "bg-brand-text" : "bg-brand-text/10"
       }`}
     >
       <span
@@ -88,8 +88,8 @@ export function ToggleRow({
   return (
     <div className="flex items-center justify-between gap-4 py-2.5">
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-[#1A1A1A]">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-[#9E9E9E]">{description}</p>}
+        <p className="text-[13px] font-medium text-brand-text">{label}</p>
+        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
       </div>
       <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
     </div>
@@ -112,17 +112,17 @@ export function RadioOption({
   name: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[#FAFAF8]">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand-secondary">
       <input
         type="radio"
         name={name}
         checked={checked}
         onChange={onChange}
-        className="mt-0.5 h-4 w-4 accent-[#7C5CFC]"
+        className="mt-0.5 h-4 w-4 accent-brand-text"
       />
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-[#1A1A1A]">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-[#9E9E9E]">{description}</p>}
+        <p className="text-[13px] font-medium text-brand-text">{label}</p>
+        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
       </div>
     </label>
   );
@@ -142,16 +142,16 @@ export function CheckOption({
   onChange: (val: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[#FAFAF8]">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand-secondary">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded accent-[#7C5CFC]"
+        className="mt-0.5 h-4 w-4 rounded accent-brand-text"
       />
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-[#1A1A1A]">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-[#9E9E9E]">{description}</p>}
+        <p className="text-[13px] font-medium text-brand-text">{label}</p>
+        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
       </div>
     </label>
   );
@@ -167,9 +167,9 @@ export function InfoBanner({
   variant?: "info" | "warning" | "error";
 }) {
   const colors = {
-    info: "bg-[#EDE9FE] border-[#7C5CFC]/20 text-[#6B6B6B]",
-    warning: "bg-amber-50 border-amber-200 text-amber-800",
-    error: "bg-red-50 border-red-200 text-red-800",
+    info: "bg-brand-secondary border-brand-divider text-brand-text/60",
+    warning: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-400",
+    error: "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400",
   };
   return (
     <div className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[12px] ${colors[variant]}`}>
@@ -189,10 +189,10 @@ export function TagChip({
   onRemove?: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#F5F4F1] px-2.5 py-1 text-[11px] font-medium text-[#6B6B6B]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-text/60">
       {label}
       {onRemove && (
-        <button type="button" onClick={onRemove} className="hover:text-[#E8527A] transition-colors">
+        <button type="button" onClick={onRemove} className="hover:text-rose-500 transition-colors">
           <X className="h-3 w-3" />
         </button>
       )}
@@ -207,22 +207,22 @@ export function Collapsible({
   defaultOpen = false,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-xl border border-[#E8E6E1]">
+    <div className="rounded-xl border border-brand-text/10">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-[#1A1A1A] hover:bg-[#FAFAF8] rounded-xl transition-colors"
+        className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary rounded-xl transition-colors"
       >
         {title}
-        <ChevronDown className={`h-4 w-4 text-[#9E9E9E] transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-4 w-4 text-brand-text/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="border-t border-[#E8E6E1] px-4 py-3">{children}</div>}
+      {open && <div className="border-t border-brand-text/10 px-4 py-3">{children}</div>}
     </div>
   );
 }
@@ -248,7 +248,7 @@ export function StudioInput({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       placeholder={placeholder}
     />
   );
@@ -275,7 +275,7 @@ export function StudioTextarea({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       rows={rows}
-      className="w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 py-3 text-[13px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 resize-none transition-all"
+      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
       placeholder={placeholder}
     />
   );
@@ -299,14 +299,14 @@ export function StudioSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full appearance-none rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 pr-9 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+        className="h-11 w-full appearance-none rounded-xl border border-brand-text/10 bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9E9E9E]" />
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/50" />
     </div>
   );
 }

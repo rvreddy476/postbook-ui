@@ -525,7 +525,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       });
                                     }}
                                     disabled={acceptFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider orchid-gradient text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-sm active:scale-95 transition-all"
                                   >
                                     Accept
                                   </button>

@@ -171,15 +171,11 @@ function LoginForm() {
         transition={{ duration: 0.45, ease: 'easeOut' }}
         className="relative w-full max-w-md"
       >
-        {/* Brand mark above the card */}
-        <div className="mb-7 flex flex-col items-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-accent shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
-            <span className="text-xl font-black tracking-tighter text-brand-bg">VC</span>
+        {/* Brand mark above the card — logo only */}
+        <div className="mb-6 flex px-1">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent shadow-md">
+            <span className="text-base font-black tracking-tighter text-brand-bg">VC</span>
           </div>
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-brand-text">VChat</h1>
-          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text/40">
-            Connect · Share · Create
-          </p>
         </div>
 
         <div className="relative overflow-hidden rounded-[1.75rem] border border-brand-divider bg-brand-card/80 p-7 shadow-2xl backdrop-blur-xl sm:p-8">

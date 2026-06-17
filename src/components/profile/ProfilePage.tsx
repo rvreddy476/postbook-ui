@@ -21,10 +21,6 @@ import { BlockedProfileView } from "./states/BlockedProfileView"
 import { UnavailableProfileView } from "./states/UnavailableProfileView"
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
 import {
-    useSendFriendRequest,
-    useAcceptFriendRequest,
-    useRejectFriendRequest,
-    useCancelFriendRequest,
     useRemoveFriend,
 } from "@/hooks/useConnections"
 import { useContentCounts } from "@/hooks/useProfilePosts"
@@ -481,10 +477,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
     // Mutations
     const followMutation = useFollowUser()
     const unfollowMutation = useUnfollowUser()
-    const sendCircleRequest = useSendFriendRequest()
-    const acceptCircleRequest = useAcceptFriendRequest()
-    const declineCircleRequest = useRejectFriendRequest()
-    const cancelCircleRequest = useCancelFriendRequest()
     const removeFromCircle = useRemoveFriend()
     const blockMutation = useBlockUser()
     const unblockMutation = useUnblockUser()
@@ -498,40 +490,26 @@ export function ProfilePage({ username }: ProfilePageProps) {
         setIsMuted(stored === "true")
     }, [profile?.id])
 
+    // Helpers
+    const authErrMsg = (e: unknown) =>
+        (e as { response?: { status?: number } })?.response?.status === 401
+            ? "Authentication error — please try again or log in again if it persists"
+            : "Something went wrong. Please try again."
+
     // Handlers
     const handleFollow = useCallback(() => {
         if (!profile) return
-        followMutation.mutate(profile.username || profile.id)
-    }, [profile, followMutation])
+        followMutation.mutate(profile.username || profile.id, {
+            onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
+        })
+    }, [profile, followMutation, toast])
 
     const handleUnfollow = useCallback(() => {
         if (!profile) return
-        unfollowMutation.mutate(profile.username || profile.id)
-    }, [profile, unfollowMutation])
-
-    const handleSendCircleRequest = useCallback(() => {
-        if (!profile) return
-        sendCircleRequest.mutate(profile.username || profile.id)
-    }, [profile, sendCircleRequest])
-
-    // graph-service has no friendship id — accept/decline/cancel are keyed by
-    // the counterparty's user_id. For a profile you are viewing, that
-    // counterparty IS this profile (sender of an incoming request, or
-    // receiver of one you sent), so pass profile.id.
-    const handleAcceptCircleRequest = useCallback(() => {
-        if (!profile || !relationship?.circle_request_received) return
-        acceptCircleRequest.mutate(profile.id)
-    }, [profile, relationship, acceptCircleRequest])
-
-    const handleDeclineCircleRequest = useCallback(() => {
-        if (!profile || !relationship?.circle_request_received) return
-        declineCircleRequest.mutate(profile.id)
-    }, [profile, relationship, declineCircleRequest])
-
-    const handleCancelCircleRequest = useCallback(() => {
-        if (!profile || !relationship?.circle_request_sent) return
-        cancelCircleRequest.mutate(profile.id)
-    }, [profile, relationship, cancelCircleRequest])
+        unfollowMutation.mutate(profile.username || profile.id, {
+            onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
+        })
+    }, [profile, unfollowMutation, toast])
 
     const handleRemoveFromCircle = useCallback(() => setRemoveCircleDialogOpen(true), [])
 
@@ -632,10 +610,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 channel={primaryChannel}
                 onFollow={handleFollow}
                 onUnfollow={handleUnfollow}
-                onSendCircleRequest={handleSendCircleRequest}
-                onAcceptCircleRequest={handleAcceptCircleRequest}
-                onDeclineCircleRequest={handleDeclineCircleRequest}
-                onCancelCircleRequest={handleCancelCircleRequest}
                 onRemoveFromCircle={handleRemoveFromCircle}
                 onEditProfile={() => router.push("/settings/profile")}
                 onBlock={handleBlock}

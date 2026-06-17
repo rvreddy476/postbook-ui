@@ -13,6 +13,7 @@ import { useDataSaver } from "@/hooks/useDataSaver";
 import { ReelActionsPanel } from "@/features/reels/components/ReelActionsPanel";
 import { ReelCommentsPanel } from "@/features/reels/components/ReelCommentsPanel";
 import { ExpandedVideoOverlay } from "@/features/reels/components/ExpandedVideoOverlay";
+import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
 import {
   getCommentsAroundByCommentId,
@@ -23,6 +24,8 @@ import {
   trackView,
 } from "@/features/reels/data/reelsApi";
 import { useReelsFeed } from "@/features/reels/hooks/useReelsFeed";
+import { useGlobalToast } from "@/contexts/ToastContext";
+import { sendVideoPlayEnd } from "@/lib/videoTelemetry";
 import { useBatchProfiles } from "@/hooks/useProfile";
 import type { Reel } from "@/features/reels/types";
 
@@ -49,6 +52,7 @@ function clampIndex(index: number, length: number): number {
 export function ReelsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useGlobalToast();
 
   const reelIdFromQuery = searchParams.get("reelId");
   const focusCommentIdFromQuery = searchParams.get("focusCommentId");
@@ -67,6 +71,7 @@ export function ReelsPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [shareTarget, setShareTarget] = useState<{ url: string; title: string } | null>(null);
   const reportMutation = useSubmitReport();
 
   const [initialized, setInitialized] = useState(false);
@@ -269,21 +274,13 @@ export function ReelsPage() {
     });
   }, []);
 
-  const handleShareForReel = useCallback(async (reelId: string) => {
+  const handleShareForReel = useCallback((reelId: string) => {
     if (typeof window === "undefined") return;
     const shareUrl = `${window.location.origin}/reels?reelId=${reelId}`;
-
+    // Count the share intent, then open the in-app share sheet (works on
+    // desktop too, unlike the silent navigator.share/clipboard fallback).
     void sharePost(reelId, "external").catch(() => {});
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "VChat Reel", url: shareUrl });
-        return;
-      } catch {
-        return;
-      }
-    }
-    await navigator.clipboard.writeText(shareUrl);
+    setShareTarget({ url: shareUrl, title: "Check this out on VChat" });
   }, []);
 
   const handleSearchSubmit = useCallback(
@@ -386,6 +383,16 @@ export function ReelsPage() {
       duration_ms: pending.durationMs,
       completed: watchedMs >= pending.durationMs * 0.95,
     });
+    // Display/counted-view pipeline (analytics-service → IsDisplayView → Redis).
+    void sendVideoPlayEnd({
+      contentId: pending.reelId,
+      creatorId: pending.creatorId,
+      contentType: "flick",
+      contentDurationMs: pending.durationMs,
+      watchedMsTotal: watchedMs,
+      endReason: "swipe_next",
+      surface: "feed",
+    });
   }, []);
 
   useEffect(() => {
@@ -463,7 +470,7 @@ export function ReelsPage() {
         <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
 
         {/* Tight 3-section row: Info | Video | Actions — centered on page */}
-        <main className="flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 pr-[400px]">
+        <main className={`flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 transition-all duration-[220ms] ease-out ${isCommentsOpen ? "pr-[400px]" : "pr-0"}`}>
           <div className="flex h-full items-stretch gap-4">
             {/* Section 1: Channel + Reel Info */}
             <div className="flex w-[260px] shrink-0 min-h-0">
@@ -503,14 +510,24 @@ export function ReelsPage() {
                 likeCount={activeReel.like_count}
                 commentCount={activeReel.comment_count}
                 shareCount={activeReel.share_count}
+                viewCount={activeReel.view_count ?? 0}
                 commentsOpen={isCommentsOpen}
                 onBoost={() => toggleBoostForReel(activeReel)}
                 onComment={toggleComments}
                 onShare={() => handleShareForReel(activeReel.reel_id)}
                 onSave={() => toggleSaveForReel(activeReel)}
                 onReport={() => { setReportOpen(true); setReportSubmitted(false); setReportReason(""); }}
-                onFeedback={() => {}}
-                onDontRecommend={() => {}}
+                onFeedback={() => toast({ type: "info", title: "Thanks — your feedback helps us improve." })}
+                onDontRecommend={() => toast({ type: "success", title: "Got it — we'll recommend this channel less." })}
+                onDescription={() => toast({
+                  type: "info",
+                  title: "Description",
+                  description: activeReel.caption?.trim() || "No description for this video.",
+                })}
+                onSaveToPlaylist={() => { toggleSaveForReel(activeReel); toast({ type: "success", title: "Saved to your playlist." }); }}
+                onCaptions={() => toast({ type: "info", title: "Captions aren't available for this video yet." })}
+                onQuality={() => toast({ type: "info", title: "Quality is set to Auto." })}
+                onNotInterested={() => { toast({ type: "success", title: "Got it — we'll show you fewer like this." }); goToIndex(activeIndex + 1); }}
               />
 
               {/* Comments — opens to the right of the rail, absolutely positioned */}
@@ -591,6 +608,13 @@ export function ReelsPage() {
           </div>
         </div>
       )}
+
+      <ShareSheet
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        url={shareTarget?.url ?? ""}
+        title={shareTarget?.title}
+      />
     </div>
   );
 }

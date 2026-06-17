@@ -1,12 +1,12 @@
 export const tokens = {
   colors: {
-    asphalt: '#302f2c',
-    paper: '#efede3',
+    asphalt: '#000000',
+    paper: '#ffffff',
     white: '#ffffff',
-    postgram: '#FF3366',
-    posttube: '#4ECDC4',
-    messenger: '#7B68EE',
-    commerce: '#F59E0B',
+    postgram: '#000000',
+    posttube: '#000000',
+    messenger: '#000000',
+    commerce: '#000000',
   },
   space: { 1: '4px', 2: '8px', 3: '12px', 4: '16px', 5: '20px', 6: '24px', 8: '32px', 10: '40px', 12: '48px', 16: '64px' },
   radius: { sm: '8px', md: '12px', lg: '16px', xl: '20px', full: '9999px' },

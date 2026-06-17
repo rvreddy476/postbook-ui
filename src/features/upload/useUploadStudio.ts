@@ -246,18 +246,13 @@ export function useUploadStudio(contentType: ContentType) {
     },
   });
 
-  /* ── Auto-upload when a file is selected ─────────── */
-
+  /* ── Deferred upload ─────────────────────────────────
+   * The file is NOT uploaded on selection — we keep only a local reference and
+   * a blob preview (no API calls, no orphaned objects in storage). The actual
+   * upload + DB record + transcode all happen on Publish (and on explicit Save
+   * Draft). This ref tracks the no-longer-used auto-upload key.
+   */
   const uploadTriggeredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (form.videoFile && form.uploadPhase === "idle") {
-      const fileKey = form.videoFile.name + form.videoFile.size;
-      if (uploadTriggeredRef.current !== fileKey) {
-        uploadTriggeredRef.current = fileKey;
-        uploadMutation.mutate();
-      }
-    }
-  }, [form.videoFile, form.uploadPhase, uploadMutation]);
 
   /* ── Processing status polling ───────────────────── */
 
@@ -279,7 +274,7 @@ export function useUploadStudio(contentType: ContentType) {
           pollingRef.current = null;
           return;
         }
-        const hasFailedRendition = status.status === "failed" || status.renditions.some((rendition) => rendition.status === "failed");
+        const hasFailedRendition = status.status === "failed" || status.renditions?.some((rendition) => rendition.status === "failed");
         if (hasFailedRendition) {
           patch({
             processingReady: false,
@@ -318,7 +313,7 @@ export function useUploadStudio(contentType: ContentType) {
         return;
       }
 
-      const hasFailedRendition = status.status === "failed" || status.renditions.some((rendition) => rendition.status === "failed");
+      const hasFailedRendition = status.status === "failed" || status.renditions?.some((rendition) => rendition.status === "failed");
       if (hasFailedRendition) {
         patch({
           processingReady: false,
@@ -461,8 +456,9 @@ export function useUploadStudio(contentType: ContentType) {
 
   /** Save draft. Optional coverMediaIdOverride is used at publish time
    *  when the cover was just uploaded and form state hasn't caught up yet. */
-  const saveDraftWithCover = useCallback(async (coverMediaIdOverride?: string) => {
-    if (!form.draftId) return;
+  const saveDraftWithCover = useCallback(async (coverMediaIdOverride?: string, draftIdOverride?: string) => {
+    const draftId = draftIdOverride ?? form.draftId;
+    if (!draftId) return;
     // Merge: chip-entered hashtags survive even if the user hasn't typed them
     // in the caption. Earlier code overwrote form.hashtags with caption-only
     // extraction, silently wiping the chip input.
@@ -470,7 +466,7 @@ export function useUploadStudio(contentType: ContentType) {
     patch({ hashtags });
     const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
     try {
-      await updateDraft(form.draftId, {
+      await updateDraft(draftId, {
         title: form.title || undefined,
         caption: form.caption,
         hashtags,
@@ -506,38 +502,67 @@ export function useUploadStudio(contentType: ContentType) {
   }, [form, patch]);
 
   const saveDraftMutation = useMutation({
-    mutationFn: () => saveDraftWithCover(),
+    mutationFn: async () => {
+      if (!form.videoFile) return;
+      // Saving a draft is an explicit commit, so we upload the video now (if it
+      // hasn't been uploaded already) and create the draft record.
+      let mediaId = form.mediaId;
+      if (!mediaId) {
+        patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
+        const upload =
+          form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD ? uploadMediaResumable : uploadMedia;
+        mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
+        patch({ uploadPhase: "done", mediaId, processingStatus: "processing" });
+      }
+      let draftId = form.draftId;
+      if (!draftId) {
+        const draft = await createDraft({ media_id: mediaId, visibility: form.visibility });
+        draftId = draft.id;
+        patch({ draftId });
+      }
+      await saveDraftWithCover(undefined, draftId);
+    },
   });
 
   /* ── Publish ─────────────────────────────────────── */
 
   const publishMutation = useMutation({
     mutationFn: async () => {
-      if (!form.mediaId) throw new Error("No media uploaded");
-      if (form.processingStatus === "failed") {
-        throw new Error(form.processingError || "Video processing failed. Replace the file or retry processing.");
-      }
-      if (!form.processingReady || form.processingStatus !== "ready") {
-        throw new Error(form.processingError || "Video processing is not finished yet.");
-      }
-      if (form.subtitlesFile && form.subtitleUploadState !== "done") {
-        throw new Error(
-          form.subtitleUploadState === "error"
-            ? form.subtitleUploadError || "Subtitle upload failed."
-            : "Subtitle upload is still in progress.",
-        );
+      if (!form.videoFile && !form.mediaId) throw new Error("No video selected");
+
+      // 1. Upload the video NOW (deferred from selection). This is the only
+      //    point at which bytes hit storage — abandoned drafts cost nothing.
+      let mediaId = form.mediaId;
+      if (!mediaId) {
+        if (!form.videoFile) throw new Error("No video selected");
+        patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
+        const upload =
+          form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD ? uploadMediaResumable : uploadMedia;
+        mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
+        patch({ uploadPhase: "done", mediaId, processingStatus: "processing" });
       }
 
-      // Upload cover ONCE at publish time — no orphaned media
+      // 2. Upload the cover (frame or custom image), if chosen.
       let coverMediaId: string | undefined;
-
       if (form.coverSourceType === "custom_image" && form.customCoverFile) {
         coverMediaId = await uploadMedia(form.customCoverFile);
       } else if (form.coverSourceType === "video_frame" && form.coverPreviewUrl) {
         coverMediaId = await uploadCoverDataUrl(form.coverPreviewUrl);
       }
 
-      // Draft path: save cover_media_id directly, then publish
+      // 3. Upload subtitles, if provided and not already uploaded.
+      if (form.subtitlesFile && form.subtitleTracks.length === 0) {
+        const uploadKey = `${mediaId}:${form.subtitlesFile.name}:${form.subtitlesFile.size}:${form.language}`;
+        subtitleUploadKeyRef.current = uploadKey; // stop the auto-effect re-uploading
+        try {
+          await createSubtitleTrack(mediaId, { language: form.language, file: form.subtitlesFile });
+        } catch {
+          /* non-fatal — caption track can be added later */
+        }
+      }
+
+      // 4. Save to the database. Server-side transcoding runs asynchronously;
+      //    the post becomes visible to viewers once renditions are ready.
       if (form.draftId) {
         try {
           await saveDraftWithCover(coverMediaId);
@@ -549,12 +574,11 @@ export function useUploadStudio(contentType: ContentType) {
         } catch { /* fall through to direct create */ }
       }
 
-      // Direct create path (no draft)
       const hashtags = mergeHashtags(form.hashtags, form.caption);
       const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
       const reel = await createReel({
         text: form.caption,
-        mediaIds: [form.mediaId],
+        mediaIds: [mediaId],
         visibility: form.visibility,
         hashtags,
         cover_media_id: coverMediaId,
@@ -607,6 +631,11 @@ export function useUploadStudio(contentType: ContentType) {
         queryClient.invalidateQueries({ queryKey: ["my-uploads"] }),
         queryClient.invalidateQueries({ queryKey: ["posttube"] }),
       ]);
+    },
+    onError: () => {
+      // Reset the upload overlay so the user can retry; the error message is
+      // surfaced via publishMutation.error in the studio UI.
+      patch({ uploadPhase: "idle" });
     },
   });
 

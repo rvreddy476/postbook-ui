@@ -618,14 +618,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 rounded-full bg-[#F5F5F7] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none ring-1 ring-transparent focus:ring-brand-secondary focus:bg-brand-card transition"
+              className="flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
             />
             <button
               type="submit"
               disabled={!commentText.trim() || addComment.isPending}
               className={`ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
                 commentText.trim()
-                  ? 'bg-brand-text text-white shadow-sm hover:bg-brand-text/90 scale-100'
+                  ? 'bg-brand-text text-brand-bg shadow-sm hover:opacity-90 scale-100'
                   : 'bg-brand-secondary text-brand-text/30 scale-95'
               }`}
               aria-label="Post comment"

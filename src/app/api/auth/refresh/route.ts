@@ -15,12 +15,9 @@ export async function POST(req: NextRequest) {
         )
     }
 
-    const encodedRefreshToken = encodeURIComponent(refreshToken)
-
     // Forward the browser's User-Agent and client IP so auth-service's
     // fingerprint check (compares UA family + /24 subnet against the
-    // values stored at login) doesn't deny the refresh just because
-    // Node's default fetch UA != the browser UA that originally signed in.
+    // values stored at login) doesn't deny the refresh.
     const browserUA = req.headers.get("user-agent") ?? ""
     const forwardedFor = req.headers.get("x-forwarded-for")
         ?? req.headers.get("x-real-ip")
@@ -28,15 +25,19 @@ export async function POST(req: NextRequest) {
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "Cookie": `refresh_token=${encodedRefreshToken}`,
     }
     if (browserUA) headers["User-Agent"] = browserUA
     if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor
 
-    // Call auth service with refresh token as a cookie (that's what it expects)
+    // The auth-service Refresh handler reads the token from the JSON body
+    // (field "refresh_token") when no cookie is present — explicitly supported
+    // for mobile/non-browser clients. Sending it as a Cookie header was broken
+    // because encodeURIComponent() changed the token value (e.g. + → %2B) and
+    // Gin reads cookie values raw (no URL-decoding), causing a database mismatch.
     const upstream = await fetch(`${AUTH_SERVICE_URL}/v1/auth/refresh`, {
         method: "POST",
         headers,
+        body: JSON.stringify({ refresh_token: refreshToken }),
     })
 
     const data = await upstream.json().catch(() => null)

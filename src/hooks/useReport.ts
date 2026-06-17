@@ -22,11 +22,18 @@ interface SubmitReportParams {
 export function useSubmitReport() {
   return useMutation({
     mutationFn: async (params: SubmitReportParams) => {
+      // /v1/reports → trust-safety-service, which expects entity_type/entity_id/details
+      // (NOT target_type/description), and entity_type ∈ {user, post, comment}.
+      // Reels/videos are posts, so normalize to "post".
+      const entityType =
+        params.targetType === "reel" || params.targetType === "video"
+          ? "post"
+          : params.targetType;
       const res = await api.post("/v1/reports", {
-        target_type: params.targetType,
-        target_id: params.targetId,
+        entity_type: entityType,
+        entity_id: params.targetId,
         reason: params.reason,
-        description: params.description ?? "",
+        details: params.description ?? "",
       });
       return res.data;
     },

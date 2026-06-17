@@ -25,6 +25,7 @@ function fmtMs(ms: number) {
 export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors }: DetailsStepProps) {
   const coverFileRef = useRef<HTMLInputElement>(null);
   const isLongStudio = contentType === "long" || contentType === "podcast";
+  const isVertical = contentType === "reel" || contentType === "short";
   const totalDurationMs = Math.floor((form.videoDurationSec ?? 0) * 1000);
   const orientation = form.videoWidth && form.videoHeight
     ? form.videoWidth > form.videoHeight
@@ -72,14 +73,14 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           placeholder="Add a title that describes your content"
           maxLength={100}
           autoFocus
-          className={`h-12 w-full rounded-xl border px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none transition-all ${
+          className={`h-12 w-full rounded-xl border px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none transition-all ${
             titleError
-              ? "border-[#E8527A] bg-[#E8527A]/5 focus:border-[#E8527A] focus:ring-2 focus:ring-[#E8527A]/10"
-              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10"
+              ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10"
+              : "border-brand-divider bg-brand-secondary focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
           }`}
         />
         {titleError && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#E8527A]">
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-rose-500 font-semibold">
             <AlertCircle className="h-3 w-3" />
             Title is required
           </div>
@@ -98,14 +99,14 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           placeholder="Tell viewers about your content. Use #hashtags and @mentions."
           maxLength={2200}
           rows={5}
-          className={`w-full rounded-xl border px-4 py-3 text-[13px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none resize-none transition-all ${
+          className={`w-full rounded-xl border px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none resize-none transition-all ${
             captionOverflow
-              ? "border-[#E8527A] bg-[#E8527A]/5 focus:border-[#E8527A] focus:ring-2 focus:ring-[#E8527A]/10"
-              : "border-[#E8E6E1] bg-[#FAFAF8] focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10"
+              ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10"
+              : "border-brand-divider bg-brand-secondary focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
           }`}
         />
         {captionOverflow && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#E8527A]">
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-rose-500 font-semibold">
             <AlertCircle className="h-3 w-3" />
             Description exceeds 2200 character limit
           </div>
@@ -122,14 +123,14 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
               onChange={(e) => patch({ hashtagInput: e.target.value })}
               onKeyDown={handleHashtagKeyDown}
               placeholder="Type a hashtag and press Enter"
-              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[14px] text-[#1A1A1A] placeholder:text-[#BFBFBF] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
             />
           </div>
           <button
             type="button"
             onClick={addHashtag}
             disabled={form.hashtags.length >= 30}
-            className="shrink-0 rounded-xl bg-[#F5F4F1] px-4 text-[12px] font-semibold text-[#6B6B6B] hover:bg-[#E8E6E1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 rounded-xl bg-brand-secondary px-4 text-[12px] font-semibold text-brand-text/60 hover:bg-brand-text/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Add
           </button>
@@ -172,16 +173,25 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
       )}
 
       {form.videoPreviewUrl && contentType !== "podcast" && (
-        <Collapsible title="Cover Poster" defaultOpen>
-          <div className="space-y-4">
-            <div className="flex gap-2">
+        <Collapsible
+          title={
+            <div className="flex items-center gap-2">
+              <Film className="h-4 w-4 text-brand-text/50" />
+              <span>Cover Poster</span>
+            </div>
+          }
+          defaultOpen
+        >
+          <div className="space-y-5">
+            {/* Segment control tabs */}
+            <div className="flex rounded-xl bg-brand-secondary p-1 border border-brand-text/5">
               <button
                 type="button"
                 onClick={() => patch({ coverSourceType: "video_frame" })}
-                className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${
                   form.coverSourceType === "video_frame"
-                    ? "bg-[#7C5CFC] text-white shadow-sm"
-                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                    ? "bg-brand-card text-brand-text shadow-sm"
+                    : "text-brand-text/50 hover:text-brand-text"
                 }`}
               >
                 <Film className="h-3.5 w-3.5" />
@@ -190,10 +200,10 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
               <button
                 type="button"
                 onClick={() => patch({ coverSourceType: "custom_image" })}
-                className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-semibold transition-all ${
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${
                   form.coverSourceType === "custom_image"
-                    ? "bg-[#7C5CFC] text-white shadow-sm"
-                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                    ? "bg-brand-card text-brand-text shadow-sm"
+                    : "text-brand-text/50 hover:text-brand-text"
                 }`}
               >
                 <ImageIcon className="h-3.5 w-3.5" />
@@ -203,12 +213,12 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
 
             {/* Frame from Video */}
             {form.coverSourceType === "video_frame" && (
-              <div className="space-y-3">
-                <p className="text-[12px] text-[#9E9E9E]">Select a timestamp to use as the cover frame</p>
+              <div className="space-y-4">
+                <p className="text-[12px] text-brand-text/50">Select a timestamp to use as the cover frame</p>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2 bg-brand-secondary/35 rounded-xl p-3 border border-brand-text/5 w-fit">
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Min</label>
+                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Min</span>
                     <input
                       type="number"
                       min={0}
@@ -222,12 +232,12 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-2 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
-                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">:</span>
+                  <span className="mt-4 text-[14px] font-bold text-brand-text/30">:</span>
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Sec</label>
+                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Sec</span>
                     <input
                       type="number"
                       min={0}
@@ -241,12 +251,12 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-2 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
-                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">.</span>
+                  <span className="mt-4 text-[14px] font-bold text-brand-text/30">.</span>
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Ms</label>
+                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Ms</span>
                     <input
                       type="number"
                       min={0}
@@ -260,13 +270,13 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(base + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-16 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-2 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
                 </div>
 
                 {form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000 && (
-                  <p className="text-[11px] text-[#E8527A] flex items-center gap-1">
+                  <p className="text-[11px] text-rose-500 font-semibold flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     Timestamp exceeds video duration ({fmtMs(form.videoDurationSec * 1000)})
                   </p>
@@ -279,23 +289,25 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   step={100}
                   value={form.coverTimestampMs ?? 0}
                   onChange={(e) => patch({ coverTimestampMs: Number(e.target.value) })}
-                  className="w-full accent-[#7C5CFC]"
+                  className="w-full accent-brand-text cursor-pointer"
                 />
 
                 <button
                   type="button"
                   onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
                   disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] disabled:opacity-40 transition-colors shadow-sm"
+                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-sm"
                 >
                   {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                   Extract Preview
                 </button>
 
                 {form.coverPreviewUrl && (
-                  <div className="overflow-hidden rounded-xl border border-[#E8E6E1] shadow-sm" style={{ maxWidth: 260 }}>
-                    <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
-                    <p className="bg-[#FAFAF8] px-3 py-1.5 text-[10px] text-[#9E9E9E] text-center">
+                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-sm" style={{ maxWidth: isVertical ? 170 : 280 }}>
+                    <div className="overflow-hidden rounded-lg">
+                      <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
+                    </div>
+                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center uppercase tracking-wider">
                       Preview — uploaded at publish time
                     </p>
                   </div>
@@ -305,12 +317,14 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
 
             {/* Custom Image */}
             {form.coverSourceType === "custom_image" && (
-              <div className="space-y-3">
-                <p className="text-[12px] text-[#9E9E9E]">Recommended: 1280x720 (16:9), JPEG/PNG/WebP, max 10 MB</p>
+              <div className="space-y-4">
+                <p className="text-[12px] text-brand-text/50">
+                  {isVertical ? "Recommended: 720x1280 (9:16), JPEG/PNG/WebP, max 10 MB" : "Recommended: 1280x720 (16:9), JPEG/PNG/WebP, max 10 MB"}
+                </p>
                 <button
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors shadow-sm"
+                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose Image
@@ -323,9 +337,11 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   className="hidden"
                 />
                 {form.customCoverPreviewUrl && (
-                  <div className="overflow-hidden rounded-xl border border-[#E8E6E1] shadow-sm" style={{ maxWidth: 260 }}>
-                    <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
-                    <p className="bg-[#FAFAF8] px-3 py-1.5 text-[10px] text-[#9E9E9E] text-center">
+                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-sm" style={{ maxWidth: isVertical ? 170 : 280 }}>
+                    <div className="overflow-hidden rounded-lg">
+                      <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
+                    </div>
+                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center uppercase tracking-wider">
                       Preview — uploaded at publish time
                     </p>
                   </div>
@@ -339,37 +355,37 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
       {/* ── Audio ── */}
       <Collapsible title="Audio" defaultOpen={false}>
         <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-xl bg-[#FAFAF8] border border-[#E8E6E1] px-4 py-3">
-            <Music className="h-4 w-4 text-[#9E9E9E]" />
-            <p className="text-[12px] text-[#9E9E9E]">
+          <div className="flex items-center gap-3 rounded-xl bg-brand-secondary border border-brand-text/10 px-4 py-3">
+            <Music className="h-4 w-4 text-brand-text/50" />
+            <p className="text-[12px] text-brand-text/50">
               {form.audioTrack ? form.audioTrack.title : "Original audio will be used"}
             </p>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Volume2 className="h-3.5 w-3.5 text-[#9E9E9E]" />
-              <span className="text-[12px] text-[#6B6B6B]">Original Audio</span>
-              <span className="ml-auto text-[11px] font-mono text-[#9E9E9E]">{Math.round(form.originalAudioVolume * 100)}%</span>
+              <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
+              <span className="text-[12px] text-brand-text/60">Original Audio</span>
+              <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.originalAudioVolume * 100)}%</span>
             </div>
             <input
               type="range" min={0} max={1} step={0.05}
               value={form.originalAudioVolume}
               onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
-              className="w-full accent-[#7C5CFC]"
+              className="w-full accent-brand-text"
             />
           </div>
           {form.audioTrack && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Volume2 className="h-3.5 w-3.5 text-[#9E9E9E]" />
-                <span className="text-[12px] text-[#6B6B6B]">Overlay Audio</span>
-                <span className="ml-auto text-[11px] font-mono text-[#9E9E9E]">{Math.round(form.overlayAudioVolume * 100)}%</span>
+                <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
+                <span className="text-[12px] text-brand-text/60">Overlay Audio</span>
+                <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.overlayAudioVolume * 100)}%</span>
               </div>
               <input
                 type="range" min={0} max={1} step={0.05}
                 value={form.overlayAudioVolume}
                 onChange={(e) => patch({ overlayAudioVolume: Number(e.target.value) })}
-                className="w-full accent-[#7C5CFC]"
+                className="w-full accent-brand-text"
               />
             </div>
           )}

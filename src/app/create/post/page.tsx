@@ -144,7 +144,7 @@ export default function CreatePostPage() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
   useEffect(() => {
-    const t = window.setTimeout(() => setDebouncedQuery(hashtagQuery), 220);
+    const t = window.setTimeout(() => setDebouncedQuery(hashtagQuery), 500);
     return () => window.clearTimeout(t);
   }, [hashtagQuery]);
 
@@ -156,7 +156,7 @@ export default function CreatePostPage() {
   // Parse hashtags
   const usedHashtags = useMemo(() => {
     const out = new Set<string>();
-    for (const match of content.toLowerCase().matchAll(/#(\w{1,50})/g)) {
+    for (const match of content.toLowerCase().matchAll(/(#[\p{L}\p{M}\p{N}_]{2,50})/gu)) {
       out.add(`#${match[1]}`);
     }
     return out;
@@ -701,13 +701,13 @@ export default function CreatePostPage() {
                           </div>
                         ) : (
                           hashtagAuto.map((tag) => {
-                            const name = tag.display_name || tag.normalized_name;
+                            const rawName = (tag.display_name || tag.normalized_name || '').replace(/^#/, '');
                             return (
                               <button
-                                key={tag.normalized_name || name}
+                                key={tag.normalized_name || rawName}
                                 type="button"
                                 onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => insertHashtag(`#${name.toLowerCase()}`)}
+                                onClick={() => insertHashtag(`#${rawName.toLowerCase()}`)}
                                 className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left transition-colors hover:bg-slate-800/80 border border-transparent hover:border-slate-700/50"
                               >
                                 <Hash
@@ -716,7 +716,7 @@ export default function CreatePostPage() {
                                   }`}
                                 />
                                 <span className="flex-1 truncate text-[13px] font-semibold text-slate-200">
-                                  #{name}
+                                  #{rawName}
                                 </span>
                                 <span className="text-[11px] text-slate-400 flex items-center gap-1 font-semibold">
                                   {tag.is_trending ? "🔥 " : ""}

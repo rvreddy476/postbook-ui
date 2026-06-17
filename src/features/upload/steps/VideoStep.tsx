@@ -78,7 +78,7 @@ function UploadOverlay({ phase, progress, error }: { phase: string; progress: nu
           className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl"
         >
           {/* Blurred backdrop */}
-          <div className="absolute inset-0 rounded-2xl bg-[#1A1A1A]/70 backdrop-blur-md" />
+          <div className="absolute inset-0 rounded-2xl bg-black/75 backdrop-blur-md" />
 
           {/* Content */}
           <motion.div
@@ -134,13 +134,13 @@ function UploadOverlay({ phase, progress, error }: { phase: string; progress: nu
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 15 }}
                 >
-                  <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-[#2BB5A0]/20 ring-4 ring-[#2BB5A0]/10">
+                  <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/10">
                     <motion.div
                       initial={{ scale: 0, rotate: -45 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ delay: 0.15, type: "spring", stiffness: 500, damping: 20 }}
                     >
-                      <CheckCircle2 className="h-12 w-12 text-[#2BB5A0]" />
+                      <CheckCircle2 className="h-12 w-12 text-emerald-500" />
                     </motion.div>
                   </div>
                 </motion.div>
@@ -158,8 +158,8 @@ function UploadOverlay({ phase, progress, error }: { phase: string; progress: nu
             {/* Error */}
             {isError && (
               <>
-                <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-[#E8527A]/20 ring-4 ring-[#E8527A]/10">
-                  <AlertCircle className="h-12 w-12 text-[#E8527A]" />
+                <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-rose-500/20 ring-4 ring-rose-500/10">
+                  <AlertCircle className="h-12 w-12 text-rose-500" />
                 </div>
                 <p className="mt-4 text-[14px] font-semibold text-white">Upload failed</p>
                 {error && <p className="mt-1 text-[12px] text-white/60 max-w-[240px] text-center">{error}</p>}
@@ -203,29 +203,29 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
           onClick={() => fileRef.current?.click()}
           className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed py-20 transition-all ${
             showErrors && !form.videoFile
-              ? "border-[#E8527A]/40 bg-[#E8527A]/5 hover:border-[#E8527A]/60"
-              : "border-[#E8E6E1] bg-[#FAFAF8] hover:border-[#7C5CFC]/40 hover:bg-[#EDE9FE]/20"
+              ? "border-rose-500/40 bg-rose-500/5 hover:border-rose-500/60"
+              : "border-brand-divider bg-brand-secondary hover:border-brand-text/40 hover:bg-brand-secondary/20"
           }`}
         >
           <div className={`flex h-18 w-18 items-center justify-center rounded-2xl transition-colors ${
             showErrors && !form.videoFile
-              ? "bg-[#E8527A]/10"
-              : "bg-[#F5F4F1] group-hover:bg-[#EDE9FE]"
+              ? "bg-rose-500/10"
+              : "bg-brand-secondary group-hover:bg-brand-secondary"
           }`}>
             <Upload className={`h-8 w-8 transition-colors ${
               showErrors && !form.videoFile
-                ? "text-[#E8527A]"
-                : "text-[#9E9E9E] group-hover:text-[#7C5CFC]"
+                ? "text-rose-500"
+                : "text-brand-text/50 group-hover:text-brand-text"
             }`} />
           </div>
-          <p className="mt-5 text-[15px] font-semibold text-[#1A1A1A]">
+          <p className="mt-5 text-[15px] font-semibold text-brand-text">
             Drag & drop your {config.label.toLowerCase()} here
           </p>
-          <p className="mt-1.5 text-[13px] text-[#9E9E9E]">
-            or <span className="text-[#7C5CFC] font-medium">click to browse</span>
+          <p className="mt-1.5 text-[13px] text-brand-text/50">
+            or <span className="text-brand-text font-medium">click to browse</span>
           </p>
 
-          <div className="mt-6 flex items-center gap-4 text-[11px] text-[#BFBFBF]">
+          <div className="mt-6 flex items-center gap-4 text-[11px] text-brand-text/30">
             <span className="flex items-center gap-1">
               <Film className="h-3 w-3" />
               MP4, WebM, MOV
@@ -244,16 +244,16 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
         </div>
 
         {showErrors && !form.videoFile && (
-          <div className="flex items-center gap-2 text-[12px] text-[#E8527A]">
+          <div className="flex items-center gap-2 text-[12px] text-rose-500 font-semibold">
             <AlertCircle className="h-3.5 w-3.5" />
             Please select a video file to continue
           </div>
         )}
 
         {form.uploadError && (
-          <div className="flex items-center gap-2 rounded-xl bg-[#E8527A]/5 border border-[#E8527A]/20 px-4 py-3">
-            <AlertCircle className="h-4 w-4 text-[#E8527A] shrink-0" />
-            <p className="text-[12px] text-[#E8527A]">{form.uploadError}</p>
+          <div className="flex items-center gap-2 rounded-xl bg-rose-500/5 border border-rose-500/20 px-4 py-3">
+            <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
+            <p className="text-[12px] text-rose-500 font-semibold">{form.uploadError}</p>
           </div>
         )}
       </div>
@@ -264,7 +264,7 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
   return (
     <div className="relative">
       {/* Video preview / placeholder */}
-      <div className="overflow-hidden rounded-2xl border border-[#E8E6E1] bg-[#1A1A1A] shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-text/10 bg-brand-text shadow-sm">
         {form.videoPreviewUrl ? (
           <video
             src={form.videoPreviewUrl}
@@ -286,9 +286,9 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
 
       {/* Minimal file info bar below video */}
       <div className="mt-3 flex items-center gap-3 px-1">
-        <p className="truncate text-[12px] font-medium text-[#6B6B6B] flex-1">
+        <p className="truncate text-[12px] font-medium text-brand-text/60 flex-1">
           {form.videoFile.name}
-          <span className="text-[#BFBFBF] ml-2">
+          <span className="text-brand-text/30 ml-2">
             {fmtSize(form.videoFile.size)}
             {form.videoDurationSec != null && ` · ${fmtDuration(form.videoDurationSec)}`}
             {form.videoWidth && form.videoHeight && ` · ${form.videoWidth}×${form.videoHeight}`}
@@ -297,14 +297,14 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="text-[11px] font-semibold text-[#7C5CFC] hover:text-[#6A4AE8] transition-colors"
+          className="text-[11px] font-semibold text-brand-text hover:text-brand-text transition-colors"
         >
           Change
         </button>
         <button
           type="button"
           onClick={clearFile}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-[#9E9E9E] hover:bg-[#F5F4F1] hover:text-[#1A1A1A] transition-colors"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text transition-colors"
         >
           <X className="h-3.5 w-3.5" />
         </button>

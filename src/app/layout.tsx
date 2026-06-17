@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: 'light' }}>
+    <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
       <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
         <script
           dangerouslySetInnerHTML={{
@@ -96,7 +96,7 @@ export default function RootLayout({
                   'url': `${siteUrl}/logo.png`,
                 },
               },
-              'datePublished': new Date().toISOString(),
+              'datePublished': '2026-01-01T00:00:00.000Z',
             }),
           }}
         />

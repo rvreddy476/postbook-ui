@@ -11,17 +11,17 @@ const config: Config = {
       },
       colors: {
         orchid: {
-          violet: '#7c3aed',
-          rose: '#db2777',
-          bg: '#fcfaff',
+          violet: 'var(--prismatic-violet)',
+          rose: 'var(--prismatic-rose)',
+          bg: 'rgb(var(--brand-bg) / <alpha-value>)',
         },
         // Q&A / Ask feature brand color
         ask: {
-          DEFAULT:  '#2563eb',
-          hover:    '#1d4ed8',
-          light:    'rgb(37 99 235 / 0.08)',
-          muted:    'rgb(37 99 235 / 0.15)',
-          text:     '#2563eb',
+          DEFAULT:  'rgb(var(--brand-accent) / <alpha-value>)',
+          hover:    'rgb(var(--brand-highlight) / <alpha-value>)',
+          light:    'rgb(var(--brand-text) / 0.08)',
+          muted:    'rgb(var(--brand-text) / 0.15)',
+          text:     'rgb(var(--brand-text) / <alpha-value>)',
         },
         // Brand Semantic Tokens
         brand: {

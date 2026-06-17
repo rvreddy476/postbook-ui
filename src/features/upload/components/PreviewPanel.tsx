@@ -59,12 +59,12 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
   }, [contentLink]);
 
   return (
-    <div className="w-[300px] shrink-0 border-l border-[#E8E6E1] bg-[#FAFAF8] overflow-y-auto hidden lg:block">
+    <div className="w-[300px] shrink-0 border-l border-brand-divider bg-brand-secondary overflow-y-auto hidden lg:block">
       <div className="p-5 space-y-5">
         {/* ── Video Player ── */}
-        <div className="overflow-hidden rounded-2xl bg-[#1A1A1A] shadow-lg ring-1 ring-black/5">
+        <div className="overflow-hidden rounded-2xl bg-black shadow-lg ring-1 ring-black/5">
           <div
-            className="relative flex items-center justify-center"
+            className="relative flex items-center justify-center bg-black"
             style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "320px" : "200px" }}
           >
             {form.coverPreviewUrl || form.customCoverPreviewUrl ? (
@@ -87,10 +87,10 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center bg-black/20"
                 >
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
-                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-brand-card/20 backdrop-blur-sm"
+                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-white/20 backdrop-blur-sm hover:scale-105"
                   }`}>
                     {playing ? (
                       <Pause className="h-5 w-5 text-white" fill="white" />
@@ -102,22 +102,22 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               </>
             ) : (
               <div className="flex flex-col items-center gap-2 text-white/30">
-                <div className="h-14 w-14 rounded-2xl bg-brand-card/5 flex items-center justify-center">
+                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center">
                   <Play className="h-6 w-6" />
                 </div>
-                <span className="text-[11px]">No preview</span>
+                <span className="text-[11px] font-semibold">No preview</span>
               </div>
             )}
           </div>
 
           {/* Controls */}
           {form.videoPreviewUrl && (
-            <div className="flex items-center gap-2 bg-[#2A2A2A] px-3 py-2">
+            <div className="flex items-center gap-2 bg-black/80 px-3 py-2">
               <button type="button" onClick={togglePlay} className="text-white/70 hover:text-white transition-colors">
                 {playing ? <Pause className="h-3 w-3" fill="currentColor" /> : <Play className="h-3 w-3" fill="currentColor" />}
               </button>
-              <div className="flex-1 h-1 bg-brand-card/10 rounded-full">
-                <div className="h-1 bg-[#7C5CFC] rounded-full" style={{ width: "0%" }} />
+              <div className="flex-1 h-1 bg-white/10 rounded-full">
+                <div className="h-1 bg-white rounded-full" style={{ width: "0%" }} />
               </div>
               <span className="text-[10px] text-white/50 font-mono">
                 {form.videoDurationSec != null ? fmtDuration(form.videoDurationSec) : "0:00"}
@@ -127,26 +127,26 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         </div>
 
         {/* ── Content Link ── */}
-        <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[12px] font-semibold text-[#1A1A1A]">Content link</p>
+            <p className="text-[12px] font-semibold text-brand-text">Content link</p>
             {contentLink && (
-              <button type="button" onClick={handleCopy} className="text-[#9E9E9E] hover:text-[#1A1A1A] transition-colors">
-                {copied ? <Check className="h-3.5 w-3.5 text-[#2BB5A0]" /> : <Copy className="h-3.5 w-3.5" />}
+              <button type="button" onClick={handleCopy} className="text-brand-text/50 hover:text-brand-text transition-colors">
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
             )}
           </div>
           {contentLink ? (
-            <p className="truncate text-[12px] font-mono text-[#7C5CFC]">{contentLink}</p>
+            <p className="truncate text-[12px] font-mono text-brand-text">{contentLink}</p>
           ) : (
-            <p className="text-[12px] text-[#BFBFBF]">Available after upload</p>
+            <p className="text-[12px] text-brand-text/30">Available after upload</p>
           )}
         </div>
 
         {/* ── File Metadata ── */}
         {form.videoFile && (
-          <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
-            <p className="text-[12px] font-semibold text-[#1A1A1A] mb-2">File Info</p>
+          <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
+            <p className="text-[12px] font-semibold text-brand-text mb-2">File Info</p>
             <div className="space-y-1.5">
               {[
                 { label: "Filename", value: form.videoFile.name },
@@ -155,8 +155,8 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
                 ...(form.videoWidth && form.videoHeight ? [{ label: "Resolution", value: `${form.videoWidth}x${form.videoHeight}` }] : []),
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between text-[11px]">
-                  <span className="text-[#9E9E9E]">{row.label}</span>
-                  <span className="text-[#1A1A1A] font-medium truncate max-w-[140px]">{row.value}</span>
+                  <span className="text-brand-text/50">{row.label}</span>
+                  <span className="text-brand-text font-medium truncate max-w-[140px]">{row.value}</span>
                 </div>
               ))}
             </div>
@@ -164,11 +164,11 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         )}
 
         {/* ── Publish to Feed ── */}
-        <div className="rounded-xl border border-[#E8E6E1] bg-brand-card p-3.5 shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[12px] font-semibold text-[#1A1A1A]">Publish to Feed</p>
-              <p className="text-[10px] text-[#9E9E9E] mt-0.5">Cross-post to your feed</p>
+              <p className="text-[12px] font-semibold text-brand-text">Publish to Feed</p>
+              <p className="text-[10px] text-brand-text/50 mt-0.5">Cross-post to your feed</p>
             </div>
             <button
               type="button"
@@ -176,7 +176,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               aria-checked={form.crossPostPostbook}
               onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-                form.crossPostPostbook ? "bg-[#E8527A]" : "bg-[#D1D1D1]"
+                form.crossPostPostbook ? "bg-brand-accent" : "bg-brand-text/25"
               }`}
             >
               <span

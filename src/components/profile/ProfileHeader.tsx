@@ -3,7 +3,7 @@
 import { useRef, useCallback, useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UserProfile, UserLink, Relationship, ContentCounts, GraphCounts, Channel } from "@/types/profile"
-import { getBadges } from "@/types/profile"
+import { getBadges, BADGE_CREATOR, BADGE_BUSINESS } from "@/types/profile"
 import {
     BadgeCheck,
     Briefcase,
@@ -22,11 +22,13 @@ import {
     ExternalLink,
     Eye,
     Lock,
+    UserPlus,
+    UserCheck,
+    UserMinus,
     Film,
     Clapperboard,
     Play,
     Crown,
-    Coffee,
     Sun,
     Moon,
 } from "lucide-react"
@@ -35,7 +37,9 @@ import Link from "next/link"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
 import TierPicker from "@/components/monetization/TierPicker"
-import TipComposer from "@/components/monetization/TipComposer"
+import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
+import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
+import { ImageAdjustDialog } from "@/components/media/ImageAdjustDialog"
 
 interface ProfileHeaderProps {
     profile: UserProfile
@@ -50,10 +54,6 @@ interface ProfileHeaderProps {
     channel: Channel | null
     onFollow: () => void
     onUnfollow: () => void
-    onSendCircleRequest: () => void
-    onAcceptCircleRequest: () => void
-    onDeclineCircleRequest: () => void
-    onCancelCircleRequest: () => void
     onRemoveFromCircle: () => void
     onEditProfile: () => void
     onMessage?: () => void
@@ -68,6 +68,14 @@ const badgeConfig: Record<string, { icon: typeof BadgeCheck; color: string; bg: 
     verified: { icon: BadgeCheck, color: "text-teal-600", bg: "bg-teal-50 border-teal-100" },
     creator: { icon: Sparkles, color: "text-brand-text", bg: "bg-brand-text/10 border-brand-text/20" },
     business: { icon: Briefcase, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+}
+
+type ProfileImageField = "avatar_media_id" | "cover_media_id"
+
+type PendingProfileImage = {
+    field: ProfileImageField
+    file: File
+    previewUrl: string
 }
 
 function formatJoinDate(dateStr: string): string {
@@ -92,13 +100,8 @@ export function ProfileHeader({
     graphCounts,
     contentCounts,
     channel,
-    // onFollow / onUnfollow stay in the props contract so callers don't
-    // break; user profile no longer renders Follow per spec §4.1, so the
-    // handlers are intentionally not destructured here.
-    onSendCircleRequest,
-    onAcceptCircleRequest,
-    onDeclineCircleRequest,
-    onCancelCircleRequest,
+    onFollow,
+    onUnfollow,
     onRemoveFromCircle,
     onEditProfile,
     onMessage,
@@ -116,6 +119,13 @@ export function ProfileHeader({
     const [avatarFails, setAvatarFails] = useState(0)
     const [coverFails, setCoverFails] = useState(0)
     const [theme, setTheme] = useState<string>("light")
+    const [pendingImage, setPendingImage] = useState<PendingProfileImage | null>(null)
+
+    useEffect(() => {
+        return () => {
+            if (pendingImage?.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl)
+        }
+    }, [pendingImage?.previewUrl])
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -156,16 +166,14 @@ export function ProfileHeader({
     const resolvedAvatar = avatarSources[avatarFails] ?? null
     const resolvedCover = coverSources[coverFails] ?? null
     const followsYou = relationship?.followed_by ?? false
-    // isFollowing removed alongside the Follow button — user profiles don't
-    // expose follower state per relationship-separation spec §4.1.
-    const inCircle = relationship?.in_circle ?? false
+    const isFollowing = relationship?.following ?? false
     const canDM = relationship?.can_dm ?? false
+    const isCreatorOrBusiness = !!(profile.badge_flags & (BADGE_CREATOR | BADGE_BUSINESS))
     // Tier 3 monetization modals
     const [showTierPicker, setShowTierPicker] = useState(false)
-    const [showTipComposer, setShowTipComposer] = useState(false)
 
     const uploadMutation = useMutation({
-        mutationFn: async ({ file, field }: { file: File; field: "avatar_media_id" | "cover_media_id" }) => {
+        mutationFn: async ({ file, field }: { file: File; field: ProfileImageField }) => {
             const mediaId = await uploadMedia(file, "image", field === "avatar_media_id" ? "avatar" : "cover")
             const endpoint = field === "avatar_media_id" ? "/v1/profiles/me/avatar" : "/v1/profiles/me/cover"
             await api.put(endpoint, { media_id: mediaId })
@@ -187,22 +195,87 @@ export function ProfileHeader({
     })
 
     const handleFileSelect = useCallback(
-        (field: "avatar_media_id" | "cover_media_id") => (e: React.ChangeEvent<HTMLInputElement>) => {
+        (field: ProfileImageField) => (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0]
-            if (file) uploadMutation.mutate({ file, field })
+            e.target.value = ""
+            if (file) {
+                setPendingImage((current) => {
+                    if (current?.previewUrl) URL.revokeObjectURL(current.previewUrl)
+                    return { file, field, previewUrl: URL.createObjectURL(file) }
+                })
+            }
         },
-        [uploadMutation]
+        []
     )
+
+    const handleAdjustedImage = useCallback(
+        (file: File) => {
+            if (!pendingImage) return
+            uploadMutation.mutate(
+                { file, field: pendingImage.field },
+                {
+                    onSettled: () => {
+                        setPendingImage((current) => {
+                            if (current?.previewUrl) URL.revokeObjectURL(current.previewUrl)
+                            return null
+                        })
+                    },
+                },
+            )
+        },
+        [pendingImage, uploadMutation],
+    )
+
+    const pendingImageConfig = pendingImage?.field === "cover_media_id"
+        ? {
+              title: "Adjust cover photo",
+              outputWidth: 1800,
+              outputHeight: 480,
+          }
+        : {
+              title: "Adjust profile photo",
+              outputWidth: 1024,
+              outputHeight: 1024,
+          }
 
     return (
         <div className="w-full bg-brand-card border-b border-black/5">
+            {pendingImage?.field === "avatar_media_id" && (
+                <ImageAdjustDialog
+                    file={pendingImage.file}
+                    previewUrl={pendingImage.previewUrl}
+                    title={pendingImageConfig.title}
+                    outputWidth={pendingImageConfig.outputWidth}
+                    outputHeight={pendingImageConfig.outputHeight}
+                    isApplying={uploadMutation.isPending}
+                    onCancel={() => {
+                        if (!uploadMutation.isPending) setPendingImage(null)
+                    }}
+                    onApply={handleAdjustedImage}
+                />
+            )}
+
             {/* Hidden file inputs */}
             <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("avatar_media_id")} />
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
 
             {/* 1. Cover Photo — half-height hero */}
             <div className="relative h-[200px] sm:h-[280px] lg:h-[320px] w-full overflow-hidden">
-                {resolvedCover ? (
+                {pendingImage?.field === "cover_media_id" ? (
+                    <ImageAdjustEditor
+                        file={pendingImage.file}
+                        previewUrl={pendingImage.previewUrl}
+                        title={pendingImageConfig.title}
+                        outputWidth={pendingImageConfig.outputWidth}
+                        outputHeight={pendingImageConfig.outputHeight}
+                        className="relative z-10"
+                        isApplying={uploadMutation.isPending}
+                        onCancel={() => {
+                            if (!uploadMutation.isPending) setPendingImage(null)
+                        }}
+                        onApply={handleAdjustedImage}
+                    />
+                ) : resolvedCover ? (
                     <img
                         src={resolvedCover}
                         alt=""
@@ -212,11 +285,13 @@ export function ProfileHeader({
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-brand-secondary via-brand-text/10 to-brand-secondary" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10" />
+                {pendingImage?.field !== "cover_media_id" && (
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10" />
+                )}
 
                 {/* Cover actions */}
                 <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-                    {isOwn && (
+                    {isOwn && pendingImage?.field !== "cover_media_id" && (
                         <>
                             <button
                                 onClick={() => coverInputRef.current?.click()}
@@ -240,7 +315,7 @@ export function ProfileHeader({
 
             {/* 2. Identity row: Profile Pic | Intro | Stats — sits cleanly below the cover */}
             <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start">
+                <div className={`grid grid-cols-1 ${channel ? "md:grid-cols-[auto_1fr_auto]" : "md:grid-cols-[auto_1fr]"} gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start`}>
 
                     {/* Left: Profile Picture */}
                     <motion.div
@@ -293,48 +368,132 @@ export function ProfileHeader({
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.05 }}
-                        className="space-y-2.5 text-center md:text-left md:pt-[4.5rem]"
+                        className="w-full md:pt-[4.5rem] space-y-3"
                     >
-                        {/* Name + badges */}
-                        <div className="flex items-center gap-2.5 justify-center md:justify-start flex-wrap">
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text">
-                                {profile.display_name}
-                            </h1>
-                            {badges.map((badge) => {
-                                const cfg = badgeConfig[badge]
-                                if (!cfg) return null
-                                const Icon = cfg.icon
-                                return (
-                                    <span
-                                        key={badge}
-                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${cfg.bg} ${cfg.color}`}
-                                    >
-                                        <Icon className="h-3 w-3" />
-                                        {badge}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
+                            {/* Left: Name, handle & badges on a single line */}
+                            <div className="flex flex-row items-center gap-3 justify-center md:justify-start flex-wrap md:flex-nowrap min-w-0">
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text whitespace-nowrap">
+                                    {profile.display_name}
+                                </h1>
+                                {profile.username && (
+                                    <span className="text-brand-text/50 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap">
+                                        @{profile.username}
                                     </span>
-                                )
-                            })}
-                            {!isOwn && followsYou && (
-                                <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                    Follows you
-                                </span>
-                            )}
-                        </div>
+                                )}
+                                <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                                    {badges.map((badge) => {
+                                        const cfg = badgeConfig[badge]
+                                        if (!cfg) return null
+                                        const Icon = cfg.icon
+                                        return (
+                                            <span
+                                                key={badge}
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
+                                            >
+                                                <Icon className="h-3 w-3" />
+                                                {badge}
+                                            </span>
+                                        )
+                                    })}
+                                    {!isOwn && followsYou && (
+                                        <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md uppercase tracking-wider whitespace-nowrap">
+                                            Follows you
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
 
-                        {/* Handle */}
-                        <p className="text-brand-text/50 font-medium tracking-wide text-sm">@{profile.username}</p>
+                            {/* Right: Action buttons (Add Friend text + icon, Message icon-only) */}
+                            <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
+                                {isOwn ? (
+                                    <>
+                                        <button
+                                            onClick={onEditProfile}
+                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
+                                        >
+                                            <Settings className="w-3.5 h-3.5" />
+                                            Edit Profile
+                                        </button>
+                                        <button
+                                            onClick={toggleTheme}
+                                            type="button"
+                                            className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-sm"
+                                            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                        >
+                                            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Follow — for creator / business accounts */}
+                                        {isCreatorOrBusiness && (
+                                            isFollowing ? (
+                                                <button
+                                                    onClick={onUnfollow}
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-sm group"
+                                                    title="Unfollow"
+                                                >
+                                                    <UserCheck className="w-4 h-4 group-hover:hidden" />
+                                                    <UserMinus className="w-4 h-4 hidden group-hover:inline" />
+                                                    <span className="group-hover:hidden">Following</span>
+                                                    <span className="hidden group-hover:inline">Unfollow</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={onFollow}
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-brand-accent text-brand-bg hover:opacity-90 transition-all shadow-sm"
+                                                    title="Follow"
+                                                >
+                                                    <UserPlus className="w-4 h-4" />
+                                                    Follow
+                                                </button>
+                                            )
+                                        )}
+
+                                        {/* Add Friend / Circle — for normal user accounts */}
+                                        {!isCreatorOrBusiness && (
+                                            <FriendRequestButton
+                                                targetUserId={profile.id}
+                                                targetUsername={profile.username}
+                                                relationship={relationship}
+                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-sm transition-all hover:opacity-90 disabled:opacity-60"
+                                                sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
+                                                friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
+                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-sm transition-all hover:opacity-90 disabled:opacity-60"
+                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold uppercase tracking-wider text-brand-text/60 shadow-sm transition-all hover:bg-brand-secondary disabled:opacity-60"
+                                                onFriendsClick={onRemoveFromCircle}
+                                            />
+                                        )}
+
+                                        <button
+                                            onClick={canDM ? onMessage : undefined}
+                                            className={`flex items-center justify-center h-10 w-10 rounded-xl border transition-all ${
+                                                canDM
+                                                    ? "border-brand-divider text-brand-text hover:bg-brand-secondary shadow-sm"
+                                                    : "border-brand-divider text-brand-text/30 cursor-not-allowed"
+                                            }`}
+                                            title={canDM ? "Send message" : "Add to Circle to message"}
+                                        >
+                                            {!canDM && <Lock className="w-3.5 h-3.5" />}
+                                            <MessageSquare className="w-4.5 h-4.5" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
 
                         {/* Meta chips */}
                         <div className="flex items-center gap-x-4 gap-y-1.5 pt-1 text-xs font-medium text-brand-text/60 justify-center md:justify-start flex-wrap">
                             {profile.profession && (
                                 <span className="flex items-center gap-1.5">
-                                    <Briefcase size={13} className="text-violet-500" />
+                                    <Briefcase size={13} className="text-brand-text/50" />
                                     {profile.profession}
                                 </span>
                             )}
                             {profile.location && (
                                 <span className="flex items-center gap-1.5">
-                                    <MapPin size={13} className="text-rose-500" />
+                                    <MapPin size={13} className="text-brand-text/50" />
                                     {profile.location}
                                 </span>
                             )}
@@ -343,7 +502,7 @@ export function ProfileHeader({
                                     href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-sky-500 hover:text-sky-600 hover:underline transition-colors"
+                                    className="flex items-center gap-1.5 text-brand-text/75 hover:underline transition-colors"
                                 >
                                     <Globe size={13} />
                                     {profile.website.replace(/^https?:\/\//, "")}
@@ -351,106 +510,16 @@ export function ProfileHeader({
                             )}
                             {profile.created_at && (
                                 <span className="flex items-center gap-1.5">
-                                    <Calendar size={13} className="text-amber-500" />
+                                    <Calendar size={13} className="text-brand-text/50" />
                                     {formatJoinDate(profile.created_at)}
                                 </span>
-                            )}
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-2 pt-2.5 justify-center md:justify-start flex-wrap">
-                            {isOwn ? (
-                                <>
-                                    <button
-                                        onClick={onEditProfile}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
-                                    >
-                                        <Settings className="w-3.5 h-3.5" />
-                                        Edit Profile
-                                    </button>
-                                    <button
-                                        onClick={toggleTheme}
-                                        type="button"
-                                        className="flex items-center justify-center p-2.5 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-sm"
-                                        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                                    >
-                                        {theme === "dark" ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-amber-600" />}
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    {/* Relationship-separation spec §3.2 / §4.1: user profiles
-                                        must never render a Follow button — friendship actions
-                                        (Add Friend / Friends / Accept / etc.) come through
-                                        ProfileActions. Follow lives on hub profile pages only. */}
-                                    <button
-                                        onClick={canDM ? onMessage : undefined}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 transition-all ${
-                                            canDM
-                                                ? "border-brand-divider text-brand-text hover:border-brand-text/30 hover:bg-brand-secondary shadow-sm"
-                                                : "border-brand-divider text-brand-text/30 cursor-not-allowed"
-                                        }`}
-                                        title={canDM ? "Send message" : "Add to Circle to message"}
-                                    >
-                                        {!canDM && <Lock className="w-3 h-3" />}
-                                        <MessageSquare className="w-3.5 h-3.5" />
-                                        Message
-                                    </button>
-                                    {/* Tier 3c — Become a member */}
-                                    <button
-                                        onClick={() => setShowTierPicker(true)}
-                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950 transition-all shadow-sm"
-                                        title="Become a member"
-                                    >
-                                        <Crown className="w-3.5 h-3.5" />
-                                        Member
-                                    </button>
-                                    {/* Tier 3d — Tip */}
-                                    <button
-                                        onClick={() => setShowTipComposer(true)}
-                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950 transition-all shadow-sm"
-                                        title="Send a tip"
-                                    >
-                                        <Coffee className="w-3.5 h-3.5" />
-                                        Tip
-                                    </button>
-                                </>
                             )}
                         </div>
                     </motion.div>
 
                     {/* Right: Stats cards — unified card system */}
-                    <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-[4.5rem]">
-                        {/* Feed Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: 0.1 }}
-                            className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5"
-                        >
-                            {/* Relationship-separation spec §4.1: user profile stats are
-                                Posts + Friends. Followers / Following live only on hub
-                                profile pages. */}
-                            <div className="grid grid-cols-2 gap-2">
-                                {[
-                                    { icon: FileText, label: "Posts", value: contentCounts.total, key: "posts", color: "text-sky-500" },
-                                    { icon: Users, label: "Friends", value: graphCounts.friend_count, key: "friends", color: "text-emerald-500" },
-                                ].map((stat) => (
-                                    <div key={stat.key} className="flex flex-col items-center text-center gap-1">
-                                        <stat.icon size={16} className={stat.color} />
-                                        <p className="text-lg font-black text-brand-text tracking-tight leading-none">
-                                            {formatCount(stat.value)}
-                                        </p>
-                                        <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-text/50">
-                                            {stat.label}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-
-                        {/* PostTube Channel Stats — same card system, subtle accent */}
-                        {channel && (
+                    {channel && (
+                        <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-[4.5rem]">
                             <motion.div
                                 initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -487,14 +556,14 @@ export function ProfileHeader({
                                     ))}
                                 </div>
                             </motion.div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Mobile: Social Graph (stacked below on small screens) */}
                 <div className="md:hidden space-y-3 mb-6">
+                    {/* Spec §4.1 — Posts + Friends only on user profile. - Commented out per user request
                     <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4">
-                        {/* Spec §4.1 — Posts + Friends only on user profile. */}
                         <div className="grid grid-cols-2 gap-2">
                             {[
                                 { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
@@ -508,6 +577,7 @@ export function ProfileHeader({
                             ))}
                         </div>
                     </div>
+                    */}
 
                     {/* Mobile: PostTube Channel Stats */}
                     {channel && (
@@ -596,13 +666,6 @@ export function ProfileHeader({
                 creatorName={profile.display_name || profile.username}
                 open={showTierPicker}
                 onClose={() => setShowTierPicker(false)}
-            />
-            {/* Tier 3d — Tip composer modal */}
-            <TipComposer
-                creatorId={profile.id}
-                creatorName={profile.display_name || profile.username}
-                open={showTipComposer}
-                onClose={() => setShowTipComposer(false)}
             />
         </div>
     )

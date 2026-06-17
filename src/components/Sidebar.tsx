@@ -10,6 +10,7 @@ import {
   Bookmark,
   Briefcase,
   Film,
+  Flame,
   // Globe2, // Communities feature disabled
   HelpCircle,
   Home,
@@ -66,6 +67,7 @@ const primaryItems: Item[] = [
 // Go Live sits right after PostTube — the post composer no longer hosts a
 // "go live" button, so this is the canonical entry point for creators.
 const moreItems: Item[] = [
+  { id: 'Trending', label: 'Trending', icon: Flame, href: '/trending', color: 'text-orange-400' },
   { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-emerald-400' },
   { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-rose-400' },
   { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-orange-400' },

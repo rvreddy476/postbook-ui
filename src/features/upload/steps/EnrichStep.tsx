@@ -43,11 +43,11 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
       {/* ── Subtitles ── */}
       <div>
         <SectionHeader title="Subtitles" subtitle="Upload a subtitle file for accessibility" />
-        <div className="rounded-xl border border-[#E8E6E1] p-4">
-          <p className="text-[12px] text-[#9E9E9E] mb-3">
+        <div className="rounded-xl border border-brand-text/10 p-4">
+          <p className="text-[12px] text-brand-text/50 mb-3">
             Upload an SRT or VTT file to add subtitles. Auto-generated subtitles will be created if no file is provided.
           </p>
-          <label className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[#E8E6E1] bg-[#FAFAF8] py-6 text-[12px] text-[#9E9E9E] hover:border-[#7C5CFC]/40 hover:bg-[#EDE9FE]/20 transition-colors">
+          <label className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-brand-text/10 bg-brand-secondary py-6 text-[12px] text-brand-text/50 hover:border-brand-text/40 hover:bg-brand-secondary/20 transition-colors">
             {form.subtitlesFile ? form.subtitlesFile.name : "Click to upload .srt or .vtt file"}
             <input
               type="file"
@@ -61,14 +61,14 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
             />
           </label>
           {form.subtitleUploadState === "uploading" && (
-            <p className="mt-3 text-[12px] text-[#7C5CFC]">Uploading subtitle track...</p>
+            <p className="mt-3 text-[12px] text-brand-text">Uploading subtitle track...</p>
           )}
           {form.subtitleUploadState === "done" && form.subtitleTracks.length > 0 && (
-            <div className="mt-3 rounded-xl border border-[#2BB5A0]/20 bg-[#2BB5A0]/5 p-3">
-              <p className="text-[12px] font-semibold text-[#2BB5A0]">Subtitle tracks saved</p>
+            <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+              <p className="text-[12px] font-semibold text-emerald-500 dark:text-emerald-400">Subtitle tracks saved</p>
               <div className="mt-2 space-y-1">
                 {form.subtitleTracks.map((track) => (
-                  <p key={track.id} className="text-[11px] text-[#6B6B6B]">
+                  <p key={track.id} className="text-[11px] text-brand-text/60">
                     {track.language.toUpperCase()} • {track.format.toUpperCase()} • {track.source.replace(/_/g, " ")}
                   </p>
                 ))}
@@ -76,7 +76,7 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
             </div>
           )}
           {form.subtitleUploadState === "error" && form.subtitleUploadError && (
-            <p className="mt-3 text-[12px] text-[#E8527A]">{form.subtitleUploadError}</p>
+            <p className="mt-3 text-[12px] text-rose-500">{form.subtitleUploadError}</p>
           )}
         </div>
       </div>
@@ -86,16 +86,16 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
         <SectionHeader title="Recording Details" subtitle="Optional metadata about when and where this was recorded" />
         <div className="space-y-4">
           <div>
-            <p className="mb-1.5 text-[12px] font-semibold text-[#6B6B6B]">Recording Date</p>
+            <p className="mb-1.5 text-[12px] font-semibold text-brand-text/60">Recording Date</p>
             <input
               type="date"
               value={form.recordingDate}
               onChange={(e) => patch({ recordingDate: e.target.value })}
-              className="h-11 w-full rounded-xl border border-[#E8E6E1] bg-[#FAFAF8] px-4 text-[13px] text-[#1A1A1A] outline-none focus:border-[#7C5CFC] focus:bg-brand-card focus:ring-2 focus:ring-[#7C5CFC]/10 transition-all"
+              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[13px] text-brand-text outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
             />
           </div>
           <div>
-            <p className="mb-1.5 text-[12px] font-semibold text-[#6B6B6B]">Recording Location</p>
+            <p className="mb-1.5 text-[12px] font-semibold text-brand-text/60">Recording Location</p>
             <StudioInput
               value={form.recordingLocation}
               onChange={(v) => patch({ recordingLocation: v })}
@@ -108,7 +108,7 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
       {/* ── License ── */}
       <div>
         <SectionHeader title="License" subtitle="Choose a license for your content" />
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-2">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 p-2">
           <RadioOption
             name="license"
             label="Standard VChat License"
@@ -127,7 +127,7 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
       </div>
 
       {/* ── Embedding ── */}
-      <div className="rounded-xl border border-[#E8E6E1] p-4">
+      <div className="rounded-xl border border-brand-text/10 p-4">
         <ToggleRow
           label="Allow Embedding"
           description="Let others embed this content on external websites"

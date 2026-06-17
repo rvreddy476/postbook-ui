@@ -22,7 +22,7 @@ import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { useGlobalToast } from '@/contexts/ToastContext';
 
 interface MinimalHeaderProps {
-    currentUser: User;
+    currentUser: User | null;
     onLogout?: () => void;
 }
 
@@ -83,7 +83,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
 
     const avatarSrc = profile?.avatar_media_id
         ? `/v1/media/${profile.avatar_media_id}/serve`
-        : currentUser.avatar;
+        : currentUser?.avatar ?? '';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -237,10 +237,10 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                 <div className="flex items-center gap-3">
                     <Link href="/">
                         <div className="flex items-center gap-3 cursor-pointer group">
-                            <div className="w-9 h-9 orchid-gradient rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-brand-text/20 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
+                            <div className="w-9 h-9 bg-orange-500 rounded-[0.7rem] flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 group-hover:rotate-6 transition-all duration-500">
                                 <span className="text-white font-black text-base tracking-tighter">VC</span>
                             </div>
-                            <span className="text-xl font-black text-brand-bg dark:text-brand-text tracking-tighter hidden sm:block italic">VChat</span>
+                            <span className="text-xl font-black text-white tracking-tighter hidden sm:block italic">VChat</span>
                         </div>
                     </Link>
                 </div>
@@ -281,6 +281,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </button>
 
+                    {currentUser && <>
                     {/* Notifications */}
                     <div className="relative" ref={notifRef}>
                         <button
@@ -393,7 +394,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                                 });
                                                                             }}
                                                                             disabled={acceptFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider orchid-gradient text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-sm active:scale-95 transition-all"
                                                                         >
                                                                             Accept
                                                                         </button>
@@ -536,6 +537,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             )}
                         </AnimatePresence>
                     </div>
+                    </>}
                 </div>
 
                 {/* Mobile Search Panel */}

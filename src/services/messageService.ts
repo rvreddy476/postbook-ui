@@ -1,5 +1,4 @@
 import { User } from '@/types';
-import { logoutUser } from '@/services/authService';
 import {
   isLiveRealtimeEventType,
   type LiveChatMessageEvent,
@@ -93,7 +92,28 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   created_at: raw.created_at as string,
 });
 
-const WS_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080').replace(/^http/, 'ws') + '/v1/ws/connect';
+const wsUrlForPath = (path: string) => {
+  const explicitBase = process.env.NEXT_PUBLIC_WS_BASE_URL;
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (explicitBase) {
+    return `${explicitBase.replace(/\/+$/, '')}${path}`;
+  }
+  if (apiBase) {
+    return `${apiBase.replace(/^http/, 'ws').replace(/\/+$/, '')}${path}`;
+  }
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, host } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `ws://${hostname}:8093${path}`;
+    }
+    const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${host}${path}`;
+  }
+  return `ws://localhost:8093${path}`;
+};
+
+const WS_PATH = '/v1/ws/connect';
 const API_BASE = '/api/chat';
 const SESSION_KEY = 'postbook_session';
 const TOKEN_KEY = 'postbook_auth_tokens';
@@ -307,11 +327,11 @@ const getAccessToken = () => {
   }
 };
 
-const clearInvalidSession = (reason?: string) => {
+const closeChatSocket = (reason?: string) => {
   if (!canUseBrowserApis()) return;
 
   if (reason) {
-    console.warn(`Chat auth reset: ${reason}`);
+    console.warn(`Chat auth unavailable: ${reason}`);
   }
 
   wsRetryCount = 0;
@@ -325,7 +345,6 @@ const clearInvalidSession = (reason?: string) => {
     socket = null;
   }
 
-  logoutUser();
 };
 
 const getChannel = () => {
@@ -372,9 +391,12 @@ const parseResponsePayload = async (res: Response): Promise<unknown> => {
 
 /**
  * Chat API Client using Proxy
+ *
+ * background=true suppresses the forced logout on 401 — use for recovery
+ * / polling paths where a stale token should not kick the user out.
  */
 const chatClient = {
-  async request<TResponse = any>(path: string, options: RequestInit = {}) {
+  async request<TResponse = any>(path: string, options: RequestInit = {}, background = false) {
     const user = getSessionUser();
     const accessToken = getAccessToken();
     const headers = new Headers(options.headers);
@@ -392,8 +414,8 @@ const chatClient = {
     const payload = await parseResponsePayload(res);
     if (!res.ok) {
       const message = getErrorMessage(payload, `Chat API request failed (${res.status})`);
-      if (res.status === 401 || /invalid token/i.test(message)) {
-        clearInvalidSession(message);
+      if (!background && (res.status === 401 || /invalid token/i.test(message))) {
+        closeChatSocket(message);
       }
       throw new Error(message);
     }
@@ -426,7 +448,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
     if (!tokenRes.ok) {
       const message = getErrorMessage(tokenPayload, 'Could not acquire chat token');
       if (tokenRes.status === 401 || /invalid token/i.test(message)) {
-        clearInvalidSession(message);
+        closeChatSocket(message);
       }
       throw new Error(message);
     }
@@ -440,7 +462,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
 
     if (socket) socket.close();
 
-    socket = new WebSocket(`${WS_BASE}?access_token=${encodeURIComponent(token)}`);
+    socket = new WebSocket(`${wsUrlForPath(WS_PATH)}?access_token=${encodeURIComponent(token)}`);
 
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -580,10 +602,10 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
 /**
  * Conversation & Message Actions
  */
-export const fetchConversations = async (limit = 20, cursor?: string) => {
+export const fetchConversations = async (limit = 20, cursor?: string, background = false) => {
   const query = new URLSearchParams({ limit: limit.toString() });
   if (cursor) query.set('cursor', cursor);
-  return chatClient.request(`/conversations?${query.toString()}`);
+  return chatClient.request(`/conversations?${query.toString()}`, {}, background);
 };
 
 export const getOrCreateDirectConversation = async (otherUserId: string) => {
@@ -600,10 +622,10 @@ export const createGroupConversation = async (name: string, memberIds: string[])
   });
 };
 
-export const fetchMessages = async (conversationId: string, limit = 30, cursor?: string) => {
+export const fetchMessages = async (conversationId: string, limit = 30, cursor?: string, background = false) => {
   const query = new URLSearchParams({ limit: limit.toString() });
   if (cursor) query.set('cursor', cursor);
-  const json = await chatClient.request(`/conversations/${conversationId}/messages?${query.toString()}`);
+  const json = await chatClient.request(`/conversations/${conversationId}/messages?${query.toString()}`, {}, background);
   const raw = Array.isArray(json.data) ? json.data : [];
   return { ...json, data: raw.map(normalizeMessage) };
 };
@@ -967,10 +989,9 @@ export const fetchPresence = async (userIds: string[]): Promise<Record<string, b
     const json = await chatClient.request<{ data: Record<string, boolean> }>('/presence', {
       method: 'POST',
       body: JSON.stringify({ user_ids: userIds }),
-    });
+    }, true);
     return json.data ?? json;
   } catch {
     return {};
   }
 };
-

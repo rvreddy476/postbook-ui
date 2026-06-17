@@ -66,6 +66,60 @@ async function resolveUserId(usernameOrId: string): Promise<string> {
     return id
 }
 
+const markRelationshipRequestSent = (relationship: Relationship | null | undefined): Relationship => ({
+    following: relationship?.following ?? false,
+    followed_by: relationship?.followed_by ?? false,
+    is_connection: false,
+    connection_status: "pending_sent",
+    in_circle: false,
+    circle_request_sent: true,
+    circle_request_received: false,
+    blocked: relationship?.blocked ?? false,
+    blocked_by: relationship?.blocked_by ?? false,
+    is_muted: relationship?.is_muted,
+    can_dm: relationship?.can_dm ?? false,
+    can_see_online: relationship?.can_see_online ?? false,
+    can_add_to_group: relationship?.can_add_to_group ?? false,
+    mutual_circle_count: relationship?.mutual_circle_count ?? 0,
+})
+
+function applyRequestSentToCaches(qc: ReturnType<typeof useQueryClient>, userId: string) {
+    qc.setQueriesData<Relationship | undefined>(
+        {
+            queryKey: ["relationship"],
+            predicate: (query) => query.queryKey[2] === userId,
+        },
+        (old) => {
+            if (!old) return old
+            return markRelationshipRequestSent(old)
+        },
+    )
+
+    qc.setQueriesData<{ profile?: { id?: string }, relationship?: Relationship | null } | undefined>(
+        {
+            queryKey: ["aggregated-profile"],
+            predicate: (query) => {
+                const data = query.state.data as { profile?: { id?: string } } | undefined
+                return data?.profile?.id === userId
+            },
+        },
+        (old) => {
+            if (!old || !("relationship" in old)) return old
+            return {
+                ...old,
+                relationship: markRelationshipRequestSent(old.relationship),
+            }
+        },
+    )
+
+    qc.setQueriesData<Map<string, Relationship> | undefined>({ queryKey: ["relationships", "batch"] }, (old) => {
+        if (!old?.has(userId)) return old
+        const next = new Map(old)
+        next.set(userId, markRelationshipRequestSent(old.get(userId)))
+        return next
+    })
+}
+
 /**
  * graph-service connection endpoints return only IDs. Hydrate a list of user
  * ids into display objects via the batch-profile endpoint (POST /v1/profiles/batch).
@@ -501,13 +555,24 @@ export function useSendFriendRequest() {
         mutationFn: async (usernameOrId: string) => {
             const userId = await resolveUserId(usernameOrId)
             await api.post("/v1/graph/connection-request", { user_id: userId })
+            return userId
         },
-        onSuccess: () => {
+        onMutate: async (usernameOrId) => {
+            const userId = UUID_RE.test(usernameOrId) ? usernameOrId : undefined
+            if (!userId) return
+            await qc.cancelQueries({ queryKey: ["relationship"] })
+            await qc.cancelQueries({ queryKey: ["relationships", "batch"] })
+            await qc.cancelQueries({ queryKey: ["aggregated-profile"] })
+            applyRequestSentToCaches(qc, userId)
+        },
+        onSuccess: (userId) => {
+            applyRequestSentToCaches(qc, userId)
+            qc.invalidateQueries({ queryKey: ["friend-requests", "sent"] })
+            qc.invalidateQueries({ queryKey: ["friend-requests", "pending"] })
+        },
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ["friend-suggestions"] })
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
             qc.invalidateQueries({ queryKey: ["connections"] })
-            qc.invalidateQueries({ queryKey: ["relationship"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
         },
         onError: (error) => {
             console.error("[Connections] Failed to send friend request", error)
@@ -664,14 +729,15 @@ export function useBatchRelationships(viewerId: string, targetIds: string[]) {
             for (const [userId, rel] of Object.entries(raw ?? {})) {
                 if (!rel || typeof rel !== 'object') continue
                 const isConnection = !!rel.is_connection
+                const status = (rel.connection_status as Relationship['connection_status']) ?? 'none'
                 map.set(userId, {
                     following: !!(rel.follows ?? rel.following),
                     followed_by: !!rel.followed_by,
                     is_connection: isConnection,
-                    connection_status: isConnection ? 'accepted' : (rel.connection_status as Relationship['connection_status']) ?? 'none',
+                    connection_status: isConnection ? 'accepted' : status,
                     in_circle: isConnection,
-                    circle_request_sent: false,
-                    circle_request_received: false,
+                    circle_request_sent: status === 'pending_sent',
+                    circle_request_received: status === 'pending_received',
                 } as Relationship)
             }
             return map

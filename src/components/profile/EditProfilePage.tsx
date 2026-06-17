@@ -29,7 +29,7 @@ type TabType = "identity" | "visual" | "work" | "education" | "interests"
 
 const TABS: { id: TabType; label: string; icon: any; description: string }[] = [
     { id: "identity", label: "Profile", icon: User, description: "Your username and bio" },
-    { id: "visual", label: "Photos", icon: Palette, description: "Avatars and cover images" },
+    { id: "visual", label: "Account", icon: Palette, description: "Photos and appearance" },
     { id: "work", label: "Work", icon: Briefcase, description: "Professional history" },
     { id: "education", label: "Education", icon: GraduationCap, description: "Academic history" },
     { id: "interests", label: "Interests", icon: Sparkles, description: "Hobbies and favorites" },

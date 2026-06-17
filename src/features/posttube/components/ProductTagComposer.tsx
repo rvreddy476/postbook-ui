@@ -139,7 +139,7 @@ export function ProductTagComposer({
                                             "mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
                                             isTagged && "cursor-not-allowed opacity-50",
                                             !isTagged && !isPicked && "hover:bg-slate-50",
-                                            isPicked && "bg-violet-50 ring-1 ring-violet-200",
+                                            isPicked && "bg-brand-secondary ring-1 ring-brand-text/20",
                                         ]
                                             .filter(Boolean)
                                             .join(" ")}
@@ -374,7 +374,7 @@ function PlacementForm({
                     type="button"
                     onClick={onSubmit}
                     disabled={submitting}
-                    className="rounded-md bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                    className="rounded-md bg-brand-text px-3 py-1.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
                 >
                     {submitting ? "Adding…" : "Add tag"}
                 </button>

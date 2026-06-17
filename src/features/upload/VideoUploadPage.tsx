@@ -220,7 +220,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               type="button"
               onClick={handlePublish}
               disabled={publishing || !canPublish}
-              className="flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-text disabled:opacity-40 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-brand-bg shadow-sm hover:bg-brand-text disabled:opacity-40 transition-all"
             >
               {publishing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publishing...</> : "Publish"}
             </button>
@@ -238,7 +238,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               <p className="mt-2 text-[13px] text-brand-highlight">Your content is being processed and will appear shortly.</p>
               <div className="mt-6 flex gap-3">
                 <Link href="/reels" className="rounded-xl bg-brand-secondary px-5 py-2.5 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary">Back to Feed</Link>
-                <button type="button" onClick={reset} className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-brand-text">Upload Another</button>
+                <button type="button" onClick={reset} className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-brand-bg hover:bg-brand-text">Upload Another</button>
               </div>
             </motion.div>
 
@@ -450,7 +450,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                       </div>
                       <button
                         type="button" onClick={extractPoster} disabled={extracting}
-                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-text px-3 py-2 text-[11px] font-semibold text-white hover:bg-brand-text disabled:opacity-40 transition-all"
+                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-text px-3 py-2 text-[11px] font-semibold text-brand-bg hover:bg-brand-text disabled:opacity-40 transition-all"
                       >
                         {extracting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
                         Extract Poster

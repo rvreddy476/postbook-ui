@@ -2,10 +2,9 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
-import { useBatchRelationships, useSendFriendRequest } from '@/hooks/useConnections'
+import { useBatchRelationships } from '@/hooks/useConnections'
 import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile'
 import { useAuthUser } from '@/store/auth'
 import ChatWindow from '@/components/ChatWindow'
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { GroupMember } from '@/types/groups'
 import type { User } from '@/types'
+import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 interface GroupMembersTabProps {
   groupId: string
@@ -186,7 +186,6 @@ function MemberCard({
 }
 
 export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembersTabProps) {
-  const router = useRouter()
   const authUser = useAuthUser()
   const [searchQuery, setSearchQuery] = useState('')
   const [chats, setChats] = useState<User[]>([])
@@ -198,8 +197,6 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   const banMember = useBanMember()
   const followUser = useFollowUser()
   const unfollowUser = useUnfollowUser()
-  const sendRequest = useSendFriendRequest()
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set())
 
   const isOwner = currentUserRole === 'owner'
   const isAdmin = currentUserRole === 'admin' || isOwner
@@ -288,40 +285,17 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       )
     }
 
-    if (rel?.connection_status === 'pending_sent' || sentIds.has(m.user_id)) {
-      return (
-        <span className="rounded-lg bg-brand-text/8 px-3 py-1.5 text-[11px] font-bold text-brand-text/50">
-          Requested
-        </span>
-      )
-    }
-    if (rel?.connection_status === 'pending_received') {
-      return (
-        <button
-          onClick={() => router.push('/settings/friend-requests')}
-          className="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5"
-        >
-          Respond
-        </button>
-      )
-    }
     return (
-      <button
-        onClick={async () => {
-          if (sentIds.has(m.user_id)) return
-          try {
-            await sendRequest.mutateAsync(m.username || m.user_id)
-            setSentIds((prev) => new Set(prev).add(m.user_id))
-          } catch {
-            // surfaced by the mutation
-          }
-        }}
-        disabled={sendRequest.isPending}
+      <FriendRequestButton
+        targetUserId={m.user_id}
+        targetUsername={m.username}
+        relationship={rel}
+        addLabel="Add friend"
         className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
-      >
-        <UserPlus className="w-3.5 h-3.5" />
-        Add friend
-      </button>
+        sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
+        acceptClassName="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+        declineClassName="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
+      />
     )
   }
 

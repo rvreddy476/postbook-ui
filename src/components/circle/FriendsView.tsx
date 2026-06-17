@@ -29,7 +29,7 @@ import type { User } from '@/types'
 import { useAuthUser } from '@/store/auth'
 import {
     useFriends, usePendingFriendRequests, useAcceptFriendRequest,
-    useRejectFriendRequest, useFriendSuggestions, useSendFriendRequest,
+    useRejectFriendRequest, useFriendSuggestions,
     useCloseFriends, useAddCloseFriend, useRemoveCloseFriend, usePresence,
     useFilteredFriendRequests, useUnfilterFriendRequest,
     type ConnectionUser, type SuggestionUser, type FriendRequestEntry,
@@ -39,6 +39,7 @@ import {
     type UserSettings, type TrustedCircleSettingKey,
 } from '@/hooks/useUserSettings'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 /* ----------------------------- shared helpers ---------------------------- */
 
@@ -988,25 +989,11 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
     const router = useRouter()
     const authUser = useAuthUser()
     const suggestionsQ = useFriendSuggestions(authUser?.id, 20)
-    const sendReq = useSendFriendRequest()
 
-    const [sentIds, setSentIds] = useState<Set<string>>(new Set())
     const [showAll, setShowAll] = useState(false)
 
     const suggestions = suggestionsQ.data ?? []
     const visible = showAll ? suggestions : suggestions.slice(0, 5)
-
-    const handleAdd = (s: SuggestionUser) => {
-        setSentIds((p) => new Set(p).add(s.user_id))
-        sendReq.mutate(s.username || s.user_id, {
-            onError: () =>
-                setSentIds((p) => {
-                    const n = new Set(p)
-                    n.delete(s.user_id)
-                    return n
-                }),
-        })
-    }
     const focusSearch = () => {
         onClose()
         router.push('/search')
@@ -1126,17 +1113,16 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                                         {reasonText(s.reason_codes, s.explain_text)}
                                     </span>
                                 </button>
-                                <button
-                                    onClick={() => handleAdd(s)}
-                                    disabled={sentIds.has(s.user_id)}
-                                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-bold transition ${
-                                        sentIds.has(s.user_id)
-                                            ? 'border border-brand-divider text-brand-text/45'
-                                            : 'bg-brand-text text-brand-bg hover:opacity-90'
-                                    }`}
-                                >
-                                    {sentIds.has(s.user_id) ? 'Requested' : '+ Add'}
-                                </button>
+                                <FriendRequestButton
+                                    targetUserId={s.user_id}
+                                    targetUsername={s.username}
+                                    addLabel="+ Add"
+                                    showIcon={false}
+                                    showIncomingActions={false}
+                                    allowCancel={false}
+                                    className="shrink-0 rounded-full bg-brand-text px-3.5 py-1.5 text-[11px] font-bold text-brand-bg transition hover:opacity-90 disabled:opacity-60"
+                                    sentClassName="border border-brand-divider bg-transparent text-brand-text/45 hover:opacity-100"
+                                />
                             </div>
                         ))
                     )}

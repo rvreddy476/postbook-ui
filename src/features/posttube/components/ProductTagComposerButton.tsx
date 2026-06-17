@@ -40,9 +40,9 @@ export function ProductTagComposerButton({
                 type="button"
                 onClick={() => setOpen(true)}
                 className={[
-                    "inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2",
+                    "inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2",
                     "text-sm font-semibold text-white shadow-sm transition",
-                    "hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-300",
+                    "hover:bg-black focus:outline-none focus:ring-2 focus:ring-brand-text/20",
                 ].join(" ")}
                 aria-label="Tag products in this video"
             >

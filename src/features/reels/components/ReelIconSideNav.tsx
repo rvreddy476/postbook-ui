@@ -32,16 +32,16 @@ function NavIcon({ href, icon, label, active, newTab }: NavIconProps) {
       rel={newTab ? "noopener noreferrer" : undefined}
       className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ${
         active
-          ? "bg-slate-900 text-white shadow-sm"
+          ? "bg-brand-accent text-brand-bg shadow-sm"
           : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
       aria-label={label}
     >
       {icon}
       {/* Tooltip */}
-      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[12px] font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-brand-accent px-3 py-1.5 text-[12px] font-medium text-brand-bg opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
         {label}
-        <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-slate-900" />
+        <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-brand-accent" />
       </span>
     </Link>
   );
@@ -51,7 +51,7 @@ export function ReelIconSideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-16 shrink-0 flex-col items-center border-r border-[#E8E8EE] bg-brand-card py-4 gap-1">
+    <aside className="hidden sm:flex h-full w-16 shrink-0 flex-col items-center border-r border-brand-divider bg-brand-card py-4 gap-1">
       <NavIcon
         href="/"
         icon={<Home className="h-[18px] w-[18px]" />}

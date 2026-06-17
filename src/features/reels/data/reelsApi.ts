@@ -415,7 +415,10 @@ export async function uploadCoverDataUrl(dataUrl: string): Promise<string> {
    ═══════════════════════════════════════════════════════════ */
 
 export async function getProcessingStatus(mediaId: string): Promise<ProcessingStatusResult> {
-  const res = await api.get<ApiResponse<ProcessingStatusResult>>(`/v1/media/${mediaId}`);
+  // The rendition-status endpoint is the one that returns `all_ready`; the plain
+  // GET /v1/media/:id returns the asset record without it (which left uploads
+  // stuck on "Video processing must finish" forever).
+  const res = await api.get<ApiResponse<ProcessingStatusResult>>(`/v1/media/${mediaId}/renditions`);
   return res.data.data;
 }
 

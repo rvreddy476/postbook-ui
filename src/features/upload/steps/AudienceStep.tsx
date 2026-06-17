@@ -18,7 +18,7 @@ export function AudienceStep({ form, patch }: AudienceStepProps) {
           title="Audience"
           subtitle="Is this content made for kids? (COPPA compliance)"
         />
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-2">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 p-2">
           <RadioOption
             name="coppa"
             label="Yes, it's made for kids"
@@ -49,7 +49,7 @@ export function AudienceStep({ form, patch }: AudienceStepProps) {
           title="Age Restriction"
           subtitle="Restrict this content to viewers over 18"
         />
-        <div className="rounded-xl border border-[#E8E6E1] p-4">
+        <div className="rounded-xl border border-brand-text/10 p-4">
           <ToggleRow
             label="Age-restricted (18+)"
             description="Only viewers who are signed in and over 18 will be able to watch"
@@ -65,14 +65,14 @@ export function AudienceStep({ form, patch }: AudienceStepProps) {
           title="Disclosures"
           subtitle="Transparency settings required by platform policies"
         />
-        <div className="space-y-1 rounded-xl border border-[#E8E6E1] p-4">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 p-4">
           <ToggleRow
             label="Paid Promotion"
             description="This content contains paid promotion, sponsorship, or product placement"
             checked={form.paidPromotion}
             onChange={(v) => patch({ paidPromotion: v })}
           />
-          <div className="border-t border-[#F0EEE9]" />
+          <div className="border-t border-brand-secondary" />
           <ToggleRow
             label="Altered / AI-Generated Content"
             description="This content uses realistic AI-generated or altered elements that could be mistaken as real"

@@ -45,6 +45,10 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
   };
 
   const handlePublish = () => {
+    // Re-entry guard: ignore clicks while a publish is in flight or already done.
+    // Without this, the (now longer) upload-on-publish window let users fire
+    // multiple publishes / create duplicate posts.
+    if (studio.publishMutation.isPending || form.publishSuccess) return;
     if (!checksPass) {
       setShowValidationErrors(true);
       return;
@@ -105,39 +109,42 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
   };
 
   /* ── Published success screen ── */
-  if (form.publishSuccess && form.publishedPostId) {
+  // Gate on publishSuccess alone — the post id only drives the optional share
+  // link. Requiring it previously could leave a successful publish stuck on the
+  // form (re-clickable) if the create/draft response omitted the id.
+  if (form.publishSuccess) {
     return (
       <AppShell sectionLabel="Upload">
-        <div className="flex h-full items-center justify-center bg-[#F5F4F1]">
+        <div className="flex h-full items-center justify-center bg-brand-secondary">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mx-auto max-w-[480px] text-center px-6"
           >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#2BB5A0]/20 to-[#2BB5A0]/5 ring-8 ring-[#2BB5A0]/5">
-              <CheckCircle2 className="h-10 w-10 text-[#2BB5A0]" />
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 ring-8 ring-emerald-500/5">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             </div>
-            <h2 className="mt-6 text-[22px] font-bold text-[#1A1A1A]">
+            <h2 className="mt-6 text-[22px] font-bold text-brand-text">
               {config.label} published!
             </h2>
-            <p className="mt-2 text-[14px] text-[#6B6B6B] leading-relaxed max-w-sm mx-auto">
+            <p className="mt-2 text-[14px] text-brand-text/60 leading-relaxed max-w-sm mx-auto">
               Your video is being processed and will be available to viewers shortly.
               This usually takes a few minutes.
             </p>
             {form.publishWarning && (
-              <p className="mt-3 rounded-xl border border-[#E5A93D]/20 bg-[#E5A93D]/5 px-4 py-3 text-[12px] text-[#6B6B6B]">
+              <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[12px] text-amber-600 dark:text-amber-400">
                 {form.publishWarning}
               </p>
             )}
 
             {postUrl && (
-              <div className="mt-6 flex items-center gap-2 rounded-xl border border-[#E8E6E1] bg-brand-card px-4 py-3 shadow-sm">
-                <span className="flex-1 truncate text-left text-[13px] text-[#6B6B6B] font-mono">{postUrl}</span>
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-sm">
+                <span className="flex-1 truncate text-left text-[13px] text-brand-text/60 font-mono">{postUrl}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(postUrl)}
-                  className="shrink-0 rounded-lg p-1.5 text-[#9E9E9E] hover:bg-[#F5F4F1] hover:text-[#6B6B6B] transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text/60 transition-colors"
                   title="Copy link"
                 >
                   <Copy className="h-4 w-4" />
@@ -148,7 +155,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-brand-card px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-sm"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Go to {isLongVideo ? "Posttube" : "Reels"}
@@ -156,7 +163,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               <button
                 type="button"
                 onClick={studio.clearFile}
-                className="rounded-xl bg-[#7C5CFC] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors shadow-sm"
+                className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-brand-bg hover:bg-brand-text transition-colors shadow-sm"
               >
                 Upload Another
               </button>
@@ -170,7 +177,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
 
   return (
     <AppShell sectionLabel="Upload">
-      <div className="flex h-full flex-col bg-[#F5F4F1]">
+      <div className="flex h-full flex-col bg-brand-secondary">
         <StudioToolbar
           contentType={contentType}
           steps={steps}
@@ -194,7 +201,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
         <div className="flex flex-1 min-h-0">
           {/* Form panel */}
           <div className="flex-1 min-w-0 overflow-y-auto">
-            <div className="mx-auto max-w-[640px] px-8 py-8">
+            <div className="mx-auto max-w-[640px] px-4 py-6 sm:px-8 sm:py-8">
               {/* Step content */}
               <AnimatePresence mode="wait">
                 <motion.div
@@ -213,15 +220,15 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-[#E8527A]/20 bg-[#E8527A]/5 p-4"
+                  className="mt-6 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-[#E8527A]" />
-                    <p className="text-[13px] font-semibold text-[#E8527A]">Please fix the following:</p>
+                    <AlertTriangle className="h-4 w-4 text-rose-500" />
+                    <p className="text-[13px] font-semibold text-rose-500">Please fix the following:</p>
                   </div>
                   <ul className="space-y-1">
                     {currentStepErrors.map((err) => (
-                      <li key={err.field} className="text-[12px] text-[#E8527A] pl-6">
+                      <li key={err.field} className="text-[12px] text-rose-500 pl-6 font-semibold">
                         {err.message}
                       </li>
                     ))}
@@ -234,21 +241,21 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-[#E8527A]/20 bg-[#E8527A]/5 p-4"
+                  className="mt-6 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="h-4 w-4 text-[#E8527A]" />
-                    <p className="text-[13px] font-semibold text-[#E8527A]">Cannot publish yet</p>
+                    <AlertTriangle className="h-4 w-4 text-rose-500" />
+                    <p className="text-[13px] font-semibold text-rose-500">Cannot publish yet</p>
                   </div>
                   {allErrors.map(({ step, errors }) => (
                     <div key={step} className="mb-2 last:mb-0">
-                      <p className="text-[11px] font-bold text-[#E8527A]/70 uppercase tracking-wide mb-1">
+                      <p className="text-[11px] font-bold text-rose-500/70 uppercase tracking-wide mb-1">
                         {STEP_META[step].label}
                       </p>
                       <ul className="space-y-0.5">
                         {errors.map((err) => (
-                          <li key={err.field} className="text-[12px] text-[#E8527A] pl-3 flex items-start gap-1.5">
-                            <span className="mt-1.5 h-1 w-1 rounded-full bg-[#E8527A] shrink-0" />
+                          <li key={err.field} className="text-[12px] text-rose-500 pl-3 flex items-start gap-1.5 font-semibold">
+                            <span className="mt-1.5 h-1 w-1 rounded-full bg-rose-500 shrink-0" />
                             {err.message}
                           </li>
                         ))}
@@ -263,16 +270,16 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-[#2BB5A0]/20 bg-[#2BB5A0]/5 p-4"
+                  className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-[#2BB5A0]" />
-                    <p className="text-[13px] font-semibold text-[#2BB5A0]">Ready to publish</p>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <p className="text-[13px] font-semibold text-emerald-500">Ready to publish</p>
                   </div>
                   <ul className="space-y-1.5">
                     {steps.map((step) => (
-                      <li key={step} className="flex items-center gap-2 text-[12px] text-[#6B6B6B]">
-                        <Check className="h-3 w-3 text-[#2BB5A0]" strokeWidth={3} />
+                      <li key={step} className="flex items-center gap-2 text-[12px] text-brand-text/60 font-semibold">
+                        <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
                         {STEP_META[step].label}
                       </li>
                     ))}
@@ -286,7 +293,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <button
                     type="button"
                     onClick={() => { setAttemptedNext(false); prevStep(); }}
-                    className="flex items-center gap-1.5 rounded-xl border border-[#E8E6E1] bg-brand-card px-5 py-2.5 text-[13px] font-medium text-[#6B6B6B] hover:bg-[#F5F4F1] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-sm"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Back
@@ -299,10 +306,10 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className={`flex items-center gap-1.5 rounded-xl px-6 py-2.5 text-[13px] font-semibold text-white transition-all shadow-sm ${
+                    className={`flex items-center gap-1.5 rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-all shadow-sm ${
                       currentStepErrors.length > 0 && attemptedNext
-                        ? "bg-[#E8527A] hover:bg-[#D4426A]"
-                        : "bg-[#7C5CFC] hover:bg-[#6A4AE8]"
+                        ? "bg-rose-600 hover:bg-rose-700 text-white"
+                        : "bg-brand-text text-brand-bg hover:opacity-90"
                     }`}
                   >
                     Continue
@@ -315,11 +322,11 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                     type="button"
                     onClick={handlePublish}
                     disabled={studio.publishMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-6 py-2.5 text-[13px] font-bold text-white hover:bg-[#6A4AE8] disabled:opacity-50 transition-all shadow-sm shadow-[#7C5CFC]/20"
+                    className="flex items-center gap-1.5 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-50 transition-all shadow-sm shadow-brand-text/20"
                   >
                     {studio.publishMutation.isPending ? (
                       <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-bg/30 border-t-brand-bg" />
                         Publishing...
                       </>
                     ) : (

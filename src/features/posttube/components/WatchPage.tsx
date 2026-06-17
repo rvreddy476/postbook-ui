@@ -10,8 +10,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Share2,
-  ThumbsDown,
-  ThumbsUp,
+  Heart,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -563,15 +562,18 @@ function WatchPageContent({ videoId }: WatchPageProps) {
 
               <div className="flex-1" />
 
-              <div className="flex items-center rounded-full bg-brand-secondary overflow-hidden">
-                <button type="button" onClick={handleLike} className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold border-r border-brand-divider">
-                  <ThumbsUp className={`h-[18px] w-[18px] ${liked ? "fill-current" : ""}`} />
-                  {fmtCount(likeCount)}
-                </button>
-                <button type="button" onClick={handleDislike} className="flex items-center px-3 py-2">
-                  <ThumbsDown className={`h-[18px] w-[18px] ${disliked ? "fill-current" : ""}`} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleLike}
+                aria-pressed={liked}
+                aria-label={liked ? "Loved" : "Love"}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
+                  liked ? "bg-rose-500/15 text-rose-500" : "bg-brand-secondary text-brand-text"
+                }`}
+              >
+                <Heart className={`h-[18px] w-[18px] ${liked ? "fill-rose-500 text-rose-500" : ""}`} />
+                {fmtCount(likeCount)}
+              </button>
 
               <button type="button" onClick={() => setShareOpen(true)} className="flex items-center gap-1.5 rounded-full bg-brand-secondary px-4 py-2 text-[13px] font-semibold text-brand-text">
                 <Share2 className="h-[18px] w-[18px]" />

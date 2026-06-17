@@ -11,16 +11,16 @@ const CREATE_OPTIONS = [
     description: "Upload a video to Posttube",
     href: "/posttube/upload?type=long",
     icon: Film,
-    gradient: "from-[#7C5CFC] to-[#5B3FD4]",
-    hoverBg: "hover:bg-[#F0EEFF]",
+    gradient: "from-brand-text to-black",
+    hoverBg: "hover:bg-brand-secondary",
   },
   {
     label: "Reel / Clip",
     description: "Short vertical video with music & effects",
     href: "/posttube/upload?type=short",
     icon: Clapperboard,
-    gradient: "from-[#A78BFA] to-[#7C3AED]",
-    hoverBg: "hover:bg-[#F5F0FF]",
+    gradient: "from-brand-text to-black",
+    hoverBg: "hover:bg-brand-secondary",
   },
   {
     label: "Live",
@@ -35,16 +35,16 @@ const CREATE_OPTIONS = [
     description: "Record or upload a podcast episode",
     href: "/posttube/upload?type=podcast",
     icon: Mic,
-    gradient: "from-[#6366F1] to-[#4338CA]",
-    hoverBg: "hover:bg-[#EEEEFF]",
+    gradient: "from-brand-text to-black",
+    hoverBg: "hover:bg-brand-secondary",
   },
   {
     label: "Create Post",
     description: "Share text, photos, or a quick update",
     href: "/create/post",
     icon: PenSquare,
-    gradient: "from-[#06B6D4] to-[#0891B2]",
-    hoverBg: "hover:bg-[#ECFEFF]",
+    gradient: "from-brand-text to-black",
+    hoverBg: "hover:bg-brand-secondary",
   },
 ] as const;
 
@@ -74,7 +74,7 @@ export function CreateButton() {
         whileTap={{ scale: 0.95 }}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C5CFC] to-[#5B3FD4] text-white shadow-[0_4px_12px_-2px_rgba(124,92,252,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(124,92,252,0.5)]"
+        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
         aria-label="Create"
       >
         <Sparkles className="h-[17px] w-[17px]" />
@@ -114,7 +114,7 @@ export function CreateButton() {
                   <option.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-semibold text-[#0F0D15] group-hover:text-[#7C5CFC] transition-colors">{option.label}</p>
+                  <p className="text-[13px] font-semibold text-[#0F0D15] group-hover:text-brand-text transition-colors">{option.label}</p>
                   <p className="text-[11px] text-[#B0ADBE]">{option.description}</p>
                 </div>
               </button>

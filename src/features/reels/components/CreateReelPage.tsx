@@ -1484,12 +1484,12 @@ function StepReview({
                 </span>
               )}
               {state.alteredContent && (
-                <span className="rounded-full bg-purple-50 border border-purple-200 px-2.5 py-0.5 text-[11px] font-medium text-purple-700">
+                <span className="rounded-full bg-brand-card border border-brand-divider px-2.5 py-0.5 text-[11px] font-medium text-brand-text">
                   Altered content
                 </span>
               )}
               {state.isMadeForKids && (
-                <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[11px] font-medium text-blue-700">
+                <span className="rounded-full bg-brand-card border border-brand-divider px-2.5 py-0.5 text-[11px] font-medium text-brand-text">
                   Made for kids
                 </span>
               )}

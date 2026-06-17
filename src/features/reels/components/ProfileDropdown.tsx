@@ -42,7 +42,7 @@ export function ProfileDropdown() {
       icon: User,
       hoverColor: "group-hover:bg-brand-text/5 group-hover:text-brand-text",
     },
-    { label: "Channel Settings", href: "/settings/channel", icon: Settings, hoverColor: "group-hover:bg-blue-50 group-hover:text-blue-600" },
+    { label: "Channel Settings", href: "/settings/channel", icon: Settings, hoverColor: "group-hover:bg-brand-card group-hover:text-brand-text" },
     { label: "Saved", href: "/saved", icon: Bookmark, hoverColor: "group-hover:bg-amber-50 group-hover:text-amber-600" },
   ];
 

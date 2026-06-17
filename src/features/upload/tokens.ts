@@ -1,4 +1,4 @@
-/** Upload Studio design tokens — warm off-white theme */
+/** Upload Studio design tokens - neutral black/white theme */
 
 export const T = {
   /* Surface */
@@ -17,20 +17,20 @@ export const T = {
   pink: "#E8527A",
   coral: "#F28B6D",
   teal: "#2BB5A0",
-  purple: "#7C5CFC",
+  neutral: "#0F1419",
   gold: "#E5A93D",
 
   /* UI */
-  accent: "#7C5CFC",
-  accentHover: "#6A4AE8",
-  accentLight: "#EDE9FE",
+  accent: "#0F1419",
+  accentHover: "#000000",
+  accentLight: "#F7F9F9",
   danger: "#E8527A",
   success: "#2BB5A0",
   warning: "#E5A93D",
 
   /* Borders / Dividers */
   border: "#E8E6E1",
-  borderFocus: "#7C5CFC",
+  borderFocus: "#0F1419",
   divider: "#F0EEE9",
 
   /* Radius */

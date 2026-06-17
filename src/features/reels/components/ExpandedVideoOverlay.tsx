@@ -4,14 +4,14 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
-  Flame,
-  ThumbsDown,
+  Heart,
   MessageCircle,
   Share2,
   Bookmark,
 } from "lucide-react";
 import { ReelPlayer } from "@/features/reels/components/ReelPlayer";
 import { MoreMenu } from "@/features/reels/components/MoreMenu";
+import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import CommentSection from "@/components/CommentSection";
 
 /* ── tiny action button used only in expanded overlay ──── */
@@ -72,7 +72,7 @@ export function ExpandedVideoOverlay({
   const showComments = Boolean(postId && postAuthorId);
 
   const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(true);
 
@@ -119,32 +119,17 @@ export function ExpandedVideoOverlay({
                 active
                 contain
                 onToggleMuted={onToggleMuted}
-                onBoost={() => {
-                  setLiked(true);
-                  setDisliked(false);
-                }}
+                onBoost={() => setLiked(true)}
               />
             </div>
 
             {/* Action buttons rail */}
             <div className="flex shrink-0 flex-col items-center gap-1.5 self-start pt-2">
               <OverlayAction
-                icon={<Flame className="h-[15px] w-[15px]" />}
-                label="Boost"
-                active={liked}
-                onClick={() => {
-                  setLiked((p) => !p);
-                  if (disliked) setDisliked(false);
-                }}
-              />
-              <OverlayAction
-                icon={<ThumbsDown className="h-[15px] w-[15px]" />}
-                label="Dislike"
-                active={disliked}
-                onClick={() => {
-                  setDisliked((p) => !p);
-                  if (liked) setLiked(false);
-                }}
+                icon={<Heart className={`h-[15px] w-[15px] ${liked ? "fill-rose-500 text-rose-500" : ""}`} />}
+                label="Love"
+                active={false}
+                onClick={() => setLiked((p) => !p)}
               />
               <OverlayAction
                 icon={<MessageCircle className="h-[15px] w-[15px]" />}
@@ -155,7 +140,7 @@ export function ExpandedVideoOverlay({
               <OverlayAction
                 icon={<Share2 className="h-[14px] w-[14px]" />}
                 label="Share"
-                onClick={() => {}}
+                onClick={() => setShareOpen(true)}
               />
               <OverlayAction
                 icon={<Bookmark className="h-[14px] w-[14px]" />}
@@ -197,6 +182,13 @@ export function ExpandedVideoOverlay({
               </div>
             ) : null}
           </motion.div>
+
+          <ShareSheet
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+            url={postId && typeof window !== "undefined" ? `${window.location.origin}/reels?reelId=${postId}` : ""}
+            title="Check this out on VChat"
+          />
         </motion.div>
       ) : null}
     </AnimatePresence>

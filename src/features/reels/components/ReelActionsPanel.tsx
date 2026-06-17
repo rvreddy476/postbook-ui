@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import {
-  Flame,
+  Heart,
   MessageCircle,
   Share2,
   Bookmark,
+  BarChart3,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { MoreMenu } from "@/features/reels/components/MoreMenu";
@@ -21,14 +22,21 @@ function ActionButton({
   label,
   count,
   active,
+  loved,
   onClick,
 }: {
   icon: ReactNode;
   label: string;
   count?: number;
   active?: boolean;
+  loved?: boolean;
   onClick: () => void;
 }) {
+  const stateClass = loved
+    ? "bg-rose-500/15 text-rose-500"
+    : active
+      ? "bg-brand-text text-brand-bg"
+      : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/70";
   return (
     <motion.button
       whileTap={{ scale: 0.93 }}
@@ -36,12 +44,9 @@ function ActionButton({
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
-        active
-          ? "bg-slate-900 text-white"
-          : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
-      }`}
-      aria-label={label}
+      aria-pressed={loved}
+      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${stateClass}`}
+      aria-label={loved ? `${label}d` : label}
     >
       <span className="flex h-7 w-7 items-center justify-center">{icon}</span>
       {typeof count === "number" ? (
@@ -49,7 +54,7 @@ function ActionButton({
           {formatCount(count)}
         </span>
       ) : (
-        <span className="text-[9px] font-medium">{label}</span>
+        <span className="text-[9px] font-medium">{loved ? `${label}d` : label}</span>
       )}
     </motion.button>
   );
@@ -61,6 +66,7 @@ interface ReelActionsPanelProps {
   likeCount: number;
   commentCount: number;
   shareCount: number;
+  viewCount: number;
   commentsOpen: boolean;
   onBoost: () => void;
   onComment: () => void;
@@ -69,6 +75,11 @@ interface ReelActionsPanelProps {
   onReport: () => void;
   onFeedback: () => void;
   onDontRecommend: () => void;
+  onDescription?: () => void;
+  onSaveToPlaylist?: () => void;
+  onCaptions?: () => void;
+  onQuality?: () => void;
+  onNotInterested?: () => void;
 }
 
 export function ReelActionsPanel({
@@ -77,6 +88,7 @@ export function ReelActionsPanel({
   likeCount,
   commentCount,
   shareCount,
+  viewCount,
   commentsOpen,
   onBoost,
   onComment,
@@ -85,14 +97,19 @@ export function ReelActionsPanel({
   onReport,
   onFeedback,
   onDontRecommend,
+  onDescription,
+  onSaveToPlaylist,
+  onCaptions,
+  onQuality,
+  onNotInterested,
 }: ReelActionsPanelProps) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <ActionButton
-        icon={<Flame className="h-[15px] w-[15px]" />}
-        label="Boost"
+        icon={<Heart className={`h-[15px] w-[15px] ${boosted ? "fill-rose-500 text-rose-500" : ""}`} />}
+        label="Love"
         count={likeCount}
-        active={boosted}
+        loved={boosted}
         onClick={onBoost}
       />
       <ActionButton
@@ -114,10 +131,27 @@ export function ReelActionsPanel({
         active={saved}
         onClick={onSave}
       />
+      {/* Views — Twitter-style stat (not interactive) */}
+      <div
+        className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-brand-highlight"
+        title={`${viewCount.toLocaleString()} views`}
+        aria-label={`${viewCount.toLocaleString()} views`}
+      >
+        <span className="flex h-7 w-7 items-center justify-center">
+          <BarChart3 className="h-[15px] w-[15px]" />
+        </span>
+        <span className="text-[9px] font-semibold tabular-nums">{formatCount(viewCount)}</span>
+      </div>
+
       <MoreMenu
         onReport={onReport}
         onFeedback={onFeedback}
         onDontRecommend={onDontRecommend}
+        onDescription={onDescription}
+        onSaveToPlaylist={onSaveToPlaylist}
+        onCaptions={onCaptions}
+        onQuality={onQuality}
+        onNotInterested={onNotInterested}
       />
     </div>
   );

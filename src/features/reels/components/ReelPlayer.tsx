@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { Play, Volume2, VolumeX, Maximize2 } from "lucide-react";
 
 interface ReelPlayerProps {
   videoUrl: string;
@@ -351,33 +351,18 @@ export function ReelPlayer({
         </div>
       ) : null}
 
+      {/* Sound rail — TOP-LEFT corner */}
       <AnimatePresence>
         {isHovered ? (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-8 left-0 right-0 z-30 flex items-center gap-2 px-3"
+            className="absolute top-3 left-3 z-30 flex items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex w-full items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-md">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePlayPause();
-                }}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/90 transition hover:text-white"
-                aria-label={isPaused ? "Play" : "Pause"}
-              >
-                {isPaused ? (
-                  <Play className="ml-0.5 h-3.5 w-3.5" fill="white" />
-                ) : (
-                  <Pause className="h-3.5 w-3.5" fill="white" />
-                )}
-              </button>
-
+            <div className="flex items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-md">
               <button
                 type="button"
                 onClick={(e) => {
@@ -405,26 +390,33 @@ export function ReelPlayer({
                 className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-brand-card/30 accent-white [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-card"
                 aria-label="Volume"
               />
-
-              <div className="flex-1" />
-
-              {onExpand ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onExpand();
-                  }}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/90 transition hover:text-white"
-                  aria-label="Expand"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
             </div>
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* Expand — TOP-RIGHT corner (play/pause handled by click-anywhere) */}
+      {onExpand ? (
+        <AnimatePresence>
+          {isHovered ? (
+            <motion.button
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onExpand();
+              }}
+              className="absolute top-3 right-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white/90 backdrop-blur-md transition hover:text-white"
+              aria-label="Expand"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </motion.button>
+          ) : null}
+        </AnimatePresence>
+      ) : null}
 
       <AnimatePresence>
         {isPaused && !isHovered ? (

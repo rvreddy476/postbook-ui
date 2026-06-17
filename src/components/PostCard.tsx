@@ -394,7 +394,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? 'text-center text-[20px] font-semibold' : 'text-[15px] text-brand-text'}`}
             style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}
           >
-            {post.text.split(/(#\w+|@\w+)/g).map((part, i) => {
+            {post.text.split(/(#[\p{L}\p{M}\p{N}_]+|@\w+)/gu).map((part, i) => {
               if (part.startsWith('#')) {
                 const tag = part.slice(1);
                 return (

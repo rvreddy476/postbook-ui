@@ -13,19 +13,16 @@ export default function UserProfileRoute() {
     const router = useRouter()
     const username = params.username as string
     const [currentUser, setCurrentUser] = useState<User | null>(null)
-    const [isSessionLoaded, setIsSessionLoaded] = useState(false)
 
     useEffect(() => {
-        const user = getSession()
-        if (user) {
+        const sync = () => {
+            const user = getSession()
             setCurrentUser(user)
         }
-        setIsSessionLoaded(true)
+        sync()
+        window.addEventListener("postbook:session-changed", sync)
+        return () => window.removeEventListener("postbook:session-changed", sync)
     }, [])
-
-    if (!isSessionLoaded) {
-        return <div className="min-h-screen bg-brand-bg" />
-    }
 
     const handleLogout = () => {
         logoutUser()
@@ -40,10 +37,11 @@ export default function UserProfileRoute() {
 
     return (
         <div className="min-h-screen bg-brand-bg font-sans selection:bg-rose-100 selection:text-rose-900">
-            {currentUser && <MinimalHeader currentUser={currentUser} onLogout={handleLogout} />}
+            {/* Header always visible — logo is the home button */}
+            <MinimalHeader currentUser={currentUser} onLogout={handleLogout} />
 
-            <div className={`flex ${currentUser ? "pt-16" : "pt-8"}`}>
-                {/* Left Sidebar */}
+            <div className="flex pt-16">
+                {/* Left Sidebar — always visible when logged in */}
                 {currentUser && (
                     <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-[90]">
                         <Sidebar activeTab="Profile" setActiveTab={handleSetActiveTab} />

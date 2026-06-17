@@ -50,7 +50,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onPrev}
           disabled={!hasPrev}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous reel"
         >
           <ChevronUp className="h-4 w-4" />
@@ -61,7 +61,7 @@ export function ReelChannelInfo({
           type="button"
           onClick={onNext}
           disabled={!hasNext}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F7] text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next reel"
         >
           <ChevronDown className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function ReelChannelInfo({
           onClick={onToggleSubscribe}
           className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition ${
             subscribed
-              ? "bg-brand-text/8 text-brand-text/70 hover:bg-brand-text/12"
+              ? "bg-brand-secondary text-brand-text/70 hover:bg-brand-secondary/80"
               : "bg-brand-text text-brand-bg hover:opacity-90"
           }`}
         >

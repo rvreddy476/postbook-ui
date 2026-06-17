@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import {
-  ThumbsUp,
-  ThumbsDown,
+  Heart,
   Share2,
   Bookmark,
   MessageCircle,
+  BarChart3,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { MoreMenu } from "@/features/reels/components/MoreMenu";
@@ -22,14 +22,21 @@ function ActionButton({
   label,
   count,
   active,
+  loved,
   onClick,
 }: {
   icon: ReactNode;
   label: string;
   count?: number;
   active?: boolean;
+  loved?: boolean;
   onClick: () => void;
 }) {
+  const stateClass = loved
+    ? "bg-rose-500/15 text-rose-500"
+    : active
+      ? "bg-brand-text text-brand-bg"
+      : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/70";
   return (
     <motion.button
       whileTap={{ scale: 0.93 }}
@@ -37,12 +44,9 @@ function ActionButton({
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${
-        active
-          ? "bg-slate-900 text-white"
-          : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
-      }`}
-      aria-label={label}
+      aria-pressed={loved}
+      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-150 ${stateClass}`}
+      aria-label={loved ? `${label}d` : label}
     >
       <span className="flex h-7 w-7 items-center justify-center">{icon}</span>
       {typeof count === "number" ? (
@@ -50,7 +54,7 @@ function ActionButton({
           {formatCount(count)}
         </span>
       ) : (
-        <span className="text-[9px] font-medium">{label}</span>
+        <span className="text-[9px] font-medium">{loved ? `${label}d` : label}</span>
       )}
     </motion.button>
   );
@@ -58,15 +62,13 @@ function ActionButton({
 
 interface ActionsPanelProps {
   liked: boolean;
-  disliked: boolean;
   saved: boolean;
   likeCount: number;
-  dislikeCount: number;
   commentCount: number;
   shareCount: number;
+  viewCount: number;
   commentsOpen: boolean;
   onToggleLike: () => void;
-  onToggleDislike: () => void;
   onShare: () => void;
   onToggleSave: () => void;
   onToggleComments: () => void;
@@ -77,15 +79,13 @@ interface ActionsPanelProps {
 
 export function ActionsPanel({
   liked,
-  disliked,
   saved,
   likeCount,
-  dislikeCount,
   commentCount,
   shareCount,
+  viewCount,
   commentsOpen,
   onToggleLike,
-  onToggleDislike,
   onShare,
   onToggleSave,
   onToggleComments,
@@ -96,18 +96,11 @@ export function ActionsPanel({
   return (
     <div className="flex flex-col items-center gap-1.5">
       <ActionButton
-        icon={<ThumbsUp className="h-[15px] w-[15px]" />}
-        label="Like"
+        icon={<Heart className={`h-[15px] w-[15px] ${liked ? "fill-rose-500 text-rose-500" : ""}`} />}
+        label="Love"
         count={likeCount}
-        active={liked}
+        loved={liked}
         onClick={onToggleLike}
-      />
-      <ActionButton
-        icon={<ThumbsDown className="h-[15px] w-[15px]" />}
-        label="Dislike"
-        count={dislikeCount}
-        active={disliked}
-        onClick={onToggleDislike}
       />
       <ActionButton
         icon={<MessageCircle className="h-[15px] w-[15px]" />}
@@ -128,6 +121,17 @@ export function ActionsPanel({
         active={saved}
         onClick={onToggleSave}
       />
+      {/* Views — Twitter-style stat (not interactive) */}
+      <div
+        className="flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-brand-highlight"
+        title={`${viewCount.toLocaleString()} views`}
+        aria-label={`${viewCount.toLocaleString()} views`}
+      >
+        <span className="flex h-7 w-7 items-center justify-center">
+          <BarChart3 className="h-[15px] w-[15px]" />
+        </span>
+        <span className="text-[9px] font-semibold tabular-nums">{formatCount(viewCount)}</span>
+      </div>
       <MoreMenu
         onReport={onReport}
         onFeedback={onFeedback}

@@ -100,7 +100,7 @@ export function SocialLinksSection() {
                                     Cancel
                                 </Button>
                                 <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-text/10">
-                                    {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Link"}
+                                    {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                                 </Button>
                             </div>
                         </motion.div>

@@ -101,7 +101,7 @@ function ProductCard({
                 "pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2",
                 "flex items-center gap-2 rounded-2xl bg-white/95 px-3 py-2 shadow-lg",
                 "backdrop-blur-sm transition hover:scale-[1.03] hover:bg-white",
-                "focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2",
+                "focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:ring-offset-2",
             ].join(" ")}
             style={{ left: `${x}%`, top: `${y}%` }}
             aria-label={`View product: ${tag.label || "tagged product"}`}
@@ -115,7 +115,7 @@ function ProductCard({
                     loading="lazy"
                 />
             ) : (
-                <div className="h-9 w-9 rounded-lg bg-violet-100" />
+                <div className="h-9 w-9 rounded-lg bg-brand-secondary" />
             )}
             <div className="flex flex-col items-start text-left">
                 {tag.label && (
@@ -123,7 +123,7 @@ function ProductCard({
                         {tag.label}
                     </span>
                 )}
-                <span className="text-[10px] font-medium uppercase tracking-wider text-violet-600">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-brand-text/70">
                     Affiliate ↗
                 </span>
             </div>

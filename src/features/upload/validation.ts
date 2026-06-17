@@ -55,26 +55,15 @@ function getDetailsErrors(form: StudioFormState): FieldError[] {
 
 function getPublishErrors(form: StudioFormState): FieldError[] {
   const errors: FieldError[] = [];
+  if (!form.videoFile && !form.mediaId) {
+    errors.push({ field: "videoFile", message: "Please select a video to publish" });
+  }
   if (!form.category) {
     errors.push({ field: "category", message: "Please select a category" });
   }
-  if (form.processingStatus === "failed") {
-    errors.push({
-      field: "processing",
-      message: form.processingError || "Video processing failed. Replace the upload or check again.",
-    });
-  } else if (!form.processingReady || form.processingStatus !== "ready") {
-    errors.push({ field: "processing", message: "Video processing must finish before publishing" });
-  }
-  if (form.subtitlesFile && form.subtitleUploadState === "uploading") {
-    errors.push({ field: "subtitles", message: "Subtitle upload is still in progress" });
-  }
-  if (form.subtitlesFile && form.subtitleUploadState === "error") {
-    errors.push({
-      field: "subtitles",
-      message: form.subtitleUploadError || "Subtitle upload failed",
-    });
-  }
+  // NOTE: the video is uploaded and transcoded on Publish (not on selection),
+  // so we no longer block publishing on processing being "ready". The post
+  // becomes visible to viewers once server-side processing finishes.
   if (form.scheduleAt) {
     const scheduleDate = new Date(form.scheduleAt);
     if (scheduleDate <= new Date()) {
@@ -100,7 +89,8 @@ export function isStepComplete(
 
   switch (step) {
     case "video":
-      return form.uploadPhase === "done" || form.mediaId !== null;
+      // File selected is enough — upload now happens on Publish, not on select.
+      return form.videoFile !== null || form.mediaId !== null;
     case "details":
       return form.title.trim().length > 0;
     case "audience":
@@ -112,7 +102,7 @@ export function isStepComplete(
       }
       return false;
     case "publish":
-      return form.category.length > 0 && form.processingReady && form.processingStatus === "ready";
+      return form.category.length > 0 && (form.videoFile !== null || form.mediaId !== null);
     default:
       return false;
   }

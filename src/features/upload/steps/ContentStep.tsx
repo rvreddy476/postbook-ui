@@ -69,24 +69,24 @@ export function ContentStep({
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
           onClick={() => fileRef.current?.click()}
-          className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#E8E6E1] bg-[#FAFAF8] py-16 transition-colors hover:border-[#7C5CFC]/40 hover:bg-[#EDE9FE]/20"
+          className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-text/10 bg-brand-secondary py-16 transition-colors hover:border-brand-text/40 hover:bg-brand-secondary/20"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5F4F1] group-hover:bg-[#EDE9FE] transition-colors">
-            <Upload className="h-6 w-6 text-[#9E9E9E] group-hover:text-[#7C5CFC]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-secondary group-hover:bg-brand-secondary transition-colors">
+            <Upload className="h-6 w-6 text-brand-text/50 group-hover:text-brand-text" />
           </div>
-          <p className="mt-4 text-[14px] font-semibold text-[#1A1A1A]">Drag & drop your file here</p>
-          <p className="mt-1 text-[12px] text-[#9E9E9E]">or click to browse</p>
-          <p className="mt-3 text-[11px] text-[#BFBFBF]">{config.label} — max {config.maxSize / (1024 * 1024)} MB</p>
+          <p className="mt-4 text-[14px] font-semibold text-brand-text">Drag & drop your file here</p>
+          <p className="mt-1 text-[12px] text-brand-text/50">or click to browse</p>
+          <p className="mt-3 text-[11px] text-brand-text/30">{config.label} — max {config.maxSize / (1024 * 1024)} MB</p>
           <input ref={fileRef} type="file" accept="video/*,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) selectFile(f); }} className="hidden" />
         </div>
       ) : (
         <>
           {/* ── File info bar ── */}
-          <div className="flex items-center gap-3 rounded-xl bg-[#FAFAF8] border border-[#E8E6E1] px-4 py-3">
-            <FileVideo className="h-4 w-4 shrink-0 text-[#7C5CFC]" />
+          <div className="flex items-center gap-3 rounded-xl bg-brand-secondary border border-brand-text/10 px-4 py-3">
+            <FileVideo className="h-4 w-4 shrink-0 text-brand-text" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-medium text-[#1A1A1A]">{form.videoFile.name}</p>
-              <p className="text-[11px] text-[#9E9E9E]">
+              <p className="truncate text-[13px] font-medium text-brand-text">{form.videoFile.name}</p>
+              <p className="text-[11px] text-brand-text/50">
                 {(form.videoFile.size / (1024 * 1024)).toFixed(1)} MB
                 {form.videoDurationSec != null && ` · ${fmtDuration(form.videoDurationSec)}`}
               </p>
@@ -94,20 +94,20 @@ export function ContentStep({
 
             {/* Upload progress / status */}
             {form.uploadPhase === "idle" && (
-              <button type="button" onClick={() => uploadMutation.mutate()} className="rounded-lg bg-[#7C5CFC] px-4 py-1.5 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors">
+              <button type="button" onClick={() => uploadMutation.mutate()} className="rounded-lg bg-brand-text px-4 py-1.5 text-[12px] font-semibold text-brand-bg hover:bg-brand-text transition-colors">
                 Upload
               </button>
             )}
             {form.uploadPhase === "uploading" && (
               <div className="flex items-center gap-2">
-                <div className="h-1.5 w-24 rounded-full bg-[#E8E6E1] overflow-hidden">
-                  <div className="h-full rounded-full bg-[#7C5CFC] transition-all" style={{ width: `${form.uploadProgress}%` }} />
+                <div className="h-1.5 w-24 rounded-full bg-brand-text/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-brand-text transition-all" style={{ width: `${form.uploadProgress}%` }} />
                 </div>
-                <span className="text-[11px] font-medium text-[#7C5CFC]">{form.uploadProgress}%</span>
+                <span className="text-[11px] font-medium text-brand-text">{form.uploadProgress}%</span>
               </div>
             )}
             {(form.uploadPhase === "confirming" || form.uploadPhase === "creating_draft") && (
-              <span className="flex items-center gap-1.5 text-[11px] text-[#9E9E9E]">
+              <span className="flex items-center gap-1.5 text-[11px] text-brand-text/50">
                 <Loader2 className="h-3 w-3 animate-spin" /> Processing...
               </span>
             )}
@@ -115,8 +115,8 @@ export function ContentStep({
               <span className="text-[11px] font-semibold text-[#2BB5A0]">Uploaded</span>
             )}
 
-            <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-[#7C5CFC] hover:text-[#6A4AE8]">Change</button>
-            <button type="button" onClick={clearFile} className="flex h-6 w-6 items-center justify-center rounded-full text-[#9E9E9E] hover:bg-[#F5F4F1] hover:text-[#1A1A1A]">
+            <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-brand-text hover:text-brand-text">Change</button>
+            <button type="button" onClick={clearFile} className="flex h-6 w-6 items-center justify-center rounded-full text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text">
               <X className="h-3.5 w-3.5" />
             </button>
             <input ref={fileRef} type="file" accept="video/*,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) selectFile(f); }} className="hidden" />
@@ -167,7 +167,7 @@ export function ContentStep({
           <button
             type="button"
             onClick={addHashtag}
-            className="shrink-0 rounded-xl bg-[#F5F4F1] px-4 text-[12px] font-semibold text-[#6B6B6B] hover:bg-[#E8E6E1] transition-colors"
+            className="shrink-0 rounded-xl bg-brand-secondary px-4 text-[12px] font-semibold text-brand-text/60 hover:bg-brand-text/10 transition-colors"
           >
             Add
           </button>
@@ -192,8 +192,8 @@ export function ContentStep({
                 onClick={() => patch({ coverSourceType: "video_frame" })}
                 className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-semibold transition-colors ${
                   form.coverSourceType === "video_frame"
-                    ? "bg-[#7C5CFC] text-white"
-                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                    ? "bg-brand-text text-brand-bg"
+                    : "bg-brand-secondary text-brand-text/60 hover:bg-brand-text/10"
                 }`}
               >
                 <Film className="h-3.5 w-3.5" />
@@ -204,8 +204,8 @@ export function ContentStep({
                 onClick={() => patch({ coverSourceType: "custom_image" })}
                 className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-semibold transition-colors ${
                   form.coverSourceType === "custom_image"
-                    ? "bg-[#7C5CFC] text-white"
-                    : "bg-[#F5F4F1] text-[#6B6B6B] hover:bg-[#E8E6E1]"
+                    ? "bg-brand-text text-brand-bg"
+                    : "bg-brand-secondary text-brand-text/60 hover:bg-brand-text/10"
                 }`}
               >
                 <ImageIcon className="h-3.5 w-3.5" />
@@ -216,12 +216,12 @@ export function ContentStep({
             {/* Frame from Video mode */}
             {form.coverSourceType === "video_frame" && (
               <div className="space-y-3">
-                <p className="text-[12px] text-[#9E9E9E]">Enter exact time or use the slider to pick a frame</p>
+                <p className="text-[12px] text-brand-text/50">Enter exact time or use the slider to pick a frame</p>
 
                 {/* mm:ss:ms precise inputs */}
                 <div className="flex items-center gap-1.5">
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Min</label>
+                    <label className="text-[10px] text-brand-text/50 mb-1">Min</label>
                     <input
                       type="number"
                       min={0}
@@ -235,12 +235,12 @@ export function ContentStep({
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
                     />
                   </div>
-                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">:</span>
+                  <span className="mt-4 text-[14px] font-bold text-brand-text/50">:</span>
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Sec</label>
+                    <label className="text-[10px] text-brand-text/50 mb-1">Sec</label>
                     <input
                       type="number"
                       min={0}
@@ -254,12 +254,12 @@ export function ContentStep({
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
                     />
                   </div>
-                  <span className="mt-4 text-[14px] font-bold text-[#9E9E9E]">.</span>
+                  <span className="mt-4 text-[14px] font-bold text-brand-text/50">.</span>
                   <div className="flex flex-col items-center">
-                    <label className="text-[10px] text-[#9E9E9E] mb-1">Ms</label>
+                    <label className="text-[10px] text-brand-text/50 mb-1">Ms</label>
                     <input
                       type="number"
                       min={0}
@@ -273,7 +273,7 @@ export function ContentStep({
                         const newMs = Math.min(base + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-16 rounded-lg border border-[#E8E6E1] bg-[#FAFAF8] px-2 py-1.5 text-center font-mono text-[13px] text-[#1A1A1A] focus:border-[#7C5CFC] focus:outline-none"
+                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
                     />
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export function ContentStep({
                   step={100}
                   value={form.coverTimestampMs ?? 0}
                   onChange={(e) => patch({ coverTimestampMs: Number(e.target.value) })}
-                  className="w-full accent-[#7C5CFC]"
+                  className="w-full accent-brand-text"
                 />
 
                 {/* Extract Preview — local only, no backend call */}
@@ -299,7 +299,7 @@ export function ContentStep({
                   type="button"
                   onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
                   disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-brand-bg hover:bg-brand-text disabled:opacity-40 transition-colors"
                 >
                   {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                   Extract Preview
@@ -307,9 +307,9 @@ export function ContentStep({
 
                 {/* Preview */}
                 {form.coverPreviewUrl && (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-[#E8E6E1]" style={{ maxWidth: 240 }}>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-brand-text/10" style={{ maxWidth: 240 }}>
                     <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
-                    <p className="bg-[#FAFAF8] px-2 py-1 text-[10px] text-[#9E9E9E] text-center">Preview only — uploaded at publish</p>
+                    <p className="bg-brand-secondary px-2 py-1 text-[10px] text-brand-text/50 text-center">Preview only — uploaded at publish</p>
                   </div>
                 )}
               </div>
@@ -318,11 +318,11 @@ export function ContentStep({
             {/* Custom Image Upload mode */}
             {form.coverSourceType === "custom_image" && (
               <div className="space-y-3">
-                <p className="text-[12px] text-[#9E9E9E]">Upload a custom cover image. Recommended: 1280x720 (16:9), JPEG/PNG/WebP.</p>
+                <p className="text-[12px] text-brand-text/50">Upload a custom cover image. Recommended: 1280x720 (16:9), JPEG/PNG/WebP.</p>
                 <button
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#6A4AE8] transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-brand-bg hover:bg-brand-text transition-colors"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose Image
@@ -336,9 +336,9 @@ export function ContentStep({
                 />
 
                 {form.customCoverPreviewUrl && (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-[#E8E6E1]" style={{ maxWidth: 240 }}>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-brand-text/10" style={{ maxWidth: 240 }}>
                     <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: "16/9" }} />
-                    <p className="bg-[#FAFAF8] px-2 py-1 text-[10px] text-[#9E9E9E] text-center">Preview only — uploaded at publish</p>
+                    <p className="bg-brand-secondary px-2 py-1 text-[10px] text-brand-text/50 text-center">Preview only — uploaded at publish</p>
                   </div>
                 )}
               </div>
@@ -350,16 +350,16 @@ export function ContentStep({
       {/* ── Audio Section ── */}
       <Collapsible title="Audio" defaultOpen={false}>
         <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-xl bg-[#FAFAF8] border border-[#E8E6E1] px-4 py-3">
-            <Music className="h-4 w-4 text-[#9E9E9E]" />
-            <p className="text-[12px] text-[#9E9E9E]">
+          <div className="flex items-center gap-3 rounded-xl bg-brand-secondary border border-brand-text/10 px-4 py-3">
+            <Music className="h-4 w-4 text-brand-text/50" />
+            <p className="text-[12px] text-brand-text/50">
               {form.audioTrack ? form.audioTrack.title : "Original audio will be used"}
             </p>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Volume2 className="h-3.5 w-3.5 text-[#9E9E9E]" />
-              <span className="text-[12px] text-[#6B6B6B]">Original Audio</span>
+              <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
+              <span className="text-[12px] text-brand-text/60">Original Audio</span>
             </div>
             <input
               type="range"
@@ -368,14 +368,14 @@ export function ContentStep({
               step={0.05}
               value={form.originalAudioVolume}
               onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
-              className="w-full accent-[#7C5CFC]"
+              className="w-full accent-brand-text"
             />
           </div>
           {form.audioTrack && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Volume2 className="h-3.5 w-3.5 text-[#9E9E9E]" />
-                <span className="text-[12px] text-[#6B6B6B]">Overlay Audio</span>
+                <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
+                <span className="text-[12px] text-brand-text/60">Overlay Audio</span>
               </div>
               <input
                 type="range"
@@ -384,7 +384,7 @@ export function ContentStep({
                 step={0.05}
                 value={form.overlayAudioVolume}
                 onChange={(e) => patch({ overlayAudioVolume: Number(e.target.value) })}
-                className="w-full accent-[#7C5CFC]"
+                className="w-full accent-brand-text"
               />
             </div>
           )}
