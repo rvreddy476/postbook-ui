@@ -23,10 +23,13 @@ type PostDetail = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 const mediaSrc = (id?: string) => (id ? `${API_BASE}/v1/media/${id}/serve` : "")
 
+type Stats = { open_escalations: number; queue_depth: number }
+
 export default function AdminReviewConsole() {
   const [items, setItems] = useState<Escalation[]>([])
   const [posts, setPosts] = useState<Record<string, PostDetail>>({})
   const [notes, setNotes] = useState<Record<string, string>>({})
+  const [stats, setStats] = useState<Stats | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +38,10 @@ export default function AdminReviewConsole() {
     setLoading(true)
     setError(null)
     try {
+      api
+        .get("/v1/reviewer/admin/stats")
+        .then((r) => setStats(r.data?.data ?? r.data))
+        .catch(() => setStats(null))
       const res = await api.get("/v1/reviewer/admin/escalations")
       const list: Escalation[] = res.data?.data ?? res.data ?? []
       setItems(list)
@@ -102,6 +109,17 @@ export default function AdminReviewConsole() {
         >
           Refresh
         </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="text-2xl font-semibold">{stats?.open_escalations ?? "—"}</div>
+          <div className="text-xs text-gray-500">Open escalations</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="text-2xl font-semibold">{stats?.queue_depth ?? "—"}</div>
+          <div className="text-xs text-gray-500">Videos awaiting a reviewer</div>
+        </div>
       </div>
 
       {loading && <p className="mt-8 text-sm text-gray-500">Loading…</p>}

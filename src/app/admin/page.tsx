@@ -268,6 +268,12 @@ export default function AdminPage() {
               <p className="mt-2 max-w-3xl text-[14px] leading-6 text-brand-text/65">
                 Minimal ship-week admin surface for dashboard, reports, audit log, takedown, suspend or unsuspend, and user data export visibility. This stays intentionally hidden from normal navigation.
               </p>
+              <a
+                href="/admin/review"
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90"
+              >
+                <Gavel className="h-4 w-4" /> Video review queue
+              </a>
             </div>
             <button
               type="button"
