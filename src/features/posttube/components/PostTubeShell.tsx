@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Bell, Home, TrendingUp, Clock, Radio, Compass, Library, Bookmark, Upload, Settings, Tv2, Moon, Sun } from "lucide-react";
+import { Search, Bell, Home, TrendingUp, Clock, Radio, Compass, Library, Bookmark, Upload, Settings, Tv2, Moon, Sun, ShieldCheck } from "lucide-react";
 import { useState, useEffect, useCallback, type FormEvent, type ReactNode } from "react";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
@@ -176,6 +176,13 @@ function PostTubeSideNav() {
         icon={<Upload className="h-[18px] w-[18px]" />}
         label="Upload"
         active={pathname.startsWith("/posttube/upload")}
+      />
+
+      <NavIcon
+        href="/reviewer"
+        icon={<ShieldCheck className="h-[18px] w-[18px]" />}
+        label="Review"
+        active={pathname.startsWith("/reviewer")}
       />
 
       <div className="mt-auto">
