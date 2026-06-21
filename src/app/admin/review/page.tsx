@@ -23,6 +23,12 @@ type PostDetail = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 const mediaSrc = (id?: string) => (id ? `${API_BASE}/v1/media/${id}/serve` : "")
 
+// Matches the existing admin pages' convention (src/app/admin/page.tsx): the
+// admin surface asserts scope via this header, which the gateway forwards to the
+// service. (The service still enforces the scope; production hardening should
+// move scope issuance into the JWT — see review notes.)
+const ADMIN_HEADERS = { "X-Scopes": "admin superadmin moderator" }
+
 type Stats = { open_escalations: number; queue_depth: number }
 
 export default function AdminReviewConsole() {
@@ -39,10 +45,10 @@ export default function AdminReviewConsole() {
     setError(null)
     try {
       api
-        .get("/v1/reviewer/admin/stats")
+        .get("/v1/reviewer/admin/stats", { headers: ADMIN_HEADERS })
         .then((r) => setStats(r.data?.data ?? r.data))
         .catch(() => setStats(null))
-      const res = await api.get("/v1/reviewer/admin/escalations")
+      const res = await api.get("/v1/reviewer/admin/escalations", { headers: ADMIN_HEADERS })
       const list: Escalation[] = res.data?.data ?? res.data ?? []
       setItems(list)
       // Hydrate post detail (video + creator) per escalation, best-effort.
@@ -81,10 +87,11 @@ export default function AdminReviewConsole() {
     }
     setBusy(e.id)
     try {
-      await api.post(`/v1/reviewer/admin/escalations/${e.id}/decision`, {
-        decision,
-        notes: notes[e.id] || "",
-      })
+      await api.post(
+        `/v1/reviewer/admin/escalations/${e.id}/decision`,
+        { decision, notes: notes[e.id] || "" },
+        { headers: ADMIN_HEADERS }
+      )
       setItems((prev) => prev.filter((x) => x.id !== e.id))
     } catch {
       alert("Action failed. Please retry.")
