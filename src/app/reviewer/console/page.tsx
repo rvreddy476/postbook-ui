@@ -1,155 +1,21 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import api from "@/lib/api"
-
-type Assignment = { id: string; content_id: string; content_seconds: number }
-type PostDetail = { content?: string }
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ""
-
-// Resolve a video post's playable URL the same way PostTube does: video-metadata
-// playback_url, falling back to serving the media asset. Returns "" if the media
-// isn't ready/attached yet (still transcoding or no media).
-async function resolveVideoUrl(contentId: string): Promise<string> {
-  try {
-    const r = await api.get(`/v1/videos/${contentId}`)
-    const vm = r.data?.data ?? r.data ?? {}
-    if (vm.playback_url) return vm.playback_url as string
-    if (vm.media_asset_id) return `${API_BASE}/v1/media/${vm.media_asset_id}/serve`
-  } catch {
-    /* no video metadata */
-  }
-  return ""
-}
 
 export default function ReviewerConsolePage() {
   const router = useRouter()
-  const [a, setA] = useState<Assignment | null>(null)
-  const [post, setPost] = useState<PostDetail | null>(null)
-  const [videoUrl, setVideoUrl] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [acting, setActing] = useState(false)
-  const [done, setDone] = useState(false) // queue empty
-  const heartbeat = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const stopHeartbeat = () => {
-    if (heartbeat.current) clearInterval(heartbeat.current)
-    heartbeat.current = null
-  }
-
-  const loadNext = useCallback(async () => {
-    stopHeartbeat()
-    setLoading(true)
-    setPost(null)
-    setVideoUrl("")
-    try {
-      const res = await api.get("/v1/reviewer/assignments/next")
-      const data: Assignment | null = res.data?.data ?? null
-      if (!data || !data.id) {
-        setA(null)
-        setDone(true)
-        return
-      }
-      setA(data)
-      setDone(false)
-      setVideoUrl(await resolveVideoUrl(data.content_id))
-      try {
-        const p = await api.get(`/v1/posts/${data.content_id}`)
-        setPost(p.data?.data ?? p.data)
-      } catch {
-        setPost(null)
-      }
-      heartbeat.current = setInterval(() => {
-        api.post(`/v1/reviewer/assignments/${data.id}/heartbeat`, { seconds: 10 }).catch(() => {})
-      }, 10000)
-    } catch (e: unknown) {
-      const code = (e as { response?: { data?: { error?: { code?: string } } } })?.response?.data?.error?.code
-      if (code === "KYC_REQUIRED" || code === "NOT_REVIEWER") {
-        router.replace("/reviewer")
-        return
-      }
-      setA(null)
-      setDone(true)
-    } finally {
-      setLoading(false)
-    }
+  
+  useEffect(() => {
+    router.replace("/reviewer")
   }, [router])
 
-  useEffect(() => {
-    loadNext()
-    return stopHeartbeat
-  }, [loadNext])
-
-  const decide = async (decision: "approve" | "escalate") => {
-    if (!a) return
-    let comments = ""
-    if (decision === "escalate") {
-      const input = window.prompt("What's the concern? (sent to the super-admin)")
-      if (!input || !input.trim()) return
-      comments = input.trim()
-    }
-    setActing(true)
-    try {
-      await api.post(`/v1/reviewer/assignments/${a.id}/decision`, { decision, comments })
-      await loadNext()
-    } catch {
-      alert("Could not submit. Try again.")
-    } finally {
-      setActing(false)
-    }
-  }
-
   return (
-    <div className="mx-auto max-w-md p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Review</h1>
-        <button onClick={() => router.push("/reviewer")} className="text-sm text-gray-500 hover:underline">
-          Dashboard
-        </button>
+    <div className="flex h-[70vh] flex-col items-center justify-center gap-4">
+      <div className="relative flex h-12 w-12 items-center justify-center">
+        <div className="absolute h-12 w-12 rounded-full border-4 border-[#2A2740] border-t-brand-accent animate-spin" />
       </div>
-
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
-      ) : done || !a ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
-          <p className="text-sm text-gray-600">You&apos;re all caught up — no videos to review right now.</p>
-          <button onClick={loadNext} className="mt-4 rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50">
-            Check again
-          </button>
-        </div>
-      ) : (
-        <div>
-          <div className="overflow-hidden rounded-xl bg-black">
-            {videoUrl ? (
-              <video src={videoUrl} controls autoPlay className="aspect-[9/16] w-full object-contain" />
-            ) : (
-              <div className="flex aspect-[9/16] w-full items-center justify-center px-4 text-center text-xs text-gray-400">
-                Video not available to play (media still processing or not attached).
-              </div>
-            )}
-          </div>
-          {post?.content && <p className="mt-3 line-clamp-3 text-sm text-gray-700">{post.content}</p>}
-
-          <div className="mt-5 flex gap-3">
-            <button
-              onClick={() => decide("escalate")}
-              disabled={acting}
-              className="flex-1 rounded-lg border border-amber-400 px-4 py-3 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50"
-            >
-              Escalate
-            </button>
-            <button
-              onClick={() => decide("approve")}
-              disabled={acting}
-              className="flex-1 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-            >
-              Approve
-            </button>
-          </div>
-        </div>
-      )}
+      <p className="text-sm font-medium text-[#8B8B9E] dark:text-[#6B6980]">Redirecting to dashboard...</p>
     </div>
   )
 }
