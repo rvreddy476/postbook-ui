@@ -5,15 +5,30 @@ import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 
 type Assignment = { id: string; content_id: string; content_seconds: number }
-type PostDetail = { content?: string; media_ids?: string[] }
+type PostDetail = { content?: string }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ""
-const mediaSrc = (id?: string) => (id ? `${API_BASE}/v1/media/${id}/serve` : "")
+
+// Resolve a video post's playable URL the same way PostTube does: video-metadata
+// playback_url, falling back to serving the media asset. Returns "" if the media
+// isn't ready/attached yet (still transcoding or no media).
+async function resolveVideoUrl(contentId: string): Promise<string> {
+  try {
+    const r = await api.get(`/v1/videos/${contentId}`)
+    const vm = r.data?.data ?? r.data ?? {}
+    if (vm.playback_url) return vm.playback_url as string
+    if (vm.media_asset_id) return `${API_BASE}/v1/media/${vm.media_asset_id}/serve`
+  } catch {
+    /* no video metadata */
+  }
+  return ""
+}
 
 export default function ReviewerConsolePage() {
   const router = useRouter()
   const [a, setA] = useState<Assignment | null>(null)
   const [post, setPost] = useState<PostDetail | null>(null)
+  const [videoUrl, setVideoUrl] = useState("")
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState(false)
   const [done, setDone] = useState(false) // queue empty
@@ -28,6 +43,7 @@ export default function ReviewerConsolePage() {
     stopHeartbeat()
     setLoading(true)
     setPost(null)
+    setVideoUrl("")
     try {
       const res = await api.get("/v1/reviewer/assignments/next")
       const data: Assignment | null = res.data?.data ?? null
@@ -38,6 +54,7 @@ export default function ReviewerConsolePage() {
       }
       setA(data)
       setDone(false)
+      setVideoUrl(await resolveVideoUrl(data.content_id))
       try {
         const p = await api.get(`/v1/posts/${data.content_id}`)
         setPost(p.data?.data ?? p.data)
@@ -105,11 +122,11 @@ export default function ReviewerConsolePage() {
       ) : (
         <div>
           <div className="overflow-hidden rounded-xl bg-black">
-            {mediaSrc(post?.media_ids?.[0]) ? (
-              <video src={mediaSrc(post?.media_ids?.[0])} controls autoPlay className="aspect-[9/16] w-full object-contain" />
+            {videoUrl ? (
+              <video src={videoUrl} controls autoPlay className="aspect-[9/16] w-full object-contain" />
             ) : (
-              <div className="flex aspect-[9/16] w-full items-center justify-center text-xs text-gray-400">
-                preview unavailable
+              <div className="flex aspect-[9/16] w-full items-center justify-center px-4 text-center text-xs text-gray-400">
+                Video not available to play (media still processing or not attached).
               </div>
             )}
           </div>
