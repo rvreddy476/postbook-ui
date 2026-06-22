@@ -4,9 +4,11 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:8081"
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null)
-    const refreshToken = typeof body?.refreshToken === "string"
-        ? body.refreshToken.trim()
-        : ""
+    // Cookie-mode: when the browser holds the refresh token in an httpOnly
+    // cookie, JS can't read it, so fall back to the cookie. Body token is kept
+    // for the legacy localStorage flow and mobile/non-browser clients.
+    const refreshToken = (typeof body?.refreshToken === "string" ? body.refreshToken.trim() : "")
+        || (req.cookies.get("refresh_token")?.value ?? "")
 
     if (!refreshToken) {
         return NextResponse.json(
@@ -49,5 +51,13 @@ export async function POST(req: NextRequest) {
         )
     }
 
-    return NextResponse.json(data)
+    // Forward the rotated httpOnly cookies (access/refresh/csrf) back to the
+    // browser so cookie-mode sessions stay alive across refreshes.
+    const res = NextResponse.json(data)
+    const getSetCookie = (upstream.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie
+    const cookies = typeof getSetCookie === "function" ? getSetCookie.call(upstream.headers) : []
+    for (const cookie of cookies) {
+        res.headers.append("set-cookie", cookie)
+    }
+    return res
 }
