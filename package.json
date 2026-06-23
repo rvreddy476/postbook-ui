@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
@@ -41,6 +43,7 @@
     "face-api.js"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

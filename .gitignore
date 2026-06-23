@@ -31,5 +31,11 @@ tsconfig.tsbuildinfo
 # Auto-generated
 next-env.d.ts
 
+# Playwright (E2E)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Claude Code
 .claude/
