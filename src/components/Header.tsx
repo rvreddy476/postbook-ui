@@ -285,10 +285,13 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     // Translucent chrome: content scrolls UNDER the bar, which is what tells
     // you the page is behind it. Falls back to the solid token where
     // backdrop-filter is unsupported.
-    <header className={`fixed top-0 z-100 h-20 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 flex items-center justify-between transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
-      {/* Brand mark + Desktop Search */}
-      <div className="flex items-center gap-4">
-        {/* VC logo — constant on every route */}
+    // Three columns, not a flex row with space-between: the outer columns are
+    // both 1fr, so the middle one is centred on the BAR regardless of how wide
+    // the logo or the action rail happen to be. With space-between the search
+    // only ever sat next to the logo and drifted whenever either side changed.
+    <header className={`fixed top-0 z-100 h-20 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+      {/* Column 1 — brand mark, constant on every route */}
+      <div className="flex items-center justify-self-start">
         <button
           onClick={() => router.push('/')}
           title="VChat Home"
@@ -296,9 +299,11 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         >
           <span className="text-sm font-bold -tracking-[0.02em] text-white">VC</span>
         </button>
+      </div>
 
-      <div className="hidden md:flex items-center" ref={searchRef}>
-        <div className="relative w-64 group">
+      {/* Column 2 — search, centred on the bar */}
+      <div className="hidden md:flex items-center justify-self-center" ref={searchRef}>
+        <div className="relative w-72 group">
           <input
             type="text"
             placeholder="Search network..."
@@ -321,14 +326,13 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           </AnimatePresence>
         </div>
       </div>
-      </div>
 
-      {/* Action rail.
+      {/* Column 3 — action rail.
           The icons sit in a recessed track, the same material as the
           segmented control, so they read as ONE group of peers rather than
           six loose glyphs floating on the bar. The account avatar stays
           outside it — it is not a peer of these actions, it is who you are. */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-self-end">
         {/* Mobile Search Toggle */}
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
