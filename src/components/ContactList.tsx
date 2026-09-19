@@ -52,6 +52,8 @@ const ContactList: React.FC<ContactListProps> = ({
   onClose,
 }) => {
   const [contacts, setContacts] = useState<User[]>([]);
+  /** Avatars whose URL was present but 404'd — a URL is not a working image. */
+  const [brokenAvatars, setBrokenAvatars] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [activeListTab, setActiveListTab] = useState<ChatTab>(ChatTab.Direct);
@@ -203,10 +205,29 @@ const ContactList: React.FC<ContactListProps> = ({
                           <div className="relative shrink-0">
                             <div className={`h-8 w-8 overflow-hidden rounded-full ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                               }`}>
-                              <img src={contact.avatar || '/default-avatar.png'} alt={contact.name} className="h-full w-full object-cover" />
+                              {/*
+                                The old fallback pointed at /default-avatar.png,
+                                which does not exist in public/ — so a contact
+                                without a picture got a BROKEN image icon plus
+                                their name as alt text. Fall back to initials,
+                                the same treatment posts already use.
+                              */}
+                              {contact.avatar && !brokenAvatars.has(contact.id) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={contact.avatar}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                  onError={() => setBrokenAvatars((prev) => new Set(prev).add(contact.id))}
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-brand-secondary text-[11px] font-semibold text-brand-text/60">
+                                  {(contact.name || '?').trim().charAt(0).toUpperCase()}
+                                </div>
+                              )}
                             </div>
                             {contact.isOnline && (
-                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-brand-bg bg-success" />
                             )}
                           </div>
 

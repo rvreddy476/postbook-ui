@@ -44,6 +44,13 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     return () => clearInterval(t);
   }, []);
 
+  /**
+   * Thumbnails whose URL was present but failed to load. A present URL is not
+   * a working one, and without this an unreachable image renders its alt TEXT
+   * inside the tile — the "Untitled" and "My bangaram" words over grey boxes.
+   */
+  const [brokenThumbs, setBrokenThumbs] = useState<Set<string>>(new Set());
+
   const tubeVideos = tubeFeed?.items ?? [];
   const trends = trendingData?.trending ?? [];
 
@@ -115,9 +122,17 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                   className="group flex gap-3"
                 >
                   <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
-                    {v.thumbnail_url ? (
+                    {v.thumbnail_url && !brokenThumbs.has(v.id) ? (
+                      // alt is empty on purpose: the title sits beside the tile,
+                      // so alt text here would be both redundant to a screen
+                      // reader and the thing that renders when the image 404s.
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={v.thumbnail_url} alt={v.title} className="h-full w-full object-cover" />
+                      <img
+                        src={v.thumbnail_url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        onError={() => setBrokenThumbs((prev) => new Set(prev).add(v.id))}
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
                         <Play className="h-5 w-5 text-brand-text/30" />
