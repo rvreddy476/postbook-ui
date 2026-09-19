@@ -70,12 +70,24 @@ export const clearPostMatchAuth = () => {
 // production deploy both work without env config.
 const BFF_BASE = '/api/postmatch'
 
-// Upstream base — the dating-service + chat-service backends. Routed
-// through the api-gateway. Cross-origin is fine because we attach the
-// access token as an Authorization header (no cookies needed for these
-// calls).
-const UPSTREAM_BASE =
-  process.env.NEXT_PUBLIC_POSTMATCH_API_URL || 'http://localhost:8090'
+// Upstream base — dating-service (:8112) and chat-service (:8092), both
+// reached through the api-gateway.
+//
+// This used to default to http://localhost:8090. Port 8090 is GROUP-SERVICE
+// ({"/v1/groups", GROUP_SERVICE_URL "http://group-service:8090"} in the
+// gateway's route table), so every non-auth PostMatch call went to the wrong
+// service entirely. dating-service is :8112 behind the `/v1/dating` prefix.
+//
+// The default is now the empty string, i.e. same-origin relative URLs. That
+// is how the rest of this app reaches the gateway: next.config.ts rewrites
+// `/v1/:path*` onto `/api/proxy/:path*`, and that route forwards to
+// API_GATEWAY_URL server-side. Consequences worth stating:
+//   - no CORS, no NEXT_PUBLIC_ port to keep in step with docker-compose;
+//   - the gateway address stays a server-side secret;
+//   - the proxy forwards the `authorization` header, so the Bearer token the
+//     request interceptor attaches still arrives.
+// Set NEXT_PUBLIC_POSTMATCH_API_URL only to bypass the proxy deliberately.
+const UPSTREAM_BASE = process.env.NEXT_PUBLIC_POSTMATCH_API_URL || ''
 
 const postmatchApi = axios.create({
   baseURL: UPSTREAM_BASE,

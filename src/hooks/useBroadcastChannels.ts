@@ -370,3 +370,71 @@ export function useDeleteComment() {
     },
   })
 }
+
+// === POLLS ===
+//
+// channel-service owns poll votes in its own `poll_votes` table and serves
+// real per-option counts. Both routes are under the `/v1/broadcast-channels`
+// prefix, which the api-gateway routes to channel-service:8106:
+//   POST /v1/broadcast-channels/:channelId/updates/:updateId/vote
+//        body { option_indexes: number[] }
+//   GET  /v1/broadcast-channels/:channelId/updates/:updateId/results
+//        → { results: [{ option_index, vote_count }], user_voted }
+//
+// Options that nobody has voted for are absent from `results` (the query is a
+// GROUP BY over cast votes), so a consumer must default a missing index to 0.
+
+export interface PollOptionResult {
+  option_index: number
+  vote_count: number
+}
+
+export interface PollResults {
+  results: PollOptionResult[]
+  user_voted: boolean
+}
+
+export function usePollResults(
+  channelId: string | undefined,
+  updateId: string | undefined,
+  enabled = true,
+) {
+  return useQuery<PollResults>({
+    queryKey: ["channel-poll-results", channelId, updateId],
+    queryFn: async () => {
+      const res = await api.get<{ data: PollResults }>(
+        `/v1/broadcast-channels/${channelId}/updates/${updateId}/results`,
+      )
+      return {
+        results: res.data.data?.results ?? [],
+        user_voted: !!res.data.data?.user_voted,
+      }
+    },
+    enabled: !!channelId && !!updateId && enabled,
+  })
+}
+
+export function useVoteOnPoll() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      channelId,
+      updateId,
+      optionIndexes,
+    }: {
+      channelId: string
+      updateId: string
+      optionIndexes: number[]
+    }) => {
+      await api.post(
+        `/v1/broadcast-channels/${channelId}/updates/${updateId}/vote`,
+        { option_indexes: optionIndexes },
+      )
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({
+        queryKey: ["channel-poll-results", vars.channelId, vars.updateId],
+      })
+    },
+  })
+}

@@ -129,15 +129,28 @@ export default function SocialPreferencesPage() {
     const [dmPolicy, setDmPolicy] = useState<"everyone" | "friends" | "nobody">("everyone")
     const { show, Toast } = useSaveToast()
 
+    // Endpoint audit: this used to PUT /v1/users/me/social-preferences, which
+    // exists in neither the api-gateway route table nor user-service. These
+    // are part of the single settings document: PUT /v1/users/me/settings.
+    //
+    // The enum values below are user-service's, not this page's vocabulary
+    // (allowedPrivacyValues in identity-platform user-service); an
+    // out-of-range value is rejected with INVALID_REQUEST for the whole body.
+    //
+    // allow_follows, show_follower_count and show_friend_count have NO field
+    // in updateSettingsRequest, so they are not sent rather than being
+    // silently dropped by the server behind a "Saved!" toast.
     const handleSave = async () => {
         try {
-            await api.put("/v1/users/me/social-preferences", {
-                allow_friend_requests: allowFriendRequests,
-                allow_follows: allowFollows,
-                require_follow_approval: requireFollowApproval,
-                show_follower_count: showFollowerCount,
-                show_friend_count: showFriendCount,
-                dm_policy: dmPolicy,
+            await api.put("/v1/users/me/settings", {
+                who_can_send_connection_request: allowFriendRequests ? "everyone" : "no_one",
+                account_visibility: requireFollowApproval ? "private" : "public",
+                who_can_message:
+                    dmPolicy === "everyone"
+                        ? "everyone_message_requests"
+                        : dmPolicy === "friends"
+                          ? "connections_only"
+                          : "no_one",
             })
             show("Saved!")
         } catch {

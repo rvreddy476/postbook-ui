@@ -15,7 +15,7 @@ import type { ConversationPresence } from "@/types/chat"
  *       {"type":"conversation.heartbeat", "conversation_id": "<uuid>"}
  *       {"type":"conversation.leave",     "conversation_id": "<uuid>"}
  *       {"type":"typing.start",            "conversation_id": "<uuid>"}
- *   - REST poll: GET /v1/conversations/:id/presence
+ *   - REST poll: GET /v1/chat/conversations/:id/presence
  *
  * `sendSignaling` from messageService is the queue-aware sender for that
  * shared socket — it buffers messages and replays them once the socket
@@ -33,7 +33,7 @@ const TYPING_THROTTLE_MS = 3_000
  * - Sends `conversation.heartbeat` every 15s while mounted (server TTL is
  *   longer than that, so a single missed beat doesn't drop us).
  * - Sends `conversation.leave` on unmount.
- * - Polls `GET /v1/conversations/:id/presence` every 10s via React Query.
+ * - Polls `GET /v1/chat/conversations/:id/presence` every 10s via React Query.
  *
  * Returns the polled presence rollup; consumers should hydrate
  * `active_users` via `useBatchProfiles` and filter out the viewer.
@@ -67,7 +67,7 @@ export function useConversationPresence(convID: string | null | undefined) {
     return useQuery<ConversationPresence>({
         queryKey: ["conversationPresence", convID],
         queryFn: async () => {
-            const res = await api.get(`/v1/conversations/${convID}/presence`)
+            const res = await api.get(`/v1/chat/conversations/${convID}/presence`)
             // Backend wraps responses as { data, error, meta } — accept either
             // the wrapped or raw form so we don't fight envelope drift.
             const body = res.data

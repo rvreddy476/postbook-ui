@@ -10,6 +10,7 @@ import {
   X, Play,
 } from 'lucide-react'
 import type { ChannelUpdate, BroadcastChannel } from '@/types/channels'
+import { usePollResults, useVoteOnPoll } from '@/hooks/useBroadcastChannels'
 
 /* ===== Props ===== */
 interface UpdateCardProps {
@@ -161,24 +162,53 @@ function VideoPreview({ mediaId }: { mediaId: string }) {
 }
 
 /* ===== Poll Display ===== */
-function PollDisplay({ update }: { update: ChannelUpdate }) {
-  const [voted, setVoted] = useState(false)
+//
+// This used to invent its numbers: `Math.floor(Math.random() * 20)` per
+// option, divided by `update.reaction_count` (a spark count, not a vote
+// count). Every percentage shown to a user was fabricated, and it changed on
+// every re-render.
+//
+// channel-service does keep real votes, in its own `poll_votes` table, and
+// serves them — so the counts below are the API's:
+//   POST .../updates/:updateId/vote     records the caller's choice
+//   GET  .../updates/:updateId/results  returns per-option vote_count
+//                                       plus whether the caller has voted
+//
+// Results are only requested once the viewer has voted, which is the same
+// reveal rule the UI already had. An option nobody picked is absent from the
+// response, so a missing index means zero, and while the refetch is in flight
+// no number is rendered at all rather than a placeholder one.
+function PollDisplay({ update, channelId }: { update: ChannelUpdate; channelId?: string }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const meta = (update.metadata || {}) as Record<string, unknown>
   const options = (meta.poll_options as string[]) || []
-  const totalVotes = update.reaction_count || 0
+
+  const vote = useVoteOnPoll()
+  const results = usePollResults(channelId, update.id, selectedIdx !== null)
+
+  const voted = selectedIdx !== null || !!results.data?.user_voted
+  const counts = results.data?.results
+  // Undefined until the server answers — distinct from "zero votes".
+  const countFor = (i: number): number | undefined =>
+    counts ? (counts.find((r) => r.option_index === i)?.vote_count ?? 0) : undefined
+  const totalVotes = counts
+    ? counts.reduce((sum, r) => sum + r.vote_count, 0)
+    : undefined
 
   const handleVote = (idx: number) => {
-    if (voted) return
+    if (voted || !channelId) return
     setSelectedIdx(idx)
-    setVoted(true)
+    vote.mutate({ channelId, updateId: update.id, optionIndexes: [idx] })
   }
 
   return (
     <div className="mt-3 space-y-2">
       {options.map((opt, i) => {
-        const votes = voted ? Math.floor(Math.random() * 20) : 0
-        const pct = voted && totalVotes > 0 ? Math.round((votes / Math.max(totalVotes, 1)) * 100) : 0
+        const votes = countFor(i)
+        const pct =
+          votes !== undefined && totalVotes !== undefined && totalVotes > 0
+            ? Math.round((votes / totalVotes) * 100)
+            : undefined
         return (
           <button
             key={i} onClick={() => handleVote(i)}
@@ -188,19 +218,23 @@ function PollDisplay({ update }: { update: ChannelUpdate }) {
                 : 'border-brand-divider hover:border-brand-text/30 cursor-pointer'
             }`}
           >
-            {voted && (
+            {pct !== undefined && (
               <div className="absolute inset-0 rounded-xl bg-brand-text/5 origin-left transition-all" style={{ width: `${pct}%` }} />
             )}
             <div className="relative flex items-center justify-between">
               <span className="text-brand-text font-medium">{opt}</span>
-              {voted && <span className="text-xs font-mono text-brand-text/50">{pct}%</span>}
+              {pct !== undefined && <span className="text-xs font-mono text-brand-text/50">{pct}%</span>}
               {voted && selectedIdx === i && <CheckCircle className="w-4 h-4 text-brand-text ml-2" />}
             </div>
           </button>
         )
       })}
       <p className="text-[11px] text-brand-text/40">
-        {voted ? `${totalVotes} total votes` : 'Click to vote'}
+        {!voted
+          ? 'Click to vote'
+          : totalVotes !== undefined
+            ? `${totalVotes} total votes`
+            : 'Counting votes…'}
         {meta.poll_duration && meta.poll_duration !== 'none' ? ` · Ends in ${String(meta.poll_duration)}` : null}
         {meta.poll_anonymous ? ' · Anonymous' : null}
       </p>
@@ -538,7 +572,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
         )}
 
         {update.update_type === 'poll' && (
-          <PollDisplay update={update} />
+          <PollDisplay update={update} channelId={channelId} />
         )}
 
         {update.update_type === 'event' && (

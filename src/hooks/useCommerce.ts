@@ -646,25 +646,99 @@ export type PaymentIntent = {
   // provider_ref is the gateway-side order id (e.g. Razorpay's order_xxx).
   // The frontend hands this to the Razorpay checkout dialog.
   provider_ref?: string
+  // amount_minor is the server-authored payable, in the smallest currency
+  // unit. Prefer it over `amount` when handing a figure to the provider SDK.
+  amount_minor?: number
+  // client_session carries whatever the provider SDK needs to open checkout
+  // (e.g. the publishable key that matches this exact provider order).
+  client_session?: Record<string, unknown>
 }
 
 export type CreatePaymentIntentInput = {
-  payee_id: string
-  reference_type: 'order'
+  // reference_id is the commerce order id, and the only field that is sent.
   reference_id: string
-  amount: number
+  reference_type?: 'order'
+  // The fields below are accepted for call-site compatibility and are
+  // DELIBERATELY NOT SENT. See the comment on useCreatePaymentIntent.
+  /** @deprecated ignored — commerce authors the payable from the order. */
+  payee_id?: string
+  /** @deprecated ignored — commerce authors the payable from the order. */
+  amount?: number
+  /** @deprecated ignored — the provider order already fixes the currency. */
   currency?: string
-  method: 'razorpay' | 'upi' | 'card' | 'netbanking'
+  /** @deprecated ignored — the provider is chosen server-side. */
+  method?: 'razorpay' | 'upi' | 'card' | 'netbanking'
+  /** @deprecated ignored. */
   idempotency_key?: string
 }
 
-// Creates a payment intent at payments-service. Returns the intent including
-// `provider_ref`, which is the Razorpay order_id used by checkout.js to open
-// the payment dialog.
+// Opens the payment for a commerce order.
+//
+// The old call was POST /v1/payments/intents. The api-gateway removed the
+// /v1/payments prefix outright (see the LB-1 comment in
+// api-gateway/cmd/server/main.go): the gateway stamps an internal service
+// key onto every proxied request and that key was payments-service's only
+// authentication, so any signed-in browser could mint a 1-paise intent
+// against a ₹10,000 order and PATCH it to `succeeded`. Checkout has
+// therefore been 404ing at the edge since the route was pulled.
+//
+// The replacement is the order's own endpoint, and it takes NO body —
+// commerce reads the order it owns and authors the payable itself, so there
+// is no path by which a buyer names what their own order costs.
 export function useCreatePaymentIntent() {
   return useMutation({
-    mutationFn: async (input: CreatePaymentIntentInput) =>
-      (await api.post('/v1/payments/intents', input)).data.data as PaymentIntent,
+    mutationFn: async (input: CreatePaymentIntentInput) => {
+      const res = await api.post(
+        `/v1/commerce/orders/${input.reference_id}/payment/intent`,
+      )
+      const body = res.data.data as {
+        payment_intent_id: string
+        amount_minor: number
+        currency: string
+        provider_ref?: string
+        status: string
+        client_session?: Record<string, unknown>
+      }
+      // Normalise onto the PaymentIntent shape existing callers read.
+      const intent: PaymentIntent = {
+        id: body.payment_intent_id,
+        payer_id: '',
+        payee_id: '',
+        reference_type: 'order',
+        reference_id: input.reference_id,
+        amount: body.amount_minor / 100,
+        amount_minor: body.amount_minor,
+        currency: body.currency,
+        method: 'razorpay',
+        status: body.status,
+        provider_ref: body.provider_ref,
+        client_session: body.client_session,
+      }
+      return intent
+    },
+  })
+}
+
+export type OrderPaymentStatus = {
+  order_id: string
+  order_status: string
+  payment_status: string
+  // Advisory only — what payments last knew. The order's own payment_status
+  // is what the UI should act on.
+  provider_status?: string
+}
+
+// Polls the order's payment status. A client-side return from the provider is
+// never proof of payment, so a checkout-return screen should keep saying
+// "confirming your payment" until this reports otherwise.
+export function useOrderPaymentStatus(orderId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['commerce', 'order-payment-status', orderId],
+    enabled: !!orderId && enabled,
+    refetchInterval: 3000,
+    queryFn: async () =>
+      (await api.get(`/v1/commerce/orders/${orderId}/payment/status`))
+        .data.data as OrderPaymentStatus,
   })
 }
 

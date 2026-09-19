@@ -8,11 +8,16 @@
 //
 // Knowingly deferred (P1-5 session redesign):
 //   - `/api/v1/auth/send-otp` + `/api/v1/auth/verify-otp` + `/api/v1/auth/logout`
-//     still hit the postmatch tokens flow with localStorage tokens. The
-//     P1 redesign migrates these onto identity-platform's auth-service
-//     + httpOnly cookies.
-//   - `/api/v1/blocks` list endpoint — dating-service doesn't surface a
-//     blocklist read yet. P1 work adds GET /v1/dating/safety/blocks.
+//     are rewritten onto the BFF under /api/postmatch/auth/* by
+//     postmatchApi's request interceptor. That BFF is still pointed at the
+//     retired postmatch-service and is a separate piece of work — see the
+//     note at the top of src/lib/postmatchApi.ts.
+//
+// Endpoint audit (this pass): the three remaining `/api/v1/*` non-auth calls
+// were repointed. `/api/v1/blocks` is no longer deferred — dating-service
+// lane D10 shipped the blocklist read as GET /v1/dating/blocks with
+// DELETE /v1/dating/blocks/:userId, so the legacy path is gone.
+// `/api/v1/media/init` is media-service's POST /v1/media/init.
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -130,11 +135,26 @@ export function usePostMatchPhotos() {
 export function useInitPhotoUpload() {
   return useMutation({
     mutationFn: async (payload: { content_type: string; file_name: string; file_size: number }) => {
-      const res = await postmatchApi.post<{ data: InitUploadResponse }>('/api/v1/media/init', {
-        purpose: 'profile_photo',
-        ...payload,
+      // media-service: POST /v1/media/init. Its field names differ from the
+      // retired postmatch-service's, and `purpose` / `file_name` are not part
+      // of its request at all (upload_purpose only means `composer` there), so
+      // the body is mapped rather than spread.
+      const res = await postmatchApi.post<{
+        data: { media_id: string; upload_url: string; object_key: string }
+      }>('/v1/media/init', {
+        file_type: 'image',
+        mime_type: payload.content_type,
+        file_size_bytes: payload.file_size,
       })
-      return res.data.data
+      const body = res.data.data
+      // media-service returns `object_key`; dating-service's photo create
+      // wants it as `media_key`.
+      const out: InitUploadResponse = {
+        media_id: body.media_id,
+        upload_url: body.upload_url,
+        media_key: body.object_key,
+      }
+      return out
     },
   })
 }
@@ -490,11 +510,9 @@ export type PostMatchBlock = {
 export function usePostMatchBlocks() {
   return useQuery<PostMatchBlock[]>({
     queryKey: ['postmatch', 'blocks'],
-    // P0-1: no /v1/dating/safety/blocks list endpoint yet — the
-    // legacy postmatch-service exposed one but dating-service hasn't
-    // surfaced its blocklist read API. Hit the legacy path for now;
-    // P1 work adds GET /v1/dating/safety/blocks.
-    queryFn: async () => (await postmatchApi.get('/api/v1/blocks')).data.data ?? [],
+    // dating-service lane D10: GET /v1/dating/blocks (note the path is not
+    // under /safety/ — only the write side is, POST /safety/block).
+    queryFn: async () => (await postmatchApi.get('/v1/dating/blocks')).data.data ?? [],
   })
 }
 
@@ -502,7 +520,7 @@ export function useUnblockPostMatchUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (blockedUserId: string) => {
-      await postmatchApi.delete(`/api/v1/blocks/${blockedUserId}`)
+      await postmatchApi.delete(`/v1/dating/blocks/${blockedUserId}`)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['postmatch', 'blocks'] })

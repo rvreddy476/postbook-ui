@@ -132,15 +132,22 @@ export default function PrivacyPage() {
     const [sensitiveFilter, setSensitiveFilter] = useState(true)
     const { show, Toast } = useSaveToast()
 
+    // Endpoint audit: this used to PUT /v1/users/me/privacy, which exists in
+    // neither the api-gateway route table nor user-service. Privacy settings
+    // are part of the single settings document: PUT /v1/users/me/settings,
+    // which merges the fields present in the body onto the stored record.
+    //
+    // Only the two toggles below have a backing field upstream
+    // (account_visibility is {public, private}; a friends-only profile is
+    // stored as private). post_visibility, appear_in_search,
+    // appear_in_suggestions and allow_tagging have NO field in
+    // updateSettingsRequest, so they are not sent — sending them would be
+    // silently dropped by the server and reported to the user as "Saved!".
     const handleSave = async () => {
         try {
-            await api.put("/v1/users/me/privacy", {
-                profile_visibility: profileVisibility,
-                post_visibility: postVisibility,
-                appear_in_search: appearInSearch,
-                appear_in_suggestions: appearInSuggestions,
-                allow_tagging: allowTagging,
-                sensitive_content_filter: sensitiveFilter,
+            await api.put("/v1/users/me/settings", {
+                account_visibility: profileVisibility === "everyone" ? "public" : "private",
+                auto_filter_abusive_content: sensitiveFilter,
             })
             show("Saved!")
         } catch {
