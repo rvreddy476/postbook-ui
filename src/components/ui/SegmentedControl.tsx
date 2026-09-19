@@ -17,6 +17,13 @@ interface SegmentedControlProps {
   /** Unique across mounted instances — the sliding pill is matched by it. */
   layoutId: string;
   size?: 'sm' | 'md';
+  /**
+   * Span the container with equal segments instead of hugging its content.
+   * A prop rather than a passed-in class: the base is `inline-flex`, and
+   * overriding a display utility from outside depends on stylesheet order
+   * rather than attribute order, so it silently works or does not.
+   */
+  fullWidth?: boolean;
   className?: string;
   'aria-label'?: string;
 }
@@ -45,17 +52,19 @@ export default function SegmentedControl({
   onChange,
   layoutId,
   size = 'md',
+  fullWidth = false,
   className = '',
   'aria-label': ariaLabel,
 }: SegmentedControlProps) {
   const pad = size === 'sm' ? 'p-0.5' : 'p-1';
   const seg = size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm';
+  const box = fullWidth ? 'flex w-full' : 'inline-flex';
 
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`inline-flex items-center rounded-full bg-brand-secondary ${pad} ${className}`}
+      className={`${box} items-center rounded-full bg-brand-secondary ${pad} ${className}`}
     >
       {segments.map((s) => {
         const selected = s.id === value;
@@ -68,8 +77,8 @@ export default function SegmentedControl({
             onClick={() => onChange(s.id)}
             // The label sits above the sliding pill, so it never gets painted over.
             className={`relative rounded-full font-semibold transition-colors duration-200 ${seg} ${
-              selected ? 'text-brand-text' : 'text-brand-text/55 hover:text-brand-text/80'
-            }`}
+              fullWidth ? 'flex-1' : ''
+            } ${selected ? 'text-brand-text' : 'text-brand-text/55 hover:text-brand-text/80'}`}
           >
             {selected && (
               <motion.span

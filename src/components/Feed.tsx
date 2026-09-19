@@ -126,12 +126,16 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      {/* Feed tabs — same control as the rest of the app, so switching
-          context always looks and behaves the same way. */}
-      <div className="mb-5 flex justify-center">
+      {/* Feed tabs. Full row, equal halves. With only two tabs a
+          content-width pill left the control floating in the middle of an
+          empty row, and the halves were unequal because "Following" is the
+          longer word. Spanning the row gives it the same edges as the posts
+          below it and makes the two choices read as equal. */}
+      <div className="mb-5">
         <SegmentedControl
           layoutId="feedTabIndicator"
           aria-label="Feed"
+          fullWidth
           value={activeTab}
           onChange={(id) => handleTabSwitch(id as FeedTab)}
           segments={tabs.map((t) => ({ id: t.key, label: t.label }))}

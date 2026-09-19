@@ -142,7 +142,7 @@ const ContactList: React.FC<ContactListProps> = ({
             layoutId="chat-scope"
             aria-label="Conversations"
             size="sm"
-            className="w-full [&>button]:flex-1"
+            fullWidth
             value={activeListTab}
             onChange={(id) => {
               setActiveListTab(id as ChatTab);
