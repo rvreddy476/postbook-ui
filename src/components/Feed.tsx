@@ -11,7 +11,7 @@ import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messa
 import { getSession } from '@/services/authService';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import type { PostDetail } from '@/types/profile';
 
@@ -29,6 +29,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUserId ?? 'me'}`;
 
   const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
+  const reduceMotion = useReducedMotion();
 
   // "For You" = ranked algorithm feed; "Following" = chronological from people you follow
   const forYouFeed = useHomeFeed('ranked', {
@@ -218,12 +219,23 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
 
         {posts.map((post, i) => (
           <React.Fragment key={post.id}>
-            <PostCard post={post} />
+            {/* Each post eases in as it mounts: staggered across the first
+                screenful, immediate for later pages (which mount off-screen
+                anyway), and a plain fade when reduced motion is on. */}
+            <motion.div
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={reduceMotion
+                ? { duration: 0.15 }
+                : { type: "spring", stiffness: 360, damping: 34, delay: i < 6 ? i * 0.04 : 0 }}
+            >
+              <PostCard post={post} />
+            </motion.div>
             {/* People-you-may-know strips woven into the feed (FB-style):
                 one after the 3rd post (or after the last post on short
                 feeds), another deeper down showing different people. */}
-            {i === Math.min(2, posts.length - 1) && <PeopleYouMayKnowStrip />}
-            {i === 14 && <PeopleYouMayKnowStrip offset={10} />}
+            {i === Math.min(2, posts.length - 1) && <div className="lg:hidden"><PeopleYouMayKnowStrip /></div>}
+            {i === 14 && <div className="lg:hidden"><PeopleYouMayKnowStrip offset={10} /></div>}
           </React.Fragment>
         ))}
 

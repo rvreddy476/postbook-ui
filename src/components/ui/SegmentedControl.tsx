@@ -31,6 +31,10 @@ interface SegmentedControlProps {
 /**
  * A pick-one-of-N control.
  *
+ * The track is a TRANSLUCENT tint of the text colour, not a fixed grey, so it
+ * reads as recessed on white chrome, on the page wash and in dark mode alike;
+ * a fixed light grey all but vanished once the page itself became off-white.
+ *
  * Deliberately NOT the accent colour. The accent means "this is the action"
  * (Post, Sign in, Follow); if a tab strip uses it too, the real actions stop
  * standing out. So the track is a recessed neutral and the selection is a
@@ -64,7 +68,7 @@ export default function SegmentedControl({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`${box} items-center rounded-full bg-brand-secondary ${pad} ${className}`}
+      className={`${box} items-center rounded-full bg-brand-text/[0.06] ${pad} ${className}`}
     >
       {segments.map((s) => {
         const selected = s.id === value;

@@ -59,7 +59,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
-      <body className={`${outfit.variable} ${spaceMono.variable} bg-brand-bg text-brand-text antialiased`}>
+      <body className={`${outfit.variable} ${spaceMono.variable} bg-canvas text-brand-text antialiased`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `

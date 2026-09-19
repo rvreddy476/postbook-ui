@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Calendar, Newspaper, Play, TrendingUp } from 'lucide-react';
+import { Play, TrendingUp, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useTrending } from '@/hooks/useSearch';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
+import { useAuthUser } from '@/store/auth';
+import { useFriendSuggestions } from '@/hooks/useConnections';
+import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
+import Avatar from '@/components/ui/Avatar';
 import { User } from '../types';
 
 interface RightPanelProps {
@@ -20,29 +24,33 @@ function formatViews(n: number): string {
   return String(n);
 }
 
-const ROTATE_MS = 12_000;
-
 /**
- * Home right rail. Friend suggestions moved inline into the feed
- * (PeopleYouMayKnowStrip) — this panel now hosts a rotating stack of
- * content cards: Trending, PostTube trending videos, Events, News.
- * Every ROTATE_MS the top card moves to the back so the rail keeps
- * changing without user input.
+ * Home right rail: people first, then what is trending.
+ *
+ * Three changes from what was here, each for a reason:
+ *
+ * - It used to show Events and News cards that were hard-coded placeholders
+ *   ("will show up here", "on its way"). With Trending also empty on a quiet
+ *   network, a third of the screen said the app had nothing in it. Those two
+ *   are gone, and every remaining card renders only when it has content.
+ * - People you may know leads, with faces and an Add friend button, because
+ *   people are what make a social feed feel inhabited. The same suggestions
+ *   also appear inline in the feed, but only below this breakpoint, so no one
+ *   sees the same faces twice.
+ * - The cards used to reshuffle every 12 seconds. Content that moves while you
+ *   are reading it takes control away from you, so the order is fixed now.
  */
 const RightPanel: React.FC<RightPanelProps> = () => {
   const router = useRouter();
+  const authUser = useAuthUser();
+  const { data: suggestions, isLoading: suggestionsLoading } = useFriendSuggestions(authUser?.id, 5);
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
   const { data: tubeFeed } = useQuery({
     queryKey: ['posttube-trending-rail'],
     queryFn: () => getCategoryFeed('trending', { limit: 3 }),
     staleTime: 120_000,
   });
-
-  const [rotation, setRotation] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setRotation((r) => r + 1), ROTATE_MS);
-    return () => clearInterval(t);
-  }, []);
+  const people = (suggestions ?? []).slice(0, 5);
 
   /**
    * Thumbnails whose URL was present but failed to load. A present URL is not
@@ -54,14 +62,86 @@ const RightPanel: React.FC<RightPanelProps> = () => {
   const tubeVideos = tubeFeed?.items ?? [];
   const trends = trendingData?.trending ?? [];
 
-  const cards: { key: string; node: React.ReactNode }[] = [
+  const cards: { key: string; show: boolean; node: React.ReactNode }[] = [
+    {
+      key: 'people',
+      show: suggestionsLoading || people.length > 0,
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-brand-text/50" />
+              <h5 className="text-sm font-semibold text-brand-text">People you may know</h5>
+            </div>
+            <button
+              onClick={() => router.push('/circle')}
+              className="text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
+            >
+              See all
+            </button>
+          </div>
+          {suggestionsLoading ? (
+            <div className="space-y-4 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-brand-secondary" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-24 rounded-sm bg-brand-secondary" />
+                    <div className="h-2 w-16 rounded-sm bg-brand-secondary" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-3.5">
+              {people.map((p) => {
+                const name = p.display_name || p.username || 'Someone';
+                return (
+                  <li key={p.user_id} className="flex items-center gap-3">
+                    <button
+                      onClick={() => router.push(`/u/${p.username || p.user_id}`)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <Avatar
+                        src={p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : undefined}
+                        name={name}
+                        className="h-10 w-10"
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-brand-text">{name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {p.mutual_friend_count
+                            ? `${p.mutual_friend_count} mutual friend${p.mutual_friend_count === 1 ? '' : 's'}`
+                            : p.username ? `@${p.username}` : 'Suggested for you'}
+                        </span>
+                      </span>
+                    </button>
+                    <FriendRequestButton
+                      targetUserId={p.user_id}
+                      targetUsername={p.username}
+                      addLabel="Add"
+                      showIncomingActions={false}
+                      allowCancel={false}
+                      className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
+                      sentClassName="bg-brand-secondary text-muted-foreground"
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ),
+    },
     {
       key: 'trending',
+      // Hidden when the network has nothing trending, rather than saying so.
+      show: trendingLoading || trends.length > 0,
       node: (
         <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">Trending</h5>
+            <h5 className="text-sm font-semibold text-brand-text">Trending</h5>
           </div>
           {trendingLoading ? (
             <div className="space-y-4 animate-pulse">
@@ -95,18 +175,19 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     },
     {
       key: 'posttube',
+      show: tubeVideos.length > 0,
       node: (
         <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Play className="h-4 w-4 text-brand-text/50" />
-              <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">PostTube Trending</h5>
+              <h5 className="text-sm font-semibold text-brand-text">Trending videos</h5>
             </div>
             <a
               href="/posttube"
               target="_blank"
               rel="noreferrer"
-              className="text-[10px] font-bold tracking-widest text-brand-highlight hover:text-brand-text"
+              className="text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
             >
               More
             </a>
@@ -156,51 +237,20 @@ const RightPanel: React.FC<RightPanelProps> = () => {
         </div>
       ),
     },
-    {
-      key: 'events',
-      node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
-          <div className="mb-3 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">Events</h5>
-          </div>
-          <p className="text-xs leading-relaxed text-brand-text/50">
-            Events from your spaces will show up here — meetups, lives, and launches near you.
-          </p>
-          <button
-            onClick={() => router.push('/groups')}
-            className="mt-3 rounded-full border border-brand-divider bg-brand-secondary px-4 py-2 text-[10px] font-black tracking-widest text-brand-text/70 transition hover:bg-brand-secondary/80"
-          >
-            Browse spaces
-          </button>
-        </div>
-      ),
-    },
-    {
-      key: 'news',
-      node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
-          <div className="mb-3 flex items-center gap-2">
-            <Newspaper className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">News</h5>
-          </div>
-          <p className="text-xs leading-relaxed text-brand-text/50">
-            A daily digest of what&apos;s happening across VChat is on its way. Until then, the
-            trending tags above are the pulse.
-          </p>
-        </div>
-      ),
-    },
   ];
 
-  // Rotate: every tick the front card moves to the back.
-  const shift = rotation % cards.length;
-  const ordered = [...cards.slice(shift), ...cards.slice(0, shift)];
+  const visible = cards.filter((c) => c.show);
 
   return (
     <div className="sticky top-28 h-fit space-y-5">
-      {ordered.map((card) => (
-        <motion.div key={card.key} layout transition={{ type: 'spring', stiffness: 300, damping: 32 }}>
+      {visible.map((card, i) => (
+        // Eases in once, in order, instead of moving around afterwards.
+        <motion.div
+          key={card.key}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 36, delay: i * 0.05 }}
+        >
           {card.node}
         </motion.div>
       ))}

@@ -74,7 +74,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
         <div className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden hover:shadow-md transition-shadow">
             {/* Repost indicator */}
             {post.is_repost && (
-                <div className="px-4 pt-2.5 flex items-center gap-1.5" style={{ color: '#EC1A59' }}>
+                <div className="px-4 pt-2.5 flex items-center gap-1.5 text-muted-foreground">
                     <Repeat2 className="w-3.5 h-3.5" />
                     <span className="text-xs font-semibold">
                         {reposterProfile?.display_name || 'Someone'} reposted

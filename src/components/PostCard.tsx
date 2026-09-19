@@ -11,6 +11,7 @@ import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
+import CommentPreview from '@/components/CommentPreview';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
@@ -18,7 +19,7 @@ import { useDataSaver } from '@/hooks/useDataSaver';
 import api from '@/lib/api';
 import { resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   MessageCircle,
   MoreHorizontal,
@@ -60,6 +61,7 @@ function timeAgo(dateStr: string): string {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const liked = !!post.viewer_reaction;
+  const reduceMotion = useReducedMotion();
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
@@ -212,7 +214,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     >
       {/* Repost indicator */}
       {post.is_repost && (
-        <div className="px-4 pt-2.5 flex items-center gap-1.5" style={{ color: '#EC1A59' }}>
+        <div className="px-4 pt-2.5 flex items-center gap-1.5 text-muted-foreground">
           <Repeat2 className="w-3.5 h-3.5" />
           <span className="text-xs font-semibold">
             {reposterProfile?.display_name || 'Someone'} reposted
@@ -222,7 +224,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* Pin indicator */}
       {post.is_pinned && (
-        <div className="px-4 pt-2.5 flex items-center gap-1.5 text-blue-500">
+        <div className="px-4 pt-2.5 flex items-center gap-1.5 text-primary-ink">
           <Pin className="w-3.5 h-3.5 fill-current" />
           <span className="text-xs font-medium">Pinned post</span>
         </div>
@@ -232,7 +234,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all shrink-0">
+            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
               {avatar ? (
                 <img
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
@@ -240,7 +242,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
+                <div className="w-full h-full flex items-center justify-center bg-brand-secondary text-brand-text/55 font-bold text-base">
                   {avatarInitial}
                 </div>
               )}
@@ -248,10 +250,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-[14px] font-bold text-brand-text hover:text-blue-600 cursor-pointer transition-colors">{name}</h4>
+              <h4 className="text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
                 <span className="text-xs text-brand-text/60">
-                  — feeling {post.feeling} <Smile className="w-3 h-3 inline text-amber-400" />
+                  — feeling {post.feeling} <Smile className="w-3 h-3 inline text-warning" />
                 </span>
               )}
             </div>
@@ -325,19 +327,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
                     <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
 
-                    <button onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-rose-50 transition-colors text-left">
-                      <Flag className="w-4 h-4 text-rose-500 mt-0.5" />
+                    <button onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/5 transition-colors text-left">
+                      <Flag className="w-4 h-4 text-danger mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-[13px] text-rose-600 font-medium">Report</div>
-                        <div className="text-[11px] text-rose-600/60">We won't tell {name}.</div>
+                        <div className="text-[13px] text-danger font-medium">Report</div>
+                        <div className="text-[11px] text-danger/60">We won't tell {name}.</div>
                       </div>
                     </button>
 
-                    <button onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-rose-50 transition-colors text-left">
-                      <UserX className="w-4 h-4 text-rose-500 mt-0.5" />
+                    <button onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/5 transition-colors text-left">
+                      <UserX className="w-4 h-4 text-danger mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-[13px] text-rose-600 font-medium">Block {name}</div>
-                        <div className="text-[11px] text-rose-600/60">No more contact, either way.</div>
+                        <div className="text-[13px] text-danger font-medium">Block {name}</div>
+                        <div className="text-[11px] text-danger/60">No more contact, either way.</div>
                       </div>
                     </button>
                   </>
@@ -345,7 +347,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
                 {isOwnPost && (
                   <button onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                    <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-blue-500 text-blue-500' : 'text-brand-text/40'}`} />
+                    <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/40'}`} />
                     <span className="text-[13px] text-brand-text font-medium">
                       {post.is_pinned ? 'Unpin' : 'Pin'}
                     </span>
@@ -460,30 +462,30 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   onClick={() => !showResults && handleVote(option.id)}
                   disabled={!!showResults || castVoteMutation.isPending}
                   className={`w-full relative py-3 px-4 rounded-xl border text-left transition-all overflow-hidden ${isVoted
-                    ? 'border-blue-400 bg-blue-50/80'
+                    ? 'border-primary bg-primary-tint/80'
                     : showResults
                       ? 'border-brand-divider bg-brand-secondary/50 cursor-default'
-                      : 'border-brand-divider hover:border-blue-200 hover:bg-blue-50/30 cursor-pointer'
+                      : 'border-brand-divider hover:border-primary-outline hover:bg-primary-tint/30 cursor-pointer'
                     }`}
                 >
                   {showResults && (
                     <div
-                      className={`absolute inset-y-0 left-0 transition-all duration-700 rounded-xl ${isVoted ? 'bg-blue-100/70' : 'bg-brand-divider/70'}`}
+                      className={`absolute inset-y-0 left-0 transition-all duration-700 rounded-xl ${isVoted ? 'bg-primary-tint/70' : 'bg-brand-divider/70'}`}
                       style={{ width: `${option.percentage}%` }}
                     />
                   )}
                   <div className="relative z-10 flex justify-between items-center">
-                    <span className={`text-sm ${isVoted ? 'font-semibold text-blue-700' : 'text-brand-text'}`}>
+                    <span className={`text-sm ${isVoted ? 'font-semibold text-primary-ink' : 'text-brand-text'}`}>
                       {option.label}
                     </span>
                     <div className="flex items-center gap-2">
                       {showResults && (
-                        <span className={`text-xs font-bold ${isVoted ? 'text-blue-600' : 'text-brand-text/40'}`}>
+                        <span className={`text-xs font-bold ${isVoted ? 'text-primary-ink' : 'text-brand-text/40'}`}>
                           {option.percentage}%
                         </span>
                       )}
                       {isVoted && (
-                        <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-primary-ink flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />
                         </div>
                       )}
@@ -533,7 +535,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                 alt=""
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
+                              <div className="w-full h-full flex items-center justify-center bg-brand-secondary text-brand-text/55 font-bold text-sm">
                                 {avatarInitial}
                               </div>
                             )}
@@ -613,7 +615,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg ${liked
-                  ? 'bg-linear-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
+                  ? 'bg-danger text-white shadow-danger/30'
                   : 'bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-5 h-5">
@@ -621,7 +623,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   </svg>
                 </div>
                 {likesCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${liked ? 'text-rose-600' : 'text-brand-text/80'}`}>
+                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${liked ? 'text-danger' : 'text-brand-text/80'}`}>
                     {likesCount}
                   </span>
                 )}
@@ -683,38 +685,54 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
             {/* Like / Love */}
             {!post.no_likes && (
-              <button onClick={toggleLike} aria-label="Like"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${liked ? 'text-rose-500 bg-rose-50' : 'text-brand-text/60 hover:text-rose-500 hover:bg-rose-50/60'}`}>
-                <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
-                <span className="text-[12px] font-semibold">{likesCount > 0 ? likesCount : 'Like'}</span>
+              <button onClick={toggleLike} aria-label={liked ? 'Unlike' : 'Like'} aria-pressed={liked}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${liked ? 'text-danger bg-danger/10' : 'text-brand-text/60 hover:text-danger hover:bg-danger/5'}`}>
+                {/* The pop: the heart swells and settles only when it BECOMES
+                    liked. initial={false} stops it firing for posts that load
+                    already liked, and it is skipped under reduced motion. */}
+                <motion.span
+                  className="inline-flex"
+                  initial={false}
+                  animate={liked && !reduceMotion ? { scale: [1, 1.35, 0.92, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.38, times: [0, 0.35, 0.7, 1], ease: 'easeOut' }}
+                >
+                  <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
+                </motion.span>
+                <span className="text-[12px] font-semibold tabular-nums">{likesCount > 0 ? likesCount : 'Like'}</span>
               </button>
             )}
 
             {/* Comment */}
             {!post.no_comments && (
-              <button onClick={() => setShowComments(!showComments)} aria-label="Comment"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${showComments ? 'text-blue-600 bg-blue-50' : 'text-brand-text/60 hover:text-blue-600 hover:bg-blue-50/60'}`}>
+              <button onClick={() => setShowComments(!showComments)} aria-label="Comment" aria-expanded={showComments}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${showComments ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
                 <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
-                <span className="text-[12px] font-semibold">{commentsCount > 0 ? commentsCount : 'Comment'}</span>
+                <span className="text-[12px] font-semibold tabular-nums">{commentsCount > 0 ? commentsCount : 'Comment'}</span>
               </button>
             )}
 
             {/* Repost — opens ShareDialog with quote + media support */}
             <button onClick={handleShare} aria-label="Repost"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-brand-text/60 hover:text-emerald-600 hover:bg-emerald-50/60 transition-all">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-brand-text/60 hover:text-success hover:bg-success/5 transition-colors duration-200 active:scale-95">
               <Repeat2 className="w-[18px] h-[18px]" />
-              <span className="text-[12px] font-semibold">{sharesCount > 0 ? sharesCount : 'Repost'}</span>
+              <span className="text-[12px] font-semibold tabular-nums">{sharesCount > 0 ? sharesCount : 'Repost'}</span>
             </button>
 
             {/* Save (Bookmark) */}
-            <button onClick={handleBookmark} aria-label="Save"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all ${bookmarked ? 'text-amber-600 bg-amber-50' : 'text-brand-text/60 hover:text-amber-600 hover:bg-amber-50/60'}`}>
+            <button onClick={handleBookmark} aria-label={bookmarked ? 'Saved' : 'Save'} aria-pressed={bookmarked}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${bookmarked ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
               <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
               <span className="text-[12px] font-semibold">{bookmarked ? 'Saved' : 'Save'}</span>
             </button>
           </div>
         )}
       </div>
+
+      {/* A comment under the post, so the feed shows people talking. Only
+          when there ARE comments and the full section is closed. */}
+      {!isReel && !post.no_comments && !showComments && commentsCount > 0 && (
+        <CommentPreview postId={post.id} count={commentsCount} onOpen={() => setShowComments(true)} />
+      )}
 
       {/* Comment Section */}
       <AnimatePresence>

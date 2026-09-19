@@ -44,6 +44,8 @@
   --color-brand-card: rgb(var(--brand-card));
 
   --color-background: rgb(var(--brand-bg));
+  /* The page ground behind the cards; see --theme-canvas. */
+  --color-canvas: rgb(var(--canvas));
   --color-foreground: rgb(var(--brand-text));
 
   /*
@@ -176,6 +178,7 @@
     --brand-highlight: var(--theme-brand-highlight);
     --brand-divider: var(--theme-brand-divider);
     --brand-card: var(--theme-brand-card);
+    --canvas: var(--theme-canvas);
 
     /*
       Every --theme-* value needs an alias here AND in the .dark block below,
@@ -210,6 +213,7 @@
     --brand-highlight: var(--theme-brand-highlight);
     --brand-divider: var(--theme-brand-divider);
     --brand-card: var(--theme-brand-card);
+    --canvas: var(--theme-canvas);
 
     --brand-ink: var(--theme-brand-ink);
     --brand-ink-hover: var(--theme-brand-ink-hover);
@@ -266,7 +270,7 @@
   body {
     color: rgb(var(--brand-text));
     font-family: var(--font-outfit), 'Outfit', sans-serif;
-    background-color: rgb(var(--brand-bg));
+    background-color: rgb(var(--canvas));
 
     /*
       Re-declared here, on the element where next/font actually defines

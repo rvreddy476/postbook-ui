@@ -25,6 +25,14 @@
   --theme-brand-card: 255 255 255;
 
   /*
+    The page itself, behind the cards. A faint cool wash rather than white, so
+    white cards sit ABOVE the page instead of dissolving into it. It is only
+    the ground: chrome (header, rail) and cards stay on brand-bg and
+    brand-card. Muted text on it still measures above 4.5:1.
+  */
+  --theme-canvas: 243 246 250;
+
+  /*
     Cerulean #3b82c4 is the brand accent. It measures 4.06:1 on white, which
     clears the 3.00:1 bar for borders, rings and icons but NOT the 4.50:1 one
     for normal-size text. So --theme-brand-ink, the same hue darkened to
@@ -73,6 +81,9 @@
   --theme-brand-highlight: 247 249 249;
   --theme-brand-divider: rgba(247, 249, 249, 0.15);
   --theme-brand-card: 0 0 0;
+
+  /* Dark keeps a black ground; its cards are separated by their borders. */
+  --theme-canvas: 0 0 0;
 
   /*
     Dark inverts the pairing: the accent lightens to #5a9bd8 (7.11:1 on black)
