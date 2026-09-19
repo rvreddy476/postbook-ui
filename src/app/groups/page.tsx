@@ -286,7 +286,7 @@ function GroupsPageInner() {
             <button
               onClick={() => acceptInvite.mutate(invite.id)}
               disabled={acceptInvite.isPending}
-              className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Accept
@@ -421,7 +421,7 @@ function GroupsPageInner() {
           {/* Create new space */}
           <Link
             href="/groups/create"
-            className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-brand-bg transition-all hover:opacity-90"
+            className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover"
           >
             <Plus className="h-4 w-4" />
             Create new space

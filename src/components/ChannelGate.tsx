@@ -77,7 +77,7 @@ export function ChannelGate({ children }: ChannelGateProps) {
           ensurePublisher.reset();
           refetch();
         }}
-        className="rounded-full bg-slate-900 px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-brand-text"
+        className="rounded-full bg-slate-900 px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-primary-ink"
       >
         Retry
       </button>

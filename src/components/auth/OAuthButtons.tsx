@@ -72,7 +72,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('github')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-xs"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-hover hover:shadow-xs"
         >
           <GitHubIcon />
           GitHub
@@ -80,7 +80,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('apple')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-xs"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-hover hover:shadow-xs"
         >
           <AppleIcon />
           Apple

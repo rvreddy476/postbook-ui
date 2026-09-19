@@ -519,7 +519,7 @@ export default function EditUpdateModal({
               type="button"
               onClick={handleSave}
               disabled={isSaving || !hasChanges}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text py-3 text-sm font-bold text-brand-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 text-sm font-bold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>

@@ -276,7 +276,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
           </span>
           <button
             onClick={() => openChat(m)}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90"
+            className="flex items-center gap-1.5 rounded-lg bg-primary-ink px-3 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-primary-hover"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             Message
@@ -291,9 +291,9 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
         targetUsername={m.username}
         relationship={rel}
         addLabel="Add friend"
-        className="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded-lg bg-primary-ink px-3 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-50"
         sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
-        acceptClassName="flex items-center gap-1.5 rounded-lg bg-brand-text px-3 py-1.5 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+        acceptClassName="flex items-center gap-1.5 rounded-lg bg-primary-ink px-3 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-50"
         declineClassName="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
       />
     )

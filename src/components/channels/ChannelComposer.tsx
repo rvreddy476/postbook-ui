@@ -842,7 +842,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
           <button
             type="button" onClick={handlePublish}
             disabled={isPublishing || !!uploadProgress}
-            className="ml-auto flex items-center gap-1.5 bg-brand-text text-brand-bg text-xs font-bold px-5 py-2 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="ml-auto flex items-center gap-1.5 bg-primary-ink text-white text-xs font-bold px-5 py-2 rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
             {(isPublishing || uploadProgress) && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             {uploadProgress ? 'Uploading...' : isPublishing ? 'Publishing...' : schedule.type === 'scheduled' ? 'Schedule Update' : 'Post Update →'}

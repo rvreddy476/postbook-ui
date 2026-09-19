@@ -418,7 +418,7 @@ export default function TaxProfilePage() {
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="inline-flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-sm font-semibold text-brand-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
                             >
                                 {isSaving ? (
                                     <>

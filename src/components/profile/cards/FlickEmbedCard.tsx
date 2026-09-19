@@ -82,7 +82,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
 
                 <Link
                     href={flickUrl}
-                    className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-brand-text hover:bg-brand-text text-white text-xs font-semibold transition-colors duration-200"
+                    className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg bg-primary-ink hover:bg-primary-ink text-white text-xs font-semibold transition-colors duration-200"
                 >
                     <Film className="w-3 h-3" />
                     View Reel

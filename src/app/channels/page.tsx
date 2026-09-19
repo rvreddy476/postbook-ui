@@ -130,7 +130,7 @@ function FeaturedCard({ channel, onSubscribe }: { channel: BroadcastChannel; onS
             e.stopPropagation()
             onSubscribe(channel.id)
           }}
-          className="mt-2 bg-brand-text text-brand-bg text-[10px] font-semibold rounded-lg px-3 py-1 hover:opacity-90 transition-opacity"
+          className="mt-2 bg-primary-ink text-white text-[10px] font-semibold rounded-lg px-3 py-1 hover:bg-primary-hover transition-opacity"
         >
           + Subscribe
         </button>
@@ -178,7 +178,7 @@ function BroadcastCard({ channel }: { channel: BroadcastChannel }) {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/channels/${channel.id}`}
-            className="bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
+            className="bg-primary-ink text-white text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:bg-primary-hover transition-opacity"
           >
             New Update
           </Link>
@@ -254,7 +254,7 @@ export default function ChannelsPage() {
         </div>
         <Link
           href="/channels/create"
-          className="flex items-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 transition-opacity shadow-xs"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-opacity shadow-xs"
         >
           <Plus className="w-4 h-4" />
           Create Channel

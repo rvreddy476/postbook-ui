@@ -94,7 +94,7 @@ export function ContentStep({
 
             {/* Upload progress / status */}
             {form.uploadPhase === "idle" && (
-              <button type="button" onClick={() => uploadMutation.mutate()} className="rounded-lg bg-brand-text px-4 py-1.5 text-[12px] font-semibold text-brand-bg hover:bg-brand-text transition-colors">
+              <button type="button" onClick={() => uploadMutation.mutate()} className="rounded-lg bg-primary-ink px-4 py-1.5 text-[12px] font-semibold text-white hover:bg-primary-ink transition-colors">
                 Upload
               </button>
             )}
@@ -299,7 +299,7 @@ export function ContentStep({
                   type="button"
                   onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
                   disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-brand-bg hover:bg-brand-text disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[12px] font-semibold text-white hover:bg-primary-ink disabled:opacity-40 transition-colors"
                 >
                   {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                   Extract Preview
@@ -322,7 +322,7 @@ export function ContentStep({
                 <button
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-brand-bg hover:bg-brand-text transition-colors"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[12px] font-semibold text-white hover:bg-primary-ink transition-colors"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose Image

@@ -146,7 +146,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
             <>
               <button
                 onClick={() => setShowCreatePost(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90"
+                className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary-hover"
               >
                 <Plus className="h-4 w-4" />
                 Create Post
@@ -181,7 +181,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
             <button
               onClick={() => joinGroup.mutate(group.id)}
               disabled={joinGroup.isPending}
-              className="flex items-center gap-2 rounded-xl bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-primary-ink px-5 py-2 text-sm font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-50"
             >
               <Users className="h-4 w-4" />
               {joinGroup.isPending ? 'Joining...' : 'Join Space'}

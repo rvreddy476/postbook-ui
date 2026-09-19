@@ -181,7 +181,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
           <button
             onClick={handleJoin}
             disabled={joinGroup.isPending}
-            className="flex items-center gap-1 px-3 py-1.5 bg-brand-text text-brand-bg rounded-lg text-[10px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 bg-primary-ink text-white rounded-lg text-[10px] font-bold hover:bg-primary-hover transition-all disabled:opacity-50"
           >
             <Plus className="w-3 h-3" />
             Join
@@ -191,7 +191,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
 
       {/* Toast */}
       {toast && (
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-primary-ink text-white text-[11px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
           {toast}
           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setToast(null) }}>
             <X className="w-3 h-3 opacity-60" />

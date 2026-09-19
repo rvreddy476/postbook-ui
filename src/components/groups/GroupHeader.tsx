@@ -189,7 +189,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {/* Primary CTA */}
                   <button
                     onClick={() => {}}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors shadow-xs"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-ink/90 transition-colors shadow-xs"
                   >
                     <Plus className="w-4 h-4" />
                     New Post
@@ -287,7 +287,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                 <button
                   onClick={handleJoin}
                   disabled={joinGroup.isPending}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 shadow-xs transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-ink/90 shadow-xs transition-all disabled:opacity-50"
                 >
                   <Users className="w-4 h-4" />
                   {joinGroup.isPending ? 'Joining...' : 'Join Group'}

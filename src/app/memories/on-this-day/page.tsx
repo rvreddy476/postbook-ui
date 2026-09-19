@@ -114,7 +114,7 @@ export default function OnThisDayPage() {
                   </p>
                   <Link
                     href={`/post/${item.post_id}`}
-                    className="inline-flex items-center rounded-2xl bg-brand-text px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-brand-highlight"
+                    className="inline-flex items-center rounded-2xl bg-primary-ink px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-brand-highlight"
                   >
                     Open post
                   </Link>

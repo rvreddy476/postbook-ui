@@ -466,7 +466,7 @@ function StepUpload({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs transition hover:bg-brand-text"
+            className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs transition hover:bg-primary-ink"
           >
             <Film className="h-4 w-4" />
             Select Video
@@ -488,7 +488,7 @@ function StepUpload({
               type="button"
               onClick={onUpload}
               disabled={isPending}
-              className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40"
+              className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-primary-ink disabled:opacity-40"
             >
               <Upload className="h-4 w-4" />
               Upload & Continue
@@ -1564,7 +1564,7 @@ function StepReview({
             type="button"
             onClick={onPublish}
             disabled={publishPending}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-[14px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-[14px] font-bold text-white shadow-xs transition hover:bg-primary-ink disabled:opacity-40"
           >
             {publishPending ? (
               <>
@@ -1658,7 +1658,7 @@ function CreateReelWizard() {
               type="button"
               onClick={nextStep}
               disabled={!canGoNext()}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-bold text-white shadow-xs transition hover:bg-primary-ink disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next
               <ArrowRight className="h-3.5 w-3.5" />

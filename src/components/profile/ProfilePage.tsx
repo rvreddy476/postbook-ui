@@ -119,7 +119,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <button
                                 onClick={handleCopy}
-                                className="w-full py-2.5 rounded-xl bg-brand-text text-white text-xs font-bold hover:bg-brand-text transition-colors"
+                                className="w-full py-2.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-ink transition-colors"
                             >
                                 {copied ? "Copied!" : "Copy Link"}
                             </button>
@@ -241,7 +241,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                 <div className="flex justify-end">
                     <button
                         onClick={() => setShowAdd((v) => !v)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold hover:bg-brand-text transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-ink transition-colors"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         Add Item
@@ -287,7 +287,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         <button
                             onClick={() => addMutation.mutate()}
                             disabled={!title.trim() || addMutation.isPending}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-bold disabled:opacity-40 hover:bg-brand-text transition-colors"
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-ink text-white text-xs font-bold disabled:opacity-40 hover:bg-primary-ink transition-colors"
                         >
                             {addMutation.isPending ? (
                                 <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>

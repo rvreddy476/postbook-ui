@@ -50,7 +50,7 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
                 >
                     <button
                         onClick={() => router.push("/")}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-ink text-white text-sm font-medium hover:bg-primary-ink transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                     >
                         <Home className="w-4 h-4" />
                         Go Home

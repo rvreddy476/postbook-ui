@@ -163,7 +163,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               <button
                 type="button"
                 onClick={studio.clearFile}
-                className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-brand-bg hover:bg-brand-text transition-colors shadow-xs"
+                className="rounded-xl bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-primary-ink transition-colors shadow-xs"
               >
                 Upload Another
               </button>
@@ -322,7 +322,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                     type="button"
                     onClick={handlePublish}
                     disabled={studio.publishMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-50 transition-all shadow-xs shadow-brand-text/20"
+                    className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-6 py-2.5 text-[13px] font-bold text-white hover:bg-primary-hover disabled:opacity-50 transition-all shadow-xs shadow-brand-text/20"
                   >
                     {studio.publishMutation.isPending ? (
                       <>

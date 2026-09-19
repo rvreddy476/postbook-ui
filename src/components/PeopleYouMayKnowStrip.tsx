@@ -112,7 +112,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                   addLabel="Add friend"
                   showIncomingActions={false}
                   allowCancel={false}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-text px-2 py-2 text-[11px] font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-60"
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-ink px-2 py-2 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-60"
                   sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
                 />
               </div>

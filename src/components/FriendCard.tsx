@@ -180,7 +180,7 @@ export default function FriendCard({
           type="button"
           onClick={onPrimary}
           disabled={primaryDisabled || primaryLoading}
-          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-text px-4 py-2 text-[13px] font-semibold text-brand-bg transition hover:opacity-90 disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-primary-hover disabled:opacity-40"
         >
           <PrimaryIcon className="h-3.5 w-3.5" />
           {primaryLoading ? '…' : primaryLabel}

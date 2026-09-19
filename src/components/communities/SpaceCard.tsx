@@ -60,7 +60,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({ space, isAdmin, onRemove, onEdit 
       <div className="flex items-center gap-2 mt-3 pt-3 border-t border-brand-divider">
         <Link
           href={href}
-          className="px-3 py-1.5 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors"
+          className="px-3 py-1.5 bg-primary-ink text-white text-xs font-bold rounded-lg hover:bg-primary-ink/90 transition-colors"
         >
           View Space
         </Link>

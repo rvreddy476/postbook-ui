@@ -561,7 +561,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Add Members
               <ChevronRight className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               <button
                 onClick={() => setStep(3)}
                 disabled={!canProceedStep2}
-                className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Review
                 <ChevronRight className="w-4 h-4" />
@@ -588,7 +588,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-60"
             >
               {creating ? (
                 <>

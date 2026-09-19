@@ -255,7 +255,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
               type="button"
               onClick={handleSave}
               disabled={!name.trim() || saving}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text py-3 font-bold text-brand-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 font-bold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
             >
               {saving ? (
                 <>

@@ -54,7 +54,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
             <button
               onClick={handleSave}
               disabled={updateRules.isPending}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text/90 transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-primary-ink rounded-lg hover:bg-primary-ink/90 transition-all disabled:opacity-50"
             >
               <Save className="w-3 h-3" /> {updateRules.isPending ? 'Saving...' : 'Save Rules'}
             </button>

@@ -369,7 +369,7 @@ export default function SpaceSettingsPage() {
                     <button
                       type="submit"
                       disabled={!name.trim() || updateGroup.isPending}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-text py-3 font-bold text-brand-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 font-bold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
                     >
                       {updateGroup.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                       {saved ? 'Saved!' : updateGroup.isPending ? 'Saving...' : 'Save Changes'}
@@ -420,7 +420,7 @@ export default function SpaceSettingsPage() {
                         <button
                           onClick={() => approvePost.mutate(p.id)}
                           disabled={approvePost.isPending}
-                          className="flex items-center gap-1 rounded-lg bg-brand-text px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-brand-bg transition-all hover:opacity-90 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-primary-ink px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
                         >
                           <Check className="h-3 w-3" />
                           Approve

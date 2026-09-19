@@ -237,7 +237,7 @@ function DailyLimitCard() {
                 )}
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
                 >
                     Save
                 </button>
@@ -315,7 +315,7 @@ function FocusModeCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
                 >
                     Save
                 </button>
@@ -393,7 +393,7 @@ function BedtimeModeCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
                 >
                     Save
                 </button>
@@ -457,7 +457,7 @@ function BreakRemindersCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
                 >
                     Save
                 </button>
@@ -514,7 +514,7 @@ function ContentPreferencesCard() {
                 </div>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand-text transition-colors"
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
                 >
                     Save
                 </button>

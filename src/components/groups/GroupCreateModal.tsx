@@ -247,7 +247,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || createGroup.isPending}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-brand-text text-white font-bold text-sm rounded-xl hover:bg-brand-text/90 transition-all disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-ink text-white font-bold text-sm rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-50"
             >
               {createGroup.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               {createGroup.isPending ? 'Creating...' : 'Create Group'}

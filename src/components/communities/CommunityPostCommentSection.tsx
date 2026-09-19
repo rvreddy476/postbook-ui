@@ -106,7 +106,7 @@ export default function CommunityPostCommentSection({ postId, communityId, space
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || createReply.isPending}
-          className="w-8 h-8 rounded-lg bg-brand-text text-brand-bg flex items-center justify-center hover:bg-brand-text/90 transition-colors disabled:opacity-40"
+          className="w-8 h-8 rounded-lg bg-primary-ink text-white flex items-center justify-center hover:bg-primary-ink/90 transition-colors disabled:opacity-40"
         >
           <Send className="w-3.5 h-3.5" />
         </button>

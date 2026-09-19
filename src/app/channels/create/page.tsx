@@ -298,7 +298,7 @@ export default function CreateChannelPage() {
               type="button"
               disabled={!canProceed}
               onClick={() => setStep(2)}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               Next
               <ArrowRight className="w-4 h-4" />
@@ -429,7 +429,7 @@ export default function CreateChannelPage() {
                 type="button"
                 disabled={!canSubmit}
                 onClick={handleSubmit}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
               >
                 <Radio className="w-4 h-4" />
                 {submitting ? 'Creating...' : 'Create Channel'}

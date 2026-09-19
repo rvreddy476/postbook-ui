@@ -162,7 +162,7 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
             ) : (
               <button
                 onClick={onSubscribe}
-                className="flex items-center gap-1.5 bg-brand-text text-brand-bg text-xs font-semibold rounded-lg px-4 py-1.5 hover:opacity-90 transition-opacity"
+                className="flex items-center gap-1.5 bg-primary-ink text-white text-xs font-semibold rounded-lg px-4 py-1.5 hover:bg-primary-hover transition-opacity"
               >
                 + Subscribe
               </button>

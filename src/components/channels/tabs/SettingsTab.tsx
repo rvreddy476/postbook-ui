@@ -608,7 +608,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           type="button"
           onClick={handleSave}
           disabled={saving || hasErrors}
-          className="w-full flex items-center justify-center gap-2 bg-brand-text text-brand-bg text-sm font-bold rounded-2xl py-3 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
+          className="w-full flex items-center justify-center gap-2 bg-primary-ink text-white text-sm font-bold rounded-2xl py-3 hover:bg-primary-hover transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />

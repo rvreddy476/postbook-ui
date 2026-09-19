@@ -134,7 +134,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
           <button
             onClick={handleJoin}
             disabled={joinMut.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 bg-brand-text text-brand-bg rounded-full text-[11px] font-bold hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary-ink text-white rounded-full text-[11px] font-bold hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             <Plus className="w-3.5 h-3.5" />
             Join
@@ -144,7 +144,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
 
       {/* Toast */}
       {toast && (
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-primary-ink text-white text-[11px] font-semibold rounded-lg shadow-lg whitespace-nowrap">
           {toast}
           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setToast(null) }}>
             <X className="w-3 h-3 opacity-60" />

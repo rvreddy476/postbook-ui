@@ -162,7 +162,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
                     <button
                         onClick={() => installMutation.mutate()}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-xs shadow-brand-text/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink transition-all shadow-xs shadow-brand-text/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -228,7 +228,7 @@ export default function AppsPage() {
                         <Download className="w-4 h-4" />
                         Installed
                         {installedIds.size > 0 && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-brand-card/20 text-white" : "bg-brand-text/10 text-brand-text"}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${showInstalledOnly ? "bg-brand-card/20 text-white" : "bg-primary-ink/10 text-brand-text"}`}>
                                 {installedIds.size}
                             </span>
                         )}
@@ -298,7 +298,7 @@ export default function AppsPage() {
                         {showInstalledOnly && (
                             <button
                                 onClick={() => setShowInstalledOnly(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-xs shadow-brand-text/20"
+                                className="px-5 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink transition-all shadow-xs shadow-brand-text/20"
                             >
                                 Browse Apps
                             </button>

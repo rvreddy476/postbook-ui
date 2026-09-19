@@ -570,7 +570,7 @@ export function ReelsPage() {
                 <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
                 <p className="mt-1 text-[13px] text-brand-highlight">Our team will review this content shortly.</p>
                 <button onClick={() => setReportOpen(false)}
-                  className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-brand-text">Done</button>
+                  className="mt-4 w-full rounded-full bg-slate-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-primary-ink">Done</button>
               </div>
             ) : (
               <>

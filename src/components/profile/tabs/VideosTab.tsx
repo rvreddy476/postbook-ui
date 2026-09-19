@@ -176,7 +176,7 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
                 {isOwn && (
                     <button
                         onClick={() => router.push("/posttube/upload")}
-                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-text hover:bg-brand-text text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-brand-text/20"
+                        className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-primary-ink hover:bg-primary-ink text-white text-sm font-semibold rounded-2xl transition-colors shadow-lg shadow-brand-text/20"
                     >
                         <Upload className="h-4 w-4" />
                         Upload Video

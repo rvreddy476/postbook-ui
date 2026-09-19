@@ -116,7 +116,7 @@ function ReportDialog({
           <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
           <p className="mt-1 text-[13px] text-brand-highlight">Thanks for helping keep our community safe. Our team will review this shortly.</p>
           <button onClick={onClose}
-            className="mt-4 w-full rounded-full bg-brand-text py-2.5 text-[13px] font-semibold text-white transition hover:bg-brand-text/90">
+            className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-[13px] font-semibold text-white transition hover:bg-primary-ink/90">
             Done
           </button>
         </div>
@@ -236,7 +236,7 @@ const ReplyItem: React.FC<{
           <div className="flex justify-end gap-1.5">
             <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-brand-highlight font-medium px-2.5 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
             <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-              className="text-[11px] font-semibold px-2.5 py-1 bg-brand-text text-white rounded-full disabled:opacity-40">Save</button>
+              className="text-[11px] font-semibold px-2.5 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40">Save</button>
           </div>
         </form>
       ) : (
@@ -384,7 +384,7 @@ const SingleComment: React.FC<{
             <div className="flex justify-end gap-1.5">
               <button type="button" onClick={() => setEditing(false)} className="text-[12px] text-brand-highlight font-medium px-3 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
               <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-                className="text-[12px] font-semibold px-3 py-1 bg-brand-text text-white rounded-full disabled:opacity-40 transition hover:bg-brand-text/90">Save</button>
+                className="text-[12px] font-semibold px-3 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40 transition hover:bg-primary-ink/90">Save</button>
             </div>
           </form>
         ) : (
@@ -458,7 +458,7 @@ const SingleComment: React.FC<{
                   className="w-full rounded-full bg-brand-secondary px-4 py-2 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" />
               </form>
               <button onClick={handleReply} disabled={!replyText.trim() || replyMutation.isPending}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-text text-white disabled:opacity-40 transition hover:bg-brand-text/90">
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-ink text-white disabled:opacity-40 transition hover:bg-primary-ink/90">
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>

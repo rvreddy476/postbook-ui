@@ -265,7 +265,7 @@ export default function FriendsView() {
 
             {/* ---- Trusted Circle row ---- */}
             <RowCard onClick={() => setActiveModal('trusted')}>
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-text text-brand-bg">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-ink text-white">
                     <Shield className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -511,7 +511,7 @@ function FriendRow({
             >
                 <MessageCircle className="h-4 w-4" />
                 {unread > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand-text px-1 text-[10px] font-bold text-brand-bg ring-2 ring-brand-card">
+                    <span className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary-ink px-1 text-[10px] font-bold text-white ring-2 ring-brand-card">
                         {unread > 99 ? '99+' : unread}
                     </span>
                 )}
@@ -567,7 +567,7 @@ function ModalHeader({
 }) {
     return (
         <div className="flex items-start gap-3 border-b border-brand-divider p-5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-text text-brand-bg">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-ink text-white">
                 {icon}
             </span>
             <div className="min-w-0 flex-1">
@@ -914,7 +914,7 @@ function OrbitVisual({
             />
             {/* you */}
             <div
-                className="absolute grid place-items-center rounded-full bg-brand-text text-brand-bg shadow-lg"
+                className="absolute grid place-items-center rounded-full bg-primary-ink text-white shadow-lg"
                 style={{ width: 54, height: 54, left: center - 27, top: center - 27 }}
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1025,7 +1025,7 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                 {/* Primary QR card */}
                 <button
                     disabled
-                    className="flex w-full items-center gap-4 rounded-2xl border border-brand-text bg-brand-text p-4 text-left text-brand-bg"
+                    className="flex w-full items-center gap-4 rounded-2xl border border-primary-ink bg-primary-ink p-4 text-left text-white"
                 >
                     <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-brand-bg text-brand-text">
                         <QrCode className="h-7 w-7" />
@@ -1105,7 +1105,7 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                                         <span className="truncate text-sm font-bold text-brand-text">
                                             {s.display_name}
                                         </span>
-                                        <span className="shrink-0 rounded-full bg-brand-text px-1.5 py-0.5 text-[9px] font-bold text-brand-bg">
+                                        <span className="shrink-0 rounded-full bg-primary-ink px-1.5 py-0.5 text-[9px] font-bold text-white">
                                             {matchPercent(s)}% MATCH
                                         </span>
                                     </span>
@@ -1120,7 +1120,7 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                                     showIcon={false}
                                     showIncomingActions={false}
                                     allowCancel={false}
-                                    className="shrink-0 rounded-full bg-brand-text px-3.5 py-1.5 text-[11px] font-bold text-brand-bg transition hover:opacity-90 disabled:opacity-60"
+                                    className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-primary-hover disabled:opacity-60"
                                     sentClassName="border border-brand-divider bg-transparent text-brand-text/45 hover:opacity-100"
                                 />
                             </div>
@@ -1341,7 +1341,7 @@ function RequestRow({
                     onAccept()
                 }}
                 disabled={busy}
-                className="shrink-0 rounded-full bg-brand-text px-3.5 py-1.5 text-[11px] font-bold text-brand-bg transition hover:opacity-90 disabled:opacity-50"
+                className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-primary-hover disabled:opacity-50"
             >
                 Accept
             </button>

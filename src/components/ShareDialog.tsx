@@ -215,7 +215,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
                 <button
                   type="submit"
                   disabled={!quoteText.trim() || shareMutation.isPending}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-brand-text text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-text/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-primary-ink text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-ink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Share

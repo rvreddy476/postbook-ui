@@ -106,7 +106,7 @@ export default function CommunityPostComposer({ communityId }: CommunityPostComp
         <button
           onClick={handleSubmit}
           disabled={!body.trim() || !selectedSpaceId || createPost.isPending}
-          className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-primary-ink text-white text-xs font-bold rounded-lg hover:bg-primary-ink/90 transition-colors disabled:opacity-40"
         >
           <Send className="w-3 h-3" />
           {createPost.isPending ? 'Posting...' : 'Post'}

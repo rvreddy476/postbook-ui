@@ -181,7 +181,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
                 e.stopPropagation()
                 onSubscribe?.(channel.id)
               }}
-              className="flex items-center gap-1 bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1 bg-primary-ink text-white text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:bg-primary-hover transition-opacity"
             >
               + Subscribe
             </button>

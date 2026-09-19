@@ -216,7 +216,7 @@ const ContactList: React.FC<ContactListProps> = ({
                                 {contact.name}
                               </h3>
                               {unreadCount > 0 && (
-                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-text px-1 text-[9px] font-bold text-white shadow-xs">
+                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-ink px-1 text-[9px] font-bold text-white shadow-xs">
                                   {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                               )}

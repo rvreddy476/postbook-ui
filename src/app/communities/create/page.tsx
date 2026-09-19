@@ -262,7 +262,7 @@ export default function CreateCommunityPage() {
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="flex items-center gap-2 px-6 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-ink/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next
               <ArrowRight className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function CreateCommunityPage() {
               <button
                 onClick={() => setStep(3)}
                 disabled={!canProceedStep2}
-                className="flex items-center gap-2 px-6 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-3 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-ink/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next
                 <ArrowRight className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function CreateCommunityPage() {
               <button
                 onClick={handleCreate}
                 disabled={submitting}
-                className="flex items-center gap-2 px-6 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 px-6 py-3 bg-primary-ink text-white text-sm font-bold rounded-xl hover:bg-primary-ink/90 transition-colors disabled:opacity-60"
               >
                 {submitting ? (
                   <>

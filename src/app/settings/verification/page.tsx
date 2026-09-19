@@ -171,7 +171,7 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
             <button
                 onClick={() => mutation.mutate(selectedType)}
                 disabled={mutation.isPending}
-                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-brand-text transition-opacity disabled:opacity-60"
+                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-primary-ink transition-opacity disabled:opacity-60"
             >
                 {mutation.isPending ? "Submitting…" : "Submit Application"}
             </button>

@@ -47,7 +47,7 @@ export default function CommunityQuestionsTab({ communityId, viewerRole }: Props
         <h2 className="text-lg font-bold text-brand-text">Questions</h2>
         <Link
           href={`/qa/ask?communityId=${communityId}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-text text-brand-bg text-xs font-bold hover:bg-brand-text/90 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-ink/90 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Ask

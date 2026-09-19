@@ -91,7 +91,7 @@ export default function CommunitiesPage() {
           </div>
           <Link
             href="/communities/create"
-            className="flex items-center gap-2 px-6 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-2xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+            className="flex items-center gap-2 px-6 py-3 bg-primary-ink text-white text-sm font-bold rounded-2xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
           >
             <Plus className="w-4 h-4" />
             Create
@@ -111,7 +111,7 @@ export default function CommunitiesPage() {
               </p>
               <button
                 onClick={() => setTab('discover')}
-                className="px-8 py-3 bg-brand-text text-brand-bg text-sm font-bold rounded-2xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                className="px-8 py-3 bg-primary-ink text-white text-sm font-bold rounded-2xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
               >
                 Explore Communities
               </button>

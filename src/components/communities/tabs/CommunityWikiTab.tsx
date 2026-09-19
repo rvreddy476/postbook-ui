@@ -56,7 +56,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
         {canEdit && (
           <button
             onClick={() => { setEditingPage(null); setShowEditor(true) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-ink text-white text-xs font-bold rounded-lg hover:bg-primary-ink/90 transition-colors"
           >
             <Plus className="w-3 h-3" /> New Page
           </button>
@@ -134,7 +134,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
               {canEdit && (!pages || pages.length === 0) && (
                 <button
                   onClick={() => setShowEditor(true)}
-                  className="mt-3 px-4 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors"
+                  className="mt-3 px-4 py-2 bg-primary-ink text-white text-xs font-bold rounded-lg hover:bg-primary-ink/90 transition-colors"
                 >
                   Create First Page
                 </button>
@@ -205,7 +205,7 @@ function WikiEditor({ communityId, editingPage, onClose, onSaved }: {
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-xs text-brand-text/50 hover:text-brand-text transition-colors">Cancel</button>
           <button onClick={handleSubmit} disabled={!title.trim() || !content.trim() || isPending}
-            className="px-5 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-lg hover:bg-brand-text/90 transition-colors disabled:opacity-40">
+            className="px-5 py-2 bg-primary-ink text-white text-xs font-bold rounded-lg hover:bg-primary-ink/90 transition-colors disabled:opacity-40">
             {isPending ? 'Saving...' : editingPage ? 'Update' : 'Create'}
           </button>
         </div>

@@ -217,7 +217,7 @@ export default function CommunityDetailPage() {
                   <button
                     onClick={() => joinCommunity.mutate(community.id)}
                     disabled={joinCommunity.isPending}
-                    className="block w-full text-center px-4 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0"
+                    className="block w-full text-center px-4 py-2.5 bg-primary-ink text-white text-sm font-bold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0"
                   >
                     Join Community
                   </button>
@@ -298,7 +298,7 @@ export default function CommunityDetailPage() {
                   {isMember && (
                     <button
                       onClick={() => setShowCreateEvent(!showCreateEvent)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-primary-ink text-white text-xs font-bold rounded-xl hover:bg-primary-ink/90 transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Create Event
@@ -426,7 +426,7 @@ export default function CommunityDetailPage() {
                         )
                       }}
                       disabled={!eventTitle.trim() || !eventDate || createEvent.isPending}
-                      className="w-full py-2.5 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors disabled:opacity-40"
+                      className="w-full py-2.5 bg-primary-ink text-white text-xs font-bold rounded-xl hover:bg-primary-ink/90 transition-colors disabled:opacity-40"
                     >
                       {createEvent.isPending ? 'Creating...' : 'Create Event'}
                     </button>
@@ -466,7 +466,7 @@ export default function CommunityDetailPage() {
                     {isMember && (
                       <button
                         onClick={() => setShowCreateEvent(true)}
-                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-xl hover:bg-brand-text/90 transition-colors"
+                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-primary-ink text-white text-xs font-bold rounded-xl hover:bg-primary-ink/90 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Create First Event
@@ -599,7 +599,7 @@ export default function CommunityDetailPage() {
                     className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
                   >
                     <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Post</span>
-                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-primary-ink/5 text-brand-text flex items-center justify-center group-hover:bg-primary-ink group-hover:text-white transition-colors shadow-xs">
                       <PenLine className="w-4 h-4" />
                     </div>
                   </Link>
@@ -612,7 +612,7 @@ export default function CommunityDetailPage() {
                     className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
                   >
                     <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Event</span>
-                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-primary-ink/5 text-brand-text flex items-center justify-center group-hover:bg-primary-ink group-hover:text-white transition-colors shadow-xs">
                       <CalendarPlus className="w-4 h-4" />
                     </div>
                   </button>

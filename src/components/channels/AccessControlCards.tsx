@@ -83,7 +83,7 @@ export function LockedUpdateCard({ update, channelName, onSubscribe }: {
           </p>
           <button
             onClick={onSubscribe}
-            className="mt-3 px-5 py-2 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+            className="mt-3 px-5 py-2 rounded-xl bg-primary-ink text-white text-sm font-semibold hover:bg-primary-ink/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
           >
             Subscribe
           </button>
@@ -116,7 +116,7 @@ export function BlockedChannelView({ channelName }: { channelName: string }) {
         <div className="mt-8">
           <Link
             href="/channels"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-ink text-white text-sm font-medium hover:bg-primary-ink/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Channels
@@ -159,7 +159,7 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
           <div className="mt-8">
             <Link
               href="/channels"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-ink text-white text-sm font-medium hover:bg-primary-ink/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Channels
@@ -204,7 +204,7 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
           {onRestore && (
             <button
               onClick={onRestore}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-ink text-white text-sm font-semibold hover:bg-primary-ink/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
             >
               Restore Channel
             </button>

@@ -191,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </span>
             )}
             {!expanded && !moreOpen && (
-              <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
+              <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-lg bg-brand-text px-2.5 py-1.5 text-[11px] font-semibold tracking-normal text-brand-bg opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
                 More
                 <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-brand-text" />
               </div>

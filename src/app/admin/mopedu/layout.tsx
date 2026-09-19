@@ -157,7 +157,7 @@ export default function MopeduAdminLayout({
                   href={link.href}
                   className={
                     active
-                      ? "shrink-0 rounded-full bg-brand-text px-3 py-1.5 text-xs font-semibold text-white"
+                      ? "shrink-0 rounded-full bg-primary-ink px-3 py-1.5 text-xs font-semibold text-white"
                       : "shrink-0 rounded-full border border-brand-divider px-3 py-1.5 text-xs text-brand-text/70"
                   }
                 >

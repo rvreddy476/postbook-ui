@@ -132,7 +132,7 @@ export function CoverFrameSelector({
             type="button"
             onClick={handleScrubCommit}
             disabled={saving}
-            className="w-full rounded-lg bg-brand-text py-2 text-[13px] font-semibold text-brand-bg transition-colors hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary-ink py-2 text-[13px] font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Extracting..." : "Extract Frame"}
           </button>

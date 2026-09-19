@@ -383,7 +383,7 @@ export default function CommunityNewPostPage() {
                       autoFocus
                       className="w-28 px-3 py-1 bg-transparent text-xs font-semibold text-brand-text placeholder:text-brand-text/30 focus:outline-hidden"
                     />
-                    <button onClick={addTag} className="px-3 py-1 bg-brand-text text-brand-bg rounded-lg text-xs font-bold hover:bg-brand-text/90">Add</button>
+                    <button onClick={addTag} className="px-3 py-1 bg-primary-ink text-white rounded-lg text-xs font-bold hover:bg-primary-ink/90">Add</button>
                     <button onClick={() => { setShowTagInput(false); setTagInput('') }} className="px-2 py-1 text-xs text-brand-text/40 hover:text-brand-text">Cancel</button>
                   </div>
                 ) : (
@@ -665,7 +665,7 @@ export default function CommunityNewPostPage() {
                 <button
                   onClick={handlePublish}
                   disabled={!isValid || publishing}
-                  className="px-8 py-3 bg-brand-text text-brand-bg text-sm font-black rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                  className="px-8 py-3 bg-primary-ink text-white text-sm font-black rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   {publishing ? 'Posting...' : 'Post'}
                 </button>

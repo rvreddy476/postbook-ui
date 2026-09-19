@@ -124,7 +124,7 @@ export function GeneralTab() {
               type="button"
               onClick={() => ensurePublisher.mutate()}
               disabled={ensurePublisher.isPending}
-              className="mt-4 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-brand-text disabled:opacity-50 transition-colors"
+              className="mt-4 rounded-xl bg-primary-ink px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-primary-ink disabled:opacity-50 transition-colors"
             >
               {ensurePublisher.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -252,7 +252,7 @@ export function GeneralTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-brand-text disabled:opacity-50"
+          className="rounded-xl bg-primary-ink px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-primary-ink disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -379,7 +379,7 @@ export function GeneralTab() {
                   type="button"
                   onClick={handleConfirmChange}
                   disabled={!handleAvailable || !handleConfirmed || changeHandle.isPending}
-                  className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-brand-text disabled:opacity-40"
+                  className="rounded-xl bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-primary-ink disabled:opacity-40"
                 >
                   {changeHandle.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

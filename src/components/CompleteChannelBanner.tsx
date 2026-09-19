@@ -49,7 +49,7 @@ export function CompleteChannelBanner() {
           </div>
           <Link
             href="/settings/profile"
-            className="shrink-0 rounded-full bg-slate-900 px-4 py-1.5 text-[12px] font-semibold text-white transition hover:bg-brand-text"
+            className="shrink-0 rounded-full bg-slate-900 px-4 py-1.5 text-[12px] font-semibold text-white transition hover:bg-primary-ink"
           >
             Complete Profile
           </Link>

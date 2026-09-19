@@ -83,7 +83,7 @@ export default function TuneBottomSheet({ isOpen, onClose, authorUsername, onTun
               <button
                 onClick={handleSubmit}
                 disabled={!selected}
-                className="w-full py-3 bg-brand-text text-brand-bg rounded-xl text-sm font-bold transition-opacity disabled:opacity-30"
+                className="w-full py-3 bg-primary-ink text-white rounded-xl text-sm font-bold transition-opacity disabled:opacity-30"
               >
                 Tune Feed
               </button>

@@ -398,7 +398,7 @@ function ProductsTab({ query }: { query: string }) {
                     {product.url && (
                         <Link
                             href={product.url}
-                            className="shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text transition-colors"
+                            className="shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-primary-ink rounded-lg hover:bg-primary-ink transition-colors"
                         >
                             View
                         </Link>

@@ -49,7 +49,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, 
           <button
             type="button"
             onClick={() => onChange('Create')}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-text text-brand-bg shadow-lg transition-transform active:scale-95"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-ink text-white shadow-lg transition-transform active:scale-95"
             aria-label="Create"
           >
             <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

@@ -98,7 +98,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
               <button
                 type="button"
                 onClick={copyLink}
-                className="shrink-0 rounded-lg bg-brand-text px-3 py-1.5 text-[12px] font-bold text-brand-bg transition hover:opacity-90"
+                className="shrink-0 rounded-lg bg-primary-ink px-3 py-1.5 text-[12px] font-bold text-white transition hover:bg-primary-hover"
               >
                 {copied ? "Copied" : "Copy"}
               </button>

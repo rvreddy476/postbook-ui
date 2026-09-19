@@ -831,7 +831,7 @@ export function SlamBookIndexRouteView() {
                             </p>
                           </div>
                           {active ? (
-                            <span className="rounded-full bg-brand-text px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                            <span className="rounded-full bg-primary-ink px-2 py-0.5 text-[10px] font-bold uppercase text-white">
                               Selected
                             </span>
                           ) : null}

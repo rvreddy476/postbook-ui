@@ -380,7 +380,7 @@ export default function PostbookMessenger() {
                   )}
                   {tab === 'friends' ? 'Messages' : tab === 'requests' ? 'Requests' : 'Groups'}
                   {badge > 0 && (
-                    <span className="text-[9px] font-bold bg-brand-text text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                    <span className="text-[9px] font-bold bg-primary-ink text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
                       {badge}
                     </span>
                   )}
@@ -437,7 +437,7 @@ export default function PostbookMessenger() {
                             {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
-                            <span className="bg-brand-text text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
+                            <span className="bg-primary-ink text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
                               {unread}
                             </span>
                           )}
@@ -636,7 +636,7 @@ export default function PostbookMessenger() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 px-6 py-3 bg-brand-text text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 px-6 py-3 bg-primary-ink text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           {toast}
         </div>
       )}

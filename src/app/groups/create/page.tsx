@@ -206,7 +206,7 @@ export default function CreateSpacePage() {
           <button
             onClick={handleCreate}
             disabled={!canCreate}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-text py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 disabled:opacity-40"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 text-sm font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-40"
           >
             {createGroup.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {createGroup.isPending ? 'Creating...' : 'Create'}

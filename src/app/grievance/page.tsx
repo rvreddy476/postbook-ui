@@ -250,7 +250,7 @@ export default function GrievancePage() {
                     <button
                         onClick={handleSubmit}
                         disabled={!canSubmit || isSubmitting}
-                        className="inline-flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-sm font-semibold text-brand-bg transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-2 rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>

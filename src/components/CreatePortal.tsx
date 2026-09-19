@@ -872,7 +872,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex items-center gap-2.5 rounded-full bg-brand-text px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-brand-bg transition hover:opacity-90 disabled:opacity-40"
+            className="flex items-center gap-2.5 rounded-full bg-primary-ink px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-white transition hover:bg-primary-hover disabled:opacity-40"
           >
             <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand-bg/15">
               {isSubmitting ? (

@@ -85,7 +85,7 @@ export default function GroupPostComposer({ groupId, channels }: GroupPostCompos
             <button
               onClick={handlePost}
               disabled={!body.trim() || createPost.isPending}
-              className="ml-auto flex items-center gap-1.5 bg-brand-text text-brand-bg text-xs font-bold px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-40 transition-all"
+              className="ml-auto flex items-center gap-1.5 bg-primary-ink text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary-hover disabled:opacity-40 transition-all"
             >
               <Send className="w-3 h-3" />
               Post

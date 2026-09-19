@@ -263,7 +263,7 @@ export function TagPickerModal({
                     <Button
                         onClick={handleConfirm}
                         disabled={selected.length === 0}
-                        className="h-10 px-6 rounded-xl bg-brand-text hover:opacity-90 text-brand-bg text-xs font-bold uppercase tracking-widest shadow-lg shadow-black/10"
+                        className="h-10 px-6 rounded-xl bg-primary-ink hover:bg-primary-hover text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-black/10"
                     >
                         Add {selected.length > 0 ? `(${selected.length})` : ""}
                     </Button>

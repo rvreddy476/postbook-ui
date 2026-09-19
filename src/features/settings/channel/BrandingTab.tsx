@@ -129,7 +129,7 @@ export function BrandingTab() {
               size="xl"
               className="border-4 border-white shadow-lg ring-1 ring-brand-secondary"
             />
-            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-brand-text text-white shadow-md transition-transform hover:scale-110">
+            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary-ink text-white shadow-md transition-transform hover:scale-110">
               {avatarUploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
@@ -260,7 +260,7 @@ export function BrandingTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-brand-text disabled:opacity-50"
+          className="rounded-xl bg-primary-ink px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-primary-ink disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

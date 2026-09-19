@@ -130,7 +130,7 @@ export default function MopeduAuditLogsPage() {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-brand-text px-3 py-2 text-sm font-semibold text-white hover:bg-brand-text/90"
+              className="flex-1 rounded-lg bg-primary-ink px-3 py-2 text-sm font-semibold text-white hover:bg-primary-ink/90"
             >
               Apply
             </button>

@@ -347,7 +347,7 @@ function ChannelDetailContent() {
               <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
                 {can.publish(role) ? (
                   <>
-                    <button onClick={() => { setActiveTab('updates'); setShowComposer(true) }} className="flex items-center gap-1.5 bg-brand-text text-brand-bg text-xs font-bold px-3 sm:px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
+                    <button onClick={() => { setActiveTab('updates'); setShowComposer(true) }} className="flex items-center gap-1.5 bg-primary-ink text-white text-xs font-bold px-3 sm:px-4 py-2 rounded-xl hover:bg-primary-hover transition-opacity">
                       <Plus className="w-3.5 h-3.5" /> <span className="hidden xs:inline">+</span> Update
                     </button>
                     <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 border border-brand-divider text-brand-text text-xs font-semibold px-3 py-2 rounded-xl hover:bg-brand-secondary/50 transition-colors">
@@ -375,7 +375,7 @@ function ChannelDetailContent() {
                     </button>
                   </>
                 ) : (
-                  <button onClick={handleSubscribe} disabled={subscribeMut.isPending} className="flex items-center gap-1.5 bg-brand-text text-brand-bg text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50">
+                  <button onClick={handleSubscribe} disabled={subscribeMut.isPending} className="flex items-center gap-1.5 bg-primary-ink text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary-hover transition-opacity disabled:opacity-50">
                     {subscribeMut.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Subscribe
                   </button>
                 )}
@@ -470,7 +470,7 @@ function ChannelDetailContent() {
                     <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-3 flex items-center justify-center"><Radio className="w-7 h-7 text-brand-text/20" /></div>
                     <p className="text-sm font-semibold text-brand-text/60">No updates yet</p>
                     <p className="text-xs text-brand-text/40 mt-1">{can.publish(role) ? 'Publish your first update to your subscribers' : `${channel.name} hasn't posted yet`}</p>
-                    {can.publish(role) && <button onClick={() => setShowComposer(true)} className="mt-4 bg-brand-text text-brand-bg text-sm font-bold rounded-xl px-5 py-2 hover:opacity-90 transition-opacity">Publish Update</button>}
+                    {can.publish(role) && <button onClick={() => setShowComposer(true)} className="mt-4 bg-primary-ink text-white text-sm font-bold rounded-xl px-5 py-2 hover:bg-primary-hover transition-opacity">Publish Update</button>}
                   </div>
                 )}
               </>

@@ -159,7 +159,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
               <button
                 onClick={() => joinMut.mutate(community.id)}
                 disabled={joinMut.isPending}
-                className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-brand-bg text-xs font-bold rounded-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                className="flex items-center gap-1.5 px-5 py-2 bg-primary-ink text-white text-xs font-bold rounded-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
                 Join
               </button>

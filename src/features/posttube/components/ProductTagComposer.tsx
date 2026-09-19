@@ -374,7 +374,7 @@ function PlacementForm({
                     type="button"
                     onClick={onSubmit}
                     disabled={submitting}
-                    className="rounded-md bg-brand-text px-3 py-1.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
+                    className="rounded-md bg-primary-ink px-3 py-1.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
                 >
                     {submitting ? "Adding…" : "Add tag"}
                 </button>

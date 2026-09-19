@@ -311,7 +311,7 @@ const CommentRow: React.FC<{
                   <button
                     onClick={handleSaveEdit}
                     disabled={!editText.trim()}
-                    className="text-[12px] font-semibold px-3 py-1 bg-brand-text text-white rounded-full disabled:opacity-40 transition hover:bg-brand-text/90"
+                    className="text-[12px] font-semibold px-3 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40 transition hover:bg-primary-ink/90"
                   >
                     Save
                   </button>

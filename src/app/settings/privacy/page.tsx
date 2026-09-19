@@ -296,7 +296,7 @@ export default function PrivacyPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                 <button
                     onClick={handleSave}
-                    className="rounded-xl bg-brand-text px-6 py-2.5 text-sm font-semibold text-brand-bg transition-opacity hover:opacity-90"
+                    className="rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover"
                 >
                     Save Privacy Settings
                 </button>

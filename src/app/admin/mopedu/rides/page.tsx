@@ -131,7 +131,7 @@ export default function MopeduRidesHistoryPage() {
           />
           <button
             type="submit"
-            className="rounded-lg bg-brand-text px-4 py-2 text-sm font-semibold text-white hover:bg-brand-text/90"
+            className="rounded-lg bg-primary-ink px-4 py-2 text-sm font-semibold text-white hover:bg-primary-ink/90"
           >
             Search
           </button>

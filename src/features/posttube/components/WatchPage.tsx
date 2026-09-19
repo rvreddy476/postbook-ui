@@ -443,7 +443,7 @@ function WatchPageContent({ videoId }: WatchPageProps) {
           <p className="mt-2 text-[13px] text-brand-highlight">
             {videoId ? "This video may still be processing or has been removed." : "Browse PostTube to find videos to watch."}
           </p>
-          <Link href="/posttube" className="mt-5 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-brand-text transition-colors">
+          <Link href="/posttube" className="mt-5 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-primary-ink transition-colors">
             Back to PostTube
           </Link>
         </div>

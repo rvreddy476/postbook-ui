@@ -148,7 +148,7 @@ export default function MyChannelPage() {
             <div className="flex items-center gap-2 pb-2">
               <Link
                 href="/posttube/upload?type=long"
-                className="flex items-center gap-1.5 rounded-xl bg-brand-text px-4 py-2 text-[12px] font-semibold text-white hover:bg-brand-text transition-colors"
+                className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[12px] font-semibold text-white hover:bg-primary-ink transition-colors"
               >
                 <Upload className="h-3.5 w-3.5" />
                 Upload
@@ -203,7 +203,7 @@ export default function MyChannelPage() {
                 <p className="mt-1 text-[12px] text-brand-text/60">Upload your first {tab === "videos" ? "video" : "flick"} to get started</p>
                 <Link
                   href={`/posttube/upload?type=${tab === "videos" ? "long" : "short"}`}
-                  className="mt-4 rounded-xl bg-brand-text px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-text transition-colors"
+                  className="mt-4 rounded-xl bg-primary-ink px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-ink transition-colors"
                 >
                   Upload Now
                 </Link>
