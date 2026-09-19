@@ -15,7 +15,12 @@
   --theme-brand-text: 15 20 25;
   --theme-brand-accent: 59 130 196;
   --theme-brand-secondary: 247 249 249;
-  --theme-brand-highlight: 40 90 138;
+  /*
+    brand-highlight is NOT an accent. It is used as a text colour 512 times and
+    has always equalled brand-text in every theme. Do not repurpose it; the
+    hover shade of the accent is --theme-brand-ink-hover below.
+  */
+  --theme-brand-highlight: 15 20 25;
   --theme-brand-divider: rgba(15, 20, 25, 0.1);
   --theme-brand-card: 255 255 255;
 
@@ -27,6 +32,7 @@
     links. Never set normal-size text to --brand-accent on this ground.
   */
   --theme-brand-ink: 47 107 163;
+  --theme-brand-ink-hover: 40 90 138;
   --theme-brand-tint: 234 242 250;
   --theme-brand-outline: 185 212 236;
   --theme-on-primary: 255 255 255;
@@ -53,7 +59,8 @@
   --theme-brand-text: 247 249 249;
   --theme-brand-accent: 90 155 216;
   --theme-brand-secondary: 22 24 28;
-  --theme-brand-highlight: 106 168 224;
+  /* see the note in :root — this is a text colour, not an accent */
+  --theme-brand-highlight: 247 249 249;
   --theme-brand-divider: rgba(247, 249, 249, 0.15);
   --theme-brand-card: 0 0 0;
 
@@ -68,6 +75,7 @@
     value and misreads on black.
   */
   --theme-brand-ink: 90 155 216;
+  --theme-brand-ink-hover: 106 168 224;
   --theme-brand-tint: 18 36 58;
   --theme-brand-outline: 44 74 104;
   --theme-on-primary: 15 20 25;
@@ -83,42 +91,13 @@
   --theme-glass-border: 247, 249, 249;
 }
 
-/* 2. Paper & Asphalt Theme (Preserved for quick switching)
-   To activate, apply `.theme-paper-asphalt` to the root <html> or <body> element. */
-.theme-paper-asphalt {
-  --theme-foreground-rgb: 48, 47, 44;
-  --theme-background-start-rgb: 239, 237, 227;
-  --theme-background-end-rgb: 239, 237, 227;
-  --theme-prismatic-violet: #D8103F;
-  --theme-prismatic-rose: #db2777;
+/*
+  There used to be a third theme here, "Paper & Asphalt" (warm cream and brown).
+  It was removed because nothing could ever select it: the inline bootstrap
+  script in src/app/layout.tsx sets documentElement.className to exactly
+  "light" or "dark", which wipes any other theme class, and no code applied it.
+  It had also drifted out of step with the tokens added for the cerulean theme.
 
-  --theme-brand-bg: 239 237 227;
-  --theme-brand-text: 48 47 44;
-  --theme-brand-accent: 48 47 44;
-  --theme-brand-secondary: 229 227 217;
-  --theme-brand-highlight: 48 47 44;
-  --theme-brand-divider: rgba(48, 47, 44, 0.15);
-  --theme-brand-card: 255 255 255;
-
-  --theme-glass-bg: 239, 237, 227;
-  --theme-glass-border: 48, 47, 44;
-}
-
-.theme-paper-asphalt.dark, .dark .theme-paper-asphalt {
-  --theme-foreground-rgb: 239, 237, 227;
-  --theme-background-start-rgb: 48, 47, 44;
-  --theme-background-end-rgb: 48, 47, 44;
-  --theme-prismatic-violet: #D8103F;
-  --theme-prismatic-rose: #db2777;
-
-  --theme-brand-bg: 48 47 44;
-  --theme-brand-text: 239 237 227;
-  --theme-brand-accent: 239 237 227;
-  --theme-brand-secondary: 58 57 54;
-  --theme-brand-divider: rgba(239, 237, 227, 0.2);
-  --theme-brand-card: 40 39 37;
-  --theme-brand-highlight: 239 237 227;
-
-  --theme-glass-bg: 48, 47, 44;
-  --theme-glass-border: 239, 237, 227;
-}
+  To add a real third theme, add a block here AND teach the bootstrap script
+  and the Header toggle to set its class. Nothing else needs to change.
+*/

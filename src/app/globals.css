@@ -54,7 +54,7 @@
                  label, and link text on white.
   */
   --color-primary-ink: rgb(var(--brand-ink));
-  --color-primary-hover: rgb(var(--brand-highlight));
+  --color-primary-hover: rgb(var(--brand-ink-hover));
   --color-primary-tint: rgb(var(--brand-tint));
   --color-primary-outline: rgb(var(--brand-outline));
 
@@ -124,6 +124,7 @@
       disappears without any error.
     */
     --brand-ink: var(--theme-brand-ink);
+    --brand-ink-hover: var(--theme-brand-ink-hover);
     --brand-tint: var(--theme-brand-tint);
     --brand-outline: var(--theme-brand-outline);
     --on-primary: var(--theme-on-primary);
@@ -150,6 +151,7 @@
     --brand-card: var(--theme-brand-card);
 
     --brand-ink: var(--theme-brand-ink);
+    --brand-ink-hover: var(--theme-brand-ink-hover);
     --brand-tint: var(--theme-brand-tint);
     --brand-outline: var(--theme-brand-outline);
     --on-primary: var(--theme-on-primary);
