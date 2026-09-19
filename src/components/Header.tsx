@@ -336,7 +336,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Create Post"
         >
-          <div className="w-5 h-5 text-violet-400 group-hover:text-violet-300 transition-colors">
+          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
@@ -350,7 +350,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Messenger"
         >
-          <div className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors">
+          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -369,7 +369,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
-          <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-fuchsia-300' : 'text-fuchsia-400 group-hover:text-fuchsia-300'}`}>
+          <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
@@ -385,7 +385,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
           title="TV"
         >
-          <div className="w-5 h-5 text-orange-400 group-hover:text-orange-300 transition-colors">
+          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -398,7 +398,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
           title="Events"
         >
-          <div className="w-5 h-5 text-amber-400 group-hover:text-amber-300 transition-colors">
+          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -415,7 +415,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
-            <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-rose-300' : 'text-rose-400 group-hover:text-rose-300'}`}>
+            <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
               <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
@@ -525,7 +525,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       });
                                     }}
                                     disabled={acceptFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-xs active:scale-95 transition-all"
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-primary-ink hover:bg-primary-hover text-white shadow-xs active:scale-95 transition-all"
                                   >
                                     Accept
                                   </button>
@@ -548,7 +548,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
                               {/* Show "Accepted" / "Declined" after handling */}
                               {notif.type === 'friend_request' && isHandled && (
-                                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1.5">Responded</p>
+                                <p className="text-[9px] font-black text-success uppercase tracking-widest mt-1.5">Responded</p>
                               )}
                             </div>
 
@@ -564,7 +564,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                     deleteNotification.mutate({ bucket: notif.bucket, ts: notif.ts });
                                   }
                                 }}
-                                className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-brand-text/30 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                className="opacity-0 group-hover/notif:opacity-100 w-5 h-5 flex items-center justify-center rounded-full text-brand-text/30 hover:text-danger hover:bg-danger/10 transition-all"
                                 title="Delete notification"
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -589,7 +589,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300 mr-1"
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          <div className="w-5 h-5 text-amber-500 group-hover:text-amber-400 transition-colors">
+          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </div>
           <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">
@@ -633,12 +633,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-brand-card shadow-md ring-1 ring-brand-divider">
                         <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
                       </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-brand-bg" />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-[11px] font-black text-brand-text uppercase tracking-widest truncate">{profile?.display_name || currentUser.name}</h4>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                        <div className="w-1 h-1 rounded-full bg-success" />
                         <span className="text-[8px] font-bold text-brand-text/60 uppercase tracking-widest">Online</span>
                       </div>
                     </div>
@@ -660,7 +660,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
                   <Link href="/settings/profile" onClick={() => setIsProfileOpen(false)}>
                     <div className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-brand-secondary transition-all cursor-pointer">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-primary-tint group-hover:text-primary-ink transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -675,9 +675,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 <div className="mt-1 pt-1 border-t border-brand-divider/60">
                   <button
                     onClick={onLogout}
-                    className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-rose-50/50 transition-all text-rose-500"
+                    className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-danger/5 transition-all text-danger"
                   >
-                    <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 group-hover:bg-rose-100 transition-colors">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-danger/10 text-danger group-hover:bg-danger/15 transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>

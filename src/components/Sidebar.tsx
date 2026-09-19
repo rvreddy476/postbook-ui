@@ -44,7 +44,12 @@ type Item = {
   label: string;
   icon: typeof Home;
   href?: string;
-  /** Tailwind text-color class for the icon — each nav item is colour-coded. */
+  /**
+   * Icon colour class. Every item now inherits the rail's own colour so the
+   * nav reads as ONE surface: eight different hues down the rail was the
+   * "stitched" look the founder objected to. The ACTIVE item is the only
+   * thing that takes the accent, which is what makes it findable.
+   */
   color: string;
   /** Opens in a new browser tab (used for PostTube — a separate surface). */
   newTab?: boolean;
@@ -52,14 +57,14 @@ type Item = {
 
 // Primary rail — always visible. Sized so the rail never scrolls.
 const primaryItems: Item[] = [
-  { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-sky-400' },
-  { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-fuchsia-400' },
-  { id: 'Circle', label: 'Circle', icon: UserRoundPlus, href: '/circle', color: 'text-emerald-400' },
-  { id: 'Groups', label: 'MySpace', icon: Users, href: '/groups', color: 'text-amber-400' },
-  { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels', color: 'text-rose-400' },
+  { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
+  { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
+  { id: 'Circle', label: 'Circle', icon: UserRoundPlus, href: '/circle', color: 'text-current' },
+  { id: 'Groups', label: 'MySpace', icon: Users, href: '/groups', color: 'text-current' },
+  { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels', color: 'text-current' },
   // Communities feature disabled — consolidated into Groups ("MySpace").
   // Service + pages kept; only the entry points are hidden.
-  // { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-violet-400' },
+  // { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-current' },
 ];
 
 // Everything else opens from the "More" button instead of overflowing.
@@ -67,17 +72,17 @@ const primaryItems: Item[] = [
 // Go Live sits right after PostTube — the post composer no longer hosts a
 // "go live" button, so this is the canonical entry point for creators.
 const moreItems: Item[] = [
-  { id: 'Trending', label: 'Trending', icon: Flame, href: '/trending', color: 'text-orange-400' },
-  { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-emerald-400' },
-  { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-rose-400' },
-  { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-orange-400' },
-  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-rose-400' },
-  { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-blue-400' },
-  { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-amber-400' },
+  { id: 'Trending', label: 'Trending', icon: Flame, href: '/trending', color: 'text-current' },
+  { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-current' },
+  { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-current' },
+  { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-current' },
+  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-current' },
+  { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-current' },
+  { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-current' },
   { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/commerce', color: 'text-green-400' },
-  { id: 'PostMatch', label: 'PostMatch', icon: Heart, href: '/postmatch', color: 'text-pink-400' },
-  { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-indigo-400' },
-  { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-teal-400' },
+  { id: 'PostMatch', label: 'PostMatch', icon: Heart, href: '/postmatch', color: 'text-current' },
+  { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-current' },
+  { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-current' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -96,38 +101,38 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const widthCls = expanded ? 'w-64 px-4' : 'w-16 items-center px-0';
   const navClass = inFlow
-    ? `relative flex h-full shrink-0 flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg dark:bg-brand-bg dark:text-brand-text ${widthCls}`
-    : `fixed left-0 top-0 z-60 hidden h-full flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg transition-all duration-500 ease-in-out dark:bg-brand-bg dark:text-brand-text md:flex ${widthCls}`;
+    ? `relative flex h-full shrink-0 flex-col border-r border-brand-divider bg-brand-bg py-6 text-brand-text ${widthCls}`
+    : `fixed left-0 top-0 z-60 hidden h-full flex-col border-r border-brand-divider bg-brand-bg py-6 text-brand-text transition-all duration-500 ease-in-out md:flex ${widthCls}`;
 
   // ---- One primary rail entry (link) ----
   const renderRailItem = (item: Item) => {
     const isActive = isItemActive(item);
     const Icon = item.icon;
-    const cls = `relative flex items-center rounded-xl transition-all duration-300 group ${
+    // One weight, one colour, accent only when active. Craft: things that
+    // behave the same look the same, so the eye can find the active item.
+    const cls = `relative flex items-center rounded-xl transition-colors duration-200 group ${
       expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-    } ${isActive ? 'bg-white/8 dark:bg-primary-ink/10' : 'hover:bg-white/5 dark:hover:bg-primary-ink/5'}`;
+    } ${isActive ? 'bg-primary-ink/10 text-primary-ink' : 'text-brand-text/70 hover:bg-primary-ink/5 hover:text-brand-text'}`;
     return (
       <Link key={item.id} href={item.href ?? '#'} className={cls}>
         <Icon
-          size={21}
-          strokeWidth={isActive ? 2.6 : 2.2}
-          className={`shrink-0 ${item.color} transition-transform duration-300 group-hover:scale-110 ${
-            isActive ? 'scale-110 drop-shadow-[0_0_6px_currentColor]' : ''
-          }`}
+          size={20}
+          strokeWidth={isActive ? 2.25 : 1.75}
+          className={`shrink-0 ${item.color} transition-transform duration-200 ease-out group-active:scale-90`}
         />
         {expanded && (
           <span
             className={`text-sm font-bold tracking-wide ${
-              isActive ? 'text-white dark:text-brand-text' : 'text-white/70 dark:text-brand-text/70'
+              isActive ? 'text-primary-ink' : 'text-brand-text/70 dark:text-brand-text/70'
             }`}
           >
             {item.label}
           </span>
         )}
         {!expanded && (
-          <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
+          <div className="pointer-events-none absolute left-full z-80 ml-3 whitespace-nowrap rounded-lg bg-brand-text px-2.5 py-1.5 text-[11px] font-semibold tracking-normal text-brand-bg opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
             {item.label}
-            <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-white dark:bg-brand-text" />
+            <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-brand-text" />
           </div>
         )}
         {isActive && !expanded && (
@@ -147,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={() => setExpanded?.(!expanded)}
           aria-label="Toggle menu"
-          className="rounded-lg p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-primary-ink/10 dark:hover:text-primary-ink"
+          className="rounded-lg p-2 text-brand-text/60 transition-colors hover:bg-primary-ink/10 hover:text-primary-ink"
         >
           <Menu size={20} strokeWidth={2.5} />
         </button>
@@ -169,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             aria-expanded={moreOpen}
             className={`relative flex items-center rounded-xl transition-all duration-300 group ${
               expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-            } ${moreOpen || moreActive ? 'bg-white/8 dark:bg-primary-ink/10' : 'hover:bg-white/5 dark:hover:bg-primary-ink/5'}`}
+            } ${moreOpen || moreActive ? 'bg-primary-ink/10' : 'hover:bg-primary-ink/5'}`}
           >
             <LayoutGrid
               size={21}
@@ -181,7 +186,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {expanded && (
               <span
                 className={`text-sm font-bold tracking-wide ${
-                  moreOpen || moreActive ? 'text-white dark:text-brand-text' : 'text-white/70 dark:text-brand-text/70'
+                  moreOpen || moreActive ? 'text-primary-ink' : 'text-brand-text/70 dark:text-brand-text/70'
                 }`}
               >
                 More
@@ -190,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {!expanded && !moreOpen && (
               <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
                 More
-                <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-white dark:bg-brand-text" />
+                <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-brand-text" />
               </div>
             )}
           </button>
@@ -198,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Flyout — the rest of the services */}
           {moreOpen && (
             <div className="absolute bottom-0 left-full z-80 ml-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-brand-text shadow-2xl dark:border-brand-divider dark:bg-brand-card">
-              <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black uppercase tracking-widest text-white/40 dark:text-brand-text/40">
+              <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black uppercase tracking-widest text-brand-text/40 dark:text-brand-text/40">
                 More on VChat
               </div>
               <div className="space-y-0.5 p-1.5 pt-0.5">
@@ -207,8 +212,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   const active = isItemActive(item);
                   const itemCls = `group/mi flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
                     active
-                      ? 'bg-white/10 text-white dark:bg-primary-ink/10 dark:text-primary-ink'
-                      : 'text-white/75 hover:bg-white/10 hover:text-white dark:text-brand-text/70 dark:hover:bg-primary-ink/5 dark:hover:text-primary-ink'
+                      ? 'bg-primary-ink/10 text-primary-ink'
+                      : 'text-brand-text/70 hover:bg-primary-ink/10 hover:text-primary-ink'
                   }`;
                   const inner = (
                     <>
@@ -257,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Account — pinned to the bottom */}
       <Link
         href="/profile"
-        className={`group mt-2 flex items-center gap-4 rounded-xl transition-all hover:bg-white/5 dark:hover:bg-primary-ink/5 ${
+        className={`group mt-2 flex items-center gap-4 rounded-xl transition-all hover:bg-primary-ink/5 ${
           expanded ? 'w-full px-4 py-3' : 'justify-center p-3'
         }`}
       >
@@ -266,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           strokeWidth={2.2}
           className="shrink-0 text-slate-300 transition-transform duration-300 group-hover:scale-110"
         />
-        {expanded && <span className="text-sm font-bold text-white/70 dark:text-brand-text/70">Account</span>}
+        {expanded && <span className="text-sm font-bold text-brand-text/70 dark:text-brand-text/70">Account</span>}
       </Link>
 
       {/* Click-away backdrop for the More flyout */}
