@@ -156,7 +156,7 @@ export default function MopeduRidesHistoryPage() {
         ) : (
           <>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Ride</th>
                   <th className="px-4 py-3">Customer</th>
@@ -234,7 +234,7 @@ export default function MopeduRidesHistoryPage() {
         ) : detail.data ? (
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                 Ride
               </p>
               <dl className="mt-2 space-y-1.5 text-xs">
@@ -299,7 +299,7 @@ export default function MopeduRidesHistoryPage() {
                 ) : null}
               </dl>
 
-              <p className="mt-4 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="mt-4 text-[11px] font-bold tracking-wider text-brand-text/60">
                 Pickup
               </p>
               <p className="mt-1 text-xs text-brand-text/80">
@@ -310,7 +310,7 @@ export default function MopeduRidesHistoryPage() {
                 {detail.data.ride.pickup.lng.toFixed(5)}
               </p>
 
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="mt-3 text-[11px] font-bold tracking-wider text-brand-text/60">
                 Drop
               </p>
               <p className="mt-1 text-xs text-brand-text/80">
@@ -323,7 +323,7 @@ export default function MopeduRidesHistoryPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                 Status history
               </p>
               <div className="mt-2">

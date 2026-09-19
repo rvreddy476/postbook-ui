@@ -87,9 +87,9 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
   const privacy = privacyConfig[group.privacy_level ?? 'public'] ?? privacyConfig.public
 
   const roleBadge = () => {
-    if (isOwner) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 rounded-full"><Crown className="w-3 h-3" />Owner</span>
-    if (viewerRole === 'admin') return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700 rounded-full"><ShieldCheck className="w-3 h-3" />Admin</span>
-    if (isMod) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 rounded-full"><Wrench className="w-3 h-3" />Mod</span>
+    if (isOwner) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold tracking-wider bg-amber-100 text-amber-700 rounded-full"><Crown className="w-3 h-3" />Owner</span>
+    if (viewerRole === 'admin') return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold tracking-wider bg-violet-100 text-violet-700 rounded-full"><ShieldCheck className="w-3 h-3" />Admin</span>
+    if (isMod) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold tracking-wider bg-blue-100 text-blue-700 rounded-full"><Wrench className="w-3 h-3" />Mod</span>
     return null
   }
 

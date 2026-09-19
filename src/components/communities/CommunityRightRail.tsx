@@ -29,7 +29,7 @@ export default function CommunityRightRail({ communityId }: Props) {
       {/* Admins & Moderators */}
       {adminMods.length > 0 && (
         <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 tracking-wide mb-3">
             <Shield className="w-3.5 h-3.5" /> Admins & Mods
           </h4>
           <div className="space-y-2">
@@ -50,7 +50,7 @@ export default function CommunityRightRail({ communityId }: Props) {
                   </div>
                   <span className="text-xs font-semibold text-brand-text truncate flex-1">{name}</span>
                   {badge && (
-                    <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded-full uppercase ${badge.color}`}>
+                    <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded-full ${badge.color}`}>
                       {badge.label}
                     </span>
                   )}
@@ -64,7 +64,7 @@ export default function CommunityRightRail({ communityId }: Props) {
       {/* Community Rules */}
       {community?.rules && community.rules.length > 0 && (
         <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 tracking-wide mb-3">
             <BookOpen className="w-3.5 h-3.5" /> Rules
           </h4>
           <ol className="space-y-1.5">
@@ -84,7 +84,7 @@ export default function CommunityRightRail({ communityId }: Props) {
       {/* About snippet */}
       {community && (
         <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 uppercase tracking-wide mb-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-brand-text/60 tracking-wide mb-3">
             <Users className="w-3.5 h-3.5" /> About
           </h4>
           <div className="space-y-2 text-xs text-brand-text/60">

@@ -155,7 +155,7 @@ export default function CommunitiesPage() {
         {tab === 'discover' && !searchQuery && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-brand-text/80 uppercase tracking-wider">Browse by Category</h3>
+              <h3 className="text-sm font-bold text-brand-text/80 tracking-wider">Browse by Category</h3>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {CATEGORIES.map((category) => (
@@ -171,7 +171,7 @@ export default function CommunitiesPage() {
                   }`}
                 >
                   <span className="text-3xl group-hover:scale-110 transition-transform duration-300">{category.emoji}</span>
-                  <span className="text-[11px] font-bold truncate w-full uppercase tracking-wide">{category.label}</span>
+                  <span className="text-[11px] font-bold truncate w-full tracking-wide">{category.label}</span>
                 </button>
               ))}
             </div>

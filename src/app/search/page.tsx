@@ -155,7 +155,7 @@ function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: 
     return (
         <div className="flex items-center gap-2 mb-3">
             <span className="text-brand-text/50">{icon}</span>
-            <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">{label}</h2>
+            <h2 className="text-sm font-black text-brand-text tracking-wider">{label}</h2>
             {count !== undefined && (
                 <span className="ml-auto text-xs font-semibold text-brand-text/40">{count} result{count !== 1 ? "s" : ""}</span>
             )}
@@ -271,7 +271,7 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
                 <section>
                     <div className="flex items-center gap-2 mb-3">
                         <Clock className="w-4 h-4 text-brand-text/50" />
-                        <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">Recent Searches</h2>
+                        <h2 className="text-sm font-black text-brand-text tracking-wider">Recent Searches</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {recentItems.map((item, i) => (
@@ -302,7 +302,7 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
                 <section>
                     <div className="flex items-center gap-2 mb-3">
                         <Bookmark className="w-4 h-4 text-brand-text/50" />
-                        <h2 className="text-sm font-black text-brand-text uppercase tracking-wider">Saved Searches</h2>
+                        <h2 className="text-sm font-black text-brand-text tracking-wider">Saved Searches</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {savedItems.map((item, i) => (
@@ -1016,7 +1016,7 @@ function SearchPageContent() {
                                                 <p className="text-sm font-semibold text-brand-text truncate">{label}</p>
                                                 <p className="text-xs text-brand-text/40 truncate">{sub}</p>
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 px-2 py-0.5 rounded-full border border-brand-divider">
+                                            <span className="text-[10px] font-bold tracking-wider text-brand-text/40 px-2 py-0.5 rounded-full border border-brand-divider">
                                                 {kindBadge}
                                             </span>
                                         </button>

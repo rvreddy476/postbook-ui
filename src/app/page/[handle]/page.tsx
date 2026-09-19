@@ -201,7 +201,7 @@ function OwnerPanel({ page, handle }: { page: import('@/types/profile').Business
 
     return (
         <div className="mt-6 rounded-2xl border border-border bg-white p-4">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Verification</h2>
+            <h2 className="text-xs font-bold tracking-wide text-muted-foreground">Verification</h2>
             {page.status === 'rejected' && page.rejection_reason && (
                 <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-[12px] text-rose-700">
                     Rejected: {page.rejection_reason}

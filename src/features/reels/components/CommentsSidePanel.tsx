@@ -65,7 +65,7 @@ export function CommentsSidePanel({
     >
       <header className="flex items-center justify-between border-b border-brand-divider px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-highlight">Live Comments</span>
+          <span className="text-xs font-semibold tracking-[0.16em] text-brand-highlight">Live Comments</span>
           <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] text-brand-highlight">{comments.length}</span>
         </div>
         <button

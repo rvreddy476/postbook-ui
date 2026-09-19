@@ -443,7 +443,7 @@ export default function RegisterPage() {
                         type="button"
                         onClick={handleResendCode}
                         disabled={resendCooldown > 0 || resendVerification.isPending}
-                        className="text-xs font-bold uppercase tracking-wider text-primary-ink transition-colors hover:text-brand-text disabled:opacity-50"
+                        className="text-xs font-bold tracking-wider text-primary-ink transition-colors hover:text-brand-text disabled:opacity-50"
                       >
                         {resendCooldown > 0
                           ? `Resend in ${resendCooldown}s`
@@ -455,7 +455,7 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => router.push('/')}
-                        className="text-xs font-bold uppercase tracking-wider text-brand-text/40 transition-colors hover:text-brand-text/70"
+                        className="text-xs font-bold tracking-wider text-brand-text/40 transition-colors hover:text-brand-text/70"
                       >
                         Skip for now
                       </button>
@@ -468,7 +468,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Terms note */}
-        <p className="mt-6 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-text/30">
+        <p className="mt-6 text-center text-[10px] font-semibold tracking-[0.2em] text-brand-text/30">
           By creating an account, you agree to our{' '}
           <span className="cursor-pointer underline underline-offset-2 hover:text-brand-text/60">Terms</span>{' '}
           and{' '}

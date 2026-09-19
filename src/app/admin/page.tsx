@@ -261,7 +261,7 @@ export default function AdminPage() {
         <div className="rounded-[30px] border border-amber-200 bg-amber-50 px-6 py-5 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-700">
+              <p className="text-[11px] font-black tracking-[0.22em] text-amber-700">
                 Internal Only
               </p>
               <h1 className="mt-1 text-[28px] font-bold text-brand-text">Admin Console</h1>
@@ -280,7 +280,7 @@ export default function AdminPage() {
                   exportRequestId ? exportStatusQuery.refetch() : Promise.resolve(),
                 ])
               }
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-amber-800 transition-colors hover:bg-amber-100"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white px-5 py-3 text-[11px] font-black tracking-[0.16em] text-amber-800 transition-colors hover:bg-amber-100"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh data
@@ -302,7 +302,7 @@ export default function AdminPage() {
         <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           {metricCards.map((card) => (
             <div key={card.label} className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
+              <p className="text-[10px] font-black tracking-[0.18em] text-brand-text/45">
                 {card.label}
               </p>
               <p className="mt-2 text-[26px] font-bold text-brand-text">
@@ -374,7 +374,7 @@ export default function AdminPage() {
             !takedownForm.entity_id.trim() ||
             !takedownForm.reason.trim()
           }
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#7B2D2D] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#5f2020] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-[#7B2D2D] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#5f2020] disabled:opacity-50"
         >
           {takedownMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -407,10 +407,10 @@ export default function AdminPage() {
         {(reportsQuery.data?.items ?? []).map((report) => (
           <div key={report.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#E9EEF9] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary-ink">
+              <span className="rounded-full bg-[#E9EEF9] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-primary-ink">
                 {report.entity_type}
               </span>
-              <span className="rounded-full bg-[#F7E7D7] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-warning">
+              <span className="rounded-full bg-[#F7E7D7] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-warning">
                 {report.status}
               </span>
               <span className="text-[11px] text-brand-text/45">{formatDate(report.created_at)}</span>
@@ -495,7 +495,7 @@ export default function AdminPage() {
             !suspendForm.until ||
             !suspendForm.reason.trim()
           }
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#8A2F2F] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#712525] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-[#8A2F2F] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#712525] disabled:opacity-50"
         >
           {suspendMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -537,7 +537,7 @@ export default function AdminPage() {
                               type="button"
                               onClick={() => unsuspendMutation.mutate(suspension.user_id)}
                               disabled={unsuspendMutation.isPending}
-                              className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary disabled:opacity-50"
+                              className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-2 text-[10px] font-black tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary disabled:opacity-50"
                             >
                               {unsuspendMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -573,7 +573,7 @@ export default function AdminPage() {
                           type="button"
                           onClick={() => exportRequestMutation.mutate()}
                           disabled={exportRequestMutation.isPending}
-                          className="inline-flex items-center gap-2 rounded-2xl bg-[#3456A0] px-5 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#294684] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 rounded-2xl bg-[#3456A0] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#294684] disabled:opacity-50"
                         >
                           {exportRequestMutation.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -586,7 +586,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => void exportStatusQuery.refetch()}
-                            className="inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary"
+                            className="inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-3 text-[10px] font-black tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary"
                           >
                             <RefreshCw className="h-4 w-4" />
                             Refresh status
@@ -605,11 +605,11 @@ export default function AdminPage() {
                       ) : null}
                       {exportRequest ? (
                         <div className="mt-5 rounded-2xl border border-brand-divider bg-background px-4 py-4">
-                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-text/45">
+                          <p className="text-[10px] font-black tracking-[0.16em] text-brand-text/45">
                             Current request
                           </p>
                           <p className="mt-2 text-[13px] font-semibold text-brand-text">
-                            Status: <span className="uppercase">{exportRequest.status}</span>
+                            Status: <span className="">{exportRequest.status}</span>
                           </p>
                           <p className="mt-1 text-[12px] text-brand-text/60">
                             Requested {formatDate(exportRequest.requested_at)}
@@ -630,7 +630,7 @@ export default function AdminPage() {
                               href={exportRequest.download_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary"
+                              className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-brand-divider px-4 py-2 text-[10px] font-black tracking-[0.16em] text-brand-highlight transition-colors hover:bg-brand-secondary"
                             >
                               <Download className="h-4 w-4" />
                               Open download
@@ -658,10 +658,10 @@ export default function AdminPage() {
                     {(auditLogQuery.data?.items ?? []).map((entry) => (
                       <div key={entry.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#EEE7FF] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary-ink">
+                          <span className="rounded-full bg-[#EEE7FF] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-primary-ink">
                             {entry.action}
                           </span>
-                          <span className="rounded-full bg-[#F2ECE4] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                          <span className="rounded-full bg-[#F2ECE4] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-muted-foreground">
                             {entry.entity_type}
                           </span>
                           <span className="text-[11px] text-brand-text/45">{formatDate(entry.created_at)}</span>

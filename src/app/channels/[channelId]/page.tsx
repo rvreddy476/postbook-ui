@@ -300,7 +300,7 @@ function ChannelDetailContent() {
             <img src={bannerSrc} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-linear-to-br ${gradient} opacity-80`}>
-              <div className="absolute inset-0 flex items-center justify-center text-brand-bg/20 text-sm font-light tracking-[0.3em] uppercase">{channel.name}</div>
+              <div className="absolute inset-0 flex items-center justify-center text-brand-bg/20 text-sm font-light tracking-[0.3em]">{channel.name}</div>
             </div>
           )}
           <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
@@ -392,7 +392,7 @@ function ChannelDetailContent() {
               ].map((s, i) => (
                 <div key={i} className="flex flex-col gap-0.5 shrink-0">
                   <span className="text-sm sm:text-[15px] font-extrabold text-brand-text font-mono">{s.val}</span>
-                  <span className="text-[9px] text-brand-text/40 uppercase tracking-wider">{s.lbl}</span>
+                  <span className="text-[9px] text-brand-text/40 tracking-wider">{s.lbl}</span>
                 </div>
               ))}
             </div>

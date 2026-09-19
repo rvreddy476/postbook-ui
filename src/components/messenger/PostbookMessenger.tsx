@@ -365,7 +365,7 @@ export default function PostbookMessenger() {
                 <button
                   key={tab}
                   onClick={() => setContactTab(tab)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest uppercase rounded-lg transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest rounded-lg transition-all ${
                     isActive
                       ? 'bg-primary-ink text-brand-bg shadow-xs'
                       : 'text-brand-text/60 hover:text-brand-text'
@@ -429,7 +429,7 @@ export default function PostbookMessenger() {
                             {friend.name}
                           </span>
                           {lastMsg?.time && (
-                            <span className="text-[10px] text-brand-text/40 font-bold uppercase shrink-0 ml-2">{lastMsg.time}</span>
+                            <span className="text-[10px] text-brand-text/40 font-bold shrink-0 ml-2">{lastMsg.time}</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
@@ -579,7 +579,7 @@ export default function PostbookMessenger() {
               {/* New Group button */}
               <button
                 onClick={handleNewGroup}
-                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest uppercase rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
+                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 New Group

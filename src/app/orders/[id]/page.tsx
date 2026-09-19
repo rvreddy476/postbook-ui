@@ -62,11 +62,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="text-xs uppercase text-gray-500">Status</div>
+          <div className="text-xs text-gray-500">Status</div>
           <div className="text-lg font-semibold">{order.status.replace(/_/g, ' ')}</div>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="text-xs uppercase text-gray-500">Payment</div>
+          <div className="text-xs text-gray-500">Payment</div>
           <div className="mt-1">
             <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold ${payUI.cls}`}>
               {payUI.label}
@@ -78,7 +78,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           ) : null}
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="text-xs uppercase text-gray-500">Total</div>
+          <div className="text-xs text-gray-500">Total</div>
           <div className="text-lg font-semibold">
             {order.currency_code} {order.final_amount.toFixed(2)}
           </div>

@@ -128,7 +128,7 @@ export default function MopeduComplaintsPage() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Complaint</th>
                   <th className="px-4 py-3">Ride</th>
@@ -161,7 +161,7 @@ export default function MopeduComplaintsPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800">
+                      <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-violet-800">
                         {c.category.replace(/_/g, " ")}
                       </span>
                     </td>
@@ -186,7 +186,7 @@ export default function MopeduComplaintsPage() {
             <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                  <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                     {selected.category.replace(/_/g, " ")}
                   </p>
                   <p className="mt-1 font-mono text-sm text-brand-text">
@@ -233,7 +233,7 @@ export default function MopeduComplaintsPage() {
                 ) : null}
               </dl>
 
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="mt-3 text-[11px] font-bold tracking-wider text-brand-text/60">
                 Description
               </p>
               <p className="mt-1 whitespace-pre-wrap rounded-lg bg-gray-50 px-3 py-2 text-xs text-brand-text/80">
@@ -242,7 +242,7 @@ export default function MopeduComplaintsPage() {
 
               {selected.resolution_note ? (
                 <>
-                  <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                  <p className="mt-3 text-[11px] font-bold tracking-wider text-brand-text/60">
                     Resolution note
                   </p>
                   <p className="mt-1 whitespace-pre-wrap rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
@@ -254,7 +254,7 @@ export default function MopeduComplaintsPage() {
               {selected.status !== "resolved" &&
               selected.status !== "dismissed" ? (
                 <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                  <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                     Update status
                   </p>
                   <div className="mt-2 space-y-1">

@@ -168,7 +168,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
             <aside className="hidden lg:block space-y-4">
               {/* Group Info Card */}
               <div className="bg-brand-card rounded-xl border border-brand-divider p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/60 mb-3">About this group</h3>
+                <h3 className="text-xs font-bold tracking-wider text-brand-text/60 mb-3">About this group</h3>
                 {group.description && (
                   <p className="text-sm text-brand-highlight leading-relaxed line-clamp-4 mb-3">{group.description}</p>
                 )}
@@ -187,7 +187,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
               {/* Admins & Mods Card */}
               {enrichedAdmins.length > 0 && (
                 <div className="bg-brand-card rounded-xl border border-brand-divider p-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/60 mb-3">Admins & Moderators</h3>
+                  <h3 className="text-xs font-bold tracking-wider text-brand-text/60 mb-3">Admins & Moderators</h3>
                   <div className="space-y-2.5">
                     {enrichedAdmins.slice(0, 5).map(m => {
                       const avatarUrl = m.avatar_media_id ? `/v1/media/${m.avatar_media_id}/serve` : null
@@ -222,7 +222,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
               {rules && rules.length > 0 && (
                 <div className="bg-brand-card rounded-xl border border-brand-divider p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-brand-text/60">Group Rules</h3>
+                    <h3 className="text-xs font-bold tracking-wider text-brand-text/60">Group Rules</h3>
                     <button onClick={() => setActiveTab('rules')} className="text-[10px] font-bold text-brand-text hover:underline">View All</button>
                   </div>
                   <div className="space-y-2">

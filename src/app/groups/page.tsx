@@ -286,7 +286,7 @@ function GroupsPageInner() {
             <button
               onClick={() => acceptInvite.mutate(invite.id)}
               disabled={acceptInvite.isPending}
-              className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[10px] font-black tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Accept
@@ -294,7 +294,7 @@ function GroupsPageInner() {
             <button
               onClick={() => rejectInvite.mutate(invite.id)}
               disabled={rejectInvite.isPending}
-              className="flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-4 py-2 text-[10px] font-black tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" />
               Decline
@@ -421,7 +421,7 @@ function GroupsPageInner() {
           {/* Create new space */}
           <Link
             href="/groups/create"
-            className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover"
+            className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[11px] font-black tracking-widest text-white transition-all hover:bg-primary-hover"
           >
             <Plus className="h-4 w-4" />
             Create new space
@@ -542,7 +542,7 @@ function GroupsPageInner() {
         {/* ── Right rail: ads / sponsored — hidden while a space is open
                so the space content uses the full width ──────────────── */}
         <aside className={`sticky top-0 h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 ${selectedSpaceId ? 'hidden' : 'hidden lg:flex'}`}>
-          <p className="px-1 text-[11px] font-black uppercase tracking-widest text-brand-text/40">Sponsored</p>
+          <p className="px-1 text-[11px] font-black tracking-widest text-brand-text/40">Sponsored</p>
           <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
             <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-brand-text/5">
               <Megaphone className="h-8 w-8 text-brand-text/20" />
@@ -559,7 +559,7 @@ function GroupsPageInner() {
             </p>
             <Link
               href="/groups/create"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-3.5 py-2 text-[10px] font-black uppercase tracking-widest text-brand-text/70 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-3.5 py-2 text-[10px] font-black tracking-widest text-brand-text/70 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
             >
               <Plus className="h-3.5 w-3.5" />
               Create a space

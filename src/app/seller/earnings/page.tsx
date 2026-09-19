@@ -90,7 +90,7 @@ export default function SellerEarningsPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Link
             href="/seller/dashboard"
-            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+            className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Dashboard
           </Link>
@@ -103,7 +103,7 @@ export default function SellerEarningsPage() {
             </div>
             <a
               href="/api/v1/commerce/seller/earnings.csv"
-              className="px-4 py-2 border border-border rounded-lg text-xs font-bold uppercase tracking-wider text-muted-foreground hover:bg-white transition"
+              className="px-4 py-2 border border-border rounded-lg text-xs font-bold tracking-wider text-muted-foreground hover:bg-white transition"
             >
               Download CSV
             </a>
@@ -124,7 +124,7 @@ export default function SellerEarningsPage() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition ${
+                className={`px-4 py-2 rounded-lg font-bold text-xs tracking-wider transition ${
                   tab === t
                     ? 'bg-[#1A1A1A] text-white'
                     : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
@@ -146,31 +146,31 @@ export default function SellerEarningsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-secondary border-b border-border text-left">
                   <tr>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Source
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Reference
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Gross
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Commission
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Fee
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       TDS
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Net
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Status
                     </th>
                   </tr>
@@ -207,7 +207,7 @@ export default function SellerEarningsPage() {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${statusPill(r.status)}`}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${statusPill(r.status)}`}
                         >
                           {r.status}
                         </span>
@@ -238,7 +238,7 @@ function TotalsCard({
       className={`rounded-xl p-4 ${accent ? 'bg-[#1A1A1A] text-white' : 'bg-white border border-border'}`}
     >
       <div
-        className={`text-[10px] font-black uppercase tracking-widest ${accent ? 'text-white/60' : 'text-muted-foreground'}`}
+        className={`text-[10px] font-black tracking-widest ${accent ? 'text-white/60' : 'text-muted-foreground'}`}
       >
         {label}
       </div>

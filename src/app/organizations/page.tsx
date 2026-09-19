@@ -61,7 +61,7 @@ export default function OrganizationsListPage() {
               <h2 className="text-lg font-bold text-foreground mb-4">Create organization</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     Name *
                   </span>
                   <input
@@ -71,7 +71,7 @@ export default function OrganizationsListPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     Legal name
                   </span>
                   <input
@@ -81,7 +81,7 @@ export default function OrganizationsListPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     GSTIN
                   </span>
                   <input
@@ -92,7 +92,7 @@ export default function OrganizationsListPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     Billing email
                   </span>
                   <input
@@ -103,7 +103,7 @@ export default function OrganizationsListPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     Approval threshold (₹)
                   </span>
                   <input
@@ -117,7 +117,7 @@ export default function OrganizationsListPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  <span className="block text-xs font-bold tracking-widest text-muted-foreground mb-1">
                     Credit terms (days)
                   </span>
                   <select
@@ -137,7 +137,7 @@ export default function OrganizationsListPage() {
               <button
                 onClick={handleCreate}
                 disabled={!name.trim() || create.isPending}
-                className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-foreground disabled:opacity-50"
+                className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs tracking-wider hover:bg-foreground disabled:opacity-50"
               >
                 {create.isPending ? 'Creating…' : 'Create'}
               </button>
@@ -171,7 +171,7 @@ export default function OrganizationsListPage() {
                         <div className="text-xs font-mono text-muted-foreground mt-1">GSTIN {o.gstin}</div>
                       )}
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-secondary text-muted-foreground">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider bg-secondary text-muted-foreground">
                       {o.status}
                     </span>
                   </div>

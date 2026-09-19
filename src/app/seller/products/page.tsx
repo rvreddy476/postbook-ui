@@ -37,7 +37,7 @@ export default function SellerProductsPage() {
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Link href="/seller/dashboard" className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block">← Dashboard</Link>
+              <Link href="/seller/dashboard" className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block">← Dashboard</Link>
               <h1 className="text-2xl font-black text-foreground">Products</h1>
             </div>
             <Link
@@ -64,9 +64,9 @@ export default function SellerProductsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-secondary border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Product</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Created</th>
+                    <th className="text-left px-6 py-3 text-[10px] font-black tracking-widest text-muted-foreground">Product</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">Status</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">Created</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -80,7 +80,7 @@ export default function SellerProductsPage() {
                           <p className="text-muted-foreground/50 text-xs mt-0.5">{p.slug}</p>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${st.color}`}>{st.label}</span>
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${st.color}`}>{st.label}</span>
                         </td>
                         <td className="px-4 py-4 text-muted-foreground text-sm">
                           {new Date(p.created_at).toLocaleDateString()}
@@ -88,7 +88,7 @@ export default function SellerProductsPage() {
                         <td className="px-4 py-4 text-right space-x-3">
                           <Link
                             href={`/seller/products/${p.id}/variants`}
-                            className="text-primary-ink hover:text-foreground font-bold text-xs uppercase tracking-wider transition"
+                            className="text-primary-ink hover:text-foreground font-bold text-xs tracking-wider transition"
                           >
                             Variants
                           </Link>
@@ -96,7 +96,7 @@ export default function SellerProductsPage() {
                             <button
                               onClick={() => submitProduct.mutate(p.id)}
                               disabled={submitProduct.isPending}
-                              className="text-primary-ink hover:text-foreground font-bold text-xs uppercase tracking-wider disabled:opacity-50 transition"
+                              className="text-primary-ink hover:text-foreground font-bold text-xs tracking-wider disabled:opacity-50 transition"
                             >
                               {p.approval_status === 'changes_requested' ? 'Resubmit' : 'Submit for Review'}
                             </button>

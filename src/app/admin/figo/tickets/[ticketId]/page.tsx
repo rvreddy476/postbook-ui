@@ -70,7 +70,7 @@ export default function FoodTicketDetailPage() {
   return (
     <div className="space-y-4">
       <header className="rounded-md border border-slate-200 bg-white p-4">
-        <div className="text-xs uppercase tracking-wide text-slate-500">
+        <div className="text-xs tracking-wide text-slate-500">
           {ticket.category}
         </div>
         <h2 className="text-lg font-semibold text-slate-900">{ticket.subject}</h2>

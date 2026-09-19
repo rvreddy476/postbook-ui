@@ -231,7 +231,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                   <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Smile className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
                   <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Hash className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
                 </div>
-                <span className="px-5 sm:px-6 py-1.5 sm:py-2 bg-primary-ink text-brand-bg text-[10px] sm:text-xs font-black tracking-widest uppercase rounded-full">
+                <span className="px-5 sm:px-6 py-1.5 sm:py-2 bg-primary-ink text-brand-bg text-[10px] sm:text-xs font-black tracking-widest rounded-full">
                   Post
                 </span>
               </div>
@@ -248,7 +248,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             onClick={handleLoadNewPosts}
-            className="mb-4 w-full rounded-2xl bg-primary-ink py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
+            className="mb-4 w-full rounded-2xl bg-primary-ink py-3 text-sm font-black tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
           >
             {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
           </motion.button>
@@ -289,7 +289,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                     ? 'Follow more people to see their posts here'
                     : 'Follow people and creators to see their posts here'}
                 </p>
-                <Link href="/discover" className="mt-4 px-6 py-2.5 bg-primary-ink text-brand-bg text-xs font-black tracking-widest uppercase rounded-full hover:opacity-90 transition-opacity">
+                <Link href="/discover" className="mt-4 px-6 py-2.5 bg-primary-ink text-brand-bg text-xs font-black tracking-widest rounded-full hover:opacity-90 transition-opacity">
                   Discover People
                 </Link>
               </>

@@ -46,7 +46,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
             <div className="space-y-4">
                 {/* Name */}
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                         Tier Name
                     </label>
                     <input
@@ -62,7 +62,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
                 {/* Price + Currency row */}
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                        <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                             Monthly Price
                         </label>
                         <input
@@ -77,7 +77,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                        <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                             Currency
                         </label>
                         <select
@@ -95,7 +95,7 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
 
                 {/* Perks */}
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                         Perks (one per line)
                     </label>
                     <textarea
@@ -116,14 +116,14 @@ function TierForm({ initialData, onSubmit, onCancel, isPending }: TierFormProps)
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card hover:border-primary-outline/50 transition-all duration-200"
+                    className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card hover:border-primary-outline/50 transition-all duration-200"
                 >
                     Cancel
                 </button>
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <>
@@ -237,7 +237,7 @@ export default function TiersPage() {
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-foreground">Subscription Tiers</h1>
                     </div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest ml-[52px]">
+                    <p className="text-[11px] font-bold text-muted-foreground tracking-widest ml-[52px]">
                         Create and manage your subscription tiers
                     </p>
                 </div>
@@ -246,7 +246,7 @@ export default function TiersPage() {
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide pb-1">
                     <Link
                         href="/monetization"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -255,7 +255,7 @@ export default function TiersPage() {
                     </Link>
                     <Link
                         href="/monetization/tiers"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -264,7 +264,7 @@ export default function TiersPage() {
                     </Link>
                     <Link
                         href="/monetization/payouts"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -285,7 +285,7 @@ export default function TiersPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-foreground">Something went wrong</p>
+                            <p className="text-[11px] font-black tracking-widest text-foreground">Something went wrong</p>
                             <p className="text-[10px] font-bold text-muted-foreground mt-0.5">Failed to load your tiers.</p>
                         </div>
                     </div>
@@ -296,7 +296,7 @@ export default function TiersPage() {
                     <div className="mb-6">
                         <button
                             onClick={() => setShowForm(true)}
-                            className="flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200"
+                            className="flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -347,7 +347,7 @@ export default function TiersPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-foreground">No tiers yet</p>
+                            <p className="text-[11px] font-black tracking-widest text-foreground">No tiers yet</p>
                             <p className="text-[10px] font-bold text-muted-foreground mt-0.5">
                                 Create your first subscription tier to start earning from your fans.
                             </p>
@@ -359,7 +359,7 @@ export default function TiersPage() {
                 {!isLoading && activeTiers.length > 0 && (
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                            <p className="text-[9px] font-black tracking-widest text-muted-foreground">
                                 {activeTiers.length} active {activeTiers.length === 1 ? "tier" : "tiers"}
                             </p>
                         </div>
@@ -385,7 +385,7 @@ export default function TiersPage() {
                     <div>
                         <div className="flex items-center gap-3 mb-4">
                             <div className="flex-1 h-px bg-secondary" />
-                            <p className="text-[8px] font-black uppercase tracking-widest text-primary-ink shrink-0">
+                            <p className="text-[8px] font-black tracking-widest text-primary-ink shrink-0">
                                 Inactive Tiers
                             </p>
                             <div className="flex-1 h-px bg-secondary" />

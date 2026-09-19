@@ -108,7 +108,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
                 <span className="text-brand-text/20">•</span>
                 {community.category && (
                   <>
-                    <span className="text-brand-text uppercase tracking-wider">
+                    <span className="text-brand-text tracking-wider">
                       {community.category}
                     </span>
                     <span className="text-brand-text/20">•</span>

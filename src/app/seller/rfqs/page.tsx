@@ -47,7 +47,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
 
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
-      <h3 className="text-xs font-black uppercase tracking-widest text-amber-800 mb-3">
+      <h3 className="text-xs font-black tracking-widest text-amber-800 mb-3">
         Send a quote
       </h3>
       <table className="w-full text-xs mb-3">
@@ -95,13 +95,13 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
         <button
           onClick={handleSend}
           disabled={send.isPending}
-          className="px-4 py-2 bg-amber-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-amber-800 disabled:opacity-50"
+          className="px-4 py-2 bg-amber-700 text-white text-xs font-bold tracking-wider rounded-lg hover:bg-amber-800 disabled:opacity-50"
         >
           {send.isPending ? 'Sending…' : 'Send quote'}
         </button>
         <button
           onClick={onClose}
-          className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+          className="px-4 py-2 text-xs font-bold tracking-wider text-muted-foreground hover:text-foreground"
         >
           Cancel
         </button>
@@ -123,7 +123,7 @@ export default function SellerRFQInboxPage() {
     <AppShell activeTab="Shop">
       <div className="min-h-screen bg-secondary">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <Link href="/seller/dashboard" className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground">
+          <Link href="/seller/dashboard" className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground">
             ← Dashboard
           </Link>
           <h1 className="text-2xl font-black text-foreground">RFQ Inbox</h1>
@@ -136,7 +136,7 @@ export default function SellerRFQInboxPage() {
               <button
                 key={t.value || 'all'}
                 onClick={() => setStatus(t.value)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
+                className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wider whitespace-nowrap ${
                   status === t.value
                     ? 'bg-[#1A1A1A] text-white'
                     : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
@@ -174,7 +174,7 @@ export default function SellerRFQInboxPage() {
                       </p>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
                         STATUS_COLOR[r.status] ?? 'bg-gray-100'
                       }`}
                     >
@@ -190,14 +190,14 @@ export default function SellerRFQInboxPage() {
                     {r.status === 'requested' || r.status === 'quoted' ? (
                       <button
                         onClick={() => setActiveRFQ(activeRFQ === r.id ? null : r.id)}
-                        className="px-4 py-1.5 bg-amber-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-amber-700"
+                        className="px-4 py-1.5 bg-amber-600 text-white text-xs font-bold tracking-wider rounded-lg hover:bg-amber-700"
                       >
                         {activeRFQ === r.id ? 'Hide quote form' : 'Send quote'}
                       </button>
                     ) : null}
                     <Link
                       href={`/rfq/${r.id}`}
-                      className="px-4 py-1.5 border border-border text-muted-foreground text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-secondary"
+                      className="px-4 py-1.5 border border-border text-muted-foreground text-xs font-bold tracking-wider rounded-lg hover:bg-secondary"
                     >
                       Open
                     </Link>

@@ -227,7 +227,7 @@ function ChatView({
             <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
           </svg>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: groupColor }}>
+            <div className="text-[10px] font-bold tracking-wider" style={{ color: groupColor }}>
               Pinned Message
             </div>
             <div className="text-[12px] text-brand-highlight truncate">
@@ -758,10 +758,10 @@ function MembersView({
           <div className="flex items-center gap-2">
             <span className="font-bold text-brand-text text-[13px] group-hover:text-brand-text transition-colors">{name}</span>
             {isAdmin && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider" style={{ color: groupColor, background: `${groupColor}15` }}>Admin</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md tracking-wider" style={{ color: groupColor, background: `${groupColor}15` }}>Admin</span>
             )}
             {isMod && (
-              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-md uppercase tracking-wider">Mod</span>
+              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-md tracking-wider">Mod</span>
             )}
           </div>
           {m.username && (
@@ -776,7 +776,7 @@ function MembersView({
     <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-hide">
       <div className="flex items-center gap-2 px-3 mb-2">
         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
-        <div className="text-brand-highlight text-[11px] font-bold uppercase tracking-widest">
+        <div className="text-brand-highlight text-[11px] font-bold tracking-widest">
           Online ({online.length})
         </div>
       </div>
@@ -788,7 +788,7 @@ function MembersView({
         <>
           <div className="flex items-center gap-2 px-3 mb-2 mt-4">
             <div className="w-2 h-2 rounded-full bg-slate-300" />
-            <div className="text-brand-text/60 text-[11px] font-bold uppercase tracking-widest">
+            <div className="text-brand-text/60 text-[11px] font-bold tracking-widest">
               Offline ({offline.length})
             </div>
           </div>

@@ -56,7 +56,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={classNames(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide",
         tone,
       )}
     >
@@ -194,7 +194,7 @@ export default function MopeduCronRunsPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+                <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                   <tr>
                     <th className="px-4 py-3">Started</th>
                     <th className="px-4 py-3">Job</th>
@@ -282,7 +282,7 @@ export default function MopeduCronRunsPage() {
             </div>
             {selected.error_summary ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                <p className="mb-1 font-semibold uppercase tracking-wider text-rose-700">
+                <p className="mb-1 font-semibold tracking-wider text-rose-700">
                   Error summary
                 </p>
                 <p className="whitespace-pre-wrap wrap-break-word">
@@ -291,7 +291,7 @@ export default function MopeduCronRunsPage() {
               </div>
             ) : null}
             <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+              <p className="mb-1 text-[11px] font-semibold tracking-wider text-brand-text/55">
                 Full row JSON
               </p>
               <JsonViewer value={selected} />
@@ -312,7 +312,7 @@ function FilterField({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
         {label}
       </span>
       {children}
@@ -333,7 +333,7 @@ function KvRow({
 }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <p className="text-[10px] font-semibold tracking-wider text-brand-text/55">
         {label}
       </p>
       <div

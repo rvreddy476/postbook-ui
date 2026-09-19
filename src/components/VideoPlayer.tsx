@@ -473,7 +473,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                   title="Quality"
                 >
                   <Settings className="w-5 h-5" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-[10px] font-black tracking-widest">
                     {currentQuality === "auto" ? "Auto" : currentQuality}
                   </span>
                 </button>
@@ -488,7 +488,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                       className="absolute bottom-full right-0 mb-2 w-40 bg-black/80 backdrop-blur-xl rounded-2xl border border-white/20 p-1.5 overflow-hidden"
                     >
                       {variantsLoading ? (
-                        <div className="px-4 py-3 text-white/60 text-[10px] font-bold uppercase tracking-widest text-center">
+                        <div className="px-4 py-3 text-white/60 text-[10px] font-bold tracking-widest text-center">
                           Loading...
                         </div>
                       ) : (
@@ -496,7 +496,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
                           <button
                             key={q}
                             onClick={() => handleQualityChange(q)}
-                            className={`w-full px-4 py-2.5 rounded-xl text-left text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-between ${
+                            className={`w-full px-4 py-2.5 rounded-xl text-left text-[11px] font-bold tracking-wider transition-all flex items-center justify-between ${
                               currentQuality === q
                                 ? "text-white orchid-gradient"
                                 : "text-white/70 hover:text-white hover:bg-brand-card/10"

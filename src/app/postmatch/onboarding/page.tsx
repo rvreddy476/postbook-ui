@@ -463,7 +463,7 @@ export default function OnboardingPage() {
             <div className="bg-[#111] rounded-2xl border border-[#222] p-5 space-y-5">
               {/* Name */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">First Name</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 tracking-wider">First Name</label>
                 <input
                   className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
                   placeholder="Your first name"
@@ -477,7 +477,7 @@ export default function OnboardingPage() {
 
               {/* Date of birth */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Date of Birth</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 tracking-wider">Date of Birth</label>
                 <div className="grid grid-cols-3 gap-2">
                   <input
                     className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
@@ -508,7 +508,7 @@ export default function OnboardingPage() {
 
               {/* Gender */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Gender</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 tracking-wider">Gender</label>
                 <div className="grid grid-cols-4 gap-2">
                   {([
                     ['male', 'Man'],
@@ -534,7 +534,7 @@ export default function OnboardingPage() {
 
               {/* Interested in */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Interested In</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 tracking-wider">Interested In</label>
                 <div className="grid grid-cols-3 gap-2">
                   {([
                     ['everyone', 'Everyone'],
@@ -559,7 +559,7 @@ export default function OnboardingPage() {
 
               {/* Intent */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Looking For</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 tracking-wider">Looking For</label>
                 <div className="grid grid-cols-2 gap-2">
                   {([
                     ['long_term', 'Long-term partner', '💞'],
@@ -637,7 +637,7 @@ export default function OnboardingPage() {
                         )}
                         {i === 0 && (
                           <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1">
-                            <span className="text-[8px] font-bold text-white uppercase tracking-wider">Primary</span>
+                            <span className="text-[8px] font-bold text-white tracking-wider">Primary</span>
                           </div>
                         )}
                         <button

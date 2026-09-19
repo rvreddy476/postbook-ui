@@ -69,7 +69,7 @@ export default function FoodFraudPage() {
         ) : (
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr className="text-left text-xs tracking-wide text-slate-500">
                 <th className="px-3 py-2">Customer</th>
                 <th className="px-3 py-2">Score</th>
                 <th className="px-3 py-2">Signals</th>

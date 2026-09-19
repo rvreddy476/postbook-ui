@@ -80,7 +80,7 @@ export default function CommunityPostCommentSection({ postId, communityId, space
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-xs font-bold text-brand-text">{name}</span>
                   {badge && (
-                    <span className={`px-1 py-0.5 text-[8px] font-bold rounded-full uppercase ${badge.color}`}>
+                    <span className={`px-1 py-0.5 text-[8px] font-bold rounded-full ${badge.color}`}>
                       {badge.label}
                     </span>
                   )}

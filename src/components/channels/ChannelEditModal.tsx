@@ -144,7 +144,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
 
         <div className="space-y-5 p-6">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Banner</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Banner</label>
             <div
               className="group relative h-36 cursor-pointer overflow-hidden rounded-2xl border border-brand-divider bg-brand-secondary"
               onClick={() => bannerInputRef.current?.click()}
@@ -210,7 +210,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Channel Name</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Channel Name</label>
             <input
               type="text"
               value={name}
@@ -223,7 +223,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Description</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Description</label>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -235,7 +235,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
           </div>
 
           <div>
-            <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Channel Type</label>
+            <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Channel Type</label>
             <div className="grid grid-cols-2 gap-3">
               {channelTypes.map((option) => (
                 <button
@@ -255,7 +255,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Category</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Category</label>
             <div className="flex flex-wrap gap-2">
               {channelCategories.map((option) => (
                 <button
@@ -275,7 +275,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
           </div>
 
           <div>
-            <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Comment Settings</label>
+            <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Comment Settings</label>
             <div className="space-y-2">
               {commentOptions.map((option) => (
                 <button
@@ -341,7 +341,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
 
               {paidAccess && (
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Monthly Price</label>
+                  <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Monthly Price</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-brand-text/40">$</span>
                     <input

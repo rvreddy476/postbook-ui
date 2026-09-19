@@ -55,7 +55,7 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
                     <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Earnings Frozen</span>
+                    <span className="text-[10px] font-black tracking-widest text-red-600">Earnings Frozen</span>
                 </div>
             )}
 
@@ -69,7 +69,7 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
                 </div>
                 <div>
                     <h2 className="text-sm font-black text-foreground">Creator earnings</h2>
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Earnings ledger overview</p>
+                    <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Earnings ledger overview</p>
                 </div>
             </div>
 
@@ -77,19 +77,19 @@ const WalletCard: React.FC<WalletCardProps> = ({ wallet, isLoading }) => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Available to withdraw */}
                 <div className="bg-background rounded-xl p-4 border border-border">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Available to withdraw</p>
+                    <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">Available to withdraw</p>
                     <p className="text-xl font-black text-foreground">{formatAmount(wallet.balance, wallet.currency)}</p>
                 </div>
 
                 {/* Lifetime earnings */}
                 <div className="bg-background rounded-xl p-4 border border-border">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Lifetime Earnings</p>
+                    <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">Lifetime Earnings</p>
                     <p className="text-xl font-black text-foreground">{formatAmount(wallet.lifetime_earnings, wallet.currency)}</p>
                 </div>
 
                 {/* Pending payout */}
                 <div className="bg-background rounded-xl p-4 border border-border">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Pending Payout</p>
+                    <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">Pending Payout</p>
                     <p className="text-xl font-black text-primary-ink">{formatAmount(wallet.pending_payout, wallet.currency)}</p>
                 </div>
             </div>

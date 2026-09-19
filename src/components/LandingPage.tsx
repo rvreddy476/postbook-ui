@@ -136,7 +136,7 @@ export default function LandingPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`relative px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full ${
+                className={`relative px-4 py-2 text-xs font-bold tracking-widest transition-all rounded-full ${
                   activeTab === tab.id
                     ? 'bg-primary-ink text-brand-bg'
                     : 'text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary'
@@ -150,13 +150,13 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
-              className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-text/70 transition-colors hover:text-brand-text"
+              className="px-4 py-2.5 text-xs font-bold tracking-widest text-brand-text/70 transition-colors hover:text-brand-text"
             >
               Log In
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary-ink px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-xs transition-transform hover:scale-[1.03]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary-ink px-5 py-2.5 text-xs font-bold tracking-widest text-brand-bg shadow-xs transition-transform hover:scale-[1.03]"
             >
               Join VChat
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -195,7 +195,7 @@ export default function LandingPage() {
                   setActiveTab(tab.id as TabType);
                   setMobileMenuOpen(false);
                 }}
-                className={`py-3 px-4 rounded-xl text-left text-xs font-bold uppercase tracking-widest transition-all ${
+                className={`py-3 px-4 rounded-xl text-left text-xs font-bold tracking-widest transition-all ${
                   activeTab === tab.id
                     ? 'bg-primary-ink text-brand-bg'
                     : 'bg-brand-secondary text-brand-text/70'
@@ -209,14 +209,14 @@ export default function LandingPage() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 py-3 text-center rounded-xl border border-brand-divider text-xs font-bold uppercase tracking-widest text-brand-text"
+                className="flex-1 py-3 text-center rounded-xl border border-brand-divider text-xs font-bold tracking-widest text-brand-text"
               >
                 Log In
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 py-3 text-center rounded-xl bg-primary-ink text-xs font-bold uppercase tracking-widest text-brand-bg"
+                className="flex-1 py-3 text-center rounded-xl bg-primary-ink text-xs font-bold tracking-widest text-brand-bg"
               >
                 Sign Up
               </Link>
@@ -241,7 +241,7 @@ export default function LandingPage() {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-3 py-1.5">
                   <span className="h-2 w-2 rounded-full bg-brand-text animate-ping" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text/60">VChat v2.0 - Active Now</span>
+                  <span className="text-[10px] font-bold tracking-widest text-brand-text/60">VChat v2.0 - Active Now</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter text-brand-text leading-[0.95]">
                   Create.<br />Connect.<br /><span className="underline decoration-brand-accent decoration-wavy decoration-3 underline-offset-8">Explore.</span>
@@ -252,14 +252,14 @@ export default function LandingPage() {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2.5 rounded-full bg-primary-ink px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-md transition-transform hover:scale-[1.03]"
+                    className="inline-flex items-center gap-2.5 rounded-full bg-primary-ink px-6 py-3.5 text-xs font-bold tracking-widest text-brand-bg shadow-md transition-transform hover:scale-[1.03]"
                   >
                     Start Free
                     <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                   </Link>
                   <Link
                     href="/reels"
-                    className="inline-flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-text transition-colors hover:bg-brand-secondary"
+                    className="inline-flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-6 py-3.5 text-xs font-bold tracking-widest text-brand-text transition-colors hover:bg-brand-secondary"
                   >
                     <Play className="h-3.5 w-3.5" strokeWidth={2.5} />
                     Watch Reels
@@ -270,7 +270,7 @@ export default function LandingPage() {
               {/* Minimal Social Proof & Layout */}
               <div className="space-y-8 lg:border-l lg:border-brand-divider lg:pl-12">
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-brand-text/50">Trusted Community</h3>
+                  <h3 className="text-xs font-bold tracking-widest text-brand-text/50">Trusted Community</h3>
                   <div className="flex items-center gap-4">
                     <div className="flex">
                       {PROOF_AVATARS.map((avatar) => (
@@ -296,7 +296,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="p-5 border border-brand-divider rounded-2xl bg-brand-card space-y-3 shadow-xs">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-brand-text">Platform Integrity</h4>
+                  <h4 className="text-xs font-bold tracking-widest text-brand-text">Platform Integrity</h4>
                   <p className="text-xs text-brand-text/60 leading-relaxed font-light">
                     Every message is securely verified, media uploads undergo automated content moderation, and analytics payouts happen directly via certified ledgers.
                   </p>
@@ -316,7 +316,7 @@ export default function LandingPage() {
               className="w-full space-y-8"
             >
               <div className="text-center max-w-xl mx-auto space-y-2">
-                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">Standardized Modules</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">Standardized Modules</h2>
                 <p className="text-xs text-brand-text/60 leading-relaxed">
                   A cohesive suite of social utilities mapped to high-efficiency protocols. Explore our core services.
                 </p>
@@ -358,7 +358,7 @@ export default function LandingPage() {
                       {feature.icon}
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-brand-text flex items-center gap-1.5">
+                      <h3 className="text-sm font-bold tracking-wider text-brand-text flex items-center gap-1.5">
                         {feature.title}
                         <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                       </h3>
@@ -381,7 +381,7 @@ export default function LandingPage() {
               className="w-full space-y-8"
             >
               <div className="text-center max-w-xl mx-auto space-y-2">
-                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">VChat Impact</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">VChat Impact</h2>
                 <p className="text-xs text-brand-text/60 leading-relaxed">
                   Platform telemetry details recorded globally across client environments.
                 </p>
@@ -397,7 +397,7 @@ export default function LandingPage() {
                   <div key={stat.label} className="p-6 border border-brand-divider bg-brand-card rounded-2xl space-y-2 shadow-xs">
                     <div className="flex items-center gap-1.5 text-brand-text/40">
                       <TrendingUp className="h-3.5 w-3.5" />
-                      <span className="text-[9px] font-bold uppercase tracking-widest">{stat.label}</span>
+                      <span className="text-[9px] font-bold tracking-widest">{stat.label}</span>
                     </div>
                     <div className="text-3xl font-black text-brand-text font-mono tracking-tight">{stat.value}</div>
                     <p className="text-[10px] text-brand-text/50 leading-relaxed font-light">{stat.desc}</p>
@@ -418,7 +418,7 @@ export default function LandingPage() {
               className="w-full space-y-6"
             >
               <div className="text-center max-w-xl mx-auto space-y-2">
-                <h2 className="text-2xl md:text-3xl font-extrabold uppercase tracking-tight">System Status</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">System Status</h2>
                 <p className="text-xs text-brand-text/60 leading-relaxed">
                   Real-time network operational diagnostics. Run a check to verify node status.
                 </p>
@@ -429,12 +429,12 @@ export default function LandingPage() {
                 <div className="bg-brand-secondary px-5 py-3 border-b border-brand-divider flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Terminal className="h-4 w-4 text-brand-text/60" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-brand-text/70 font-mono">VChat Diagnostic Console</span>
+                    <span className="text-xs font-bold tracking-wider text-brand-text/70 font-mono">VChat Diagnostic Console</span>
                   </div>
                   <button
                     onClick={runDiagnostic}
                     disabled={diagnosticRunning}
-                    className="px-3 py-1 rounded-sm bg-primary-ink text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
+                    className="px-3 py-1 rounded-sm bg-primary-ink text-brand-bg text-[10px] font-bold tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
                   >
                     {diagnosticRunning ? 'Running...' : 'Run Diagnostics'}
                   </button>
@@ -470,7 +470,7 @@ export default function LandingPage() {
                   ? 'bg-amber-500'
                   : 'bg-neutral-400'
             } animate-pulse`} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-[10px] font-bold tracking-wider">
               {status === 'operational'
                 ? 'All upstream gateways operational'
                 : status === 'degraded'
@@ -478,7 +478,7 @@ export default function LandingPage() {
                   : 'System health unknown'}
             </span>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand-text/40">
+          <span className="text-[10px] font-bold tracking-widest text-brand-text/40">
             © {new Date().getFullYear()} VChat. Trusted globally.
           </span>
         </div>

@@ -117,7 +117,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
             {/* Emoji selection */}
             <div className="mb-3">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground tracking-wide mb-1.5">
                     Emoji
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -139,7 +139,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
             {/* Status text */}
             <div className="mb-3">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground tracking-wide mb-1.5">
                     Status
                 </p>
                 <input
@@ -154,7 +154,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
             {/* Expiry */}
             <div className="mb-4">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground tracking-wide mb-1.5">
                     Clear after
                 </p>
                 <select

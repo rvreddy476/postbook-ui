@@ -62,9 +62,9 @@ export default function SellerDashboardPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-1">Seller Dashboard</p>
+              <p className="text-xs font-black tracking-widest text-primary-ink mb-1">Seller Dashboard</p>
               <h1 className="text-2xl font-black text-foreground">{seller.store_name}</h1>
-              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusColor[seller.status] ?? 'bg-secondary text-muted-foreground'}`}>
+              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-black tracking-wider ${statusColor[seller.status] ?? 'bg-secondary text-muted-foreground'}`}>
                 {seller.status.replace('_', ' ')}
               </span>
             </div>
@@ -139,7 +139,7 @@ export default function SellerDashboardPage() {
 function StatCard({ label, value, accent }: { label: string; value: number | string; accent: string }) {
   return (
     <div className="bg-white rounded-2xl border border-border p-5 hover:border-primary-outline transition">
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
+      <p className="text-[10px] font-black tracking-widest text-muted-foreground mb-1">{label}</p>
       <p className="text-2xl font-black mt-1" style={{ color: accent }}>{value}</p>
     </div>
   )

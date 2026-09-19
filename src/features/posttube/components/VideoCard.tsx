@@ -272,7 +272,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
           <p className="mt-1.5 text-[11px] text-brand-text/60">{video.channel_name}</p>
           {hasResumeState && (
             <div className="mt-3">
-              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-text/75">
+              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold tracking-[0.12em] text-brand-text/75">
                 <span>Resume at {fmtDuration(resumePosition)}</span>
                 <span>{Math.round(resumePercent)}%</span>
               </div>

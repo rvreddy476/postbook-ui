@@ -128,7 +128,7 @@ export default function DiscoverPage() {
                     <div key={`${r.kind}-${i}`} className="flex items-start gap-3 p-3 rounded-xl bg-[#1a1a1a]">
                       <span className="text-rose-400 text-lg">•</span>
                       <div className="flex-1">
-                        <div className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                        <div className="text-xs font-bold tracking-wider text-rose-300">
                           {r.kind.replace(/_/g, ' ')}
                         </div>
                         <div className="text-sm text-white/90">{r.detail}</div>
@@ -379,7 +379,7 @@ export default function DiscoverPage() {
                   <button
                     type="button"
                     onClick={() => setDecisionError(null)}
-                    className="mt-1 text-[10px] font-bold uppercase tracking-widest text-rose-200 hover:text-white transition"
+                    className="mt-1 text-[10px] font-bold tracking-widest text-rose-200 hover:text-white transition"
                   >
                     Dismiss
                   </button>
@@ -389,7 +389,7 @@ export default function DiscoverPage() {
 
             {/* Card counter */}
             <div className="text-center mt-4">
-              <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">{currentIndex + 1} of {cards.length}</span>
+              <span className="text-[10px] font-bold text-foreground tracking-widest">{currentIndex + 1} of {cards.length}</span>
             </div>
           </>
         )}

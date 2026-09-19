@@ -99,8 +99,8 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
     return (
         <div className="space-y-4">
             <div className="mb-6">
-                <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">{label}</label>
-                <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">{description}</p>
+                <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">{label}</label>
+                <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">{description}</p>
             </div>
 
             {/* Only render the requested section or all sections if none specified */}
@@ -125,7 +125,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                                 <div className={`p-2 rounded-xl ${isExpanded ? "bg-brand-text border-brand-text" : "bg-brand-secondary border-brand-divider"} border`}>
                                     <Icon className={`w-4 h-4 ${isExpanded ? "text-brand-card" : "text-brand-text/60"}`} />
                                 </div>
-                                <span className={`text-[11px] font-black uppercase tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
+                                <span className={`text-[11px] font-black tracking-widest ${isExpanded ? "text-brand-text" : "text-brand-highlight"}`}>{sectionLabel}</span>
                                 {items.length > 0 && (
                                     <span className="text-[10px] font-black bg-brand-secondary text-brand-text px-2 py-0.5 rounded-full">
                                         {items.length}
@@ -227,7 +227,7 @@ function AboutItemRow({
                                 <div className="p-1 bg-emerald-100 rounded-lg">
                                     <Target className="w-3 h-3 text-emerald-600" />
                                 </div>
-                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{label}</span>
+                                <span className="text-[10px] font-black text-emerald-600 tracking-widest">{label}</span>
                             </div>
                         )
                     }
@@ -237,8 +237,8 @@ function AboutItemRow({
                         const opt = f.options.find((o) => o.value === val)
                         return (
                             <div key={f.key}>
-                                <span className="text-[9px] font-black text-brand-text/60 uppercase tracking-widest block">{label}</span>
-                                <span className="text-[11px] font-black text-brand-text uppercase italic tracking-tight">{opt?.label ?? String(val)}</span>
+                                <span className="text-[9px] font-black text-brand-text/60 tracking-widest block">{label}</span>
+                                <span className="text-[11px] font-black text-brand-text italic tracking-tight">{opt?.label ?? String(val)}</span>
                             </div>
                         )
                     }
@@ -246,8 +246,8 @@ function AboutItemRow({
                     // Default text/number/date
                     return (
                         <div key={f.key}>
-                            <span className="text-[9px] font-black text-brand-text/60 uppercase tracking-widest block">{label}</span>
-                            <span className="text-[11px] font-black text-brand-text uppercase italic tracking-tight">{String(val)}</span>
+                            <span className="text-[9px] font-black text-brand-text/60 tracking-widest block">{label}</span>
+                            <span className="text-[11px] font-black text-brand-text italic tracking-tight">{String(val)}</span>
                         </div>
                     )
                 })}
@@ -290,7 +290,7 @@ function AddItemForm({
                 whileHover={{ x: 5 }}
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-brand-text hover:text-brand-text mt-4 px-2"
+                className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-brand-text hover:text-brand-text mt-4 px-2"
             >
                 <Plus className="w-4 h-4" />
                 Add New {filterType === 'work' ? "Professional Entry" : filterType === 'education' ? "Academic Entry" : "History Item"}
@@ -355,7 +355,7 @@ function AddItemForm({
 
                     const labelNode = (
                         <div className="mb-2">
-                            <label className="text-[10px] font-black text-brand-text uppercase tracking-[0.2em]">{fieldLabel}</label>
+                            <label className="text-[10px] font-black text-brand-text tracking-[0.2em]">{fieldLabel}</label>
                         </div>
                     )
 
@@ -386,7 +386,7 @@ function AddItemForm({
                                     onChange={(e) => setField(f.key, e.target.checked)}
                                     className="w-5 h-5 rounded-lg border-brand-text/30 text-brand-text focus:ring-brand-text/20"
                                 />
-                                <span className="text-[11px] font-black text-brand-text uppercase tracking-widest">{fieldLabel}</span>
+                                <span className="text-[11px] font-black text-brand-text tracking-widest">{fieldLabel}</span>
                             </label>
                         )
                     }
@@ -407,10 +407,10 @@ function AddItemForm({
             </div>
 
             <div className="flex gap-4 justify-end pt-6 border-t border-brand-secondary">
-                <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black uppercase tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
+                <Button variant="ghost" className="h-12 px-8 rounded-2xl text-brand-text/60 font-black tracking-widest text-[10px]" onClick={() => { setShowForm(false); setFormData({}) }}>
                     Cancel
                 </Button>
-                <Button className="h-12 px-10 rounded-2xl bg-brand-text text-brand-card font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-text/10" onClick={handleSubmit} disabled={isAdding}>
+                <Button className="h-12 px-10 rounded-2xl bg-brand-text text-brand-card font-black tracking-widest text-[10px] shadow-lg shadow-brand-text/10" onClick={handleSubmit} disabled={isAdding}>
                     {isAdding ? "Adding..." : "Add Entry"}
                 </Button>
             </div>

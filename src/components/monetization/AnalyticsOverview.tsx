@@ -88,7 +88,7 @@ const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ overview, trend, 
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No analytics data yet</p>
+                    <p className="text-[10px] font-black tracking-widest text-muted-foreground">No analytics data yet</p>
                     <p className="text-[9px] font-bold text-primary-ink">Start posting content to see your analytics here.</p>
                 </div>
             </div>
@@ -170,7 +170,7 @@ const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ overview, trend, 
                             <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center">
                                 {stat.icon}
                             </div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                            <span className="text-[9px] font-black tracking-widest text-muted-foreground">
                                 {stat.label}
                             </span>
                         </div>

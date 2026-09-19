@@ -65,7 +65,7 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
             <div className="px-5 pt-4 pb-2">
                 <div className="flex items-center gap-1.5 text-teal-500">
                     <Bookmark className="h-3 w-3 fill-teal-500" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="text-[11px] font-semibold tracking-wide">
                         Stashed on {formatStashedDate(post.created_at)}
                     </span>
                 </div>

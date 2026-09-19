@@ -250,11 +250,11 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {isSearching ? (
           <div className="px-4 py-6 flex flex-col items-center gap-2">
             <div className="w-5 h-5 border-2 border-brand-text/30 border-t-transparent rounded-full animate-spin" />
-            <span className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">Searching...</span>
+            <span className="text-[10px] font-bold text-brand-text/60 tracking-widest">Searching...</span>
           </div>
         ) : searchResults.length === 0 ? (
           <div className="px-4 py-6 text-center">
-            <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">No users found</p>
+            <p className="text-[11px] font-bold text-brand-text/60 tracking-widest">No users found</p>
           </div>
         ) : (
           <div className="py-1.5 max-h-[320px] overflow-y-auto">
@@ -344,7 +344,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Create</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">Create</span>
         </button>
 
         {/* 2. Chat/Messenger */}
@@ -363,7 +363,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               {totalUnread > 99 ? '99+' : totalUnread}
             </div>
           )}
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Messages</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">Messages</span>
         </button>
 
         {/* 3. Reels */}
@@ -377,7 +377,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Reels</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">Reels</span>
         </button>
 
         {/* 4. TV — opens PostTube in new tab */}
@@ -393,7 +393,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">TV</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">TV</span>
         </Link>
 
         {/* 5. Events */}
@@ -406,7 +406,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Events</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">Events</span>
         </button>
 
 
@@ -443,12 +443,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-1000"
               >
                 <div className="p-4 border-b border-brand-divider/60 flex items-center justify-between">
-                  <h3 className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">Notifications</h3>
+                  <h3 className="text-[10px] font-black text-brand-text/60 tracking-widest">Notifications</h3>
                   {unreadNotifCount > 0 && (
                     <button
                       onClick={() => markAllRead.mutate()}
                       disabled={markAllRead.isPending}
-                      className="flex items-center gap-1 text-[9px] font-black text-brand-text/50 hover:text-brand-text uppercase tracking-widest transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 text-[9px] font-black text-brand-text/50 hover:text-brand-text tracking-widest transition-colors disabled:opacity-50"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -462,7 +462,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                   {activityNotifs.length === 0 ? (
                     <div className="px-4 py-8 text-center">
                       <div className="text-2xl mb-2">&#128276;</div>
-                      <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">No notifications yet</p>
+                      <p className="text-[10px] font-bold text-brand-text/60 tracking-widest">No notifications yet</p>
                     </div>
                   ) : (
                     <AnimatePresence initial={false}>
@@ -508,7 +508,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                   {notif.type === 'comment_reaction' && 'sparked your comment \u2726'}
                                   {notif.type === 'comment' && 'commented on your post'}
                                 </p>
-                                <p className="text-[9px] text-brand-text/60 font-bold uppercase tracking-widest mt-0.5">
+                                <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                   {formatTimeAgo(notif.created_at)}
                                 </p>
                               </button>
@@ -528,7 +528,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       });
                                     }}
                                     disabled={acceptFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-primary-ink hover:bg-primary-hover text-white shadow-xs active:scale-95 transition-all"
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-primary-ink hover:bg-primary-hover text-white shadow-xs active:scale-95 transition-all"
                                   >
                                     Accept
                                   </button>
@@ -542,7 +542,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       });
                                     }}
                                     disabled={rejectFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
                                   >
                                     Decline
                                   </button>
@@ -551,7 +551,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
                               {/* Show "Accepted" / "Declined" after handling */}
                               {notif.type === 'friend_request' && isHandled && (
-                                <p className="text-[9px] font-black text-success uppercase tracking-widest mt-1.5">Responded</p>
+                                <p className="text-[9px] font-black text-success tracking-widest mt-1.5">Responded</p>
                               )}
                             </div>
 
@@ -595,7 +595,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">
             {theme === 'dark' ? 'Light' : 'Dark'}
           </span>
         </button>
@@ -639,10 +639,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-brand-bg" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-[11px] font-black text-brand-text uppercase tracking-widest truncate">{profile?.display_name || currentUser.name}</h4>
+                      <h4 className="text-[11px] font-black text-brand-text tracking-widest truncate">{profile?.display_name || currentUser.name}</h4>
                       <div className="flex items-center gap-1 mt-0.5">
                         <div className="w-1 h-1 rounded-full bg-success" />
-                        <span className="text-[8px] font-bold text-brand-text/60 uppercase tracking-widest">Online</span>
+                        <span className="text-[8px] font-bold text-brand-text/60 tracking-widest">Online</span>
                       </div>
                     </div>
                   </div>
@@ -657,7 +657,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
-                      <span className="text-[10px] font-black text-brand-highlight uppercase tracking-widest group-hover:text-brand-text">Profile</span>
+                      <span className="text-[10px] font-black text-brand-highlight tracking-widest group-hover:text-brand-text">Profile</span>
                     </div>
                   </Link>
 
@@ -669,7 +669,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <span className="text-[10px] font-black text-brand-highlight uppercase tracking-widest group-hover:text-brand-text">Settings</span>
+                      <span className="text-[10px] font-black text-brand-highlight tracking-widest group-hover:text-brand-text">Settings</span>
                     </div>
                   </Link>
                 </div>
@@ -685,7 +685,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+                    <span className="text-[10px] font-black tracking-widest">Logout</span>
                   </button>
                 </div>
               </motion.div>
@@ -711,7 +711,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={e => handleSearchChange(e.target.value)}
-                className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-3 px-12 text-xs font-black uppercase tracking-widest outline-hidden focus:ring-4 focus:ring-brand-text/10 transition-all"
+                className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-3 px-12 text-xs font-black tracking-widest outline-hidden focus:ring-4 focus:ring-brand-text/10 transition-all"
               />
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               {searchQuery && (

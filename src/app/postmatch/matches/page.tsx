@@ -53,7 +53,7 @@ export default function MatchesPage() {
         {likesReceived.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-orange-500">Likes You</h2>
+              <h2 className="text-xs font-black tracking-widest text-orange-500">Likes You</h2>
               <span className="w-5 h-5 rounded-full bg-linear-to-r from-rose-600 to-orange-500 flex items-center justify-center text-[10px] font-black text-white">
                 {likesReceived.length}
               </span>
@@ -90,7 +90,7 @@ export default function MatchesPage() {
 
         {/* New Matches */}
         <div className="mb-8">
-          <h2 className="text-xs font-black uppercase tracking-widest text-rose-500 mb-4">New Matches</h2>
+          <h2 className="text-xs font-black tracking-widest text-rose-500 mb-4">New Matches</h2>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
@@ -134,7 +134,7 @@ export default function MatchesPage() {
 
         {/* Conversations */}
         <div>
-          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Conversations</h2>
+          <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-4">Conversations</h2>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />

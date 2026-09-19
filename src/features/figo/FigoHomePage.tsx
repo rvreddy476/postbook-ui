@@ -1055,7 +1055,7 @@ function DeliveryOpsPanel() {
                     </p>
                   </div>
                   {isBatch ? (
-                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-900">
+                    <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-black tracking-wide text-amber-900">
                       Batch · same restaurant
                     </span>
                   ) : null}

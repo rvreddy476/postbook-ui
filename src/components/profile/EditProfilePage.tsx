@@ -147,7 +147,7 @@ export function EditProfilePage() {
         setTimeout(() => setSaved(false), 2000)
     }
 
-    if (!localUser) return <div className="p-20 text-center text-brand-text/60 font-bold uppercase tracking-widest italic">Authorization Required</div>
+    if (!localUser) return <div className="p-20 text-center text-brand-text/60 font-bold tracking-widest italic">Authorization Required</div>
 
     if (profileLoading) return (
         <div className="max-w-6xl mx-auto py-12 px-6">
@@ -175,10 +175,10 @@ export function EditProfilePage() {
                         <ArrowLeft className="w-6 h-6" />
                     </motion.button>
                     <div>
-                        <h1 className="text-4xl font-black text-brand-text tracking-tighter uppercase italic">
+                        <h1 className="text-4xl font-black text-brand-text tracking-tighter italic">
                             Edit <span className="text-brand-highlight">Profile</span>
                         </h1>
-                        <p className="text-xs font-bold text-brand-text/60 uppercase tracking-[0.3em] mt-1">Manage your presence and details</p>
+                        <p className="text-xs font-bold text-brand-text/60 tracking-[0.3em] mt-1">Manage your presence and details</p>
                     </div>
                 </div>
 
@@ -195,7 +195,7 @@ export function EditProfilePage() {
                         ) : (
                             <Target className="w-5 h-5 mr-2 group-hover:scale-125 transition-transform" />
                         )}
-                        <span className="font-black uppercase tracking-widest text-xs">
+                        <span className="font-black tracking-widest text-xs">
                             {saved ? "Saved" : "Save Changes"}
                         </span>
                     </Button>
@@ -235,7 +235,7 @@ export function EditProfilePage() {
                                     <Icon className={`w-4 h-4 ${isActive ? "text-brand-card" : "text-brand-text/60 group-hover:text-brand-text"}`} />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className={`text-[10px] font-black uppercase tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
+                                    <div className={`text-[10px] font-black tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
                                 </div>
                                 {isActive && (
                                     <motion.div layoutId="active-indicator" className="absolute right-3 text-white">

@@ -109,7 +109,7 @@ function LiveCard({ stream, creatorName }: { stream: LiveStream; creatorName: st
             <Radio className="h-10 w-10 text-white/80" />
           </div>
         )}
-        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black tracking-widest text-white">
           <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
           Live
         </span>

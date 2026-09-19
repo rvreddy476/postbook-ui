@@ -110,7 +110,7 @@ export function ProductTagComposer({
                 <div className="grid flex-1 grid-cols-2 gap-0 overflow-hidden">
                     {/* Left — pick an affiliate link */}
                     <section className="flex flex-col overflow-hidden border-r border-slate-100">
-                        <h3 className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-slate-500">
                             Your affiliate links
                         </h3>
                         <div className="flex-1 overflow-y-auto px-3">
@@ -171,7 +171,7 @@ export function ProductTagComposer({
 
                     {/* Right — existing tags */}
                     <section className="flex flex-col overflow-hidden">
-                        <h3 className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-slate-500">
                             Tags on this video ({tags.length})
                         </h3>
                         <div className="flex-1 overflow-y-auto px-3">
@@ -295,7 +295,7 @@ function PlacementForm({
 }) {
     return (
         <div className="border-t border-slate-100 bg-slate-50/50 p-4">
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <h4 className="mb-2 text-xs font-semibold tracking-wider text-slate-500">
                 Placement
             </h4>
 

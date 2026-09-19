@@ -133,7 +133,7 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
             </p>
 
             <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold text-brand-highlight uppercase tracking-wide">
+                <legend className="text-xs font-semibold text-brand-highlight tracking-wide">
                     Account type
                 </legend>
                 {TYPE_OPTIONS.map((opt) => (

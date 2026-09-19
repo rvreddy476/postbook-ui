@@ -156,7 +156,7 @@ function CompleteSignupContent() {
                 <h1 className="text-xl font-black tracking-tight text-foreground">
                   Finish signing up
                 </h1>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+                <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                   One more step
                 </p>
               </div>

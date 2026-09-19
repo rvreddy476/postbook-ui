@@ -56,7 +56,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
         {/* Info overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className="rounded-full bg-red-500/90 px-2.5 py-0.5 text-[10px] font-bold uppercase text-white tracking-wide">
+            <span className="rounded-full bg-red-500/90 px-2.5 py-0.5 text-[10px] font-bold text-white tracking-wide">
               Featured
             </span>
             {featured.duration_seconds > 0 && (

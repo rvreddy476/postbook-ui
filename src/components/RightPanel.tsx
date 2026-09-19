@@ -61,7 +61,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
         <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Trending</h5>
+            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">Trending</h5>
           </div>
           {trendingLoading ? (
             <div className="space-y-4 animate-pulse">
@@ -81,7 +81,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                   className="group block w-full cursor-pointer text-left"
                 >
                   <h6 className="text-xs font-bold text-brand-text transition-colors group-hover:text-primary-ink">#{trend.hashtag}</h6>
-                  <p className="text-[10px] uppercase tracking-widest text-brand-text/40">
+                  <p className="text-[10px] tracking-widest text-brand-text/40">
                     {trend.score >= 1000 ? `${(trend.score / 1000).toFixed(1)}k` : Math.round(trend.score)} posts
                   </p>
                 </button>
@@ -100,13 +100,13 @@ const RightPanel: React.FC<RightPanelProps> = () => {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Play className="h-4 w-4 text-brand-text/50" />
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">PostTube Trending</h5>
+              <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">PostTube Trending</h5>
             </div>
             <a
               href="/posttube"
               target="_blank"
               rel="noreferrer"
-              className="text-[10px] font-bold uppercase tracking-widest text-brand-highlight hover:text-brand-text"
+              className="text-[10px] font-bold tracking-widest text-brand-highlight hover:text-brand-text"
             >
               More
             </a>
@@ -162,14 +162,14 @@ const RightPanel: React.FC<RightPanelProps> = () => {
         <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Calendar className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Events</h5>
+            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">Events</h5>
           </div>
           <p className="text-xs leading-relaxed text-brand-text/50">
             Events from your spaces will show up here — meetups, lives, and launches near you.
           </p>
           <button
             onClick={() => router.push('/groups')}
-            className="mt-3 rounded-full border border-brand-divider bg-brand-secondary px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-text/70 transition hover:bg-brand-secondary/80"
+            className="mt-3 rounded-full border border-brand-divider bg-brand-secondary px-4 py-2 text-[10px] font-black tracking-widest text-brand-text/70 transition hover:bg-brand-secondary/80"
           >
             Browse spaces
           </button>
@@ -182,7 +182,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
         <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Newspaper className="h-4 w-4 text-brand-text/50" />
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">News</h5>
+            <h5 className="text-[10px] font-black tracking-widest text-brand-text/60">News</h5>
           </div>
           <p className="text-xs leading-relaxed text-brand-text/50">
             A daily digest of what&apos;s happening across VChat is on its way. Until then, the
@@ -206,7 +206,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       ))}
 
       {/* Footer */}
-      <footer className="space-y-2 px-6 text-[10px] uppercase tracking-[0.2em] text-brand-text/40">
+      <footer className="space-y-2 px-6 text-[10px] tracking-[0.2em] text-brand-text/40">
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           <a href="#" className="transition-colors hover:text-primary-ink">About</a>
           <a href="#" className="transition-colors hover:text-primary-ink">Privacy</a>

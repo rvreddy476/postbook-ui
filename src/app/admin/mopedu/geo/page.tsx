@@ -139,7 +139,7 @@ function CitiesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">State</th>
@@ -171,7 +171,7 @@ function CitiesTab() {
                       onClick={() => toggleActive(c)}
                       disabled={updateM.isPending}
                       className={classNames(
-                        "rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide transition-colors",
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide transition-colors",
                         c.is_active
                           ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200",
@@ -323,7 +323,7 @@ function CityFormModal({
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               maxLength={2}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-hidden focus:border-brand-text"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -333,7 +333,7 @@ function CityFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               maxLength={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-hidden focus:border-brand-text"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -348,7 +348,7 @@ function CityFormModal({
         </label>
 
         <div className="rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+          <p className="mb-2 text-[11px] font-semibold tracking-wider text-brand-text/55">
             Feature flags
           </p>
           <div className="space-y-2">
@@ -444,7 +444,7 @@ function ZonesTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+          <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
             City
           </span>
           <select
@@ -486,7 +486,7 @@ function ZonesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Name</th>
@@ -512,7 +512,7 @@ function ZonesTab() {
                     <td className="px-4 py-3">
                       <span
                         className={classNames(
-                          "rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase",
+                          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           z.is_active
                             ? "bg-emerald-100 text-emerald-800"
                             : "bg-gray-100 text-gray-600",
@@ -705,7 +705,7 @@ function FareRulesTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+          <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
             City
           </span>
           <select
@@ -747,7 +747,7 @@ function FareRulesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Vehicle</th>
@@ -797,7 +797,7 @@ function FareRulesTab() {
                     <td className="px-4 py-3">
                       <span
                         className={classNames(
-                          "rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase",
+                          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           r.is_active
                             ? "bg-emerald-100 text-emerald-800"
                             : "bg-gray-100 text-gray-600",
@@ -1113,7 +1113,7 @@ function FormField({
 }) {
   return (
     <label className="block text-xs">
-      <span className="mb-1 block font-semibold uppercase tracking-wider text-brand-text/60">
+      <span className="mb-1 block font-semibold tracking-wider text-brand-text/60">
         {label}
         {required ? <span className="ml-0.5 text-rose-600">*</span> : null}
       </span>

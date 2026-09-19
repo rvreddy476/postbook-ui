@@ -256,7 +256,7 @@ export default function CommunityNewPostPage() {
                     )}
                   </div>
                   <div className="flex flex-col text-left mr-2 justify-center">
-                    <span className="text-[9px] font-bold text-brand-text/50 uppercase tracking-widest leading-none mb-0.5">Posting to</span>
+                    <span className="text-[9px] font-bold text-brand-text/50 tracking-widest leading-none mb-0.5">Posting to</span>
                     <span className="text-xs font-black text-brand-text leading-none truncate max-w-[120px]">
                       c/{selectedCommunity?.handle || selectedCommunity?.name || 'Select'}
                     </span>
@@ -273,7 +273,7 @@ export default function CommunityNewPostPage() {
                       transition={{ duration: 0.2 }}
                       className="absolute top-full mt-2 left-0 w-80 bg-white/95 dark:bg-brand-bg/95 backdrop-blur-2xl border border-brand-divider/60 rounded-3xl shadow-2xl z-50 py-2 max-h-72 overflow-y-auto"
                     >
-                      <p className="px-4 py-2.5 text-[10px] font-black text-brand-text/40 uppercase tracking-widest pl-5">Your communities</p>
+                      <p className="px-4 py-2.5 text-[10px] font-black text-brand-text/40 tracking-widest pl-5">Your communities</p>
                       <div className="px-2 space-y-1">
                         {myCommunities.map(community => (
                           <button

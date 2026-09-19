@@ -310,7 +310,7 @@ export function ProfileActions({
                                 className="absolute right-0 top-full mt-1 z-50 w-64 rounded-xl bg-brand-card border border-brand-divider shadow-lg py-1 overflow-hidden"
                             >
                                 {/* Tune header */}
-                                <div className="px-4 py-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-brand-text/60">
+                                <div className="px-4 py-2 flex items-center gap-2 text-[10px] font-bold tracking-wider text-brand-text/60">
                                     <SlidersHorizontal className="w-3 h-3" />
                                     More Actions
                                 </div>

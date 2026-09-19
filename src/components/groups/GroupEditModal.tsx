@@ -122,7 +122,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
 
         <div className="space-y-5 p-6">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Cover Photo</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Cover Photo</label>
             <div
               className="group relative h-36 cursor-pointer overflow-hidden rounded-2xl border border-brand-divider bg-brand-secondary"
               onClick={() => coverInputRef.current?.click()}
@@ -188,7 +188,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Space Name</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Space Name</label>
             <input
               type="text"
               value={name}
@@ -200,7 +200,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Description</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Description</label>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -212,7 +212,7 @@ export default function GroupEditModal({ group, onClose }: GroupEditModalProps) 
           </div>
 
           <div>
-            <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Visibility</label>
+            <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Visibility</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"

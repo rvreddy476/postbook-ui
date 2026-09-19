@@ -792,7 +792,7 @@ function AnomalyItem({
                     <p className="truncate text-sm font-semibold text-foreground">
                         {anomalyLabel(anomaly.anomaly_type)}
                     </p>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tone.chip}`}>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide ${tone.chip}`}>
                         Risk {anomaly.risk_score}
                     </span>
                     {ackd && (

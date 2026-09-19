@@ -65,7 +65,7 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
                 <button
                     onClick={() => setShowConfirm(!showConfirm)}
                     disabled={isPending}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-primary-outline text-foreground hover:bg-brand-card hover:shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest bg-background border border-primary-outline text-foreground hover:bg-brand-card hover:shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <div className="w-3.5 h-3.5 border-2 border-primary-outline border-t-transparent rounded-full animate-spin" />
@@ -91,14 +91,14 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setShowConfirm(false)}
-                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-colors"
+                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleUnsubscribe}
                                     disabled={isPending}
-                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-50 border border-red-100 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black tracking-widest bg-red-50 border border-red-100 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
                                 >
                                     {isPending ? "..." : "Unsubscribe"}
                                 </button>
@@ -114,7 +114,7 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
         <button
             onClick={handleSubscribe}
             disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {isPending ? (
                 <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />

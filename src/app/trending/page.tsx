@@ -125,7 +125,7 @@ export default function TrendingPage() {
                     {tags.length > 0 && (
                         <div className="mt-8 flex flex-col items-center gap-2 py-4">
                             <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
-                            <p className="text-xs font-semibold text-brand-text/30 uppercase tracking-widest">
+                            <p className="text-xs font-semibold text-brand-text/30 tracking-widest">
                                 Updates live
                             </p>
                             <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />

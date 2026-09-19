@@ -128,7 +128,7 @@ export default function CommunityMembersTab({ communityId, viewerRole }: Props) 
       {sections.map((section, si) => (
         <div key={si} className="mb-4">
           {section.title && (
-            <h3 className="text-xs font-bold text-brand-text/50 uppercase tracking-wide mb-2">{section.title}</h3>
+            <h3 className="text-xs font-bold text-brand-text/50 tracking-wide mb-2">{section.title}</h3>
           )}
           <div className="space-y-2">
             {section.members.map(member => (
@@ -192,7 +192,7 @@ function MemberRow({ member, communityId, viewerRole, canAdmin }: {
       </div>
       <div className="flex items-center gap-2">
         {badge && (
-          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase ${badge.color}`}>
+          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${badge.color}`}>
             {badge.label}
           </span>
         )}

@@ -44,7 +44,7 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
         <h2 className="text-[16px] font-bold text-brand-text">{title}</h2>
         {badge && (
           <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${badgeColor || "bg-brand-secondary text-brand-highlight"}`}
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${badgeColor || "bg-brand-secondary text-brand-highlight"}`}
           >
             {badge}
           </span>

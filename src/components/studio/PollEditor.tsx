@@ -56,7 +56,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
           poll prompt goes. Lives on the same `text` field that the
           composer textarea would normally hold. */}
       <div>
-        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-brand-text/50">
+        <label className="mb-1 block text-[11px] font-bold tracking-wider text-brand-text/50">
           Question
         </label>
         <input
@@ -80,7 +80,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
         )}
       </div>
 
-      <div className="mb-1 mt-2 block text-[11px] font-bold uppercase tracking-wider text-brand-text/50">
+      <div className="mb-1 mt-2 block text-[11px] font-bold tracking-wider text-brand-text/50">
         Options
       </div>
       {poll.options.map((opt, i) => {

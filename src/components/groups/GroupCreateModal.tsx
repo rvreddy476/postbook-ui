@@ -98,7 +98,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Name */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Group Name</label>
+            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Group Name</label>
             <input
               type="text"
               value={name}
@@ -113,7 +113,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
           {/* Handle */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Handle</label>
+            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Handle</label>
             <div className="relative">
               <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
               <input
@@ -145,7 +145,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Description</label>
+            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -158,7 +158,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Category</label>
+            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Category</label>
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map((cat) => (
                 <button
@@ -179,7 +179,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
           {/* Privacy Level */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Privacy</label>
+            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-2">Privacy</label>
             <div className="space-y-2">
               {privacyOptions.map((opt) => (
                 <button
@@ -210,7 +210,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
           {/* Join Mode (only for non-private) */}
           {privacyLevel !== 'private' && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-brand-highlight mb-2">Join Mode</label>
+              <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-2">Join Mode</label>
               <div className="grid grid-cols-3 gap-2">
                 {joinModeOptions.filter(o => o.value !== 'invite_only').map((opt) => (
                   <button

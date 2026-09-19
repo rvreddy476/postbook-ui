@@ -333,7 +333,7 @@ export function ProfileHeader({
                                     onError={() => setAvatarFails((n) => n + 1)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-brand-card bg-linear-to-br from-brand-text/70 to-brand-text uppercase">
+                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-brand-card bg-linear-to-br from-brand-text/70 to-brand-text">
                                     {(profile.display_name || "?").charAt(0)}
                                 </div>
                             )}
@@ -389,7 +389,7 @@ export function ProfileHeader({
                                         return (
                                             <span
                                                 key={badge}
-                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
                                             >
                                                 <Icon className="h-3 w-3" />
                                                 {badge}
@@ -397,7 +397,7 @@ export function ProfileHeader({
                                         )
                                     })}
                                     {!isOwn && followsYou && (
-                                        <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md uppercase tracking-wider whitespace-nowrap">
+                                        <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md tracking-wider whitespace-nowrap">
                                             Follows you
                                         </span>
                                     )}
@@ -410,7 +410,7 @@ export function ProfileHeader({
                                     <>
                                         <button
                                             onClick={onEditProfile}
-                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-xs"
+                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xs"
                                         >
                                             <Settings className="w-3.5 h-3.5" />
                                             Edit Profile
@@ -431,7 +431,7 @@ export function ProfileHeader({
                                             isFollowing ? (
                                                 <button
                                                     onClick={onUnfollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-xs group"
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-xs group"
                                                     title="Unfollow"
                                                 >
                                                     <UserCheck className="w-4 h-4 group-hover:hidden" />
@@ -442,7 +442,7 @@ export function ProfileHeader({
                                             ) : (
                                                 <button
                                                     onClick={onFollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-primary-ink text-brand-bg hover:opacity-90 transition-all shadow-xs"
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider bg-primary-ink text-brand-bg hover:opacity-90 transition-all shadow-xs"
                                                     title="Follow"
                                                 >
                                                     <UserPlus className="w-4 h-4" />
@@ -457,11 +457,11 @@ export function ProfileHeader({
                                                 targetUserId={profile.id}
                                                 targetUsername={profile.username}
                                                 relationship={relationship}
-                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
+                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
                                                 sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
                                                 friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
-                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
-                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold uppercase tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
+                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
+                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
                                                 onFriendsClick={onRemoveFromCircle}
                                             />
                                         )}
@@ -527,12 +527,12 @@ export function ProfileHeader({
                                 className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 border-l-[3px] border-l-violet-500"
                             >
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">
+                                    <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">
                                         PostTube Channel
                                     </span>
                                     <Link
                                         href={`/posttube/channel/${channel.handle}`}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         View
@@ -549,7 +549,7 @@ export function ProfileHeader({
                                             <p className="text-lg font-black text-brand-text tracking-tight leading-none">
                                                 {formatCount(stat.value)}
                                             </p>
-                                            <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-text/50">
+                                            <span className="text-[9px] font-semibold tracking-[0.15em] text-brand-text/50">
                                                 {stat.label}
                                             </span>
                                         </div>
@@ -572,7 +572,7 @@ export function ProfileHeader({
                                 <div key={stat.label} className="flex flex-col items-center text-center gap-1">
                                     <stat.icon size={15} className={stat.color} />
                                     <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                    <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-brand-text/50">{stat.label}</span>
+                                    <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -583,10 +583,10 @@ export function ProfileHeader({
                     {channel && (
                         <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4 border-l-[3px] border-l-violet-500">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
+                                <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
                                 <Link
                                     href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View
@@ -601,7 +601,7 @@ export function ProfileHeader({
                                     <div key={stat.label} className="flex flex-col items-center text-center gap-1">
                                         <stat.icon size={15} className={stat.color} />
                                         <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                        <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-brand-text/50">{stat.label}</span>
+                                        <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -613,7 +613,7 @@ export function ProfileHeader({
                 {profile.bio && (
                     <div className="pb-6">
                         <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 sm:p-6">
-                            <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
+                            <h3 className="text-[10px] font-bold tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
                             <p className="text-[15px] not-italic font-normal leading-relaxed text-brand-text/80">
                                 {profile.bio}
                             </p>

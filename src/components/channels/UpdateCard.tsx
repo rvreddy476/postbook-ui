@@ -309,7 +309,7 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
 
   return (
     <div className={`mt-3 rounded-xl border p-4 ${severityStyles[severity as keyof typeof severityStyles] || severityStyles.info}`}>
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider mb-2">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider mb-2">
         <AlertTriangle className="w-3 h-3" />
         {severity} alert
         {isExpired && <span className="text-brand-text/40 normal-case ml-2">Expired</span>}
@@ -462,7 +462,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
 
       {/* Pinned / Urgent indicators */}
       {update.is_pinned && (
-        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold uppercase tracking-widest px-4 pt-3 pb-0">
+        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold tracking-widest px-4 pt-3 pb-0">
           <Pin className="w-3 h-3" /> Pinned
         </div>
       )}

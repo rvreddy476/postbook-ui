@@ -85,7 +85,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
         return (
             <div className="bg-brand-card rounded-2xl border border-border p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Content Details</p>
+                    <p className="text-[10px] font-black tracking-widest text-muted-foreground">Content Details</p>
                     <button
                         onClick={onClose}
                         className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center hover:border-primary-outline transition-colors"
@@ -113,7 +113,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                         {truncateId(metrics.content_id)}
                     </span>
                     <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest border ${
                             metrics.content_type === "reel"
                                 ? "bg-purple-50 text-purple-600 border-purple-100"
                                 : "bg-blue-50 text-blue-600 border-blue-100"
@@ -141,7 +141,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4" />
                             </svg>
                         </div>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Hourly Trend</span>
+                        <span className="text-[9px] font-black tracking-widest text-muted-foreground">Hourly Trend</span>
                     </div>
                     <div className="bg-background rounded-xl border border-border p-4">
                         <div className="flex items-end gap-1 overflow-x-auto" style={{ height: chartHeight }}>
@@ -187,25 +187,25 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
             {/* Key metrics grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-background rounded-xl border border-border p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Views</p>
+                    <p className="text-[8px] font-black tracking-widest text-muted-foreground mb-1">Views</p>
                     <p className="text-lg font-black text-foreground">{formatNumber(metrics.views_display)}</p>
                     <p className="text-[8px] font-bold text-primary-ink">{formatNumber(metrics.unique_viewers)} unique</p>
                 </div>
 
                 <div className="bg-background rounded-xl border border-border p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Watch Time</p>
+                    <p className="text-[8px] font-black tracking-widest text-muted-foreground mb-1">Watch Time</p>
                     <p className="text-lg font-black text-foreground">{formatWatchTime(metrics.watch_time_total_ms)}</p>
                     <p className="text-[8px] font-bold text-primary-ink">avg {formatWatchTime(metrics.avg_watch_time_ms)}</p>
                 </div>
 
                 <div className="bg-background rounded-xl border border-border p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Completion</p>
+                    <p className="text-[8px] font-black tracking-widest text-muted-foreground mb-1">Completion</p>
                     <p className="text-lg font-black text-foreground">{(metrics.completion_rate * 100).toFixed(1)}%</p>
                     <p className="text-[8px] font-bold text-primary-ink">avg {metrics.avg_percent_viewed.toFixed(1)}% viewed</p>
                 </div>
 
                 <div className="bg-background rounded-xl border border-border p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Content Quality</p>
+                    <p className="text-[8px] font-black tracking-widest text-muted-foreground mb-1">Content Quality</p>
                     <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${cqsDotColor(metrics.content_quality_score)}`} />
                         <p className="text-lg font-black text-foreground">
@@ -227,7 +227,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                     { label: "Saves", value: formatNumber(metrics.saves) },
                 ].map((stat) => (
                     <div key={stat.label} className="text-center">
-                        <p className="text-[7px] font-black uppercase tracking-widest text-primary-ink mb-0.5">{stat.label}</p>
+                        <p className="text-[7px] font-black tracking-widest text-primary-ink mb-0.5">{stat.label}</p>
                         <p className="text-sm font-black text-foreground">{stat.value}</p>
                     </div>
                 ))}

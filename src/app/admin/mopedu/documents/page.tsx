@@ -125,7 +125,7 @@ function MopeduDocumentsQueueContent() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Partner</th>
                   <th className="px-4 py-3">Doc type</th>
@@ -193,7 +193,7 @@ function MopeduDocumentsQueueContent() {
             <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                  <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                     {selected.document_type}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-brand-text">

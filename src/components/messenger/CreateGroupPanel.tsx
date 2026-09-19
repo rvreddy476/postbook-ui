@@ -241,7 +241,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Name */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Group Name *</label>
+                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Group Name *</label>
                 <input
                   type="text"
                   value={name}
@@ -255,7 +255,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Handle */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Handle</label>
+                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Handle</label>
                 <div className="relative">
                   <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
                   <input
@@ -271,7 +271,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Description */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-1.5">Description</label>
+                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -284,7 +284,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Category */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-2">Category</label>
+                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-2">Category</label>
                 <div className="flex flex-wrap gap-1.5">
                   {CATEGORIES.map(cat => (
                     <button
@@ -305,7 +305,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Privacy */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-brand-highlight mb-2">Privacy</label>
+                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-2">Privacy</label>
                 <div className="space-y-2">
                   {([
                     { value: 'public' as const, icon: <Globe className="w-4 h-4" />, label: 'Public', desc: 'Anyone can find and join' },
@@ -498,7 +498,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
               {/* Members list */}
               <div>
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Members</h3>
+                <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-2">Members</h3>
 
                 {/* Creator = Admin */}
                 {me && (
@@ -510,7 +510,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       <p className="text-sm font-semibold text-brand-text truncate">{me.name}</p>
                       <p className="text-[10px] text-brand-text/60">You</p>
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 rounded-md">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-wider bg-amber-50 text-amber-600 rounded-md">
                       <Crown className="w-2.5 h-2.5" />Admin
                     </span>
                   </div>
@@ -524,7 +524,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-brand-text truncate">{m.name}</p>
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md">
+                    <span className="text-[9px] font-bold tracking-wider text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md">
                       Member
                     </span>
                   </div>

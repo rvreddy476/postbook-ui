@@ -346,7 +346,7 @@ export default function ChannelsPage() {
             {/* Featured horizontal scroll */}
             {featured.length > 0 && !searchQuery.trim() && activeCategory === 'All' && (
               <div>
-                <h2 className="text-xs font-bold text-brand-text/50 uppercase tracking-wider mb-3">Featured</h2>
+                <h2 className="text-xs font-bold text-brand-text/50 tracking-wider mb-3">Featured</h2>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
                   {featured.map((channel) => (
                     <FeaturedCard

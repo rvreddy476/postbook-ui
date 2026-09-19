@@ -127,7 +127,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No transactions yet</p>
+                    <p className="text-[10px] font-black tracking-widest text-muted-foreground">No transactions yet</p>
                     <p className="text-[9px] font-bold text-primary-ink">Your transaction history will appear here.</p>
                 </div>
             </div>
@@ -138,10 +138,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         <div className="bg-brand-card rounded-2xl border border-border overflow-hidden shadow-xs">
             {/* Table header */}
             <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 bg-background border-b border-border">
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Transaction</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-24 text-center">Status</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-28 text-right">Date</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-24 text-right">Amount</span>
+                <span className="text-[9px] font-black tracking-widest text-muted-foreground">Transaction</span>
+                <span className="text-[9px] font-black tracking-widest text-muted-foreground w-24 text-center">Status</span>
+                <span className="text-[9px] font-black tracking-widest text-muted-foreground w-28 text-right">Date</span>
+                <span className="text-[9px] font-black tracking-widest text-muted-foreground w-24 text-right">Amount</span>
             </div>
 
             {/* Transaction rows */}
@@ -152,7 +152,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <div key={tx.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:gap-4 px-4 py-3 hover:bg-background/50 transition-colors duration-200">
                             {/* Type + reference */}
                             <div className="flex items-center gap-3 min-w-0">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0 ${badge.className}`}>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black tracking-widest border shrink-0 ${badge.className}`}>
                                     {badge.label}
                                 </span>
                                 <span className="text-[10px] font-bold text-muted-foreground truncate">
@@ -165,7 +165,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
                             {/* Status */}
                             <div className="w-24 flex items-center justify-center sm:justify-center">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black tracking-widest ${
                                     tx.status === "completed" ? "bg-emerald-50 text-emerald-600" :
                                     tx.status === "pending" ? "bg-amber-50 text-amber-600" :
                                     tx.status === "failed" ? "bg-red-50 text-red-500" :
@@ -198,7 +198,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     <button
                         onClick={onLoadMore}
                         disabled={isFetchingNextPage}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground hover:bg-brand-card active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground hover:bg-brand-card active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isFetchingNextPage ? (
                             <>

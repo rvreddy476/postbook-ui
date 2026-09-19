@@ -1392,7 +1392,7 @@ function StepReview({
 
           {/* Title */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Title</p>
+            <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Title</p>
             <p className="text-[13px] text-brand-text">
               {state.title || <span className="italic text-brand-text/30">No title</span>}
             </p>
@@ -1400,7 +1400,7 @@ function StepReview({
 
           {/* Caption preview */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Description</p>
+            <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Description</p>
             <p className="text-[13px] text-brand-text line-clamp-2">
               {state.caption || <span className="italic text-brand-text/30">No description</span>}
             </p>
@@ -1409,7 +1409,7 @@ function StepReview({
           {/* Hashtags */}
           {captionHashtags.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-1">Hashtags</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-1">Hashtags</p>
               <div className="flex flex-wrap gap-1">
                 {captionHashtags.map((tag) => (
                   <span key={tag} className="rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] font-medium text-brand-highlight">
@@ -1423,7 +1423,7 @@ function StepReview({
           {/* Tags */}
           {state.tags.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-1">Tags</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-1">Tags</p>
               <div className="flex flex-wrap gap-1">
                 {state.tags.slice(0, 10).map((tag) => (
                   <span key={tag} className="rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] font-medium text-brand-highlight">
@@ -1440,37 +1440,37 @@ function StepReview({
           {/* Settings grid */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Visibility</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Visibility</p>
               <p className="text-[13px] font-medium text-brand-text capitalize">{state.visibility}</p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Language</p>
-              <p className="text-[13px] font-medium text-brand-text uppercase">{state.language}</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Language</p>
+              <p className="text-[13px] font-medium text-brand-text">{state.language}</p>
             </div>
             {state.category && (
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Category</p>
+                <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Category</p>
                 <p className="text-[13px] font-medium text-brand-text">{state.category}</p>
               </div>
             )}
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">License</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">License</p>
               <p className="text-[13px] font-medium text-brand-text">
                 {state.license === "creative_commons" ? "CC-BY" : "Standard"}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Likes</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Likes</p>
               <p className="text-[13px] font-medium text-brand-text">{state.likesEnabled ? "On" : "Off"}</p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Comments</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Comments</p>
               <p className="text-[13px] font-medium text-brand-text">
                 {state.commentsEnabled ? `On (${state.commentModeration})` : "Off"}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Embedding</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Embedding</p>
               <p className="text-[13px] font-medium text-brand-text">{state.allowEmbedding ? "Allowed" : "Blocked"}</p>
             </div>
           </div>
@@ -1499,7 +1499,7 @@ function StepReview({
           {/* Cross-post */}
           {state.crossPostPostbook && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-1">Cross-post</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-1">Cross-post</p>
               <span className="rounded-full bg-[#E8527A]/10 px-2.5 py-0.5 text-[11px] font-medium text-danger">
                 Feed
               </span>
@@ -1509,7 +1509,7 @@ function StepReview({
           {/* Schedule */}
           {state.scheduleAt && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-0.5">Scheduled for</p>
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-0.5">Scheduled for</p>
               <p className="text-[13px] font-medium text-brand-text">
                 {new Date(state.scheduleAt).toLocaleString()}
               </p>
@@ -1518,7 +1518,7 @@ function StepReview({
 
           {/* Processing status */}
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-1">Processing</p>
+            <p className="text-[11px] font-bold tracking-wider text-brand-text/30 mb-1">Processing</p>
             <div className="flex items-center gap-2">
               {state.processingReady ? (
                 <>

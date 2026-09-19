@@ -34,14 +34,14 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">Cover Photo</label>
-                        <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">Recommended: 1500x500px</p>
+                        <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">Cover Photo</label>
+                        <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">Recommended: 1500x500px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => coverInputRef.current?.click()}
-                        className="text-[10px] font-black uppercase tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
+                        className="text-[10px] font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Replace Photo
                     </motion.button>
@@ -100,14 +100,14 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">Profile Picture</label>
-                        <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">Square, Min 400x400px</p>
+                        <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">Profile Picture</label>
+                        <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">Square, Min 400x400px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => avatarInputRef.current?.click()}
-                        className="text-[10px] font-black uppercase tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
+                        className="text-[10px] font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Change Photo
                     </motion.button>
@@ -127,7 +127,7 @@ export function AvatarCoverSection({
                                     onError={() => setAvatarBroken(true)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-highlight/50 bg-linear-to-br from-brand-secondary to-brand-card uppercase italic">
+                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-highlight/50 bg-linear-to-br from-brand-secondary to-brand-card italic">
                                     {displayName.charAt(0)}
                                 </div>
                             )}
@@ -154,7 +154,7 @@ export function AvatarCoverSection({
                     </div>
 
                     <div className="space-y-1">
-                        <p className="text-sm font-black uppercase tracking-widest text-brand-text">Your Profile Image</p>
+                        <p className="text-sm font-black tracking-widest text-brand-text">Your Profile Image</p>
                         <p className="text-xs font-bold text-brand-text/60 max-w-[240px] leading-relaxed">
                             This picture is visible to everyone on the platform.
                         </p>

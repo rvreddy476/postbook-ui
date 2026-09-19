@@ -31,10 +31,10 @@ function PostDetailContent() {
   if (isError || !post) {
     return (
       <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center gap-4">
-        <p className="text-lg font-black text-brand-text/30 uppercase tracking-widest italic">Post not found</p>
+        <p className="text-lg font-black text-brand-text/30 tracking-widest italic">Post not found</p>
         <button
           onClick={() => router.back()}
-          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] uppercase tracking-widest text-brand-highlight hover:text-blue-600 hover:shadow-lg transition-all border border-brand-divider"
+          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] tracking-widest text-brand-highlight hover:text-blue-600 hover:shadow-lg transition-all border border-brand-divider"
         >
           Go Back
         </button>
@@ -53,7 +53,7 @@ function PostDetailContent() {
           >
             <ArrowLeft className="w-5 h-5 text-brand-highlight" />
           </button>
-          <h1 className="text-sm font-black uppercase tracking-widest text-brand-text italic">Post</h1>
+          <h1 className="text-sm font-black tracking-widest text-brand-text italic">Post</h1>
         </div>
       </div>
 

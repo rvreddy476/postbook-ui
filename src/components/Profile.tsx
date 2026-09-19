@@ -35,12 +35,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
         <div className="max-w-4xl mx-auto">
           <header className="flex justify-between items-center mb-10">
             <div>
-              <h2 className="text-4xl font-black text-brand-text tracking-tighter uppercase italic">Identity Registry</h2>
-              <p className="text-[10px] font-black text-brand-text/60 tracking-[0.4em] uppercase mt-1">Recalibrating Neural Parameters</p>
+              <h2 className="text-4xl font-black text-brand-text tracking-tighter italic">Identity Registry</h2>
+              <p className="text-[10px] font-black text-brand-text/60 tracking-[0.4em] mt-1">Recalibrating Neural Parameters</p>
             </div>
             <button
               onClick={() => setIsEditing(false)}
-              className="px-6 py-2.5 bg-brand-secondary text-brand-highlight rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-secondary transition-all"
+              className="px-6 py-2.5 bg-brand-secondary text-brand-highlight rounded-2xl font-black text-[10px] tracking-widest hover:bg-brand-secondary transition-all"
             >
               Cancel
             </button>
@@ -57,7 +57,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                 { label: 'Active Frequencies (Hobbies)', field: 'hobbies', type: 'text' }
               ].map((item) => (
                 <div key={item.field} className="space-y-2">
-                  <label className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest ml-4">{item.label}</label>
+                  <label className="text-[10px] font-black text-brand-text/60 tracking-widest ml-4">{item.label}</label>
                   <input
                     type={item.type}
                     value={(editForm as any)[item.field]}
@@ -67,7 +67,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                 </div>
               ))}
               <div className="md:col-span-2 space-y-2">
-                <label className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest ml-4">Core Manifest (Bio)</label>
+                <label className="text-[10px] font-black text-brand-text/60 tracking-widest ml-4">Core Manifest (Bio)</label>
                 <textarea
                   value={editForm.bio}
                   onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
@@ -78,7 +78,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
             <button
               onClick={handleSave}
-              className="w-full py-6 bg-linear-to-r from-blue-600 to-brand-text text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              className="w-full py-6 bg-linear-to-r from-blue-600 to-brand-text text-white rounded-[2.5rem] font-black text-lg tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               Synchronize Identity
             </button>
@@ -105,7 +105,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
         <div className="flex-1 space-y-6 pt-4">
           <div className="space-y-1">
-            <h1 className="text-5xl font-black text-brand-text tracking-tighter uppercase italic">{user.name}</h1>
+            <h1 className="text-5xl font-black text-brand-text tracking-tighter italic">{user.name}</h1>
             <p className="text-xl font-bold text-brand-text/60 italic">"{user.bio}"</p>
           </div>
 
@@ -117,7 +117,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
               { label: 'Origin', val: user.dob, icon: '🎂' }
             ].map(info => (
               <div key={info.label} className="p-5 bg-brand-card rounded-3xl shadow-xs border border-brand-divider hover:shadow-xl transition-all">
-                <p className="text-[10px] font-black uppercase text-brand-text/60 tracking-widest mb-1">{info.icon} {info.label}</p>
+                <p className="text-[10px] font-black text-brand-text/60 tracking-widest mb-1">{info.icon} {info.label}</p>
                 <p className="font-bold text-xs text-brand-text truncate">{info.val || 'Uncharted'}</p>
               </div>
             ))}
@@ -132,7 +132,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-slate-900 text-white shadow-xl' : 'text-brand-text/60 hover:text-brand-highlight'}`}
+                className={`flex-1 py-4 rounded-2xl font-black text-[10px] tracking-widest transition-all ${activeTab === tab ? 'bg-slate-900 text-white shadow-xl' : 'text-brand-text/60 hover:text-brand-highlight'}`}
               >
                 {tab === 'posts' ? 'Manifests' : tab === 'friends' ? 'Network' : 'Archives'}
               </button>
@@ -155,7 +155,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             )}
             {activeTab !== 'posts' && (
               <div className="p-20 text-center bg-brand-card/40 rounded-[3rem] border-2 border-dashed border-brand-divider">
-                <p className="text-brand-text/30 font-black uppercase tracking-[0.5em] text-sm italic">Data stream empty</p>
+                <p className="text-brand-text/30 font-black tracking-[0.5em] text-sm italic">Data stream empty</p>
               </div>
             )}
           </div>
@@ -163,16 +163,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
         <div className="space-y-8">
           <div className="bg-linear-to-br from-blue-600 to-brand-text rounded-[3rem] p-8 text-white shadow-2xl shadow-brand-text/20">
-            <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Active Frequencies</h3>
+            <h3 className="font-black text-xs tracking-[0.3em] mb-6 italic">Active Frequencies</h3>
             <div className="flex flex-wrap gap-2">
               {(user.hobbies || 'Design, AI, Code').split(',').map(h => (
-                <span key={h} className="bg-brand-card/10 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/20">{h.trim()}</span>
+                <span key={h} className="bg-brand-card/10 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black tracking-widest border border-white/20">{h.trim()}</span>
               ))}
             </div>
           </div>
 
           <div className="bg-brand-card rounded-[3rem] p-8 border border-brand-divider shadow-xs">
-            <h3 className="text-brand-text font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Network Nodes</h3>
+            <h3 className="text-brand-text font-black text-xs tracking-[0.3em] mb-6 italic">Network Nodes</h3>
             <div className="grid grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="aspect-square bg-brand-secondary rounded-2xl overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-xs border border-white">

@@ -332,7 +332,7 @@
 }
 
 .pb-landing-root {
-  @apply relative flex min-h-screen flex-col overflow-hidden bg-brand-bg font-sans text-brand-text selection:bg-[#D8103F]/20 selection:text-[#6b081f];
+  @apply relative flex min-h-screen flex-col overflow-hidden bg-brand-bg font-sans text-brand-text selection:bg-primary-ink/20 selection:text-primary-hover;
 }
 
 .pb-landing-bg {
@@ -344,15 +344,15 @@
 }
 
 .pb-landing-blob--top-left {
-  @apply left-[-15%] top-[-25%] h-[70%] w-[70%] bg-blue-400/10 blur-[200px];
+  @apply left-[-15%] top-[-25%] h-[70%] w-[70%] bg-primary/10 blur-[200px];
 }
 
 .pb-landing-blob--bottom-right {
-  @apply bottom-[-25%] right-[-15%] h-[70%] w-[70%] bg-[#D8103F]/10 blur-[200px];
+  @apply bottom-[-25%] right-[-15%] h-[70%] w-[70%] bg-primary-ink/10 blur-[200px];
 }
 
 .pb-landing-blob--pulse {
-  @apply right-[10%] top-[20%] h-[40%] w-[40%] animate-pulse bg-rose-400/5 blur-[150px];
+  @apply right-[10%] top-[20%] h-[40%] w-[40%] animate-pulse bg-primary-ink/5 blur-[150px];
 }
 
 .pb-landing-nav {
@@ -368,7 +368,7 @@
 }
 
 .pb-brand-icon {
-  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-[#b80d35] shadow-2xl shadow-[#D8103F]/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
+  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary-hover shadow-lg shadow-primary-ink/25 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
 }
 
 .pb-brand-icon-svg {
@@ -384,11 +384,11 @@
 }
 
 .pb-nav-login-link {
-  @apply text-xs font-bold uppercase tracking-[0.25em] text-brand-highlight transition-all hover:text-[#D8103F];
+  @apply text-sm font-semibold text-brand-text/70 transition-colors hover:text-primary-ink;
 }
 
 .pb-nav-signup-link {
-  @apply rounded-2xl bg-slate-950 px-8 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:bg-black active:scale-95;
+  @apply rounded-full bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors duration-200 hover:bg-primary-hover active:scale-95;
 }
 
 .pb-landing-main {
@@ -412,7 +412,7 @@
 }
 
 .pb-landing-title-gradient {
-  @apply bg-linear-to-r from-blue-500 via-[#D8103F] to-rose-500 bg-clip-text text-transparent;
+  @apply bg-linear-to-r from-primary via-primary-ink to-primary-hover bg-clip-text text-transparent;
 }
 
 .pb-landing-subtitle {
@@ -428,19 +428,19 @@
 }
 
 .pb-feature-card--blue {
-  @apply hover:shadow-blue-500/10;
+  @apply hover:shadow-primary-ink/10;
 }
 
 .pb-feature-card--rose {
-  @apply hover:shadow-rose-500/10;
+  @apply hover:shadow-primary-ink/10;
 }
 
 .pb-feature-card--amber {
-  @apply hover:shadow-amber-500/10;
+  @apply hover:shadow-primary-ink/10;
 }
 
 .pb-feature-card--emerald {
-  @apply hover:shadow-emerald-500/10;
+  @apply hover:shadow-primary-ink/10;
 }
 
 .pb-feature-icon {
@@ -448,19 +448,19 @@
 }
 
 .pb-feature-icon--blue {
-  @apply bg-linear-to-br from-blue-500 to-blue-700 shadow-blue-500/20;
+  @apply bg-linear-to-br from-primary to-primary-ink shadow-primary-ink/20;
 }
 
 .pb-feature-icon--rose {
-  @apply bg-linear-to-br from-rose-500 to-rose-700 shadow-rose-500/20;
+  @apply bg-linear-to-br from-primary-ink to-primary-hover shadow-primary-ink/20;
 }
 
 .pb-feature-icon--amber {
-  @apply bg-linear-to-br from-amber-400 to-yellow-600 shadow-amber-500/30;
+  @apply bg-linear-to-br from-primary to-primary-ink shadow-primary-ink/20;
 }
 
 .pb-feature-icon--emerald {
-  @apply bg-linear-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20;
+  @apply bg-linear-to-br from-primary to-primary-hover shadow-primary-ink/20;
 }
 
 .pb-feature-icon-svg {
@@ -468,7 +468,7 @@
 }
 
 .pb-feature-title {
-  @apply mb-1 text-xs font-black uppercase tracking-widest text-brand-text;
+  @apply mb-1 text-sm font-semibold text-brand-text;
 }
 
 .pb-feature-description {

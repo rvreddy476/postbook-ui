@@ -102,7 +102,7 @@ export function TagPickerModal({
             <div className="space-y-5">
                 {/* Counter */}
                 <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-brand-text/60 tracking-widest">
                         {remaining > 0 ? `${remaining} more available` : "Limit reached"}
                     </p>
                     {selected.length > 0 && (
@@ -130,7 +130,7 @@ export function TagPickerModal({
                     <button
                         type="button"
                         onClick={() => setActiveCategory(null)}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider transition-colors ${
                             activeCategory === null
                                 ? "bg-brand-text text-brand-card"
                                 : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
@@ -143,7 +143,7 @@ export function TagPickerModal({
                             key={cat.id}
                             type="button"
                             onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider transition-colors ${
                                 activeCategory === cat.id
                                     ? "bg-brand-text text-brand-card"
                                     : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
@@ -256,14 +256,14 @@ export function TagPickerModal({
                     <Button
                         variant="ghost"
                         onClick={onClose}
-                        className="h-10 px-6 rounded-xl text-brand-highlight text-xs font-bold uppercase tracking-widest"
+                        className="h-10 px-6 rounded-xl text-brand-highlight text-xs font-bold tracking-widest"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleConfirm}
                         disabled={selected.length === 0}
-                        className="h-10 px-6 rounded-xl bg-primary-ink hover:bg-primary-hover text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-black/10"
+                        className="h-10 px-6 rounded-xl bg-primary-ink hover:bg-primary-hover text-white text-xs font-bold tracking-widest shadow-lg shadow-black/10"
                     >
                         Add {selected.length > 0 ? `(${selected.length})` : ""}
                     </Button>

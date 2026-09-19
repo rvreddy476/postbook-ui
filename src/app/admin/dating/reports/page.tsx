@@ -109,7 +109,7 @@ export default function DatingReportsQueue() {
       {data && data.length > 0 && (
         <div className="overflow-x-auto border rounded-lg">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+            <thead className="bg-gray-50 text-left text-xs text-gray-500">
               <tr>
                 <th className="px-3 py-2">When</th>
                 <th className="px-3 py-2">Reporter → Target</th>

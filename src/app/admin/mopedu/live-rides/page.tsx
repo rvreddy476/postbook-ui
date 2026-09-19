@@ -121,7 +121,7 @@ export default function MopeduLiveRidesPage() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Ride</th>
                   <th className="px-4 py-3">Customer</th>
@@ -181,7 +181,7 @@ export default function MopeduLiveRidesPage() {
             <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                  <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                     Ride
                   </p>
                   <p className="mt-1 font-mono text-sm text-brand-text">
@@ -242,7 +242,7 @@ export default function MopeduLiveRidesPage() {
               </dl>
 
               <div className="mt-4">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                <p className="mb-2 text-[11px] font-bold tracking-wider text-brand-text/60">
                   Status timeline
                 </p>
                 {detail.isLoading ? (

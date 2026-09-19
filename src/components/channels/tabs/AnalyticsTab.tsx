@@ -12,7 +12,7 @@ interface AnalyticsTabProps {
 function StatCard({ label, value, change, trend }: { label: string; value: string; change?: string; trend?: 'up' | 'down' | 'neutral' }) {
   return (
     <div className="bg-brand-card border border-brand-divider rounded-xl p-4">
-      <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] font-bold text-brand-text/40 tracking-wider">{label}</p>
       <p className="text-2xl font-extrabold text-brand-text font-mono mt-1">{value}</p>
       {change && (
         <div className={`flex items-center gap-1 mt-1.5 text-[11px] font-semibold ${
@@ -70,7 +70,7 @@ export default function AnalyticsTab({ channel, updates = [] }: AnalyticsTabProp
       {/* Top update */}
       {topUpdate && (
         <div className="bg-brand-card border border-brand-divider rounded-xl p-4">
-          <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-2">Top performing update</p>
+          <p className="text-[10px] font-bold text-brand-text/40 tracking-wider mb-2">Top performing update</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-brand-text truncate">{topUpdate.title || topUpdate.body.slice(0, 60)}</p>
@@ -87,7 +87,7 @@ export default function AnalyticsTab({ channel, updates = [] }: AnalyticsTabProp
       {/* Chart placeholders */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-brand-card border border-brand-divider rounded-xl p-4">
-          <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-3">Subscriber Growth</p>
+          <p className="text-[10px] font-bold text-brand-text/40 tracking-wider mb-3">Subscriber Growth</p>
           <div className="h-40 flex items-center justify-center bg-brand-bg rounded-lg">
             <div className="text-center">
               <TrendingUp className="w-8 h-8 text-brand-text/15 mx-auto mb-2" />
@@ -96,7 +96,7 @@ export default function AnalyticsTab({ channel, updates = [] }: AnalyticsTabProp
           </div>
         </div>
         <div className="bg-brand-card border border-brand-divider rounded-xl p-4">
-          <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-3">Views Over Time</p>
+          <p className="text-[10px] font-bold text-brand-text/40 tracking-wider mb-3">Views Over Time</p>
           <div className="h-40 flex items-center justify-center bg-brand-bg rounded-lg">
             <div className="text-center">
               <BarChart3 className="w-8 h-8 text-brand-text/15 mx-auto mb-2" />
@@ -110,7 +110,7 @@ export default function AnalyticsTab({ channel, updates = [] }: AnalyticsTabProp
       {updates.length > 0 && (
         <div className="bg-brand-card border border-brand-divider rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-brand-divider">
-            <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider">Update Performance</p>
+            <p className="text-[10px] font-bold text-brand-text/40 tracking-wider">Update Performance</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">

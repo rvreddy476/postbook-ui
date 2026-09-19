@@ -133,7 +133,7 @@ export default function ForgotPasswordPage() {
                     <h1 className="text-2xl font-black tracking-tight text-foreground">
                       Forgot Password
                     </h1>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                       Account Recovery
                     </p>
                   </div>
@@ -208,7 +208,7 @@ export default function ForgotPasswordPage() {
                     <h2 className="text-xl font-black tracking-tight text-foreground">
                       Reset Password
                     </h2>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+                    <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                       Enter Code & New Password
                     </p>
                   </div>

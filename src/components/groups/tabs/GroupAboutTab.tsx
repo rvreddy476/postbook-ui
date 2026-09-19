@@ -60,14 +60,14 @@ export default function GroupAboutTab({ group }: GroupAboutTabProps) {
       {/* Description Card */}
       {group.description && (
         <div className="bg-brand-card rounded-xl border border-brand-divider p-5">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-3">About</h3>
+          <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-3">About</h3>
           <p className="text-sm text-brand-highlight leading-relaxed whitespace-pre-wrap">{group.description}</p>
         </div>
       )}
 
       {/* Details Card */}
       <div className="bg-brand-card rounded-xl border border-brand-divider p-5">
-        <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Details</h3>
+        <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-2">Details</h3>
 
         <div className="divide-y divide-brand-secondary">
           <DetailRow
@@ -141,7 +141,7 @@ export default function GroupAboutTab({ group }: GroupAboutTabProps) {
       {/* Permissions Card */}
       {(group.who_can_post || group.who_can_invite) && (
         <div className="bg-brand-card rounded-xl border border-brand-divider p-5">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2">Permissions</h3>
+          <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-2">Permissions</h3>
 
           <div className="divide-y divide-brand-secondary">
             {group.who_can_post && (

@@ -180,7 +180,7 @@ export default function CommunityDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-5 text-[11px] font-bold text-brand-text/60 tracking-wide uppercase">
+              <div className="flex items-center gap-3 mb-5 text-[11px] font-bold text-brand-text/60 tracking-wide">
                 <span>{formatCount(community.member_count)} members</span>
                 {community.online_count !== undefined && (
                   <>
@@ -435,7 +435,7 @@ export default function CommunityDetailPage() {
 
                 {upcomingEvents.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 tracking-wide">
                       Upcoming
                     </h3>
                     <div className="space-y-3">
@@ -448,7 +448,7 @@ export default function CommunityDetailPage() {
 
                 {pastEvents.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-brand-text/70 mb-3 tracking-wide">
                       Past
                     </h3>
                     <div className="space-y-3">
@@ -505,7 +505,7 @@ export default function CommunityDetailPage() {
                 <div className="bg-white rounded-2xl border border-brand-divider p-5 space-y-5">
                   {community.description && (
                     <div>
-                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                      <h4 className="text-xs font-semibold text-brand-text/50 tracking-wide mb-1">
                         Description
                       </h4>
                       <p className="text-sm text-brand-text leading-relaxed">
@@ -516,7 +516,7 @@ export default function CommunityDetailPage() {
 
                   {community.rules && community.rules.length > 0 && (
                     <div>
-                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-2">
+                      <h4 className="text-xs font-semibold text-brand-text/50 tracking-wide mb-2">
                         Rules
                       </h4>
                       <ol className="space-y-1.5">
@@ -534,7 +534,7 @@ export default function CommunityDetailPage() {
 
                   {community.category && (
                     <div>
-                      <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                      <h4 className="text-xs font-semibold text-brand-text/50 tracking-wide mb-1">
                         Category
                       </h4>
                       <span className="px-3 py-1 bg-brand-bg text-brand-text text-sm font-semibold rounded-full">
@@ -544,7 +544,7 @@ export default function CommunityDetailPage() {
                   )}
 
                   <div>
-                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                    <h4 className="text-xs font-semibold text-brand-text/50 tracking-wide mb-1">
                       Created
                     </h4>
                     <p className="text-sm font-mono text-brand-text/70">
@@ -557,7 +557,7 @@ export default function CommunityDetailPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-semibold text-brand-text/50 uppercase tracking-wide mb-1">
+                    <h4 className="text-xs font-semibold text-brand-text/50 tracking-wide mb-1">
                       Type
                     </h4>
                     <p className="text-sm text-brand-text capitalize">{community.community_type}</p>
@@ -640,7 +640,7 @@ function AnnouncementCard({ announcement }: { announcement: CommunityAnnouncemen
       <div className="absolute top-0 left-0 w-1 h-full bg-brand-text/40 rounded-l-3xl" />
       <div className="flex items-center gap-3 mb-3">
         {announcement.is_pinned && (
-          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-2 py-1 rounded-md">
+          <div className="flex items-center gap-1 text-[10px] font-black tracking-wider text-brand-text bg-brand-text/10 px-2 py-1 rounded-md">
             <Pin className="w-3 h-3" /> Pinned
           </div>
         )}
@@ -662,7 +662,7 @@ function AnnouncementCard({ announcement }: { announcement: CommunityAnnouncemen
             </span>
           )}
         </div>
-        <span className="text-[11px] font-bold text-brand-text/40 ml-auto uppercase tracking-wide">
+        <span className="text-[11px] font-bold text-brand-text/40 ml-auto tracking-wide">
           {new Date(announcement.created_at).toLocaleDateString()}
         </span>
       </div>
@@ -682,7 +682,7 @@ function EventCard({ event, isPast }: { event: CommunityEvent; isPast?: boolean 
       <div className="flex gap-5">
         <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/10 to-transparent flex flex-col items-center justify-center shrink-0 border border-brand-divider/50 shadow-xs relative overflow-hidden">
           <div className="absolute top-0 w-full h-1.5 bg-brand-text opacity-80" />
-          <span className="text-[11px] font-bold text-brand-text/70 uppercase tracking-widest mt-1">
+          <span className="text-[11px] font-bold text-brand-text/70 tracking-widest mt-1">
             {date.toLocaleDateString('en-US', { month: 'short' })}
           </span>
           <span className="text-xl font-black text-brand-text leading-none mt-0.5">{date.getDate()}</span>

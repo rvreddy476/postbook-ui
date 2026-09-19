@@ -83,7 +83,7 @@ function PayoutMethodCard({ method, onRemove, isRemoving }: PayoutMethodCardProp
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-black text-foreground">{methodTypeLabel(method.method_type)}</span>
                     {method.is_verified && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[7px] font-black tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
                             Verified
                         </span>
                     )}
@@ -93,7 +93,7 @@ function PayoutMethodCard({ method, onRemove, isRemoving }: PayoutMethodCardProp
             <button
                 onClick={() => onRemove(method.id)}
                 disabled={isRemoving}
-                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-border text-muted-foreground bg-brand-card hover:border-red-200 hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[8px] font-black tracking-widest border border-border text-muted-foreground bg-brand-card hover:border-red-200 hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isRemoving ? (
                     <div className="w-3 h-3 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
@@ -155,7 +155,7 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Amount */}
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                         Amount ({currency})
                     </label>
                     <div className="relative">
@@ -181,7 +181,7 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
                                     key={pct}
                                     type="button"
                                     onClick={() => setAmount(val)}
-                                    className="px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground transition-colors"
+                                    className="px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground transition-colors"
                                 >
                                     {pct}%
                                 </button>
@@ -192,7 +192,7 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
 
                 {/* Payout method select */}
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
                         Payout Method
                     </label>
                     {methods.length === 0 ? (
@@ -218,14 +218,14 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-all"
+                        className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-all"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isPending || methods.length === 0}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <>
@@ -275,13 +275,13 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
                 </div>
                 <div>
                     <h3 className="text-sm font-black text-foreground">Tax Information</h3>
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Required for payouts in some regions</p>
+                    <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Required for payouts in some regions</p>
                 </div>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Country</label>
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">Country</label>
                     <select
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
@@ -298,7 +298,7 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">PAN Number</label>
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">PAN Number</label>
                     <input
                         type="text"
                         value={pan}
@@ -308,7 +308,7 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
                     />
                 </div>
                 <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">GST Number (optional)</label>
+                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">GST Number (optional)</label>
                     <input
                         type="text"
                         value={gst}
@@ -323,7 +323,7 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary-ink to-primary-hover text-white hover:shadow-lg hover:shadow-[#7B5B3A]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary-ink to-primary-hover text-white hover:shadow-lg hover:shadow-[#7B5B3A]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <>
@@ -422,7 +422,7 @@ export default function PayoutsPage() {
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-foreground">Payouts</h1>
                     </div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest ml-[52px]">
+                    <p className="text-[11px] font-bold text-muted-foreground tracking-widest ml-[52px]">
                         Manage payout methods, tax info & withdraw earnings
                     </p>
                 </div>
@@ -431,7 +431,7 @@ export default function PayoutsPage() {
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide pb-1">
                     <Link
                         href="/monetization"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -440,7 +440,7 @@ export default function PayoutsPage() {
                     </Link>
                     <Link
                         href="/monetization/tiers"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -449,7 +449,7 @@ export default function PayoutsPage() {
                     </Link>
                     <Link
                         href="/monetization/payouts"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -462,7 +462,7 @@ export default function PayoutsPage() {
 <div className="h-px bg-secondary mb-6" />
 
 <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Demo payouts</p>
+    <p className="text-[10px] font-black tracking-widest text-amber-700">Demo payouts</p>
     <p className="mt-1 text-[11px] font-bold text-amber-900">
         Razorpay live credentials are not configured in this environment, so payout requests and payment movement here should be treated as demo-mode behavior.
     </p>
@@ -474,7 +474,7 @@ export default function PayoutsPage() {
                         <div>
                             {/* Phase 2 §D4: this is creator earnings (a pending payout),
                                 not a consumer wallet. Labelled accordingly. */}
-                            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Pending payout</p>
+                            <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">Pending payout</p>
                             {walletLoading ? (
                                 <div className="h-7 w-28 bg-secondary rounded-full animate-pulse" />
                             ) : (
@@ -488,7 +488,7 @@ export default function PayoutsPage() {
                             <button
                                 onClick={() => setShowPayoutForm(true)}
                                 disabled={walletLoading || (wallet?.balance ?? 0) <= 0 || wallet?.is_frozen}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -502,7 +502,7 @@ export default function PayoutsPage() {
                             <svg className="w-3.5 h-3.5 text-red-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-red-600">
+                            <span className="text-[9px] font-black tracking-widest text-red-600">
                                 Earnings are frozen. Payouts are temporarily unavailable.
                             </span>
                         </div>
@@ -530,7 +530,7 @@ export default function PayoutsPage() {
                         {!showAddMethod && (
                             <button
                                 onClick={() => setShowAddMethod(true)}
-                                className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
+                                className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -549,7 +549,7 @@ export default function PayoutsPage() {
                             />
                             <button
                                 onClick={() => setShowAddMethod(false)}
-                                className="mt-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                                className="mt-2 text-[9px] font-black tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Cancel
                             </button>
@@ -577,7 +577,7 @@ export default function PayoutsPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No payout methods</p>
+                            <p className="text-[10px] font-black tracking-widest text-muted-foreground">No payout methods</p>
                             <p className="text-[9px] font-bold text-primary-ink">Add a method to start receiving payouts.</p>
                         </div>
                     ) : (
@@ -601,7 +601,7 @@ export default function PayoutsPage() {
                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Tax information saved successfully</span>
+                            <span className="text-[10px] font-black tracking-widest text-emerald-600">Tax information saved successfully</span>
                         </div>
                     )}
                     <TaxInfoForm onSubmit={handleSaveTax} isPending={saveTaxInfo.isPending} />
@@ -622,7 +622,7 @@ export default function PayoutsPage() {
                     {!hasNextPage && payoutHistory.length > 0 && (
                         <div className="mt-8 flex items-center gap-3">
                             <div className="flex-1 h-px bg-secondary" />
-                            <p className="text-[8px] font-black uppercase tracking-widest text-primary-ink shrink-0">
+                            <p className="text-[8px] font-black tracking-widest text-primary-ink shrink-0">
                                 End of payout history
                             </p>
                             <div className="flex-1 h-px bg-secondary" />

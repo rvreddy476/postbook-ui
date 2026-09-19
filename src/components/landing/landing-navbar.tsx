@@ -15,15 +15,15 @@ export function LandingNavbar() {
         
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/commerce" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
+          <Link href="/commerce" className="text-xs font-bold tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Sell on VChat
           </Link>
-          <Link href="/login" className="text-xs font-bold uppercase tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
+          <Link href="/login" className="text-xs font-bold tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Log In
           </Link>
           <Link
             href="/register"
-            className="rounded-2xl bg-primary-ink px-8 py-3 text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-2xl transition-all hover:opacity-90 active:scale-95"
+            className="rounded-2xl bg-primary-ink px-8 py-3 text-[10px] font-black tracking-widest text-brand-bg shadow-2xl transition-all hover:opacity-90 active:scale-95"
           >
             Sign Up
           </Link>
@@ -48,21 +48,21 @@ export function LandingNavbar() {
             <Link
               href="/commerce"
               onClick={() => setIsOpen(false)}
-              className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
+              className="text-sm font-bold tracking-[0.2em] text-brand-text"
             >
               Sell on VChat
             </Link>
             <Link
               href="/login"
               onClick={() => setIsOpen(false)}
-              className="text-sm font-bold uppercase tracking-[0.2em] text-brand-text"
+              className="text-sm font-bold tracking-[0.2em] text-brand-text"
             >
               Log In
             </Link>
             <Link
               href="/register"
               onClick={() => setIsOpen(false)}
-              className="rounded-2xl bg-primary-ink px-8 py-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-lg"
+              className="rounded-2xl bg-primary-ink px-8 py-4 text-center text-[10px] font-black tracking-widest text-brand-bg shadow-lg"
             >
               Sign Up Free
             </Link>

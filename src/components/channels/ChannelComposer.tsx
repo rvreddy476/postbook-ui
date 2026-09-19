@@ -86,7 +86,7 @@ function CharCount({ current, max }: { current: number; max: number }) {
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-[11px] font-bold text-brand-text/50 uppercase tracking-wider mb-1.5">
+    <label className="block text-[11px] font-bold text-brand-text/50 tracking-wider mb-1.5">
       {children}{required && <span className="text-red-400 ml-0.5">*</span>}
     </label>
   )

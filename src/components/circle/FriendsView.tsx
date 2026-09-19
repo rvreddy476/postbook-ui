@@ -405,7 +405,7 @@ function Avatar({
 
 function Eyebrow({ text }: { text: string }) {
     return (
-        <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-text/45">
+        <div className="text-[11px] font-bold tracking-[0.14em] text-brand-text/45">
             {text}
         </div>
     )
@@ -1055,7 +1055,7 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                                     {m.icon}
                                 </span>
                                 {m.soon && (
-                                    <span className="rounded-full border border-brand-divider px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-brand-text/45">
+                                    <span className="rounded-full border border-brand-divider px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-brand-text/45">
                                         Soon
                                     </span>
                                 )}
@@ -1320,7 +1320,7 @@ function RequestRow({
                     <span className="truncate text-xs text-brand-text/55">
                         {req.username ? `@${req.username}` : 'Wants to connect'}
                     </span>
-                    <span className="shrink-0 rounded-full border border-brand-divider px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-brand-text/50">
+                    <span className="shrink-0 rounded-full border border-brand-divider px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-brand-text/50">
                         {originChip(req)}
                     </span>
                 </div>

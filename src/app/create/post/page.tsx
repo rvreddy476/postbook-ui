@@ -506,7 +506,7 @@ export default function CreatePostPage() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-800/50">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-violet-400">
+                  <div className="text-[10px] font-bold tracking-[0.25em] text-violet-400">
                     Creative Studio
                   </div>
                   <div className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -754,7 +754,7 @@ export default function CreatePostPage() {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-violet-400 mb-3 flex items-center gap-1.5">
+                      <div className="text-[11px] font-bold tracking-wider text-violet-400 mb-3 flex items-center gap-1.5">
                         <ChartBarIcon className="h-3.5 w-3.5" /> Post Poll Creator
                       </div>
                       
@@ -847,7 +847,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={() => setStyleTab("solids")}
-                        className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                        className={`text-[11px] font-bold tracking-wider transition-colors ${
                           styleTab === "solids" ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
@@ -856,7 +856,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={() => setStyleTab("gradients")}
-                        className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                        className={`text-[11px] font-bold tracking-wider transition-colors ${
                           styleTab === "gradients" ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
@@ -865,7 +865,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={() => setStyleTab("custom")}
-                        className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                        className={`text-[11px] font-bold tracking-wider transition-colors ${
                           styleTab === "custom" ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
                         }`}
                       >
@@ -877,7 +877,7 @@ export default function CreatePostPage() {
                       <button
                         type="button"
                         onClick={() => setBackground(null)}
-                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-red-400 flex items-center gap-1 transition"
+                        className="text-[10px] font-bold tracking-wider text-slate-400 hover:text-red-400 flex items-center gap-1 transition"
                       >
                         <Undo2 className="h-3 w-3" /> Reset background
                       </button>
@@ -1115,7 +1115,7 @@ export default function CreatePostPage() {
                         className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          <span className="text-xs font-bold text-white tracking-wider">
                             Choose Location
                           </span>
                           <button
@@ -1169,7 +1169,7 @@ export default function CreatePostPage() {
                   type="button"
                   onClick={handlePublish}
                   disabled={publishing || (!content.trim() && images.length === 0 && !pollQuestion.trim())}
-                  className="flex items-center gap-3 rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition transform hover:scale-[1.02] active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex items-center gap-3 rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-6 py-3.5 text-xs font-bold tracking-wider text-white shadow-lg transition transform hover:scale-[1.02] active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
                     {publishing ? (
@@ -1183,7 +1183,7 @@ export default function CreatePostPage() {
               </div>
 
               {/* Status footer bar */}
-              <div className="flex items-center justify-between bg-slate-950/40 px-6 py-3.5 border-t border-slate-800/20 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+              <div className="flex items-center justify-between bg-slate-950/40 px-6 py-3.5 border-t border-slate-800/20 text-[11px] text-slate-400 font-bold tracking-wider">
                 <div className="flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-emerald-400" />
                   {publishing ? "SECURE POST..." : "DRAFT AUTO-SAVED"}
@@ -1244,10 +1244,10 @@ export default function CreatePostPage() {
               transition={{ duration: 0.4, delay: 0.15 }}
               className="w-full rounded-[32px] bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-6 shadow-2xl relative"
             >
-              <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-violet-400 mb-3">
+              <div className="text-[10px] font-bold tracking-[0.25em] text-violet-400 mb-3">
                 Live Rendering
               </div>
-              <div className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-2">
+              <div className="text-sm font-bold text-white tracking-wider mb-4 border-b border-slate-800/50 pb-2">
                 Real-Time Post Preview
               </div>
 
@@ -1337,7 +1337,7 @@ export default function CreatePostPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <div className="text-[9px] font-bold text-slate-500 tracking-wider flex items-center justify-between">
                       <span>{pollMultiple ? "Multi-Choice" : "Single Choice"}</span>
                       <span>Expires in {pollDurationHours}h</span>
                     </div>
@@ -1383,10 +1383,10 @@ export default function CreatePostPage() {
             >
               <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-fuchsia-500/10 blur-2xl pointer-events-none" />
               
-              <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-fuchsia-400 mb-3">
+              <div className="text-[10px] font-bold tracking-[0.25em] text-fuchsia-400 mb-3">
                 Co-Pilot Assistant
               </div>
-              <div className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/5 pb-2 flex items-center gap-1.5">
+              <div className="text-sm font-bold text-white tracking-wider mb-4 border-b border-white/5 pb-2 flex items-center gap-1.5">
                 <Sparkles className="h-4 w-4 text-fuchsia-400 animate-pulse" />
                 AI Creation Engine
               </div>
@@ -1426,7 +1426,7 @@ export default function CreatePostPage() {
               {captionSuggestions.length > 0 && (
                 <div className="space-y-2 mb-4 animate-fadeIn">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-slate-400 tracking-wider">
                       Suggested Captions
                     </span>
                     <button
@@ -1465,7 +1465,7 @@ export default function CreatePostPage() {
               {hashtagSuggestions.length > 0 && (
                 <div className="space-y-2 animate-fadeIn">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-slate-400 tracking-wider">
                       Recommended Tags
                     </span>
                     <button

@@ -69,7 +69,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
           {Object.entries(grouped).length > 0 ? (
             Object.entries(grouped).map(([category, catPages]) => (
               <div key={category} className="mb-4">
-                <h4 className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-1.5">{category}</h4>
+                <h4 className="text-[10px] font-bold text-brand-text/40 tracking-wider mb-1.5">{category}</h4>
                 <div className="space-y-0.5">
                   {catPages.map(page => (
                     <button

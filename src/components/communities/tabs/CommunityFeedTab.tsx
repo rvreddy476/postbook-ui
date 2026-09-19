@@ -102,7 +102,7 @@ export default function CommunityFeedTab({ communityId, isMember, viewerRole }: 
       {/* Featured strip */}
       {featuredPosts && featuredPosts.length > 0 && (
         <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
-          <div className="flex items-center gap-1.5 text-violet-700 text-xs font-bold uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-1.5 text-violet-700 text-xs font-bold tracking-wider mb-2">
             <Star className="w-3.5 h-3.5" /> Featured
           </div>
           <div className="space-y-2">

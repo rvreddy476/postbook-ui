@@ -271,7 +271,7 @@ export default function HashtagPage() {
                             ) : (
                                 <div className="flex flex-col items-center gap-2 py-4">
                                     <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
-                                    <p className="text-xs font-semibold text-brand-text/40 uppercase tracking-widest">
+                                    <p className="text-xs font-semibold text-brand-text/40 tracking-widest">
                                         All caught up
                                     </p>
                                     <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />

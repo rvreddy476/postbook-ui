@@ -39,7 +39,7 @@ export function MessageToastContent({
                     <span className="text-[11px] font-black text-brand-text tracking-tight truncate">
                         {senderName}
                     </span>
-                    <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest shrink-0">
+                    <span className="text-[8px] font-bold text-slate-300 tracking-widest shrink-0">
                         {timestamp}
                     </span>
                 </div>

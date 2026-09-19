@@ -21,7 +21,7 @@ export default function MonetizationPage() {
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-foreground">Creator Dashboard</h1>
                     </div>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest ml-[52px]">
+                    <p className="text-[11px] font-bold text-muted-foreground tracking-widest ml-[52px]">
                         Manage your earnings, tiers & payouts
                     </p>
                 </div>
@@ -30,7 +30,7 @@ export default function MonetizationPage() {
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide pb-1">
                     <Link
                         href="/monetization"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-brand-card text-foreground border-primary-outline border shadow-xs shadow-[#D4A574]/10"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -39,7 +39,7 @@ export default function MonetizationPage() {
                     </Link>
                     <Link
                         href="/monetization/tiers"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -48,7 +48,7 @@ export default function MonetizationPage() {
                     </Link>
                     <Link
                         href="/monetization/payouts"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 bg-background text-muted-foreground border-transparent border hover:bg-brand-card hover:text-foreground hover:border-border transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -61,7 +61,7 @@ export default function MonetizationPage() {
 <div className="h-px bg-secondary mb-6" />
 
 <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Demo payouts</p>
+    <p className="text-[10px] font-black tracking-widest text-amber-700">Demo payouts</p>
     <p className="mt-1 text-[11px] font-bold text-amber-900">
         Razorpay live credentials are not configured in this environment, so payout and payment actions should be treated as safe demo flows, not live settlement.
     </p>
@@ -76,7 +76,7 @@ export default function MonetizationPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-foreground">Something went wrong</p>
+                            <p className="text-[11px] font-black tracking-widest text-foreground">Something went wrong</p>
                             <p className="text-[10px] font-bold text-muted-foreground mt-0.5">Failed to load your dashboard. Please try again later.</p>
                         </div>
                     </div>

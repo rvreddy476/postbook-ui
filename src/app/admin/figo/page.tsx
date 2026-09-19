@@ -113,7 +113,7 @@ function KPI({
         toneRing,
       ].join(" ")}
     >
-      <div className="text-xs uppercase tracking-wide text-slate-500">
+      <div className="text-xs tracking-wide text-slate-500">
         {title}
       </div>
       <div className="mt-1 flex items-baseline gap-2">

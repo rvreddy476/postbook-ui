@@ -17,7 +17,7 @@ export default async function SlamBookSharePage({
             <ArrowLeft className="h-4 w-4" />
             Back to Feed
           </Link>
-          <Link href="/login" className="rounded-full border border-brand-divider px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-highlight transition-colors hover:bg-brand-secondary">
+          <Link href="/login" className="rounded-full border border-brand-divider px-4 py-2 text-xs font-bold tracking-[0.18em] text-brand-highlight transition-colors hover:bg-brand-secondary">
             Sign in
           </Link>
         </div>

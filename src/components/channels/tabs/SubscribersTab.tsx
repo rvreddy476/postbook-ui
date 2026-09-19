@@ -26,19 +26,19 @@ function roleBadge(role: string) {
   switch (role) {
     case 'admin':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold uppercase tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold tracking-wider">
           <ShieldCheck className="w-3 h-3" /> Admin
         </span>
       )
     case 'moderator':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold tracking-wider">
           <ShieldCheck className="w-3 h-3" /> Mod
         </span>
       )
     case 'pending':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wider">
           <Clock className="w-3 h-3" /> Pending
         </span>
       )
@@ -315,7 +315,7 @@ export default function SubscribersTab({
       {pendingMembers.length > 0 && (
         <div className="bg-orange-50 border border-orange-200 rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 border-b border-orange-200">
-            <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider">
+            <p className="text-[10px] font-bold text-orange-600 tracking-wider">
               {pendingMembers.length} Pending {pendingMembers.length === 1 ? 'Approval' : 'Approvals'}
             </p>
           </div>

@@ -320,7 +320,7 @@ export default function LiveStartPage() {
                 />
               ) : hasBrowserPreview ? (
                 <div className="flex h-full flex-col bg-black">
-                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-[11px] uppercase tracking-wider text-white/45">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-[11px] tracking-wider text-white/45">
                     <span className="inline-flex items-center gap-2 font-bold text-cyan-300">
                       <Video className="h-3.5 w-3.5" />
                       Browser Camera Preview
@@ -377,7 +377,7 @@ export default function LiveStartPage() {
               {/* Overlays */}
               <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2">
                 {streamDetail?.status === "live" && (
-                  <span className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase text-white shadow-lg">
+                  <span className="flex items-center gap-1.5 rounded-lg bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-lg">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                     Live
                   </span>
@@ -417,7 +417,7 @@ export default function LiveStartPage() {
               <div className="flex items-center gap-3">
                 {streamDetail ? (
                   <>
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
                       streamDetail.status === "live" ? "bg-rose-500/10 text-rose-500" : "bg-amber-500/10 text-amber-600"
                     }`}>
                       {streamDetail.status}
@@ -473,7 +473,7 @@ export default function LiveStartPage() {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-3 text-[12px] font-bold uppercase tracking-wider transition-colors ${
+                  className={`flex-1 py-3 text-[12px] font-bold tracking-wider transition-colors ${
                     activeTab === tab
                       ? "border-b-2 border-rose-500 text-rose-500"
                       : "text-brand-text/40 hover:text-brand-text/60"
@@ -490,7 +490,7 @@ export default function LiveStartPage() {
                   {/* Stream setup form */}
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-brand-text/40">
+                      <label className="mb-1 block text-[11px] font-bold tracking-wider text-brand-text/40">
                         Title <span className="text-rose-400">*</span>
                       </label>
                       <input
@@ -502,7 +502,7 @@ export default function LiveStartPage() {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Description</label>
+                      <label className="mb-1 block text-[11px] font-bold tracking-wider text-brand-text/40">Description</label>
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -513,7 +513,7 @@ export default function LiveStartPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Visibility</label>
+                        <label className="mb-1 block text-[11px] font-bold tracking-wider text-brand-text/40">Visibility</label>
                         <select
                           value={visibility}
                           onChange={(e) => setVisibility(e.target.value as typeof visibility)}
@@ -523,7 +523,7 @@ export default function LiveStartPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Schedule</label>
+                        <label className="mb-1 block text-[11px] font-bold tracking-wider text-brand-text/40">Schedule</label>
                         <input
                           type="datetime-local"
                           value={scheduleAt}
@@ -563,7 +563,7 @@ export default function LiveStartPage() {
                   {/* Browser Camera Publish */}
                   {streamDetail && (
                     <div className="space-y-3 rounded-xl border border-brand-divider bg-brand-secondary p-4">
-                      <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                      <p className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-brand-text/60">
                         <Video className="h-3.5 w-3.5" />
                         Browser Camera / Mic
                       </p>
@@ -617,7 +617,7 @@ export default function LiveStartPage() {
                   {/* OBS Settings */}
                   {streamDetail && (
                     <div className="space-y-3 rounded-xl border border-brand-divider bg-brand-secondary p-4">
-                      <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+                      <p className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-brand-text/60">
                         <Video className="h-3.5 w-3.5" />
                         OBS / Encoder
                       </p>
@@ -653,7 +653,7 @@ export default function LiveStartPage() {
                   {/* Scheduled streams */}
                   {myScheduledStreams.length > 0 && (
                     <div>
-                      <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Scheduled</p>
+                      <p className="mb-2 text-[11px] font-bold tracking-wider text-brand-text/40">Scheduled</p>
                       {myScheduledStreams.map((s) => (
                         <div key={s.id} className="rounded-lg border border-brand-divider bg-brand-secondary px-3 py-2">
                           <p className="text-[12px] font-semibold text-brand-text">{s.title}</p>
@@ -669,7 +669,7 @@ export default function LiveStartPage() {
                   {/* Chat */}
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Live Chat</p>
+                      <p className="text-[11px] font-bold tracking-wider text-brand-text/40">Live Chat</p>
                       <button
                         type="button"
                         onClick={() => setChatEnabled((c) => !c)}
@@ -752,7 +752,7 @@ export default function LiveStartPage() {
 
                   {/* Muted viewers */}
                   <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Muted Viewers</p>
+                    <p className="mb-2 text-[11px] font-bold tracking-wider text-brand-text/40">Muted Viewers</p>
                     <div className="flex flex-wrap gap-1.5">
                       {mutedUsers.length > 0 ? mutedUsers.map((m) => (
                         <span key={m.user_id} className="inline-flex items-center gap-1.5 rounded-full border border-brand-divider bg-brand-secondary px-2.5 py-1 text-[11px] text-brand-text">
@@ -773,7 +773,7 @@ export default function LiveStartPage() {
 
                   {/* Word filters */}
                   <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-brand-text/40">Blocked Words</p>
+                    <p className="mb-2 text-[11px] font-bold tracking-wider text-brand-text/40">Blocked Words</p>
                     <div className="flex flex-wrap gap-1.5">
                       {wordFilters.length > 0 ? wordFilters.map((f) => (
                         <span key={f.word} className="inline-flex items-center gap-1.5 rounded-full border border-brand-divider bg-brand-secondary px-2.5 py-1 text-[11px] text-brand-text">
@@ -825,7 +825,7 @@ function CopyRow({ label, value, copied, onCopy, disabled }: { label: string; va
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg bg-brand-card px-3 py-2 ring-1 ring-brand-divider">
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40">{label}</p>
+        <p className="text-[10px] font-bold tracking-wider text-brand-text/40">{label}</p>
         <p className="mt-0.5 truncate font-mono text-[11px] text-brand-text">{value}</p>
       </div>
       <button

@@ -172,7 +172,7 @@ export function TrustBadge({
       {display.map((p) => (
         <span
           key={p.key}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${p.className}`}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${p.className}`}
         >
           <Glyph name={p.icon} />
           {p.label}

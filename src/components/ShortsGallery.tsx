@@ -95,7 +95,7 @@ const ShortsGallery: React.FC = () => {
       <div className="h-full w-full bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-fuchsia-400 animate-spin" />
-          <p className="text-white/40 text-xs font-medium tracking-wider uppercase">Loading Reels</p>
+          <p className="text-white/40 text-xs font-medium tracking-wider">Loading Reels</p>
         </div>
       </div>
     );
@@ -187,7 +187,7 @@ const ShortsGallery: React.FC = () => {
               transition={{ duration: 1.5, repeat: 3, ease: 'easeInOut' }}
               className="flex flex-col items-center gap-1"
             >
-              <span className="text-white/30 text-[10px] font-medium tracking-wider uppercase">Swipe up</span>
+              <span className="text-white/30 text-[10px] font-medium tracking-wider">Swipe up</span>
               <ChevronUp className="w-4 h-4 text-white/30 rotate-180" />
             </motion.div>
           </motion.div>

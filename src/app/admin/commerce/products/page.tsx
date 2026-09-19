@@ -191,7 +191,7 @@ export default function AdminProductQueuePage() {
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-xs tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Seller</th>
@@ -263,14 +263,14 @@ export default function AdminProductQueuePage() {
                   <>
                     {/* Media */}
                     <section className="mt-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                      <h3 className="text-xs font-semibold tracking-wider text-gray-500 mb-2">
                         Media ({mediaList.length})
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {product.primary_image_media_id && (
                           <div className="relative">
                             <MediaThumb mediaId={product.primary_image_media_id} />
-                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold uppercase rounded-sm px-1">
+                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold rounded-sm px-1">
                               Cover
                             </span>
                           </div>
@@ -288,7 +288,7 @@ export default function AdminProductQueuePage() {
 
                     {/* Compliance */}
                     <section className="mt-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                      <h3 className="text-xs font-semibold tracking-wider text-gray-500 mb-2">
                         Compliance
                       </h3>
                       <dl className="grid grid-cols-2 gap-2 text-xs">
@@ -329,7 +329,7 @@ export default function AdminProductQueuePage() {
                     {/* Description */}
                     {product.description && (
                       <section className="mt-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                        <h3 className="text-xs font-semibold tracking-wider text-gray-500 mb-2">
                           Description
                         </h3>
                         <p className="text-sm whitespace-pre-line text-gray-700">
@@ -341,7 +341,7 @@ export default function AdminProductQueuePage() {
                     {/* Attributes */}
                     {attrList.length > 0 && (
                       <section className="mt-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                        <h3 className="text-xs font-semibold tracking-wider text-gray-500 mb-2">
                           Attributes
                         </h3>
                         <dl className="grid grid-cols-2 gap-2 text-xs">

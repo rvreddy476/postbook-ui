@@ -256,7 +256,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
             {/* All tab */}
             <button
                 onClick={() => onSelect(undefined)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 transition-all duration-200 border ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 transition-all duration-200 border ${
                     activeCollection === undefined
                         ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
                         : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
@@ -280,7 +280,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 <button
                     key={col.name}
                     onClick={() => onSelect(col.name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 transition-all duration-200 border ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 transition-all duration-200 border ${
                         activeCollection === col.name
                             ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
                             : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
@@ -352,7 +352,7 @@ export default function SavedPage() {
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-brand-text">Saved</h1>
                     </div>
-                    <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest ml-[52px]">
+                    <p className="text-[11px] font-bold text-brand-text/60 tracking-widest ml-[52px]">
                         Your bookmarked content, organised by collection
                     </p>
                 </div>
@@ -385,7 +385,7 @@ export default function SavedPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-brand-text">Something went wrong</p>
+                            <p className="text-[11px] font-black tracking-widest text-brand-text">Something went wrong</p>
                             <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">Failed to load your saved items.</p>
                         </div>
                     </div>
@@ -397,7 +397,7 @@ export default function SavedPage() {
                             </svg>
                         </div>
                         <div className="text-center">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-brand-text">
+                            <p className="text-[11px] font-black tracking-widest text-brand-text">
                                 {activeCollection ? `No items in "${activeCollection}"` : "Nothing saved yet"}
                             </p>
                             <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">
@@ -411,7 +411,7 @@ export default function SavedPage() {
                     <>
                         {/* Item count header */}
                         <div className="flex items-center justify-between mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-brand-text/60">
+                            <p className="text-[9px] font-black tracking-widest text-brand-text/60">
                                 {allItems.length} item{allItems.length !== 1 ? "s" : ""}
                                 {activeCollection ? ` in "${activeCollection}"` : " total"}
                             </p>
@@ -435,7 +435,7 @@ export default function SavedPage() {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isFetchingNextPage ? (
                                         <>
@@ -458,7 +458,7 @@ export default function SavedPage() {
                         {!hasNextPage && allItems.length > 0 && (
                             <div className="mt-10 flex items-center gap-3">
                                 <div className="flex-1 h-px bg-brand-secondary" />
-                                <p className="text-[8px] font-black uppercase tracking-widest text-brand-text/30 shrink-0">
+                                <p className="text-[8px] font-black tracking-widest text-brand-text/30 shrink-0">
                                     End of saved items
                                 </p>
                                 <div className="flex-1 h-px bg-brand-secondary" />

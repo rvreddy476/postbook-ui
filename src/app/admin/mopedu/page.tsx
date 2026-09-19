@@ -47,7 +47,7 @@ function KpiCard({ label, value, icon: Icon, tone = "neutral", loading }: KpiCar
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-text/45">
+        <p className="text-[10px] font-black tracking-[0.16em] text-brand-text/45">
           {label}
         </p>
         <div

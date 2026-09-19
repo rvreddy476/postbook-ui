@@ -190,7 +190,7 @@ export function ImageAdjustEditor({
 
             {!compact && (
                 <div className="absolute left-4 top-4 rounded-xl bg-black/45 px-3 py-2 text-white backdrop-blur-md">
-                    <div className="text-xs font-black uppercase tracking-wider">{title}</div>
+                    <div className="text-xs font-black tracking-wider">{title}</div>
                     <div className="text-[11px] text-white/70">Drag the image to adjust its position.</div>
                 </div>
             )}

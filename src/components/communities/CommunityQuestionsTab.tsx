@@ -57,7 +57,7 @@ export default function CommunityQuestionsTab({ communityId, viewerRole }: Props
       {/* Popular topic chips */}
       {popularTopics && popularTopics.length > 0 && (
         <div className="mb-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/50 mb-2">
+          <p className="text-[11px] font-bold tracking-wide text-brand-text/50 mb-2">
             Popular topics
           </p>
           <div className="flex flex-wrap gap-2">
@@ -78,7 +78,7 @@ export default function CommunityQuestionsTab({ communityId, viewerRole }: Props
       {/* Pinned section */}
       {pinned.length > 0 && (
         <div className="mb-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-brand-text/50 mb-2">
+          <p className="text-[11px] font-bold tracking-wide text-brand-text/50 mb-2">
             Pinned
           </p>
           <div className="space-y-2">

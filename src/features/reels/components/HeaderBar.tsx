@@ -50,7 +50,7 @@ export function HeaderBar({
             </span>
           </Link>
           <div className="h-5 w-px bg-white/20 dark:bg-brand-divider" />
-          <span className="text-[12px] font-bold uppercase tracking-widest text-white/50 dark:text-brand-text/50">
+          <span className="text-[12px] font-bold tracking-widest text-white/50 dark:text-brand-text/50">
             {sectionLabel}
           </span>
         </div>

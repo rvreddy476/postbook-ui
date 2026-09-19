@@ -141,7 +141,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
 
                 <button
                     onClick={onEditProfile}
-                    className="mt-4 w-full py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-xs"
+                    className="mt-4 w-full py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xs"
                 >
                     Edit Profile
                 </button>

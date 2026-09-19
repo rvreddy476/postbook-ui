@@ -149,7 +149,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
 
         <div className="space-y-5 p-6">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Banner</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Banner</label>
             <div
               className="group relative h-36 cursor-pointer overflow-hidden rounded-2xl border border-brand-divider bg-brand-secondary"
               onClick={() => bannerInputRef.current?.click()}
@@ -215,7 +215,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Community Name</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Community Name</label>
             <input
               type="text"
               value={name}
@@ -228,7 +228,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Description</label>
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-highlight">Description</label>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -240,7 +240,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Community Type</label>
+            <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Community Type</label>
             <div className="grid grid-cols-3 gap-3">
               {communityTypes.map((option) => (
                 <button
@@ -260,7 +260,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Category</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Category</label>
             <div className="flex flex-wrap gap-2">
               {categories.map((option) => (
                 <button
@@ -280,7 +280,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Join Mode</label>
+            <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Join Mode</label>
             <div className="grid grid-cols-3 gap-3">
               {joinModes.map((option) => (
                 <button
@@ -300,7 +300,7 @@ export default function CommunityEditModal({ community, onClose }: CommunityEdit
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Rules</label>
+            <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Rules</label>
             <div className="space-y-2">
               {rules.map((rule, index) => (
                 <div key={`${community.id}-rule-${index}`} className="flex items-center gap-2">

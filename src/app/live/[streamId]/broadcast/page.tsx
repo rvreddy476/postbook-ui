@@ -158,7 +158,7 @@ export default function BroadcastPage() {
         <div className="mb-5 flex flex-col gap-1">
           <div className="flex items-center gap-3">
             {isLive && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black uppercase tracking-widest text-rose-500">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black tracking-widest text-rose-500">
                 <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />
                 Live
               </span>
@@ -209,7 +209,7 @@ export default function BroadcastPage() {
           <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-white">
             <Users className="h-3.5 w-3.5" />
             <span className="text-xs font-bold">{participantCount}</span>
-            <span className="text-[10px] uppercase tracking-widest text-white/70">in-room</span>
+            <span className="text-[10px] tracking-widest text-white/70">in-room</span>
           </div>
         </div>
 

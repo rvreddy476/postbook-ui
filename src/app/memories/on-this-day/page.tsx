@@ -48,7 +48,7 @@ export default function OnThisDayPage() {
                 <CalendarClock className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-warning">
+                <p className="text-[11px] font-black tracking-[0.22em] text-warning">
                   Memories
                 </p>
                 <h1 className="mt-1 text-[28px] font-bold text-brand-text">On This Day</h1>
@@ -61,7 +61,7 @@ export default function OnThisDayPage() {
               type="button"
               onClick={() => void memoriesQuery.refetch()}
               disabled={memoriesQuery.isFetching}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#E9C98C] bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-warning transition-colors hover:bg-[#FFF2D6] disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#E9C98C] bg-white px-5 py-3 text-[11px] font-black tracking-[0.18em] text-warning transition-colors hover:bg-[#FFF2D6] disabled:opacity-50"
             >
               {memoriesQuery.isFetching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -83,7 +83,7 @@ export default function OnThisDayPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-12 text-center shadow-xs">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-brand-highlight">
+            <p className="text-[11px] font-black tracking-[0.22em] text-brand-highlight">
               Nothing resurfaced today
             </p>
             <p className="mt-2 text-[14px] text-brand-text/65">
@@ -104,7 +104,7 @@ export default function OnThisDayPage() {
                 )}
                 <div className="space-y-4 px-6 py-5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-[#FFF3D6] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-warning">
+                    <span className="rounded-full bg-[#FFF3D6] px-3 py-1 text-[10px] font-black tracking-[0.18em] text-warning">
                       {item.years_ago} years ago
                     </span>
                     <span className="text-[11px] text-brand-text/45">{item.memory_date}</span>
@@ -114,7 +114,7 @@ export default function OnThisDayPage() {
                   </p>
                   <Link
                     href={`/post/${item.post_id}`}
-                    className="inline-flex items-center rounded-2xl bg-primary-ink px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-brand-highlight"
+                    className="inline-flex items-center rounded-2xl bg-primary-ink px-4 py-2.5 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-brand-highlight"
                   >
                     Open post
                   </Link>

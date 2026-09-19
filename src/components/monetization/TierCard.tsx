@@ -38,7 +38,7 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
                         <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-sm font-black text-foreground truncate">{tier.name}</h3>
                             {!tier.is_active && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest bg-brand-secondary text-brand-highlight border border-brand-divider shrink-0">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black tracking-widest bg-brand-secondary text-brand-highlight border border-brand-divider shrink-0">
                                     Inactive
                                 </span>
                             )}
@@ -109,7 +109,7 @@ const TierCard: React.FC<TierCardProps> = ({ tier, onEdit, onToggleActive, isUpd
                     <div>
                         <button
                             onClick={() => setShowPerks(!showPerks)}
-                            className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-1.5 mb-2 text-[9px] font-black tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <svg className={`w-3 h-3 transition-transform duration-200 ${showPerks ? "rotate-90" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

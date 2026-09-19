@@ -66,9 +66,9 @@ export default function PostMatchChatPage() {
         </div>
         <div className="flex-1">
           <h2 className="font-bold text-white text-sm">{otherName}</h2>
-          <p className="text-[10px] text-foreground font-bold uppercase tracking-widest">Matched</p>
+          <p className="text-[10px] text-foreground font-bold tracking-widest">Matched</p>
         </div>
-        <Link href={`/postmatch/matches`} className="text-[10px] font-black text-foreground uppercase tracking-widest hover:text-rose-500 transition">
+        <Link href={`/postmatch/matches`} className="text-[10px] font-black text-foreground tracking-widest hover:text-rose-500 transition">
           Info
         </Link>
       </header>

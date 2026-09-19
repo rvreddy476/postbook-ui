@@ -38,7 +38,7 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
 }
 
 const inputCls = 'w-full border border-[#333] rounded-xl px-4 py-3 text-white bg-[#1a1a1a] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition-all text-sm font-medium placeholder:text-foreground'
-const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5'
+const labelCls = 'block text-[10px] font-black tracking-widest text-muted-foreground mb-1.5'
 const selectCls = `${inputCls} h-[46px] cursor-pointer`
 
 export default function PostMatchProfilePage() {
@@ -185,7 +185,7 @@ export default function PostMatchProfilePage() {
           {profile && (
             <div className="flex items-center justify-center gap-3 mt-2">
               <span className="text-xs text-muted-foreground">{profile.city}</span>
-              <span className="inline-block px-2 py-0.5 bg-rose-50 text-rose-500 rounded-sm text-[10px] font-black uppercase tracking-wider">
+              <span className="inline-block px-2 py-0.5 bg-rose-50 text-rose-500 rounded-sm text-[10px] font-black tracking-wider">
                 {profile.profile_completion_percent}% complete
               </span>
             </div>
@@ -195,7 +195,7 @@ export default function PostMatchProfilePage() {
         {/* Tab switcher */}
         <div className="flex gap-1 bg-[#111] rounded-xl border border-[#222] p-1 mb-4">
           {(['profile', 'preferences', 'photos'] as const).map(t => (
-            <button key={t} onClick={() => { setTab(t); setError(''); setSuccess('') }} className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition ${tab === t ? 'bg-gray-900 text-white' : 'text-muted-foreground hover:text-white'}`}>
+            <button key={t} onClick={() => { setTab(t); setError(''); setSuccess('') }} className={`flex-1 py-2.5 rounded-lg text-xs font-bold tracking-widest transition ${tab === t ? 'bg-gray-900 text-white' : 'text-muted-foreground hover:text-white'}`}>
               {t}
             </button>
           ))}
@@ -307,7 +307,7 @@ export default function PostMatchProfilePage() {
                       ) : (
                         <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-foreground text-xl">📷</div>
                       )}
-                      {p.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1"><span className="text-[9px] font-black text-white uppercase tracking-widest">Primary</span></div>}
+                      {p.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1"><span className="text-[9px] font-black text-white tracking-widest">Primary</span></div>}
                       <button
                         onClick={() => deletePhoto.mutate(p.id)}
                         disabled={deletePhoto.isPending}
@@ -329,7 +329,7 @@ export default function PostMatchProfilePage() {
 
         {/* Logout */}
         <div className="mt-6 text-center">
-          <button onClick={handleLogout} className="text-xs font-bold text-foreground hover:text-red-500 uppercase tracking-widest transition">
+          <button onClick={handleLogout} className="text-xs font-bold text-foreground hover:text-red-500 tracking-widest transition">
             Sign Out
           </button>
         </div>

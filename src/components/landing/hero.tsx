@@ -29,7 +29,7 @@ export function LandingHero() {
         {/* Commerce CTA */}
         <Link
           href="/commerce"
-          className="inline-flex items-center gap-3 px-5 py-3 bg-brand-card border border-brand-divider rounded-2xl text-brand-text text-xs font-black uppercase tracking-widest hover:border-brand-accent transition-all group"
+          className="inline-flex items-center gap-3 px-5 py-3 bg-brand-card border border-brand-divider rounded-2xl text-brand-text text-xs font-black tracking-widest hover:border-brand-accent transition-all group"
         >
           <span className="text-lg">🛍️</span>
           <span>Sell on VChat</span>
@@ -140,9 +140,9 @@ function FeatureCard({ title, desc, color, href, icon }: FeatureCardProps) {
           {icon}
         </svg>
       </div>
-      <h3 className="mb-1 text-[11px] font-black uppercase tracking-widest text-brand-text">{title}</h3>
+      <h3 className="mb-1 text-[11px] font-black tracking-widest text-brand-text">{title}</h3>
       <p className="text-[10px] font-bold leading-tight text-brand-text/60">{desc}</p>
-      <div className="mt-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] text-brand-text/40 transition-colors group-hover:text-brand-text">
+      <div className="mt-3 inline-flex items-center gap-1 text-[9px] font-black tracking-[0.2em] text-brand-text/40 transition-colors group-hover:text-brand-text">
         Open
         <svg className="h-2.5 w-2.5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />

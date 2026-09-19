@@ -110,7 +110,7 @@ export default function ChannelProfilePage() {
                 {/* Links */}
                 {channel.links && channel.links.length > 0 && (
                     <div className="mt-6">
-                        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">
+                        <h2 className="text-sm font-bold text-foreground tracking-wide mb-3">
                             Links
                         </h2>
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -137,7 +137,7 @@ export default function ChannelProfilePage() {
                 {/* Milestones */}
                 {channel.milestones && channel.milestones.length > 0 && (
                     <div className="mt-8 mb-12">
-                        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">
+                        <h2 className="text-sm font-bold text-foreground tracking-wide mb-3">
                             Milestones
                         </h2>
                         <div className="relative">

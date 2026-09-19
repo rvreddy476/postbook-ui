@@ -101,7 +101,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <p
-                        className={`text-[11px] font-black uppercase tracking-widest leading-snug ${
+                        className={`text-[11px] font-black tracking-widest leading-snug ${
                             isCritical
                                 ? "text-rose-700 dark:text-rose-200"
                                 : "text-brand-text"

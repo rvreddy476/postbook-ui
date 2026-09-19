@@ -267,7 +267,7 @@ function SlamMetric({
 }) {
   return (
     <div className="rounded-2xl border border-brand-divider bg-secondary px-4 py-3 shadow-xs">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-brand-text/50">
+      <div className="flex items-center gap-2 text-[11px] tracking-[0.14em] text-brand-text/50">
         {icon}
         {label}
       </div>
@@ -317,11 +317,11 @@ function ResponseInputCard({
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-[14px] font-semibold text-brand-text">{card.title}</h3>
         {card.is_required ? (
-          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">
+          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
             Required
           </span>
         ) : null}
-        <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-bold uppercase text-brand-highlight">
+        <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-bold text-brand-highlight">
           {card.response_type.replaceAll("_", " ")}
         </span>
       </div>
@@ -431,7 +431,7 @@ export function SlamBookMemoriesHub() {
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Card className="overflow-hidden border-brand-divider/70 bg-linear-to-br from-[#fff6e8] via-brand-card to-[#fffdf7]">
           <CardContent className="px-8 py-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#E9C98C] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-warning">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E9C98C] bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-warning">
               <BookHeart className="h-3.5 w-3.5" />
               Memories Hub
             </div>
@@ -501,10 +501,10 @@ export function SlamBookMemoriesHub() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(item.status)}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(item.status)}`}>
                           {item.status}
                         </span>
-                        <span className="text-[10px] uppercase tracking-[0.14em] text-brand-text/50">
+                        <span className="text-[10px] tracking-[0.14em] text-brand-text/50">
                           {slambookVisibilityLabel(item.visibility)}
                         </span>
                       </div>
@@ -647,7 +647,7 @@ export function SlamBookIndexRouteView() {
     <div className="mx-auto max-w-[1260px] px-6 py-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-text/45">
+          <p className="text-[11px] font-bold tracking-[0.18em] text-brand-text/45">
             SlamBook Studio
           </p>
           <h1 className="mt-2 text-[28px] font-bold text-brand-text">Create and manage SlamBooks</h1>
@@ -826,12 +826,12 @@ export function SlamBookIndexRouteView() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-[14px] font-semibold text-brand-text">{pack.title}</p>
-                            <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-brand-text/45">
+                            <p className="mt-1 text-[12px] tracking-[0.14em] text-brand-text/45">
                               {pack.category}
                             </p>
                           </div>
                           {active ? (
-                            <span className="rounded-full bg-primary-ink px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                            <span className="rounded-full bg-primary-ink px-2 py-0.5 text-[10px] font-bold text-white">
                               Selected
                             </span>
                           ) : null}
@@ -875,7 +875,7 @@ export function SlamBookIndexRouteView() {
                     {customCards.map((card, index) => (
                       <div key={`custom-card-${index}`} className="rounded-2xl border border-brand-divider bg-white p-4">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/50">
+                          <p className="text-[12px] font-semibold tracking-[0.14em] text-brand-text/50">
                             Custom card {index + 1}
                           </p>
                           <button
@@ -1041,10 +1041,10 @@ export function SlamBookIndexRouteView() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(item.status)}`}>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(item.status)}`}>
                             {item.status}
                           </span>
-                          <span className="text-[10px] uppercase tracking-[0.14em] text-brand-text/50">
+                          <span className="text-[10px] tracking-[0.14em] text-brand-text/50">
                             {slambookIdentityLabel(item.response_identity_mode)}
                           </span>
                         </div>
@@ -1430,11 +1430,11 @@ function SlamBookWorkspace({
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to list
             </Link>
-            <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase ${statusTone(slambook.status)}`}>
+            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${statusTone(slambook.status)}`}>
               {slambook.status}
             </span>
             {openedFromShare ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase text-amber-700">
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-700">
                 Opened via share link
               </span>
             ) : null}
@@ -1490,11 +1490,11 @@ function SlamBookWorkspace({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-[14px] font-semibold text-brand-text">{card.title}</p>
                       {card.is_required ? (
-                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">
+                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
                           Required
                         </span>
                       ) : null}
-                      <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-bold uppercase text-brand-highlight">
+                      <span className="rounded-full bg-brand-secondary px-2 py-0.5 text-[10px] font-bold text-brand-highlight">
                         {card.response_type.replaceAll("_", " ")}
                       </span>
                     </div>
@@ -1610,7 +1610,7 @@ function SlamBookWorkspace({
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(viewerSession.status)}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(viewerSession.status)}`}>
                         {viewerSession.status}
                       </span>
                       <span className="text-[12px] text-brand-text/55">
@@ -1669,18 +1669,18 @@ function SlamBookWorkspace({
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             {item.is_pinned ? (
-                              <span className="rounded-full bg-[#E5A93D]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-warning">
+                              <span className="rounded-full bg-[#E5A93D]/10 px-2 py-0.5 text-[10px] font-bold text-warning">
                                 Pinned
                               </span>
                             ) : null}
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(item.status)}`}>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(item.status)}`}>
                               {item.status}
                             </span>
                           </div>
                           <p className="mt-3 text-[13px] font-semibold text-brand-text">
                             {item.anonymous ? "Anonymous" : item.responder_display_name || "Guest"}
                           </p>
-                          <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-brand-text/45">
+                          <p className="mt-1 text-[11px] tracking-[0.14em] text-brand-text/45">
                             {item.card_title}
                           </p>
                         </div>
@@ -1929,7 +1929,7 @@ function SlamBookWorkspace({
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-[13px] font-semibold text-brand-text">{responderLabel}</p>
-                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(session.status)}`}>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusTone(session.status)}`}>
                                 {session.status}
                               </span>
                             </div>
@@ -2021,7 +2021,7 @@ function SlamBookWorkspace({
             </CardHeader>
             <CardContent className="space-y-3 text-[13px] text-brand-text/65">
               <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
+                <p className="text-[12px] font-semibold tracking-[0.14em] text-brand-text/45">
                   Last activity
                 </p>
                 <p className="mt-1 text-[14px] font-semibold text-brand-text">
@@ -2029,7 +2029,7 @@ function SlamBookWorkspace({
                 </p>
               </div>
               <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
+                <p className="text-[12px] font-semibold tracking-[0.14em] text-brand-text/45">
                   Approval policy
                 </p>
                 <p className="mt-1 text-[14px] font-semibold text-brand-text">
@@ -2037,7 +2037,7 @@ function SlamBookWorkspace({
                 </p>
               </div>
               <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
+                <p className="text-[12px] font-semibold tracking-[0.14em] text-brand-text/45">
                   Response identity
                 </p>
                 <p className="mt-1 text-[14px] font-semibold text-brand-text">

@@ -163,7 +163,7 @@ export default function MopeduAuditLogsPage() {
         ) : (
           <>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
                 <tr>
                   <th className="px-4 py-3">When</th>
                   <th className="px-4 py-3">Actor</th>
@@ -197,7 +197,7 @@ export default function MopeduAuditLogsPage() {
                     <td className="px-4 py-3 font-mono text-xs">
                       {shortId(row.target_id)}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs uppercase text-brand-text/70">
+                    <td className="px-4 py-3 font-mono text-xs text-brand-text/70">
                       {row.request_method}
                     </td>
                     <td className="px-4 py-3">
@@ -248,7 +248,7 @@ export default function MopeduAuditLogsPage() {
               <Field k="IP" v={selected.ip_address ?? "—"} mono />
               {selected.user_agent ? (
                 <div className="col-span-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-text/55">
+                  <p className="text-[10px] font-semibold tracking-wider text-brand-text/55">
                     User agent
                   </p>
                   <p className="mt-0.5 break-all font-mono text-[11px] text-brand-text/70">
@@ -259,7 +259,7 @@ export default function MopeduAuditLogsPage() {
             </dl>
 
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                 Request body (redacted)
               </p>
               <div className="mt-2">
@@ -268,7 +268,7 @@ export default function MopeduAuditLogsPage() {
             </div>
 
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
+              <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                 Full row
               </p>
               <div className="mt-2">
@@ -285,7 +285,7 @@ export default function MopeduAuditLogsPage() {
 function Field({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <p className="text-[10px] font-semibold tracking-wider text-brand-text/55">
         {k}
       </p>
       <p

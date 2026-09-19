@@ -157,7 +157,7 @@ export default function LiveViewerPage() {
         <header className="mb-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-3">
             {stream.status === "live" && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black uppercase tracking-widest text-rose-500">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black tracking-widest text-rose-500">
                 <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />
                 Live
               </span>

@@ -170,7 +170,7 @@ export function ProfileTabs({
                             <button
                                 key={tab.key}
                                 onClick={() => onTabChange(tab.key)}
-                                className={`relative flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
+                                className={`relative flex items-center gap-2 px-4 py-3 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
                                     isActive
                                         ? "text-brand-text"
                                         : "text-zinc-400 hover:text-zinc-700"

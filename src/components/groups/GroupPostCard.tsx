@@ -277,7 +277,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
     }`}>
       {/* Pinned indicator */}
       {post.is_pinned && (
-        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold uppercase tracking-widest px-4 pt-3 pb-0">
+        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold tracking-widest px-4 pt-3 pb-0">
           <Pin className="w-3 h-3" /> Pinned
         </div>
       )}
@@ -285,7 +285,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
       <div className="p-4">
         {/* Announcement badge */}
         {post.is_announcement && (
-          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold tracking-wider mb-2">
             <Megaphone className="w-3 h-3" /> Announcement
           </div>
         )}

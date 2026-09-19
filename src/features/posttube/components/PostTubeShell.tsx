@@ -78,7 +78,7 @@ function PostTubeHeader({ dark, onToggleDark }: { dark: boolean; onToggleDark: (
             </div>
             <div className="flex flex-col leading-none">
               <span className="text-[15px] font-extrabold tracking-tight text-foreground dark:text-[#EEEDF5]">PostTube</span>
-              <span className="text-[9px] font-semibold tracking-widest text-[#B0ADBE] dark:text-muted-foreground uppercase">Studio</span>
+              <span className="text-[9px] font-semibold tracking-widest text-[#B0ADBE] dark:text-muted-foreground">Studio</span>
             </div>
           </Link>
         </div>

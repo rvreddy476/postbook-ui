@@ -405,7 +405,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5">
           <div>
-            <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-brand-text/60">
+            <div className="mb-1 text-[10px] font-medium tracking-[0.2em] text-brand-text/60">
               Compose
             </div>
             <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-brand-text">
@@ -440,7 +440,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <button
               type="button"
               onClick={() => setShowVisMenu((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-wider text-brand-text shadow-xs transition hover:bg-brand-secondary/80"
+              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium tracking-wider text-brand-text shadow-xs transition hover:bg-brand-secondary/80"
             >
               <VisIcon className="h-3.5 w-3.5 text-primary-ink" />
               {visOption.label}
@@ -782,7 +782,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                       </div>
                     )}
                     <div className="mb-2 flex items-center justify-between gap-6">
-                      <div className="text-[10px] font-medium uppercase tracking-[0.15em] text-brand-text/60">
+                      <div className="text-[10px] font-medium tracking-[0.15em] text-brand-text/60">
                         Background
                       </div>
                       <button
@@ -791,7 +791,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                           setBackground(null);
                           setShowBackgroundPicker(false);
                         }}
-                        className="text-[10px] font-medium uppercase tracking-widest text-primary-ink hover:underline"
+                        className="text-[10px] font-medium tracking-widest text-primary-ink hover:underline"
                       >
                         Reset
                       </button>
@@ -872,7 +872,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex items-center gap-2.5 rounded-full bg-primary-ink px-5 py-3 text-[12px] font-medium uppercase tracking-[0.15em] text-white transition hover:bg-primary-hover disabled:opacity-40"
+            className="flex items-center gap-2.5 rounded-full bg-primary-ink px-5 py-3 text-[12px] font-medium tracking-[0.15em] text-white transition hover:bg-primary-hover disabled:opacity-40"
           >
             <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand-bg/15">
               {isSubmitting ? (
@@ -886,7 +886,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         {/* Footer status bar */}
-        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-brand-text/60">
+        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold tracking-widest text-brand-text/60">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-success" />
             {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}

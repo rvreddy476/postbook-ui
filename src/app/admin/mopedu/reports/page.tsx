@@ -317,7 +317,7 @@ function KpiCard({
 }) {
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <p className="text-[11px] font-semibold tracking-wider text-brand-text/55">
         {label}
       </p>
       <p className="mt-1 text-2xl font-bold text-brand-text">{value}</p>
@@ -340,7 +340,7 @@ function RevenueBarChart({ rows }: { rows: RevenueReportRow[] }) {
   if (top.length === 0) return null
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <p className="mb-3 text-[11px] font-semibold tracking-wider text-brand-text/55">
         Top 5 by fare total
       </p>
       <ul className="space-y-2">
@@ -385,7 +385,7 @@ function RevenueTable({
     <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+          <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
             <tr>
               <SortHeader
                 label="Group"
@@ -502,7 +502,7 @@ function SortHeader({
         type="button"
         onClick={() => onSort(k)}
         className={classNames(
-          "inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider",
+          "inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider",
           active ? "text-brand-text" : "text-gray-500 hover:text-brand-text",
         )}
       >
@@ -605,7 +605,7 @@ function PartnerRetentionDisplay({ data }: { data: PartnerCohortRetention }) {
         hint={`Cohort month: ${data.cohort_month}`}
       />
       <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+        <p className="mb-3 text-[11px] font-semibold tracking-wider text-brand-text/55">
           Active partners — retention
         </p>
         <div className="space-y-3">
@@ -709,7 +709,7 @@ function CustomerCohortDisplay({
         hint={`Cohort month: ${data.cohort_month}`}
       />
       <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+        <p className="mb-3 text-[11px] font-semibold tracking-wider text-brand-text/55">
           Average rides per customer
         </p>
         <div className="space-y-3">
@@ -773,7 +773,7 @@ function CohortFilter({
           />
         </FilterField>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+          <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
             Quick chips
           </span>
           {COHORT_CHIPS.map((c) => {
@@ -823,7 +823,7 @@ function FilterField({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+      <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
         {label}
       </span>
       {children}
@@ -974,7 +974,7 @@ function MatchingHealthTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-gray-500">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Vehicle</th>
               <th className="px-3 py-2">Rides</th>
@@ -1020,7 +1020,7 @@ function PartnerQualityTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-gray-500">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">Received</th>
               <th className="px-3 py-2">Accepted</th>
@@ -1070,7 +1070,7 @@ function SupplyDemandTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-gray-500">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Hour</th>
               <th className="px-3 py-2">Ride requests</th>
@@ -1110,7 +1110,7 @@ function SafetyTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-gray-500">
               <th className="px-3 py-2">Kind</th>
               <th className="px-3 py-2">Severity</th>
               <th className="px-3 py-2">Count</th>
@@ -1170,7 +1170,7 @@ function PartnerComplianceTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-gray-500">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Expired KYC docs</th>

@@ -64,7 +64,7 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
           </p>
         </div>
         <span
-          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusPill(r.status)}`}
+          className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${statusPill(r.status)}`}
         >
           {r.status}
         </span>
@@ -80,7 +80,7 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
       )}
 
       <div className="mt-3 border-t border-border pt-3 text-sm">
-        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+        <div className="text-[10px] font-black tracking-widest text-muted-foreground mb-1">
           Buyer's reason
         </div>
         <div className="font-medium text-foreground">{r.reason_code.replace(/_/g, ' ')}</div>
@@ -103,7 +103,7 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
 
       {r.rejection_reason && (
         <div className="mt-3 border-t border-border pt-3 text-sm">
-          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+          <div className="text-[10px] font-black tracking-widest text-muted-foreground mb-1">
             Your rejection reason
           </div>
           <p className="text-foreground">{r.rejection_reason}</p>
@@ -124,14 +124,14 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReject(false)}
-                  className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                  className="px-3 py-1.5 text-xs font-bold tracking-wider text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => reject.mutate({ returnId: r.id, reason: rejectMessage })}
                   disabled={!rejectMessage || reject.isPending}
-                  className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-700 disabled:opacity-50"
+                  className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold tracking-wider hover:bg-red-700 disabled:opacity-50"
                 >
                   {reject.isPending ? 'Rejecting…' : 'Confirm Reject'}
                 </button>
@@ -142,13 +142,13 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
               <button
                 onClick={() => approve.mutate(r.id)}
                 disabled={approve.isPending}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 disabled:opacity-50"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-50"
               >
                 {approve.isPending ? 'Approving…' : 'Approve & Refund'}
               </button>
               <button
                 onClick={() => setShowReject(true)}
-                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-50"
+                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg text-xs font-bold tracking-wider hover:bg-red-50"
               >
                 Reject
               </button>
@@ -178,7 +178,7 @@ export default function SellerReturnsPage() {
           <div className="mb-6">
             <Link
               href="/seller/dashboard"
-              className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+              className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
             >
               ← Dashboard
             </Link>
@@ -194,7 +194,7 @@ export default function SellerReturnsPage() {
               <button
                 key={t.value || 'all'}
                 onClick={() => setStatus(t.value)}
-                className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider whitespace-nowrap transition ${
+                className={`px-4 py-2 rounded-lg font-bold text-xs tracking-wider whitespace-nowrap transition ${
                   status === t.value
                     ? 'bg-[#1A1A1A] text-white'
                     : 'bg-white border border-border text-muted-foreground hover:bg-secondary'

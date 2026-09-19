@@ -113,10 +113,10 @@ export function HobbiesInterestsEditor({ userId }: HobbiesInterestsEditorProps) 
         <div className="space-y-8">
             {/* Header */}
             <div>
-                <label className="text-[11px] font-black text-brand-text uppercase tracking-[0.2em]">
+                <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">
                     Hobbies & Interests
                 </label>
-                <p className="text-[10px] font-bold text-brand-text/60 uppercase tracking-wider mt-0.5">
+                <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">
                     Share your passions and what makes you, you
                 </p>
             </div>
@@ -205,7 +205,7 @@ function TagListSection({
                     <div className="p-2 rounded-xl bg-brand-secondary border border-brand-divider">
                         <Icon className="w-4 h-4 text-brand-highlight" />
                     </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-brand-text">
+                    <span className="text-[11px] font-black tracking-widest text-brand-text">
                         {title}
                     </span>
                     <span className="text-[10px] font-black bg-brand-secondary text-brand-highlight px-2 py-0.5 rounded-full">
@@ -218,7 +218,7 @@ function TagListSection({
                         size="sm"
                         onClick={onAdd}
                         disabled={isBusy}
-                        className="h-8 px-3 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-[10px] font-black uppercase tracking-widest"
+                        className="h-8 px-3 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-[10px] font-black tracking-widest"
                     >
                         <Plus className="w-3.5 h-3.5 mr-1" />
                         Add
@@ -231,7 +231,7 @@ function TagListSection({
                 {items.length === 0 ? (
                     <div className="text-center py-8">
                         <Icon className="w-8 h-8 text-brand-secondary mx-auto mb-3" />
-                        <p className="text-[11px] font-bold text-brand-text/60 uppercase tracking-widest">
+                        <p className="text-[11px] font-bold text-brand-text/60 tracking-widest">
                             No {title.toLowerCase()} added yet
                         </p>
                         <Button
@@ -239,7 +239,7 @@ function TagListSection({
                             size="sm"
                             onClick={onAdd}
                             disabled={isBusy}
-                            className="mt-3 text-blue-600 hover:text-blue-700 text-[10px] font-black uppercase tracking-widest"
+                            className="mt-3 text-blue-600 hover:text-blue-700 text-[10px] font-black tracking-widest"
                         >
                             <Plus className="w-3.5 h-3.5 mr-1" />
                             Add your first {title.toLowerCase().slice(0, -1)}

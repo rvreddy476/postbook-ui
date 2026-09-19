@@ -227,7 +227,7 @@ function DraftSection({
 
   return (
     <div>
-      <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-3">
+      <p className="text-[10px] font-bold text-brand-text/40 tracking-wider mb-3">
         {title} ({drafts.length})
       </p>
       <div className="space-y-3">

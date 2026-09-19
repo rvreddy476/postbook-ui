@@ -115,7 +115,7 @@ export default function NewLiveStreamPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-text/60">
+            <label className="mb-1.5 block text-xs font-semibold tracking-wide text-brand-text/60">
               Title <span className="text-rose-500">*</span>
             </label>
             <input
@@ -131,7 +131,7 @@ export default function NewLiveStreamPage() {
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-text/60">
+            <label className="mb-1.5 block text-xs font-semibold tracking-wide text-brand-text/60">
               Description
             </label>
             <textarea
@@ -146,7 +146,7 @@ export default function NewLiveStreamPage() {
 
           {/* Visibility */}
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-brand-text/60">
+            <label className="mb-2 block text-xs font-semibold tracking-wide text-brand-text/60">
               Who can watch
             </label>
             <div className="space-y-2">
@@ -184,7 +184,7 @@ export default function NewLiveStreamPage() {
 
           {/* Cover image */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-text/60">
+            <label className="mb-1.5 block text-xs font-semibold tracking-wide text-brand-text/60">
               Cover image
             </label>
             {coverPreview ? (

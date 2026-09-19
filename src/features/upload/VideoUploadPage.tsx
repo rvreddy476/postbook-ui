@@ -380,7 +380,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               <div className="space-y-5">
                 {/* Preview card */}
                 <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-xs">
-                  <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Preview</p>
+                  <p className="mb-3 text-[11px] font-bold tracking-widest text-brand-text/60">Preview</p>
                   <div className="overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xs">
                     <div
                       className="flex items-center justify-center bg-brand-secondary"
@@ -408,7 +408,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-xs">
                   <div className="flex items-center gap-2 mb-3">
                     <StepDot done={!!posterPreview} />
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Poster</p>
+                    <p className="text-[11px] font-bold tracking-widest text-brand-text/60">Poster</p>
                   </div>
 
                   <div

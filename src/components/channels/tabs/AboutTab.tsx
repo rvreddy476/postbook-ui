@@ -53,7 +53,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
       {/* Description */}
       {channel.description && (
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-2">
+          <p className="text-xs font-bold tracking-wider text-brand-text/50 mb-2">
             Description
           </p>
           <p className="text-sm text-brand-text leading-relaxed whitespace-pre-wrap">
@@ -64,12 +64,12 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
 
       {/* Details grid */}
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">
+        <p className="text-xs font-bold tracking-wider text-brand-text/50 mb-3">
           Details
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-brand-bg rounded-xl p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 mb-1">
+            <p className="text-[10px] font-bold tracking-wider text-brand-text/40 mb-1">
               Category
             </p>
             <p className="text-sm font-semibold text-brand-text capitalize">
@@ -77,7 +77,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
             </p>
           </div>
           <div className="bg-brand-bg rounded-xl p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 mb-1">
+            <p className="text-[10px] font-bold tracking-wider text-brand-text/40 mb-1">
               Comment Policy
             </p>
             <div className="flex items-center gap-1.5">
@@ -88,7 +88,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
             </div>
           </div>
           <div className="bg-brand-bg rounded-xl p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 mb-1">
+            <p className="text-[10px] font-bold tracking-wider text-brand-text/40 mb-1">
               Language
             </p>
             <div className="flex items-center gap-1.5">
@@ -99,7 +99,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
             </div>
           </div>
           <div className="bg-brand-bg rounded-xl p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 mb-1">
+            <p className="text-[10px] font-bold tracking-wider text-brand-text/40 mb-1">
               Forward Allowed
             </p>
             <div className="flex items-center gap-1.5">
@@ -114,7 +114,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
 
       {/* Stats */}
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">
+        <p className="text-xs font-bold tracking-wider text-brand-text/50 mb-3">
           Stats
         </p>
         <div className="flex items-center gap-6">
@@ -126,7 +126,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
               <p className="text-sm font-extrabold text-brand-text font-mono">
                 {formatCount(channel.subscriber_count)}
               </p>
-              <p className="text-[10px] text-brand-text/40 uppercase tracking-wider font-semibold">
+              <p className="text-[10px] text-brand-text/40 tracking-wider font-semibold">
                 Subscribers
               </p>
             </div>
@@ -139,7 +139,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
               <p className="text-sm font-extrabold text-brand-text font-mono">
                 {formatCount(channel.update_count)}
               </p>
-              <p className="text-[10px] text-brand-text/40 uppercase tracking-wider font-semibold">
+              <p className="text-[10px] text-brand-text/40 tracking-wider font-semibold">
                 Updates
               </p>
             </div>
@@ -152,7 +152,7 @@ export default function AboutTab({ channel, role }: AboutTabProps) {
               <p className="text-sm font-extrabold text-brand-text font-mono">
                 {formatDate(channel.created_at)}
               </p>
-              <p className="text-[10px] text-brand-text/40 uppercase tracking-wider font-semibold">
+              <p className="text-[10px] text-brand-text/40 tracking-wider font-semibold">
                 Created
               </p>
             </div>

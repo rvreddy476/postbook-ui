@@ -46,14 +46,14 @@ function AnalyticsCard({ channel }: { channel: BroadcastChannel }) {
 
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50 mb-3">
+      <p className="text-[10px] font-bold tracking-wider text-brand-text/50 mb-3">
         Channel Analytics
       </p>
       <div className="grid grid-cols-2 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="bg-brand-bg rounded-xl p-3">
             <p className="text-base font-extrabold text-brand-text font-mono">{s.value}</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/40 mt-0.5">
+            <p className="text-[10px] font-bold tracking-wider text-brand-text/40 mt-0.5">
               {s.label}
             </p>
           </div>
@@ -87,7 +87,7 @@ function QuickSettingsCard({
 
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50 mb-3">
+      <p className="text-[10px] font-bold tracking-wider text-brand-text/50 mb-3">
         Quick Settings
       </p>
       <div className="space-y-0.5">
@@ -153,7 +153,7 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
 function VisitorAboutCard({ channel }: { channel: BroadcastChannel }) {
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 space-y-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text/50">About</p>
+      <p className="text-[10px] font-bold tracking-wider text-brand-text/50">About</p>
 
       {channel.description && (
         <p className="text-sm text-brand-text leading-relaxed">{channel.description}</p>

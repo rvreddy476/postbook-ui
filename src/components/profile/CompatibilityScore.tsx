@@ -45,7 +45,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
 
     return (
         <div className="flex flex-col items-center gap-2 p-4 bg-brand-card rounded-2xl border border-border shadow-xs">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+            <p className="text-[10px] font-bold text-muted-foreground tracking-wide">
                 Compatibility
             </p>
 

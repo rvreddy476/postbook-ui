@@ -156,7 +156,7 @@ function MopeduPartnersContent() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Partner</th>
                 <th className="px-4 py-3">Phone</th>

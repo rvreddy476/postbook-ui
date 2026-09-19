@@ -187,7 +187,7 @@ function RestaurantSLATab({ win }: { win: { from: string; to: string } }) {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Restaurant</th>
             <th className="px-3 py-2">Orders</th>
             <th className="px-3 py-2">Breached</th>
@@ -226,7 +226,7 @@ function DeliverySLATab({ win }: { win: { from: string; to: string } }) {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Partner</th>
             <th className="px-3 py-2">Deliveries</th>
             <th className="px-3 py-2">Late</th>
@@ -269,7 +269,7 @@ function PaymentReconTab({ win }: { win: { from: string; to: string } }) {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Method</th>
             <th className="px-3 py-2">Status</th>
             <th className="px-3 py-2">Count</th>
@@ -313,7 +313,7 @@ function RefundsTab({ win }: { win: { from: string; to: string } }) {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Category</th>
             <th className="px-3 py-2">Count</th>
             <th className="px-3 py-2">Amount ₹</th>
@@ -366,7 +366,7 @@ function CouponAbuseTab({ win }: { win: { from: string; to: string } }) {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Customer</th>
             <th className="px-3 py-2">Coupon</th>
             <th className="px-3 py-2">Uses</th>
@@ -402,7 +402,7 @@ function ComplianceTab() {
     >
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="text-left text-xs tracking-wide text-slate-500">
             <th className="px-3 py-2">Restaurant</th>
             <th className="px-3 py-2">FSSAI ok</th>
             <th className="px-3 py-2">Expired docs</th>
@@ -504,7 +504,7 @@ function KPIs({ children }: { children: React.ReactNode }) {
 function KPI({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-slate-200 bg-white p-3">
-      <div className="text-xs uppercase tracking-wide text-slate-500">
+      <div className="text-xs tracking-wide text-slate-500">
         {label}
       </div>
       <div className="text-lg font-semibold text-slate-900">{value}</div>

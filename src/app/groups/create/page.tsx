@@ -117,7 +117,7 @@ export default function CreateSpacePage() {
 
           {/* Name */}
           <div className="mt-6">
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-text/50" htmlFor="spaceName">
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-text/50" htmlFor="spaceName">
               Space name
             </label>
             <input
@@ -140,7 +140,7 @@ export default function CreateSpacePage() {
 
           {/* What kind of space is this? */}
           <div className="mt-5">
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-text/50">
+            <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-text/50">
               What kind of space is this?
             </label>
             <div className="space-y-2">

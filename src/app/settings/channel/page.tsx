@@ -38,7 +38,7 @@ export default function ChannelSettingsPage() {
         {/* Sidebar */}
         <nav className="w-[220px] shrink-0">
           <div className="sticky top-8 space-y-1">
-            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-text/60 px-3">
+            <h2 className="mb-3 text-[11px] font-bold tracking-widest text-brand-text/60 px-3">
               Channel Settings
             </h2>
             {TABS.map((tab) => {

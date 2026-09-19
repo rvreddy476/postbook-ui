@@ -112,7 +112,7 @@ export default function PostMatchLandingPage() {
       {/* ── Features ────────────────────────────────────────── */}
       <section id="features" className="bg-[#111] py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3">Features</p>
+          <p className="text-xs font-black tracking-widest text-rose-500 mb-3">Features</p>
           <h2 className="text-4xl font-black text-white mb-14">Why PostMatch is different</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map(f => (
@@ -129,7 +129,7 @@ export default function PostMatchLandingPage() {
       {/* ── How it Works ────────────────────────────────────── */}
       <section id="how-it-works" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3">Process</p>
+          <p className="text-xs font-black tracking-widest text-rose-500 mb-3">Process</p>
           <h2 className="text-4xl font-black text-white mb-14">4 steps to your first match</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {STEPS.map(s => (
@@ -146,7 +146,7 @@ export default function PostMatchLandingPage() {
       {/* ── Scoring Breakdown ───────────────────────────────── */}
       <section className="bg-gray-900 py-20 text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <p className="text-xs font-black uppercase tracking-widest text-rose-400 mb-3">Algorithm</p>
+          <p className="text-xs font-black tracking-widest text-rose-400 mb-3">Algorithm</p>
           <h2 className="text-4xl font-black mb-10">7-Factor Compatibility Score</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[

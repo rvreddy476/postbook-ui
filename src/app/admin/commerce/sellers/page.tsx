@@ -142,7 +142,7 @@ export default function AdminSellerQueuePage() {
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-xs tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Store</th>
                 <th className="px-4 py-3">Email</th>
@@ -196,7 +196,7 @@ export default function AdminSellerQueuePage() {
             <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  <h3 className="text-xs font-semibold tracking-wider text-gray-600">
                     KYC verification
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
@@ -234,9 +234,9 @@ export default function AdminSellerQueuePage() {
                   <ul className="text-xs space-y-0.5">
                     {kycReport.checks.map((c) => (
                       <li key={c.field} className="flex items-center gap-2">
-                        <span className="font-mono uppercase text-gray-500 w-24">{c.field}</span>
+                        <span className="font-mono text-gray-500 w-24">{c.field}</span>
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
                             c.status === "valid"
                               ? "bg-emerald-100 text-emerald-800"
                               : c.status === "invalid"

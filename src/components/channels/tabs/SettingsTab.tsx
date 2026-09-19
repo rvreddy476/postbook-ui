@@ -63,7 +63,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-[10px] font-bold text-brand-text/40 uppercase tracking-wider mb-1.5">
+    <label className="block text-[10px] font-bold text-brand-text/40 tracking-wider mb-1.5">
       {children}
     </label>
   )

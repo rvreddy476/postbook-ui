@@ -418,7 +418,7 @@ export default function MopeduPartnerDetailPage() {
             </ul>
           )}
           <div className="mt-5">
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-text/60">
+            <h4 className="mb-2 text-xs font-semibold tracking-wider text-brand-text/60">
               Subscription payments
             </h4>
             {payments.length === 0 ? (
@@ -463,7 +463,7 @@ export default function MopeduPartnerDetailPage() {
           <EmptyState title="No rides yet" />
         ) : (
           <table className="w-full text-sm">
-            <thead className="text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="pb-2 pr-4">Ride</th>
                 <th className="pb-2 pr-4">Status</th>
@@ -555,7 +555,7 @@ function DefRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="text-xs uppercase tracking-wider text-brand-text/45">
+      <dt className="text-xs tracking-wider text-brand-text/45">
         {label}
       </dt>
       <dd

@@ -98,8 +98,8 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
             <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M10 8l6 4-6 4V8z"/><path d="M2 7v10a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2z"/></svg>
           </div>
           <div>
-            <h1 className="text-3xl font-black text-brand-text tracking-tighter uppercase italic">PostTube<span className="text-indigo-600">.in</span></h1>
-            <p className="text-[10px] font-black text-brand-text/60 uppercase tracking-[0.4em] mt-0.5">Infinite Cinema Hub</p>
+            <h1 className="text-3xl font-black text-brand-text tracking-tighter italic">PostTube<span className="text-indigo-600">.in</span></h1>
+            <p className="text-[10px] font-black text-brand-text/60 tracking-[0.4em] mt-0.5">Infinite Cinema Hub</p>
           </div>
         </div>
 
@@ -115,7 +115,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="bg-linear-to-r from-indigo-600 to-brand-text text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-400/20 hover:scale-105 active:scale-95 transition-all">
+          <button className="bg-linear-to-r from-indigo-600 to-brand-text text-white px-8 py-3.5 rounded-2xl font-black text-[10px] tracking-widest shadow-xl shadow-indigo-400/20 hover:scale-105 active:scale-95 transition-all">
             Channel Creator
           </button>
         </div>
@@ -134,19 +134,19 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
             </div>
 
             <div className="bg-brand-card/70 backdrop-blur-3xl rounded-[3rem] p-10 shadow-xs border border-white/60">
-               <h2 className="text-3xl font-black text-brand-text uppercase italic tracking-tight mb-6">{selectedVideo.title}</h2>
+               <h2 className="text-3xl font-black text-brand-text italic tracking-tight mb-6">{selectedVideo.title}</h2>
                <div className="flex flex-wrap items-center justify-between gap-6 border-b border-brand-divider pb-8 mb-8">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-xl border-2 border-white">
                       <img src={selectedVideo.avatar} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div>
-                      <h4 className="font-black text-brand-text text-base uppercase italic">{selectedVideo.author}</h4>
-                      <p className="text-[10px] text-brand-text/60 font-black tracking-widest uppercase">{selectedVideo.subscribers} Citizens</p>
+                      <h4 className="font-black text-brand-text text-base italic">{selectedVideo.author}</h4>
+                      <p className="text-[10px] text-brand-text/60 font-black tracking-widest">{selectedVideo.subscribers} Citizens</p>
                     </div>
                     <button 
                       onClick={() => setIsSubscribed(!isSubscribed)}
-                      className={`ml-4 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                      className={`ml-4 px-8 py-3 rounded-2xl font-black text-[10px] tracking-widest transition-all ${
                         isSubscribed ? 'bg-brand-secondary text-brand-highlight' : 'bg-linear-to-r from-indigo-600 to-brand-text text-white shadow-xl shadow-indigo-400/20'
                       }`}
                     >
@@ -157,7 +157,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                   <div className="flex items-center gap-3">
                      <button 
                        onClick={() => {setIsLiked(!isLiked); setIsDisliked(false);}}
-                       className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                       className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-[10px] tracking-widest transition-all ${
                          isLiked ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-xl' : 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100'
                        }`}
                      >
@@ -166,7 +166,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                      </button>
                      <button 
                        onClick={() => {setIsDisliked(!isDisliked); setIsLiked(false);}}
-                       className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                       className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-black text-[10px] tracking-widest transition-all ${
                          isDisliked ? 'bg-rose-600 text-white shadow-rose-500/20 shadow-xl' : 'bg-rose-50 text-rose-500 hover:bg-rose-100'
                        }`}
                      >
@@ -175,13 +175,13 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                   </div>
                </div>
                <div className="bg-brand-secondary/50 rounded-3xl p-6 border border-brand-divider">
-                  <p className="text-brand-highlight text-[11px] font-black uppercase tracking-widest mb-2">{selectedVideo.views} Manifestations • {selectedVideo.timestamp}</p>
+                  <p className="text-brand-highlight text-[11px] font-black tracking-widest mb-2">{selectedVideo.views} Manifestations • {selectedVideo.timestamp}</p>
                   <p className="text-brand-text font-bold leading-relaxed">{selectedVideo.description}</p>
                </div>
             </div>
 
             <div className="bg-brand-card/50 rounded-[3rem] p-10 border border-white">
-              <h3 className="text-xl font-black text-brand-text uppercase italic tracking-tight mb-8">Manifestations</h3>
+              <h3 className="text-xl font-black text-brand-text italic tracking-tight mb-8">Manifestations</h3>
               <div className="flex gap-6 mb-10">
                 <img src={currentUser.avatar} className="w-12 h-12 rounded-2xl shadow-lg border border-white" alt="" />
                 <div className="flex-1">
@@ -192,7 +192,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
           </div>
 
           <div className="space-y-6">
-             <h3 className="text-[10px] font-black text-brand-text/60 uppercase tracking-[0.4em] mb-4">Neural Chain</h3>
+             <h3 className="text-[10px] font-black text-brand-text/60 tracking-[0.4em] mb-4">Neural Chain</h3>
              {INITIAL_VIDEOS.filter(v => v.id !== selectedVideo.id).map(v => (
                <div 
                  key={v.id} 
@@ -204,8 +204,8 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                     <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[8px] font-black px-1.5 py-0.5 rounded-lg backdrop-blur-md">{v.duration}</span>
                  </div>
                  <div className="min-w-0 flex flex-col justify-center">
-                    <h4 className="text-[11px] font-black text-brand-text leading-tight line-clamp-2 uppercase italic mb-1 group-hover:text-indigo-600 transition-colors">{v.title}</h4>
-                    <p className="text-[9px] font-black text-brand-text/60 uppercase tracking-widest">{v.author}</p>
+                    <h4 className="text-[11px] font-black text-brand-text leading-tight line-clamp-2 italic mb-1 group-hover:text-indigo-600 transition-colors">{v.title}</h4>
+                    <p className="text-[9px] font-black text-brand-text/60 tracking-widest">{v.author}</p>
                     <p className="text-[9px] text-brand-text/60 font-medium mt-0.5">{v.views} views</p>
                  </div>
                </div>
@@ -219,7 +219,7 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
               <button 
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${
+                className={`shrink-0 px-8 py-3.5 rounded-2xl font-black text-[10px] tracking-widest transition-all duration-300 ${
                   activeCategory === cat 
                   ? 'bg-linear-to-r from-indigo-600 to-brand-text text-white shadow-xl shadow-indigo-400/20 scale-105' 
                   : 'bg-brand-card border border-brand-divider text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight'
@@ -253,9 +253,9 @@ const PostTube: React.FC<PostTubeProps> = ({ currentUser }) => {
                      <img src={video.avatar} className="w-full h-full object-cover" alt="" />
                    </div>
                    <div className="min-w-0">
-                      <h3 className="text-sm font-black text-brand-text leading-tight mb-1 uppercase italic tracking-tight line-clamp-2 group-hover:text-indigo-600 transition-colors">{video.title}</h3>
-                      <p className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">{video.author}</p>
-                      <p className="text-[10px] text-brand-text/60 font-bold mt-1 uppercase tracking-tight">{video.views} Views • {video.timestamp}</p>
+                      <h3 className="text-sm font-black text-brand-text leading-tight mb-1 italic tracking-tight line-clamp-2 group-hover:text-indigo-600 transition-colors">{video.title}</h3>
+                      <p className="text-[10px] font-black text-brand-text/60 tracking-widest">{video.author}</p>
+                      <p className="text-[10px] text-brand-text/60 font-bold mt-1 tracking-tight">{video.views} Views • {video.timestamp}</p>
                    </div>
                 </div>
               </div>

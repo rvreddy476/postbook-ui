@@ -326,7 +326,7 @@ function LoginForm() {
                       <h2 className="text-xl font-black tracking-tight text-brand-text">
                         Two-Factor Auth
                       </h2>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+                      <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                         Verification Required
                       </p>
                     </div>
@@ -411,7 +411,7 @@ function LoginForm() {
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-text/30">
+        <p className="mt-6 text-center text-[10px] font-semibold tracking-[0.25em] text-brand-text/30">
           &copy; 2026 VChat
         </p>
       </motion.div>

@@ -127,7 +127,7 @@ export default function MopeduSafetyPage() {
           })}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
+          <span className="text-[11px] font-semibold tracking-wider text-brand-text/55">
             Severity
           </span>
           {SEVERITY_FILTERS.map((f) => {
@@ -168,7 +168,7 @@ export default function MopeduSafetyPage() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Incident</th>
                 <th className="px-4 py-3">Kind</th>
@@ -187,7 +187,7 @@ export default function MopeduSafetyPage() {
                     {shortId(s.id)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-slate-700">
                       {s.kind.replace(/_/g, " ")}
                     </span>
                   </td>

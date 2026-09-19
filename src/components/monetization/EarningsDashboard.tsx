@@ -30,7 +30,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                     </div>
                     <div>
                         <p className="text-xs font-black text-foreground">Request Payout</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Withdraw your earnings</p>
+                        <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Withdraw your earnings</p>
                     </div>
                     <svg className="w-4 h-4 text-primary-ink ml-auto opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -48,7 +48,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                     </div>
                     <div>
                         <p className="text-xs font-black text-foreground">Manage Tiers</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Create & edit subscription tiers</p>
+                        <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Create & edit subscription tiers</p>
                     </div>
                     <svg className="w-4 h-4 text-primary-ink ml-auto opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -66,7 +66,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                     </div>
                     <div>
                         <h3 className="text-xs font-black text-foreground">Earnings Overview</h3>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Monthly earnings trend</p>
+                        <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Monthly earnings trend</p>
                     </div>
                 </div>
 
@@ -100,7 +100,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                         </div>
                         <Link
                             href="/monetization/tiers"
-                            className="text-[9px] font-black uppercase tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
+                            className="text-[9px] font-black tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
                         >
                             View All
                         </Link>
@@ -130,7 +130,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                     <h3 className="text-xs font-black text-foreground">Recent Transactions</h3>
                     <Link
                         href="/monetization/payouts"
-                        className="text-[9px] font-black uppercase tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
+                        className="text-[9px] font-black tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
                     >
                         View All
                     </Link>

@@ -249,7 +249,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   </div>
                   {allErrors.map(({ step, errors }) => (
                     <div key={step} className="mb-2 last:mb-0">
-                      <p className="text-[11px] font-bold text-rose-500/70 uppercase tracking-wide mb-1">
+                      <p className="text-[11px] font-bold text-rose-500/70 tracking-wide mb-1">
                         {STEP_META[step].label}
                       </p>
                       <ul className="space-y-0.5">

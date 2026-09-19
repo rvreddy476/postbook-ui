@@ -95,7 +95,7 @@ export function CreateButton() {
           >
             <div className="px-3 py-2 flex items-center gap-2">
               <Zap className="h-3 w-3 text-warning" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#B0ADBE]">
+              <p className="text-[10px] font-bold tracking-widest text-[#B0ADBE]">
                 Create New
               </p>
             </div>

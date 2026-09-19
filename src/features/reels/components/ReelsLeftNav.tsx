@@ -56,7 +56,7 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
 function NavSection({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="mb-1">
-      <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-text/30">
+      <p className="mb-1.5 px-3 text-[10px] font-bold tracking-[0.12em] text-brand-text/30">
         {label}
       </p>
       <nav className="flex flex-col gap-0.5">{children}</nav>
@@ -131,7 +131,7 @@ export function ReelsLeftNav() {
 
       {/* Suggested Creators */}
       <div className="mb-1 px-3">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-text/30">
+        <p className="mb-3 text-[10px] font-bold tracking-[0.12em] text-brand-text/30">
           Suggested Creators
         </p>
         <div className="flex flex-col gap-2.5">

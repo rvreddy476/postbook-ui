@@ -354,7 +354,7 @@ export default function SellerOnboardingPage() {
   // ── Wizard Layout ──────────────────────────────────────────
   const progress = ((uiStep - 1) / (STEPS.length - 1)) * 100
   const inputCls = 'w-full border border-brand-divider rounded-xl px-4 py-2.5 text-brand-text bg-brand-bg/40 focus:bg-brand-bg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm font-medium placeholder:text-brand-text/20'
-  const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-brand-text/40 mb-1'
+  const labelCls = 'block text-[10px] font-black tracking-widest text-brand-text/40 mb-1'
 
   return (
     <AppShell activeTab="Shop">
@@ -362,11 +362,11 @@ export default function SellerOnboardingPage() {
         {/* Progress Header - Balanced */}
         <div className="w-full bg-brand-card border-b border-brand-divider sticky top-0 z-40 shadow-xs">
           <div className="max-w-2xl mx-auto flex items-center justify-between px-6 py-4">
-            <h1 className="text-sm font-black text-brand-text uppercase tracking-wider">Store Application</h1>
+            <h1 className="text-sm font-black text-brand-text tracking-wider">Store Application</h1>
             <div className="flex-1 max-w-[150px] h-1.5 bg-brand-secondary/50 rounded-full mx-6 overflow-hidden">
               <div className="h-full bg-primary transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
             </div>
-            <span className="text-xs font-black text-primary uppercase tracking-widest">{Math.round(progress)}%</span>
+            <span className="text-xs font-black text-primary tracking-widest">{Math.round(progress)}%</span>
           </div>
         </div>
 
@@ -385,7 +385,7 @@ export default function SellerOnboardingPage() {
               <div className="animate-slideUp space-y-4">
                 <div className="flex justify-between items-baseline mb-2">
                   <h2 className="text-xl font-black text-brand-text tracking-tight">Business Info</h2>
-                  <span className="text-[10px] font-black text-brand-text/30 uppercase tracking-[0.2em]">Step 1/5</span>
+                  <span className="text-[10px] font-black text-brand-text/30 tracking-[0.2em]">Step 1/5</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div><label className={labelCls}>Business Name*</label><input className={inputCls} placeholder="e.g. My Shop" value={pageName} onChange={e => { setPageName(e.target.value); setStoreName(e.target.value); if (!pageHandle) setPageHandle(autoSlug(e.target.value)) }} /></div>
@@ -430,7 +430,7 @@ export default function SellerOnboardingPage() {
                     <div><label className={labelCls}>City</label><input className={inputCls} value={city} onChange={e => setCity(e.target.value)} /></div>
                   </div>
                   <div className="pt-4 border-t border-brand-divider">
-                    <h3 className="text-[10px] font-black text-brand-text/30 uppercase mb-4 tracking-widest">Verification Docs</h3>
+                    <h3 className="text-[10px] font-black text-brand-text/30 mb-4 tracking-widest">Verification Docs</h3>
                     {docs.map((doc, i) => (
                       <div key={i} className="mb-4 p-4 bg-brand-bg/30 border border-brand-divider rounded-xl space-y-3">
                         <div>
@@ -443,18 +443,18 @@ export default function SellerOnboardingPage() {
                         </div>
                         {doc.media_id ? (
                           <div className="flex items-center justify-between p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
-                            <span className="text-xs font-bold text-emerald-600 uppercase truncate flex-1">{doc.fileName || 'Uploaded'}</span>
+                            <span className="text-xs font-bold text-emerald-600 truncate flex-1">{doc.fileName || 'Uploaded'}</span>
                             <button type="button" onClick={() => setDocs(prev => prev.map((d, j) => j === i ? { ...d, media_id: '', fileName: '' } : d))} className="text-xs font-black text-red-500/50 hover:text-red-500 ml-3">REMOVE</button>
                           </div>
                         ) : (
                           <label className="flex items-center justify-center p-5 border-2 border-dashed border-brand-divider rounded-xl cursor-pointer hover:bg-brand-bg/50 group transition-all">
-                            <span className="text-[10px] font-black text-brand-text/30 group-hover:text-primary transition-colors uppercase tracking-widest">Select secure file</span>
+                            <span className="text-[10px] font-black text-brand-text/30 group-hover:text-primary transition-colors tracking-widest">Select secure file</span>
                             <input type="file" className="hidden" accept="image/*,.pdf" onChange={e => { const f = e.target.files?.[0]; if (f) handleDocUpload(i, f) }} />
                           </label>
                         )}
                       </div>
                     ))}
-                    <button type="button" onClick={() => setDocs(prev => [...prev, { document_type: 'other', media_id: '', fileName: '', uploading: false }])} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">+ Add Document</button>
+                    <button type="button" onClick={() => setDocs(prev => [...prev, { document_type: 'other', media_id: '', fileName: '', uploading: false }])} className="text-[10px] font-black text-primary tracking-widest hover:underline">+ Add Document</button>
                   </div>
                 </div>
               </div>
@@ -468,12 +468,12 @@ export default function SellerOnboardingPage() {
                   {['platform', 'self_ship', 'pickup'].map(mode => (
                     <label key={mode} className={`flex items-center justify-center py-4 rounded-xl border-2 transition-all cursor-pointer ${deliveryModes.includes(mode) ? 'border-primary bg-primary/5' : 'border-brand-divider hover:border-brand-text/10'}`}>
                       <input type="checkbox" className="hidden" checked={deliveryModes.includes(mode)} onChange={e => setDeliveryModes(prev => e.target.checked ? [...prev, mode] : prev.filter(m => m !== mode))} />
-                      <span className="text-[10px] font-black text-brand-text/50 uppercase tracking-widest">{mode.replace('_', ' ')}</span>
+                      <span className="text-[10px] font-black text-brand-text/50 tracking-widest">{mode.replace('_', ' ')}</span>
                     </label>
                   ))}
                 </div>
                 <div className="pt-6 border-t border-brand-divider space-y-4">
-                  <h3 className="text-[10px] font-black text-brand-text/30 uppercase tracking-widest">Banking Details</h3>
+                  <h3 className="text-[10px] font-black text-brand-text/30 tracking-widest">Banking Details</h3>
                   <div className="space-y-4">
                     <div><label className={labelCls}>Account Holder*</label><input className={inputCls} value={accountHolder} onChange={e => setAccountHolder(e.target.value)} /></div>
                     <div className="grid grid-cols-2 gap-4">
@@ -490,22 +490,22 @@ export default function SellerOnboardingPage() {
               <div className="animate-slideUp space-y-4">
                 <h2 className="text-xl font-black text-brand-text tracking-tight">Final Summary</h2>
                 <div className="bg-brand-bg/50 border border-brand-divider rounded-2xl p-6 space-y-3">
-                  <div className="flex justify-between items-center"><span className="text-xs font-black text-brand-text/30 uppercase tracking-widest">Store</span><span className="text-sm font-bold text-brand-text">{pageName}</span></div>
-                  <div className="flex justify-between items-center border-t border-brand-divider pt-3"><span className="text-xs font-black text-brand-text/30 uppercase tracking-widest">Email</span><span className="text-sm font-bold text-brand-text">{email}</span></div>
-                  <div className="flex justify-between items-center border-t border-brand-divider pt-3"><span className="text-xs font-black text-brand-text/30 uppercase tracking-widest">Owner</span><span className="text-sm font-bold text-brand-text">{ownerName}</span></div>
+                  <div className="flex justify-between items-center"><span className="text-xs font-black text-brand-text/30 tracking-widest">Store</span><span className="text-sm font-bold text-brand-text">{pageName}</span></div>
+                  <div className="flex justify-between items-center border-t border-brand-divider pt-3"><span className="text-xs font-black text-brand-text/30 tracking-widest">Email</span><span className="text-sm font-bold text-brand-text">{email}</span></div>
+                  <div className="flex justify-between items-center border-t border-brand-divider pt-3"><span className="text-xs font-black text-brand-text/30 tracking-widest">Owner</span><span className="text-sm font-bold text-brand-text">{ownerName}</span></div>
                 </div>
-                <p className="text-[10px] font-bold text-brand-text/40 uppercase tracking-widest text-center leading-relaxed">By submitting, you agree to all seller terms.</p>
+                <p className="text-[10px] font-bold text-brand-text/40 tracking-widest text-center leading-relaxed">By submitting, you agree to all seller terms.</p>
               </div>
             )}
 
             {/* ── Fixed Navigation ── */}
             <div className="flex justify-between items-center mt-10 pt-6 border-t border-brand-divider">
               {uiStep > 1 ? (
-                <button onClick={() => { setError(''); setUIStep(s => s - 1) }} className="px-6 py-3 rounded-xl border border-brand-divider text-brand-text/60 font-black text-xs uppercase tracking-widest hover:text-brand-text hover:bg-brand-bg transition-all">Back</button>
+                <button onClick={() => { setError(''); setUIStep(s => s - 1) }} className="px-6 py-3 rounded-xl border border-brand-divider text-brand-text/60 font-black text-xs tracking-widest hover:text-brand-text hover:bg-brand-bg transition-all">Back</button>
               ) : (
-                <button onClick={() => router.push('/commerce')} className="px-6 py-3 text-brand-text/40 font-black text-xs uppercase tracking-widest hover:text-brand-text">Cancel</button>
+                <button onClick={() => router.push('/commerce')} className="px-6 py-3 text-brand-text/40 font-black text-xs tracking-widest hover:text-brand-text">Cancel</button>
               )}
-              <button onClick={handleNext} disabled={isSaving} className="px-10 py-3 bg-primary text-primary-foreground rounded-xl font-black shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all text-xs uppercase tracking-widest flex items-center gap-2">
+              <button onClick={handleNext} disabled={isSaving} className="px-10 py-3 bg-primary text-primary-foreground rounded-xl font-black shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all text-xs tracking-widest flex items-center gap-2">
                 {isSaving ? (
                   <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
                 ) : null}

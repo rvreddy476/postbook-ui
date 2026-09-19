@@ -95,7 +95,7 @@ function PaymentCard({
             <p className="text-lg font-bold text-brand-text">
               {paiseToRupees(row.amount_paise)}
             </p>
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-800">
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-800">
               {row.payment_method}
             </span>
             <StatusPill

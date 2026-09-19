@@ -255,7 +255,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
         {/* Top bar: mute + more */}
         <div className="absolute top-4 left-0 right-0 z-20 flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <span className="text-white/80 text-xs font-bold tracking-widest uppercase">Reels</span>
+            <span className="text-white/80 text-xs font-bold tracking-widest">Reels</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -308,7 +308,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-sm truncate">{authorName}</p>
             </div>
-            <button className="px-4 py-1.5 bg-brand-card/20 backdrop-blur-md rounded-full text-white text-[11px] font-bold uppercase tracking-wider hover:bg-brand-card/30 transition-colors border border-white/10">
+            <button className="px-4 py-1.5 bg-brand-card/20 backdrop-blur-md rounded-full text-white text-[11px] font-bold tracking-wider hover:bg-brand-card/30 transition-colors border border-white/10">
               <UserPlus className="w-3.5 h-3.5 inline mr-1" />
               Follow
             </button>

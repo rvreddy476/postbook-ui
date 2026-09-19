@@ -125,7 +125,7 @@ export default function ManageChannelDrawer({
 
             {/* 1. Pending Actions */}
             <section className="py-4 px-5 border-b border-brand-divider">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-brand-text/40 mb-3">
+              <h3 className="text-[10px] font-extrabold tracking-widest text-brand-text/40 mb-3">
                 Pending Actions
               </h3>
               {hasPendingActions ? (
@@ -154,7 +154,7 @@ export default function ManageChannelDrawer({
 
             {/* 2. Quick Stats */}
             <section className="py-4 px-5 border-b border-brand-divider">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-brand-text/40 mb-3">
+              <h3 className="text-[10px] font-extrabold tracking-widest text-brand-text/40 mb-3">
                 Quick Stats
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -174,7 +174,7 @@ export default function ManageChannelDrawer({
 
             {/* 3. Quick Shortcuts */}
             <section className="py-4 px-5 border-b border-brand-divider">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-brand-text/40 mb-3">
+              <h3 className="text-[10px] font-extrabold tracking-widest text-brand-text/40 mb-3">
                 Quick Shortcuts
               </h3>
               <div className="space-y-0.5">
@@ -193,7 +193,7 @@ export default function ManageChannelDrawer({
 
             {/* 4. Moderation Queue */}
             <section className="py-4 px-5 border-b border-brand-divider">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-brand-text/40 mb-3">
+              <h3 className="text-[10px] font-extrabold tracking-widest text-brand-text/40 mb-3">
                 Moderation Queue
               </h3>
               <div className="flex flex-col items-center justify-center py-6 text-brand-text/30">
@@ -204,7 +204,7 @@ export default function ManageChannelDrawer({
 
             {/* 5. Banned Users */}
             <section className="py-4 px-5">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-brand-text/40 mb-3">
+              <h3 className="text-[10px] font-extrabold tracking-widest text-brand-text/40 mb-3">
                 Banned Users
               </h3>
               <div className="flex flex-col items-center justify-center py-6 text-brand-text/30">

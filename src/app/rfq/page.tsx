@@ -41,16 +41,16 @@ export default function MyRFQsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-secondary text-left">
                   <tr>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Requested
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Seller
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Expires
                     </th>
                   </tr>
@@ -71,7 +71,7 @@ export default function MyRFQsPage() {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
                             STATUS_COLOR[r.status] ?? 'bg-gray-100'
                           }`}
                         >

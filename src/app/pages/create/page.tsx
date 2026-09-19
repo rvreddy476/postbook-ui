@@ -73,7 +73,7 @@ export default function CreateBusinessPage() {
 
                 {/* Identity */}
                 <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Identity</h2>
+                    <h2 className="text-xs font-bold text-muted-foreground tracking-wide">Identity</h2>
 
                     <div>
                         <label className="block text-xs font-semibold text-foreground mb-1.5">
@@ -154,7 +154,7 @@ export default function CreateBusinessPage() {
 
                 {/* Contact */}
                 <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Contact</h2>
+                    <h2 className="text-xs font-bold text-muted-foreground tracking-wide">Contact</h2>
 
                     {[
                         { label: 'Phone', field: 'phone', placeholder: '+1 234 567 8900', type: 'tel' },
@@ -178,7 +178,7 @@ export default function CreateBusinessPage() {
 
                 {/* Extras */}
                 <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Extras</h2>
+                    <h2 className="text-xs font-bold text-muted-foreground tracking-wide">Extras</h2>
 
                     <div>
                         <label className="block text-xs font-semibold text-foreground mb-1.5">Price Range</label>

@@ -131,7 +131,7 @@ export default function SellerProductVariantsPage() {
             <div>
               <Link
                 href="/seller/products"
-                className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+                className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
               >
                 ← Products
               </Link>
@@ -256,19 +256,19 @@ export default function SellerProductVariantsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-secondary border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="text-left px-6 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       SKU
                     </th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="text-left px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Options
                     </th>
-                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="text-right px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       MRP
                     </th>
-                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="text-right px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Selling
                     </th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="text-left px-4 py-3 text-[10px] font-black tracking-widest text-muted-foreground">
                       Status
                     </th>
                     <th className="px-4 py-3" />
@@ -292,14 +292,14 @@ export default function SellerProductVariantsPage() {
                         <button
                           onClick={() => startEdit(v)}
                           disabled={v.status === 'archived'}
-                          className="text-primary-ink hover:text-foreground font-bold text-xs uppercase tracking-wider disabled:opacity-40 transition"
+                          className="text-primary-ink hover:text-foreground font-bold text-xs tracking-wider disabled:opacity-40 transition"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleArchive(v)}
                           disabled={v.status === 'archived' || archiveVariant.isPending}
-                          className="text-red-600 hover:text-red-700 font-bold text-xs uppercase tracking-wider disabled:opacity-40 transition"
+                          className="text-red-600 hover:text-red-700 font-bold text-xs tracking-wider disabled:opacity-40 transition"
                         >
                           Archive
                         </button>
@@ -332,7 +332,7 @@ function StatusChip({ status }: { status: string }) {
       ? 'bg-secondary text-muted-foreground/50 border border-border'
       : 'bg-amber-50 text-amber-800 border border-amber-200'
   return (
-    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tone}`}>
+    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${tone}`}>
       {status}
     </span>
   )
@@ -348,7 +348,7 @@ function Field(props: {
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+      <label className="block text-[10px] font-black tracking-widest text-muted-foreground mb-1.5">
         {props.label}
         {props.required ? <span className="text-red-600 ml-1">*</span> : null}
       </label>
@@ -372,7 +372,7 @@ function FieldNum(props: {
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+      <label className="block text-[10px] font-black tracking-widest text-muted-foreground mb-1.5">
         {props.label}
         {props.required ? <span className="text-red-600 ml-1">*</span> : null}
       </label>

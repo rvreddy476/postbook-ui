@@ -218,7 +218,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
 
                 <div className="flex items-center gap-2 bg-brand-secondary/35 rounded-xl p-3 border border-brand-text/5 w-fit">
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Min</span>
+                    <span className="text-[10px] font-bold text-brand-text/45 tracking-wider mb-1">Min</span>
                     <input
                       type="number"
                       min={0}
@@ -237,7 +237,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/30">:</span>
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Sec</span>
+                    <span className="text-[10px] font-bold text-brand-text/45 tracking-wider mb-1">Sec</span>
                     <input
                       type="number"
                       min={0}
@@ -256,7 +256,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/30">.</span>
                   <div className="flex flex-col items-center">
-                    <span className="text-[10px] font-bold text-brand-text/45 uppercase tracking-wider mb-1">Ms</span>
+                    <span className="text-[10px] font-bold text-brand-text/45 tracking-wider mb-1">Ms</span>
                     <input
                       type="number"
                       min={0}
@@ -307,7 +307,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                     <div className="overflow-hidden rounded-lg">
                       <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
                     </div>
-                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center uppercase tracking-wider">
+                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center tracking-wider">
                       Preview — uploaded at publish time
                     </p>
                   </div>
@@ -341,7 +341,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                     <div className="overflow-hidden rounded-lg">
                       <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
                     </div>
-                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center uppercase tracking-wider">
+                    <p className="mt-2 text-[10px] font-bold text-brand-text/40 text-center tracking-wider">
                       Preview — uploaded at publish time
                     </p>
                   </div>

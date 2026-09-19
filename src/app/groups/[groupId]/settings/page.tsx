@@ -213,7 +213,7 @@ export default function SpaceSettingsPage() {
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-brand-text">{group.name}</p>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-brand-text/40">Manage</p>
+              <p className="text-[11px] font-bold tracking-widest text-brand-text/40">Manage</p>
             </div>
           </div>
 
@@ -258,7 +258,7 @@ export default function SpaceSettingsPage() {
                 <form onSubmit={handleSave} className="space-y-6">
                   <div className="space-y-5 rounded-2xl border border-brand-divider bg-brand-card p-6">
                     <div>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Cover Photo</label>
+                      <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Cover Photo</label>
                       <div
                         className="group relative h-44 cursor-pointer overflow-hidden rounded-2xl border border-brand-divider bg-brand-secondary"
                         onClick={() => coverInputRef.current?.click()}
@@ -312,7 +312,7 @@ export default function SpaceSettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Space Name</label>
+                      <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Space Name</label>
                       <input
                         type="text"
                         value={name}
@@ -324,7 +324,7 @@ export default function SpaceSettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Description</label>
+                      <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Description</label>
                       <textarea
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
@@ -335,7 +335,7 @@ export default function SpaceSettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-brand-highlight">Visibility</label>
+                      <label className="mb-3 block text-xs font-bold tracking-wider text-brand-highlight">Visibility</label>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
@@ -378,7 +378,7 @@ export default function SpaceSettingsPage() {
                 </form>
 
                 <div className="mt-8 rounded-2xl border border-rose-200 bg-brand-card p-6">
-                  <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-rose-600">Danger Zone</h3>
+                  <h3 className="mb-2 text-sm font-black tracking-wider text-rose-600">Danger Zone</h3>
                   <p className="mb-4 text-xs text-brand-text/60">Deleting this space is permanent and cannot be undone. All posts, members, and data will be lost.</p>
                   <button
                     onClick={handleDelete}
@@ -420,7 +420,7 @@ export default function SpaceSettingsPage() {
                         <button
                           onClick={() => approvePost.mutate(p.id)}
                           disabled={approvePost.isPending}
-                          className="flex items-center gap-1 rounded-lg bg-primary-ink px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-primary-ink px-3 py-1.5 text-[10px] font-black tracking-widest text-white transition-all hover:bg-primary-hover disabled:opacity-50"
                         >
                           <Check className="h-3 w-3" />
                           Approve
@@ -428,7 +428,7 @@ export default function SpaceSettingsPage() {
                         <button
                           onClick={() => rejectPost.mutate(p.id)}
                           disabled={rejectPost.isPending}
-                          className="flex items-center gap-1 rounded-lg bg-brand-text/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
+                          className="flex items-center gap-1 rounded-lg bg-brand-text/8 px-3 py-1.5 text-[10px] font-black tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
                         >
                           <X className="h-3 w-3" />
                           Reject
@@ -455,7 +455,7 @@ export default function SpaceSettingsPage() {
                         <button
                           onClick={() => unban.mutate(b.user_id)}
                           disabled={unban.isPending}
-                          className="rounded-lg bg-brand-text/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
+                          className="rounded-lg bg-brand-text/8 px-3 py-1.5 text-[10px] font-black tracking-widest text-brand-text/60 transition-all hover:bg-brand-text/12 disabled:opacity-50"
                         >
                           Unban
                         </button>

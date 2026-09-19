@@ -598,7 +598,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         >
           <Pin className="w-4 h-4 text-amber-500 shrink-0 rotate-45" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Pinned Message</p>
+            <p className="text-[10px] font-bold text-amber-600 tracking-wider">Pinned Message</p>
             <p className="text-[12px] text-brand-highlight truncate">{pinnedMessage.message?.text || 'Click to view'}</p>
           </div>
           <button

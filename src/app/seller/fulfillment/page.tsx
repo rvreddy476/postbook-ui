@@ -50,11 +50,11 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-secondary text-muted-foreground">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider bg-secondary text-muted-foreground">
             {order.payment_status}
           </span>
           <span
-            className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${pill.color}`}
+            className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${pill.color}`}
           >
             {pill.label}
           </span>
@@ -62,7 +62,7 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
       </div>
 
       <div className="mt-3 border-t border-border pt-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+        <p className="text-[10px] font-black tracking-widest text-muted-foreground mb-2">
           Your items ({items.length})
         </p>
         <ul className="space-y-1.5">
@@ -130,7 +130,7 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
           <button
             onClick={() => bookShipment.mutate(order.id)}
             disabled={bookShipment.isPending}
-            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-foreground disabled:opacity-50 transition"
+            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs tracking-wider hover:bg-foreground disabled:opacity-50 transition"
           >
             {bookShipment.isPending ? 'Booking…' : 'Book Shipment'}
           </button>
@@ -139,14 +139,14 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
           <button
             onClick={() => issueInvoice.mutate(order.id)}
             disabled={issueInvoice.isPending}
-            className="px-4 py-2 border border-border text-muted-foreground rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-secondary disabled:opacity-50 transition"
+            className="px-4 py-2 border border-border text-muted-foreground rounded-lg font-bold text-xs tracking-wider hover:bg-secondary disabled:opacity-50 transition"
           >
             {issueInvoice.isPending ? 'Issuing…' : 'Issue Invoice'}
           </button>
         )}
         <Link
           href={`/seller/orders/${order.id}`}
-          className="ml-auto text-xs font-bold text-primary-ink hover:text-foreground transition uppercase tracking-wider"
+          className="ml-auto text-xs font-bold text-primary-ink hover:text-foreground transition tracking-wider"
         >
           Details →
         </Link>
@@ -175,7 +175,7 @@ export default function SellerFulfillmentPage() {
             <div>
               <Link
                 href="/seller/dashboard"
-                className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+                className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
               >
                 ← Dashboard
               </Link>
@@ -192,7 +192,7 @@ export default function SellerFulfillmentPage() {
                 key={t.value}
                 onClick={() => setStage(t.value)}
                 title={t.description}
-                className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider whitespace-nowrap transition ${
+                className={`px-4 py-2 rounded-lg font-bold text-xs tracking-wider whitespace-nowrap transition ${
                   stage === t.value
                     ? 'bg-[#1A1A1A] text-white'
                     : 'bg-white border border-border text-muted-foreground hover:bg-secondary'

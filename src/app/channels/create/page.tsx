@@ -146,7 +146,7 @@ export default function CreateChannelPage() {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                 Channel Name
               </label>
               <input
@@ -161,7 +161,7 @@ export default function CreateChannelPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                 Handle
               </label>
               <div className="relative">
@@ -203,7 +203,7 @@ export default function CreateChannelPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                 Category
               </label>
               <div className="flex flex-wrap gap-2">
@@ -225,7 +225,7 @@ export default function CreateChannelPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                 Description
               </label>
               <textarea
@@ -241,7 +241,7 @@ export default function CreateChannelPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                   Cover Image
                 </label>
                 <button
@@ -267,7 +267,7 @@ export default function CreateChannelPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                   Channel Icon
                 </label>
                 <button
@@ -309,7 +309,7 @@ export default function CreateChannelPage() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-2">
                 Comment Settings
               </label>
               <div className="space-y-2">
@@ -385,7 +385,7 @@ export default function CreateChannelPage() {
 
               {paidAccess && (
                 <div>
-                  <label className="block text-xs font-bold text-brand-text/60 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
                     Monthly Price
                   </label>
                   <div className="relative">

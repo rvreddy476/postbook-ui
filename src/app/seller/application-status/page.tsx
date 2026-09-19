@@ -71,7 +71,7 @@ export default function ApplicationStatusPage() {
               </p>
               {seller.changes_requested && (
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-800 mb-1">Requested changes</p>
+                  <p className="text-[10px] font-black tracking-widest text-orange-800 mb-1">Requested changes</p>
                   <p className="text-orange-700 text-sm">{seller.changes_requested}</p>
                 </div>
               )}
@@ -91,7 +91,7 @@ export default function ApplicationStatusPage() {
               </p>
               {seller.rejection_reason && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-800 mb-1">Reason</p>
+                  <p className="text-[10px] font-black tracking-widest text-red-800 mb-1">Reason</p>
                   <p className="text-red-700 text-sm">{seller.rejection_reason}</p>
                 </div>
               )}
@@ -105,7 +105,7 @@ export default function ApplicationStatusPage() {
               </p>
               {seller.changes_requested && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-800 mb-1">Reason</p>
+                  <p className="text-[10px] font-black tracking-widest text-red-800 mb-1">Reason</p>
                   <p className="text-red-700 text-sm">{seller.changes_requested}</p>
                 </div>
               )}
@@ -115,7 +115,7 @@ export default function ApplicationStatusPage() {
           <div className="space-y-3 mt-4">
             {seller.store_name && (
               <div className="bg-secondary border border-border rounded-xl p-4 text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Business</p>
+                <p className="text-[10px] font-black tracking-widest text-muted-foreground mb-1">Business</p>
                 <p className="text-sm font-bold text-foreground">{seller.store_name}</p>
               </div>
             )}

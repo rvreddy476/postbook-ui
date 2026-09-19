@@ -201,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Flyout — the rest of the services */}
           {moreOpen && (
             <div className="absolute bottom-0 left-full z-80 ml-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-brand-text shadow-2xl dark:border-brand-divider dark:bg-brand-card">
-              <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black uppercase tracking-widest text-brand-text/40 dark:text-brand-text/40">
+              <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black tracking-widest text-brand-text/40 dark:text-brand-text/40">
                 More on VChat
               </div>
               <div className="space-y-0.5 p-1.5 pt-0.5">

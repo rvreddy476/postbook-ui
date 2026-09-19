@@ -38,7 +38,7 @@ export function EndorsementSection({ userId, endorsementSummary, isOwn }: Endors
     return (
         <div className="bg-brand-card rounded-2xl border border-border shadow-xs p-4">
             <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground tracking-wide flex items-center gap-2">
                     <ThumbsUp className="w-4 h-4 text-primary-ink" />
                     Endorsements
                 </h3>

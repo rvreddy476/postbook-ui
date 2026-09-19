@@ -15,7 +15,7 @@ import { useCategories } from '@/hooks/useCommerce'
 import { uploadMedia } from '@/lib/mediaUpload'
 
 const inputCls = 'w-full border border-border rounded-xl px-4 py-3 text-foreground bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary-outline outline-hidden transition-all text-sm font-medium placeholder:text-muted-foreground/30'
-const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5'
+const labelCls = 'block text-[10px] font-black tracking-widest text-muted-foreground mb-1.5'
 
 type Variant = {
   sku: string
@@ -236,7 +236,7 @@ export default function NewProductPage() {
             >
               {i + 1}
             </div>
-            <div className="ml-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:block">
+            <div className="ml-2 text-[10px] font-black tracking-widest text-muted-foreground hidden sm:block">
               {label}
             </div>
             {i < STEPS.length - 1 && <div className="flex-1 h-[2px] bg-secondary mx-3" />}
@@ -253,7 +253,7 @@ export default function NewProductPage() {
         <div className="max-w-3xl mx-auto px-4 py-8">
           <Link
             href="/seller/products"
-            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-4 block"
+            className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-4 block"
           >
             ← Products
           </Link>
@@ -430,7 +430,7 @@ export default function NewProductPage() {
                   </div>
                 </div>
                 <div className="border-t border-border pt-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+                  <h4 className="text-xs font-black tracking-widest text-muted-foreground mb-3">
                     Shipping dimensions
                   </h4>
                   <div className="grid grid-cols-4 gap-4">
@@ -490,13 +490,13 @@ export default function NewProductPage() {
                 </div>
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    <h4 className="text-xs font-black tracking-widest text-muted-foreground">
                       Attributes / Specs
                     </h4>
                     <button
                       type="button"
                       onClick={() => setAttributes(prev => [...prev, { name: '', value: '', unit: '' }])}
-                      className="text-[10px] font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition"
+                      className="text-[10px] font-black tracking-widest text-primary-ink hover:text-foreground transition"
                     >
                       + Add row
                     </button>
@@ -551,14 +551,14 @@ export default function NewProductPage() {
                 {variants.map((v, i) => (
                   <div key={i} className="border border-border rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                      <h4 className="text-xs font-black tracking-widest text-muted-foreground">
                         Variant {i + 1}
                       </h4>
                       {variants.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeVariant(i)}
-                          className="text-[10px] font-black uppercase tracking-widest text-red-600 hover:text-red-800 transition"
+                          className="text-[10px] font-black tracking-widest text-red-600 hover:text-red-800 transition"
                         >
                           Remove
                         </button>
@@ -670,7 +670,7 @@ export default function NewProductPage() {
                       <button
                         type="button"
                         onClick={() => setPrimaryImage(null)}
-                        className="text-xs font-black uppercase tracking-widest text-red-600 hover:text-red-800 transition"
+                        className="text-xs font-black tracking-widest text-red-600 hover:text-red-800 transition"
                       >
                         Remove
                       </button>
@@ -724,7 +724,7 @@ export default function NewProductPage() {
                       <button
                         type="button"
                         onClick={() => setVideoItem(null)}
-                        className="text-xs font-black uppercase tracking-widest text-red-600 hover:text-red-800 transition"
+                        className="text-xs font-black tracking-widest text-red-600 hover:text-red-800 transition"
                       >
                         Remove
                       </button>

@@ -200,7 +200,7 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
     <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-all ${post.is_pinned ? 'ring-1 ring-brand-text/10' : ''}`}>
       {/* Pinned */}
       {post.is_pinned && (
-        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold uppercase tracking-widest px-4 pt-3 pb-0">
+        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold tracking-widest px-4 pt-3 pb-0">
           <Pin className="w-3 h-3" /> Pinned
         </div>
       )}
@@ -208,21 +208,21 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
       <div className="p-4">
         {/* Announcement badge */}
         {post.is_announcement && (
-          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold tracking-wider mb-2">
             <Megaphone className="w-3 h-3" /> Announcement
           </div>
         )}
 
         {/* Featured badge */}
         {post.is_featured && (
-          <div className="flex items-center gap-1 text-violet-600 text-[10px] font-bold uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-1 text-violet-600 text-[10px] font-bold tracking-wider mb-2">
             <Star className="w-3 h-3" /> Featured
           </div>
         )}
 
         {/* Q&A Accepted badge */}
         {post.content_type === 'qa_question' && post.is_answered && (
-          <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-bold uppercase tracking-wider mb-2">
+          <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-bold tracking-wider mb-2">
             <CheckCircle2 className="w-3 h-3" /> Accepted Answer
           </div>
         )}
@@ -241,7 +241,7 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <span className="text-sm font-bold text-brand-text">{authorName}</span>
             {roleBadge && (
-              <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-full uppercase ${roleBadge.color}`}>
+              <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-full ${roleBadge.color}`}>
                 {roleBadge.label}
               </span>
             )}

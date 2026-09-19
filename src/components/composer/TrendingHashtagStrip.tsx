@@ -57,7 +57,7 @@ export default function TrendingHashtagStrip({
     return (
         <div className="space-y-1.5">
             {label && (
-                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
+                <p className="text-[10px] font-bold tracking-wider text-violet-400">
                     🔥 {label}
                 </p>
             )}

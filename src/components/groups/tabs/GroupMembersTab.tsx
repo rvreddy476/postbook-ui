@@ -92,7 +92,7 @@ function MemberCard({
 
       {/* Role tag — admins/mods only; regular members carry no badge */}
       {member.role !== 'member' && (
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${badge.color} ${badge.bgColor}`}>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold tracking-wider ${badge.color} ${badge.bgColor}`}>
           {badge.icon}
           {badge.label}
         </div>
@@ -395,7 +395,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
 
       {/* Members — single heading, admins first */}
       <div>
-        <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60 mb-2 px-1">
+        <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-2 px-1">
           Members ({ordered.length})
         </h3>
         <div className="space-y-2">

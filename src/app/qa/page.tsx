@@ -111,7 +111,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
 
           {topics && topics.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Topics <span className="normal-case font-normal text-neutral-400">(up to 3)</span></p>
+              <p className="text-xs font-semibold text-neutral-500 tracking-wider mb-2">Topics <span className="normal-case font-normal text-neutral-400">(up to 3)</span></p>
               <div className="flex flex-wrap gap-2">
                 {topics.map(t => (
                   <button key={t.id} type="button" onClick={() => toggleTopic(t.id)}
@@ -127,7 +127,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
           <div>
-            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Tags <span className="normal-case font-normal text-neutral-400">(up to 5)</span></p>
+            <p className="text-xs font-semibold text-neutral-500 tracking-wider mb-2">Tags <span className="normal-case font-normal text-neutral-400">(up to 5)</span></p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {tags.map(tag => (
                 <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-ask-light text-ask text-xs font-medium">
@@ -447,7 +447,7 @@ export default function QAPage() {
         </div>
 
         <div className="px-3 pb-4 border-b border-brand-divider">
-          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-1">Questions</p>
+          <p className="px-2 text-[11px] font-black tracking-widest text-neutral-400 mb-1">Questions</p>
           {navItems.map(item => (
             <button
               key={item.key}
@@ -486,7 +486,7 @@ export default function QAPage() {
         </div>
 
         <div className="px-3 py-4 flex-1">
-          <p className="px-2 text-[11px] font-black uppercase tracking-widest text-neutral-400 mb-2">Topics</p>
+          <p className="px-2 text-[11px] font-black tracking-widest text-neutral-400 mb-2">Topics</p>
           <div className="relative mb-2">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <input

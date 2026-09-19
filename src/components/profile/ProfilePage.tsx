@@ -157,7 +157,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
                 <Pin className="w-3.5 h-3.5 text-brand-text" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-highlight">Pinned</span>
+                <span className="text-[10px] font-black tracking-[0.2em] text-brand-highlight">Pinned</span>
             </div>
             <div className="flex flex-wrap gap-2">
                 {pins.map((pin) => (
@@ -170,7 +170,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                             {pin.content_id}
                         </span>
                         <span
-                            className={`text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
+                            className={`text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
                                 CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-brand-secondary text-brand-text/60 border-brand-divider"
                             }`}
                         >
@@ -251,7 +251,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
 
             {isOwn && showAdd && (
                 <div className="border border-brand-text/20 rounded-xl p-4 bg-brand-text/5 space-y-3">
-                    <p className="text-xs font-bold text-brand-text uppercase tracking-wider">New Portfolio Item</p>
+                    <p className="text-xs font-bold text-brand-text tracking-wider">New Portfolio Item</p>
                     <input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -319,7 +319,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
                                 <span
-                                    className={`shrink-0 text-[9px] font-bold uppercase tracking-wider border px-1.5 py-0.5 rounded-md ${
+                                    className={`shrink-0 text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
                                         ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
                                     }`}
                                 >
@@ -373,7 +373,7 @@ function ComingSoonTab({
             <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
                 {description}
             </p>
-            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-text shadow-xs">
+            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-brand-text shadow-xs">
                 <Sparkles className="w-3 h-3" />
                 Coming soon
             </span>

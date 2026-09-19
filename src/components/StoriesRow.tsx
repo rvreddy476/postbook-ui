@@ -127,7 +127,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
                 <div className="w-8 h-8 rounded-full bg-primary-ink text-brand-bg flex items-center justify-center shadow-lg">
                   <Plus size={18} />
                 </div>
-                <span className="text-[10px] font-black tracking-widest uppercase text-primary-ink">Add</span>
+                <span className="text-[10px] font-black tracking-widest text-primary-ink">Add</span>
               </div>
             </div>
           </div>
@@ -159,7 +159,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
 
                   {/* Name bottom */}
                   <div className="absolute bottom-3 left-3 right-3">
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest truncate drop-shadow-md">{group.authorName}</p>
+                    <p className="text-[10px] font-black text-white tracking-widest truncate drop-shadow-md">{group.authorName}</p>
                   </div>
 
                   {/* Unseen dot */}

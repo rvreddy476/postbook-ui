@@ -68,7 +68,7 @@ export default function BulkImportPage() {
         <div className="max-w-5xl mx-auto px-4 py-8">
           <Link
             href="/seller/dashboard"
-            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+            className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Dashboard
           </Link>
@@ -81,7 +81,7 @@ export default function BulkImportPage() {
 
           <div className="mt-4 bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <h2 className="text-xs font-black tracking-widest text-muted-foreground">
                 Upload a new CSV
               </h2>
               <button
@@ -124,7 +124,7 @@ export default function BulkImportPage() {
                 <p className="text-sm font-bold text-foreground">
                   Status:{' '}
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
                       STATUS_COLOR[activeJob.data.status] ?? 'bg-gray-100 text-gray-700'
                     }`}
                   >
@@ -139,7 +139,7 @@ export default function BulkImportPage() {
                   <button
                     onClick={() => execute.mutate(activeJob.data!.id)}
                     disabled={execute.isPending}
-                    className="mt-3 px-5 py-2 bg-[#1A1A1A] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-foreground disabled:opacity-50"
+                    className="mt-3 px-5 py-2 bg-[#1A1A1A] text-white rounded-lg text-xs font-bold tracking-wider hover:bg-foreground disabled:opacity-50"
                   >
                     {execute.isPending ? 'Importing…' : `Import ${activeJob.data.valid_rows} rows`}
                   </button>
@@ -158,7 +158,7 @@ export default function BulkImportPage() {
 
           <div className="mt-6 bg-white rounded-2xl border border-border overflow-hidden">
             <div className="px-6 py-4 border-b border-border">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <h2 className="text-xs font-black tracking-widest text-muted-foreground">
                 Recent imports
               </h2>
             </div>
@@ -168,19 +168,19 @@ export default function BulkImportPage() {
               <table className="w-full text-sm">
                 <thead className="bg-secondary text-left">
                   <tr>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Started
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Filename
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-[10px] font-black tracking-widest text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Rows
                     </th>
-                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <th className="px-4 py-2 text-right text-[10px] font-black tracking-widest text-muted-foreground">
                       Errors
                     </th>
                   </tr>
@@ -200,7 +200,7 @@ export default function BulkImportPage() {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
                             STATUS_COLOR[j.status] ?? 'bg-gray-100 text-gray-700'
                           }`}
                         >

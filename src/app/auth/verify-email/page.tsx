@@ -109,7 +109,7 @@ export default function VerifyEmailPage() {
               <h1 className="text-2xl font-black tracking-tight text-foreground">
                 Verify Email
               </h1>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+              <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                 Check Your Inbox
               </p>
             </div>

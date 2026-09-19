@@ -75,7 +75,7 @@ export default function OrganizationDetailPage({
         <div className="max-w-5xl mx-auto px-4 py-8">
           <Link
             href="/organizations"
-            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
+            className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Organizations
           </Link>
@@ -86,7 +86,7 @@ export default function OrganizationDetailPage({
 
           {/* Settings card */}
           <section className="mt-6 bg-white rounded-2xl border border-border p-6">
-            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+            <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3">
               Settings
             </h2>
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -108,7 +108,7 @@ export default function OrganizationDetailPage({
           {/* Pending approvals */}
           {pending.length > 0 && (
             <section className="mt-6 bg-white rounded-2xl border border-amber-200 p-6">
-              <h2 className="text-xs font-black uppercase tracking-widest text-amber-800 mb-3">
+              <h2 className="text-xs font-black tracking-widest text-amber-800 mb-3">
                 Pending approvals ({pending.length})
               </h2>
               <ul className="space-y-2">
@@ -129,7 +129,7 @@ export default function OrganizationDetailPage({
                       <button
                         onClick={() => approveOrder.mutate({ orderId: o.id })}
                         disabled={approveOrder.isPending}
-                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold tracking-wider rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                       >
                         Approve
                       </button>
@@ -138,7 +138,7 @@ export default function OrganizationDetailPage({
                           const reason = window.prompt('Reason for rejection (shown to buyer):')
                           if (reason) rejectOrder.mutate({ orderId: o.id, reason })
                         }}
-                        className="px-3 py-1.5 border border-red-300 text-red-700 text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-red-50"
+                        className="px-3 py-1.5 border border-red-300 text-red-700 text-xs font-bold tracking-wider rounded-lg hover:bg-red-50"
                       >
                         Reject
                       </button>
@@ -152,7 +152,7 @@ export default function OrganizationDetailPage({
           {/* Members */}
           <section className="mt-6 bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <h2 className="text-xs font-black tracking-widest text-muted-foreground">
                 Members ({members.filter((m) => m.status === 'active').length})
               </h2>
             </div>
@@ -185,7 +185,7 @@ export default function OrganizationDetailPage({
                       ))}
                     </select>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider ${
                         m.status === 'active'
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-gray-100 text-gray-600'
@@ -211,7 +211,7 @@ export default function OrganizationDetailPage({
             </div>
 
             <div className="mt-4 pt-4 border-t border-border">
-              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+              <h3 className="text-xs font-black tracking-widest text-muted-foreground mb-2">
                 Invite member
               </h3>
               <div className="flex gap-2">
@@ -236,7 +236,7 @@ export default function OrganizationDetailPage({
                 <button
                   onClick={handleInvite}
                   disabled={!inviteEmail || invite.isPending}
-                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-foreground disabled:opacity-50"
+                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-bold tracking-wider rounded-lg hover:bg-foreground disabled:opacity-50"
                 >
                   {invite.isPending ? 'Inviting…' : 'Invite'}
                 </button>
@@ -251,7 +251,7 @@ export default function OrganizationDetailPage({
 
           {/* Recent orders */}
           <section className="mt-6 bg-white rounded-2xl border border-border p-6">
-            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+            <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-3">
               Recent orders ({orders.length})
             </h2>
             {orders.length === 0 ? (

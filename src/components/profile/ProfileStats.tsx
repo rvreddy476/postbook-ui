@@ -51,7 +51,7 @@ export function ProfileStats({ graphCounts, contentCounts, onStatClick }: Profil
                             <span className="text-lg font-black text-brand-text tracking-tight leading-none">
                                 {formatCount(stat.value)}
                             </span>
-                            <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-text/50">
+                            <span className="text-[9px] font-semibold tracking-[0.15em] text-brand-text/50">
                                 {stat.label}
                             </span>
                         </motion.button>

@@ -77,7 +77,7 @@ export function ReputationBadge({ reputation, size = "md" }: ReputationBadgeProp
                 <span className={`${s.score} font-bold ${tier.color}`}>
                     {reputation}
                 </span>
-                <span className={`${s.label} font-medium ${tier.color} uppercase tracking-wider`}>
+                <span className={`${s.label} font-medium ${tier.color} tracking-wider`}>
                     {tier.label}
                 </span>
             </div>

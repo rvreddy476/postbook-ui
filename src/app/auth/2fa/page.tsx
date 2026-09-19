@@ -96,7 +96,7 @@ function TwoFAPageContent() {
                 <h1 className="text-xl font-black tracking-tight text-foreground">
                   Two-Factor Auth
                 </h1>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
+                <p className="text-[11px] font-bold tracking-[0.18em] text-primary-ink">
                   Verification Required
                 </p>
               </div>

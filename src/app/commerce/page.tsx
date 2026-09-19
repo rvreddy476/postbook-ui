@@ -151,7 +151,7 @@ export default function CommerceLandingPage() {
       {/* ── How it Works ────────────────────────────────────────── */}
       <section id="how-it-works" className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">Process</p>
+          <p className="text-xs font-black tracking-widest text-primary-ink mb-3">Process</p>
           <h2 className="text-4xl font-black text-foreground mb-14">How it works</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {HOW_IT_WORKS.map(item => (
@@ -170,7 +170,7 @@ export default function CommerceLandingPage() {
       {/* ── Benefits ────────────────────────────────────────────── */}
       <section id="benefits" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">Why sell here</p>
+          <p className="text-xs font-black tracking-widest text-primary-ink mb-3">Why sell here</p>
           <h2 className="text-4xl font-black text-foreground mb-14">Built for real sellers</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {BENEFITS.map(b => (
@@ -187,7 +187,7 @@ export default function CommerceLandingPage() {
       {/* ── FAQ ─────────────────────────────────────────────────── */}
       <section id="faq" className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">FAQ</p>
+          <p className="text-xs font-black tracking-widest text-primary-ink mb-3">FAQ</p>
           <h2 className="text-4xl font-black text-foreground mb-12">Common questions</h2>
           <div className="space-y-6">
             {FAQS.map(faq => (

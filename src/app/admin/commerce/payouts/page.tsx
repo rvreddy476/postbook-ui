@@ -75,7 +75,7 @@ export default function AdminPayoutReconciliationPage() {
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
+            <thead className="bg-gray-50 text-left text-xs tracking-wider text-gray-500">
               <tr>
                 <th className="px-4 py-3">Seller</th>
                 <th className="px-4 py-3 text-right">Count</th>
@@ -146,7 +146,7 @@ function SummaryCard({
     <div
       className={`rounded-xl p-4 ${accent ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'}`}
     >
-      <div className={`text-xs uppercase tracking-wider ${accent ? 'text-white/60' : 'text-gray-500'}`}>
+      <div className={`text-xs tracking-wider ${accent ? 'text-white/60' : 'text-gray-500'}`}>
         {label}
       </div>
       <div className={`text-lg font-bold ${accent ? 'text-white' : 'text-gray-900'}`}>{value}</div>

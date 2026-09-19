@@ -47,7 +47,7 @@ export function UploadHeader({
             <X className="h-4 w-4" />
           </Link>
           <h1 className="text-[15px] sm:text-[16px] font-bold text-brand-text">Upload Studio</h1>
-          <span className={`rounded-md border px-2 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase ${badgeColor}`}>
+          <span className={`rounded-md border px-2 py-0.5 text-[10px] sm:text-[11px] font-bold ${badgeColor}`}>
             {config.label}
           </span>
         </div>

@@ -51,7 +51,7 @@ export default function RFQDetailPage({
     <AppShell activeTab="Shop">
       <div className="min-h-screen bg-secondary">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-          <Link href="/rfq" className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground">
+          <Link href="/rfq" className="text-xs font-black tracking-widest text-primary-ink hover:text-foreground">
             ← My RFQs
           </Link>
           <h1 className="text-2xl font-black text-foreground">RFQ {rfq.id.slice(0, 8)}…</h1>
@@ -62,7 +62,7 @@ export default function RFQDetailPage({
 
           {rfq.message_text && (
             <section className="bg-white rounded-xl border border-border p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+              <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-2">
                 Your message
               </h2>
               <p className="text-sm whitespace-pre-line">{rfq.message_text}</p>
@@ -70,7 +70,7 @@ export default function RFQDetailPage({
           )}
 
           <section className="bg-white rounded-xl border border-border p-4">
-            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+            <h2 className="text-xs font-black tracking-widest text-muted-foreground mb-2">
               Items requested
             </h2>
             <ul className="text-sm space-y-1">
@@ -85,7 +85,7 @@ export default function RFQDetailPage({
 
           {liveQuote ? (
             <section className="bg-white rounded-xl border border-emerald-200 p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-2">
+              <h2 className="text-xs font-black tracking-widest text-emerald-700 mb-2">
                 Seller's quote
               </h2>
               <p className="text-2xl font-black text-foreground">
@@ -161,7 +161,7 @@ export default function RFQDetailPage({
                         })
                       }
                       disabled={!canAccept || accept.isPending}
-                      className="flex-1 px-5 py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex-1 px-5 py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {accept.isPending ? 'Accepting…' : 'Accept & Place Order'}
                     </button>
@@ -170,7 +170,7 @@ export default function RFQDetailPage({
                         const reason = window.prompt('Reason for rejection (optional):') ?? ''
                         reject.mutate({ rfqId: rfq.id, reason })
                       }}
-                      className="px-5 py-3 border border-red-300 text-red-700 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-50"
+                      className="px-5 py-3 border border-red-300 text-red-700 rounded-lg text-xs font-bold tracking-wider hover:bg-red-50"
                     >
                       Reject
                     </button>
