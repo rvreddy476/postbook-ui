@@ -36,21 +36,21 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
   const hasShipment = !!shipment
 
   return (
-    <div className="rounded-xl border border-[#E8DDD3] bg-white p-5">
+    <div className="rounded-xl border border-border bg-white p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link
             href={`/seller/orders/${order.id}`}
-            className="font-bold text-[#1A1A1A] hover:text-[#8B5E3C] transition"
+            className="font-bold text-foreground hover:text-primary-ink transition"
           >
             Order {order.order_number}
           </Link>
-          <p className="text-xs text-[#6B5544] mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Placed {new Date(order.created_at).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#F5F0EB] text-[#4A3728]">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-secondary text-muted-foreground">
             {order.payment_status}
           </span>
           <span
@@ -61,36 +61,36 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
         </div>
       </div>
 
-      <div className="mt-3 border-t border-[#E8DDD3] pt-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-2">
+      <div className="mt-3 border-t border-border pt-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
           Your items ({items.length})
         </p>
         <ul className="space-y-1.5">
           {items.map((it) => (
             <li key={it.id} className="flex items-center justify-between text-sm">
               <div className="truncate">
-                <span className="font-medium text-[#1A1A1A]">{it.product_title}</span>
-                <span className="text-[#6B5544]">
+                <span className="font-medium text-foreground">{it.product_title}</span>
+                <span className="text-muted-foreground">
                   {' '}
                   · {it.sku} · qty {it.quantity}
                 </span>
               </div>
-              <span className="text-xs font-mono text-[#6B5544]">
+              <span className="text-xs font-mono text-muted-foreground">
                 ₹{it.final_price.toFixed(2)}
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-[#6B5544]">
-          Your subtotal: <span className="font-bold text-[#1A1A1A]">₹{seller_subtotal.toFixed(2)}</span>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Your subtotal: <span className="font-bold text-foreground">₹{seller_subtotal.toFixed(2)}</span>
         </p>
       </div>
 
       {shipment && (
-        <div className="mt-3 border-t border-[#E8DDD3] pt-3 text-sm">
+        <div className="mt-3 border-t border-border pt-3 text-sm">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[#6B5544]">Courier:</span>{' '}
+              <span className="text-muted-foreground">Courier:</span>{' '}
               <span className="font-medium">{shipment.courier}</span>
               {shipment.tracking_number && (
                 <>
@@ -105,7 +105,7 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
                   href={shipment.label_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs font-bold text-[#8B5E3C] hover:text-[#1A1A1A] transition"
+                  className="text-xs font-bold text-primary-ink hover:text-foreground transition"
                 >
                   Label ↗
                 </a>
@@ -115,7 +115,7 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
                   href={shipment.tracking_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs font-bold text-[#8B5E3C] hover:text-[#1A1A1A] transition"
+                  className="text-xs font-bold text-primary-ink hover:text-foreground transition"
                 >
                   Track ↗
                 </a>
@@ -125,12 +125,12 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
         </div>
       )}
 
-      <div className="mt-3 border-t border-[#E8DDD3] pt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 border-t border-border pt-3 flex flex-wrap items-center gap-2">
         {!hasShipment && payable && (
           <button
             onClick={() => bookShipment.mutate(order.id)}
             disabled={bookShipment.isPending}
-            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#3A2E26] disabled:opacity-50 transition"
+            className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-foreground disabled:opacity-50 transition"
           >
             {bookShipment.isPending ? 'Booking…' : 'Book Shipment'}
           </button>
@@ -139,14 +139,14 @@ function FulfillmentCard({ card }: { card: SellerOrderCard }) {
           <button
             onClick={() => issueInvoice.mutate(order.id)}
             disabled={issueInvoice.isPending}
-            className="px-4 py-2 border border-[#E8DDD3] text-[#4A3728] rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#F5F0EB] disabled:opacity-50 transition"
+            className="px-4 py-2 border border-border text-muted-foreground rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-secondary disabled:opacity-50 transition"
           >
             {issueInvoice.isPending ? 'Issuing…' : 'Issue Invoice'}
           </button>
         )}
         <Link
           href={`/seller/orders/${order.id}`}
-          className="ml-auto text-xs font-bold text-[#8B5E3C] hover:text-[#1A1A1A] transition uppercase tracking-wider"
+          className="ml-auto text-xs font-bold text-primary-ink hover:text-foreground transition uppercase tracking-wider"
         >
           Details →
         </Link>
@@ -169,18 +169,18 @@ export default function SellerFulfillmentPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <Link
                 href="/seller/dashboard"
-                className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+                className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
               >
                 ← Dashboard
               </Link>
-              <h1 className="text-2xl font-black text-[#1A1A1A]">Fulfillment</h1>
-              <p className="text-sm text-[#6B5544] mt-1">
+              <h1 className="text-2xl font-black text-foreground">Fulfillment</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Ship items in the right order. Click an order to see buyer details and shipment tracking.
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function SellerFulfillmentPage() {
                 className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider whitespace-nowrap transition ${
                   stage === t.value
                     ? 'bg-[#1A1A1A] text-white'
-                    : 'bg-white border border-[#E8DDD3] text-[#4A3728] hover:bg-[#F5F0EB]'
+                    : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {t.label}
@@ -204,12 +204,12 @@ export default function SellerFulfillmentPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-sm text-[#6B5544]">Loading queue…</div>
+            <div className="text-sm text-muted-foreground">Loading queue…</div>
           ) : error ? (
             <div className="text-sm text-red-600">{(error as Error).message}</div>
           ) : orders.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <p className="text-sm text-[#6B5544]">
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 Nothing here. Orders matching the &ldquo;{TABS.find(t => t.value === stage)?.label}&rdquo;
                 tab will show up here.
               </p>

@@ -294,7 +294,7 @@ export default function NotificationPreferencesPage() {
             {/* Back link */}
             <Link
                 href="/settings"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-[#8a0a28]"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-text transition-colors hover:text-danger"
             >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Settings

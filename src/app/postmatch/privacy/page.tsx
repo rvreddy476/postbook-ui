@@ -66,7 +66,7 @@ export default function PostMatchPrivacyPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/postmatch/settings" className="text-sm text-[#888] hover:text-white">
+          <Link href="/postmatch/settings" className="text-sm text-muted-foreground hover:text-white">
             ← Settings
           </Link>
           <h1 className="text-lg font-bold">Privacy</h1>
@@ -74,7 +74,7 @@ export default function PostMatchPrivacyPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
-        {isLoading && <p className="text-sm text-[#888]">Loading…</p>}
+        {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {error && (
           <p className="text-sm text-rose-400">
             Could not load privacy settings. Try refreshing.
@@ -93,7 +93,7 @@ export default function PostMatchPrivacyPage() {
             >
               <div className="flex-1">
                 <div className="font-semibold">{t.label}</div>
-                <div className="text-sm text-[#888] mt-0.5">{t.description}</div>
+                <div className="text-sm text-muted-foreground mt-0.5">{t.description}</div>
               </div>
               <span
                 className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
@@ -110,7 +110,7 @@ export default function PostMatchPrivacyPage() {
           )
         })}
 
-        <p className="pt-4 text-xs text-[#555] leading-relaxed">
+        <p className="pt-4 text-xs text-foreground leading-relaxed">
           These controls take effect immediately. Existing matches keep seeing
           your profile as before; only new discovery is affected.
         </p>

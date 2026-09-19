@@ -130,7 +130,7 @@ export default function FriendCard({
  
         <div className="min-w-0 flex-1 pr-6">
           <Link href={profileHref}>
-            <div className="truncate text-[14px] font-bold leading-tight text-brand-text hover:text-[#2563EB] transition-colors">
+            <div className="truncate text-[14px] font-bold leading-tight text-brand-text hover:text-primary-ink transition-colors">
               {displayName}
             </div>
           </Link>

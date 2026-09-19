@@ -46,7 +46,7 @@ export default function OrganizationDetailPage({
   if (isLoading) {
     return (
       <AppShell activeTab="Shop">
-        <div className="p-8 text-sm text-[#6B5544]">Loading organization…</div>
+        <div className="p-8 text-sm text-muted-foreground">Loading organization…</div>
       </AppShell>
     )
   }
@@ -71,22 +71,22 @@ export default function OrganizationDetailPage({
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <Link
             href="/organizations"
-            className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Organizations
           </Link>
-          <h1 className="text-2xl font-black text-[#1A1A1A]">{org.name}</h1>
+          <h1 className="text-2xl font-black text-foreground">{org.name}</h1>
           {org.legal_name && org.legal_name !== org.name && (
-            <p className="text-sm text-[#6B5544]">{org.legal_name}</p>
+            <p className="text-sm text-muted-foreground">{org.legal_name}</p>
           )}
 
           {/* Settings card */}
-          <section className="mt-6 bg-white rounded-2xl border border-[#E8DDD3] p-6">
-            <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-3">
+          <section className="mt-6 bg-white rounded-2xl border border-border p-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
               Settings
             </h2>
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -118,8 +118,8 @@ export default function OrganizationDetailPage({
                     className="flex items-center justify-between border-b border-amber-100 last:border-0 pb-2"
                   >
                     <div>
-                      <div className="font-bold text-[#1A1A1A]">{o.order_number}</div>
-                      <div className="text-xs text-[#6B5544]">
+                      <div className="font-bold text-foreground">{o.order_number}</div>
+                      <div className="text-xs text-muted-foreground">
                         ₹{o.final_amount.toFixed(2)}
                         {o.po_number ? ` · PO ${o.po_number}` : ''}
                         {o.cost_center ? ` · ${o.cost_center}` : ''}
@@ -150,9 +150,9 @@ export default function OrganizationDetailPage({
           )}
 
           {/* Members */}
-          <section className="mt-6 bg-white rounded-2xl border border-[#E8DDD3] p-6">
+          <section className="mt-6 bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544]">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 Members ({members.filter((m) => m.status === 'active').length})
               </h2>
             </div>
@@ -160,14 +160,14 @@ export default function OrganizationDetailPage({
               {members.map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between text-sm border-b border-[#E8DDD3] last:border-0 pb-1.5"
+                  className="flex items-center justify-between text-sm border-b border-border last:border-0 pb-1.5"
                 >
                   <div className="min-w-0 truncate">
-                    <span className="font-mono text-xs text-[#6B5544]">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {m.user_id.slice(0, 8)}…
                     </span>
                     {m.invited_email && (
-                      <span className="ml-2 text-[#1A1A1A]">{m.invited_email}</span>
+                      <span className="ml-2 text-foreground">{m.invited_email}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export default function OrganizationDetailPage({
                       onChange={(e) =>
                         updateRole.mutate({ orgId, userId: m.user_id, role: e.target.value as OrgRole })
                       }
-                      className="text-xs border border-[#E8DDD3] rounded-sm px-2 py-1"
+                      className="text-xs border border-border rounded-sm px-2 py-1"
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>
@@ -210,8 +210,8 @@ export default function OrganizationDetailPage({
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#E8DDD3]">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-2">
+            <div className="mt-4 pt-4 border-t border-border">
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
                 Invite member
               </h3>
               <div className="flex gap-2">
@@ -220,12 +220,12 @@ export default function OrganizationDetailPage({
                   placeholder="email@company.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="flex-1 border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                  className="flex-1 border border-border rounded-lg px-3 py-2 text-sm"
                 />
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as OrgRole)}
-                  className="border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                  className="border border-border rounded-lg px-3 py-2 text-sm"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
@@ -236,7 +236,7 @@ export default function OrganizationDetailPage({
                 <button
                   onClick={handleInvite}
                   disabled={!inviteEmail || invite.isPending}
-                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[#3A2E26] disabled:opacity-50"
+                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-foreground disabled:opacity-50"
                 >
                   {invite.isPending ? 'Inviting…' : 'Invite'}
                 </button>
@@ -250,26 +250,26 @@ export default function OrganizationDetailPage({
           </section>
 
           {/* Recent orders */}
-          <section className="mt-6 bg-white rounded-2xl border border-[#E8DDD3] p-6">
-            <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-3">
+          <section className="mt-6 bg-white rounded-2xl border border-border p-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
               Recent orders ({orders.length})
             </h2>
             {orders.length === 0 ? (
-              <p className="text-sm text-[#6B5544]">No orders yet.</p>
+              <p className="text-sm text-muted-foreground">No orders yet.</p>
             ) : (
               <ul className="space-y-1">
                 {orders.slice(0, 20).map((o) => (
                   <li
                     key={o.id}
-                    className="flex items-center justify-between text-sm border-b border-[#E8DDD3] last:border-0 py-2"
+                    className="flex items-center justify-between text-sm border-b border-border last:border-0 py-2"
                   >
                     <Link
                       href={`/orders/${o.id}`}
-                      className="font-medium text-[#1A1A1A] hover:text-[#8B5E3C]"
+                      className="font-medium text-foreground hover:text-primary-ink"
                     >
                       {o.order_number}
                     </Link>
-                    <div className="text-xs text-[#6B5544] flex gap-3">
+                    <div className="text-xs text-muted-foreground flex gap-3">
                       <span>{new Date(o.created_at).toLocaleDateString()}</span>
                       <span className="font-mono">₹{o.final_amount.toFixed(2)}</span>
                       <span>{o.status.replace(/_/g, ' ')}</span>
@@ -296,9 +296,9 @@ function Field({
 }) {
   return (
     <div>
-      <dt className="text-xs text-[#6B5544]">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd
-        className={`${mono ? 'font-mono' : ''} ${value ? 'font-medium text-[#1A1A1A]' : 'italic text-[#6B5544]/60'}`}
+        className={`${mono ? 'font-mono' : ''} ${value ? 'font-medium text-foreground' : 'italic text-muted-foreground/60'}`}
       >
         {value || '—'}
       </dd>

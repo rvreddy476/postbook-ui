@@ -58,8 +58,6 @@
   --color-primary-tint: rgb(var(--brand-tint));
   --color-primary-outline: rgb(var(--brand-outline));
 
-  --color-text-muted: rgb(var(--text-muted));
-
   --color-success: rgb(var(--success));
   --color-warning: rgb(var(--warning));
   --color-danger: rgb(var(--danger));
@@ -69,7 +67,14 @@
   --color-secondary-foreground: rgb(var(--brand-text));
 
   --color-muted: rgb(var(--brand-secondary));
-  --color-muted-foreground: rgb(var(--brand-highlight));
+  /*
+    Was brand-highlight, which equals brand-text, so "muted" foreground
+    rendered identically to normal foreground and the name promised something
+    it never delivered. It is now the real muted grey (6.12:1 on white), which
+    makes text-muted-foreground the one class for secondary text. There is
+    deliberately no second token spelled text-muted.
+  */
+  --color-muted-foreground: rgb(var(--text-muted));
 
   /* was #ef4444 and #ffffff, two colours dark mode could never change */
   --color-destructive: rgb(var(--danger));

@@ -67,12 +67,12 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
         return (
             <div className="flex items-center gap-2">
                 {showStatus ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FAF5F0] rounded-full border border-[#F0E6DC]">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-background rounded-full border border-border">
                         {currentStatusEmoji && (
                             <span className="text-sm">{currentStatusEmoji}</span>
                         )}
                         {currentStatusText && (
-                            <span className="text-xs font-medium text-[#7B5B3A] italic max-w-[200px] truncate">
+                            <span className="text-xs font-medium text-muted-foreground italic max-w-[200px] truncate">
                                 {currentStatusText}
                             </span>
                         )}
@@ -83,7 +83,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                                     setStatusEmoji(currentStatusEmoji ?? "")
                                     setIsEditing(true)
                                 }}
-                                className="ml-1 text-[#7B5B3A]/40 hover:text-[#7B5B3A] transition-colors"
+                                className="ml-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
                             >
                                 <Pencil className="w-3 h-3" />
                             </button>
@@ -92,7 +92,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                 ) : isOwn ? (
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7B5B3A] bg-[#FAF5F0] rounded-full border border-[#F0E6DC] hover:border-[#D4A574] transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-background rounded-full border border-border hover:border-primary-outline transition-colors"
                     >
                         <Smile className="w-3.5 h-3.5" />
                         Set status
@@ -104,12 +104,12 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
     // Edit mode (modal-like inline form)
     return (
-        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-lg p-4 w-full max-w-sm">
+        <div className="bg-brand-card rounded-2xl border border-border shadow-lg p-4 w-full max-w-sm">
             <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-[#3C2415]">Set your status</h3>
+                <h3 className="text-sm font-bold text-foreground">Set your status</h3>
                 <button
                     onClick={() => setIsEditing(false)}
-                    className="text-[#7B5B3A]/40 hover:text-[#7B5B3A] transition-colors"
+                    className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
                 >
                     <X className="w-4 h-4" />
                 </button>
@@ -117,7 +117,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
             {/* Emoji selection */}
             <div className="mb-3">
-                <p className="text-[10px] font-bold text-[#7B5B3A] uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
                     Emoji
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -127,8 +127,8 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                             onClick={() => setStatusEmoji(emoji)}
                             className={`w-8 h-8 rounded-lg flex items-center justify-center text-base transition-all ${
                                 statusEmoji === emoji
-                                    ? "bg-[#D4A574]/20 border border-[#D4A574] scale-110"
-                                    : "bg-[#FAF5F0] border border-[#F0E6DC] hover:border-[#D4A574]/50"
+                                    ? "bg-primary-tint/20 border border-primary-outline scale-110"
+                                    : "bg-background border border-border hover:border-primary-outline/50"
                             }`}
                         >
                             {emoji}
@@ -139,7 +139,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
 
             {/* Status text */}
             <div className="mb-3">
-                <p className="text-[10px] font-bold text-[#7B5B3A] uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
                     Status
                 </p>
                 <input
@@ -148,19 +148,19 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                     onChange={(e) => setStatusText(e.target.value)}
                     placeholder="What's on your mind?"
                     maxLength={80}
-                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground/40 focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                 />
             </div>
 
             {/* Expiry */}
             <div className="mb-4">
-                <p className="text-[10px] font-bold text-[#7B5B3A] uppercase tracking-wide mb-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5">
                     Clear after
                 </p>
                 <select
                     value={expiresIn}
                     onChange={(e) => setExpiresIn(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                 >
                     <option value="never">Don&apos;t clear</option>
                     <option value="1">1 hour</option>
@@ -176,7 +176,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                     <button
                         onClick={handleClear}
                         disabled={updateStatus.isPending}
-                        className="flex-1 px-3 py-2 text-xs font-bold text-[#7B5B3A] bg-[#FAF5F0] rounded-lg border border-[#F0E6DC] hover:bg-[#F0E6DC] disabled:opacity-50 transition-colors"
+                        className="flex-1 px-3 py-2 text-xs font-bold text-muted-foreground bg-background rounded-lg border border-border hover:bg-secondary disabled:opacity-50 transition-colors"
                     >
                         Clear status
                     </button>
@@ -184,7 +184,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                 <button
                     onClick={handleSave}
                     disabled={updateStatus.isPending || (!statusText.trim() && !statusEmoji)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-[#7B5B3A] rounded-lg hover:bg-[#3C2415] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-primary-ink rounded-lg hover:bg-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     {updateStatus.isPending ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />

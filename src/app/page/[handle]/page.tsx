@@ -34,16 +34,16 @@ export default function BusinessPageDetail() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0]">
-                <Loader2 className="h-7 w-7 animate-spin text-[#7B5B3A]" />
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
             </div>
         )
     }
     if (error || !page) {
         return (
-            <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#FAF5F0] text-center">
-                <p className="text-[#3C2415] font-semibold">Page not found</p>
-                <button onClick={() => router.push('/pages')} className="text-sm text-[#7B5B3A] underline">
+            <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background text-center">
+                <p className="text-foreground font-semibold">Page not found</p>
+                <button onClick={() => router.push('/pages')} className="text-sm text-muted-foreground underline">
                     Browse pages
                 </button>
             </div>
@@ -62,28 +62,28 @@ export default function BusinessPageDetail() {
     const hintButtons = (page.actionButtons ?? []).filter((b) => !b.gated)
 
     return (
-        <div className="min-h-screen bg-[#FAF5F0] pb-16">
+        <div className="min-h-screen bg-background pb-16">
             {/* Top bar */}
-            <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-[#F0E6DC] bg-[#FAF5F0]/85 px-4 py-3 backdrop-blur-sm">
-                <button onClick={() => router.back()} className="rounded-full p-1.5 hover:bg-[#F0E6DC]">
-                    <ArrowLeft className="h-5 w-5 text-[#3C2415]" />
+            <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-sm">
+                <button onClick={() => router.back()} className="rounded-full p-1.5 hover:bg-secondary">
+                    <ArrowLeft className="h-5 w-5 text-foreground" />
                 </button>
-                <span className="truncate text-sm font-semibold text-[#3C2415]">{page.page_name}</span>
+                <span className="truncate text-sm font-semibold text-foreground">{page.page_name}</span>
             </div>
 
             {/* Cover */}
-            <div className="relative h-40 w-full bg-linear-to-br from-[#E8D9C5] to-[#D4A574]/40 sm:h-52">
+            <div className="relative h-40 w-full bg-linear-to-br from-[#E8D9C5] to-primary/40 sm:h-52">
                 {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
             </div>
 
             <div className="mx-auto max-w-2xl px-4">
                 {/* Avatar + identity */}
                 <div className="-mt-10 flex items-end gap-4">
-                    <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-[#FAF5F0] bg-white shadow-xs">
+                    <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-border bg-white shadow-xs">
                         {avatar ? (
                             <img src={avatar} alt="" className="h-full w-full object-cover" />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-[#7B5B3A] text-2xl font-bold text-white">
+                            <div className="flex h-full w-full items-center justify-center bg-primary-ink text-2xl font-bold text-white">
                                 {page.page_name.charAt(0).toUpperCase()}
                             </div>
                         )}
@@ -92,12 +92,12 @@ export default function BusinessPageDetail() {
 
                 <div className="mt-3">
                     <div className="flex items-center gap-1.5">
-                        <h1 className="text-xl font-bold text-[#3C2415]">{page.page_name}</h1>
-                        {page.is_verified && <BadgeCheck className="h-5 w-5 text-[#2563EB]" />}
+                        <h1 className="text-xl font-bold text-foreground">{page.page_name}</h1>
+                        {page.is_verified && <BadgeCheck className="h-5 w-5 text-primary-ink" />}
                     </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#7B5B3A]">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
                         <span>{displayType}</span>
-                        <span className="text-[#7B5B3A]/40">·</span>
+                        <span className="text-muted-foreground/40">·</span>
                         <span className="inline-flex items-center gap-1">
                             <Users className="h-3.5 w-3.5" />
                             {page.follower_count.toLocaleString()} {page.follower_count === 1 ? 'follower' : 'followers'}
@@ -110,7 +110,7 @@ export default function BusinessPageDetail() {
                         )}
                     </div>
                     {page.description && (
-                        <p className="mt-2 text-[14px] leading-relaxed text-[#3C2415]/80">{page.description}</p>
+                        <p className="mt-2 text-[14px] leading-relaxed text-foreground/80">{page.description}</p>
                     )}
                 </div>
 
@@ -138,7 +138,7 @@ export default function BusinessPageDetail() {
                         <button
                             onClick={onUnfollow}
                             disabled={unfollow.isPending}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-5 py-2.5 text-[13px] font-semibold text-[#3C2415] transition hover:bg-[#F0E6DC] disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-5 py-2.5 text-[13px] font-semibold text-foreground transition hover:bg-secondary disabled:opacity-60"
                         >
                             {unfollow.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-emerald-600" />}
                             Following
@@ -147,7 +147,7 @@ export default function BusinessPageDetail() {
                     {actions?.canManage && (
                         <button
                             onClick={() => router.push('/pages/manage')}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-5 py-2.5 text-[13px] font-semibold text-[#3C2415] transition hover:bg-[#F0E6DC]"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-5 py-2.5 text-[13px] font-semibold text-foreground transition hover:bg-secondary"
                         >
                             <Settings className="h-4 w-4" />
                             Manage Page
@@ -167,7 +167,7 @@ export default function BusinessPageDetail() {
 }
 
 function HintButton({ btn, website, phone }: { btn: PageActionButton; website?: string; phone?: string }) {
-    const base = 'inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#3C2415] transition hover:bg-[#F0E6DC]'
+    const base = 'inline-flex items-center gap-1.5 rounded-full border border-[#E0D5C8] bg-white px-4 py-2.5 text-[13px] font-semibold text-foreground transition hover:bg-secondary'
     if ((btn.id === 'website' || btn.id === 'official_website') && website) {
         return <a href={website} target="_blank" rel="noreferrer" className={base}><Globe className="h-4 w-4" />{btn.label}</a>
     }
@@ -200,8 +200,8 @@ function OwnerPanel({ page, handle }: { page: import('@/types/profile').Business
     }
 
     return (
-        <div className="mt-6 rounded-2xl border border-[#F0E6DC] bg-white p-4">
-            <h2 className="text-xs font-bold uppercase tracking-wide text-[#7B5B3A]">Verification</h2>
+        <div className="mt-6 rounded-2xl border border-border bg-white p-4">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Verification</h2>
             {page.status === 'rejected' && page.rejection_reason && (
                 <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-[12px] text-rose-700">
                     Rejected: {page.rejection_reason}
@@ -213,21 +213,21 @@ function OwnerPanel({ page, handle }: { page: import('@/types/profile').Business
                     const have = uploadedTypes.has(d)
                     const docRow = docs.find((x) => x.document_type === d)
                     return (
-                        <div key={d} className="flex items-center justify-between gap-3 rounded-xl border border-[#F0E6DC] px-3 py-2.5">
+                        <div key={d} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
                             <div className="flex items-center gap-2">
-                                {have ? <FileCheck2 className="h-4 w-4 text-emerald-600" /> : <Upload className="h-4 w-4 text-[#7B5B3A]/50" />}
-                                <span className="text-[13px] text-[#3C2415]">
+                                {have ? <FileCheck2 className="h-4 w-4 text-emerald-600" /> : <Upload className="h-4 w-4 text-muted-foreground/50" />}
+                                <span className="text-[13px] text-foreground">
                                     {documentLabel(d)}
                                     {req && <span className="ml-1 text-rose-400">*</span>}
                                 </span>
                                 {docRow && (
-                                    <span className="text-[11px] text-[#7B5B3A]/60">({docRow.status})</span>
+                                    <span className="text-[11px] text-muted-foreground/60">({docRow.status})</span>
                                 )}
                             </div>
                             <button
                                 onClick={() => upload(d)}
                                 disabled={addDoc.isPending && pendingType === d}
-                                className="rounded-lg bg-[#F0E6DC] px-3 py-1 text-[12px] font-semibold text-[#3C2415] hover:bg-[#E0D5C8] disabled:opacity-60"
+                                className="rounded-lg bg-secondary px-3 py-1 text-[12px] font-semibold text-foreground hover:bg-[#E0D5C8] disabled:opacity-60"
                             >
                                 {addDoc.isPending && pendingType === d ? '…' : have ? 'Replace' : 'Upload'}
                             </button>
@@ -235,7 +235,7 @@ function OwnerPanel({ page, handle }: { page: import('@/types/profile').Business
                     )
                 })}
                 {required.length === 0 && optional.length === 0 && (
-                    <p className="text-[13px] text-[#7B5B3A]/70">No documents required for this page type.</p>
+                    <p className="text-[13px] text-muted-foreground/70">No documents required for this page type.</p>
                 )}
             </div>
 
@@ -244,7 +244,7 @@ function OwnerPanel({ page, handle }: { page: import('@/types/profile').Business
                     onClick={() => submit.mutate(page.id)}
                     disabled={submit.isPending || !allRequiredUploaded}
                     title={allRequiredUploaded ? '' : 'Upload all required documents first'}
-                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#7B5B3A] py-3 text-[13px] font-bold text-white transition hover:bg-[#3C2415] disabled:opacity-50"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 text-[13px] font-bold text-white transition hover:bg-foreground disabled:opacity-50"
                 >
                     {submit.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     Submit for review

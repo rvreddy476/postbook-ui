@@ -48,7 +48,7 @@ export function IconSideNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-16 shrink-0 flex-col items-center border-r border-[#E8E8EE] bg-brand-card py-4 gap-1">
+    <aside className="flex h-full w-16 shrink-0 flex-col items-center border-r border-border bg-brand-card py-4 gap-1">
       {/* Main nav */}
       <NavIcon
         href="/"

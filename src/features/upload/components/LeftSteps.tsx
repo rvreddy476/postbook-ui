@@ -46,7 +46,7 @@ export function LeftSteps({ steps, currentStep, currentStepIndex, onStepClick }:
             >
               {/* Step indicator */}
               {isDone ? (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2BB5A0]">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success">
                   <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
                 </div>
               ) : isActive ? (
@@ -80,7 +80,7 @@ export function LeftSteps({ steps, currentStep, currentStepIndex, onStepClick }:
         </div>
         <div className="h-1.5 rounded-full bg-brand-text/10 overflow-hidden">
           <div
-            className="h-full rounded-full bg-[#2BB5A0] transition-all duration-300"
+            className="h-full rounded-full bg-success transition-all duration-300"
             style={{ width: `${(completedCount / totalSteps) * 100}%` }}
           />
         </div>

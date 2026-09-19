@@ -52,7 +52,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
       </h3>
       <table className="w-full text-xs mb-3">
         <thead>
-          <tr className="text-left text-[#6B5544]">
+          <tr className="text-left text-muted-foreground">
             <th>Variant</th>
             <th className="text-right">Qty</th>
             <th className="text-right">Unit price (₹)</th>
@@ -80,7 +80,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
           ))}
         </tbody>
       </table>
-      <label className="block text-xs font-medium text-[#6B5544] mb-1">
+      <label className="block text-xs font-medium text-muted-foreground mb-1">
         Quote valid for (days)
       </label>
       <input
@@ -101,7 +101,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
         </button>
         <button
           onClick={onClose}
-          className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#6B5544] hover:text-[#1A1A1A]"
+          className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
         >
           Cancel
         </button>
@@ -121,13 +121,13 @@ export default function SellerRFQInboxPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <Link href="/seller/dashboard" className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A]">
+          <Link href="/seller/dashboard" className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground">
             ← Dashboard
           </Link>
-          <h1 className="text-2xl font-black text-[#1A1A1A]">RFQ Inbox</h1>
-          <p className="text-sm text-[#6B5544] mt-1">
+          <h1 className="text-2xl font-black text-foreground">RFQ Inbox</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Buyers requesting custom quotes. Send a per-line price to convert into an order.
           </p>
 
@@ -139,7 +139,7 @@ export default function SellerRFQInboxPage() {
                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
                   status === t.value
                     ? 'bg-[#1A1A1A] text-white'
-                    : 'bg-white border border-[#E8DDD3] text-[#4A3728] hover:bg-[#F5F0EB]'
+                    : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {t.label}
@@ -148,7 +148,7 @@ export default function SellerRFQInboxPage() {
           </div>
 
           {rfqs.length === 0 ? (
-            <p className="p-6 bg-white rounded-2xl border border-[#E8DDD3] text-sm text-[#6B5544]">
+            <p className="p-6 bg-white rounded-2xl border border-border text-sm text-muted-foreground">
               Nothing in this bucket.
             </p>
           ) : (
@@ -156,11 +156,11 @@ export default function SellerRFQInboxPage() {
               {rfqs.map((r) => (
                 <div
                   key={r.id}
-                  className="rounded-xl border border-[#E8DDD3] bg-white p-5"
+                  className="rounded-xl border border-border bg-white p-5"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-xs text-[#6B5544]">
+                      <div className="text-xs text-muted-foreground">
                         From buyer{' '}
                         <span className="font-mono">{r.buyer_user_id.slice(0, 8)}…</span>
                         {r.organization_id && (
@@ -169,7 +169,7 @@ export default function SellerRFQInboxPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#6B5544] mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Requested {new Date(r.requested_at).toLocaleString()}
                       </p>
                     </div>
@@ -182,7 +182,7 @@ export default function SellerRFQInboxPage() {
                     </span>
                   </div>
                   {r.message_text && (
-                    <p className="mt-2 text-sm text-[#1A1A1A] whitespace-pre-line">
+                    <p className="mt-2 text-sm text-foreground whitespace-pre-line">
                       {r.message_text}
                     </p>
                   )}
@@ -197,7 +197,7 @@ export default function SellerRFQInboxPage() {
                     ) : null}
                     <Link
                       href={`/rfq/${r.id}`}
-                      className="px-4 py-1.5 border border-[#E8DDD3] text-[#4A3728] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[#F5F0EB]"
+                      className="px-4 py-1.5 border border-border text-muted-foreground text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-secondary"
                     >
                       Open
                     </Link>

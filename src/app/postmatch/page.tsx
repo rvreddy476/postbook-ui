@@ -47,7 +47,7 @@ export default function PostMatchLandingPage() {
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#888]">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-white transition">Features</a>
             <a href="#how-it-works" className="hover:text-white transition">How it Works</a>
           </nav>
@@ -73,7 +73,7 @@ export default function PostMatchLandingPage() {
           <span className="bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">actually gets you.</span>
         </h1>
 
-        <p className="text-lg text-[#888] max-w-2xl mb-10 leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-2xl mb-10 leading-relaxed">
           Smart compatibility scoring, intention-based matching, and safety-first design.
           Built for people serious about finding their person.
         </p>
@@ -103,7 +103,7 @@ export default function PostMatchLandingPage() {
           ].map(s => (
             <div key={s.label}>
               <p className="text-3xl font-black text-white">{s.value}</p>
-              <p className="text-sm text-[#666] mt-0.5">{s.label}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -119,7 +119,7 @@ export default function PostMatchLandingPage() {
               <div key={f.title} className="bg-[#1a1a1a] rounded-2xl border border-[#333] p-6 hover:border-rose-300 hover:shadow-lg hover:shadow-rose-500/5 transition">
                 <div className="text-3xl mb-3">{f.icon}</div>
                 <h3 className="font-bold text-white mb-1">{f.title}</h3>
-                <p className="text-sm text-[#888] leading-relaxed">{f.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -134,9 +134,9 @@ export default function PostMatchLandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {STEPS.map(s => (
               <div key={s.num} className="group">
-                <div className="text-5xl font-black text-[#222] group-hover:text-rose-200 transition mb-4">{s.num}</div>
+                <div className="text-5xl font-black text-foreground group-hover:text-rose-200 transition mb-4">{s.num}</div>
                 <h3 className="font-bold text-white mb-2">{s.title}</h3>
-                <p className="text-sm text-[#888] leading-relaxed">{s.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -171,7 +171,7 @@ export default function PostMatchLandingPage() {
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-5xl font-black text-white mb-4">Ready to meet someone real?</h2>
-          <p className="text-[#888] mb-10">No swiping fatigue. Just meaningful matches.</p>
+          <p className="text-muted-foreground mb-10">No swiping fatigue. Just meaningful matches.</p>
           <Link
             href={startHref}
             className="inline-block px-10 py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-rose-500/20 transition text-sm"
@@ -183,7 +183,7 @@ export default function PostMatchLandingPage() {
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer className="border-t border-[#222] py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[#666]">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© 2026 PostMatch · by VChat</p>
           <div className="flex gap-6">
             <Link href="/postmatch/discover" className="hover:text-white transition">Discover</Link>

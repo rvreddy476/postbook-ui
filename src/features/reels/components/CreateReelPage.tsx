@@ -199,7 +199,7 @@ function VisibilitySelector({
             className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${
               active
                 ? "bg-slate-900 text-white shadow-xs"
-                : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
+                : "bg-secondary text-brand-highlight hover:bg-brand-secondary/70"
             }`}
           >
             <Icon className="h-4 w-4 shrink-0" />
@@ -311,7 +311,7 @@ function TagInput({
               }
             }}
             placeholder={placeholder}
-            className="flex-1 rounded-lg border border-brand-divider bg-[#F9FAFB] px-3 py-2 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="flex-1 rounded-lg border border-brand-divider bg-secondary px-3 py-2 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
         </div>
       )}
@@ -478,7 +478,7 @@ function StepUpload({
             <button
               type="button"
               onClick={clearFile}
-              className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-4 py-2.5 text-[13px] font-medium text-brand-highlight transition hover:bg-brand-secondary/70"
+              className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2.5 text-[13px] font-medium text-brand-highlight transition hover:bg-brand-secondary/70"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Remove
@@ -726,7 +726,7 @@ function StepDetails({
         )}
 
         {/* Copyright checks card */}
-        <div className="w-[200px] rounded-xl border border-brand-divider bg-[#F9FAFB] p-3">
+        <div className="w-[200px] rounded-xl border border-brand-divider bg-secondary p-3">
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="h-4 w-4 text-brand-text/60" />
             <span className="text-[12px] font-semibold text-brand-highlight">Checks</span>
@@ -788,7 +788,7 @@ function StepDetails({
             onChange={(e) => patch({ title: e.target.value })}
             placeholder="Add a title that describes your reel"
             maxLength={100}
-            className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
           <p className="mt-1 text-right text-[11px] text-brand-text/30">{state.title.length}/100</p>
         </div>
@@ -805,7 +805,7 @@ function StepDetails({
             placeholder="Tell viewers about your reel. Use #hashtags and @mentions."
             maxLength={REEL_LIMITS.MAX_CAPTION_LENGTH}
             rows={4}
-            className="w-full resize-none rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-3 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="w-full resize-none rounded-xl border border-brand-divider bg-secondary px-4 py-3 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
           <div className="mt-1.5 flex items-center justify-between px-1">
             <span className="text-[11px] text-brand-text/30">
@@ -839,7 +839,7 @@ function StepDetails({
             Is this reel made for kids? (Required by COPPA)
           </p>
           <div className="space-y-2">
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <input
                 type="radio"
                 name="audience-kids"
@@ -851,7 +851,7 @@ function StepDetails({
                 <span className="text-[13px] font-medium text-brand-text">No, it&apos;s not made for kids</span>
               </div>
             </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <input
                 type="radio"
                 name="audience-kids"
@@ -874,7 +874,7 @@ function StepDetails({
           <p className="mb-3 text-[12px] text-brand-text/60">
             Let viewers know if your reel contains paid promotion, sponsorship, or product placement.
           </p>
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
             <input
               type="checkbox"
               checked={state.paidPromotion}
@@ -893,7 +893,7 @@ function StepDetails({
           <p className="mb-3 text-[12px] text-brand-text/60">
             Disclose if your reel uses AI-generated or significantly altered content that could be mistaken as real.
           </p>
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
             <input
               type="checkbox"
               checked={state.alteredContent}
@@ -910,7 +910,7 @@ function StepDetails({
         {/* Smart features: chapters, places, concepts */}
         <Section title="Automatic features" icon={Sparkles} defaultOpen>
           <div className="space-y-3">
-            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Automatic chapters</span>
                 <p className="text-[11px] text-brand-text/60">Auto-generate chapters based on your content</p>
@@ -922,7 +922,7 @@ function StepDetails({
                 className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
-            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Featured places</span>
                 <p className="text-[11px] text-brand-text/60">Allow automatic detection and tagging of locations</p>
@@ -934,7 +934,7 @@ function StepDetails({
                 className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
-            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Automatic concepts</span>
                 <p className="text-[11px] text-brand-text/60">Auto-tag concepts and topics from your content</p>
@@ -971,7 +971,7 @@ function StepDetails({
                 id="category"
                 value={state.category}
                 onChange={(e) => patch({ category: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               >
                 <option value="">Select a category</option>
                 {CATEGORIES.map((cat) => (
@@ -988,7 +988,7 @@ function StepDetails({
                   className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
                     state.topicId === null
                       ? "bg-slate-900 text-white"
-                      : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
+                      : "bg-secondary text-brand-highlight hover:bg-brand-secondary/70"
                   }`}
                 >
                   None
@@ -1001,7 +1001,7 @@ function StepDetails({
                     className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition ${
                       state.topicId === topic.id
                         ? "bg-slate-900 text-white"
-                        : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
+                        : "bg-secondary text-brand-highlight hover:bg-brand-secondary/70"
                     }`}
                   >
                     {topic.icon ? `${topic.icon} ` : ""}{topic.label}
@@ -1023,7 +1023,7 @@ function StepDetails({
                 id="language"
                 value={state.language}
                 onChange={(e) => patch({ language: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -1050,7 +1050,7 @@ function StepDetails({
                 type="date"
                 value={state.recordingDate}
                 onChange={(e) => patch({ recordingDate: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               />
             </div>
             <div>
@@ -1063,7 +1063,7 @@ function StepDetails({
                 value={state.recordingLocation}
                 onChange={(e) => patch({ recordingLocation: e.target.value })}
                 placeholder="Search for a location..."
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               />
             </div>
           </div>
@@ -1075,7 +1075,7 @@ function StepDetails({
             <div>
               <label className="mb-1.5 block text-[12px] font-medium text-brand-highlight">License</label>
               <div className="space-y-2">
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
                   <input
                     type="radio"
                     name="license"
@@ -1085,7 +1085,7 @@ function StepDetails({
                   />
                   <span className="text-[13px] font-medium text-brand-text">Standard VChat License</span>
                 </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
                   <input
                     type="radio"
                     name="license"
@@ -1098,7 +1098,7 @@ function StepDetails({
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Allow embedding</span>
                 <p className="text-[11px] text-brand-text/60">Allow others to embed this reel on their websites</p>
@@ -1111,7 +1111,7 @@ function StepDetails({
               />
             </label>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Publish to subscriptions feed</span>
                 <p className="text-[11px] text-brand-text/60">Notify subscribers and show in their feed</p>
@@ -1141,7 +1141,7 @@ function StepDetails({
             ).map((opt) => (
               <label
                 key={opt.value}
-                className="flex cursor-pointer items-center gap-3 rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary"
+                className="flex cursor-pointer items-center gap-3 rounded-xl bg-secondary px-4 py-3 transition hover:bg-brand-secondary"
               >
                 <input
                   type="radio"
@@ -1163,7 +1163,7 @@ function StepDetails({
         <Section title="Comments & ratings" icon={MessageSquare} defaultOpen>
           <div className="space-y-4">
             {/* Likes toggle */}
-            <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Show likes</span>
                 <p className="text-[11px] text-brand-text/60">Allow viewers to see like count and react</p>
@@ -1186,7 +1186,7 @@ function StepDetails({
             </div>
 
             {/* Comments toggle */}
-            <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3">
               <div>
                 <span className="text-[13px] font-medium text-brand-text">Enable comments</span>
                 <p className="text-[11px] text-brand-text/60">Allow viewers to post comments on this reel</p>
@@ -1217,7 +1217,7 @@ function StepDetails({
                   <select
                     value={state.commentAccess}
                     onChange={(e) => patch({ commentAccess: e.target.value as CommentAccess })}
-                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                    className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
                   >
                     <option value="everyone">Everyone</option>
                     <option value="followers">Followers only</option>
@@ -1232,7 +1232,7 @@ function StepDetails({
                   <select
                     value={state.commentModeration}
                     onChange={(e) => patch({ commentModeration: e.target.value as CommentModeration })}
-                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                    className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
                   >
                     <option value="none">None</option>
                     <option value="basic">Basic — hold potentially inappropriate comments</option>
@@ -1247,7 +1247,7 @@ function StepDetails({
 
         {/* Cross-post */}
         <Section title="Cross-post" icon={Send} defaultOpen>
-          <div className="flex items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3">
             <div>
               <span className="text-[13px] font-medium text-brand-text">Publish to Feed</span>
               <p className="text-[11px] text-brand-text/60">Share as a post on your Feed</p>
@@ -1283,7 +1283,7 @@ function StepDetails({
               onChange={(e) => patch({ seoTitle: e.target.value })}
               placeholder="Custom title for search engines"
               maxLength={120}
-              className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+              className="w-full rounded-xl border border-brand-divider bg-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
             />
             <p className="mt-1 text-right text-[11px] text-brand-text/30">{state.seoTitle.length}/120</p>
           </div>
@@ -1354,7 +1354,7 @@ function StepReview({
         />
 
         {/* Schedule toggle */}
-        <div className="rounded-2xl border border-brand-divider bg-[#F9FAFB] p-4 space-y-3">
+        <div className="rounded-2xl border border-brand-divider bg-secondary p-4 space-y-3">
           <label className="flex cursor-pointer items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-brand-text/60" />
@@ -1387,7 +1387,7 @@ function StepReview({
         </div>
 
         {/* Summary card */}
-        <div className="rounded-2xl border border-brand-divider bg-[#F9FAFB] p-5 space-y-4">
+        <div className="rounded-2xl border border-brand-divider bg-secondary p-5 space-y-4">
           <h3 className="text-[14px] font-bold text-brand-text">Summary</h3>
 
           {/* Title */}
@@ -1500,7 +1500,7 @@ function StepReview({
           {state.crossPostPostbook && (
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/30 mb-1">Cross-post</p>
-              <span className="rounded-full bg-[#E8527A]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#E8527A]">
+              <span className="rounded-full bg-[#E8527A]/10 px-2.5 py-0.5 text-[11px] font-medium text-danger">
                 Feed
               </span>
             </div>
@@ -1550,7 +1550,7 @@ function StepReview({
             type="button"
             onClick={onSaveDraft}
             disabled={saveDraftPending}
-            className="flex items-center gap-2 rounded-full bg-[#F5F5F7] px-5 py-3 text-[13px] font-semibold text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-40"
+            className="flex items-center gap-2 rounded-full bg-secondary px-5 py-3 text-[13px] font-semibold text-brand-highlight transition hover:bg-brand-secondary/70 disabled:opacity-40"
           >
             {saveDraftPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1647,7 +1647,7 @@ function CreateReelWizard() {
             <button
               type="button"
               onClick={prevStep}
-              className="flex items-center gap-1.5 rounded-full bg-[#F5F5F7] px-4 py-2 text-[12px] font-medium text-brand-highlight transition hover:bg-brand-secondary/70"
+              className="flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-[12px] font-medium text-brand-highlight transition hover:bg-brand-secondary/70"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back

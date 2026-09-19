@@ -51,17 +51,17 @@ export default function TwoFASetup({
     return (
       <div className="space-y-5">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-[#3C2415]">
+          <h3 className="text-sm font-semibold text-foreground">
             Step 1: Set up your authenticator app
           </h3>
-          <p className="text-xs text-[#7B5B3A]">
+          <p className="text-xs text-muted-foreground">
             Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.)
             or manually enter the secret key.
           </p>
         </div>
 
         {/* QR Code Image */}
-        <div className="flex justify-center rounded-xl border border-[#F0E6DC] bg-brand-card p-4">
+        <div className="flex justify-center rounded-xl border border-border bg-brand-card p-4">
           <img
             src={setupData.qr_code_url}
             alt="2FA QR Code"
@@ -71,15 +71,15 @@ export default function TwoFASetup({
 
         {/* Secret key */}
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-[#7B5B3A]">Secret Key</p>
+          <p className="text-xs font-semibold text-muted-foreground">Secret Key</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] px-3 py-2 font-mono text-sm tracking-wider text-[#3C2415]">
+            <code className="flex-1 rounded-lg bg-background border border-border px-3 py-2 font-mono text-sm tracking-wider text-foreground">
               {setupData.secret}
             </code>
             <button
               type="button"
               onClick={handleCopySecret}
-              className="shrink-0 rounded-lg border border-[#F0E6DC] bg-brand-card p-2 text-[#7B5B3A] transition-colors hover:bg-[#FAF5F0]"
+              className="shrink-0 rounded-lg border border-border bg-brand-card p-2 text-muted-foreground transition-colors hover:bg-background"
             >
               {copiedSecret ? (
                 <Check className="h-4 w-4 text-emerald-600" />
@@ -93,7 +93,7 @@ export default function TwoFASetup({
         <button
           type="button"
           onClick={() => setStep(2)}
-          className="w-full rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f]"
+          className="w-full rounded-xl bg-primary-tint py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink"
         >
           Next
         </button>
@@ -105,16 +105,16 @@ export default function TwoFASetup({
     return (
       <div className="space-y-5">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-[#3C2415]">
+          <h3 className="text-sm font-semibold text-foreground">
             Step 2: Verify your authenticator
           </h3>
-          <p className="text-xs text-[#7B5B3A]">
+          <p className="text-xs text-muted-foreground">
             Enter the 6-digit code from your authenticator app to confirm the setup.
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-[#7B5B3A]">Verification Code</label>
+          <label className="text-xs font-semibold text-muted-foreground">Verification Code</label>
           <input
             type="text"
             inputMode="numeric"
@@ -125,7 +125,7 @@ export default function TwoFASetup({
               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
               setVerifyCode(val);
             }}
-            className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-[#3C2415] outline-hidden transition-all placeholder:text-[#D4A574]/50 focus:ring-2 focus:ring-[#D4A574]/30"
+            className="w-full rounded-xl border border-border bg-brand-card px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-foreground outline-hidden transition-all placeholder:text-primary-ink/50 focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
@@ -139,7 +139,7 @@ export default function TwoFASetup({
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="flex-1 rounded-xl border border-[#F0E6DC] bg-brand-card py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
+            className="flex-1 rounded-xl border border-border bg-brand-card py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-background"
           >
             Back
           </button>
@@ -154,7 +154,7 @@ export default function TwoFASetup({
               }
             }}
             disabled={isVerifying || verifyCode.length !== 6}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-2.5 text-sm font-bold text-white transition-all hover:bg-[#c4955f] disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-tint py-2.5 text-sm font-bold text-white transition-all hover:bg-primary-ink disabled:opacity-50"
           >
             {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
           </button>
@@ -167,10 +167,10 @@ export default function TwoFASetup({
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-[#3C2415]">
+        <h3 className="text-sm font-semibold text-foreground">
           Step 3: Save your recovery codes
         </h3>
-        <p className="text-xs text-[#7B5B3A]">
+        <p className="text-xs text-muted-foreground">
           These codes can be used to access your account if you lose your authenticator device.
           Each code can only be used once.
         </p>
@@ -189,7 +189,7 @@ export default function TwoFASetup({
         {setupData.recovery_codes.map((code) => (
           <div
             key={code}
-            className="rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] px-3 py-2 text-center font-mono text-sm tracking-wider text-[#3C2415]"
+            className="rounded-lg bg-background border border-border px-3 py-2 text-center font-mono text-sm tracking-wider text-foreground"
           >
             {code}
           </div>
@@ -199,7 +199,7 @@ export default function TwoFASetup({
       <button
         type="button"
         onClick={handleCopyAllCodes}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#F0E6DC] bg-brand-card py-2.5 text-sm font-semibold text-[#7B5B3A] transition-all hover:bg-[#FAF5F0]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-brand-card py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-background"
       >
         {copiedCodes ? (
           <>
@@ -217,7 +217,7 @@ export default function TwoFASetup({
       <button
         type="button"
         onClick={onDone}
-        className="w-full rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f]"
+        className="w-full rounded-xl bg-primary-tint py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink"
       >
         Done
       </button>

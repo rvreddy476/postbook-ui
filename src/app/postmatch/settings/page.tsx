@@ -28,7 +28,7 @@ export default function PostMatchSettingsPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/postmatch/discover" className="text-sm text-[#888] hover:text-white">
+          <Link href="/postmatch/discover" className="text-sm text-muted-foreground hover:text-white">
             ← Discover
           </Link>
           <h1 className="text-lg font-bold">Settings</h1>
@@ -45,9 +45,9 @@ export default function PostMatchSettingsPage() {
             <div className="text-2xl">{r.icon}</div>
             <div className="flex-1">
               <div className="font-semibold">{r.label}</div>
-              <div className="text-sm text-[#888]">{r.desc}</div>
+              <div className="text-sm text-muted-foreground">{r.desc}</div>
             </div>
-            <div className="text-[#555]">→</div>
+            <div className="text-foreground">→</div>
           </Link>
         ))}
 

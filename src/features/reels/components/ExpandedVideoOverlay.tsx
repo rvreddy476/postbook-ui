@@ -158,7 +158,7 @@ export function ExpandedVideoOverlay({
             {/* Comments panel */}
             {showComments && commentsVisible ? (
               <div className="flex w-[380px] shrink-0 flex-col rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between border-b border-[#E8E8EE] px-4 py-3">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <h3 className="text-[13px] font-bold text-brand-text">
                     Comments{typeof commentCount === "number" ? ` (${commentCount})` : ""}
                   </h3>

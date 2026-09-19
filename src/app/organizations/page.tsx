@@ -39,71 +39,71 @@ export default function OrganizationsListPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-black text-[#1A1A1A]">Organizations</h1>
-              <p className="text-sm text-[#6B5544] mt-1">
+              <h1 className="text-2xl font-black text-foreground">Organizations</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Buy on behalf of a company: shared billing, approval routing, credit terms.
               </p>
             </div>
             <button
               onClick={() => setShowForm((v) => !v)}
-              className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-[#3A2E26] transition text-sm"
+              className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-foreground transition text-sm"
             >
               {showForm ? 'Cancel' : '+ New Organization'}
             </button>
           </div>
 
           {showForm && (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-6 mb-6">
-              <h2 className="text-lg font-bold text-[#1A1A1A] mb-4">Create organization</h2>
+            <div className="bg-white rounded-2xl border border-border p-6 mb-6">
+              <h2 className="text-lg font-bold text-foreground mb-4">Create organization</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Name *
                   </span>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Legal name
                   </span>
                   <input
                     value={legalName}
                     onChange={(e) => setLegalName(e.target.value)}
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     GSTIN
                   </span>
                   <input
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
                     placeholder="27ABCDE1234F1Z5"
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Billing email
                   </span>
                   <input
                     type="email"
                     value={billingEmail}
                     onChange={(e) => setBillingEmail(e.target.value)}
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Approval threshold (₹)
                   </span>
                   <input
@@ -113,17 +113,17 @@ export default function OrganizationsListPage() {
                     value={approvalThreshold}
                     onChange={(e) => setApprovalThreshold(e.target.value)}
                     placeholder="Orders ≥ this need approver"
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-xs font-bold uppercase tracking-widest text-[#6B5544] mb-1">
+                  <span className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Credit terms (days)
                   </span>
                   <select
                     value={creditDays}
                     onChange={(e) => setCreditDays(e.target.value)}
-                    className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="0">Prepay only</option>
                     <option value="7">Net 7</option>
@@ -137,7 +137,7 @@ export default function OrganizationsListPage() {
               <button
                 onClick={handleCreate}
                 disabled={!name.trim() || create.isPending}
-                className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-[#3A2E26] disabled:opacity-50"
+                className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-foreground disabled:opacity-50"
               >
                 {create.isPending ? 'Creating…' : 'Create'}
               </button>
@@ -145,10 +145,10 @@ export default function OrganizationsListPage() {
           )}
 
           {isLoading ? (
-            <div className="text-sm text-[#6B5544]">Loading organizations…</div>
+            <div className="text-sm text-muted-foreground">Loading organizations…</div>
           ) : orgs.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <p className="text-sm text-[#6B5544]">
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 You don't belong to any organization yet. Create one to start placing business
                 orders, or ask an existing admin to invite you.
               </p>
@@ -159,23 +159,23 @@ export default function OrganizationsListPage() {
                 <Link
                   key={o.id}
                   href={`/organizations/${o.id}`}
-                  className="block bg-white rounded-2xl border border-[#E8DDD3] p-5 hover:border-[#8B5E3C] transition"
+                  className="block bg-white rounded-2xl border border-border p-5 hover:border-primary-outline transition"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-bold text-[#1A1A1A]">{o.name}</div>
+                      <div className="font-bold text-foreground">{o.name}</div>
                       {o.legal_name && o.legal_name !== o.name && (
-                        <div className="text-xs text-[#6B5544]">{o.legal_name}</div>
+                        <div className="text-xs text-muted-foreground">{o.legal_name}</div>
                       )}
                       {o.gstin && (
-                        <div className="text-xs font-mono text-[#6B5544] mt-1">GSTIN {o.gstin}</div>
+                        <div className="text-xs font-mono text-muted-foreground mt-1">GSTIN {o.gstin}</div>
                       )}
                     </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#F5F0EB] text-[#4A3728]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-secondary text-muted-foreground">
                       {o.status}
                     </span>
                   </div>
-                  <div className="mt-3 text-xs text-[#6B5544] flex gap-4">
+                  <div className="mt-3 text-xs text-muted-foreground flex gap-4">
                     {o.approval_threshold && (
                       <span>Approval ≥ ₹{o.approval_threshold.toFixed(0)}</span>
                     )}

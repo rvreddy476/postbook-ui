@@ -26,21 +26,21 @@ export default function AcceptInvitePage({
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center">
-        <div className="bg-white rounded-2xl border border-[#E8DDD3] p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-border p-8 max-w-md w-full text-center">
           {accept.isPending && (
-            <p className="text-sm text-[#6B5544]">Accepting invitation…</p>
+            <p className="text-sm text-muted-foreground">Accepting invitation…</p>
           )}
           {accept.isSuccess && (
             <>
-              <h1 className="text-xl font-black text-[#1A1A1A] mb-1">Welcome aboard</h1>
-              <p className="text-sm text-[#6B5544]">Redirecting to your organization…</p>
+              <h1 className="text-xl font-black text-foreground mb-1">Welcome aboard</h1>
+              <p className="text-sm text-muted-foreground">Redirecting to your organization…</p>
             </>
           )}
           {accept.isError && (
             <>
               <h1 className="text-xl font-black text-red-600 mb-1">Invitation invalid</h1>
-              <p className="text-sm text-[#6B5544]">
+              <p className="text-sm text-muted-foreground">
                 {(accept.error as Error).message ||
                   'Link may have expired or been used already. Ask the admin to send a new one.'}
               </p>

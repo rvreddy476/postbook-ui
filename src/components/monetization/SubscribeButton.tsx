@@ -65,12 +65,12 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
                 <button
                     onClick={() => setShowConfirm(!showConfirm)}
                     disabled={isPending}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#D4A574] text-[#3C2415] hover:bg-brand-card hover:shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-primary-outline text-foreground hover:bg-brand-card hover:shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
-                        <div className="w-3.5 h-3.5 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3.5 h-3.5 border-2 border-primary-outline border-t-transparent rounded-full animate-spin" />
                     ) : (
-                        <svg className="w-3.5 h-3.5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-primary-ink" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     )}
@@ -83,15 +83,15 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
                 {showConfirm && (
                     <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowConfirm(false)} />
-                        <div className="absolute top-full mt-2 right-0 z-50 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-lg p-4 min-w-[220px]">
-                            <p className="text-xs font-black text-[#3C2415] mb-1">Unsubscribe?</p>
-                            <p className="text-[9px] font-bold text-[#7B5B3A] mb-4">
+                        <div className="absolute top-full mt-2 right-0 z-50 bg-brand-card rounded-xl border border-border shadow-lg p-4 min-w-[220px]">
+                            <p className="text-xs font-black text-foreground mb-1">Unsubscribe?</p>
+                            <p className="text-[9px] font-bold text-muted-foreground mb-4">
                                 You will lose access to this creator&apos;s exclusive content at the end of the current billing period.
                             </p>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setShowConfirm(false)}
-                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:bg-brand-card transition-colors"
+                                    className="flex-1 px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -114,7 +114,7 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
         <button
             onClick={handleSubscribe}
             disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {isPending ? (
                 <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />

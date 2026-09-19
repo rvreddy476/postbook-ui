@@ -27,7 +27,7 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
         <Link href="/postmatch" className="text-sm font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">PostMatch</Link>
         <div className="flex gap-1">
           {items.map(i => (
-            <Link key={i.id} href={i.href} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${active === i.id ? 'bg-rose-50 text-rose-600' : 'text-[#666] hover:text-white'}`}>
+            <Link key={i.id} href={i.href} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${active === i.id ? 'bg-rose-50 text-rose-600' : 'text-muted-foreground hover:text-white'}`}>
               <span className="mr-1">{i.icon}</span>{i.label}
             </Link>
           ))}
@@ -37,8 +37,8 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
   )
 }
 
-const inputCls = 'w-full border border-[#333] rounded-xl px-4 py-3 text-white bg-[#1a1a1a] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition-all text-sm font-medium placeholder:text-[#555]'
-const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-[#666] mb-1.5'
+const inputCls = 'w-full border border-[#333] rounded-xl px-4 py-3 text-white bg-[#1a1a1a] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition-all text-sm font-medium placeholder:text-foreground'
+const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5'
 const selectCls = `${inputCls} h-[46px] cursor-pointer`
 
 export default function PostMatchProfilePage() {
@@ -177,14 +177,14 @@ export default function PostMatchProfilePage() {
               {photos.find(p => p.is_primary)?.media_url ? (
                 <img src={photos.find(p => p.is_primary)!.media_url!} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-[#555] text-3xl font-black">{firstName?.[0] ?? '?'}</span>
+                <span className="text-foreground text-3xl font-black">{firstName?.[0] ?? '?'}</span>
               )}
             </div>
           </div>
           <h2 className="text-xl font-black text-white">{firstName || 'Your Profile'}</h2>
           {profile && (
             <div className="flex items-center justify-center gap-3 mt-2">
-              <span className="text-xs text-[#666]">{profile.city}</span>
+              <span className="text-xs text-muted-foreground">{profile.city}</span>
               <span className="inline-block px-2 py-0.5 bg-rose-50 text-rose-500 rounded-sm text-[10px] font-black uppercase tracking-wider">
                 {profile.profile_completion_percent}% complete
               </span>
@@ -195,7 +195,7 @@ export default function PostMatchProfilePage() {
         {/* Tab switcher */}
         <div className="flex gap-1 bg-[#111] rounded-xl border border-[#222] p-1 mb-4">
           {(['profile', 'preferences', 'photos'] as const).map(t => (
-            <button key={t} onClick={() => { setTab(t); setError(''); setSuccess('') }} className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition ${tab === t ? 'bg-gray-900 text-white' : 'text-[#666] hover:text-white'}`}>
+            <button key={t} onClick={() => { setTab(t); setError(''); setSuccess('') }} className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition ${tab === t ? 'bg-gray-900 text-white' : 'text-muted-foreground hover:text-white'}`}>
               {t}
             </button>
           ))}
@@ -233,7 +233,7 @@ export default function PostMatchProfilePage() {
                   <label className={labelCls}>Intent</label>
                   <div className="grid grid-cols-2 gap-2">
                     {([['long_term', 'Long-term'], ['marriage', 'Marriage'], ['casual', 'Casual'], ['figuring_out', 'Figuring Out']] as const).map(([val, label]) => (
-                      <button key={val} type="button" onClick={() => setIntent(val)} className={`py-2.5 rounded-xl border-2 text-xs font-bold transition ${intent === val ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-[#222] text-[#666] hover:border-[#333]'}`}>
+                      <button key={val} type="button" onClick={() => setIntent(val)} className={`py-2.5 rounded-xl border-2 text-xs font-bold transition ${intent === val ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-[#222] text-muted-foreground hover:border-[#333]'}`}>
                         {label}
                       </button>
                     ))}
@@ -255,13 +255,13 @@ export default function PostMatchProfilePage() {
                 <div>
                   <label className={labelCls}>Max Distance ({distanceKm} km)</label>
                   <input type="range" min={5} max={200} value={distanceKm} onChange={e => setDistanceKm(parseInt(e.target.value))} className="w-full accent-rose-500" />
-                  <div className="flex justify-between text-[10px] text-[#555] font-bold mt-1"><span>5 km</span><span>200 km</span></div>
+                  <div className="flex justify-between text-[10px] text-foreground font-bold mt-1"><span>5 km</span><span>200 km</span></div>
                 </div>
                 <div>
                   <label className={labelCls}>Interested In</label>
                   <div className="grid grid-cols-3 gap-2">
                     {([['everyone', 'Everyone'], ['male', 'Men'], ['female', 'Women']] as const).map(([val, label]) => (
-                      <button key={val} type="button" onClick={() => setPrefGender(val)} className={`py-3 rounded-xl border-2 text-xs font-bold transition ${prefGender === val ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-[#222] text-[#666] hover:border-[#333]'}`}>
+                      <button key={val} type="button" onClick={() => setPrefGender(val)} className={`py-3 rounded-xl border-2 text-xs font-bold transition ${prefGender === val ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-[#222] text-muted-foreground hover:border-[#333]'}`}>
                         {label}
                       </button>
                     ))}
@@ -292,7 +292,7 @@ export default function PostMatchProfilePage() {
                           )}
                           <div className="flex-1">
                             <div className="text-white/90">{r.moderation_reason || 'No reason provided.'}</div>
-                            <div className="text-[#888] mt-1">{new Date(r.created_at).toLocaleDateString()}</div>
+                            <div className="text-muted-foreground mt-1">{new Date(r.created_at).toLocaleDateString()}</div>
                           </div>
                         </li>
                       ))}
@@ -305,7 +305,7 @@ export default function PostMatchProfilePage() {
                       {p.media_url ? (
                         <img src={p.media_url} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-[#555] text-xl">📷</div>
+                        <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-foreground text-xl">📷</div>
                       )}
                       {p.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1"><span className="text-[9px] font-black text-white uppercase tracking-widest">Primary</span></div>}
                       <button
@@ -317,7 +317,7 @@ export default function PostMatchProfilePage() {
                   ))}
                   {photos.length === 0 && (
                     <div className="col-span-3 py-8 text-center">
-                      <p className="text-[#666] text-sm">No photos yet.</p>
+                      <p className="text-muted-foreground text-sm">No photos yet.</p>
                       <Link href="/postmatch/onboarding" className="text-rose-500 text-xs font-bold mt-1 inline-block hover:underline">Upload photos →</Link>
                     </div>
                   )}
@@ -329,7 +329,7 @@ export default function PostMatchProfilePage() {
 
         {/* Logout */}
         <div className="mt-6 text-center">
-          <button onClick={handleLogout} className="text-xs font-bold text-[#555] hover:text-red-500 uppercase tracking-widest transition">
+          <button onClick={handleLogout} className="text-xs font-bold text-foreground hover:text-red-500 uppercase tracking-widest transition">
             Sign Out
           </button>
         </div>

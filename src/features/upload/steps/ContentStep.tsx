@@ -112,7 +112,7 @@ export function ContentStep({
               </span>
             )}
             {form.uploadPhase === "done" && (
-              <span className="text-[11px] font-semibold text-[#2BB5A0]">Uploaded</span>
+              <span className="text-[11px] font-semibold text-success">Uploaded</span>
             )}
 
             <button type="button" onClick={() => { fileRef.current?.click(); }} className="text-[11px] font-semibold text-brand-text hover:text-brand-text">Change</button>
@@ -123,7 +123,7 @@ export function ContentStep({
           </div>
 
           {form.uploadError && (
-            <p className="text-[12px] text-[#E8527A]">{form.uploadError}</p>
+            <p className="text-[12px] text-danger">{form.uploadError}</p>
           )}
         </>
       )}
@@ -280,7 +280,7 @@ export function ContentStep({
 
                 {/* Validation message */}
                 {form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000 && (
-                  <p className="text-[11px] text-[#E8527A]">Timestamp exceeds video duration ({fmtMs(form.videoDurationSec * 1000)})</p>
+                  <p className="text-[11px] text-danger">Timestamp exceeds video duration ({fmtMs(form.videoDurationSec * 1000)})</p>
                 )}
 
                 {/* Slider — secondary navigation synced with inputs */}

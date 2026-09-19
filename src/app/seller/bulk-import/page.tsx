@@ -64,24 +64,24 @@ export default function BulkImportPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <Link
             href="/seller/dashboard"
-            className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Dashboard
           </Link>
-          <h1 className="text-2xl font-black text-[#1A1A1A]">Bulk SKU Import</h1>
-          <p className="text-sm text-[#6B5544] mt-1">
+          <h1 className="text-2xl font-black text-foreground">Bulk SKU Import</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Upload a CSV to create or update many products at once. Required columns:{' '}
             <span className="font-mono">sku, title, mrp, selling_price, stock_qty</span>.
             Optional tier columns let you set quantity discounts in the same upload.
           </p>
 
-          <div className="mt-4 bg-white rounded-2xl border border-[#E8DDD3] p-6">
+          <div className="mt-4 bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544]">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 Upload a new CSV
               </h2>
               <button
@@ -94,13 +94,13 @@ export default function BulkImportPage() {
                   a.click()
                   URL.revokeObjectURL(url)
                 }}
-                className="text-xs font-bold text-[#8B5E3C] hover:text-[#1A1A1A] underline"
+                className="text-xs font-bold text-primary-ink hover:text-foreground underline"
               >
                 Download template
               </button>
             </div>
-            <label className="flex items-center justify-center h-32 border-2 border-dashed border-[#E8DDD3] rounded-xl cursor-pointer hover:bg-[#F5F0EB] transition">
-              <span className="text-sm text-[#6B5544]">
+            <label className="flex items-center justify-center h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-secondary transition">
+              <span className="text-sm text-muted-foreground">
                 {uploadProgress ?? 'Click or drop a .csv file to begin'}
               </span>
               <input
@@ -117,11 +117,11 @@ export default function BulkImportPage() {
               <p className="mt-2 text-sm text-red-600">{uploadError}</p>
             )}
             {activeJob.data && (
-              <div className="mt-4 border-t border-[#E8DDD3] pt-4">
-                <p className="text-xs text-[#6B5544]">
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="text-xs text-muted-foreground">
                   Active job <span className="font-mono">{activeJob.data.id.slice(0, 8)}…</span>
                 </p>
-                <p className="text-sm font-bold text-[#1A1A1A]">
+                <p className="text-sm font-bold text-foreground">
                   Status:{' '}
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
@@ -131,7 +131,7 @@ export default function BulkImportPage() {
                     {activeJob.data.status.replace(/_/g, ' ')}
                   </span>
                 </p>
-                <p className="text-xs text-[#6B5544] mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {activeJob.data.total_rows} rows · {activeJob.data.valid_rows} valid ·{' '}
                   {activeJob.data.error_rows} errors
                 </p>
@@ -139,7 +139,7 @@ export default function BulkImportPage() {
                   <button
                     onClick={() => execute.mutate(activeJob.data!.id)}
                     disabled={execute.isPending}
-                    className="mt-3 px-5 py-2 bg-[#1A1A1A] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3A2E26] disabled:opacity-50"
+                    className="mt-3 px-5 py-2 bg-[#1A1A1A] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-foreground disabled:opacity-50"
                   >
                     {execute.isPending ? 'Importing…' : `Import ${activeJob.data.valid_rows} rows`}
                   </button>
@@ -156,31 +156,31 @@ export default function BulkImportPage() {
             )}
           </div>
 
-          <div className="mt-6 bg-white rounded-2xl border border-[#E8DDD3] overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#E8DDD3]">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544]">
+          <div className="mt-6 bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-6 py-4 border-b border-border">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 Recent imports
               </h2>
             </div>
             {jobs.length === 0 ? (
-              <p className="p-6 text-sm text-[#6B5544]">No imports yet.</p>
+              <p className="p-6 text-sm text-muted-foreground">No imports yet.</p>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-[#F5F0EB] text-left">
+                <thead className="bg-secondary text-left">
                   <tr>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Started
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Filename
                     </th>
-                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Rows
                     </th>
-                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-2 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Errors
                     </th>
                   </tr>
@@ -190,9 +190,9 @@ export default function BulkImportPage() {
                     <tr
                       key={j.id}
                       onClick={() => setActiveJobId(j.id)}
-                      className={`cursor-pointer hover:bg-[#F5F0EB]/50 ${activeJobId === j.id ? 'bg-[#F5F0EB]' : ''}`}
+                      className={`cursor-pointer hover:bg-secondary/50 ${activeJobId === j.id ? 'bg-secondary' : ''}`}
                     >
-                      <td className="px-4 py-2 text-xs text-[#6B5544]">
+                      <td className="px-4 py-2 text-xs text-muted-foreground">
                         {new Date(j.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-2 font-mono text-xs truncate max-w-[24ch]">
@@ -208,7 +208,7 @@ export default function BulkImportPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2 text-right font-mono">
-                        {j.total_rows} <span className="text-[#6B5544]">/ {j.imported_rows}</span>
+                        {j.total_rows} <span className="text-muted-foreground">/ {j.imported_rows}</span>
                       </td>
                       <td className="px-4 py-2 text-right font-mono">
                         {j.error_rows > 0 ? (

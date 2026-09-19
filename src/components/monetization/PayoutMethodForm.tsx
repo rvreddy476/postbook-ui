@@ -74,20 +74,20 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
     }
 
     const inputClass =
-        "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
+        "w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold text-foreground placeholder:text-primary-ink/60 focus:outline-hidden focus:ring-2 focus:ring-primary/30 focus:border-primary-outline transition-all duration-200"
 
     return (
-        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
+        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-border p-6 shadow-xs">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary-ink flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                 </div>
                 <div>
-                    <h3 className="text-sm font-black text-[#3C2415]">Add Payout Method</h3>
-                    <p className="text-[9px] font-bold text-[#7B5B3A] uppercase tracking-widest">Choose how you want to receive payouts</p>
+                    <h3 className="text-sm font-black text-foreground">Add Payout Method</h3>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Choose how you want to receive payouts</p>
                 </div>
             </div>
 
@@ -103,8 +103,8 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                         }}
                         className={`flex flex-col items-center gap-2 px-3 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
                             selectedMethod === opt.value
-                                ? "bg-[#FAF5F0] text-[#3C2415] border-[#D4A574] shadow-xs"
-                                : "bg-brand-card text-[#7B5B3A] border-[#F0E6DC] hover:border-[#D4A574]/50 hover:bg-[#FAF5F0]/50"
+                                ? "bg-background text-foreground border-primary-outline shadow-xs"
+                                : "bg-brand-card text-muted-foreground border-border hover:border-primary-outline/50 hover:bg-background/50"
                         }`}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -119,7 +119,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
             {selectedMethod === "upi" && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">UPI ID</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">UPI ID</label>
                         <input
                             type="text"
                             value={upiId}
@@ -136,7 +136,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
             {selectedMethod === "bank_transfer" && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">Account Holder Name</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Account Holder Name</label>
                         <input
                             type="text"
                             value={accountHolder}
@@ -147,7 +147,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">Bank Name</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Bank Name</label>
                         <input
                             type="text"
                             value={bankName}
@@ -158,7 +158,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">Account Number</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Account Number</label>
                         <input
                             type="text"
                             value={accountNumber}
@@ -169,7 +169,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">IFSC Code</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">IFSC Code</label>
                         <input
                             type="text"
                             value={ifscCode}
@@ -186,7 +186,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
             {selectedMethod === "paypal" && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1.5">PayPal Email</label>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">PayPal Email</label>
                         <input
                             type="email"
                             value={paypalEmail}
@@ -204,7 +204,7 @@ const PayoutMethodForm: React.FC<PayoutMethodFormProps> = ({ onSubmit, isPending
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <>

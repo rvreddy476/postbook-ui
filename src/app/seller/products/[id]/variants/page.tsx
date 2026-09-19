@@ -125,18 +125,18 @@ export default function SellerProductVariantsPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <Link
                 href="/seller/products"
-                className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+                className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
               >
                 ← Products
               </Link>
-              <h1 className="text-2xl font-black text-[#1A1A1A]">Variants</h1>
-              <p className="text-[#6B5544] text-sm mt-1">
+              <h1 className="text-2xl font-black text-foreground">Variants</h1>
+              <p className="text-muted-foreground text-sm mt-1">
                 Size, color, packaging — each one is a sellable SKU under this product.
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function SellerProductVariantsPage() {
                   setEditingId(null)
                   setShowForm(true)
                 }}
-                className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-[#3A2E26] transition text-sm"
+                className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-foreground transition text-sm"
               >
                 + Add Variant
               </button>
@@ -155,8 +155,8 @@ export default function SellerProductVariantsPage() {
           </div>
 
           {showForm && (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-6 mb-6">
-              <h2 className="text-lg font-black text-[#1A1A1A] mb-4">
+            <div className="bg-white rounded-2xl border border-border p-6 mb-6">
+              <h2 className="text-lg font-black text-foreground mb-4">
                 {editingId ? 'Edit Variant' : 'New Variant'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -226,13 +226,13 @@ export default function SellerProductVariantsPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={addVariant.isPending || updateVariant.isPending}
-                  className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-[#3A2E26] transition text-sm disabled:opacity-50"
+                  className="px-5 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-foreground transition text-sm disabled:opacity-50"
                 >
                   {editingId ? 'Save Changes' : 'Create Variant'}
                 </button>
                 <button
                   onClick={resetForm}
-                  className="px-5 py-2.5 bg-[#F5F0EB] text-[#6B5544] rounded-xl font-bold hover:bg-[#E8DDD3] transition text-sm"
+                  className="px-5 py-2.5 bg-secondary text-muted-foreground rounded-xl font-bold hover:bg-secondary transition text-sm"
                 >
                   Cancel
                 </button>
@@ -241,34 +241,34 @@ export default function SellerProductVariantsPage() {
           )}
 
           {isLoading ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <div className="w-8 h-8 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <div className="w-8 h-8 border-2 border-primary-outline border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : variants.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <p className="font-bold text-[#1A1A1A] mb-1">No variants yet</p>
-              <p className="text-[#6B5544] text-sm">
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <p className="font-bold text-foreground mb-1">No variants yet</p>
+              <p className="text-muted-foreground text-sm">
                 Add a variant for each SKU you want to sell under this product.
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] overflow-hidden">
+            <div className="bg-white rounded-2xl border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-[#F5F0EB] border-b border-[#E8DDD3]">
+                <thead className="bg-secondary border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       SKU
                     </th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Options
                     </th>
-                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       MRP
                     </th>
-                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="text-right px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Selling
                     </th>
-                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Status
                     </th>
                     <th className="px-4 py-3" />
@@ -276,13 +276,13 @@ export default function SellerProductVariantsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#E8DDD3]">
                   {variants.map((v) => (
-                    <tr key={v.id} className="hover:bg-[#F5F0EB]/50 transition">
-                      <td className="px-6 py-4 font-mono text-[13px] text-[#1A1A1A]">{v.sku}</td>
-                      <td className="px-4 py-4 text-[#6B5544] text-xs">{optionsLabel(v)}</td>
+                    <tr key={v.id} className="hover:bg-secondary/50 transition">
+                      <td className="px-6 py-4 font-mono text-[13px] text-foreground">{v.sku}</td>
+                      <td className="px-4 py-4 text-muted-foreground text-xs">{optionsLabel(v)}</td>
                       <td className="px-4 py-4 text-right tabular-nums">
                         {v.currency_code ?? 'INR'} {v.mrp.toFixed(2)}
                       </td>
-                      <td className="px-4 py-4 text-right tabular-nums font-bold text-[#1A1A1A]">
+                      <td className="px-4 py-4 text-right tabular-nums font-bold text-foreground">
                         {v.currency_code ?? 'INR'} {v.selling_price.toFixed(2)}
                       </td>
                       <td className="px-4 py-4">
@@ -292,7 +292,7 @@ export default function SellerProductVariantsPage() {
                         <button
                           onClick={() => startEdit(v)}
                           disabled={v.status === 'archived'}
-                          className="text-[#8B5E3C] hover:text-[#1A1A1A] font-bold text-xs uppercase tracking-wider disabled:opacity-40 transition"
+                          className="text-primary-ink hover:text-foreground font-bold text-xs uppercase tracking-wider disabled:opacity-40 transition"
                         >
                           Edit
                         </button>
@@ -329,7 +329,7 @@ function StatusChip({ status }: { status: string }) {
     status === 'active'
       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
       : status === 'archived'
-      ? 'bg-[#F5F0EB] text-[#6B5544]/50 border border-[#E8DDD3]'
+      ? 'bg-secondary text-muted-foreground/50 border border-border'
       : 'bg-amber-50 text-amber-800 border border-amber-200'
   return (
     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tone}`}>
@@ -348,7 +348,7 @@ function Field(props: {
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1.5">
+      <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
         {props.label}
         {props.required ? <span className="text-red-600 ml-1">*</span> : null}
       </label>
@@ -357,9 +357,9 @@ function Field(props: {
         value={props.value}
         disabled={props.disabled}
         onChange={(e) => props.onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-[#8B5E3C]/30 disabled:bg-[#F5F0EB] disabled:text-[#6B5544]/60"
+        className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/30 disabled:bg-secondary disabled:text-muted-foreground/60"
       />
-      {props.hint && <p className="mt-1 text-[11px] text-[#6B5544]/70">{props.hint}</p>}
+      {props.hint && <p className="mt-1 text-[11px] text-muted-foreground/70">{props.hint}</p>}
     </div>
   )
 }
@@ -372,7 +372,7 @@ function FieldNum(props: {
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1.5">
+      <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
         {props.label}
         {props.required ? <span className="text-red-600 ml-1">*</span> : null}
       </label>
@@ -385,7 +385,7 @@ function FieldNum(props: {
           const n = parseFloat(e.target.value)
           props.onChange(Number.isFinite(n) ? n : 0)
         }}
-        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-[#8B5E3C]/30"
+        className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/30"
       />
     </div>
   )

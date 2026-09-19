@@ -102,9 +102,9 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8 selection:bg-primary-tint/20 selection:text-foreground">
       <div className="w-full max-w-md">
-        <div className="relative overflow-hidden rounded-4xl border border-[#F0E6DC] bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="relative overflow-hidden rounded-4xl border border-border bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             {/* Step 1: Enter email or phone */}
             {step === 'request' && (
@@ -119,27 +119,27 @@ export default function ForgotPasswordPage() {
               >
                 <Link
                   href="/login"
-                  className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7B5B3A] transition-colors hover:text-[#D4A574]"
+                  className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary-ink"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to login
                 </Link>
 
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                    <KeyRound className="h-6 w-6 text-[#D4A574]" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background">
+                    <KeyRound className="h-6 w-6 text-primary-ink" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight text-[#3C2415]">
+                    <h1 className="text-2xl font-black tracking-tight text-foreground">
                       Forgot Password
                     </h1>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#D4A574]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
                       Account Recovery
                     </p>
                   </div>
                 </div>
 
-                <p className="mb-5 text-sm font-medium text-[#7B5B3A]">
+                <p className="mb-5 text-sm font-medium text-muted-foreground">
                   Enter your email address or phone number and we will send you a code to reset your password.
                 </p>
 
@@ -151,7 +151,7 @@ export default function ForgotPasswordPage() {
 
                 <form onSubmit={handleRequestCode} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#7B5B3A]" htmlFor="identifier">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="identifier">
                       Email or Phone Number
                     </label>
                     <input
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="you@example.com or 9876543210"
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 text-sm font-medium text-[#3C2415] outline-hidden transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-border bg-brand-card px-4 py-2.5 text-sm font-medium text-foreground outline-hidden transition-all placeholder:text-primary-ink/40 focus:ring-4 focus:ring-primary/10 focus:border-primary-outline"
                       required
                     />
                   </div>
@@ -168,7 +168,7 @@ export default function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={forgotPassword.isPending}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-tint py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink hover:scale-[1.01] disabled:opacity-60"
                   >
                     {forgotPassword.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                     {forgotPassword.isPending ? 'Sending...' : 'Send Reset Code'}
@@ -194,28 +194,28 @@ export default function ForgotPasswordPage() {
                     setDirection(-1);
                     setStep('request');
                   }}
-                  className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-[#7B5B3A] transition-colors hover:text-[#D4A574]"
+                  className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary-ink"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back
                 </button>
 
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                    <Mail className="h-6 w-6 text-[#D4A574]" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-background">
+                    <Mail className="h-6 w-6 text-primary-ink" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black tracking-tight text-[#3C2415]">
+                    <h2 className="text-xl font-black tracking-tight text-foreground">
                       Reset Password
                     </h2>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#D4A574]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
                       Enter Code & New Password
                     </p>
                   </div>
                 </div>
 
-                <p className="mb-5 text-sm font-medium text-[#7B5B3A]">
-                  We sent a reset code to <strong className="text-[#3C2415]">{identifier}</strong>.
+                <p className="mb-5 text-sm font-medium text-muted-foreground">
+                  We sent a reset code to <strong className="text-foreground">{identifier}</strong>.
                   Enter it below along with your new password.
                 </p>
 
@@ -227,7 +227,7 @@ export default function ForgotPasswordPage() {
 
                 <form onSubmit={handleResetPassword} className="space-y-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#7B5B3A]" htmlFor="resetCode">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="resetCode">
                       Reset Code
                     </label>
                     <input
@@ -239,13 +239,13 @@ export default function ForgotPasswordPage() {
                       onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="000000"
                       maxLength={6}
-                      className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-hidden transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                      className="w-full rounded-xl border border-border bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-foreground outline-hidden transition-all placeholder:tracking-[0.3em] placeholder:text-primary-ink/40 focus:ring-4 focus:ring-primary/10 focus:border-primary-outline"
                       required
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#7B5B3A]" htmlFor="newPassword">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="newPassword">
                       New Password
                     </label>
                     <div className="relative">
@@ -255,14 +255,14 @@ export default function ForgotPasswordPage() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Min 8 characters"
-                        className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-hidden transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                        className="w-full rounded-xl border border-border bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-foreground outline-hidden transition-all placeholder:text-primary-ink/40 focus:ring-4 focus:ring-primary/10 focus:border-primary-outline"
                         required
                         minLength={8}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7B5B3A] transition-colors hover:text-[#3C2415]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                         tabIndex={-1}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -271,7 +271,7 @@ export default function ForgotPasswordPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-[#7B5B3A]" htmlFor="confirmPassword">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="confirmPassword">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -281,14 +281,14 @@ export default function ForgotPasswordPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Re-enter password"
-                        className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-[#3C2415] outline-hidden transition-all placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                        className="w-full rounded-xl border border-border bg-brand-card px-4 py-2.5 pr-11 text-sm font-medium text-foreground outline-hidden transition-all placeholder:text-primary-ink/40 focus:ring-4 focus:ring-primary/10 focus:border-primary-outline"
                         required
                         minLength={8}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7B5B3A] transition-colors hover:text-[#3C2415]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                         tabIndex={-1}
                       >
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -299,7 +299,7 @@ export default function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={resetPassword.isPending}
-                    className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01] disabled:opacity-60"
+                    className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-tint py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink hover:scale-[1.01] disabled:opacity-60"
                   >
                     {resetPassword.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                     {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
@@ -313,7 +313,7 @@ export default function ForgotPasswordPage() {
                       forgotPassword.mutate(identifier.trim());
                     }}
                     disabled={forgotPassword.isPending}
-                    className="text-sm font-semibold text-[#D4A574] transition-colors hover:text-[#3C2415] disabled:opacity-50"
+                    className="text-sm font-semibold text-primary-ink transition-colors hover:text-foreground disabled:opacity-50"
                   >
                     {forgotPassword.isPending ? 'Sending...' : 'Resend Code'}
                   </button>
@@ -336,13 +336,13 @@ export default function ForgotPasswordPage() {
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                     <CheckCircle className="h-8 w-8 text-emerald-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-[#3C2415]">Password Reset!</h2>
-                  <p className="mt-2 text-sm text-[#7B5B3A]">
+                  <h2 className="text-xl font-bold text-foreground">Password Reset!</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Your password has been successfully reset. You can now log in with your new password.
                   </p>
                   <Link
                     href="/login"
-                    className="mt-6 inline-flex items-center justify-center rounded-xl bg-[#D4A574] px-8 py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01]"
+                    className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-tint px-8 py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink hover:scale-[1.01]"
                   >
                     Back to Login
                   </Link>

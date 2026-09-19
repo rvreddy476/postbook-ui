@@ -474,7 +474,7 @@ export default function CreatePostPage() {
     return tokens.map((token, idx) => {
       if (token.startsWith("#") && token.length > 1) {
         return (
-          <span key={idx} className="font-bold text-[#3B82F6] hover:underline cursor-pointer">
+          <span key={idx} className="font-bold text-primary-ink hover:underline cursor-pointer">
             {token}
           </span>
         );

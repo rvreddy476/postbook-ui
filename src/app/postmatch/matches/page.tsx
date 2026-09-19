@@ -19,7 +19,7 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
         <Link href="/postmatch" className="text-sm font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">PostMatch</Link>
         <div className="flex gap-1">
           {items.map(i => (
-            <Link key={i.id} href={i.href} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${active === i.id ? 'bg-rose-50 text-rose-600' : 'text-[#666] hover:text-white'}`}>
+            <Link key={i.id} href={i.href} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${active === i.id ? 'bg-rose-50 text-rose-600' : 'text-muted-foreground hover:text-white'}`}>
               <span className="mr-1">{i.icon}</span>{i.label}
             </Link>
           ))}
@@ -70,7 +70,7 @@ export default function MatchesPage() {
                       {l.photo_url ? (
                         <img src={l.photo_url} alt="" className="w-full h-full object-cover blur-xs" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#555] text-2xl font-black">
+                        <div className="w-full h-full flex items-center justify-center text-foreground text-2xl font-black">
                           {l.first_name[0]}
                         </div>
                       )}
@@ -99,7 +99,7 @@ export default function MatchesPage() {
             <div className="bg-[#111] rounded-2xl border border-[#222] p-8 text-center">
               <div className="text-4xl mb-3">♡</div>
               <h3 className="font-bold text-white mb-1">No matches yet</h3>
-              <p className="text-[#666] text-sm mb-4">Keep discovering — your match is out there!</p>
+              <p className="text-muted-foreground text-sm mb-4">Keep discovering — your match is out there!</p>
               <Link href="/postmatch/discover" className="inline-block px-5 py-2.5 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-xl font-bold text-sm">
                 Discover
               </Link>
@@ -117,7 +117,7 @@ export default function MatchesPage() {
                       {m.other_user?.photo_url ? (
                         <img src={m.other_user.photo_url} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#555] text-2xl font-black">
+                        <div className="w-full h-full flex items-center justify-center text-foreground text-2xl font-black">
                           {m.other_user?.first_name?.[0] ?? '?'}
                         </div>
                       )}
@@ -134,14 +134,14 @@ export default function MatchesPage() {
 
         {/* Conversations */}
         <div>
-          <h2 className="text-xs font-black uppercase tracking-widest text-[#666] mb-4">Conversations</h2>
+          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Conversations</h2>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : conversations.length === 0 ? (
             <div className="bg-[#111] rounded-2xl border border-[#222] p-6 text-center">
-              <p className="text-[#666] text-sm">No conversations yet. Match with someone to start chatting!</p>
+              <p className="text-muted-foreground text-sm">No conversations yet. Match with someone to start chatting!</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function MatchesPage() {
                   className="w-full bg-[#111] rounded-2xl border border-[#222] p-4 flex items-center gap-4 hover:border-rose-200 hover:shadow-md hover:shadow-rose-500/5 transition text-left group"
                 >
                   <div className="w-14 h-14 rounded-full bg-[#1a1a1a] shrink-0 overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center text-[#555] text-xl font-black">
+                    <div className="w-full h-full flex items-center justify-center text-foreground text-xl font-black">
                       {c.other_user?.first_name?.[0] ?? '?'}
                     </div>
                   </div>
@@ -160,12 +160,12 @@ export default function MatchesPage() {
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-white group-hover:text-rose-600 transition">{c.other_user?.first_name ?? 'Unknown'}</h3>
                       {c.last_message && (
-                        <span className="text-[10px] text-[#555] font-bold">
+                        <span className="text-[10px] text-foreground font-bold">
                           {new Date(c.last_message.created_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-[#666] truncate mt-0.5">
+                    <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {c.last_message?.body_text || 'Start the conversation...'}
                     </p>
                   </div>

@@ -27,7 +27,7 @@ export default function RFQDetailPage({
   if (isLoading) {
     return (
       <AppShell activeTab="Shop">
-        <div className="p-8 text-sm text-[#6B5544]">Loading RFQ…</div>
+        <div className="p-8 text-sm text-muted-foreground">Loading RFQ…</div>
       </AppShell>
     )
   }
@@ -49,28 +49,28 @@ export default function RFQDetailPage({
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-          <Link href="/rfq" className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A]">
+          <Link href="/rfq" className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground">
             ← My RFQs
           </Link>
-          <h1 className="text-2xl font-black text-[#1A1A1A]">RFQ {rfq.id.slice(0, 8)}…</h1>
-          <p className="text-sm text-[#6B5544]">
+          <h1 className="text-2xl font-black text-foreground">RFQ {rfq.id.slice(0, 8)}…</h1>
+          <p className="text-sm text-muted-foreground">
             Status: <span className="font-bold">{rfq.status}</span> · Expires{' '}
             {new Date(rfq.expires_at).toLocaleDateString()}
           </p>
 
           {rfq.message_text && (
-            <section className="bg-white rounded-xl border border-[#E8DDD3] p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-2">
+            <section className="bg-white rounded-xl border border-border p-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
                 Your message
               </h2>
               <p className="text-sm whitespace-pre-line">{rfq.message_text}</p>
             </section>
           )}
 
-          <section className="bg-white rounded-xl border border-[#E8DDD3] p-4">
-            <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-2">
+          <section className="bg-white rounded-xl border border-border p-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
               Items requested
             </h2>
             <ul className="text-sm space-y-1">
@@ -88,15 +88,15 @@ export default function RFQDetailPage({
               <h2 className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-2">
                 Seller's quote
               </h2>
-              <p className="text-2xl font-black text-[#1A1A1A]">
+              <p className="text-2xl font-black text-foreground">
                 ₹{liveQuote.quoted_total.toFixed(2)}
               </p>
-              <p className="text-xs text-[#6B5544]">
+              <p className="text-xs text-muted-foreground">
                 Valid until {new Date(liveQuote.expires_at).toLocaleString()}
               </p>
               <table className="w-full text-xs mt-3">
                 <thead>
-                  <tr className="text-left text-[#6B5544]">
+                  <tr className="text-left text-muted-foreground">
                     <th>Item</th>
                     <th className="text-right">Qty</th>
                     <th className="text-right">Unit</th>
@@ -118,13 +118,13 @@ export default function RFQDetailPage({
               {rfq.status === 'quoted' && (
                 <div className="mt-4 pt-4 border-t border-emerald-100 space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-[#6B5544] mb-1">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
                       Ship to
                     </label>
                     <select
                       value={useAddr}
                       onChange={(e) => setSelectedAddr(e.target.value)}
-                      className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="">— Pick an address —</option>
                       {addrList.map((a) => (
@@ -135,7 +135,7 @@ export default function RFQDetailPage({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#6B5544] mb-1">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
                       Payment
                     </label>
                     <select
@@ -143,7 +143,7 @@ export default function RFQDetailPage({
                       onChange={(e) =>
                         setPaymentMethod(e.target.value as 'prepaid' | 'cod' | 'credit')
                       }
-                      className="w-full border border-[#E8DDD3] rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="prepaid">Pay online (Razorpay)</option>
                       <option value="cod">Cash on Delivery</option>
@@ -187,8 +187,8 @@ export default function RFQDetailPage({
               )}
             </section>
           ) : (
-            <section className="bg-white rounded-xl border border-[#E8DDD3] p-4">
-              <p className="text-sm text-[#6B5544]">
+            <section className="bg-white rounded-xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">
                 Waiting for the seller to send a quote. RFQs expire automatically after the window
                 closes.
               </p>

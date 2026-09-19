@@ -39,7 +39,7 @@ const containerStyles: Record<ToastType, string> = {
 const titleStyles: Record<ToastType, string> = {
     success: "text-emerald-800",
     error: "text-rose-800",
-    info: "text-[#8a0a28]",
+    info: "text-danger",
     warning: "text-amber-800",
 }
 

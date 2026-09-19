@@ -409,7 +409,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               Compose
             </div>
             <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-brand-text">
-              CREATE <span className="text-[#2563EB]">POST</span>
+              CREATE <span className="text-primary-ink">POST</span>
             </div>
           </div>
           <button
@@ -442,7 +442,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               onClick={() => setShowVisMenu((v) => !v)}
               className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-wider text-brand-text shadow-xs transition hover:bg-brand-secondary/80"
             >
-              <VisIcon className="h-3.5 w-3.5 text-[#2563EB]" />
+              <VisIcon className="h-3.5 w-3.5 text-primary-ink" />
               {visOption.label}
               <ChevronDown className="h-3 w-3 text-brand-text/60" />
             </button>
@@ -464,7 +464,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                         type="button"
                         onClick={() => { setVisibility(opt.value); setShowVisMenu(false); }}
                         className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium transition-colors ${
-                          active ? 'bg-brand-secondary text-[#2563EB]' : 'text-brand-text hover:bg-brand-secondary'
+                          active ? 'bg-brand-secondary text-primary-ink' : 'text-brand-text hover:bg-brand-secondary'
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />
@@ -484,7 +484,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {(mood || location) && (
             <div className="flex flex-wrap gap-1.5 px-6 pt-3">
               {mood && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-xs">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-warning shadow-xs">
                   <Smile className="h-3 w-3" />
                   {mood}
                   <button onClick={() => setMood(null)} className="text-brand-text/40 hover:text-brand-text">
@@ -493,7 +493,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 </span>
               )}
               {location && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-xs">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-success shadow-xs">
                   <MapPin className="h-3 w-3" />
                   {location}
                   <button
@@ -570,7 +570,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                     onClick={() => fileInputRef.current?.click()}
                     className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-brand-divider transition hover:border-[#2563EB] hover:bg-brand-secondary"
                   >
-                    <Plus className="h-5 w-5 text-[#aaa]" />
+                    <Plus className="h-5 w-5 text-muted-foreground" />
                   </button>
                 </div>
               )}
@@ -620,7 +620,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {showLocation && (
             <div className="px-6 pt-3">
               <div className="flex items-center gap-2 rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
-                <MapPin className="h-3.5 w-3.5 text-[#1D9E75]" />
+                <MapPin className="h-3.5 w-3.5 text-success" />
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
@@ -640,7 +640,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <div className="px-6 pt-3">
               <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Hash className="h-3.5 w-3.5 text-[#2563EB]" />
+                  <Hash className="h-3.5 w-3.5 text-primary-ink" />
                   <input
                      value={hashtagDraft}
                      onChange={(e) => setHashtagDraft(e.target.value)}
@@ -674,12 +674,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                     {hashtags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-brand-card border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#2563EB]"
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-card border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-primary-ink"
                       >
                         #{tag}
                         <button
                           onClick={() => removeHashtag(tag)}
-                          className="text-[#2563EB]/60 hover:text-[#2563EB]"
+                          className="text-primary-ink/60 hover:text-primary-ink"
                           aria-label={`Remove #${tag}`}
                         >
                           <X className="h-3 w-3" />
@@ -710,7 +710,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Add photo"
               className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card disabled:opacity-30"
             >
-              <ImagePlus className="h-[18px] w-[18px] text-[#378ADD]" />
+              <ImagePlus className="h-[18px] w-[18px] text-primary-ink" />
             </button>
             <button
               type="button"
@@ -722,7 +722,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Add poll"
               className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showPoll ? 'bg-brand-card' : ''}`}
             >
-              <BarChart3 className="h-[18px] w-[18px] text-[#EF9F27]" />
+              <BarChart3 className="h-[18px] w-[18px] text-warning" />
             </button>
             <button
               type="button"
@@ -731,7 +731,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Mood / Activity"
               className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showMood || mood ? 'bg-brand-card' : ''}`}
             >
-              <Smile className="h-[18px] w-[18px] text-[#D4537E]" />
+              <Smile className="h-[18px] w-[18px] text-danger" />
             </button>
             <button
               type="button"
@@ -740,7 +740,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Location"
               className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showLocation || location ? 'bg-brand-card' : ''}`}
             >
-              <MapPin className="h-[18px] w-[18px] text-[#1D9E75]" />
+              <MapPin className="h-[18px] w-[18px] text-success" />
             </button>
             <button
               type="button"
@@ -749,7 +749,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               title="Add hashtag"
               className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card' : ''}`}
             >
-              <Hash className="h-[18px] w-[18px] text-[#2563EB]" />
+              <Hash className="h-[18px] w-[18px] text-primary-ink" />
             </button>
             {/* Design: paints the textarea card background. Disabled when
                 media or a poll is present (color backgrounds are text-only
@@ -761,7 +761,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 aria-label="Design"
                 title="Design background"
                 className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 ${
-                  showBackgroundPicker || background ? 'ring-2 ring-offset-1 ring-[#2563EB]' : ''
+                  showBackgroundPicker || background ? 'ring-2 ring-offset-1 ring-primary' : ''
                 }`}
               >
                 <FlowerPaletteIcon size={26} />
@@ -791,7 +791,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                           setBackground(null);
                           setShowBackgroundPicker(false);
                         }}
-                        className="text-[10px] font-medium uppercase tracking-widest text-[#2563EB] hover:underline"
+                        className="text-[10px] font-medium uppercase tracking-widest text-primary-ink hover:underline"
                       >
                         Reset
                       </button>
@@ -888,7 +888,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         {/* Footer status bar */}
         <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-brand-text/60">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#1D9E75]" />
+            <ShieldCheck className="h-3.5 w-3.5 text-success" />
             {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}
           </div>
           <div>

@@ -41,17 +41,17 @@ function DeviceItem({
   isRemoving: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
-        <Smartphone className="h-5 w-5 text-[#D4A574]" />
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3 transition-colors hover:bg-background">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background">
+        <Smartphone className="h-5 w-5 text-primary-ink" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-[#3C2415]">
+        <p className="truncate text-sm font-semibold text-foreground">
           {device.device_name || 'Unnamed Device'}
         </p>
-        <div className="mt-0.5 flex items-center gap-2 text-xs text-[#7B5B3A]">
+        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
           <span className="font-mono">{truncateFingerprint(device.fingerprint)}</span>
-          <span className="text-[#F0E6DC]">|</span>
+          <span className="text-background">|</span>
           <span>Last used: {formatDate(device.last_used)}</span>
         </div>
       </div>
@@ -74,11 +74,11 @@ function DeviceItem({
 
 function DeviceSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
-      <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3">
+      <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="h-4 w-40 animate-pulse rounded-sm bg-[#F0E6DC]" />
-        <div className="h-3 w-56 animate-pulse rounded-sm bg-[#F0E6DC]" />
+        <div className="h-4 w-40 animate-pulse rounded-sm bg-secondary" />
+        <div className="h-3 w-56 animate-pulse rounded-sm bg-secondary" />
       </div>
     </div>
   );
@@ -127,8 +127,8 @@ export default function TrustedDevices({
       {/* Empty state */}
       {!isLoading && !error && devices && devices.length === 0 && (
         <div className="py-6 text-center">
-          <Smartphone className="mx-auto h-10 w-10 text-[#F0E6DC]" />
-          <p className="mt-2 text-sm font-medium text-[#7B5B3A]">No trusted devices yet.</p>
+          <Smartphone className="mx-auto h-10 w-10 text-background" />
+          <p className="mt-2 text-sm font-medium text-muted-foreground">No trusted devices yet.</p>
         </div>
       )}
 
@@ -151,7 +151,7 @@ export default function TrustedDevices({
         type="button"
         onClick={onTrustCurrent}
         disabled={isTrusting}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#F0E6DC] bg-brand-card py-2.5 text-sm font-semibold text-[#D4A574] transition-all hover:bg-[#FAF5F0] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-brand-card py-2.5 text-sm font-semibold text-primary-ink transition-all hover:bg-background disabled:opacity-50"
       >
         {isTrusting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

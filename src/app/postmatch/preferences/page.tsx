@@ -42,7 +42,7 @@ export default function PostMatchPreferencesPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/postmatch/settings" className="text-sm text-[#888] hover:text-white">
+          <Link href="/postmatch/settings" className="text-sm text-muted-foreground hover:text-white">
             ← Settings
           </Link>
           <h1 className="text-lg font-bold">Preferences</h1>
@@ -51,7 +51,7 @@ export default function PostMatchPreferencesPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {isLoading ? (
-          <p className="text-[#888]">Loading…</p>
+          <p className="text-muted-foreground">Loading…</p>
         ) : (
           <>
             <section className="rounded-2xl border border-[#1a1a1a] bg-[#101010] p-6">
@@ -65,7 +65,7 @@ export default function PostMatchPreferencesPage() {
                   onChange={(e) => setMinAge(parseInt(e.target.value) || 18)}
                   className="w-24 bg-[#1a1a1a] border border-[#2a2a2a] rounded-sm px-3 py-2 text-sm"
                 />
-                <span className="text-[#888]">to</span>
+                <span className="text-muted-foreground">to</span>
                 <input
                   type="number"
                   min={18}
@@ -102,7 +102,7 @@ export default function PostMatchPreferencesPage() {
                     className={`py-2 rounded-lg text-sm border ${
                       gender === g
                         ? 'bg-rose-600 border-rose-600 text-white'
-                        : 'bg-transparent border-[#2a2a2a] text-[#ccc] hover:border-rose-500'
+                        : 'bg-transparent border-[#2a2a2a] text-muted-foreground hover:border-rose-500'
                     }`}
                   >
                     {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -129,7 +129,7 @@ export default function PostMatchPreferencesPage() {
                     className={`py-2 rounded-lg text-sm border ${
                       intent === opt.v
                         ? 'bg-rose-600 border-rose-600 text-white'
-                        : 'bg-transparent border-[#2a2a2a] text-[#ccc] hover:border-rose-500'
+                        : 'bg-transparent border-[#2a2a2a] text-muted-foreground hover:border-rose-500'
                     }`}
                   >
                     {opt.label}

@@ -14,8 +14,8 @@ import {
 import { useCategories } from '@/hooks/useCommerce'
 import { uploadMedia } from '@/lib/mediaUpload'
 
-const inputCls = 'w-full border border-[#E8DDD3] rounded-xl px-4 py-3 text-[#1A1A1A] bg-white focus:ring-2 focus:ring-[#8B5E3C]/20 focus:border-[#8B5E3C] outline-hidden transition-all text-sm font-medium placeholder:text-[#6B5544]/30'
-const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1.5'
+const inputCls = 'w-full border border-border rounded-xl px-4 py-3 text-foreground bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary-outline outline-hidden transition-all text-sm font-medium placeholder:text-muted-foreground/30'
+const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5'
 
 type Variant = {
   sku: string
@@ -230,16 +230,16 @@ export default function NewProductPage() {
                 i === step
                   ? 'bg-[#1A1A1A] text-white'
                   : i < step
-                    ? 'bg-[#8B5E3C] text-white'
-                    : 'bg-[#E8DDD3] text-[#6B5544]'
+                    ? 'bg-primary-ink text-white'
+                    : 'bg-secondary text-muted-foreground'
               }`}
             >
               {i + 1}
             </div>
-            <div className="ml-2 text-[10px] font-black uppercase tracking-widest text-[#4A3728] hidden sm:block">
+            <div className="ml-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:block">
               {label}
             </div>
-            {i < STEPS.length - 1 && <div className="flex-1 h-[2px] bg-[#E8DDD3] mx-3" />}
+            {i < STEPS.length - 1 && <div className="flex-1 h-[2px] bg-secondary mx-3" />}
           </div>
         ))}
       </div>
@@ -249,20 +249,20 @@ export default function NewProductPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-3xl mx-auto px-4 py-8">
           <Link
             href="/seller/products"
-            className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-4 block"
+            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-4 block"
           >
             ← Products
           </Link>
-          <h1 className="text-2xl font-black text-[#1A1A1A] mb-1">Add New Product</h1>
-          <p className="text-sm text-[#6B5544] mb-6">
+          <h1 className="text-2xl font-black text-foreground mb-1">Add New Product</h1>
+          <p className="text-sm text-muted-foreground mb-6">
             Fill every step. Compliance fields are checked by moderators before your listing goes live.
           </p>
 
-          <div className="bg-white rounded-2xl border border-[#E8DDD3] p-8">
+          <div className="bg-white rounded-2xl border border-border p-8">
             {stepperBar}
 
             {error && (
@@ -429,8 +429,8 @@ export default function NewProductPage() {
                     />
                   </div>
                 </div>
-                <div className="border-t border-[#E8DDD3] pt-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#4A3728] mb-3">
+                <div className="border-t border-border pt-4">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
                     Shipping dimensions
                   </h4>
                   <div className="grid grid-cols-4 gap-4">
@@ -488,21 +488,21 @@ export default function NewProductPage() {
                     placeholder="ceramic, mug, handmade, kitchen"
                   />
                 </div>
-                <div className="border-t border-[#E8DDD3] pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#4A3728]">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                       Attributes / Specs
                     </h4>
                     <button
                       type="button"
                       onClick={() => setAttributes(prev => [...prev, { name: '', value: '', unit: '' }])}
-                      className="text-[10px] font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition"
+                      className="text-[10px] font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition"
                     >
                       + Add row
                     </button>
                   </div>
                   {attributes.length === 0 && (
-                    <p className="text-xs text-[#6B5544]/70 italic">
+                    <p className="text-xs text-muted-foreground/70 italic">
                       No attributes yet. Add specs like Material, Capacity, Colour…
                     </p>
                   )}
@@ -535,7 +535,7 @@ export default function NewProductPage() {
                       <button
                         type="button"
                         onClick={() => setAttributes(prev => prev.filter((_, idx) => idx !== i))}
-                        className="px-3 text-[#6B5544] hover:text-red-600 transition"
+                        className="px-3 text-muted-foreground hover:text-red-600 transition"
                         aria-label="Remove"
                       >
                         ×
@@ -549,9 +549,9 @@ export default function NewProductPage() {
             {step === 2 && (
               <div className="space-y-6">
                 {variants.map((v, i) => (
-                  <div key={i} className="border border-[#E8DDD3] rounded-xl p-4">
+                  <div key={i} className="border border-border rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-[#4A3728]">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                         Variant {i + 1}
                       </h4>
                       {variants.length > 1 && (
@@ -653,7 +653,7 @@ export default function NewProductPage() {
                 <button
                   type="button"
                   onClick={() => setVariants(prev => [...prev, emptyVariant()])}
-                  className="w-full py-3 border-2 border-dashed border-[#E8DDD3] rounded-xl text-[#6B5544] font-bold hover:bg-[#F5F0EB] transition text-sm"
+                  className="w-full py-3 border-2 border-dashed border-border rounded-xl text-muted-foreground font-bold hover:bg-secondary transition text-sm"
                 >
                   + Add another variant
                 </button>
@@ -676,8 +676,8 @@ export default function NewProductPage() {
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-[#E8DDD3] rounded-xl cursor-pointer hover:bg-[#F5F0EB] transition">
-                      <span className="text-sm font-medium text-[#6B5544]">Click to upload primary image</span>
+                    <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-secondary transition">
+                      <span className="text-sm font-medium text-muted-foreground">Click to upload primary image</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -697,7 +697,7 @@ export default function NewProductPage() {
                         <button
                           type="button"
                           onClick={() => setGallery(prev => prev.filter((_, idx) => idx !== i))}
-                          className="absolute -top-2 -right-2 bg-white border border-[#E8DDD3] rounded-full w-6 h-6 text-[#6B5544] hover:text-red-600 transition"
+                          className="absolute -top-2 -right-2 bg-white border border-border rounded-full w-6 h-6 text-muted-foreground hover:text-red-600 transition"
                           aria-label="Remove"
                         >
                           ×
@@ -705,8 +705,8 @@ export default function NewProductPage() {
                       </div>
                     ))}
                   </div>
-                  <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-[#E8DDD3] rounded-xl cursor-pointer hover:bg-[#F5F0EB] transition">
-                    <span className="text-sm font-medium text-[#6B5544]">+ Add gallery image</span>
+                  <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-secondary transition">
+                    <span className="text-sm font-medium text-muted-foreground">+ Add gallery image</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -730,8 +730,8 @@ export default function NewProductPage() {
                       </button>
                     </div>
                   ) : (
-                    <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-[#E8DDD3] rounded-xl cursor-pointer hover:bg-[#F5F0EB] transition">
-                      <span className="text-sm font-medium text-[#6B5544]">+ Upload demo video</span>
+                    <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-secondary transition">
+                      <span className="text-sm font-medium text-muted-foreground">+ Upload demo video</span>
                       <input
                         type="file"
                         accept="video/*"
@@ -742,8 +742,8 @@ export default function NewProductPage() {
                   )}
                 </div>
 
-                <div className="border-t border-[#E8DDD3] pt-4">
-                  <p className="text-xs text-[#6B5544] mb-3">
+                <div className="border-t border-border pt-4">
+                  <p className="text-xs text-muted-foreground mb-3">
                     On submit, your product is saved and sent to the moderation queue. You can keep editing while it
                     awaits review.
                   </p>
@@ -751,13 +751,13 @@ export default function NewProductPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-3 mt-8 pt-6 border-t border-[#E8DDD3]">
+            <div className="flex items-center justify-between gap-3 mt-8 pt-6 border-t border-border">
               <div>
                 {step > 0 && (
                   <button
                     type="button"
                     onClick={goBack}
-                    className="px-5 py-3 border border-[#E8DDD3] rounded-xl text-[#6B5544] font-bold hover:bg-[#F5F0EB] transition text-sm"
+                    className="px-5 py-3 border border-border rounded-xl text-muted-foreground font-bold hover:bg-secondary transition text-sm"
                   >
                     Back
                   </button>
@@ -766,7 +766,7 @@ export default function NewProductPage() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/seller/products"
-                  className="px-5 py-3 text-[#6B5544] font-bold hover:text-[#1A1A1A] transition text-sm"
+                  className="px-5 py-3 text-muted-foreground font-bold hover:text-foreground transition text-sm"
                 >
                   Cancel
                 </Link>
@@ -775,7 +775,7 @@ export default function NewProductPage() {
                     type="button"
                     onClick={goNext}
                     disabled={step === 0 ? !canProceedStep0 : step === 2 ? !canProceedStep2 : false}
-                    className="px-8 py-3 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-[#3A2E26] disabled:opacity-50 transition text-sm"
+                    className="px-8 py-3 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-foreground disabled:opacity-50 transition text-sm"
                   >
                     Next
                   </button>
@@ -784,7 +784,7 @@ export default function NewProductPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!canSubmit || createProduct.isPending || !!savingState}
-                    className="px-8 py-3 bg-[#8B5E3C] text-white rounded-xl font-bold hover:bg-[#3A2E26] disabled:opacity-50 transition text-sm"
+                    className="px-8 py-3 bg-primary-ink text-white rounded-xl font-bold hover:bg-foreground disabled:opacity-50 transition text-sm"
                   >
                     {createProduct.isPending || savingState ? 'Saving…' : 'Save & Submit for Review'}
                   </button>

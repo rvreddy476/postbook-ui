@@ -120,7 +120,7 @@ function buildPills(trustTier: string | null | undefined, verified: Set<string>)
       key: 'new',
       label: 'New profile',
       icon: 'sparkle',
-      className: 'bg-[#1a1a1a] text-[#888] border border-[#2a2a2a]',
+      className: 'bg-[#1a1a1a] text-muted-foreground border border-[#2a2a2a]',
     })
   }
 
@@ -179,7 +179,7 @@ export function TrustBadge({
         </span>
       ))}
       {variant === 'compact' && pills.length > 1 && (
-        <span className="text-[10px] font-bold text-[#666]">+{pills.length - 1}</span>
+        <span className="text-[10px] font-bold text-muted-foreground">+{pills.length - 1}</span>
       )}
     </div>
   )

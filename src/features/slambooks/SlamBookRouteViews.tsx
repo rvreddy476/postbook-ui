@@ -266,7 +266,7 @@ function SlamMetric({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 shadow-xs">
+    <div className="rounded-2xl border border-brand-divider bg-secondary px-4 py-3 shadow-xs">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-brand-text/50">
         {icon}
         {label}
@@ -313,7 +313,7 @@ function ResponseInputCard({
   const placeholder = card.placeholder_text?.trim() || "Share your answer";
 
   return (
-    <div className="rounded-2xl border border-brand-divider bg-[#FCFCFB] p-4">
+    <div className="rounded-2xl border border-brand-divider bg-background p-4">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-[14px] font-semibold text-brand-text">{card.title}</h3>
         {card.is_required ? (
@@ -431,7 +431,7 @@ export function SlamBookMemoriesHub() {
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Card className="overflow-hidden border-brand-divider/70 bg-linear-to-br from-[#fff6e8] via-brand-card to-[#fffdf7]">
           <CardContent className="px-8 py-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#E9C98C] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#8a5d08]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E9C98C] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-warning">
               <BookHeart className="h-3.5 w-3.5" />
               Memories Hub
             </div>
@@ -496,7 +496,7 @@ export function SlamBookMemoriesHub() {
                 <Link
                   key={item.id}
                   href={`/memories/slambooks/${item.id}`}
-                  className="block rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4 transition-colors hover:bg-brand-secondary"
+                  className="block rounded-2xl border border-brand-divider bg-secondary p-4 transition-colors hover:bg-brand-secondary"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -780,7 +780,7 @@ export function SlamBookIndexRouteView() {
                 </div>
               </div>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 text-[13px] text-brand-text">
+              <label className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-secondary px-4 py-3 text-[13px] text-brand-text">
                 <input
                   type="checkbox"
                   checked={approvalRequired}
@@ -820,7 +820,7 @@ export function SlamBookIndexRouteView() {
                         className={`rounded-2xl border p-4 text-left transition-colors ${
                           active
                             ? "border-brand-text bg-brand-text/5"
-                            : "border-brand-divider bg-[#FAFAF8] hover:bg-brand-secondary"
+                            : "border-brand-divider bg-secondary hover:bg-brand-secondary"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
@@ -850,7 +850,7 @@ export function SlamBookIndexRouteView() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-brand-divider bg-[#FCFCFB] p-4">
+              <div className="rounded-2xl border border-brand-divider bg-background p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[13px] font-semibold text-brand-text">Custom cards</p>
@@ -960,7 +960,7 @@ export function SlamBookIndexRouteView() {
                             className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                             placeholder="Helper text"
                           />
-                          <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-brand-divider bg-[#FAFAF8] px-3 py-2 text-[12px] text-brand-text">
+                          <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-brand-divider bg-secondary px-3 py-2 text-[12px] text-brand-text">
                             <input
                               type="checkbox"
                               checked={!!card.is_required}
@@ -1036,7 +1036,7 @@ export function SlamBookIndexRouteView() {
                   <Link
                     key={item.id}
                     href={`/memories/slambooks/${item.id}`}
-                    className="block rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4 transition-colors hover:bg-brand-secondary"
+                    className="block rounded-2xl border border-brand-divider bg-secondary p-4 transition-colors hover:bg-brand-secondary"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -1090,7 +1090,7 @@ export function SlamBookIndexRouteView() {
                   </p>
                   <div className="space-y-2">
                     {selectedPack.templates.map((template) => (
-                      <div key={template.id} className="rounded-xl border border-brand-divider bg-[#FAFAF8] px-3 py-3">
+                      <div key={template.id} className="rounded-xl border border-brand-divider bg-secondary px-3 py-3">
                         <p className="text-[12px] font-semibold text-brand-text">{template.title}</p>
                         <p className="mt-1 text-[12px] text-brand-text/60">{template.prompt}</p>
                       </div>
@@ -1486,7 +1486,7 @@ function SlamBookWorkspace({
             <CardContent>
               <div className="grid gap-3">
                 {cards.map((card) => (
-                  <div key={card.id} className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+                  <div key={card.id} className="rounded-2xl border border-brand-divider bg-secondary p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-[14px] font-semibold text-brand-text">{card.title}</p>
                       {card.is_required ? (
@@ -1529,7 +1529,7 @@ function SlamBookWorkspace({
                         className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 disabled:opacity-60"
                       />
                     </div>
-                    <label className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 text-[13px] text-brand-text">
+                    <label className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-secondary px-4 py-3 text-[13px] text-brand-text">
                       <input
                         type="checkbox"
                         checked={anonymous}
@@ -1608,7 +1608,7 @@ function SlamBookWorkspace({
                 </>
               ) : viewerSession ? (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+                  <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${statusTone(viewerSession.status)}`}>
                         {viewerSession.status}
@@ -1625,7 +1625,7 @@ function SlamBookWorkspace({
                   </div>
 
                   {viewerSession.items.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-brand-divider bg-[#FCFCFB] p-4">
+                    <div key={item.id} className="rounded-2xl border border-brand-divider bg-background p-4">
                       <p className="text-[13px] font-semibold text-brand-text">{item.card_title || "Prompt"}</p>
                       <p className="mt-1 text-[12px] text-brand-text/50">{item.card_prompt}</p>
                       <p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-brand-text/75">
@@ -1669,7 +1669,7 @@ function SlamBookWorkspace({
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             {item.is_pinned ? (
-                              <span className="rounded-full bg-[#E5A93D]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#A46D12]">
+                              <span className="rounded-full bg-[#E5A93D]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-warning">
                                 Pinned
                               </span>
                             ) : null}
@@ -1750,7 +1750,7 @@ function SlamBookWorkspace({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+              <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                 <p className="text-[13px] font-semibold text-brand-text">Share link</p>
                 <p className="mt-1 text-[12px] text-brand-text/55">
                   Generate a token link for friends, classmates, or teammates to answer this SlamBook.
@@ -1783,7 +1783,7 @@ function SlamBookWorkspace({
               </div>
 
               {canModerate ? (
-                <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+                <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                   <p className="text-[13px] font-semibold text-brand-text">Direct invite</p>
                   <p className="mt-1 text-[12px] text-brand-text/55">
                     Search for people, add them to the invite list, and send the request without copying UUIDs.
@@ -1879,7 +1879,7 @@ function SlamBookWorkspace({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4 text-[12px] text-brand-text/55">
+                <div className="rounded-2xl border border-brand-divider bg-secondary p-4 text-[12px] text-brand-text/55">
                   Invite controls stay with the SlamBook owner or moderator.
                 </div>
               )}
@@ -1918,7 +1918,7 @@ function SlamBookWorkspace({
                       "Anonymous response";
 
                     return (
-                      <div key={session.id} className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+                      <div key={session.id} className="rounded-2xl border border-brand-divider bg-secondary p-4">
                         <div className="flex items-start gap-3">
                           <Avatar
                             src={null}
@@ -2020,7 +2020,7 @@ function SlamBookWorkspace({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-[13px] text-brand-text/65">
-              <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+              <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
                   Last activity
                 </p>
@@ -2028,7 +2028,7 @@ function SlamBookWorkspace({
                   {formatDateTime(slambook.last_activity_at)}
                 </p>
               </div>
-              <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+              <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
                   Approval policy
                 </p>
@@ -2036,7 +2036,7 @@ function SlamBookWorkspace({
                   {slambook.approval_required ? "Approval required" : "Auto-publish after submit"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] p-4">
+              <div className="rounded-2xl border border-brand-divider bg-secondary p-4">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-text/45">
                   Response identity
                 </p>

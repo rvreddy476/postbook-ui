@@ -31,15 +31,15 @@ function parseUserAgent(ua: string): string {
 function getPlatformIcon(platform: string) {
   const p = platform.toLowerCase();
   if (p.includes('mobile') || p.includes('android') || p.includes('ios')) {
-    return <Smartphone className="h-5 w-5 text-[#D4A574]" />;
+    return <Smartphone className="h-5 w-5 text-primary-ink" />;
   }
   if (p.includes('desktop') || p.includes('windows') || p.includes('mac') || p.includes('linux')) {
-    return <Monitor className="h-5 w-5 text-[#D4A574]" />;
+    return <Monitor className="h-5 w-5 text-primary-ink" />;
   }
   if (p.includes('web')) {
-    return <Globe className="h-5 w-5 text-[#D4A574]" />;
+    return <Globe className="h-5 w-5 text-primary-ink" />;
   }
-  return <Laptop className="h-5 w-5 text-[#D4A574]" />;
+  return <Laptop className="h-5 w-5 text-primary-ink" />;
 }
 
 function formatDate(iso: string): string {
@@ -72,13 +72,13 @@ function SessionItem({
   isRevoking: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3 transition-colors hover:bg-background">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background">
         {getPlatformIcon(session.platform)}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold text-[#3C2415]">
+          <p className="truncate text-sm font-semibold text-foreground">
             {parseUserAgent(session.user_agent)}
           </p>
           {isCurrent && (
@@ -87,9 +87,9 @@ function SessionItem({
             </span>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-2 text-xs text-[#7B5B3A]">
+        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
           <span>{session.ip}</span>
-          <span className="text-[#F0E6DC]">|</span>
+          <span className="text-background">|</span>
           <span>{formatDate(session.created_at)}</span>
         </div>
       </div>
@@ -113,11 +113,11 @@ function SessionItem({
 
 function SessionSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
-      <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3">
+      <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="h-4 w-48 animate-pulse rounded-sm bg-[#F0E6DC]" />
-        <div className="h-3 w-32 animate-pulse rounded-sm bg-[#F0E6DC]" />
+        <div className="h-4 w-48 animate-pulse rounded-sm bg-secondary" />
+        <div className="h-3 w-32 animate-pulse rounded-sm bg-secondary" />
       </div>
     </div>
   );
@@ -180,8 +180,8 @@ export default function SessionList({
       {/* Empty state */}
       {!isLoading && !error && sessions && sessions.length === 0 && (
         <div className="py-8 text-center">
-          <Laptop className="mx-auto h-10 w-10 text-[#F0E6DC]" />
-          <p className="mt-2 text-sm font-medium text-[#7B5B3A]">No active sessions found.</p>
+          <Laptop className="mx-auto h-10 w-10 text-background" />
+          <p className="mt-2 text-sm font-medium text-muted-foreground">No active sessions found.</p>
         </div>
       )}
 
@@ -215,7 +215,7 @@ export default function SessionList({
 
       {/* Logout all button */}
       {!isLoading && otherSessions.length > 0 && (
-        <div className="border-t border-[#F0E6DC] pt-4">
+        <div className="border-t border-border pt-4">
           <button
             type="button"
             onClick={onLogoutAll}

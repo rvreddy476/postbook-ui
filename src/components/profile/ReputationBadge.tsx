@@ -13,11 +13,11 @@ function getReputationTier(score: number): {
     bgColor: string
     borderColor: string
 } {
-    if (score >= 90) return { label: "Exemplary", color: "text-[#3C2415]", bgColor: "bg-[#D4A574]/30", borderColor: "border-[#D4A574]" }
-    if (score >= 70) return { label: "Trusted", color: "text-[#3C2415]", bgColor: "bg-[#D4A574]/20", borderColor: "border-[#D4A574]/60" }
-    if (score >= 50) return { label: "Established", color: "text-[#7B5B3A]", bgColor: "bg-[#F0E6DC]", borderColor: "border-[#F0E6DC]" }
-    if (score >= 30) return { label: "Growing", color: "text-[#7B5B3A]", bgColor: "bg-[#FAF5F0]", borderColor: "border-[#F0E6DC]" }
-    return { label: "New", color: "text-[#7B5B3A]/60", bgColor: "bg-[#FAF5F0]", borderColor: "border-[#F0E6DC]/50" }
+    if (score >= 90) return { label: "Exemplary", color: "text-foreground", bgColor: "bg-primary-tint/30", borderColor: "border-primary-outline" }
+    if (score >= 70) return { label: "Trusted", color: "text-foreground", bgColor: "bg-primary-tint/20", borderColor: "border-primary-outline/60" }
+    if (score >= 50) return { label: "Established", color: "text-muted-foreground", bgColor: "bg-secondary", borderColor: "border-border" }
+    if (score >= 30) return { label: "Growing", color: "text-muted-foreground", bgColor: "bg-background", borderColor: "border-border" }
+    return { label: "New", color: "text-muted-foreground/60", bgColor: "bg-background", borderColor: "border-border/50" }
 }
 
 export function ReputationBadge({ reputation, size = "md" }: ReputationBadgeProps) {
@@ -53,7 +53,7 @@ export function ReputationBadge({ reputation, size = "md" }: ReputationBadgeProp
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="3"
-                        className="text-[#F0E6DC]"
+                        className="text-background"
                     />
                     {/* Progress circle */}
                     <circle
@@ -66,11 +66,11 @@ export function ReputationBadge({ reputation, size = "md" }: ReputationBadgeProp
                         strokeLinecap="round"
                         strokeDasharray={circumference}
                         strokeDashoffset={strokeDashoffset}
-                        className="text-[#D4A574]"
+                        className="text-primary-ink"
                         transform="rotate(-90 16 16)"
                     />
                 </svg>
-                <Shield className={`absolute ${size === "sm" ? "w-1.5 h-1.5" : size === "md" ? "w-2 h-2" : "w-2.5 h-2.5"} text-[#D4A574]`} />
+                <Shield className={`absolute ${size === "sm" ? "w-1.5 h-1.5" : size === "md" ? "w-2 h-2" : "w-2.5 h-2.5"} text-primary-ink`} />
             </div>
 
             <div className="flex flex-col leading-none">

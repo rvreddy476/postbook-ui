@@ -61,11 +61,11 @@ function amountColor(type: Transaction["type"]): string {
             return "text-emerald-600"
         case "payout":
         case "subscription_payment":
-            return "text-[#3C2415]"
+            return "text-foreground"
         case "refund":
             return "text-amber-600"
         default:
-            return "text-[#3C2415]"
+            return "text-foreground"
     }
 }
 
@@ -88,12 +88,12 @@ function amountPrefix(type: Transaction["type"]): string {
 function TransactionRowSkeleton() {
     return (
         <div className="flex items-center gap-4 py-3 px-4 animate-pulse">
-            <div className="w-8 h-8 rounded-lg bg-[#F0E6DC] shrink-0" />
+            <div className="w-8 h-8 rounded-lg bg-secondary shrink-0" />
             <div className="flex-1 space-y-1.5">
-                <div className="h-3 bg-[#F0E6DC] rounded-full w-20" />
-                <div className="h-2.5 bg-[#F0E6DC] rounded-full w-32" />
+                <div className="h-3 bg-secondary rounded-full w-20" />
+                <div className="h-2.5 bg-secondary rounded-full w-32" />
             </div>
-            <div className="h-4 bg-[#F0E6DC] rounded-full w-16" />
+            <div className="h-4 bg-secondary rounded-full w-16" />
         </div>
     )
 }
@@ -108,7 +108,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 }) => {
     if (isLoading) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
+            <div className="bg-brand-card rounded-2xl border border-border overflow-hidden shadow-xs">
                 <div className="divide-y divide-[#F0E6DC]">
                     {Array.from({ length: compact ? 5 : 8 }).map((_, i) => (
                         <TransactionRowSkeleton key={i} />
@@ -120,28 +120,28 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
     if (transactions.length === 0) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-xs">
+            <div className="bg-brand-card rounded-2xl border border-border p-10 shadow-xs">
                 <div className="flex flex-col items-center justify-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
-                        <svg className="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <div className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center">
+                        <svg className="w-5 h-5 text-primary-ink" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#7B5B3A]">No transactions yet</p>
-                    <p className="text-[9px] font-bold text-[#D4A574]">Your transaction history will appear here.</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">No transactions yet</p>
+                    <p className="text-[9px] font-bold text-primary-ink">Your transaction history will appear here.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
+        <div className="bg-brand-card rounded-2xl border border-border overflow-hidden shadow-xs">
             {/* Table header */}
-            <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 bg-[#FAF5F0] border-b border-[#F0E6DC]">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A]">Transaction</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] w-24 text-center">Status</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] w-28 text-right">Date</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] w-24 text-right">Amount</span>
+            <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 bg-background border-b border-border">
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Transaction</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-24 text-center">Status</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-28 text-right">Date</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground w-24 text-right">Amount</span>
             </div>
 
             {/* Transaction rows */}
@@ -149,15 +149,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 {transactions.map((tx) => {
                     const badge = typeBadge(tx.type)
                     return (
-                        <div key={tx.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:gap-4 px-4 py-3 hover:bg-[#FAF5F0]/50 transition-colors duration-200">
+                        <div key={tx.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:gap-4 px-4 py-3 hover:bg-background/50 transition-colors duration-200">
                             {/* Type + reference */}
                             <div className="flex items-center gap-3 min-w-0">
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0 ${badge.className}`}>
                                     {badge.label}
                                 </span>
-                                <span className="text-[10px] font-bold text-[#7B5B3A] truncate">
+                                <span className="text-[10px] font-bold text-muted-foreground truncate">
                                     {tx.reference_type && (
-                                        <span className="text-[#D4A574]">{tx.reference_type}: </span>
+                                        <span className="text-primary-ink">{tx.reference_type}: </span>
                                     )}
                                     <span className="font-mono text-[9px]">{tx.reference_id || "--"}</span>
                                 </span>
@@ -169,7 +169,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                                     tx.status === "completed" ? "bg-emerald-50 text-emerald-600" :
                                     tx.status === "pending" ? "bg-amber-50 text-amber-600" :
                                     tx.status === "failed" ? "bg-red-50 text-red-500" :
-                                    "bg-[#FAF5F0] text-[#7B5B3A]"
+                                    "bg-background text-muted-foreground"
                                 }`}>
                                     {tx.status}
                                 </span>
@@ -177,8 +177,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
                             {/* Date */}
                             <div className="w-28 flex flex-col items-end justify-center">
-                                <span className="text-[10px] font-bold text-[#3C2415]">{formatDate(tx.created_at)}</span>
-                                <span className="text-[8px] font-bold text-[#D4A574]">{formatTime(tx.created_at)}</span>
+                                <span className="text-[10px] font-bold text-foreground">{formatDate(tx.created_at)}</span>
+                                <span className="text-[8px] font-bold text-primary-ink">{formatTime(tx.created_at)}</span>
                             </div>
 
                             {/* Amount */}
@@ -194,15 +194,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
             {/* Load more */}
             {hasNextPage && onLoadMore && (
-                <div className="border-t border-[#F0E6DC] p-4 flex justify-center">
+                <div className="border-t border-border p-4 flex justify-center">
                     <button
                         onClick={onLoadMore}
                         disabled={isFetchingNextPage}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#F0E6DC] text-[#7B5B3A] hover:border-[#D4A574] hover:text-[#3C2415] hover:bg-brand-card active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground hover:bg-brand-card active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isFetchingNextPage ? (
                             <>
-                                <div className="w-3 h-3 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+                                <div className="w-3 h-3 border-2 border-primary-outline border-t-transparent rounded-full animate-spin" />
                                 Loading...
                             </>
                         ) : (

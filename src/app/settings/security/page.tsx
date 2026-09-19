@@ -79,15 +79,15 @@ function parseUserAgent(ua: string): string {
 function getPlatformIcon(platform: string) {
     const p = platform.toLowerCase()
     if (p.includes("mobile") || p.includes("android") || p.includes("ios")) {
-        return <Smartphone className="h-5 w-5 text-[#D4A574]" />
+        return <Smartphone className="h-5 w-5 text-primary-ink" />
     }
     if (p.includes("desktop") || p.includes("windows") || p.includes("mac") || p.includes("linux")) {
-        return <Monitor className="h-5 w-5 text-[#D4A574]" />
+        return <Monitor className="h-5 w-5 text-primary-ink" />
     }
     if (p.includes("web")) {
-        return <Globe className="h-5 w-5 text-[#D4A574]" />
+        return <Globe className="h-5 w-5 text-primary-ink" />
     }
-    return <Laptop className="h-5 w-5 text-[#D4A574]" />
+    return <Laptop className="h-5 w-5 text-primary-ink" />
 }
 
 function formatDate(iso: string): string {
@@ -255,8 +255,8 @@ function Enable2FADialog({
                         exit={{ opacity: 0 }}
                         className="flex flex-col items-center justify-center py-12"
                     >
-                        <Loader2 className="h-8 w-8 animate-spin text-[#D4A574]" />
-                        <p className="mt-3 text-sm text-[#7B5B3A]">Setting up 2FA...</p>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary-ink" />
+                        <p className="mt-3 text-sm text-muted-foreground">Setting up 2FA...</p>
                     </motion.div>
                 )}
 
@@ -271,17 +271,17 @@ function Enable2FADialog({
                         className="space-y-5"
                     >
                         <div className="space-y-1">
-                            <h3 className="text-sm font-semibold text-[#3C2415]">
+                            <h3 className="text-sm font-semibold text-foreground">
                                 Step 1: Set up your authenticator app
                             </h3>
-                            <p className="text-xs text-[#7B5B3A]">
+                            <p className="text-xs text-muted-foreground">
                                 Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.)
                                 or manually enter the secret key.
                             </p>
                         </div>
 
                         {/* QR Code Image */}
-                        <div className="flex justify-center rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] p-4">
+                        <div className="flex justify-center rounded-xl border border-border bg-background p-4">
                             <img
                                 src={setupData.qr_code_url}
                                 alt="2FA QR Code"
@@ -291,16 +291,16 @@ function Enable2FADialog({
 
                         {/* Secret key */}
                         <div className="space-y-2">
-                            <p className="text-xs font-semibold text-[#7B5B3A]">Secret Key</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Secret Key</p>
                             <div className="flex items-center gap-2">
-                                <code className="flex-1 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] px-3 py-2 font-mono text-sm tracking-wider text-[#3C2415]">
+                                <code className="flex-1 rounded-lg bg-background border border-border px-3 py-2 font-mono text-sm tracking-wider text-foreground">
                                     {setupData.secret}
                                 </code>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleCopySecret}
-                                    className="shrink-0 border-[#F0E6DC] text-[#7B5B3A] hover:bg-[#FAF5F0]"
+                                    className="shrink-0 border-border text-muted-foreground hover:bg-background"
                                 >
                                     {copied ? (
                                         <Check className="h-4 w-4 text-emerald-500" />
@@ -313,7 +313,7 @@ function Enable2FADialog({
 
                         <Button
                             onClick={() => setStep(2)}
-                            className="w-full bg-[#D4A574] text-white hover:bg-[#c4955f]"
+                            className="w-full bg-primary-tint text-white hover:bg-primary-ink"
                             size="lg"
                         >
                             Next
@@ -332,16 +332,16 @@ function Enable2FADialog({
                         className="space-y-5"
                     >
                         <div className="space-y-1">
-                            <h3 className="text-sm font-semibold text-[#3C2415]">
+                            <h3 className="text-sm font-semibold text-foreground">
                                 Step 2: Verify your authenticator
                             </h3>
-                            <p className="text-xs text-[#7B5B3A]">
+                            <p className="text-xs text-muted-foreground">
                                 Enter the 6-digit code from your authenticator app to confirm the setup.
                             </p>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-[#7B5B3A]">Verification Code</label>
+                            <label className="text-xs font-semibold text-muted-foreground">Verification Code</label>
                             <Input
                                 type="text"
                                 inputMode="numeric"
@@ -353,7 +353,7 @@ function Enable2FADialog({
                                     setVerifyCode(val)
                                     if (error) setError("")
                                 }}
-                                className="text-center font-mono text-lg tracking-[0.5em] border-[#F0E6DC] focus-visible:ring-[#D4A574]"
+                                className="text-center font-mono text-lg tracking-[0.5em] border-border focus-visible:ring-primary"
                             />
                         </div>
 
@@ -367,14 +367,14 @@ function Enable2FADialog({
                             <Button
                                 variant="outline"
                                 onClick={() => setStep(1)}
-                                className="flex-1 border-[#F0E6DC] text-[#7B5B3A] hover:bg-[#FAF5F0]"
+                                className="flex-1 border-border text-muted-foreground hover:bg-background"
                             >
                                 Back
                             </Button>
                             <Button
                                 onClick={handleVerify}
                                 disabled={verify2FA.isPending || verifyCode.length !== 6}
-                                className="flex-1 bg-[#D4A574] text-white hover:bg-[#c4955f]"
+                                className="flex-1 bg-primary-tint text-white hover:bg-primary-ink"
                             >
                                 {verify2FA.isPending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -397,10 +397,10 @@ function Enable2FADialog({
                         className="space-y-5"
                     >
                         <div className="space-y-1">
-                            <h3 className="text-sm font-semibold text-[#3C2415]">
+                            <h3 className="text-sm font-semibold text-foreground">
                                 Step 3: Save your recovery codes
                             </h3>
-                            <p className="text-xs text-[#7B5B3A]">
+                            <p className="text-xs text-muted-foreground">
                                 These codes can be used to access your account if you lose your authenticator device.
                                 Each code can only be used once.
                             </p>
@@ -419,7 +419,7 @@ function Enable2FADialog({
                             {setupData.recovery_codes.map((code) => (
                                 <div
                                     key={code}
-                                    className="rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] px-3 py-2 text-center font-mono text-sm tracking-wider text-[#3C2415]"
+                                    className="rounded-lg bg-background border border-border px-3 py-2 text-center font-mono text-sm tracking-wider text-foreground"
                                 >
                                     {code}
                                 </div>
@@ -429,7 +429,7 @@ function Enable2FADialog({
                         <Button
                             variant="outline"
                             onClick={handleCopyAllCodes}
-                            className="w-full border-[#F0E6DC] text-[#7B5B3A] hover:bg-[#FAF5F0]"
+                            className="w-full border-border text-muted-foreground hover:bg-background"
                         >
                             {copiedCodes ? (
                                 <>
@@ -446,7 +446,7 @@ function Enable2FADialog({
 
                         <Button
                             onClick={handleDone}
-                            className="w-full bg-[#D4A574] text-white hover:bg-[#c4955f]"
+                            className="w-full bg-primary-tint text-white hover:bg-primary-ink"
                             size="lg"
                         >
                             Done
@@ -533,7 +533,7 @@ function Disable2FADialog({
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#7B5B3A]">Password</label>
+                    <label className="text-xs font-semibold text-muted-foreground">Password</label>
                     <Input
                         type="password"
                         placeholder="Enter your password"
@@ -542,12 +542,12 @@ function Disable2FADialog({
                             setPassword(e.target.value)
                             if (error) setError("")
                         }}
-                        className="border-[#F0E6DC] focus-visible:ring-[#D4A574]"
+                        className="border-border focus-visible:ring-primary"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#7B5B3A]">Authentication Code</label>
+                    <label className="text-xs font-semibold text-muted-foreground">Authentication Code</label>
                     <Input
                         type="text"
                         inputMode="numeric"
@@ -559,7 +559,7 @@ function Disable2FADialog({
                             setCode(val)
                             if (error) setError("")
                         }}
-                        className="text-center font-mono text-lg tracking-[0.5em] border-[#F0E6DC] focus-visible:ring-[#D4A574]"
+                        className="text-center font-mono text-lg tracking-[0.5em] border-border focus-visible:ring-primary"
                     />
                 </div>
 
@@ -570,7 +570,7 @@ function Disable2FADialog({
                 )}
 
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={onClose} className="flex-1 border-[#F0E6DC] text-[#7B5B3A] hover:bg-[#FAF5F0]">
+                    <Button variant="outline" onClick={onClose} className="flex-1 border-border text-muted-foreground hover:bg-background">
                         Cancel
                     </Button>
                     <Button
@@ -660,7 +660,7 @@ function DeleteAccountDialog({
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[#7B5B3A]">
+                    <label className="text-xs font-semibold text-muted-foreground">
                         Type <strong className="text-rose-600">DELETE</strong> to confirm
                     </label>
                     <Input
@@ -671,7 +671,7 @@ function DeleteAccountDialog({
                             setConfirmText(e.target.value)
                             if (error) setError("")
                         }}
-                        className="border-[#F0E6DC] focus-visible:ring-rose-500"
+                        className="border-border focus-visible:ring-rose-500"
                     />
                 </div>
 
@@ -682,7 +682,7 @@ function DeleteAccountDialog({
                 )}
 
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={onClose} className="flex-1 border-[#F0E6DC] text-[#7B5B3A] hover:bg-[#FAF5F0]">
+                    <Button variant="outline" onClick={onClose} className="flex-1 border-border text-muted-foreground hover:bg-background">
                         Cancel
                     </Button>
                     <Button
@@ -735,10 +735,10 @@ function anomalyTone(risk: number, ackd: boolean): {
 } {
     if (ackd) {
         return {
-            border: "border-[#F0E6DC]",
+            border: "border-border",
             bg: "bg-brand-card",
-            icon: "text-[#7B5B3A]",
-            chip: "bg-[#FAF5F0] text-[#7B5B3A]",
+            icon: "text-muted-foreground",
+            chip: "bg-background text-muted-foreground",
         }
     }
     if (risk >= 70) {
@@ -758,10 +758,10 @@ function anomalyTone(risk: number, ackd: boolean): {
         }
     }
     return {
-        border: "border-[#F0E6DC]",
+        border: "border-border",
         bg: "bg-brand-card",
-        icon: "text-[#D4A574]",
-        chip: "bg-[#FAF5F0] text-[#7B5B3A]",
+        icon: "text-primary-ink",
+        chip: "bg-background text-muted-foreground",
     }
 }
 
@@ -789,19 +789,19 @@ function AnomalyItem({
             </div>
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-[#3C2415]">
+                    <p className="truncate text-sm font-semibold text-foreground">
                         {anomalyLabel(anomaly.anomaly_type)}
                     </p>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tone.chip}`}>
                         Risk {anomaly.risk_score}
                     </span>
                     {ackd && (
-                        <span className="shrink-0 rounded-full bg-[#FAF5F0] px-2 py-0.5 text-[10px] font-bold text-[#7B5B3A]">
+                        <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                             Acknowledged
                         </span>
                     )}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#7B5B3A]">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     {anomaly.ip ? <span>IP {anomaly.ip}</span> : null}
                     {anomaly.user_agent ? <span className="truncate max-w-[200px]">{parseUserAgent(anomaly.user_agent)}</span> : null}
                     <span>{formatDate(anomaly.occurred_at)}</span>
@@ -818,7 +818,7 @@ function AnomalyItem({
                     size="sm"
                     onClick={() => onAck(anomaly.id)}
                     disabled={isAcking}
-                    className="shrink-0 text-[#3C2415] hover:bg-white/60"
+                    className="shrink-0 text-foreground hover:bg-white/60"
                 >
                     {isAcking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Dismiss"}
                 </Button>
@@ -848,14 +848,14 @@ function SessionItem({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
+            className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3 transition-colors hover:bg-background"
         >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background">
                 {getPlatformIcon(session.platform)}
             </div>
             <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-[#3C2415]">
+                    <p className="truncate text-sm font-semibold text-foreground">
                         {parseUserAgent(session.user_agent)}
                     </p>
                     {isCurrent && (
@@ -864,9 +864,9 @@ function SessionItem({
                         </span>
                     )}
                 </div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-[#7B5B3A]">
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{session.ip}</span>
-                    <span className="text-[#F0E6DC]">|</span>
+                    <span className="text-background">|</span>
                     <span>{formatDate(session.created_at)}</span>
                 </div>
             </div>
@@ -904,18 +904,18 @@ function TrustedDeviceItem({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 transition-colors hover:bg-[#FAF5F0]"
+            className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3 transition-colors hover:bg-background"
         >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FAF5F0]">
-                <Smartphone className="h-5 w-5 text-[#D4A574]" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background">
+                <Smartphone className="h-5 w-5 text-primary-ink" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[#3C2415]">
+                <p className="truncate text-sm font-semibold text-foreground">
                     {device.device_name || "Unnamed Device"}
                 </p>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-[#7B5B3A]">
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-mono">{truncateFingerprint(device.fingerprint)}</span>
-                    <span className="text-[#F0E6DC]">|</span>
+                    <span className="text-background">|</span>
                     <span>Last used: {formatDate(device.last_used)}</span>
                 </div>
             </div>
@@ -938,11 +938,11 @@ function TrustedDeviceItem({
 
 function ItemSkeleton() {
     return (
-        <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
-            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
+        <div className="flex items-center gap-4 rounded-xl border border-border bg-brand-card px-4 py-3">
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />
             <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-4 w-48 animate-pulse rounded-sm bg-[#F0E6DC]" />
-                <div className="h-3 w-32 animate-pulse rounded-sm bg-[#F0E6DC]" />
+                <div className="h-4 w-48 animate-pulse rounded-sm bg-secondary" />
+                <div className="h-3 w-32 animate-pulse rounded-sm bg-secondary" />
             </div>
         </div>
     )
@@ -1202,7 +1202,7 @@ export default function SecuritySettingsPage() {
                 {/* Back button */}
                 <button
                     onClick={() => router.push("/settings/profile")}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-[#D4A574] transition-colors hover:text-[#3C2415]"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-ink transition-colors hover:text-foreground"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Profile Settings
@@ -1210,8 +1210,8 @@ export default function SecuritySettingsPage() {
 
                 {/* Page title */}
                 <div>
-                    <h1 className="text-2xl font-bold text-[#3C2415]">Security Settings</h1>
-                    <p className="mt-1 text-sm text-[#7B5B3A]">
+                    <h1 className="text-2xl font-bold text-foreground">Security Settings</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Manage your account security, two-factor authentication, and active sessions.
                     </p>
                 </div>
@@ -1246,23 +1246,23 @@ export default function SecuritySettingsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
+                    className="rounded-2xl bg-brand-card border border-border shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                                <AlertTriangle className="h-6 w-6 text-[#D4A574]" />
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
+                                <AlertTriangle className="h-6 w-6 text-primary-ink" />
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-lg font-bold text-[#3C2415]">Security Alerts</h2>
+                                    <h2 className="text-lg font-bold text-foreground">Security Alerts</h2>
                                     {pendingAnomalies.length > 0 && (
                                         <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">
                                             {pendingAnomalies.length} new
                                         </span>
                                     )}
                                 </div>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Where you&apos;ve signed in from. We&apos;ll flag anything unusual so you can confirm or revoke.
                                 </p>
                             </div>
@@ -1279,7 +1279,7 @@ export default function SecuritySettingsPage() {
                             {!anomaliesLoading && (!anomalies || anomalies.length === 0) && (
                                 <div className="py-6 text-center">
                                     <ShieldCheck className="mx-auto h-10 w-10 text-emerald-300" />
-                                    <p className="mt-2 text-sm font-medium text-[#7B5B3A]">
+                                    <p className="mt-2 text-sm font-medium text-muted-foreground">
                                         No security alerts. Your account looks healthy.
                                     </p>
                                 </div>
@@ -1308,20 +1308,20 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
+                    className="rounded-2xl bg-brand-card border border-border shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
                                 {is2FAEnabled ? (
                                     <ShieldCheck className="h-6 w-6 text-emerald-500" />
                                 ) : (
-                                    <Shield className="h-6 w-6 text-[#D4A574]" />
+                                    <Shield className="h-6 w-6 text-primary-ink" />
                                 )}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-lg font-bold text-[#3C2415]">
+                                    <h2 className="text-lg font-bold text-foreground">
                                         Two-Factor Authentication
                                     </h2>
                                     {is2FAEnabled && (
@@ -1330,7 +1330,7 @@ export default function SecuritySettingsPage() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     {is2FAEnabled
                                         ? "Your account is protected with an additional authentication step."
                                         : "Add an extra layer of security to your account by requiring a code from your authenticator app."}
@@ -1350,7 +1350,7 @@ export default function SecuritySettingsPage() {
                             ) : (
                                 <Button
                                     onClick={() => setEnableDialogOpen(true)}
-                                    className="bg-[#D4A574] text-white hover:bg-[#c4955f]"
+                                    className="bg-primary-tint text-white hover:bg-primary-ink"
                                 >
                                     <Shield className="h-4 w-4" />
                                     Enable 2FA
@@ -1367,16 +1367,16 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
+                    className="rounded-2xl bg-brand-card border border-border shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                                <Laptop className="h-6 w-6 text-[#D4A574]" />
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
+                                <Laptop className="h-6 w-6 text-primary-ink" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-lg font-bold text-[#3C2415]">Active Sessions</h2>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <h2 className="text-lg font-bold text-foreground">Active Sessions</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Devices and browsers where your account is currently signed in.
                                 </p>
                             </div>
@@ -1399,8 +1399,8 @@ export default function SecuritySettingsPage() {
 
                             {!sessionsLoading && !sessionsError && sessions && sessions.length === 0 && (
                                 <div className="py-8 text-center">
-                                    <Laptop className="mx-auto h-10 w-10 text-[#F0E6DC]" />
-                                    <p className="mt-2 text-sm font-medium text-[#7B5B3A]">
+                                    <Laptop className="mx-auto h-10 w-10 text-background" />
+                                    <p className="mt-2 text-sm font-medium text-muted-foreground">
                                         No active sessions found.
                                     </p>
                                 </div>
@@ -1433,7 +1433,7 @@ export default function SecuritySettingsPage() {
                         </div>
 
                         {!sessionsLoading && otherSessions.length > 0 && (
-                            <div className="mt-4 border-t border-[#F0E6DC] pt-4">
+                            <div className="mt-4 border-t border-border pt-4">
                                 <Button
                                     variant="outline"
                                     onClick={handleLogoutAll}
@@ -1459,16 +1459,16 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
+                    className="rounded-2xl bg-brand-card border border-border shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                                <ShieldPlus className="h-6 w-6 text-[#D4A574]" />
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
+                                <ShieldPlus className="h-6 w-6 text-primary-ink" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-lg font-bold text-[#3C2415]">Trusted Devices</h2>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <h2 className="text-lg font-bold text-foreground">Trusted Devices</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Devices you have marked as trusted will skip 2FA verification.
                                 </p>
                             </div>
@@ -1490,8 +1490,8 @@ export default function SecuritySettingsPage() {
 
                             {!devicesLoading && !devicesError && trustedDevices && trustedDevices.length === 0 && (
                                 <div className="py-6 text-center">
-                                    <Smartphone className="mx-auto h-10 w-10 text-[#F0E6DC]" />
-                                    <p className="mt-2 text-sm font-medium text-[#7B5B3A]">
+                                    <Smartphone className="mx-auto h-10 w-10 text-background" />
+                                    <p className="mt-2 text-sm font-medium text-muted-foreground">
                                         No trusted devices yet.
                                     </p>
                                 </div>
@@ -1511,12 +1511,12 @@ export default function SecuritySettingsPage() {
                             )}
                         </div>
 
-                        <div className="mt-4 border-t border-[#F0E6DC] pt-4">
+                        <div className="mt-4 border-t border-border pt-4">
                             <Button
                                 variant="outline"
                                 onClick={handleTrustCurrentDevice}
                                 disabled={trustDevice.isPending}
-                                className="w-full border-[#F0E6DC] text-[#D4A574] hover:bg-[#FAF5F0] hover:text-[#3C2415]"
+                                className="w-full border-border text-primary-ink hover:bg-background hover:text-foreground"
                             >
                                 {trustDevice.isPending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1536,16 +1536,16 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
+                    className="rounded-2xl bg-brand-card border border-border shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF5F0]">
-                                <KeyRound className="h-6 w-6 text-[#D4A574]" />
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
+                                <KeyRound className="h-6 w-6 text-primary-ink" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-lg font-bold text-[#3C2415]">Change Password</h2>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <h2 className="text-lg font-bold text-foreground">Change Password</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Update your password by requesting a reset code sent to your email or phone.
                                 </p>
                             </div>
@@ -1553,7 +1553,7 @@ export default function SecuritySettingsPage() {
 
                         <div className="mt-5 space-y-3">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-[#7B5B3A]">
+                                <label className="text-xs font-semibold text-muted-foreground">
                                     Email or Phone Number
                                 </label>
                                 <Input
@@ -1564,7 +1564,7 @@ export default function SecuritySettingsPage() {
                                         setChangePasswordIdentifier(e.target.value)
                                         setChangePasswordSent(false)
                                     }}
-                                    className="border-[#F0E6DC] focus-visible:ring-[#D4A574]"
+                                    className="border-border focus-visible:ring-primary"
                                 />
                             </div>
 
@@ -1577,7 +1577,7 @@ export default function SecuritySettingsPage() {
                             <Button
                                 onClick={handleChangePassword}
                                 disabled={forgotPassword.isPending || changePasswordSent}
-                                className="w-full bg-[#D4A574] text-white hover:bg-[#c4955f]"
+                                className="w-full bg-primary-tint text-white hover:bg-primary-ink"
                             >
                                 {forgotPassword.isPending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1605,8 +1605,8 @@ export default function SecuritySettingsPage() {
                                 <Trash2 className="h-6 w-6 text-rose-500" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 className="text-lg font-bold text-[#3C2415]">Delete Account</h2>
-                                <p className="mt-1 text-sm text-[#7B5B3A]">
+                                <h2 className="text-lg font-bold text-foreground">Delete Account</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Permanently delete your account and all associated data. There is a 30-day grace period
                                     during which you can cancel by logging in.
                                 </p>

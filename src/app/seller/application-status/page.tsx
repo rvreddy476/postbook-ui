@@ -31,15 +31,15 @@ export default function ApplicationStatusPage() {
   if (isLoading || !seller) {
     return (
       <AppShell activeTab="Shop">
-        <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB]">
-          <div className="w-8 h-8 border-2 border-[#8B5E3C] border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen flex items-center justify-center bg-secondary">
+          <div className="w-8 h-8 border-2 border-primary-outline border-t-transparent rounded-full animate-spin" />
         </div>
       </AppShell>
     )
   }
 
   const statusConfig: Record<string, { icon: string; title: string; borderColor: string }> = {
-    submitted: { icon: '📋', title: 'Application Submitted', borderColor: 'border-[#8B5E3C]' },
+    submitted: { icon: '📋', title: 'Application Submitted', borderColor: 'border-primary-outline' },
     under_review: { icon: '🔍', title: 'Under Review', borderColor: 'border-amber-300' },
     changes_required: { icon: '📝', title: 'Changes Required', borderColor: 'border-orange-300' },
     rejected: { icon: '❌', title: 'Application Rejected', borderColor: 'border-red-300' },
@@ -50,15 +50,15 @@ export default function ApplicationStatusPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F0EB] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-secondary px-4">
         <div className={`max-w-md w-full bg-white rounded-2xl shadow-lg border-2 ${cfg.borderColor} p-10 text-center`}>
-          <div className="w-16 h-16 rounded-2xl bg-[#F5F0EB] border border-[#E8DDD3] flex items-center justify-center mx-auto mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-secondary border border-border flex items-center justify-center mx-auto mb-5">
             <span className="text-3xl">{cfg.icon}</span>
           </div>
-          <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">{cfg.title}</h2>
+          <h2 className="text-2xl font-black text-foreground mb-2">{cfg.title}</h2>
 
           {(seller.status === 'submitted' || seller.status === 'under_review') && (
-            <p className="text-[#6B5544] mb-6 text-sm leading-relaxed">
+            <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
               Your seller application is being reviewed by our team. We typically respond within 2-3 business days.
               You'll receive a notification once a decision is made.
             </p>
@@ -66,7 +66,7 @@ export default function ApplicationStatusPage() {
 
           {seller.status === 'changes_required' && (
             <>
-              <p className="text-[#6B5544] mb-4 text-sm">
+              <p className="text-muted-foreground mb-4 text-sm">
                 Our review team has requested some changes to your application.
               </p>
               {seller.changes_requested && (
@@ -77,7 +77,7 @@ export default function ApplicationStatusPage() {
               )}
               <button
                 onClick={() => router.push('/seller/onboarding')}
-                className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-[#3A2E26] transition text-sm mb-3"
+                className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-xl font-bold hover:bg-foreground transition text-sm mb-3"
               >
                 Make Changes
               </button>
@@ -86,7 +86,7 @@ export default function ApplicationStatusPage() {
 
           {seller.status === 'rejected' && (
             <>
-              <p className="text-[#6B5544] mb-4 text-sm">
+              <p className="text-muted-foreground mb-4 text-sm">
                 Unfortunately, your application was not approved at this time.
               </p>
               {seller.rejection_reason && (
@@ -100,7 +100,7 @@ export default function ApplicationStatusPage() {
 
           {seller.status === 'suspended' && (
             <>
-              <p className="text-[#6B5544] mb-4 text-sm">
+              <p className="text-muted-foreground mb-4 text-sm">
                 Your seller account has been suspended.
               </p>
               {seller.changes_requested && (
@@ -114,14 +114,14 @@ export default function ApplicationStatusPage() {
 
           <div className="space-y-3 mt-4">
             {seller.store_name && (
-              <div className="bg-[#F5F0EB] border border-[#E8DDD3] rounded-xl p-4 text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1">Business</p>
-                <p className="text-sm font-bold text-[#1A1A1A]">{seller.store_name}</p>
+              <div className="bg-secondary border border-border rounded-xl p-4 text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Business</p>
+                <p className="text-sm font-bold text-foreground">{seller.store_name}</p>
               </div>
             )}
             <button
               onClick={() => router.push('/commerce')}
-              className="w-full py-3.5 border border-[#E8DDD3] rounded-xl text-[#6B5544] font-bold hover:bg-[#F5F0EB] transition text-sm"
+              className="w-full py-3.5 border border-border rounded-xl text-muted-foreground font-bold hover:bg-secondary transition text-sm"
             >
               Back to Commerce
             </button>

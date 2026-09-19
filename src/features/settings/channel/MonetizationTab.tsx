@@ -77,7 +77,7 @@ export function MonetizationTab() {
 
       {/* Info */}
       <div className="rounded-2xl border border-brand-text/10 bg-brand-text/50 p-6">
-        <h3 className="text-[13px] font-bold text-[#6b081f]">Coming Soon</h3>
+        <h3 className="text-[13px] font-bold text-danger">Coming Soon</h3>
         <p className="mt-1 text-[12px] leading-relaxed text-brand-text">
           Monetization features including Super Boosts, channel memberships, and ad revenue
           sharing are currently in development. Keep creating great content to meet the

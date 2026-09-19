@@ -27,7 +27,7 @@ const CREATE_OPTIONS = [
     description: "Go live and interact with your audience",
     href: "/live/start",
     icon: Radio,
-    gradient: "from-[#F59E0B] to-[#D97706]",
+    gradient: "from-warning to-[#D97706]",
     hoverBg: "hover:bg-[#FFF8EB]",
   },
   {
@@ -78,7 +78,7 @@ export function CreateButton() {
         aria-label="Create"
       >
         <Sparkles className="h-[17px] w-[17px]" />
-        <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#F59E0B] ring-2 ring-white">
+        <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning ring-2 ring-white">
           <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
         </div>
       </motion.button>
@@ -91,10 +91,10 @@ export function CreateButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-100"
+            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-border bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-100"
           >
             <div className="px-3 py-2 flex items-center gap-2">
-              <Zap className="h-3 w-3 text-[#F59E0B]" />
+              <Zap className="h-3 w-3 text-warning" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#B0ADBE]">
                 Create New
               </p>
@@ -114,7 +114,7 @@ export function CreateButton() {
                   <option.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-semibold text-[#0F0D15] group-hover:text-brand-text transition-colors">{option.label}</p>
+                  <p className="text-[13px] font-semibold text-foreground group-hover:text-brand-text transition-colors">{option.label}</p>
                   <p className="text-[11px] text-[#B0ADBE]">{option.description}</p>
                 </div>
               </button>

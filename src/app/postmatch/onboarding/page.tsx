@@ -381,7 +381,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#222] border-t-rose-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#888] text-sm font-medium">Connecting PostMatch to your VChat account…</p>
+          <p className="text-muted-foreground text-sm font-medium">Connecting PostMatch to your VChat account…</p>
         </div>
       </div>
     )
@@ -398,7 +398,7 @@ export default function OnboardingPage() {
             </div>
             <span className="text-base font-black tracking-tight text-white">PostMatch</span>
           </Link>
-          <span className="text-xs font-semibold text-[#666]">Step {stepIndex + 1} of {ALL_STEPS.length}</span>
+          <span className="text-xs font-semibold text-muted-foreground">Step {stepIndex + 1} of {ALL_STEPS.length}</span>
         </div>
         <div className="h-1 bg-[#1a1a1a]">
           <div className="h-full bg-linear-to-r from-rose-600 to-orange-500 transition-all duration-500" style={{ width: `${progress}%` }} />
@@ -421,7 +421,7 @@ export default function OnboardingPage() {
           <div className="max-w-sm mx-auto">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-black mb-1">Community Guidelines</h1>
-              <p className="text-[#666] text-sm">A few things to keep in mind</p>
+              <p className="text-muted-foreground text-sm">A few things to keep in mind</p>
             </div>
 
             <div className="bg-[#111] rounded-2xl border border-[#222] divide-y divide-[#1a1a1a] mb-8">
@@ -435,7 +435,7 @@ export default function OnboardingPage() {
                   <span className="text-2xl shrink-0 mt-0.5">{rule.icon}</span>
                   <div>
                     <h3 className="font-bold text-white text-sm">{rule.title}</h3>
-                    <p className="text-[#666] text-xs mt-0.5 leading-relaxed">{rule.desc}</p>
+                    <p className="text-muted-foreground text-xs mt-0.5 leading-relaxed">{rule.desc}</p>
                   </div>
                 </div>
               ))}
@@ -457,30 +457,30 @@ export default function OnboardingPage() {
           <div>
             <div className="mb-6">
               <h1 className="text-2xl font-black">About you</h1>
-              <p className="text-[#666] text-sm mt-1">Tell us a bit about yourself. All fields are required.</p>
+              <p className="text-muted-foreground text-sm mt-1">Tell us a bit about yourself. All fields are required.</p>
             </div>
 
             <div className="bg-[#111] rounded-2xl border border-[#222] p-5 space-y-5">
               {/* Name */}
               <div>
-                <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">First Name</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">First Name</label>
                 <input
-                  className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
+                  className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
                   placeholder="Your first name"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
                   maxLength={22}
                   autoFocus
                 />
-                <p className="text-[10px] text-[#666] mt-1">This appears on your profile. 1-22 characters.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">This appears on your profile. 1-22 characters.</p>
               </div>
 
               {/* Date of birth */}
               <div>
-                <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">Date of Birth</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Date of Birth</label>
                 <div className="grid grid-cols-3 gap-2">
                   <input
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
                     placeholder="DD"
                     value={dobDay}
                     onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 2); setDobDay(v); if (v.length === 2) dobMonthRef.current?.focus() }}
@@ -488,7 +488,7 @@ export default function OnboardingPage() {
                   />
                   <input
                     ref={dobMonthRef}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
                     placeholder="MM"
                     value={dobMonth}
                     onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 2); setDobMonth(v); if (v.length === 2) dobYearRef.current?.focus() }}
@@ -496,19 +496,19 @@ export default function OnboardingPage() {
                   />
                   <input
                     ref={dobYearRef}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
                     placeholder="YYYY"
                     value={dobYear}
                     onChange={e => setDobYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     maxLength={4}
                   />
                 </div>
-                <p className="text-[10px] text-[#666] mt-1">Your age will be shown publicly. Must be 18+.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Your age will be shown publicly. Must be 18+.</p>
               </div>
 
               {/* Gender */}
               <div>
-                <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">Gender</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Gender</label>
                 <div className="grid grid-cols-4 gap-2">
                   {([
                     ['male', 'Man'],
@@ -523,7 +523,7 @@ export default function OnboardingPage() {
                       className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${
                         gender === val
                           ? 'border-rose-500 bg-rose-50 text-rose-600'
-                          : 'border-[#333] text-[#666] hover:border-[#555] bg-[#111]'
+                          : 'border-[#333] text-muted-foreground hover:border-[#555] bg-[#111]'
                       }`}
                     >
                       {label}
@@ -534,7 +534,7 @@ export default function OnboardingPage() {
 
               {/* Interested in */}
               <div>
-                <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">Interested In</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Interested In</label>
                 <div className="grid grid-cols-3 gap-2">
                   {([
                     ['everyone', 'Everyone'],
@@ -548,7 +548,7 @@ export default function OnboardingPage() {
                       className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${
                         lookingFor === val
                           ? 'border-rose-500 bg-rose-50 text-rose-600'
-                          : 'border-[#333] text-[#666] hover:border-[#555] bg-[#111]'
+                          : 'border-[#333] text-muted-foreground hover:border-[#555] bg-[#111]'
                       }`}
                     >
                       {label}
@@ -559,7 +559,7 @@ export default function OnboardingPage() {
 
               {/* Intent */}
               <div>
-                <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">Looking For</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-wider">Looking For</label>
                 <div className="grid grid-cols-2 gap-2">
                   {([
                     ['long_term', 'Long-term partner', '💞'],
@@ -578,7 +578,7 @@ export default function OnboardingPage() {
                       }`}
                     >
                       <span className="text-lg">{icon}</span>
-                      <span className={`text-xs font-bold ${intent === val ? 'text-rose-600' : 'text-[#888]'}`}>{label}</span>
+                      <span className={`text-xs font-bold ${intent === val ? 'text-rose-600' : 'text-muted-foreground'}`}>{label}</span>
                     </button>
                   ))}
                 </div>
@@ -603,7 +603,7 @@ export default function OnboardingPage() {
           <div>
             <div className="mb-6">
               <h1 className="text-2xl font-black">Photos & Selfie</h1>
-              <p className="text-[#666] text-sm mt-1">Upload profile photos and take a selfie for verification.</p>
+              <p className="text-muted-foreground text-sm mt-1">Upload profile photos and take a selfie for verification.</p>
             </div>
 
             {/* Profile Photos */}
@@ -611,9 +611,9 @@ export default function OnboardingPage() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="font-bold text-sm text-white">Profile Photos</h3>
-                  <p className="text-[11px] text-[#666]">At least 1 required. Up to 6.</p>
+                  <p className="text-[11px] text-muted-foreground">At least 1 required. Up to 6.</p>
                 </div>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${photos.length > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-[#1a1a1a] text-[#666]'}`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${photos.length > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-[#1a1a1a] text-muted-foreground'}`}>
                   {photos.length}/6
                 </span>
               </div>
@@ -653,7 +653,7 @@ export default function OnboardingPage() {
                   return (
                     <label key={i} className="aspect-3/4 rounded-xl border-2 border-dashed border-[#333] flex flex-col items-center justify-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/30 transition group">
                       <div className="w-7 h-7 rounded-full bg-[#1a1a1a] group-hover:bg-rose-100 flex items-center justify-center transition">
-                        <svg className="w-4 h-4 text-[#666] group-hover:text-rose-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <svg className="w-4 h-4 text-muted-foreground group-hover:text-rose-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                       </div>
                       <input ref={i === photos.length ? fileInputRef : undefined} type="file" className="hidden" accept="image/jpeg,image/png,image/webp" multiple onChange={handleAddPhoto} />
                     </label>
@@ -667,10 +667,10 @@ export default function OnboardingPage() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="font-bold text-sm text-white">Selfie Verification <span className="text-red-500">*</span></h3>
-                  <p className="text-[11px] text-[#666]">Required. Your selfie must match your profile photos.</p>
+                  <p className="text-[11px] text-muted-foreground">Required. Your selfie must match your profile photos.</p>
                 </div>
                 {!faceModelsLoaded && step === 'media' && (
-                  <span className="text-[10px] font-bold text-[#555] flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-foreground flex items-center gap-1.5">
                     <div className="w-3 h-3 border border-[#555] border-t-transparent rounded-full animate-spin" />
                     Loading AI...
                   </span>
@@ -754,7 +754,7 @@ export default function OnboardingPage() {
                   )}
                   <button
                     onClick={() => { URL.revokeObjectURL(selfie.preview); setSelfie(null); setFaceStatus('idle') }}
-                    className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-[#666] hover:text-red-500 transition"
+                    className="mx-auto mt-3 flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-red-500 transition"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Retake
@@ -771,7 +771,7 @@ export default function OnboardingPage() {
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-sm text-white group-hover:text-rose-600 transition">Take a Selfie</p>
-                    <p className="text-[11px] text-[#666]">Opens your camera for a live photo</p>
+                    <p className="text-[11px] text-muted-foreground">Opens your camera for a live photo</p>
                   </div>
                 </button>
               )}
@@ -781,7 +781,7 @@ export default function OnboardingPage() {
             <div className="flex items-center gap-3 mt-6">
               <button
                 onClick={() => goTo('personal')}
-                className="px-6 py-4 rounded-2xl text-[#666] font-bold text-sm hover:bg-[#1a1a1a] transition"
+                className="px-6 py-4 rounded-2xl text-muted-foreground font-bold text-sm hover:bg-[#1a1a1a] transition"
               >
                 Back
               </button>
@@ -806,7 +806,7 @@ export default function OnboardingPage() {
               <svg className="w-10 h-10 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
             </div>
             <h1 className="text-2xl font-black mb-2">Find people near you</h1>
-            <p className="text-[#666] text-sm leading-relaxed max-w-xs mx-auto mb-8">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto mb-8">
               We use your location to show matches nearby. This helps find people you can actually meet.
             </p>
 
@@ -821,7 +821,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleContinue}
                   disabled={isSaving}
-                  className="w-full py-3 text-[#666] font-bold text-sm hover:text-white transition"
+                  className="w-full py-3 text-muted-foreground font-bold text-sm hover:text-white transition"
                 >
                   {isSaving ? 'Saving...' : 'Skip for now'}
                 </button>
@@ -831,7 +831,7 @@ export default function OnboardingPage() {
             {locationStatus === 'requesting' && (
               <div className="py-6">
                 <div className="w-8 h-8 border-[3px] border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-[#666] text-sm font-medium">Waiting for permission...</p>
+                <p className="text-muted-foreground text-sm font-medium">Waiting for permission...</p>
               </div>
             )}
 
@@ -857,7 +857,7 @@ export default function OnboardingPage() {
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-full">
                   <span className="text-amber-600 text-sm font-bold">Location unavailable</span>
                 </div>
-                <p className="text-[#666] text-xs leading-relaxed max-w-xs mx-auto">
+                <p className="text-muted-foreground text-xs leading-relaxed max-w-xs mx-auto">
                   Matches won&apos;t be sorted by distance. You can enable location later in settings.
                 </p>
                 <button
@@ -873,7 +873,7 @@ export default function OnboardingPage() {
 
             <button
               onClick={() => goTo('media')}
-              className="mt-4 text-xs font-bold text-[#666] hover:text-white transition"
+              className="mt-4 text-xs font-bold text-muted-foreground hover:text-white transition"
             >
               Go Back
             </button>

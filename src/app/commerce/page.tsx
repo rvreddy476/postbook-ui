@@ -62,36 +62,36 @@ function sellerHref() {
 export default function CommerceLandingPage() {
   const startHref = sellerHref()
   return (
-    <div className="min-h-screen bg-[#F5F0EB] font-sans">
+    <div className="min-h-screen bg-secondary font-sans">
       {/* ── Navbar ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[#F5F0EB]/90 backdrop-blur-md border-b border-[#E8DDD3]">
+      <header className="sticky top-0 z-50 bg-secondary/90 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-white font-black text-sm">
               VC
             </div>
             <div>
-              <p className="font-bold text-[#1A1A1A] text-sm leading-none">VChat Commerce</p>
-              <p className="text-[10px] text-[#6B5544] mt-0.5">For businesses, sellers, and partners</p>
+              <p className="font-bold text-foreground text-sm leading-none">VChat Commerce</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">For businesses, sellers, and partners</p>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#4A3728]">
-            <a href="#how-it-works" className="hover:text-[#1A1A1A] transition">How it Works</a>
-            <a href="#benefits" className="hover:text-[#1A1A1A] transition">Benefits</a>
-            <a href="#faq" className="hover:text-[#1A1A1A] transition">FAQ</a>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+            <a href="#how-it-works" className="hover:text-foreground transition">How it Works</a>
+            <a href="#benefits" className="hover:text-foreground transition">Benefits</a>
+            <a href="#faq" className="hover:text-foreground transition">FAQ</a>
           </nav>
 
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden sm:block px-4 py-2 text-sm font-semibold text-[#1A1A1A] border border-[#1A1A1A] rounded-full hover:bg-[#1A1A1A] hover:text-white transition"
+              className="hidden sm:block px-4 py-2 text-sm font-semibold text-foreground border border-[#1A1A1A] rounded-full hover:bg-[#1A1A1A] hover:text-white transition"
             >
               Sign In
             </Link>
             <Link
               href={startHref}
-              className="px-4 py-2 text-sm font-bold text-white bg-[#1A1A1A] rounded-full hover:bg-[#3A2E26] transition"
+              className="px-4 py-2 text-sm font-bold text-white bg-[#1A1A1A] rounded-full hover:bg-foreground transition"
             >
               Create Business Page
             </Link>
@@ -101,18 +101,18 @@ export default function CommerceLandingPage() {
 
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-24">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD3] rounded-full text-sm text-[#4A3728] mb-8 shadow-xs">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-border rounded-full text-sm text-muted-foreground mb-8 shadow-xs">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Sell products. Build your brand. Grow on VChat.
         </div>
 
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[#1A1A1A] leading-[1.05] tracking-tight max-w-4xl mb-6">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.05] tracking-tight max-w-4xl mb-6">
           Launch your{' '}
-          <span className="text-[#8B5E3C]">Business Page</span>{' '}
+          <span className="text-primary-ink">Business Page</span>{' '}
           and start selling from your own storefront.
         </h1>
 
-        <p className="text-lg text-[#6B5544] max-w-2xl mb-10 leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-2xl mb-10 leading-relaxed">
           Create your brand profile, submit seller details, get approved, and upload products
           — all from one guided flow built for retailers, home businesses, and growing brands.
         </p>
@@ -120,20 +120,20 @@ export default function CommerceLandingPage() {
         <div className="flex flex-wrap gap-4">
           <Link
             href={startHref}
-            className="px-8 py-4 bg-[#1A1A1A] text-white font-bold rounded-2xl hover:bg-[#3A2E26] transition text-sm shadow-lg shadow-black/10"
+            className="px-8 py-4 bg-[#1A1A1A] text-white font-bold rounded-2xl hover:bg-foreground transition text-sm shadow-lg shadow-black/10"
           >
             Create Business Page
           </Link>
           <a
             href="#how-it-works"
-            className="px-8 py-4 bg-white text-[#1A1A1A] font-bold rounded-2xl border border-[#E8DDD3] hover:border-[#1A1A1A] transition text-sm"
+            className="px-8 py-4 bg-white text-foreground font-bold rounded-2xl border border-border hover:border-[#1A1A1A] transition text-sm"
           >
             Learn More
           </a>
         </div>
 
         {/* Stats row */}
-        <div className="flex flex-wrap gap-10 mt-16 pt-10 border-t border-[#E8DDD3]">
+        <div className="flex flex-wrap gap-10 mt-16 pt-10 border-t border-border">
           {[
             { value: '2M+', label: 'Active users' },
             { value: '₹0', label: 'Listing fee' },
@@ -141,8 +141,8 @@ export default function CommerceLandingPage() {
             { value: '7-day', label: 'Return window' },
           ].map(s => (
             <div key={s.label}>
-              <p className="text-3xl font-black text-[#1A1A1A]">{s.value}</p>
-              <p className="text-sm text-[#6B5544] mt-0.5">{s.label}</p>
+              <p className="text-3xl font-black text-foreground">{s.value}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -151,16 +151,16 @@ export default function CommerceLandingPage() {
       {/* ── How it Works ────────────────────────────────────────── */}
       <section id="how-it-works" className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] mb-3">Process</p>
-          <h2 className="text-4xl font-black text-[#1A1A1A] mb-14">How it works</h2>
+          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">Process</p>
+          <h2 className="text-4xl font-black text-foreground mb-14">How it works</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {HOW_IT_WORKS.map(item => (
               <div key={item.step} className="group">
-                <div className="text-5xl font-black text-[#E8DDD3] group-hover:text-[#8B5E3C] transition mb-4">
+                <div className="text-5xl font-black text-background group-hover:text-primary-ink transition mb-4">
                   {item.step}
                 </div>
-                <h3 className="font-bold text-[#1A1A1A] mb-2">{item.title}</h3>
-                <p className="text-sm text-[#6B5544] leading-relaxed">{item.desc}</p>
+                <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -170,14 +170,14 @@ export default function CommerceLandingPage() {
       {/* ── Benefits ────────────────────────────────────────────── */}
       <section id="benefits" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] mb-3">Why sell here</p>
-          <h2 className="text-4xl font-black text-[#1A1A1A] mb-14">Built for real sellers</h2>
+          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">Why sell here</p>
+          <h2 className="text-4xl font-black text-foreground mb-14">Built for real sellers</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {BENEFITS.map(b => (
-              <div key={b.title} className="bg-white rounded-2xl border border-[#E8DDD3] p-6 hover:border-[#8B5E3C] transition">
+              <div key={b.title} className="bg-white rounded-2xl border border-border p-6 hover:border-primary-outline transition">
                 <div className="text-3xl mb-3">{b.emoji}</div>
-                <h3 className="font-bold text-[#1A1A1A] mb-1">{b.title}</h3>
-                <p className="text-sm text-[#6B5544] leading-relaxed">{b.desc}</p>
+                <h3 className="font-bold text-foreground mb-1">{b.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
               </div>
             ))}
           </div>
@@ -187,13 +187,13 @@ export default function CommerceLandingPage() {
       {/* ── FAQ ─────────────────────────────────────────────────── */}
       <section id="faq" className="bg-white py-20">
         <div className="max-w-3xl mx-auto px-6">
-          <p className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] mb-3">FAQ</p>
-          <h2 className="text-4xl font-black text-[#1A1A1A] mb-12">Common questions</h2>
+          <p className="text-xs font-black uppercase tracking-widest text-primary-ink mb-3">FAQ</p>
+          <h2 className="text-4xl font-black text-foreground mb-12">Common questions</h2>
           <div className="space-y-6">
             {FAQS.map(faq => (
-              <div key={faq.q} className="border-b border-[#E8DDD3] pb-6 last:border-0">
-                <h3 className="font-bold text-[#1A1A1A] mb-2">{faq.q}</h3>
-                <p className="text-sm text-[#6B5544] leading-relaxed">{faq.a}</p>
+              <div key={faq.q} className="border-b border-border pb-6 last:border-0">
+                <h3 className="font-bold text-foreground mb-2">{faq.q}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
               </div>
             ))}
           </div>
@@ -203,11 +203,11 @@ export default function CommerceLandingPage() {
       {/* ── Bottom CTA ──────────────────────────────────────────── */}
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-5xl font-black text-[#1A1A1A] mb-4">Ready to start selling?</h2>
-          <p className="text-[#6B5544] mb-10">Join thousands of sellers growing their business on VChat.</p>
+          <h2 className="text-5xl font-black text-foreground mb-4">Ready to start selling?</h2>
+          <p className="text-muted-foreground mb-10">Join thousands of sellers growing their business on VChat.</p>
           <Link
             href={startHref}
-            className="inline-block px-10 py-4 bg-[#1A1A1A] text-white font-bold rounded-2xl hover:bg-[#3A2E26] transition text-sm shadow-lg shadow-black/10"
+            className="inline-block px-10 py-4 bg-[#1A1A1A] text-white font-bold rounded-2xl hover:bg-foreground transition text-sm shadow-lg shadow-black/10"
           >
             Create Business Page — It's Free
           </Link>
@@ -215,13 +215,13 @@ export default function CommerceLandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="border-t border-[#E8DDD3] py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-[#6B5544]">
+      <footer className="border-t border-border py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© 2026 VChat Commerce</p>
           <div className="flex gap-6">
-            <Link href="/seller/dashboard" className="hover:text-[#1A1A1A] transition">Seller Dashboard</Link>
-            <Link href="/pages" className="hover:text-[#1A1A1A] transition">Business Pages</Link>
-            <Link href="/" className="hover:text-[#1A1A1A] transition">Back to Feed</Link>
+            <Link href="/seller/dashboard" className="hover:text-foreground transition">Seller Dashboard</Link>
+            <Link href="/pages" className="hover:text-foreground transition">Business Pages</Link>
+            <Link href="/" className="hover:text-foreground transition">Back to Feed</Link>
           </div>
         </div>
       </footer>

@@ -53,15 +53,15 @@ export default function CreateBusinessPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FAF5F0]">
-            <div className="sticky top-0 z-20 bg-[#FAF5F0]/80 backdrop-blur-xs px-4 py-3 flex items-center gap-3 border-b border-[#F0E6DC]">
+        <div className="min-h-screen bg-background">
+            <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xs px-4 py-3 flex items-center gap-3 border-b border-border">
                 <button
                     onClick={() => router.back()}
-                    className="p-1.5 rounded-full hover:bg-[#F0E6DC] transition-colors"
+                    className="p-1.5 rounded-full hover:bg-secondary transition-colors"
                 >
-                    <ChevronLeft className="w-5 h-5 text-[#3C2415]" />
+                    <ChevronLeft className="w-5 h-5 text-foreground" />
                 </button>
-                <span className="text-sm font-semibold text-[#3C2415]">Create Business Page</span>
+                <span className="text-sm font-semibold text-foreground">Create Business Page</span>
             </div>
 
             <form onSubmit={handleSubmit} className="max-w-xl mx-auto px-4 py-6 space-y-5">
@@ -72,28 +72,28 @@ export default function CreateBusinessPage() {
                 )}
 
                 {/* Identity */}
-                <section className="bg-white rounded-2xl border border-[#F0E6DC] p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-[#7B5B3A] uppercase tracking-wide">Identity</h2>
+                <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Identity</h2>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">
                             Page Handle <span className="text-red-400">*</span>
                         </label>
-                        <div className="flex items-center border border-[#F0E6DC] rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#D4A574]/50">
-                            <span className="px-3 py-2.5 text-sm text-[#7B5B3A] bg-[#FAF5F0] border-r border-[#F0E6DC]">@</span>
+                        <div className="flex items-center border border-border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/50">
+                            <span className="px-3 py-2.5 text-sm text-muted-foreground bg-background border-r border-border">@</span>
                             <input
                                 type="text"
                                 value={form.page_handle}
                                 onChange={set('page_handle')}
                                 placeholder="your-business"
-                                className="flex-1 px-3 py-2.5 text-sm text-[#3C2415] bg-white focus:outline-hidden"
+                                className="flex-1 px-3 py-2.5 text-sm text-foreground bg-white focus:outline-hidden"
                             />
                         </div>
-                        <p className="text-xs text-[#7B5B3A]/60 mt-1">Letters, numbers, hyphens only.</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Letters, numbers, hyphens only.</p>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">
                             Business Name <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -101,18 +101,18 @@ export default function CreateBusinessPage() {
                             value={form.page_name}
                             onChange={set('page_name')}
                             placeholder="Acme Coffee Shop"
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">
                             Page Type <span className="text-red-400">*</span>
                         </label>
                         <select
                             value={form.page_type}
                             onChange={set('page_type')}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                         >
                             <option value="">Select a page type</option>
                             {PAGE_TYPES.map((t) => (
@@ -120,7 +120,7 @@ export default function CreateBusinessPage() {
                             ))}
                         </select>
                         {selectedType && (
-                            <p className="text-xs text-[#7B5B3A]/70 mt-1.5">
+                            <p className="text-xs text-muted-foreground/70 mt-1.5">
                                 {selectedType.description}
                                 {selectedType.requiredDocuments.length > 0 && (
                                     <> Requires: {selectedType.requiredDocuments.map((d) => d.replace(/_/g, ' ')).join(', ')}.</>
@@ -130,31 +130,31 @@ export default function CreateBusinessPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">Category (optional)</label>
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">Category (optional)</label>
                         <input
                             type="text"
                             value={form.category}
                             onChange={set('category')}
                             placeholder="e.g. Italian restaurant"
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">Description</label>
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">Description</label>
                         <textarea
                             value={form.description}
                             onChange={set('description')}
                             placeholder="Tell people about your business..."
                             rows={3}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50 resize-none"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50 resize-none"
                         />
                     </div>
                 </section>
 
                 {/* Contact */}
-                <section className="bg-white rounded-2xl border border-[#F0E6DC] p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-[#7B5B3A] uppercase tracking-wide">Contact</h2>
+                <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Contact</h2>
 
                     {[
                         { label: 'Phone', field: 'phone', placeholder: '+1 234 567 8900', type: 'tel' },
@@ -164,28 +164,28 @@ export default function CreateBusinessPage() {
                         { label: 'Address', field: 'address', placeholder: '123 Main St, City', type: 'text' },
                     ].map(({ label, field, placeholder, type }) => (
                         <div key={field}>
-                            <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">{label}</label>
+                            <label className="block text-xs font-semibold text-foreground mb-1.5">{label}</label>
                             <input
                                 type={type}
                                 value={form[field as keyof typeof form]}
                                 onChange={set(field)}
                                 placeholder={placeholder}
-                                className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                                className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
                     ))}
                 </section>
 
                 {/* Extras */}
-                <section className="bg-white rounded-2xl border border-[#F0E6DC] p-4 space-y-4">
-                    <h2 className="text-xs font-bold text-[#7B5B3A] uppercase tracking-wide">Extras</h2>
+                <section className="bg-white rounded-2xl border border-border p-4 space-y-4">
+                    <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Extras</h2>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">Price Range</label>
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">Price Range</label>
                         <select
                             value={form.price_range}
                             onChange={set('price_range')}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                         >
                             <option value="">Not specified</option>
                             <option value="$">$ — Budget</option>
@@ -196,13 +196,13 @@ export default function CreateBusinessPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[#3C2415] mb-1.5">Booking URL</label>
+                        <label className="block text-xs font-semibold text-foreground mb-1.5">Booking URL</label>
                         <input
                             type="url"
                             value={form.booking_url}
                             onChange={set('booking_url')}
                             placeholder="https://calendly.com/..."
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-border rounded-xl bg-white text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/50"
                         />
                     </div>
                 </section>
@@ -210,7 +210,7 @@ export default function CreateBusinessPage() {
                 <button
                     type="submit"
                     disabled={createPage.isPending}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-white bg-[#7B5B3A] rounded-2xl hover:bg-[#3C2415] disabled:opacity-60 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-white bg-primary-ink rounded-2xl hover:bg-foreground disabled:opacity-60 transition-colors"
                 >
                     {createPage.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                     Create Page

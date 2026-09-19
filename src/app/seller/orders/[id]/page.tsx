@@ -49,7 +49,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
   if (isLoading) {
     return (
       <AppShell activeTab="Shop">
-        <div className="p-8 text-sm text-[#6B5544]">Loading order…</div>
+        <div className="p-8 text-sm text-muted-foreground">Loading order…</div>
       </AppShell>
     )
   }
@@ -69,45 +69,45 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="mx-auto max-w-4xl p-6 space-y-6">
           <div>
             <Link
               href="/seller/fulfillment"
-              className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+              className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
             >
               ← Fulfillment
             </Link>
-            <h1 className="text-2xl font-black text-[#1A1A1A] mt-1">Order {order.order_number}</h1>
-            <div className="text-sm text-[#6B5544]">
+            <h1 className="text-2xl font-black text-foreground mt-1">Order {order.order_number}</h1>
+            <div className="text-sm text-muted-foreground">
               Placed {new Date(order.created_at).toLocaleString()}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-[#E8DDD3] bg-white p-4">
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+            <div className="rounded-xl border border-border bg-white p-4">
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Status
               </div>
-              <div className="text-lg font-bold text-[#1A1A1A]">
+              <div className="text-lg font-bold text-foreground">
                 {order.status.replace(/_/g, ' ')}
               </div>
             </div>
-            <div className="rounded-xl border border-[#E8DDD3] bg-white p-4">
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+            <div className="rounded-xl border border-border bg-white p-4">
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Payment
               </div>
-              <div className="text-lg font-bold text-[#1A1A1A]">{order.payment_status}</div>
-              <div className="text-xs text-[#6B5544]">{order.payment_method ?? '-'}</div>
+              <div className="text-lg font-bold text-foreground">{order.payment_status}</div>
+              <div className="text-xs text-muted-foreground">{order.payment_method ?? '-'}</div>
             </div>
-            <div className="rounded-xl border border-[#E8DDD3] bg-white p-4">
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+            <div className="rounded-xl border border-border bg-white p-4">
+              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 Your subtotal
               </div>
-              <div className="text-lg font-bold text-[#1A1A1A]">
+              <div className="text-lg font-bold text-foreground">
                 ₹{seller_subtotal.toFixed(2)}
               </div>
-              <div className="text-xs text-[#6B5544]">
+              <div className="text-xs text-muted-foreground">
                 Order total {order.currency_code} {order.final_amount.toFixed(2)}
               </div>
             </div>
@@ -115,13 +115,13 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
 
           {/* Buyer + shipping */}
           {address && (
-            <section className="rounded-xl border border-[#E8DDD3] bg-white p-6">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-3">
+            <section className="rounded-xl border border-border bg-white p-6">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
                 Ship to
               </h2>
-              <div className="text-sm text-[#1A1A1A] space-y-0.5">
+              <div className="text-sm text-foreground space-y-0.5">
                 {address.full_name && <div className="font-bold">{address.full_name}</div>}
-                {address.phone && <div className="text-[#6B5544]">{address.phone}</div>}
+                {address.phone && <div className="text-muted-foreground">{address.phone}</div>}
                 {address.line1 && <div>{address.line1}</div>}
                 {address.line2 && <div>{address.line2}</div>}
                 <div>
@@ -133,12 +133,12 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
           )}
 
           {/* Items */}
-          <section className="rounded-xl border border-[#E8DDD3] bg-white p-6">
-            <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544] mb-3">
+          <section className="rounded-xl border border-border bg-white p-6">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
               Your items
             </h2>
             <table className="w-full text-sm">
-              <thead className="text-left text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+              <thead className="text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                 <tr>
                   <th className="pb-2">Product</th>
                   <th className="pb-2">SKU</th>
@@ -150,8 +150,8 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
               <tbody className="divide-y divide-[#E8DDD3]">
                 {items.map((it) => (
                   <tr key={it.id}>
-                    <td className="py-2 font-medium text-[#1A1A1A]">{it.product_title}</td>
-                    <td className="py-2 text-[#6B5544] font-mono text-xs">{it.sku}</td>
+                    <td className="py-2 font-medium text-foreground">{it.product_title}</td>
+                    <td className="py-2 text-muted-foreground font-mono text-xs">{it.sku}</td>
                     <td className="py-2 text-right">{it.quantity}</td>
                     <td className="py-2 text-right text-xs">{it.status}</td>
                     <td className="py-2 text-right font-mono">₹{it.final_price.toFixed(2)}</td>
@@ -162,16 +162,16 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
           </section>
 
           {/* Shipment */}
-          <section className="rounded-xl border border-[#E8DDD3] bg-white p-6">
+          <section className="rounded-xl border border-border bg-white p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544]">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 Shipment
               </h2>
               {!hasShipment && payable && (
                 <button
                   disabled={bookShipment.isPending}
                   onClick={() => bookShipment.mutate(order.id)}
-                  className="rounded-lg bg-[#1A1A1A] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[#3A2E26] disabled:opacity-50 transition"
+                  className="rounded-lg bg-[#1A1A1A] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-foreground disabled:opacity-50 transition"
                 >
                   {bookShipment.isPending ? 'Booking…' : 'Book shipment'}
                 </button>
@@ -180,7 +180,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
 
             {hasShipment ? (
               <>
-                <div className="text-sm text-[#1A1A1A]">
+                <div className="text-sm text-foreground">
                   Courier: <span className="font-bold">{shipment.courier}</span>
                   {shipment.tracking_number && (
                     <>
@@ -196,7 +196,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
                       href={shipment.label_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#8B5E3C] hover:text-[#1A1A1A] text-sm font-bold transition"
+                      className="text-primary-ink hover:text-foreground text-sm font-bold transition"
                     >
                       Download label ↗
                     </a>
@@ -206,7 +206,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
                       href={shipment.tracking_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#8B5E3C] hover:text-[#1A1A1A] text-sm font-bold transition"
+                      className="text-primary-ink hover:text-foreground text-sm font-bold transition"
                     >
                       Track ↗
                     </a>
@@ -214,7 +214,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
                 </div>
               </>
             ) : (
-              <p className="text-sm text-[#6B5544]">
+              <p className="text-sm text-muted-foreground">
                 No shipment booked yet.{' '}
                 {!payable && (
                   <span className="text-amber-700">Waiting for payment.</span>
@@ -230,16 +230,16 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
           </section>
 
           {/* Invoice */}
-          <section className="rounded-xl border border-[#E8DDD3] bg-white p-6">
+          <section className="rounded-xl border border-border bg-white p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#6B5544]">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 Invoice
               </h2>
               {!hasInvoice && payable && (
                 <button
                   disabled={issueInvoice.isPending}
                   onClick={() => issueInvoice.mutate(order.id)}
-                  className="rounded-lg bg-[#1A1A1A] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[#3A2E26] disabled:opacity-50 transition"
+                  className="rounded-lg bg-[#1A1A1A] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-foreground disabled:opacity-50 transition"
                 >
                   {issueInvoice.isPending ? 'Issuing…' : 'Issue invoice'}
                 </button>
@@ -248,7 +248,7 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
 
             {hasInvoice ? (
               <>
-                <div className="text-sm text-[#1A1A1A]">
+                <div className="text-sm text-foreground">
                   Invoice <span className="font-mono">{invoiceData!.invoice.invoice_number}</span>
                 </div>
                 {invoiceData!.download_url && (
@@ -256,14 +256,14 @@ export default function SellerOrderDetailPage({ params }: { params: Promise<{ id
                     href={invoiceData!.download_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-block mt-2 rounded-lg bg-[#8B5E3C] text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[#3A2E26] transition"
+                    className="inline-block mt-2 rounded-lg bg-primary-ink text-white px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-foreground transition"
                   >
                     Download invoice
                   </a>
                 )}
               </>
             ) : (
-              <p className="text-sm text-[#6B5544]">No invoice issued yet.</p>
+              <p className="text-sm text-muted-foreground">No invoice issued yet.</p>
             )}
           </section>
         </div>

@@ -85,14 +85,14 @@ function StepUpPageContent() {
       : 'Enter the 6-digit code from your authenticator app.';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8 selection:bg-[#D4A574]/20 selection:text-[#3C2415]">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8 selection:bg-primary-tint/20 selection:text-foreground">
       <div className="w-full max-w-md">
-        <div className="rounded-4xl border border-[#F0E6DC] bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
+        <div className="rounded-4xl border border-border bg-brand-card p-7 shadow-[0_20px_50px_rgba(60,36,21,0.08)] sm:p-8">
           <div className="mb-6">
             <button
               type="button"
               onClick={() => router.push('/login')}
-              className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-[#7B5B3A] transition-colors hover:text-[#D4A574]"
+              className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary-ink"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to login
@@ -103,7 +103,7 @@ function StepUpPageContent() {
                 <ShieldAlert className="h-6 w-6 text-amber-700" />
               </div>
               <div>
-                <h1 className="text-xl font-black tracking-tight text-[#3C2415]">
+                <h1 className="text-xl font-black tracking-tight text-foreground">
                   Verify it's you
                 </h1>
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
@@ -113,7 +113,7 @@ function StepUpPageContent() {
             </div>
           </div>
 
-          <p className="mb-5 text-sm font-medium text-[#7B5B3A]">
+          <p className="mb-5 text-sm font-medium text-muted-foreground">
             We noticed this sign-in is from a new device on a new network.
             {' '}{description}
           </p>
@@ -126,7 +126,7 @@ function StepUpPageContent() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#7B5B3A]" htmlFor="stepUpCode">
+              <label className="text-xs font-semibold text-muted-foreground" htmlFor="stepUpCode">
                 Verification Code
               </label>
               <input
@@ -138,7 +138,7 @@ function StepUpPageContent() {
                 value={code}
                 onChange={handleCodeChange}
                 placeholder="000000"
-                className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-[#3C2415] outline-hidden transition-all placeholder:tracking-[0.3em] placeholder:text-[#D4A574]/40 focus:ring-4 focus:ring-[#D4A574]/10 focus:border-[#D4A574]"
+                className="w-full rounded-xl border border-border bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-foreground outline-hidden transition-all placeholder:tracking-[0.3em] placeholder:text-primary-ink/40 focus:ring-4 focus:ring-primary/10 focus:border-primary-outline"
                 required
               />
             </div>
@@ -146,7 +146,7 @@ function StepUpPageContent() {
             <button
               type="submit"
               disabled={isVerifying || code.length < 6}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4A574] py-3 text-sm font-bold text-white transition-all hover:bg-[#c4955f] hover:scale-[1.01] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-tint py-3 text-sm font-bold text-white transition-all hover:bg-primary-ink hover:scale-[1.01] disabled:opacity-60"
             >
               {isVerifying && <Loader2 className="h-4 w-4 animate-spin" />}
               {isVerifying ? 'Verifying...' : 'Verify'}
@@ -162,7 +162,7 @@ function StepUpPageContent() {
                   setCode('');
                   setError(null);
                 }}
-                className="text-sm font-semibold text-[#D4A574] transition-colors hover:text-[#3C2415]"
+                className="text-sm font-semibold text-primary-ink transition-colors hover:text-foreground"
               >
                 {method === 'email_otp'
                   ? 'Use authenticator app instead'
@@ -171,7 +171,7 @@ function StepUpPageContent() {
             </div>
           )}
 
-          <p className="mt-6 text-[11px] leading-relaxed text-[#9A8369]">
+          <p className="mt-6 text-[11px] leading-relaxed text-muted-foreground">
             If this wasn't you, change your password immediately and review
             recent activity from your account settings.
           </p>
@@ -183,8 +183,8 @@ function StepUpPageContent() {
 
 function Fallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#FAF5F0] px-4 py-8">
-      <Loader2 className="h-6 w-6 animate-spin text-[#D4A574]" />
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-primary-ink" />
     </div>
   );
 }

@@ -27,7 +27,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center p-3">
-                <Loader2 className="w-4 h-4 animate-spin text-[#7B5B3A]" />
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             </div>
         )
     }
@@ -44,8 +44,8 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
     const strokeDashoffset = circumference - (score / 100) * circumference
 
     return (
-        <div className="flex flex-col items-center gap-2 p-4 bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-xs">
-            <p className="text-[10px] font-bold text-[#7B5B3A] uppercase tracking-wide">
+        <div className="flex flex-col items-center gap-2 p-4 bg-brand-card rounded-2xl border border-border shadow-xs">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                 Compatibility
             </p>
 
@@ -86,7 +86,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
                 </div>
             </div>
 
-            <p className="text-xs font-medium text-[#7B5B3A]">{label}</p>
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
         </div>
     )
 }

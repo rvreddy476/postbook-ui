@@ -32,9 +32,9 @@ export function ReelCommentsPanel({
           className="overflow-hidden"
           data-comments-drawer="true"
         >
-          <div className="flex w-[380px] flex-col rounded-2xl border border-[#E8E8EE] bg-brand-card shadow-lg">
+          <div className="flex w-[380px] flex-col rounded-2xl border border-border bg-brand-card shadow-lg">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#E8E8EE] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h3 className="text-[13px] font-bold text-brand-text">
                 Comments ({commentCount})
               </h3>

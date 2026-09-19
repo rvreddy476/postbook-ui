@@ -98,12 +98,12 @@ export default function DiscoverPage() {
               <h3 className="text-lg font-black text-white">Why am I seeing {current.first_name}?</h3>
               <button
                 onClick={() => setShowExplain(false)}
-                className="text-[#666] hover:text-white text-2xl leading-none"
+                className="text-muted-foreground hover:text-white text-2xl leading-none"
                 aria-label="Close"
               >×</button>
             </div>
             {explain.isLoading && (
-              <p className="text-sm text-[#888]">Looking up the match signals…</p>
+              <p className="text-sm text-muted-foreground">Looking up the match signals…</p>
             )}
             {explain.error && (
               <p className="text-sm text-rose-400">Couldn&apos;t load the explanation.</p>
@@ -120,7 +120,7 @@ export default function DiscoverPage() {
                   </div>
                 )}
                 {explain.data.reasons.length === 0 ? (
-                  <p className="text-sm text-[#888]">
+                  <p className="text-sm text-muted-foreground">
                     Matches your preferences. No extra signals to surface.
                   </p>
                 ) : (
@@ -136,7 +136,7 @@ export default function DiscoverPage() {
                     </div>
                   ))
                 )}
-                <p className="pt-3 text-[10px] text-[#555] leading-relaxed">
+                <p className="pt-3 text-[10px] text-foreground leading-relaxed">
                   Matching uses your preferences and signals you&apos;ve shared.
                   We never expose abuse-prevention details.
                 </p>
@@ -154,7 +154,7 @@ export default function DiscoverPage() {
               <span className="text-4xl">🎉</span>
             </div>
             <h2 className="text-3xl font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent mb-2">It&apos;s a Match!</h2>
-            <p className="text-[#666] text-sm mb-8">You and {current?.first_name} liked each other</p>
+            <p className="text-muted-foreground text-sm mb-8">You and {current?.first_name} liked each other</p>
             <div className="space-y-3">
               <button
                 onClick={() => { setMatchPopup(null); router.push(`/postmatch/chat/${matchPopup.conversation_id}`) }}
@@ -164,7 +164,7 @@ export default function DiscoverPage() {
               </button>
               <button
                 onClick={() => setMatchPopup(null)}
-                className="w-full py-3.5 border border-[#333] rounded-2xl text-[#666] font-bold text-sm hover:bg-[#1a1a1a] transition"
+                className="w-full py-3.5 border border-[#333] rounded-2xl text-muted-foreground font-bold text-sm hover:bg-[#1a1a1a] transition"
               >
                 Keep Swiping
               </button>
@@ -181,9 +181,9 @@ export default function DiscoverPage() {
               <span className="text-5xl">✦</span>
             </div>
             <h3 className="text-2xl font-black text-white mb-2">You&apos;ve seen everyone</h3>
-            <p className="text-[#666] text-sm mb-8 max-w-xs leading-relaxed">New people join every day. Come back soon or expand your preferences.</p>
+            <p className="text-muted-foreground text-sm mb-8 max-w-xs leading-relaxed">New people join every day. Come back soon or expand your preferences.</p>
             <div className="flex gap-3">
-              <button onClick={() => setCurrentIndex(0)} className="px-6 py-3 bg-[#111] border border-[#333] rounded-2xl text-sm font-bold text-[#888] hover:bg-[#1a1a1a] transition shadow-xs">
+              <button onClick={() => setCurrentIndex(0)} className="px-6 py-3 bg-[#111] border border-[#333] rounded-2xl text-sm font-bold text-muted-foreground hover:bg-[#1a1a1a] transition shadow-xs">
                 Refresh
               </button>
               <Link href="/postmatch/profile" className="px-6 py-3 bg-linear-to-r from-rose-600 to-orange-500 rounded-2xl text-sm font-bold text-white shadow-lg shadow-rose-500/20 hover:shadow-xl transition">
@@ -290,13 +290,13 @@ export default function DiscoverPage() {
                     </div>
                   )}
                   {current.bio_preview && (
-                    <p className="text-[#888] text-sm leading-relaxed">{current.bio_preview}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{current.bio_preview}</p>
                   )}
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
                       current.trust_level === 'high' ? 'bg-emerald-50 text-emerald-600' :
                       current.trust_level === 'medium' ? 'bg-amber-50 text-amber-600' :
-                      'bg-[#1a1a1a] text-[#666]'
+                      'bg-[#1a1a1a] text-muted-foreground'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${
                         current.trust_level === 'high' ? 'bg-emerald-500' :
@@ -389,7 +389,7 @@ export default function DiscoverPage() {
 
             {/* Card counter */}
             <div className="text-center mt-4">
-              <span className="text-[10px] font-bold text-[#555] uppercase tracking-widest">{currentIndex + 1} of {cards.length}</span>
+              <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">{currentIndex + 1} of {cards.length}</span>
             </div>
           </>
         )}
@@ -413,7 +413,7 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
     <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
       <div className="max-w-md mx-auto flex items-center justify-between px-4 h-16">
         {/* Left — Settings */}
-        <Link href="/postmatch/profile" className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#666] hover:bg-[#222] hover:text-white transition">
+        <Link href="/postmatch/profile" className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center text-muted-foreground hover:bg-[#222] hover:text-white transition">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         </Link>
 
@@ -435,7 +435,7 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
               {primaryPhoto ? (
                 <img src={primaryPhoto} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-[#666] font-black text-sm">{name?.[0] ?? '?'}</span>
+                <span className="text-muted-foreground font-black text-sm">{name?.[0] ?? '?'}</span>
               )}
             </div>
           </button>
@@ -449,20 +449,20 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
                   onClick={() => { setShowMenu(false); router.push('/postmatch/profile') }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#1a1a1a] transition text-left"
                 >
-                  <svg className="w-5 h-5 text-[#666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   <div>
                     <p className="text-sm font-bold text-white">My Profile</p>
-                    <p className="text-[10px] text-[#666]">Edit photos & details</p>
+                    <p className="text-[10px] text-muted-foreground">Edit photos & details</p>
                   </div>
                 </button>
                 <button
                   onClick={() => { setShowMenu(false); router.push('/postmatch/profile') }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#1a1a1a] transition text-left"
                 >
-                  <svg className="w-5 h-5 text-[#666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <div>
                     <p className="text-sm font-bold text-white">Settings</p>
-                    <p className="text-[10px] text-[#666]">Preferences & account</p>
+                    <p className="text-[10px] text-muted-foreground">Preferences & account</p>
                   </div>
                 </button>
                 <div className="border-t border-[#222] my-1" />
@@ -470,10 +470,10 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
                   onClick={() => { setShowMenu(false); router.push('/postmatch/matches') }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#1a1a1a] transition text-left"
                 >
-                  <svg className="w-5 h-5 text-[#666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                   <div>
                     <p className="text-sm font-bold text-white">Matches</p>
-                    <p className="text-[10px] text-[#666]">See who likes you</p>
+                    <p className="text-[10px] text-muted-foreground">See who likes you</p>
                   </div>
                 </button>
                 <div className="border-t border-[#222] my-1" />
@@ -501,16 +501,16 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
 function BottomNav({ active, router }: { active: string; router: ReturnType<typeof useRouter> }) {
   const tabs = [
     { id: 'discover', label: 'Discover', href: '/postmatch/discover', icon: (a: boolean) => (
-      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-[#555]'}`} fill={a ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 0 : 1.5}><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-foreground'}`} fill={a ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 0 : 1.5}><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
     )},
     { id: 'matches', label: 'Matches', href: '/postmatch/matches', icon: (a: boolean) => (
-      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-[#555]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-foreground'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
     )},
     { id: 'chat', label: 'Chat', href: '/postmatch/matches', icon: (a: boolean) => (
-      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-[#555]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-foreground'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
     )},
     { id: 'profile', label: 'Profile', href: '/postmatch/profile', icon: (a: boolean) => (
-      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-[#555]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+      <svg className={`w-6 h-6 ${a ? 'text-rose-500' : 'text-foreground'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={a ? 2.5 : 1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
     )},
   ]
 
@@ -522,7 +522,7 @@ function BottomNav({ active, router }: { active: string; router: ReturnType<type
           return (
             <Link key={t.id} href={t.href} className="flex flex-col items-center gap-0.5 min-w-[64px]">
               {t.icon(isActive)}
-              <span className={`text-[10px] font-bold ${isActive ? 'text-rose-500' : 'text-[#555]'}`}>{t.label}</span>
+              <span className={`text-[10px] font-bold ${isActive ? 'text-rose-500' : 'text-foreground'}`}>{t.label}</span>
             </Link>
           )
         })}

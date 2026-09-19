@@ -315,7 +315,7 @@ export default function AdminPage() {
   <div className="space-y-8">
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F3E6D2] text-[#7B5B3A]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F3E6D2] text-muted-foreground">
           <Gavel className="h-5 w-5" />
         </div>
         <div>
@@ -333,7 +333,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setTakedownForm((current) => ({ ...current, entity_type: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           >
             <option value="post">Post</option>
             <option value="comment">Comment</option>
@@ -348,7 +348,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setTakedownForm((current) => ({ ...current, entity_id: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="UUID or message identifier"
           />
         </label>
@@ -361,7 +361,7 @@ export default function AdminPage() {
             setTakedownForm((current) => ({ ...current, reason: event.target.value }))
           }
           rows={3}
-          className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+          className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           placeholder="Why this content is being removed"
         />
       </label>
@@ -393,7 +393,7 @@ export default function AdminPage() {
 
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF3FF] text-[#3456A0]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF3FF] text-primary-ink">
           <Shield className="h-5 w-5" />
         </div>
         <div>
@@ -405,12 +405,12 @@ export default function AdminPage() {
       </div>
       <div className="space-y-3">
         {(reportsQuery.data?.items ?? []).map((report) => (
-          <div key={report.id} className="rounded-2xl border border-brand-divider bg-[#FCFAF7] px-4 py-4">
+          <div key={report.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#E9EEF9] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#3456A0]">
+              <span className="rounded-full bg-[#E9EEF9] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary-ink">
                 {report.entity_type}
               </span>
-              <span className="rounded-full bg-[#F7E7D7] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#8A4E14]">
+              <span className="rounded-full bg-[#F7E7D7] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-warning">
                 {report.status}
               </span>
               <span className="text-[11px] text-brand-text/45">{formatDate(report.created_at)}</span>
@@ -439,7 +439,7 @@ export default function AdminPage() {
   <div className="space-y-8">
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E8E8] text-[#8A2F2F]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E8E8] text-danger">
           <Ban className="h-5 w-5" />
         </div>
         <div>
@@ -457,7 +457,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setSuspendForm((current) => ({ ...current, user_id: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="User UUID"
           />
         </label>
@@ -469,7 +469,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setSuspendForm((current) => ({ ...current, until: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           />
         </label>
         <label className="block text-[12px] font-semibold text-brand-text">
@@ -480,7 +480,7 @@ export default function AdminPage() {
               setSuspendForm((current) => ({ ...current, reason: event.target.value }))
             }
             rows={3}
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-background px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="Reason for suspension"
           />
         </label>
@@ -513,7 +513,7 @@ export default function AdminPage() {
     </section>
                     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF7F1] text-[#256B43]">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF7F1] text-success">
                           <Shield className="h-5 w-5" />
                         </div>
                         <div>
@@ -525,7 +525,7 @@ export default function AdminPage() {
                       </div>
                       <div className="space-y-3">
                         {(suspensionsQuery.data?.items ?? []).map((suspension) => (
-                          <div key={suspension.user_id} className="rounded-2xl border border-brand-divider bg-[#FCFAF7] px-4 py-4">
+                          <div key={suspension.user_id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
                             <p className="text-[12px] font-semibold text-brand-text">
                               User <span className="font-mono">{suspension.user_id}</span>
                             </p>
@@ -558,7 +558,7 @@ export default function AdminPage() {
 
                     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF1FF] text-[#3456A0]">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF1FF] text-primary-ink">
                           <Download className="h-5 w-5" />
                         </div>
                         <div>
@@ -604,7 +604,7 @@ export default function AdminPage() {
                         </p>
                       ) : null}
                       {exportRequest ? (
-                        <div className="mt-5 rounded-2xl border border-brand-divider bg-[#FCFAF7] px-4 py-4">
+                        <div className="mt-5 rounded-2xl border border-brand-divider bg-background px-4 py-4">
                           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-text/45">
                             Current request
                           </p>
@@ -644,7 +644,7 @@ export default function AdminPage() {
 
                 <section className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                   <div className="mb-5 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-[#6B46C1]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-primary-ink">
                       <RefreshCw className="h-5 w-5" />
                     </div>
                     <div>
@@ -656,12 +656,12 @@ export default function AdminPage() {
                   </div>
                   <div className="space-y-4">
                     {(auditLogQuery.data?.items ?? []).map((entry) => (
-                      <div key={entry.id} className="rounded-2xl border border-brand-divider bg-[#FCFAF7] px-4 py-4">
+                      <div key={entry.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#EEE7FF] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#6B46C1]">
+                          <span className="rounded-full bg-[#EEE7FF] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary-ink">
                             {entry.action}
                           </span>
-                          <span className="rounded-full bg-[#F2ECE4] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#7B5B3A]">
+                          <span className="rounded-full bg-[#F2ECE4] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">
                             {entry.entity_type}
                           </span>
                           <span className="text-[11px] text-brand-text/45">{formatDate(entry.created_at)}</span>

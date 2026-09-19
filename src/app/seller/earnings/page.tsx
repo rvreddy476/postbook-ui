@@ -86,24 +86,24 @@ export default function SellerEarningsPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Link
             href="/seller/dashboard"
-            className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+            className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
           >
             ← Dashboard
           </Link>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-black text-[#1A1A1A]">Earnings</h1>
-              <p className="text-sm text-[#6B5544] mt-1">
+              <h1 className="text-2xl font-black text-foreground">Earnings</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Per-order breakdown of gross, commission, platform fee, TDS, and net payout.
               </p>
             </div>
             <a
               href="/api/v1/commerce/seller/earnings.csv"
-              className="px-4 py-2 border border-[#E8DDD3] rounded-lg text-xs font-bold uppercase tracking-wider text-[#4A3728] hover:bg-white transition"
+              className="px-4 py-2 border border-border rounded-lg text-xs font-bold uppercase tracking-wider text-muted-foreground hover:bg-white transition"
             >
               Download CSV
             </a>
@@ -127,7 +127,7 @@ export default function SellerEarningsPage() {
                 className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition ${
                   tab === t
                     ? 'bg-[#1A1A1A] text-white'
-                    : 'bg-white border border-[#E8DDD3] text-[#4A3728] hover:bg-[#F5F0EB]'
+                    : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {t === 'all' ? 'All' : t === 'prepaid' ? 'Prepaid (Razorpay)' : 'COD'}
@@ -136,41 +136,41 @@ export default function SellerEarningsPage() {
           </div>
 
           {loading ? (
-            <div className="text-sm text-[#6B5544]">Loading earnings…</div>
+            <div className="text-sm text-muted-foreground">Loading earnings…</div>
           ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <p className="text-sm text-[#6B5544]">No entries yet for this tab.</p>
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <p className="text-sm text-muted-foreground">No entries yet for this tab.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] overflow-hidden">
+            <div className="bg-white rounded-2xl border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-[#F5F0EB] border-b border-[#E8DDD3] text-left">
+                <thead className="bg-secondary border-b border-border text-left">
                   <tr>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Source
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Reference
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Gross
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Commission
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Fee
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       TDS
                     </th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Net
                     </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#6B5544]">
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Status
                     </th>
                   </tr>
@@ -178,16 +178,16 @@ export default function SellerEarningsPage() {
                 <tbody className="divide-y divide-[#E8DDD3]">
                   {filtered.map((r, i) => (
                     <tr key={`${r.source}-${r.reference}-${i}`}>
-                      <td className="px-4 py-2 text-xs text-[#6B5544]">
+                      <td className="px-4 py-2 text-xs text-muted-foreground">
                         {r.date ? new Date(r.date).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-2 text-xs">
-                        <span className="font-medium text-[#1A1A1A]">{r.source}</span>
+                        <span className="font-medium text-foreground">{r.source}</span>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="font-medium text-[#1A1A1A]">{r.reference}</div>
+                        <div className="font-medium text-foreground">{r.reference}</div>
                         {r.product && (
-                          <div className="text-xs text-[#6B5544] truncate max-w-[20ch]">
+                          <div className="text-xs text-muted-foreground truncate max-w-[20ch]">
                             {r.product}
                           </div>
                         )}
@@ -235,14 +235,14 @@ function TotalsCard({
 }) {
   return (
     <div
-      className={`rounded-xl p-4 ${accent ? 'bg-[#1A1A1A] text-white' : 'bg-white border border-[#E8DDD3]'}`}
+      className={`rounded-xl p-4 ${accent ? 'bg-[#1A1A1A] text-white' : 'bg-white border border-border'}`}
     >
       <div
-        className={`text-[10px] font-black uppercase tracking-widest ${accent ? 'text-white/60' : 'text-[#6B5544]'}`}
+        className={`text-[10px] font-black uppercase tracking-widest ${accent ? 'text-white/60' : 'text-muted-foreground'}`}
       >
         {label}
       </div>
-      <div className={`text-lg font-bold ${accent ? 'text-white' : 'text-[#1A1A1A]'}`}>
+      <div className={`text-lg font-bold ${accent ? 'text-white' : 'text-foreground'}`}>
         {value < 0 ? '-' : ''}₹{Math.abs(value).toFixed(2)}
       </div>
     </div>

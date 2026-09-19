@@ -60,20 +60,20 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
     if (isLoading) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10 animate-pulse">
+            <div className="bg-brand-card rounded-2xl border border-primary-outline p-6 shadow-md shadow-[#D4A574]/10 animate-pulse">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="h-4 bg-[#F0E6DC] rounded-full w-32" />
-                        <div className="h-5 bg-[#F0E6DC] rounded-lg w-14" />
+                        <div className="h-4 bg-secondary rounded-full w-32" />
+                        <div className="h-5 bg-secondary rounded-lg w-14" />
                     </div>
-                    <div className="w-8 h-8 bg-[#F0E6DC] rounded-lg" />
+                    <div className="w-8 h-8 bg-secondary rounded-lg" />
                 </div>
-                <div className="h-40 bg-[#F0E6DC] rounded-xl mb-6" />
+                <div className="h-40 bg-secondary rounded-xl mb-6" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="space-y-2">
-                            <div className="h-2.5 bg-[#F0E6DC] rounded-full w-16" />
-                            <div className="h-5 bg-[#F0E6DC] rounded-full w-20" />
+                            <div className="h-2.5 bg-secondary rounded-full w-16" />
+                            <div className="h-5 bg-secondary rounded-full w-20" />
                         </div>
                     ))}
                 </div>
@@ -83,19 +83,19 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
     if (!metrics) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
+            <div className="bg-brand-card rounded-2xl border border-border p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#7B5B3A]">Content Details</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Content Details</p>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center hover:border-[#D4A574] transition-colors"
+                        className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center hover:border-primary-outline transition-colors"
                     >
-                        <svg className="w-4 h-4 text-[#7B5B3A]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                <p className="text-[10px] font-bold text-[#D4A574]">Unable to load content details.</p>
+                <p className="text-[10px] font-bold text-primary-ink">Unable to load content details.</p>
             </div>
         )
     }
@@ -105,11 +105,11 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
     const chartHeight = 120
 
     return (
-        <div className="bg-brand-card rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10">
+        <div className="bg-brand-card rounded-2xl border border-primary-outline p-6 shadow-md shadow-[#D4A574]/10">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-black text-[#3C2415]">
+                    <span className="font-mono text-xs font-black text-foreground">
                         {truncateId(metrics.content_id)}
                     </span>
                     <span
@@ -124,9 +124,9 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                 </div>
                 <button
                     onClick={onClose}
-                    className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center hover:border-[#D4A574] transition-colors"
+                    className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center hover:border-primary-outline transition-colors"
                 >
-                    <svg className="w-4 h-4 text-[#7B5B3A]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -136,14 +136,14 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
             {hourlyTrend.length > 0 && (
                 <div className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="w-6 h-6 rounded-md bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
-                            <svg className="w-3 h-3 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <div className="w-6 h-6 rounded-md bg-background border border-border flex items-center justify-center">
+                            <svg className="w-3 h-3 text-primary-ink" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4" />
                             </svg>
                         </div>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A]">Hourly Trend</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Hourly Trend</span>
                     </div>
-                    <div className="bg-[#FAF5F0] rounded-xl border border-[#F0E6DC] p-4">
+                    <div className="bg-background rounded-xl border border-border p-4">
                         <div className="flex items-end gap-1 overflow-x-auto" style={{ height: chartHeight }}>
                             {hourlyTrend.map((point, idx) => {
                                 const barHeight = Math.max((point.views / maxViews) * (chartHeight - 20), 2)
@@ -156,14 +156,14 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                         <div className="relative group">
                                             {/* Tooltip */}
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                                                <div className="bg-[#3C2415] text-white text-[8px] font-bold rounded-lg px-2 py-1 whitespace-nowrap shadow-lg">
+                                                <div className="bg-foreground text-white text-[8px] font-bold rounded-lg px-2 py-1 whitespace-nowrap shadow-lg">
                                                     <div>{formatNumber(point.views)} views</div>
                                                     <div>{formatNumber(point.plays)} plays</div>
                                                     <div>{formatWatchTime(point.watch_time_ms)}</div>
                                                 </div>
                                             </div>
                                             <div
-                                                className="w-full rounded-t-md bg-linear-to-t from-[#D4A574] to-[#D4A574]/60 hover:from-[#7B5B3A] hover:to-[#D4A574] transition-all duration-200 cursor-pointer"
+                                                className="w-full rounded-t-md bg-linear-to-t from-primary to-primary/60 hover:from-primary-ink hover:to-primary transition-all duration-200 cursor-pointer"
                                                 style={{
                                                     height: barHeight,
                                                     minWidth: hourlyTrend.length > 24 ? 8 : 16,
@@ -172,7 +172,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                         </div>
                                         {/* Only show labels for every Nth bar to avoid crowding */}
                                         {(idx % Math.max(Math.floor(hourlyTrend.length / 12), 1) === 0) && (
-                                            <span className="text-[6px] font-bold text-[#D4A574] whitespace-nowrap">
+                                            <span className="text-[6px] font-bold text-primary-ink whitespace-nowrap">
                                                 {formatHour(point.hour)}
                                             </span>
                                         )}
@@ -186,33 +186,33 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
             {/* Key metrics grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-[#FAF5F0] rounded-xl border border-[#F0E6DC] p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Views</p>
-                    <p className="text-lg font-black text-[#3C2415]">{formatNumber(metrics.views_display)}</p>
-                    <p className="text-[8px] font-bold text-[#D4A574]">{formatNumber(metrics.unique_viewers)} unique</p>
+                <div className="bg-background rounded-xl border border-border p-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Views</p>
+                    <p className="text-lg font-black text-foreground">{formatNumber(metrics.views_display)}</p>
+                    <p className="text-[8px] font-bold text-primary-ink">{formatNumber(metrics.unique_viewers)} unique</p>
                 </div>
 
-                <div className="bg-[#FAF5F0] rounded-xl border border-[#F0E6DC] p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Watch Time</p>
-                    <p className="text-lg font-black text-[#3C2415]">{formatWatchTime(metrics.watch_time_total_ms)}</p>
-                    <p className="text-[8px] font-bold text-[#D4A574]">avg {formatWatchTime(metrics.avg_watch_time_ms)}</p>
+                <div className="bg-background rounded-xl border border-border p-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Watch Time</p>
+                    <p className="text-lg font-black text-foreground">{formatWatchTime(metrics.watch_time_total_ms)}</p>
+                    <p className="text-[8px] font-bold text-primary-ink">avg {formatWatchTime(metrics.avg_watch_time_ms)}</p>
                 </div>
 
-                <div className="bg-[#FAF5F0] rounded-xl border border-[#F0E6DC] p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Completion</p>
-                    <p className="text-lg font-black text-[#3C2415]">{(metrics.completion_rate * 100).toFixed(1)}%</p>
-                    <p className="text-[8px] font-bold text-[#D4A574]">avg {metrics.avg_percent_viewed.toFixed(1)}% viewed</p>
+                <div className="bg-background rounded-xl border border-border p-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Completion</p>
+                    <p className="text-lg font-black text-foreground">{(metrics.completion_rate * 100).toFixed(1)}%</p>
+                    <p className="text-[8px] font-bold text-primary-ink">avg {metrics.avg_percent_viewed.toFixed(1)}% viewed</p>
                 </div>
 
-                <div className="bg-[#FAF5F0] rounded-xl border border-[#F0E6DC] p-3">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[#7B5B3A] mb-1">Content Quality</p>
+                <div className="bg-background rounded-xl border border-border p-3">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Content Quality</p>
                     <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${cqsDotColor(metrics.content_quality_score)}`} />
-                        <p className="text-lg font-black text-[#3C2415]">
+                        <p className="text-lg font-black text-foreground">
                             {(metrics.content_quality_score * 100).toFixed(0)}%
                         </p>
                     </div>
-                    <p className="text-[8px] font-bold text-[#D4A574]">{cqsLabel(metrics.content_quality_score)}</p>
+                    <p className="text-[8px] font-bold text-primary-ink">{cqsLabel(metrics.content_quality_score)}</p>
                 </div>
             </div>
 
@@ -227,8 +227,8 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                     { label: "Saves", value: formatNumber(metrics.saves) },
                 ].map((stat) => (
                     <div key={stat.label} className="text-center">
-                        <p className="text-[7px] font-black uppercase tracking-widest text-[#D4A574] mb-0.5">{stat.label}</p>
-                        <p className="text-sm font-black text-[#3C2415]">{stat.value}</p>
+                        <p className="text-[7px] font-black uppercase tracking-widest text-primary-ink mb-0.5">{stat.label}</p>
+                        <p className="text-sm font-black text-foreground">{stat.value}</p>
                     </div>
                 ))}
             </div>

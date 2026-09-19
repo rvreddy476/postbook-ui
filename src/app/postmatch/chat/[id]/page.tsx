@@ -56,19 +56,19 @@ export default function PostMatchChatPage() {
     <div className="h-screen flex flex-col bg-[#0a0a0a]">
       {/* Header */}
       <header className="bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a] px-4 py-3 flex items-center gap-3 shrink-0">
-        <button onClick={() => router.push('/postmatch/matches')} className="text-[#666] hover:text-white transition">
+        <button onClick={() => router.push('/postmatch/matches')} className="text-muted-foreground hover:text-white transition">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <div className="w-10 h-10 rounded-full bg-linear-to-br from-rose-500 to-orange-500 p-[2px] shrink-0">
-          <div className="w-full h-full rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#666] font-black text-sm">
+          <div className="w-full h-full rounded-full bg-[#1a1a1a] flex items-center justify-center text-muted-foreground font-black text-sm">
             {otherName[0]}
           </div>
         </div>
         <div className="flex-1">
           <h2 className="font-bold text-white text-sm">{otherName}</h2>
-          <p className="text-[10px] text-[#555] font-bold uppercase tracking-widest">Matched</p>
+          <p className="text-[10px] text-foreground font-bold uppercase tracking-widest">Matched</p>
         </div>
-        <Link href={`/postmatch/matches`} className="text-[10px] font-black text-[#555] uppercase tracking-widest hover:text-rose-500 transition">
+        <Link href={`/postmatch/matches`} className="text-[10px] font-black text-foreground uppercase tracking-widest hover:text-rose-500 transition">
           Info
         </Link>
       </header>
@@ -85,7 +85,7 @@ export default function PostMatchChatPage() {
               <span className="text-3xl">💬</span>
             </div>
             <h3 className="font-bold text-white mb-1">Start the conversation</h3>
-            <p className="text-[#666] text-sm max-w-xs">Say hello to {otherName}! First impressions matter.</p>
+            <p className="text-muted-foreground text-sm max-w-xs">Say hello to {otherName}! First impressions matter.</p>
           </div>
         ) : (
           <>
@@ -99,7 +99,7 @@ export default function PostMatchChatPage() {
                       : 'bg-[#111] border border-[#222] text-white rounded-bl-md'
                   }`}>
                     <p className="leading-relaxed">{msg.body_text}</p>
-                    <p className={`text-[9px] mt-1 ${isMine ? 'text-white/50' : 'text-[#555]'} text-right font-bold`}>
+                    <p className={`text-[9px] mt-1 ${isMine ? 'text-white/50' : 'text-foreground'} text-right font-bold`}>
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -115,7 +115,7 @@ export default function PostMatchChatPage() {
       <div className="bg-[#0a0a0a] border-t border-[#1a1a1a] px-4 py-3 shrink-0">
         <div className="flex items-center gap-2 max-w-lg mx-auto">
           <input
-            className="flex-1 border border-[#333] rounded-full px-4 py-2.5 text-sm text-white bg-[#1a1a1a] focus:bg-[#111] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
+            className="flex-1 border border-[#333] rounded-full px-4 py-2.5 text-sm text-white bg-[#1a1a1a] focus:bg-[#111] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-foreground"
             placeholder="Type a message..."
             value={text}
             onChange={e => setText(e.target.value)}

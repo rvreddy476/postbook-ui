@@ -37,13 +37,13 @@ export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepCl
               isActive
                 ? "text-brand-text"
                 : isDone
-                ? "text-[#2BB5A0]"
+                ? "text-success"
                 : "text-brand-text/50 hover:text-brand-text/60"
             }`}
           >
             {/* Indicator */}
             {isDone ? (
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2BB5A0]">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success">
                 <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
               </div>
             ) : (
@@ -65,7 +65,7 @@ export function HorizontalSteps({ steps, currentStep, currentStepIndex, onStepCl
         <span>{currentStepIndex}/{steps.length}</span>
         <div className="h-1 w-16 rounded-full bg-brand-text/10 overflow-hidden">
           <div
-            className="h-full rounded-full bg-[#2BB5A0] transition-all duration-300"
+            className="h-full rounded-full bg-success transition-all duration-300"
             style={{ width: `${(currentStepIndex / steps.length) * 100}%` }}
           />
         </div>

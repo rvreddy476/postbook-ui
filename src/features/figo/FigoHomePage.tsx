@@ -1529,7 +1529,7 @@ export default function FigoHomePage() {
   }, [data, query])
 
   return (
-    <main className="min-h-screen bg-[#f7f4ef] text-neutral-950">
+    <main className="min-h-screen bg-background text-neutral-950">
       <section className="border-b border-neutral-200 bg-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-10">
           <div className="flex flex-col justify-center">
@@ -1544,7 +1544,7 @@ export default function FigoHomePage() {
               Browse live restaurants, add dishes to a one-restaurant cart, apply
               launch coupons, and place COD orders through the new FiGo service.
             </p>
-            <div className="mt-7 flex max-w-xl items-center gap-2 rounded-lg border border-neutral-200 bg-[#f7f4ef] px-3 py-3">
+            <div className="mt-7 flex max-w-xl items-center gap-2 rounded-lg border border-neutral-200 bg-background px-3 py-3">
               <Search className="h-5 w-5 text-neutral-500" />
               <input
                 value={query}

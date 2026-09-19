@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 
 export function PagesTab() {
   return (
-    <div className="rounded-[28px] border border-brand-divider bg-[#FCFAF7] px-6 py-10 text-center shadow-xs">
+    <div className="rounded-[28px] border border-brand-divider bg-background px-6 py-10 text-center shadow-xs">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-secondary text-brand-highlight">
         <FileText className="h-8 w-8" />
       </div>

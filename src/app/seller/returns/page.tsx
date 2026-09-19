@@ -46,20 +46,20 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
   const pending = r.status === 'requested'
 
   return (
-    <div className="rounded-xl border border-[#E8DDD3] bg-white p-5">
+    <div className="rounded-xl border border-border bg-white p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           {order ? (
             <Link
               href={`/seller/orders/${order.id}`}
-              className="font-bold text-[#1A1A1A] hover:text-[#8B5E3C] transition"
+              className="font-bold text-foreground hover:text-primary-ink transition"
             >
               Order {order.order_number}
             </Link>
           ) : (
-            <span className="font-mono text-xs text-[#6B5544]">order {r.order_id.slice(0, 8)}…</span>
+            <span className="font-mono text-xs text-muted-foreground">order {r.order_id.slice(0, 8)}…</span>
           )}
-          <p className="text-xs text-[#6B5544] mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Requested {new Date(r.requested_at).toLocaleString()}
           </p>
         </div>
@@ -71,47 +71,47 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
       </div>
 
       {item && (
-        <div className="mt-3 border-t border-[#E8DDD3] pt-3 text-sm">
-          <div className="font-medium text-[#1A1A1A]">{item.product_title}</div>
-          <div className="text-xs text-[#6B5544] mt-0.5">
+        <div className="mt-3 border-t border-border pt-3 text-sm">
+          <div className="font-medium text-foreground">{item.product_title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
             SKU {item.sku} · qty {item.quantity} · ₹{item.final_price.toFixed(2)}
           </div>
         </div>
       )}
 
-      <div className="mt-3 border-t border-[#E8DDD3] pt-3 text-sm">
-        <div className="text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1">
+      <div className="mt-3 border-t border-border pt-3 text-sm">
+        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
           Buyer's reason
         </div>
-        <div className="font-medium text-[#1A1A1A]">{r.reason_code.replace(/_/g, ' ')}</div>
+        <div className="font-medium text-foreground">{r.reason_code.replace(/_/g, ' ')}</div>
         {r.reason_description && (
-          <p className="text-[#6B5544] text-sm mt-1 whitespace-pre-line">{r.reason_description}</p>
+          <p className="text-muted-foreground text-sm mt-1 whitespace-pre-line">{r.reason_description}</p>
         )}
       </div>
 
       {(r.refund_amount || refundPreview.data?.refund_amount) && (
-        <div className="mt-3 border-t border-[#E8DDD3] pt-3 text-sm">
-          <span className="text-[#6B5544]">Refund preview:</span>{' '}
-          <span className="font-bold text-[#1A1A1A]">
+        <div className="mt-3 border-t border-border pt-3 text-sm">
+          <span className="text-muted-foreground">Refund preview:</span>{' '}
+          <span className="font-bold text-foreground">
             ₹{(r.refund_amount ?? refundPreview.data?.refund_amount ?? 0).toFixed(2)}
           </span>
           {r.refund_amount == null && (
-            <span className="text-xs text-[#6B5544] ml-2">(item final price)</span>
+            <span className="text-xs text-muted-foreground ml-2">(item final price)</span>
           )}
         </div>
       )}
 
       {r.rejection_reason && (
-        <div className="mt-3 border-t border-[#E8DDD3] pt-3 text-sm">
-          <div className="text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1">
+        <div className="mt-3 border-t border-border pt-3 text-sm">
+          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
             Your rejection reason
           </div>
-          <p className="text-[#1A1A1A]">{r.rejection_reason}</p>
+          <p className="text-foreground">{r.rejection_reason}</p>
         </div>
       )}
 
       {pending && (
-        <div className="mt-4 border-t border-[#E8DDD3] pt-3">
+        <div className="mt-4 border-t border-border pt-3">
           {showReject ? (
             <div className="space-y-2">
               <textarea
@@ -119,12 +119,12 @@ function ReturnCard({ card }: { card: SellerReturnCard }) {
                 onChange={(e) => setRejectMessage(e.target.value)}
                 rows={2}
                 placeholder="Reason shown to buyer (required)"
-                className="w-full rounded-md border border-[#E8DDD3] px-3 py-2 text-sm"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowReject(false)}
-                  className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#6B5544] hover:text-[#1A1A1A]"
+                  className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
@@ -173,17 +173,17 @@ export default function SellerReturnsPage() {
 
   return (
     <AppShell activeTab="Shop">
-      <div className="min-h-screen bg-[#F5F0EB]">
+      <div className="min-h-screen bg-secondary">
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="mb-6">
             <Link
               href="/seller/dashboard"
-              className="text-xs font-black uppercase tracking-widest text-[#8B5E3C] hover:text-[#1A1A1A] transition mb-1 block"
+              className="text-xs font-black uppercase tracking-widest text-primary-ink hover:text-foreground transition mb-1 block"
             >
               ← Dashboard
             </Link>
-            <h1 className="text-2xl font-black text-[#1A1A1A]">Returns</h1>
-            <p className="text-sm text-[#6B5544] mt-1">
+            <h1 className="text-2xl font-black text-foreground">Returns</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Approve to refund the buyer and trigger a reverse pickup. Reject only with a clear reason —
               the buyer sees it.
             </p>
@@ -197,7 +197,7 @@ export default function SellerReturnsPage() {
                 className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider whitespace-nowrap transition ${
                   status === t.value
                     ? 'bg-[#1A1A1A] text-white'
-                    : 'bg-white border border-[#E8DDD3] text-[#4A3728] hover:bg-[#F5F0EB]'
+                    : 'bg-white border border-border text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {t.label}
@@ -206,12 +206,12 @@ export default function SellerReturnsPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-sm text-[#6B5544]">Loading returns…</div>
+            <div className="text-sm text-muted-foreground">Loading returns…</div>
           ) : error ? (
             <div className="text-sm text-red-600">{(error as Error).message}</div>
           ) : returns.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E8DDD3] p-12 text-center">
-              <p className="text-sm text-[#6B5544]">
+            <div className="bg-white rounded-2xl border border-border p-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 {status === 'requested'
                   ? 'No new return requests. New requests will appear here.'
                   : 'Nothing in this bucket.'}
