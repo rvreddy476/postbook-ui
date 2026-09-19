@@ -270,7 +270,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
   };
 
   return (
-    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-brand-card border border-brand-divider shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 w-[320px] sm:w-[360px] ${isMinimized ? 'h-16' : 'h-[460px] sm:h-[500px]'}`}>
+    <div className={`relative flex flex-col overflow-hidden rounded-t-2xl bg-brand-card border border-brand-divider shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 w-[300px] sm:w-[320px] ${isMinimized ? 'h-16' : 'h-[404px] sm:h-[440px]'}`}>
       {/* Chat Header */}
       <header
         className="flex h-16 shrink-0 items-center justify-between border-b border-brand-divider px-5 cursor-pointer"
@@ -312,8 +312,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           <div ref={scrollRef} className="scrollbar-hide flex-1 overflow-y-auto p-5">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-500/15 ring-1 ring-indigo-200/60 dark:ring-indigo-400/30">
-                  <MessageCircle className="h-8 w-8 text-indigo-500/70 dark:text-indigo-300" />
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-secondary dark:bg-brand-text/15 ring-1 ring-brand-text/60 dark:ring-brand-text/30">
+                  <MessageCircle className="h-8 w-8 text-brand-text/60/70 dark:text-brand-text/60" />
                 </div>
                 <p className="text-sm font-extrabold text-brand-text">Start a conversation</p>
                 <p className="mt-1 text-[12px] font-medium text-brand-text/60">Say hello to {contact.name}</p>
@@ -386,14 +386,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               <ArrowDownToLine className="h-3.5 w-3.5" />
                             </a>
                             {msg.text && (
-                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-indigo-600 text-white' : 'border border-brand-divider bg-brand-card text-brand-text'}`}>
+                              <div className={`px-3 py-1.5 text-[13px] leading-snug ${isMe ? 'bg-brand-text text-brand-bg' : 'border border-brand-divider bg-brand-card text-brand-text'}`}>
                                 {msg.text}
                               </div>
                             )}
                           </div>
                         ) : (
                           <div className={`max-w-[220px] wrap-break-word rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-xs ${isMe
-                            ? 'rounded-tr-sm bg-indigo-600 text-white'
+                            ? 'rounded-tr-sm bg-brand-text text-brand-bg'
                             : 'rounded-tl-sm border border-brand-divider bg-brand-card text-brand-text'
                             }`}>
                             {msg.text}
@@ -411,7 +411,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                                 key={emoji}
                                 onClick={() => handleToggleReaction(msg, emoji)}
                                 className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-xs transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '')
-                                  ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
+                                  ? 'border border-brand-divider bg-brand-secondary text-brand-text/60'
                                   : 'border border-brand-divider bg-brand-card text-brand-highlight'
                                   }`}
                               >
@@ -463,7 +463,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                 >
                   <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
                     <Suspense fallback={
-                      <div className="flex h-[435px] w-[352px] items-center justify-center bg-brand-card">
+                      <div className="flex h-[380px] w-[352px] items-center justify-center bg-brand-card">
                         <span className="text-xs font-medium text-brand-text/30">Loading emojis...</span>
                       </div>
                     }>
@@ -529,7 +529,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-all hover:bg-indigo-700 active:scale-90 disabled:opacity-30 disabled:shadow-none"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-send text-white transition-colors duration-200 hover:bg-send-hover active:scale-90 disabled:opacity-30 disabled:shadow-none"
               >
                 <Send className="h-4 w-4 -ml-0.5" />
               </button>

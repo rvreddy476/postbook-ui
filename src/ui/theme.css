@@ -44,6 +44,16 @@
   --theme-danger: 198 40 40;
   --theme-info: 47 107 163;
 
+  /*
+    Send. Sampled from the image the founder shared: #b36077, the dominant
+    colour over 806 pixels. Deliberately OUTSIDE the cerulean family - the
+    chat window is otherwise black and white, so this is its single point of
+    colour and it marks the one irreversible action there.
+    4.32:1 against white, which clears the 3.00:1 bar for an icon.
+  */
+  --theme-send: 179 96 119;
+  --theme-send-hover: 158 77 104;
+
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
 }
@@ -86,6 +96,10 @@
   --theme-warning: 251 191 36;
   --theme-danger: 248 113 113;
   --theme-info: 106 168 224;
+
+  /* Lifted for the dark ground, same hue. */
+  --theme-send: 201 124 146;
+  --theme-send-hover: 214 146 165;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;

@@ -114,6 +114,8 @@
   --color-warning: rgb(var(--warning));
   --color-danger: rgb(var(--danger));
   --color-info: rgb(var(--info));
+  --color-send: rgb(var(--send));
+  --color-send-hover: rgb(var(--send-hover));
 
   --color-secondary: rgb(var(--brand-secondary));
   --color-secondary-foreground: rgb(var(--brand-text));
@@ -190,6 +192,8 @@
     --warning: var(--theme-warning);
     --danger: var(--theme-danger);
     --info: var(--theme-info);
+    --send: var(--theme-send);
+    --send-hover: var(--theme-send-hover);
   }
 
   .dark {
@@ -217,6 +221,8 @@
     --warning: var(--theme-warning);
     --danger: var(--theme-danger);
     --info: var(--theme-info);
+    --send: var(--theme-send);
+    --send-hover: var(--theme-send-hover);
   }
 
   html,
