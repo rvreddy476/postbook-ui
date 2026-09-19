@@ -158,7 +158,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-primary-ink/20 selection:text-brand-text">
       {/* Ambient monochrome glows */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
       <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
@@ -173,7 +173,7 @@ function LoginForm() {
       >
         {/* Brand mark above the card — logo only */}
         <div className="mb-6 flex px-1">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent shadow-md">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-ink shadow-md">
             <span className="text-base font-black tracking-tighter text-brand-bg">VC</span>
           </div>
         </div>
@@ -243,7 +243,7 @@ function LoginForm() {
                       </label>
                       <Link
                         href="/auth/forgot-password"
-                        className="text-xs font-semibold text-brand-accent transition-colors hover:text-brand-text"
+                        className="text-xs font-semibold text-primary-ink transition-colors hover:text-brand-text"
                       >
                         Forgot password?
                       </Link>
@@ -277,7 +277,7 @@ function LoginForm() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isLoading ? 'Signing in...' : 'Sign In'}
@@ -289,7 +289,7 @@ function LoginForm() {
                   <span>New to VChat? </span>
                   <Link
                     href="/register"
-                    className="font-bold text-brand-accent hover:underline"
+                    className="font-bold text-primary-ink hover:underline"
                   >
                     Create an account
                   </Link>
@@ -312,7 +312,7 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={handleBackToLogin}
-                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-brand-accent"
+                    className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-primary-ink"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to login
@@ -320,13 +320,13 @@ function LoginForm() {
 
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-secondary">
-                      <ShieldCheck className="h-6 w-6 text-brand-accent" />
+                      <ShieldCheck className="h-6 w-6 text-primary-ink" />
                     </div>
                     <div>
                       <h2 className="text-xl font-black tracking-tight text-brand-text">
                         Two-Factor Auth
                       </h2>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-accent">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-ink">
                         Verification Required
                       </p>
                     </div>
@@ -382,7 +382,7 @@ function LoginForm() {
                   <button
                     type="submit"
                     disabled={isVerifying || (!isRecoveryMode && twoFACode.length < 6)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 hover:scale-[1.01] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3 text-sm font-bold text-brand-bg transition-all hover:opacity-90 hover:scale-[1.01] disabled:opacity-60"
                   >
                     {isVerifying && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isVerifying ? 'Verifying...' : 'Verify'}
@@ -398,7 +398,7 @@ function LoginForm() {
                       setTwoFACode('');
                       setTwoFAError(null);
                     }}
-                    className="text-sm font-semibold text-brand-accent transition-colors hover:text-brand-text"
+                    className="text-sm font-semibold text-primary-ink transition-colors hover:text-brand-text"
                   >
                     {isRecoveryMode
                       ? 'Use authenticator code instead'

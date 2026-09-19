@@ -256,7 +256,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
                             className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 px-11 text-sm outline-hidden transition-all"
                         />
-                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         {searchQuery && (
                             <button
                                 onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
@@ -276,7 +276,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     {/* Mobile Search Toggle */}
                     <button
                         onClick={() => setIsSearchOpen(!isSearchOpen)}
-                        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent transition-colors"
+                        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </button>
@@ -286,16 +286,16 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     <div className="relative" ref={notifRef}>
                         <button
                             onClick={() => setIsNotifOpen(!isNotifOpen)}
-                            className={`group relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-brand-accent' : ''}`}
+                            className={`group relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-primary-ink' : ''}`}
                             title="Notifications"
                         >
-                            <div className={`w-4 h-4 ${isNotifOpen ? 'text-white dark:text-brand-accent' : 'text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-brand-accent'} transition-colors`}>
+                            <div className={`w-4 h-4 ${isNotifOpen ? 'text-white dark:text-primary-ink' : 'text-white/60 group-hover:text-white dark:text-brand-text/60 dark:group-hover:text-primary-ink'} transition-colors`}>
                                 <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                             </div>
                             {unreadNotifCount > 0 && (
-                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-brand-accent text-white text-[8px] font-black rounded-full shadow-xs">
+                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-primary-ink text-white text-[8px] font-black rounded-full shadow-xs">
                                     {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                                 </div>
                             )}
@@ -454,7 +454,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     <div className="relative" ref={profileRef}>
                         <div className="flex items-center gap-1">
                             <Link href="/profile">
-                                <button className="p-0.5 bg-brand-accent rounded-full hover:scale-105 active:scale-95 transition-all duration-300">
+                                <button className="p-0.5 bg-primary-ink rounded-full hover:scale-105 active:scale-95 transition-all duration-300">
                                     <div className="w-8 h-8 rounded-full overflow-hidden bg-brand-bg">
                                         <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
                                     </div>
@@ -462,7 +462,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             </Link>
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="w-5 h-9 flex items-center justify-center text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-brand-accent transition-colors"
+                                className="w-5 h-9 flex items-center justify-center text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
                             >
                                 <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                             </button>

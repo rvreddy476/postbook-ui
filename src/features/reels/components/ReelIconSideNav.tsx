@@ -32,16 +32,16 @@ function NavIcon({ href, icon, label, active, newTab }: NavIconProps) {
       rel={newTab ? "noopener noreferrer" : undefined}
       className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ${
         active
-          ? "bg-brand-accent text-brand-bg shadow-xs"
+          ? "bg-primary-ink text-brand-bg shadow-xs"
           : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
       aria-label={label}
     >
       {icon}
       {/* Tooltip */}
-      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-brand-accent px-3 py-1.5 text-[12px] font-medium text-brand-bg opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
+      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-primary-ink px-3 py-1.5 text-[12px] font-medium text-brand-bg opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
         {label}
-        <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-brand-accent" />
+        <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 bg-primary-ink" />
       </span>
     </Link>
   );

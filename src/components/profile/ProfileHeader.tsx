@@ -442,7 +442,7 @@ export function ProfileHeader({
                                             ) : (
                                                 <button
                                                     onClick={onFollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-brand-accent text-brand-bg hover:opacity-90 transition-all shadow-xs"
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-primary-ink text-brand-bg hover:opacity-90 transition-all shadow-xs"
                                                     title="Follow"
                                                 >
                                                     <UserPlus className="w-4 h-4" />
@@ -457,10 +457,10 @@ export function ProfileHeader({
                                                 targetUserId={profile.id}
                                                 targetUsername={profile.username}
                                                 relationship={relationship}
-                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
+                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
                                                 sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
                                                 friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
-                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
+                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
                                                 declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold uppercase tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
                                                 onFriendsClick={onRemoveFromCircle}
                                             />

@@ -105,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const Icon = item.icon;
     const cls = `relative flex items-center rounded-xl transition-all duration-300 group ${
       expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-    } ${isActive ? 'bg-white/8 dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`;
+    } ${isActive ? 'bg-white/8 dark:bg-primary-ink/10' : 'hover:bg-white/5 dark:hover:bg-primary-ink/5'}`;
     return (
       <Link key={item.id} href={item.href ?? '#'} className={cls}>
         <Icon
@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {isActive && !expanded && (
           <motion.div
             layoutId="rail-active"
-            className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-brand-accent"
+            className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-primary-ink"
           />
         )}
       </Link>
@@ -147,7 +147,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={() => setExpanded?.(!expanded)}
           aria-label="Toggle menu"
-          className="rounded-lg p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-brand-accent/10 dark:hover:text-brand-accent"
+          className="rounded-lg p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-primary-ink/10 dark:hover:text-primary-ink"
         >
           <Menu size={20} strokeWidth={2.5} />
         </button>
@@ -169,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             aria-expanded={moreOpen}
             className={`relative flex items-center rounded-xl transition-all duration-300 group ${
               expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-            } ${moreOpen || moreActive ? 'bg-white/8 dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`}
+            } ${moreOpen || moreActive ? 'bg-white/8 dark:bg-primary-ink/10' : 'hover:bg-white/5 dark:hover:bg-primary-ink/5'}`}
           >
             <LayoutGrid
               size={21}
@@ -207,8 +207,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   const active = isItemActive(item);
                   const itemCls = `group/mi flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
                     active
-                      ? 'bg-white/10 text-white dark:bg-brand-accent/10 dark:text-brand-accent'
-                      : 'text-white/75 hover:bg-white/10 hover:text-white dark:text-brand-text/70 dark:hover:bg-brand-accent/5 dark:hover:text-brand-accent'
+                      ? 'bg-white/10 text-white dark:bg-primary-ink/10 dark:text-primary-ink'
+                      : 'text-white/75 hover:bg-white/10 hover:text-white dark:text-brand-text/70 dark:hover:bg-primary-ink/5 dark:hover:text-primary-ink'
                   }`;
                   const inner = (
                     <>
@@ -257,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Account — pinned to the bottom */}
       <Link
         href="/profile"
-        className={`group mt-2 flex items-center gap-4 rounded-xl transition-all hover:bg-white/5 dark:hover:bg-brand-accent/5 ${
+        className={`group mt-2 flex items-center gap-4 rounded-xl transition-all hover:bg-white/5 dark:hover:bg-primary-ink/5 ${
           expanded ? 'w-full px-4 py-3' : 'justify-center p-3'
         }`}
       >

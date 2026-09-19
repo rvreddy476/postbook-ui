@@ -23,7 +23,7 @@ export function LandingNavbar() {
           </Link>
           <Link
             href="/register"
-            className="rounded-2xl bg-brand-accent px-8 py-3 text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-2xl transition-all hover:opacity-90 active:scale-95"
+            className="rounded-2xl bg-primary-ink px-8 py-3 text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-2xl transition-all hover:opacity-90 active:scale-95"
           >
             Sign Up
           </Link>
@@ -62,7 +62,7 @@ export function LandingNavbar() {
             <Link
               href="/register"
               onClick={() => setIsOpen(false)}
-              className="rounded-2xl bg-brand-accent px-8 py-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-lg"
+              className="rounded-2xl bg-primary-ink px-8 py-4 text-center text-[10px] font-black uppercase tracking-widest text-brand-bg shadow-lg"
             >
               Sign Up Free
             </Link>

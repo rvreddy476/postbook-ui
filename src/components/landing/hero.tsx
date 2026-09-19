@@ -33,7 +33,7 @@ export function LandingHero() {
         >
           <span className="text-lg">🛍️</span>
           <span>Sell on VChat</span>
-          <svg className="h-3 w-3 text-brand-text/40 group-hover:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-3 w-3 text-brand-text/40 group-hover:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
           </svg>
         </Link>

@@ -367,7 +367,7 @@ export default function PostbookMessenger() {
                   onClick={() => setContactTab(tab)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest uppercase rounded-lg transition-all ${
                     isActive
-                      ? 'bg-brand-accent text-brand-bg shadow-xs'
+                      ? 'bg-primary-ink text-brand-bg shadow-xs'
                       : 'text-brand-text/60 hover:text-brand-text'
                   }`}
                 >
@@ -418,14 +418,14 @@ export default function PostbookMessenger() {
                       onClick={() => handleFriendClick(friend)}
                       className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
                         isActive
-                          ? 'bg-brand-accent/5 border border-brand-divider'
-                          : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
+                          ? 'bg-primary-ink/5 border border-brand-divider'
+                          : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'
                       }`}
                     >
                       <Avatar user={friend} size={42} showStatus avatarUrl={avatarUrl} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-sm font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
+                          <span className={`text-sm font-bold truncate ${isActive ? 'text-primary-ink' : 'text-brand-text'} group-hover:text-primary-ink transition-colors`}>
                             {friend.name}
                           </span>
                           {lastMsg?.time && (
@@ -470,7 +470,7 @@ export default function PostbookMessenger() {
                   return (
                     <div
                       key={conv.id}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-transparent hover:border-brand-divider hover:bg-brand-accent/5 transition-all"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-transparent hover:border-brand-divider hover:bg-primary-ink/5 transition-all"
                     >
                       <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
                       <div className="flex-1 min-w-0">
@@ -486,7 +486,7 @@ export default function PostbookMessenger() {
                           onClick={() => handleAcceptRequest(conv)}
                           disabled={busy}
                           aria-label="Accept request"
-                          className="w-8 h-8 rounded-lg bg-brand-accent text-brand-bg flex items-center justify-center transition-all disabled:opacity-50"
+                          className="w-8 h-8 rounded-lg bg-primary-ink text-brand-bg flex items-center justify-center transition-all disabled:opacity-50"
                         >
                           <Check className="w-4 h-4" />
                         </button>
@@ -530,8 +530,8 @@ export default function PostbookMessenger() {
                         onClick={() => handleGroupClick(group.id)}
                         className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
                           isActive
-                            ? 'bg-brand-accent/5 border border-brand-divider'
-                            : 'hover:bg-brand-accent/5 border border-transparent hover:border-brand-divider'
+                            ? 'bg-primary-ink/5 border border-brand-divider'
+                            : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'
                         }`}
                       >
                         {/* Group avatar */}
@@ -552,7 +552,7 @@ export default function PostbookMessenger() {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className={`text-sm font-bold truncate ${isActive ? 'text-brand-accent' : 'text-brand-text'} group-hover:text-brand-accent transition-colors`}>
+                            <span className={`text-sm font-bold truncate ${isActive ? 'text-primary-ink' : 'text-brand-text'} group-hover:text-primary-ink transition-colors`}>
                               {group.name}
                             </span>
                             {privacy === 'private' && <Lock className="w-3 h-3 text-brand-text/30 shrink-0" />}
@@ -579,7 +579,7 @@ export default function PostbookMessenger() {
               {/* New Group button */}
               <button
                 onClick={handleNewGroup}
-                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest uppercase rounded-2xl bg-brand-accent text-brand-bg flex items-center justify-center gap-2 transition-all"
+                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest uppercase rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 New Group

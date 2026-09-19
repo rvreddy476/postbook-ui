@@ -130,7 +130,7 @@ export function StudioToolbar({
               type="button"
               onClick={onPublish}
               disabled={!checksPass || isPublishing}
-              className="flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-[11px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-4 py-2 text-[11px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               {isPublishing && <Loader2 className="h-3 w-3 animate-spin" />}
               Publish

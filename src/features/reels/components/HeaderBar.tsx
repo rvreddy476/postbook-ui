@@ -76,11 +76,11 @@ export function HeaderBar({
 
           <button
             type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-brand-accent/10 dark:hover:text-brand-accent"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-primary-ink/10 dark:hover:text-primary-ink"
             aria-label="Notifications"
           >
             <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-accent" />
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary-ink" />
           </button>
 
           <ProfileDropdown />

@@ -119,7 +119,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-md border-b border-brand-divider py-4 px-6 md:px-12">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-accent text-brand-bg">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-ink text-brand-bg">
               <Sparkles className="h-4.5 w-4.5" strokeWidth={2.5} />
             </span>
             <span className="text-xl font-bold tracking-tight text-brand-text">VChat</span>
@@ -138,7 +138,7 @@ export default function LandingPage() {
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={`relative px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full ${
                   activeTab === tab.id
-                    ? 'bg-brand-accent text-brand-bg'
+                    ? 'bg-primary-ink text-brand-bg'
                     : 'text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary'
                 }`}
               >
@@ -156,7 +156,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-xs transition-transform hover:scale-[1.03]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary-ink px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-xs transition-transform hover:scale-[1.03]"
             >
               Join VChat
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -197,7 +197,7 @@ export default function LandingPage() {
                 }}
                 className={`py-3 px-4 rounded-xl text-left text-xs font-bold uppercase tracking-widest transition-all ${
                   activeTab === tab.id
-                    ? 'bg-brand-accent text-brand-bg'
+                    ? 'bg-primary-ink text-brand-bg'
                     : 'bg-brand-secondary text-brand-text/70'
                 }`}
               >
@@ -216,7 +216,7 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 py-3 text-center rounded-xl bg-brand-accent text-xs font-bold uppercase tracking-widest text-brand-bg"
+                className="flex-1 py-3 text-center rounded-xl bg-primary-ink text-xs font-bold uppercase tracking-widest text-brand-bg"
               >
                 Sign Up
               </Link>
@@ -252,7 +252,7 @@ export default function LandingPage() {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2.5 rounded-full bg-brand-accent px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-md transition-transform hover:scale-[1.03]"
+                    className="inline-flex items-center gap-2.5 rounded-full bg-primary-ink px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-md transition-transform hover:scale-[1.03]"
                   >
                     Start Free
                     <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
@@ -286,7 +286,7 @@ export default function LandingPage() {
                     <div>
                       <div className="flex items-center gap-1 text-xs font-bold text-brand-text">
                         {[0, 1, 2, 3, 4].map((i) => (
-                          <Star key={i} className="h-3 w-3 fill-brand-accent text-brand-accent" strokeWidth={0} />
+                          <Star key={i} className="h-3 w-3 fill-brand-accent text-primary-ink" strokeWidth={0} />
                         ))}
                         <span className="ml-1">4.9/5 Rating</span>
                       </div>
@@ -354,7 +354,7 @@ export default function LandingPage() {
                     href={feature.href}
                     className="group flex gap-4 p-5 rounded-2xl border border-brand-divider bg-brand-card hover:bg-brand-secondary transition-all"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-accent text-brand-bg group-hover:scale-105 transition-transform">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-ink text-brand-bg group-hover:scale-105 transition-transform">
                       {feature.icon}
                     </div>
                     <div className="space-y-1">
@@ -434,7 +434,7 @@ export default function LandingPage() {
                   <button
                     onClick={runDiagnostic}
                     disabled={diagnosticRunning}
-                    className="px-3 py-1 rounded-sm bg-brand-accent text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
+                    className="px-3 py-1 rounded-sm bg-primary-ink text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
                   >
                     {diagnosticRunning ? 'Running...' : 'Run Diagnostics'}
                   </button>

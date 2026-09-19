@@ -41,7 +41,7 @@ const VisibilityDropdown: React.FC<VisibilityDropdownProps> = ({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-lg border border-brand-divider bg-brand-secondary px-2 py-1 text-[10px] font-medium text-brand-text transition-all hover:bg-brand-accent/5"
+        className="flex items-center gap-1.5 rounded-lg border border-brand-divider bg-brand-secondary px-2 py-1 text-[10px] font-medium text-brand-text transition-all hover:bg-primary-ink/5"
       >
         <span style={{ color: accentColor }}>{current.icon}</span>
         {current.label}
@@ -62,7 +62,7 @@ const VisibilityDropdown: React.FC<VisibilityDropdownProps> = ({
                 key={v.id}
                 onClick={() => { onChange(v.id); setOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
-                  value === v.id ? 'bg-brand-accent/10' : 'hover:bg-brand-accent/5'
+                  value === v.id ? 'bg-primary-ink/10' : 'hover:bg-primary-ink/5'
                 }`}
               >
                 <span style={{ color: value === v.id ? accentColor : undefined }} className={value === v.id ? '' : 'text-brand-text/40'}>

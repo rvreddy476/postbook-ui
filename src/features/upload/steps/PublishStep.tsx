@@ -179,7 +179,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
               aria-checked={form.crossPostPostbook}
               onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
               className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent/20 ${
-                form.crossPostPostbook ? "bg-brand-accent" : "bg-brand-text/20"
+                form.crossPostPostbook ? "bg-primary-ink" : "bg-brand-text/20"
               }`}
             >
               <span

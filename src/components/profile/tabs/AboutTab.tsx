@@ -67,7 +67,7 @@ function InfoRow({ icon: Icon, label, value, isLink }: { icon: typeof Briefcase;
             <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-highlight/60 mb-0.5">{label}</p>
                 {isLink ? (
-                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-brand-accent hover:underline flex items-center gap-1">
+                    <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary-ink hover:underline flex items-center gap-1">
                         {value.replace(/^https?:\/\//, "")}
                         <ExternalLink className="w-3 h-3" />
                     </a>

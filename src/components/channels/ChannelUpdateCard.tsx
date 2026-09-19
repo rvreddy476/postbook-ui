@@ -41,10 +41,10 @@ const ChannelUpdateCard: React.FC<ChannelUpdateCardProps> = ({ update }) => {
   const icon = typeIcons[update.update_type] ?? typeIcons.announcement
 
   return (
-    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 hover:bg-brand-accent/5 transition-all">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 hover:bg-primary-ink/5 transition-all">
       {/* Pinned indicator */}
       {update.is_pinned && (
-        <div className="flex items-center gap-1 text-brand-accent text-[10px] font-bold uppercase tracking-widest mb-2">
+        <div className="flex items-center gap-1 text-primary-ink text-[10px] font-bold uppercase tracking-widest mb-2">
           <Pin className="w-3 h-3" />
           Pinned
         </div>

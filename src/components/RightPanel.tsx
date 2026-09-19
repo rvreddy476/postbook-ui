@@ -73,7 +73,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                   onClick={() => router.push(`/hashtag/${trend.hashtag}`)}
                   className="group block w-full cursor-pointer text-left"
                 >
-                  <h6 className="text-xs font-bold text-brand-text transition-colors group-hover:text-brand-accent">#{trend.hashtag}</h6>
+                  <h6 className="text-xs font-bold text-brand-text transition-colors group-hover:text-primary-ink">#{trend.hashtag}</h6>
                   <p className="text-[10px] uppercase tracking-widest text-brand-text/40">
                     {trend.score >= 1000 ? `${(trend.score / 1000).toFixed(1)}k` : Math.round(trend.score)} posts
                   </p>
@@ -125,7 +125,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-xs font-bold leading-snug text-brand-text transition-colors group-hover:text-brand-accent">
+                    <p className="line-clamp-2 text-xs font-bold leading-snug text-brand-text transition-colors group-hover:text-primary-ink">
                       {v.title || 'Untitled video'}
                     </p>
                     <p className="mt-0.5 truncate text-[10px] text-brand-text/40">
@@ -193,9 +193,9 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       {/* Footer */}
       <footer className="space-y-2 px-6 text-[10px] uppercase tracking-[0.2em] text-brand-text/40">
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <a href="#" className="transition-colors hover:text-brand-accent">About</a>
-          <a href="#" className="transition-colors hover:text-brand-accent">Privacy</a>
-          <a href="#" className="transition-colors hover:text-brand-accent">Terms</a>
+          <a href="#" className="transition-colors hover:text-primary-ink">About</a>
+          <a href="#" className="transition-colors hover:text-primary-ink">Privacy</a>
+          <a href="#" className="transition-colors hover:text-primary-ink">Terms</a>
         </div>
         <p>&copy; 2026 VChat</p>
       </footer>

@@ -65,7 +65,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
             {/* Progress bar */}
             <motion.div
                 className={`absolute bottom-0 left-0 h-[2px] ${
-                    isCritical ? "bg-rose-400" : "bg-brand-accent"
+                    isCritical ? "bg-rose-400" : "bg-primary-ink"
                 }`}
                 initial={{ width: "100%" }}
                 animate={{ width: "0%" }}
@@ -87,7 +87,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
                         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                             isCritical
                                 ? "bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-300"
-                                : "bg-brand-secondary text-brand-accent"
+                                : "bg-brand-secondary text-primary-ink"
                         }`}
                     >
                         {isCritical ? (

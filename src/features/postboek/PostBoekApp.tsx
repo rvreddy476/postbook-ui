@@ -206,7 +206,7 @@ const PostBoekApp: React.FC = () => {
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
-      <div className="h-screen min-h-screen overflow-hidden font-sans selection:bg-brand-accent selection:text-brand-bg">
+      <div className="h-screen min-h-screen overflow-hidden font-sans selection:bg-primary-ink selection:text-brand-bg">
         <Header
           currentUser={currentUser}
           activeTab={activeTab}

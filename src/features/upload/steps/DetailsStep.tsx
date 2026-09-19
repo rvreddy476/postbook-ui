@@ -296,7 +296,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   type="button"
                   onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
                   disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
-                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-xs"
+                  className="flex items-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-xs"
                 >
                   {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                   Extract Preview
@@ -324,7 +324,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                 <button
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
-                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 transition-all active:scale-[0.98] shadow-xs"
+                  className="flex items-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 transition-all active:scale-[0.98] shadow-xs"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose Image

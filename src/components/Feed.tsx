@@ -175,7 +175,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             {activeTab === tab.key && (
               <motion.div
                 layoutId="feedTabIndicator"
-                className="absolute bottom-0 left-1/4 right-1/4 h-[3px] rounded-full bg-brand-accent"
+                className="absolute bottom-0 left-1/4 right-1/4 h-[3px] rounded-full bg-primary-ink"
               />
             )}
           </button>
@@ -201,7 +201,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                   onClick={() => setSelectedHashtag(t.hashtag)}
                   className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all ${
                     selectedHashtag === t.hashtag
-                      ? 'bg-brand-accent text-brand-bg shadow-xs'
+                      ? 'bg-primary-ink text-brand-bg shadow-xs'
                       : 'bg-brand-secondary text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary/80'
                   }`}
                 >
@@ -227,11 +227,11 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
               <p className="text-brand-text/40 text-base sm:text-lg font-light pt-1.5 sm:pt-2">What&apos;s on your mind?</p>
               <div className="flex items-center justify-between pt-2 border-t border-brand-divider">
                 <div className="flex gap-4">
-                  <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><ImageIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
-                  <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><Smile className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
-                  <span className="text-brand-text/60 hover:text-brand-accent transition-colors"><Hash className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
+                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><ImageIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
+                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Smile className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
+                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Hash className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
                 </div>
-                <span className="px-5 sm:px-6 py-1.5 sm:py-2 bg-brand-accent text-brand-bg text-[10px] sm:text-xs font-black tracking-widest uppercase rounded-full">
+                <span className="px-5 sm:px-6 py-1.5 sm:py-2 bg-primary-ink text-brand-bg text-[10px] sm:text-xs font-black tracking-widest uppercase rounded-full">
                   Post
                 </span>
               </div>
@@ -248,7 +248,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             onClick={handleLoadNewPosts}
-            className="mb-4 w-full rounded-2xl bg-brand-accent py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
+            className="mb-4 w-full rounded-2xl bg-primary-ink py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
           >
             {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
           </motion.button>
@@ -289,7 +289,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                     ? 'Follow more people to see their posts here'
                     : 'Follow people and creators to see their posts here'}
                 </p>
-                <Link href="/discover" className="mt-4 px-6 py-2.5 bg-brand-accent text-brand-bg text-xs font-black tracking-widest uppercase rounded-full hover:opacity-90 transition-opacity">
+                <Link href="/discover" className="mt-4 px-6 py-2.5 bg-primary-ink text-brand-bg text-xs font-black tracking-widest uppercase rounded-full hover:opacity-90 transition-opacity">
                   Discover People
                 </Link>
               </>

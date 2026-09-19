@@ -83,7 +83,7 @@ export function UploadHeader({
           type="button"
           onClick={onPublish}
           disabled={!checksPass || isPublishing}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-accent px-4 py-1.5 sm:px-5 sm:py-2 text-[12px] sm:text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98]"
+          className="flex items-center gap-1.5 rounded-lg bg-primary-ink px-4 py-1.5 sm:px-5 sm:py-2 text-[12px] sm:text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98]"
         >
           {isPublishing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           Publish

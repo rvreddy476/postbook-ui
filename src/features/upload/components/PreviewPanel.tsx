@@ -176,7 +176,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               aria-checked={form.crossPostPostbook}
               onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-                form.crossPostPostbook ? "bg-brand-accent" : "bg-brand-text/25"
+                form.crossPostPostbook ? "bg-primary-ink" : "bg-brand-text/25"
               }`}
             >
               <span

@@ -179,7 +179,7 @@ function SpotlightPreview({
       <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-brand-card/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
         <div
           ref={barRef}
-          className="h-full bg-brand-accent"
+          className="h-full bg-primary-ink"
           style={{ width: "0%" }}
         />
       </div>
@@ -195,7 +195,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
         title="Spark"
       >
         <Zap className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
         title="Stash"
       >
         <Bookmark className="h-3.5 w-3.5" />
@@ -211,7 +211,7 @@ function QuickActions({ visible }: { visible: boolean }) {
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/70 text-brand-bg backdrop-blur-md transition-all hover:bg-brand-accent hover:scale-110"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
         title="Echo"
       >
         <Share2 className="h-3.5 w-3.5" />
@@ -260,13 +260,13 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
           <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
           <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
           {duration && (
-            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-brand-accent/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-xs transition-opacity duration-300">
+            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-primary-ink/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-xs transition-opacity duration-300">
               {duration}
             </span>
           )}
         </div>
         <div className="min-w-0 flex-1 py-1">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-brand-accent transition-colors">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-primary-ink transition-colors">
             {video.title}
           </h3>
           <p className="mt-1.5 text-[11px] text-brand-text/60">{video.channel_name}</p>
@@ -278,7 +278,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-brand-secondary">
                 <div
-                  className="h-full rounded-full bg-brand-accent"
+                  className="h-full rounded-full bg-primary-ink"
                   style={{ width: `${Math.max(8, resumePercent)}%` }}
                 />
               </div>
@@ -327,20 +327,20 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
         <QuickActions visible={spotlightActive} />
 
         {duration && (
-          <span className="absolute bottom-3 right-3 z-10 rounded-xl bg-brand-accent/80 px-2.5 py-1 text-[11px] font-bold text-brand-bg tracking-wider backdrop-blur-md transition-opacity duration-300">
+          <span className="absolute bottom-3 right-3 z-10 rounded-xl bg-primary-ink/80 px-2.5 py-1 text-[11px] font-bold text-brand-bg tracking-wider backdrop-blur-md transition-opacity duration-300">
             {duration}
           </span>
         )}
 
         <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100"}`}>
-          <div className="absolute inset-0 bg-brand-accent/10" />
+          <div className="absolute inset-0 bg-primary-ink/10" />
           <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card shadow-md backdrop-blur-xl">
-            <Play className="ml-0.5 h-6 w-6 fill-brand-accent text-brand-accent" />
+            <Play className="ml-0.5 h-6 w-6 fill-brand-accent text-primary-ink" />
           </div>
         </div>
 
         {video.view_count >= 100 && (
-          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-xl bg-brand-accent/80 px-2 py-1 backdrop-blur-md">
+          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-xl bg-primary-ink/80 px-2 py-1 backdrop-blur-md">
             <Eye className="h-3 w-3 text-brand-bg" />
             <span className="text-[10px] font-bold text-brand-bg">{fmtViews(video.view_count).replace(" views", "")}</span>
           </div>
@@ -356,15 +356,15 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
             className="h-10 w-10 shrink-0 rounded-xl bg-brand-secondary object-cover ring-2 ring-brand-divider shadow-xs"
             loading="lazy"
           />
-          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-brand-accent text-brand-bg ring-2 ring-brand-bg flex items-center justify-center">
+          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-primary-ink text-brand-bg ring-2 ring-brand-bg flex items-center justify-center">
             <Zap className="h-2 w-2 text-brand-bg" />
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text group-hover:text-brand-accent transition-colors">
+          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text group-hover:text-primary-ink transition-colors">
             {video.title}
           </h3>
-          <p className="mt-1 text-[12px] text-brand-text/60 group-hover:text-brand-accent/85 transition-colors">
+          <p className="mt-1 text-[12px] text-brand-text/60 group-hover:text-primary-ink/85 transition-colors">
             {video.channel_name}
           </p>
           <div className="mt-1 flex items-center gap-2 text-[11px] text-brand-text/50">

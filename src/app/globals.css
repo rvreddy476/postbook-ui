@@ -26,8 +26,11 @@
   --color-orchid-rose: var(--prismatic-rose);
   --color-orchid-bg: rgb(var(--brand-bg));
 
-  --color-ask: rgb(var(--brand-accent));
-  --color-ask-hover: rgb(var(--brand-highlight));
+  /*
+    ask is a button colour, so it takes the text-safe shade, not the accent.
+  */
+  --color-ask: rgb(var(--brand-ink));
+  --color-ask-hover: rgb(var(--brand-ink-hover));
   --color-ask-light: rgb(var(--brand-text) / 0.08);
   --color-ask-muted: rgb(var(--brand-text) / 0.15);
   --color-ask-text: rgb(var(--brand-text));
@@ -43,7 +46,13 @@
   --color-background: rgb(var(--brand-bg));
   --color-foreground: rgb(var(--brand-text));
 
-  --color-primary: rgb(var(--brand-accent));
+  /*
+    primary is a FILL that carries a label, so it resolves to the text-safe
+    shade. The founder's #3b82c4 stays exactly as --brand-accent and is what
+    ring, border-brand-accent and decorative accents use, where 4.06:1 clears
+    the 3.00:1 bar for interface elements.
+  */
+  --color-primary: rgb(var(--brand-ink));
   --color-primary-foreground: rgb(var(--on-primary));
 
   /*

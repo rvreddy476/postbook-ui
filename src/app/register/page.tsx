@@ -147,7 +147,7 @@ export default function RegisterPage() {
     'w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10';
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-primary-ink/20 selection:text-brand-text">
       {/* Ambient monochrome glows */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
       <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
@@ -162,7 +162,7 @@ export default function RegisterPage() {
       >
         {/* Brand mark above the card — logo only */}
         <div className="mb-6 flex px-1">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent shadow-md">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-ink shadow-md">
             <span className="text-base font-black tracking-tighter text-brand-bg">VC</span>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function RegisterPage() {
                             key={g}
                             className={`relative flex cursor-pointer items-center justify-center rounded-xl border py-3 text-xs font-bold transition-all ${
                               gender === g
-                                ? 'border-brand-accent bg-brand-accent text-brand-bg shadow-xs'
+                                ? 'border-brand-accent bg-primary-ink text-brand-bg shadow-xs'
                                 : 'border-brand-divider bg-brand-secondary text-brand-text/50 hover:border-brand-accent/40 hover:text-brand-text/70'
                             }`}
                           >
@@ -336,7 +336,7 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isLoading ? 'Creating account...' : 'Create Account'}
@@ -348,7 +348,7 @@ export default function RegisterPage() {
                   <span>Already have an account? </span>
                   <Link
                     href="/login"
-                    className="font-bold text-brand-accent hover:underline"
+                    className="font-bold text-primary-ink hover:underline"
                   >
                     Sign in
                   </Link>
@@ -381,14 +381,14 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => { setDirection(-1); setScreen('register'); }}
-                      className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-brand-accent"
+                      className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-primary-ink"
                     >
                       <ArrowLeft className="h-4 w-4" />
                       Back to registration
                     </button>
 
                     <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-secondary">
-                      <Mail className="h-6 w-6 text-brand-accent" />
+                      <Mail className="h-6 w-6 text-primary-ink" />
                     </div>
 
                     <h2 className="text-2xl font-black tracking-tight text-brand-text">
@@ -429,7 +429,7 @@ export default function RegisterPage() {
                         type="button"
                         onClick={handleVerifyEmail}
                         disabled={verifyEmail.isPending || verifyCode.length < 6}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-accent py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
                       >
                         {verifyEmail.isPending && (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -443,7 +443,7 @@ export default function RegisterPage() {
                         type="button"
                         onClick={handleResendCode}
                         disabled={resendCooldown > 0 || resendVerification.isPending}
-                        className="text-xs font-bold uppercase tracking-wider text-brand-accent transition-colors hover:text-brand-text disabled:opacity-50"
+                        className="text-xs font-bold uppercase tracking-wider text-primary-ink transition-colors hover:text-brand-text disabled:opacity-50"
                       >
                         {resendCooldown > 0
                           ? `Resend in ${resendCooldown}s`

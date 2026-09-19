@@ -143,7 +143,7 @@ const ContactList: React.FC<ContactListProps> = ({
                   if (tab.key === ChatTab.Direct) onClearGroup?.();
                 }}
                 className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${activeListTab === tab.key
-                  ? 'bg-brand-accent text-brand-bg shadow-xs'
+                  ? 'bg-primary-ink text-brand-bg shadow-xs'
                   : 'text-brand-highlight hover:text-brand-text'
                   }`}
               >
@@ -194,8 +194,8 @@ const ContactList: React.FC<ContactListProps> = ({
                           key={contact.id}
                           onClick={() => onContactClick(contact)}
                           className={`group relative flex w-full items-center gap-2.5 rounded-xl p-2.5 transition-all duration-300 ${isActive
-                            ? 'z-10 bg-brand-accent/5 ring-1 ring-brand-divider scale-[1.02]'
-                            : 'z-0 border border-transparent hover:bg-brand-accent/5 hover:border-brand-divider'
+                            ? 'z-10 bg-primary-ink/5 ring-1 ring-brand-divider scale-[1.02]'
+                            : 'z-0 border border-transparent hover:bg-primary-ink/5 hover:border-brand-divider'
                             }`}
                         >
                           {/* Removed Active Indicator Bar per user request */}
@@ -268,8 +268,8 @@ const ContactList: React.FC<ContactListProps> = ({
                           key={group.id}
                           onClick={() => onGroupClick?.(group.id)}
                           className={`group relative flex w-full items-center gap-2.5 rounded-xl p-2.5 transition-all duration-300 ${isActive
-                            ? 'z-10 bg-brand-accent/5 ring-1 ring-brand-divider scale-[1.02]'
-                            : 'z-0 border border-transparent hover:bg-brand-accent/5 hover:border-brand-divider'
+                            ? 'z-10 bg-primary-ink/5 ring-1 ring-brand-divider scale-[1.02]'
+                            : 'z-0 border border-transparent hover:bg-primary-ink/5 hover:border-brand-divider'
                             }`}
                         >
                           {/* Removed Active Indicator Bar per user request */}
