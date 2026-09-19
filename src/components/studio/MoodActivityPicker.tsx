@@ -28,10 +28,13 @@ interface MoodActivityPickerProps {
   onClose: () => void;
   accentColor: string;
   isDarkMode?: boolean;
+  /** Which tab to open on. The composer has separate Feeling and Activity
+   *  buttons, so each one should land on its own tab. */
+  initialTab?: 'feeling' | 'activity';
 }
 
-const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClose, accentColor, isDarkMode = false }) => {
-  const [tab, setTab] = useState<'feeling' | 'activity'>('feeling');
+const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClose, accentColor, isDarkMode = false, initialTab = 'feeling' }) => {
+  const [tab, setTab] = useState<'feeling' | 'activity'>(initialTab);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activityDetail, setActivityDetail] = useState('');
 

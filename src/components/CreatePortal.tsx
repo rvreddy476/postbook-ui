@@ -3,7 +3,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Activity as ActivityIcon,
   BarChart3,
+  BookOpen,
   ChevronDown,
   Globe,
   Hash,
@@ -95,6 +97,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [showVisMenu, setShowVisMenu] = useState(false);
   const [mood, setMood] = useState<string | null>(null);
   const [showMood, setShowMood] = useState(false);
+  const [moodTab, setMoodTab] = useState<'feeling' | 'activity'>('feeling');
   const [location, setLocation] = useState('');
   const [showLocation, setShowLocation] = useState(false);
   const [showPoll, setShowPoll] = useState(false);
@@ -107,6 +110,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [hashtagDraft, setHashtagDraft] = useState('');
   const [background, setBackground] = useState<string | null>(null);
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
+  /*
+    Journal = a longer written entry with a heading. There is no journal
+    content_type on the backend (POST_CONTENT_TYPES is post|poll|reel|video),
+    so it posts as an ordinary post with the heading as the first line. That
+    is a deliberate client-side framing, NOT a new kind of object — if it
+    should be its own type, that is a backend change.
+  */
+  const [showJournal, setShowJournal] = useState(false);
+  const [journalTitle, setJournalTitle] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +156,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const hasColorBg = background !== null && isTextOnly;
 
   const validPollOptions = poll.options.filter((o) => o.trim()).length >= 2;
-  const canPost = Boolean(text.trim() || files.length > 0 || (showPoll && validPollOptions));
+  const canPost = Boolean(text.trim() || journalTitle.trim() || files.length > 0 || (showPoll && validPollOptions));
   const charCount = text.length;
   const maxChars = 2000;
 
@@ -347,7 +359,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       const tagSuffix = finalHashtags.length > 0
         ? ' ' + finalHashtags.map((t) => `#${t}`).join(' ')
         : '';
-      const wireText = (text.trim() + tagSuffix).trim();
+      // A journal title becomes the first line of the body. There is no
+      // journal content_type on the wire, so this is presentation, not a new
+      // object — see the note beside the showJournal state.
+      const titlePrefix = showJournal && journalTitle.trim()
+        ? journalTitle.trim() + '\n\n'
+        : '';
+      const wireText = (titlePrefix + text.trim() + tagSuffix).trim();
 
       const payload = {
         text: wireText,
@@ -405,11 +423,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5">
           <div>
-            <div className="mb-1 text-[10px] font-medium tracking-[0.2em] text-brand-text/60">
-              Compose
-            </div>
-            <div className="text-[22px] font-medium leading-none tracking-[-0.6px] text-brand-text">
-              CREATE <span className="text-primary-ink">POST</span>
+            {/* "CREATE POST" was typed in capitals rather than styled that
+                way, which is why the capitalisation sweep could not reach it. */}
+            <div className="text-xl font-semibold -tracking-[0.018em] text-brand-text">
+              Create post
             </div>
           </div>
           <button
@@ -520,6 +537,17 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 color: onDark ? '#ffffff' : '#111',
               } : undefined}
             >
+              {showJournal && (
+                <input
+                  value={journalTitle}
+                  onChange={(e) => setJournalTitle(e.target.value)}
+                  placeholder="Title"
+                  maxLength={120}
+                  className={`mb-3 w-full border-b bg-transparent pb-2 text-lg font-semibold -tracking-[0.018em] outline-hidden ${
+                    hasColorBg ? 'border-white/25 placeholder:text-current/50' : 'border-brand-divider text-brand-text placeholder:text-brand-text/35'
+                  }`}
+                />
+              )}
               <textarea
                 ref={textareaRef}
                 value={text}
@@ -607,7 +635,9 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <div className="px-6 pt-3">
               <div className="rounded-[18px] bg-brand-secondary border border-brand-divider px-3 py-3">
                 <MoodActivityPicker
-                  accentColor="#2563EB"
+                  key={moodTab}
+                  initialTab={moodTab}
+                  accentColor="rgb(var(--brand-ink))"
                   isDarkMode={isDark}
                   onSelect={(m) => { setMood(m); setShowMood(false); }}
                   onClose={() => setShowMood(false)}
@@ -701,16 +731,21 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         <div className="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
-          <div className="flex gap-1.5 rounded-full bg-brand-secondary border border-brand-divider p-1.5 shadow-xs">
+          {/* What you can add, NAMED.
+              This was six icons in six different colours with no labels, so
+              the composer's abilities were guessable at best — a poll and a
+              feeling looked like decoration. Colour now carries state (added
+              or not) instead of identity, and every control says what it is. */}
+          <div className="flex flex-wrap gap-1.5 rounded-2xl bg-brand-secondary border border-brand-divider p-1.5">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={files.length >= 10}
-              aria-label="Add photo"
-              title="Add photo"
-              className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card disabled:opacity-30"
+              title="Add a photo"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 ${files.length > 0 ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
             >
-              <ImagePlus className="h-[18px] w-[18px] text-primary-ink" />
+              <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
+              Photo
             </button>
             <button
               type="button"
@@ -718,38 +753,66 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 setShowPoll((v) => !v);
                 if (showPoll) setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
               }}
-              aria-label="Add poll"
-              title="Add poll"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showPoll ? 'bg-brand-card' : ''}`}
+              title="Ask a question with options"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showPoll ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
             >
-              <BarChart3 className="h-[18px] w-[18px] text-warning" />
+              <BarChart3 className="h-4 w-4" strokeWidth={1.75} />
+              Poll
             </button>
             <button
               type="button"
-              onClick={() => setShowMood((v) => !v)}
-              aria-label="Mood / Activity"
-              title="Mood / Activity"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showMood || mood ? 'bg-brand-card' : ''}`}
+              onClick={() => setShowJournal((v) => !v)}
+              title="Write something longer"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showJournal ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
             >
-              <Smile className="h-[18px] w-[18px] text-danger" />
+              <BookOpen className="h-4 w-4" strokeWidth={1.75} />
+              Journal
+            </button>
+            {/* Feeling and Activity share one picker with two tabs; each
+                button opens its own tab, and pressing the open one closes it. */}
+            <button
+              type="button"
+              onClick={() => {
+                if (showMood && moodTab === 'feeling') { setShowMood(false); return; }
+                setMoodTab('feeling');
+                setShowMood(true);
+              }}
+              title="How you are feeling"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+            >
+              <Smile className="h-4 w-4" strokeWidth={1.75} />
+              Feeling
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (showMood && moodTab === 'activity') { setShowMood(false); return; }
+                setMoodTab('activity');
+                setShowMood(true);
+              }}
+              title="What you are doing"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+            >
+              <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
+              Activity
             </button>
             <button
               type="button"
               onClick={() => setShowLocation((v) => !v)}
-              aria-label="Location"
-              title="Location"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showLocation || location ? 'bg-brand-card' : ''}`}
+              title="Add a place"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showLocation || location ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
             >
-              <MapPin className="h-[18px] w-[18px] text-success" />
+              <MapPin className="h-4 w-4" strokeWidth={1.75} />
+              Place
             </button>
             <button
               type="button"
               onClick={() => setShowHashtagInput((v) => !v)}
-              aria-label="Add hashtag"
-              title="Add hashtag"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-brand-card ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card' : ''}`}
+              title="Add a hashtag"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
             >
-              <Hash className="h-[18px] w-[18px] text-primary-ink" />
+              <Hash className="h-4 w-4" strokeWidth={1.75} />
+              Tag
             </button>
             {/* Design: paints the textarea card background. Disabled when
                 media or a poll is present (color backgrounds are text-only

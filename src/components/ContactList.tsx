@@ -2,9 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Lock, MessageCircle, Plus, Search, Users, MessagesSquare, Minus } from 'lucide-react';
+import { Globe, Lock, MessageCircle, Plus, Search, Users, MessagesSquare, Minus, SquarePen } from 'lucide-react';
 
 import CreateGroupPanel from '@/components/messenger/CreateGroupPanel';
+import NewMessageSheet from '@/components/messenger/NewMessageSheet';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useMyGroups } from '@/hooks/useGroups';
 import SegmentedControl from '@/components/ui/SegmentedControl';
@@ -59,6 +60,7 @@ const ContactList: React.FC<ContactListProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [activeListTab, setActiveListTab] = useState<ChatTab>(ChatTab.Direct);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [showNewMessage, setShowNewMessage] = useState(false);
 
   const { getUnreadCountForUser } = useNotifications();
   const { data: myGroups, isLoading: groupsLoading } = useMyGroups();
@@ -118,21 +120,41 @@ const ContactList: React.FC<ContactListProps> = ({
 
   return (
     <div className="relative flex h-full flex-col">
+      <AnimatePresence>
+        {showNewMessage && (
+          <NewMessageSheet
+            onClose={() => setShowNewMessage(false)}
+            onOpened={(user) => onContactClick(user)}
+          />
+        )}
+      </AnimatePresence>
       <div className="flex flex-col h-full p-4">
         {/* Section header. The title is the only heavy thing here; a panel
             title competing with the conversation names is what made this read
             as noisy. */}
         <div className="mb-3 flex items-center justify-between px-2">
           <h2 className="text-base font-semibold -tracking-[0.014em] text-brand-text">Chat</h2>
-          {onClose && (
+          <div className="flex items-center gap-1">
+            {/* Start a conversation with anyone — the list below only shows
+                people already in your circle. */}
             <button
-              onClick={onClose}
-              aria-label="Collapse chat"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+              onClick={() => setShowNewMessage(true)}
+              aria-label="New message"
+              title="New message"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text"
             >
-              <Minus className="h-4 w-4" />
+              <SquarePen className="h-4 w-4" strokeWidth={1.75} />
             </button>
-          )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label="Collapse chat"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Same control as the rest of the app. Direct/Groups is a choice, not
@@ -157,7 +179,7 @@ const ContactList: React.FC<ContactListProps> = ({
           <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/40" />
           <input
             type="text"
-            placeholder="Search messages"
+            placeholder="Search chats"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-full border border-transparent bg-brand-secondary py-2 pl-10 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
