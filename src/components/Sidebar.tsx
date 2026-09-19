@@ -172,16 +172,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setMoreOpen((v) => !v)}
             aria-label="More services"
             aria-expanded={moreOpen}
-            className={`relative flex items-center rounded-xl transition-all duration-300 group ${
+            className={`relative flex items-center rounded-xl transition-colors duration-200 group ${
               expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-            } ${moreOpen || moreActive ? 'bg-primary-ink/10' : 'hover:bg-primary-ink/5'}`}
+            } ${moreOpen || moreActive ? 'bg-primary-ink/10 text-primary-ink' : 'text-brand-text/70 hover:bg-primary-ink/5 hover:text-brand-text'}`}
           >
             <LayoutGrid
-              size={21}
-              strokeWidth={moreOpen || moreActive ? 2.6 : 2.2}
-              className={`shrink-0 text-cyan-400 transition-transform duration-300 group-hover:scale-110 ${
-                moreOpen || moreActive ? 'scale-110 drop-shadow-[0_0_6px_currentColor]' : ''
-              }`}
+              size={20}
+              strokeWidth={moreOpen || moreActive ? 2.25 : 1.75}
+              className="shrink-0 transition-transform duration-200 ease-out group-active:scale-90"
             />
             {expanded && (
               <span

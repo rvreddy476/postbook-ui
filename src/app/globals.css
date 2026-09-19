@@ -67,6 +67,49 @@
   --color-primary-tint: rgb(var(--brand-tint));
   --color-primary-outline: rgb(var(--brand-outline));
 
+  /*
+    Typography scale.
+
+    Tracking is size-specific, never one value everywhere. The app leans hard
+    on wide tracking for small labels (401 uses of uppercase + widest) and on
+    the heaviest weight (678 uses of font-black). Retuning the SCALE fixes all
+    of them at once, which is the point of keeping design in one file: the
+    alternative was editing 818 call sites and getting it wrong somewhere.
+
+    widest drops from 0.1em to 0.04em. At 9-11px, 0.1em is the shouty
+    all-caps look; 0.04em stays legible and still reads as a label.
+  */
+  --tracking-tighter: -0.022em;
+  --tracking-tight: -0.014em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.006em;
+  --tracking-wider: 0.018em;
+  --tracking-widest: 0.04em;
+
+  /*
+    900 is a display weight. Used on every small label it reads as shouting
+    and muddies at small sizes. 800 keeps the emphasis and the rhythm.
+  */
+  --font-weight-black: 800;
+
+  /*
+    Radius scale. 4,200 uses across twelve values, so again the scale is the
+    lever rather than the call sites. Softened a step at the sizes that carry
+    the UI — xl is on 1,263 elements and 2xl on 704 — so panels and controls
+    feel related instead of arbitrarily rounded.
+
+    Rule for new work: radius should track the element's size, and a nested
+    corner should be the parent's radius minus the padding, so curves stay
+    concentric instead of drifting apart.
+  */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+  --radius-3xl: 1.5rem;
+
   --color-success: rgb(var(--success));
   --color-warning: rgb(var(--warning));
   --color-danger: rgb(var(--danger));
@@ -182,6 +225,38 @@
     overflow-x: hidden;
   }
 
+  /*
+    Headings: tracking tightens as size grows, leading tightens with it.
+    Letters read too far apart as they get larger, so large display text wants
+    NEGATIVE tracking; body copy sits near zero. There are 597 headings in the
+    app and almost none set this, so it belongs here rather than on each one.
+  */
+  h1 {
+    letter-spacing: -0.022em;
+    line-height: 1.1;
+  }
+  h2 {
+    letter-spacing: -0.018em;
+    line-height: 1.15;
+  }
+  h3 {
+    letter-spacing: -0.012em;
+    line-height: 1.25;
+  }
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.006em;
+    line-height: 1.35;
+  }
+
+  /* Optical sizing where the face supports it, and better numerals in UI. */
+  body {
+    font-optical-sizing: auto;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
   body {
     color: rgb(var(--brand-text));
     font-family: var(--font-outfit), 'Outfit', sans-serif;
@@ -197,6 +272,22 @@
       @theme inline); this only restores the preflight base styles.
     */
     --default-mono-font-family: var(--font-mono-face), 'Space Mono', monospace;
+  }
+}
+
+/*
+  Reduced motion. Anything that moves must degrade to a cross-fade rather than
+  a slide or a spring, and transitions must not simply be deleted — a 0s
+  transition can break components that wait for transitionend.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
