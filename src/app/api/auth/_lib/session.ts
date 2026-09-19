@@ -35,6 +35,39 @@ export const SESSION_FLAG_COOKIE = "pb_auth"
 export const REFRESH_COOKIE_PATH = "/api/auth"
 
 /**
+ * The access token, for media reads only.
+ *
+ * <img> and <video> cannot send an Authorization header, and the access token
+ * otherwise lives only in page storage, so every image and video request
+ * reached the gateway anonymous. media-service answers an anonymous read of
+ * anything not world-readable with 404 (deliberately indistinguishable from
+ * "does not exist"), which is why feed videos sat at 0:00.
+ *
+ * The gateway already reads a cookie named exactly `access_token` — it is how
+ * a browser EventSource authenticates — so the name is not ours to choose.
+ * Scoped to /v1/media so the browser attaches it to media reads and to NOTHING
+ * else: no state-changing route ever receives it. httpOnly so script cannot
+ * read it; SameSite=Lax so another site's <img> or <video> pointing at our
+ * media does not carry it either.
+ */
+export const MEDIA_ACCESS_COOKIE = "access_token"
+export const MEDIA_ACCESS_COOKIE_PATH = "/v1/media"
+
+/** Seconds until the JWT's exp, or null if it cannot be read. Not a verification. */
+function secondsUntilExpiry(jwt: string): number | null {
+    try {
+        const payload = JSON.parse(
+            Buffer.from(jwt.split(".")[1] ?? "", "base64url").toString("utf8"),
+        ) as { exp?: unknown }
+        if (typeof payload.exp !== "number") return null
+        const left = Math.floor(payload.exp - Date.now() / 1000)
+        return left > 0 ? left : null
+    } catch {
+        return null
+    }
+}
+
+/**
  * Matches the upstream refresh-token TTL ceiling. The server enforces its
  * own expiry on every refresh attempt, so this is only about not keeping a
  * dead cookie around forever.
@@ -80,12 +113,27 @@ export function attachSession(
             maxAge: COOKIE_MAX_AGE_SECONDS,
         })
     }
+
+    // Lives exactly as long as the token it carries, so an expired token is
+    // never presented. Every refresh re-sets it through this same function.
+    if (tokens.accessToken) {
+        res.cookies.set({
+            name: MEDIA_ACCESS_COOKIE,
+            value: tokens.accessToken,
+            httpOnly: true,
+            secure: secureCookies(),
+            sameSite: "lax",
+            path: MEDIA_ACCESS_COOKIE_PATH,
+            maxAge: secondsUntilExpiry(tokens.accessToken) ?? 60 * 15,
+        })
+    }
 }
 
-/** Remove both cookies. Safe to call when neither is present. */
+/** Remove all three cookies. Safe to call when none is present. */
 export function clearSession(res: NextResponse) {
     res.cookies.delete({ name: REFRESH_COOKIE, path: REFRESH_COOKIE_PATH })
     res.cookies.delete({ name: SESSION_FLAG_COOKIE, path: "/" })
+    res.cookies.delete({ name: MEDIA_ACCESS_COOKIE, path: MEDIA_ACCESS_COOKIE_PATH })
 }
 
 /**

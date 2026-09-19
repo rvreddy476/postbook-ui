@@ -10,6 +10,13 @@ const FORWARDED_HEADERS = [
     "content-type",
     "accept",
     "cookie",
+    // Byte ranges. Browsers fetch video in chunks with Range; without it the
+    // storage answered with the whole file every time, seeking could not work,
+    // and an MP4 whose index sits at the END showed 0:00 until the entire file
+    // had streamed through this hop. The 206 and Content-Range it now gets back
+    // are copied to the browser by the header loop below.
+    "range",
+    "if-range",
 ]
 
 async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
