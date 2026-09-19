@@ -11,9 +11,60 @@ const AUTH_SERVICE_URL =
     process.env.AUTH_SERVICE_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     'http://localhost:8081';
-const CHAT_SECRET =
-    process.env.CHAT_PROXY_SIGNING_SECRET ??
-    (process.env.NODE_ENV === 'development' ? 'dev_secret_change_me' : '');
+/**
+ * Signing secret for the chat token this proxy mints.
+ *
+ * There used to be a hardcoded fallback literal here, applied whenever
+ * NODE_ENV was 'development'. Two problems with that: a usable signing key
+ * lived in the repository, and any environment that was not exactly
+ * 'development' — a preview build, a container with NODE_ENV unset — fell
+ * through to an empty string and answered every chat request with a bare 500
+ * that named nothing.
+ *
+ * Now there is no fallback. The secret comes from the environment or the
+ * route refuses to serve, and says exactly which variable is missing. It must
+ * match the JWT_SECRET used by chat-message-service and chat-ws-gateway.
+ */
+const CHAT_SECRET = process.env.CHAT_PROXY_SIGNING_SECRET ?? '';
+
+/**
+ * Shortest secret worth accepting for an HMAC-SHA256 signing key. Anything
+ * below this is a placeholder, not a key.
+ */
+const MIN_SECRET_LENGTH = 16;
+
+type SecretProblem = { code: string; detail: string };
+
+/**
+ * Check the secret's presence and length. Never reads, logs or returns the
+ * value itself — only whether there is one and whether it is long enough.
+ */
+const checkChatSecret = (): SecretProblem | null => {
+    if (!CHAT_SECRET) {
+        return {
+            code: 'CHAT_PROXY_SECRET_MISSING',
+            detail:
+                'CHAT_PROXY_SIGNING_SECRET is not set in this environment. It must equal the JWT_SECRET used by chat-message-service and chat-ws-gateway.',
+        };
+    }
+    if (CHAT_SECRET.length < MIN_SECRET_LENGTH) {
+        return {
+            code: 'CHAT_PROXY_SECRET_TOO_SHORT',
+            detail: `CHAT_PROXY_SIGNING_SECRET is set but is shorter than ${MIN_SECRET_LENGTH} characters, which is too short to sign with.`,
+        };
+    }
+    return null;
+};
+
+// Surface the misconfiguration once at startup rather than only on the first
+// user who tries to open a chat.
+const startupSecretProblem = checkChatSecret();
+if (startupSecretProblem) {
+    console.error(
+        `[ChatProxy] disabled at startup: ${startupSecretProblem.code} — ${startupSecretProblem.detail}`,
+    );
+}
+
 const CHAT_JWT_KID = process.env.JWT_KID || 'v1';
 
 type RouteParams = { params: Promise<{ path?: string[] }> };
@@ -89,10 +140,24 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
     const fullPath = pathParts.join('/');
     const url = new URL(req.url);
 
-    if (!CHAT_SECRET) {
+    // A missing signing secret is a deployment fault, not a bad request and
+    // not a crash. 503 says "this route cannot serve in this environment", and
+    // the body names the variable so whoever sees it can fix it without
+    // reading the source. The value is never included.
+    const secretProblem = checkChatSecret();
+    if (secretProblem) {
+        console.error(
+            `[ChatProxy] refusing ${req.method} /${fullPath}: ${secretProblem.code} — ${secretProblem.detail}`,
+        );
         return NextResponse.json(
-            { error: 'Missing chat proxy signing secret configuration' },
-            { status: 500 },
+            {
+                error: {
+                    code: secretProblem.code,
+                    message: 'Chat is not available because this deployment is misconfigured.',
+                    detail: secretProblem.detail,
+                },
+            },
+            { status: 503 },
         );
     }
 

@@ -2,51 +2,45 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 
 const SESSION_KEY = "postbook_session"
 const TOKEN_KEY = "postbook_auth_tokens"
-const SESSION_CHANGE_EVENT = "postbook:session-changed"
 
 const canUseStorage = () =>
     typeof window !== "undefined" && typeof localStorage !== "undefined"
+
+/**
+ * Only the access token lives here now.
+ *
+ * The refresh token used to sit alongside it under the same key, readable by
+ * any injected script. It now lives in an httpOnly cookie set by the BFF
+ * routes under /api/auth; see src/app/api/auth/_lib/session.ts.
+ */
+interface TokenRecord {
+    accessToken?: string
+    updatedAt: number
+}
 
 const getAccessToken = (): string | null => {
     if (!canUseStorage()) return null
     try {
         const raw = localStorage.getItem(TOKEN_KEY)
         if (!raw) return null
-        const record = JSON.parse(raw) as { accessToken?: string }
+        const record = JSON.parse(raw) as TokenRecord
         return record.accessToken ?? null
     } catch {
         return null
     }
 }
 
-const getRefreshToken = (): string | null => {
-    if (!canUseStorage()) return null
-    try {
-        const raw = localStorage.getItem(TOKEN_KEY)
-        if (!raw) return null
-        const record = JSON.parse(raw) as { refreshToken?: string }
-        return record.refreshToken ?? null
-    } catch {
-        return null
-    }
-}
-
-const saveTokens = (accessToken: string, refreshToken: string) => {
+const saveAccessToken = (accessToken: string) => {
     if (!canUseStorage()) return
-    const record = { accessToken, refreshToken, updatedAt: Date.now() }
+    const record: TokenRecord = { accessToken, updatedAt: Date.now() }
     localStorage.setItem(TOKEN_KEY, JSON.stringify(record))
 }
 
-const clearStoredAuth = () => {
-    if (!canUseStorage()) return
-    localStorage.removeItem(SESSION_KEY)
-    localStorage.removeItem(TOKEN_KEY)
-    window.dispatchEvent(new Event(SESSION_CHANGE_EVENT))
-}
-
-// Removes only the expired access/refresh tokens — does NOT touch the session
-// user record and does NOT fire session-changed. Keeps the user visually logged
-// in while preventing stale tokens from being sent on future requests.
+// Removes only the expired access token — does NOT touch the session user
+// record and does NOT fire session-changed. Keeps the user visually logged in
+// while preventing a stale token from being sent on future requests. If the
+// session is genuinely over, the refresh route has already dropped the
+// session cookies and middleware redirects on the next navigation.
 const clearExpiredTokens = () => {
     if (!canUseStorage()) return
     localStorage.removeItem(TOKEN_KEY)
@@ -69,19 +63,99 @@ const getUserId = (): string | null => {
  * session is active. Reads from the same storage slot used by the
  * axios interceptor so the value is consistent across surfaces.
  *
- * Components subscribe to session changes via SESSION_CHANGE_EVENT
+ * Components subscribe to session changes via the session-changed event
  * if they need to react; the snapshot returned by this function is
  * a point-in-time read.
  */
 export const getCurrentUserId = getUserId
 
-const ensureCsrfToken = (): string => {
-    if (typeof document === "undefined") return ""
-    const match = document.cookie.split("; ").find((c) => c.startsWith("csrf_token="))
-    if (match) return match.split("=")[1]
-    const token = crypto.randomUUID()
-    document.cookie = `csrf_token=${token}; path=/`
-    return token
+/**
+ * One-shot migration for sessions created before the refresh token moved to
+ * a cookie.
+ *
+ * Those browsers still have a refresh token in localStorage. Without this
+ * they would either keep using it from JS (the thing we are removing) or be
+ * forced to sign in again. Instead the token is handed to /api/auth/session,
+ * which verifies it against the access token, stores it httpOnly, and then it
+ * is deleted from localStorage — whatever the outcome, it does not stay here.
+ *
+ * Runs once per page load, and only when a legacy token is actually present.
+ */
+const migrateLegacyRefreshToken = () => {
+    if (!canUseStorage()) return
+
+    let legacyRefresh: string | undefined
+    let accessToken: string | undefined
+
+    try {
+        const raw = localStorage.getItem(TOKEN_KEY)
+        if (!raw) return
+        const record = JSON.parse(raw) as {
+            accessToken?: string
+            refreshToken?: string
+        }
+        if (typeof record.refreshToken !== "string" || !record.refreshToken.trim()) {
+            return
+        }
+        legacyRefresh = record.refreshToken.trim()
+        accessToken = record.accessToken
+
+        // Rewrite the record without the refresh token first, so it is gone
+        // from storage even if the request below never completes.
+        saveAccessToken(accessToken ?? "")
+    } catch {
+        return
+    }
+
+    if (!accessToken) {
+        // No access token to prove the session with, so the adopt route would
+        // refuse it. The token is already removed from storage above; the user
+        // signs in again, which is the correct outcome for a half-session.
+        return
+    }
+
+    void fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, refreshToken: legacyRefresh }),
+    }).catch(() => {
+        // Nothing to undo: the token is out of localStorage either way.
+    })
+}
+
+if (typeof window !== "undefined") {
+    migrateLegacyRefreshToken()
+}
+
+/**
+ * Echo the server's CSRF token. Never mint one.
+ *
+ * This used to generate a random value, write it to a `csrf_token` cookie and
+ * send it as X-CSRF-Token — a token the client invented, which proves nothing
+ * and reads like protection that exists. auth-service issues the real
+ * `csrf_token` cookie on login and refresh (handler.go setAuthCookies), and
+ * its middleware compares that cookie against the header. A self-minted pair
+ * satisfies that comparison with a value the server never chose, so the
+ * forgery was not merely useless — it was the check answering itself.
+ *
+ * Now: send the header only when the server has actually set the cookie. If
+ * there is no cookie there is no header, and the server decides what to do
+ * about that.
+ *
+ * Worth knowing: for this app the header is usually moot either way. The
+ * shared CSRF middleware skips the check entirely when the request is
+ * authenticated by a bearer token (shared/middleware/csrf.go), which is how
+ * every call here authenticates. It matters only on cookie-authenticated
+ * paths.
+ */
+const readServerCsrfToken = (): string | null => {
+    if (typeof document === "undefined") return null
+    const match = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("csrf_token="))
+    if (!match) return null
+    const value = match.slice("csrf_token=".length)
+    return value ? decodeURIComponent(value) : null
 }
 
 const api = axios.create({
@@ -102,15 +176,25 @@ api.interceptors.request.use((config) => {
 
     if (config.method && ["post", "put", "delete", "patch"].includes(config.method.toLowerCase())) {
         config.headers["X-Requested-With"] = "XMLHttpRequest"
-        config.headers["X-CSRF-Token"] = ensureCsrfToken()
+        const csrfToken = readServerCsrfToken()
+        if (csrfToken) {
+            config.headers["X-CSRF-Token"] = csrfToken
+        }
     }
 
-    // Mopedu admin: every request to /v1/rider/admin/* carries the rider:admin
-    // role header. Backend stubs this for now; production gateway will replace.
-    const rawUrl = typeof config.url === "string" ? config.url : ""
-    if (rawUrl.includes("/v1/rider/admin/")) {
-        config.headers["X-Admin-Role"] = "rider:admin"
-    }
+    // Removed: an `X-Admin-Role: rider:admin` header that this client attached
+    // to every /v1/rider/admin/* request.
+    //
+    // It never authorised anything it appeared to. Since 2026-09-07 the
+    // gateway strips client-supplied identity headers and re-stamps X-Scopes
+    // from the signed token, and rider-service's AdminGuard authorises on that
+    // claim (services/rider-service/internal/http/middleware/audit.go, which
+    // keeps the old constant purely to document the change). Sending it did
+    // nothing except make this file look like it granted itself admin.
+    //
+    // Before that date it DID work, on any authenticated user willing to send
+    // one header — which is what made removing it worth doing rather than
+    // leaving as harmless dead weight.
 
     return config
 })
@@ -120,17 +204,19 @@ type RefreshResult = "success" | "invalid" | "unavailable"
 let refreshPromise: Promise<RefreshResult> | null = null
 
 async function refreshAccessToken(): Promise<RefreshResult> {
-    const refreshToken = getRefreshToken()
-    if (!refreshToken) return "invalid"
-
     try {
+        // No body: the refresh token is in the httpOnly pb_rt cookie, which
+        // the browser attaches to this same-origin request and JS cannot read.
         const res = await fetch("/api/auth/refresh", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken }),
+            credentials: "same-origin",
         })
 
         if (!res.ok) {
+            // 401/403 means the session is over — the route has already
+            // dropped the cookies. Anything else (502/503, upstream down) is
+            // temporary and must not sign the user out.
             return res.status === 401 || res.status === 403 ? "invalid" : "unavailable"
         }
 
@@ -141,10 +227,11 @@ async function refreshAccessToken(): Promise<RefreshResult> {
         const primary = payload?.data ?? payload?.result ?? payload
         const tokens = primary?.tokens ?? primary
         const newAccess = tokens?.access_token ?? tokens?.accessToken ?? tokens?.token
-        const newRefresh = tokens?.refresh_token ?? tokens?.refreshToken
 
         if (newAccess) {
-            saveTokens(newAccess, newRefresh ?? refreshToken)
+            // The rotated refresh token is not in this payload — the route
+            // stripped it and put it back in the cookie.
+            saveAccessToken(newAccess)
             return "success"
         }
         return "invalid"
