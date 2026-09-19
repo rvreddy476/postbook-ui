@@ -337,12 +337,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </button>
 
-        <div className="flex items-center gap-0.5 rounded-full bg-brand-secondary p-1">
+        <div className="flex items-center gap-1 rounded-full bg-brand-secondary px-2 py-1.5">
 
         {/* 1. Post/Manifest */}
         <button
           onClick={onCreateClick}
-          className="group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          className="group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Create Post"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -356,7 +356,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 2. Chat/Messenger */}
         <button
           onClick={onToggleContactList}
-          className="group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          className="group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Messenger"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -375,7 +375,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 3. Reels */}
         <button
           onClick={() => setActiveTab('Reels')}
-          className={`group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
+          className={`group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
           <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -391,7 +391,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           href="/posttube"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative hidden sm:flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="TV"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -404,7 +404,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
         {/* 5. Events */}
         <button
-          className="group relative hidden sm:flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Events"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -421,7 +421,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
+            className={`group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
             <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>

@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Image as ImageIcon, Smile, Hash, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Smile, Hash, Loader2 } from 'lucide-react'; // ImageIcon/Smile/Hash are used by the commented-out composer below
 import PostCard from './PostCard';
 import PeopleYouMayKnowStrip from './PeopleYouMayKnowStrip';
 import Link from 'next/link';
 import { useHomeFeed } from '@/hooks/useFeedPosts';
 import { useMyProfile } from '@/hooks/useEditProfile';
-import { useTrending } from '@/hooks/useSearch';
 import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messageService';
 import { getSession } from '@/services/authService';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
@@ -16,30 +15,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import type { PostDetail } from '@/types/profile';
 
-type FeedTab = 'for-you' | 'following' | 'hashtags';
+type FeedTab = 'for-you' | 'following';
 
 interface FeedProps {
   onCreateClick?: () => void;
-}
-
-interface HashtagPostsResponse {
-  data: PostDetail[];
-  meta?: { next_cursor: string };
-}
-
-function useHashtagPosts(tag: string, enabled: boolean) {
-  return useInfiniteQuery({
-    queryKey: ['hashtag-posts', tag],
-    queryFn: async ({ pageParam }) => {
-      const params: Record<string, string> = { limit: '20' };
-      if (pageParam) params.cursor = pageParam as string;
-      const res = await api.get<HashtagPostsResponse>(`/v1/hashtags/${tag}/posts`, { params });
-      return res.data;
-    },
-    initialPageParam: '' as string,
-    getNextPageParam: (lastPage) => lastPage.meta?.next_cursor || undefined,
-    enabled: enabled && !!tag,
-  });
 }
 
 const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
@@ -50,7 +29,6 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUserId ?? 'me'}`;
 
   const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
-  const [selectedHashtag, setSelectedHashtag] = useState<string>('');
 
   // "For You" = ranked algorithm feed; "Following" = chronological from people you follow
   const forYouFeed = useHomeFeed('ranked', {
@@ -65,21 +43,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     enabled: activeTab === 'following',
   });
 
-  // Trending hashtags for the #Hashtag tab
-  const { data: trendingData, isLoading: trendingLoading } = useTrending();
-  const trendingHashtags = trendingData?.trending ?? [];
-
-  // Auto-select first trending hashtag when tab is activated
-  useEffect(() => {
-    if (activeTab === 'hashtags' && !selectedHashtag && trendingHashtags.length > 0) {
-      setSelectedHashtag(trendingHashtags[0].hashtag);
-    }
-  }, [activeTab, selectedHashtag, trendingHashtags]);
-
-  // Hashtag posts feed
-  const hashtagFeed = useHashtagPosts(selectedHashtag, activeTab === 'hashtags');
-
-  const feed = activeTab === 'hashtags' ? hashtagFeed : activeTab === 'following' ? followingFeed : forYouFeed;
+  const feed = activeTab === 'following' ? followingFeed : forYouFeed;
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = feed;
 
   const queryClient = useQueryClient();
@@ -150,10 +114,12 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Two tabs only. Hashtags are a way IN to content, not a third kind of
+  // feed, so they belong with the other discovery entry points in the
+  // Trending card rather than sitting beside "For You" and "Following".
   const tabs: { key: FeedTab; label: string }[] = [
     { key: 'for-you', label: 'For You' },
     { key: 'following', label: 'Following' },
-    { key: 'hashtags', label: '#Hashtag' },
   ];
 
   return (
@@ -172,39 +138,14 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
         />
       </div>
 
-      {/* Hashtag chips row — shown only on #Hashtag tab */}
-      {activeTab === 'hashtags' && (
-        <div className="mb-5">
-          {trendingLoading ? (
-            <div className="flex gap-2 animate-pulse">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-8 w-20 rounded-full bg-brand-secondary" />
-              ))}
-            </div>
-          ) : trendingHashtags.length === 0 ? (
-            <p className="text-xs text-brand-text/40 text-center py-2">No trending hashtags right now</p>
-          ) : (
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-              {trendingHashtags.map((t) => (
-                <button
-                  key={t.hashtag}
-                  onClick={() => setSelectedHashtag(t.hashtag)}
-                  className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all ${
-                    selectedHashtag === t.hashtag
-                      ? 'bg-primary-ink text-brand-bg shadow-xs'
-                      : 'bg-brand-secondary text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary/80'
-                  }`}
-                >
-                  #{t.hashtag}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/*
+        Inline composer — COMMENTED OUT at the founder's request (19 Sep).
 
-      {/* Inline Create Post — hidden on hashtags tab */}
-      {activeTab !== 'hashtags' && (
+        It duplicated the create action already in the header rail, and it
+        pushed the first real post below the fold on a laptop. Left in place
+        rather than deleted so it can be restored in one step; `onCreateClick`
+        is still threaded through this component for the same reason.
+
         <div
           className="bg-brand-card border border-brand-divider rounded-3xl p-4 sm:p-5 shadow-xs mb-6 sm:mb-8 cursor-pointer hover:shadow-md transition-shadow"
           onClick={onCreateClick}
@@ -217,21 +158,19 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
               <p className="text-brand-text/40 text-base sm:text-lg font-light pt-1.5 sm:pt-2">What&apos;s on your mind?</p>
               <div className="flex items-center justify-between pt-2 border-t border-brand-divider">
                 <div className="flex gap-4">
-                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><ImageIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
-                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Smile className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
-                  <span className="text-brand-text/60 hover:text-primary-ink transition-colors"><Hash className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={2.2} /></span>
+                  <span className="text-brand-text/60"><ImageIcon className="w-5 h-5" /></span>
+                  <span className="text-brand-text/60"><Smile className="w-5 h-5" /></span>
+                  <span className="text-brand-text/60"><Hash className="w-5 h-5" /></span>
                 </div>
-                <span className="px-5 sm:px-6 py-1.5 sm:py-2 bg-primary-ink text-brand-bg text-[10px] sm:text-xs font-black tracking-widest rounded-full">
-                  Post
-                </span>
+                <span className="px-6 py-2 bg-primary-ink text-brand-bg text-xs rounded-full">Post</span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      */}
 
       <AnimatePresence>
-        {newPostCount > 0 && activeTab !== 'hashtags' && (
+        {newPostCount > 0 && (
           <motion.button
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -254,20 +193,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
 
         {!isLoading && posts.length === 0 && (
           <div className="rounded-2xl border border-brand-divider py-20 text-center flex flex-col items-center">
-            {activeTab === 'hashtags' ? (
-              <>
-                <Hash className="w-12 h-12 text-brand-text/20 mb-4" />
-                <h3 className="text-base font-semibold text-brand-text/60">
-                  {selectedHashtag ? `No posts for #${selectedHashtag}` : 'Select a hashtag'}
-                </h3>
-                <p className="mt-1 text-sm text-brand-text/40">
-                  {selectedHashtag
-                    ? 'Be the first to post with this hashtag'
-                    : 'Pick a trending hashtag above to explore posts'}
-                </p>
-              </>
-            ) : (
-              <>
+            <>
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-brand-text/20 mb-4">
                   <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
                 </svg>
@@ -282,8 +208,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                 <Link href="/discover" className="mt-4 px-6 py-2.5 bg-primary-ink text-brand-bg text-xs font-black tracking-widest rounded-full hover:opacity-90 transition-opacity">
                   Discover People
                 </Link>
-              </>
-            )}
+            </>
           </div>
         )}
 
