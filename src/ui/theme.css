@@ -13,11 +13,30 @@
 
   --theme-brand-bg: 255 255 255;
   --theme-brand-text: 15 20 25;
-  --theme-brand-accent: 15 20 25;
+  --theme-brand-accent: 59 130 196;
   --theme-brand-secondary: 247 249 249;
-  --theme-brand-highlight: 15 20 25;
+  --theme-brand-highlight: 40 90 138;
   --theme-brand-divider: rgba(15, 20, 25, 0.1);
   --theme-brand-card: 255 255 255;
+
+  /*
+    Cerulean #3b82c4 is the brand accent. It measures 4.06:1 on white, which
+    clears the 3.00:1 bar for borders, rings and icons but NOT the 4.50:1 one
+    for normal-size text. So --theme-brand-ink, the same hue darkened to
+    5.60:1, carries anything that has text on or in it: solid button fills and
+    links. Never set normal-size text to --brand-accent on this ground.
+  */
+  --theme-brand-ink: 47 107 163;
+  --theme-brand-tint: 234 242 250;
+  --theme-brand-outline: 185 212 236;
+  --theme-on-primary: 255 255 255;
+
+  --theme-text-muted: 83 100 113;
+
+  --theme-success: 27 127 75;
+  --theme-warning: 138 83 0;
+  --theme-danger: 198 40 40;
+  --theme-info: 47 107 163;
 
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
@@ -32,11 +51,33 @@
 
   --theme-brand-bg: 0 0 0;
   --theme-brand-text: 247 249 249;
-  --theme-brand-accent: 247 249 249;
+  --theme-brand-accent: 90 155 216;
   --theme-brand-secondary: 22 24 28;
-  --theme-brand-highlight: 247 249 249;
+  --theme-brand-highlight: 106 168 224;
   --theme-brand-divider: rgba(247, 249, 249, 0.15);
   --theme-brand-card: 0 0 0;
+
+  /*
+    Dark inverts the pairing: the accent lightens to #5a9bd8 (7.11:1 on black)
+    and a light fill takes a NEAR-BLACK label, which is why --theme-on-primary
+    flips here. These values were derived, not specified by the founder, who
+    chose the light theme's cerulean.
+
+    Every token below must be restated in this block. .dark sits on the same
+    html element as :root, so anything omitted silently inherits the light
+    value and misreads on black.
+  */
+  --theme-brand-ink: 90 155 216;
+  --theme-brand-tint: 18 36 58;
+  --theme-brand-outline: 44 74 104;
+  --theme-on-primary: 15 20 25;
+
+  --theme-text-muted: 139 152 165;
+
+  --theme-success: 74 222 128;
+  --theme-warning: 251 191 36;
+  --theme-danger: 248 113 113;
+  --theme-info: 106 168 224;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;

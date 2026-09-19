@@ -44,7 +44,26 @@
   --color-foreground: rgb(var(--brand-text));
 
   --color-primary: rgb(var(--brand-accent));
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: rgb(var(--on-primary));
+
+  /*
+    primary      the brand cerulean. Rings, borders, icons, active indicators,
+                 large display type, chart fills. NOT normal-size text: it is
+                 4.06:1 on white, under the 4.50:1 needed for body text.
+    primary-ink  the same hue darkened to 5.60:1. Solid button fills with a
+                 label, and link text on white.
+  */
+  --color-primary-ink: rgb(var(--brand-ink));
+  --color-primary-hover: rgb(var(--brand-highlight));
+  --color-primary-tint: rgb(var(--brand-tint));
+  --color-primary-outline: rgb(var(--brand-outline));
+
+  --color-text-muted: rgb(var(--text-muted));
+
+  --color-success: rgb(var(--success));
+  --color-warning: rgb(var(--warning));
+  --color-danger: rgb(var(--danger));
+  --color-info: rgb(var(--info));
 
   --color-secondary: rgb(var(--brand-secondary));
   --color-secondary-foreground: rgb(var(--brand-text));
@@ -52,8 +71,9 @@
   --color-muted: rgb(var(--brand-secondary));
   --color-muted-foreground: rgb(var(--brand-highlight));
 
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  /* was #ef4444 and #ffffff, two colours dark mode could never change */
+  --color-destructive: rgb(var(--danger));
+  --color-destructive-foreground: rgb(var(--on-primary));
 
   --color-border: var(--brand-divider);
   --color-input: var(--brand-divider);
@@ -97,6 +117,21 @@
     --brand-highlight: var(--theme-brand-highlight);
     --brand-divider: var(--theme-brand-divider);
     --brand-card: var(--theme-brand-card);
+
+    /*
+      Every --theme-* value needs an alias here AND in the .dark block below,
+      or the @theme entry that reads it resolves to nothing and the colour
+      disappears without any error.
+    */
+    --brand-ink: var(--theme-brand-ink);
+    --brand-tint: var(--theme-brand-tint);
+    --brand-outline: var(--theme-brand-outline);
+    --on-primary: var(--theme-on-primary);
+    --text-muted: var(--theme-text-muted);
+    --success: var(--theme-success);
+    --warning: var(--theme-warning);
+    --danger: var(--theme-danger);
+    --info: var(--theme-info);
   }
 
   .dark {
@@ -113,6 +148,16 @@
     --brand-highlight: var(--theme-brand-highlight);
     --brand-divider: var(--theme-brand-divider);
     --brand-card: var(--theme-brand-card);
+
+    --brand-ink: var(--theme-brand-ink);
+    --brand-tint: var(--theme-brand-tint);
+    --brand-outline: var(--theme-brand-outline);
+    --on-primary: var(--theme-on-primary);
+    --text-muted: var(--theme-text-muted);
+    --success: var(--theme-success);
+    --warning: var(--theme-warning);
+    --danger: var(--theme-danger);
+    --info: var(--theme-info);
   }
 
   html,
