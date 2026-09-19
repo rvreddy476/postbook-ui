@@ -7,6 +7,7 @@ import { Globe, Lock, MessageCircle, Plus, Search, Users, MessagesSquare, Minus 
 import CreateGroupPanel from '@/components/messenger/CreateGroupPanel';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useMyGroups } from '@/hooks/useGroups';
+import SegmentedControl from '@/components/ui/SegmentedControl';
 import { getSession } from '@/services/authService';
 import { subscribeToPresenceUpdates } from '@/services/messageService';
 import { fetchCircleMembers } from '@/services/userService';
@@ -118,53 +119,48 @@ const ContactList: React.FC<ContactListProps> = ({
   return (
     <div className="relative flex h-full flex-col">
       <div className="flex flex-col h-full p-4">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-4 px-2">
-          <h2 className="text-xl font-extrabold tracking-tight text-brand-text flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-brand-text/60" />
-            Chat
-          </h2>
+        {/* Section header. The title is the only heavy thing here; a panel
+            title competing with the conversation names is what made this read
+            as noisy. */}
+        <div className="mb-3 flex items-center justify-between px-2">
+          <h2 className="text-base font-semibold -tracking-[0.014em] text-brand-text">Chat</h2>
           {onClose && (
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
+              aria-label="Collapse chat"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Tabs — with sliding underline for professional look */}
-        <div className="relative mb-4 flex gap-1 px-2">
-          <div className="flex w-full rounded-xl bg-brand-secondary p-1">
-            {TAB_CONFIG.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setActiveListTab(tab.key);
-                  if (tab.key === ChatTab.Direct) onClearGroup?.();
-                }}
-                className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${activeListTab === tab.key
-                  ? 'bg-primary-ink text-brand-bg shadow-xs'
-                  : 'text-brand-highlight hover:text-brand-text'
-                  }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Same control as the rest of the app. Direct/Groups is a choice, not
+            an action, so it does not take the accent. */}
+        <div className="mb-3 px-2">
+          <SegmentedControl
+            layoutId="chat-scope"
+            aria-label="Conversations"
+            size="sm"
+            className="w-full [&>button]:flex-1"
+            value={activeListTab}
+            onChange={(id) => {
+              setActiveListTab(id as ChatTab);
+              if (id === ChatTab.Direct) onClearGroup?.();
+            }}
+            segments={TAB_CONFIG.map((t) => ({ id: t.key, label: t.label }))}
+          />
         </div>
 
         {/* Search */}
-        <div className="relative mb-4 px-2">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-text/60" />
+        <div className="relative mb-3 px-2">
+          <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/40" />
           <input
             type="text"
-            placeholder="Search messages..."
+            placeholder="Search messages"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-10 pr-4 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
+            className="w-full rounded-full border border-transparent bg-brand-secondary py-2 pl-10 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
           />
         </div>
 
@@ -191,19 +187,21 @@ const ContactList: React.FC<ContactListProps> = ({
                     {filteredContacts.map((contact) => {
                       const isActive = activeChatIds.includes(contact.id);
                       const unreadCount = getUnreadCountForUser(contact.id);
+                      // A list row must not grow when selected: scaling nudges
+                      // every row below it and makes the list feel unstable
+                      // while you scan. Selection is a fill, nothing more.
                       return (
                         <button
                           key={contact.id}
                           onClick={() => onContactClick(contact)}
-                          className={`group relative flex w-full items-center gap-2.5 rounded-xl p-2.5 transition-all duration-300 ${isActive
-                            ? 'z-10 bg-primary-ink/5 ring-1 ring-brand-divider scale-[1.02]'
-                            : 'z-0 border border-transparent hover:bg-primary-ink/5 hover:border-brand-divider'
+                          className={`group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors duration-150 ${isActive
+                            ? 'bg-primary-ink/8'
+                            : 'hover:bg-brand-secondary'
                             }`}
                         >
-                          {/* Removed Active Indicator Bar per user request */}
 
                           <div className="relative shrink-0">
-                            <div className={`h-8 w-8 overflow-hidden rounded-full ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
+                            <div className={`h-9 w-9 overflow-hidden rounded-full ring-2 transition-colors ${isActive ? 'ring-primary-outline' : 'ring-transparent'
                               }`}>
                               {/*
                                 The old fallback pointed at /default-avatar.png,
@@ -232,17 +230,22 @@ const ContactList: React.FC<ContactListProps> = ({
                           </div>
 
                           <div className="flex flex-1 flex-col overflow-hidden text-left">
-                            <div className="flex items-center justify-between">
-                              <h3 className="truncate text-[14px] font-normal tracking-tight text-brand-text">
+                            <div className="flex items-center justify-between gap-2">
+                              {/* The NAME is the thing you are scanning for, so
+                                  it carries the weight. Status was bold and the
+                                  name was not, which inverted the hierarchy. */}
+                              <h3 className={`truncate text-sm -tracking-[0.006em] ${unreadCount > 0 ? 'font-semibold text-brand-text' : 'font-medium text-brand-text'}`}>
                                 {contact.name}
                               </h3>
                               {unreadCount > 0 && (
-                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-ink px-1 text-[9px] font-bold text-white shadow-xs">
+                                <span className="inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-primary-ink px-1.5 text-[11px] font-semibold tabular-nums text-white">
                                   {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                               )}
                             </div>
-                            <p className="truncate text-[11px] font-bold text-brand-highlight mt-0.5">
+                            {/* Presence is secondary information: muted, and
+                                only coloured when it actually means "here". */}
+                            <p className={`mt-0.5 truncate text-xs ${contact.isOnline ? 'text-success' : 'text-muted-foreground'}`}>
                               {contact.isOnline ? 'Active now' : 'Offline'}
                             </p>
                           </div>
@@ -288,12 +291,11 @@ const ContactList: React.FC<ContactListProps> = ({
                         <button
                           key={group.id}
                           onClick={() => onGroupClick?.(group.id)}
-                          className={`group relative flex w-full items-center gap-2.5 rounded-xl p-2.5 transition-all duration-300 ${isActive
-                            ? 'z-10 bg-primary-ink/5 ring-1 ring-brand-divider scale-[1.02]'
-                            : 'z-0 border border-transparent hover:bg-primary-ink/5 hover:border-brand-divider'
+                          className={`group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors duration-150 ${isActive
+                            ? 'bg-primary-ink/8'
+                            : 'hover:bg-brand-secondary'
                             }`}
                         >
-                          {/* Removed Active Indicator Bar per user request */}
 
                           <div className={`h-8 w-8 shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                             }`}>
@@ -332,7 +334,7 @@ const ContactList: React.FC<ContactListProps> = ({
                       onClick={() => setShowCreateGroupModal(true)}
                       className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-divider bg-brand-secondary/50 p-4 text-sm font-bold text-brand-highlight transition-all hover:border-brand-text/20 hover:bg-brand-text/5 hover:text-brand-text"
                     >
-                      <Plus className="h-5 w-5 transition-transform group-hover:scale-110" />
+                      <Plus className="h-5 w-5 transition-transform duration-200 ease-out group-active:scale-90" />
                       New Group
                     </button>
                   </>

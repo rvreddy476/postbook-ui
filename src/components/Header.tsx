@@ -336,7 +336,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 1. Post/Manifest */}
         <button
           onClick={onCreateClick}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
+          className="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
           title="Create Post"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -350,7 +350,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 2. Chat/Messenger */}
         <button
           onClick={onToggleContactList}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
+          className="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
           title="Messenger"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -359,7 +359,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             </svg>
           </div>
           {totalUnread > 0 && (
-            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-primary-ink text-white text-[9px] font-black rounded-full shadow-xs">
+            <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-bg">
               {totalUnread > 99 ? '99+' : totalUnread}
             </div>
           )}
@@ -369,7 +369,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 3. Reels */}
         <button
           onClick={() => setActiveTab('Reels')}
-          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
+          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
           <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -385,7 +385,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           href="/posttube"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
           title="TV"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -398,7 +398,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
         {/* 5. Events */}
         <button
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300"
+          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
           title="Events"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -415,7 +415,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
+            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
             <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -424,7 +424,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               </svg>
             </div>
             {unreadNotifCount > 0 && (
-              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-primary-ink text-white text-[9px] font-black rounded-full shadow-xs">
+              <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-bg">
                 {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
               </div>
             )}

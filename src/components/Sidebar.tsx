@@ -121,11 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`shrink-0 ${item.color} transition-transform duration-200 ease-out group-active:scale-90`}
         />
         {expanded && (
-          <span
-            className={`text-sm font-bold tracking-wide ${
-              isActive ? 'text-primary-ink' : 'text-brand-text/70 dark:text-brand-text/70'
-            }`}
-          >
+          <span className={`text-sm ${isActive ? 'font-semibold' : 'font-medium'}`}>
             {item.label}
           </span>
         )}
@@ -138,7 +134,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         {isActive && !expanded && (
           <motion.div
             layoutId="rail-active"
-            className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-primary-ink"
+            transition={{ type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }}
+            className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-primary-ink"
           />
         )}
       </Link>
@@ -158,10 +155,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* Nav items — spread to fill the rail, no scrollbar */}
+      {/* Nav items.
+          Previously justify-evenly, which stretched the icons down the whole
+          rail so the spacing changed with viewport height and nothing read as
+          a group. A fixed rhythm anchored at the top keeps the relationship
+          between items constant at any size. */}
       <div
-        className={`flex w-full flex-1 flex-col ${
-          expanded ? 'gap-1' : 'items-center justify-evenly'
+        className={`flex w-full flex-col ${
+          expanded ? 'gap-1' : 'items-center gap-1.5'
         }`}
       >
         {primaryItems.map(renderRailItem)}
@@ -257,19 +258,22 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Account — pinned to the bottom */}
+      {/* Account — pinned to the bottom, with a hairline above it so it reads
+          as a different kind of destination from the navigation. The icon was
+          text-slate-300: a raw palette value so pale it looked disabled, and
+          one that could not follow the theme. */}
       <Link
         href="/profile"
-        className={`group mt-2 flex items-center gap-4 rounded-xl transition-all hover:bg-primary-ink/5 ${
-          expanded ? 'w-full px-4 py-3' : 'justify-center p-3'
+        className={`group mt-auto flex items-center gap-4 rounded-xl text-brand-text/70 transition-colors hover:bg-primary-ink/5 hover:text-brand-text ${
+          expanded ? 'w-full px-4 py-3' : 'w-full justify-center p-3'
         }`}
       >
         <User
-          size={21}
-          strokeWidth={2.2}
-          className="shrink-0 text-slate-300 transition-transform duration-300 group-hover:scale-110"
+          size={20}
+          strokeWidth={1.75}
+          className="shrink-0 transition-transform duration-200 ease-out group-active:scale-90"
         />
-        {expanded && <span className="text-sm font-bold text-brand-text/70 dark:text-brand-text/70">Account</span>}
+        {expanded && <span className="text-sm font-medium">Account</span>}
       </Link>
 
       {/* Click-away backdrop for the More flyout */}
