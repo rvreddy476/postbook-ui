@@ -282,7 +282,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   };
 
   return (
-    <header className={`fixed top-0 z-100 h-20 bg-brand-text text-brand-bg border-b border-brand-divider dark:bg-brand-bg dark:text-brand-text px-6 flex items-center justify-between transition-all duration-500 ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+    <header className={`fixed top-0 z-100 h-20 bg-brand-bg text-brand-text border-b border-brand-divider px-6 flex items-center justify-between transition-all duration-500 ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Brand mark + Desktop Search */}
       <div className="flex items-center gap-4">
         {/* VC logo — constant on every route */}
@@ -302,13 +302,13 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 pl-10 pr-4 text-sm outline-hidden transition-all"
+            className="w-full bg-brand-secondary border border-brand-divider text-brand-text placeholder-brand-text/40 focus:ring-brand-accent focus:bg-brand-secondary dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 pl-10 pr-4 text-sm outline-hidden transition-all"
           />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/40 group-focus-within:text-brand-text/70 dark:text-brand-text/40 dark:group-focus-within:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {searchQuery && (
             <button
               onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 text-white/70 hover:bg-white/30 dark:bg-brand-secondary dark:text-brand-highlight dark:hover:bg-brand-secondary/80 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-brand-secondary text-brand-text/70 hover:bg-brand-secondary dark:bg-brand-secondary dark:text-brand-highlight dark:hover:bg-brand-secondary/80 transition-colors"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -325,7 +325,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* Mobile Search Toggle */}
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl text-brand-text/60 hover:text-brand-text dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </button>
@@ -366,7 +366,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 3. Reels */}
         <button
           onClick={() => setActiveTab('Reels')}
-          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'Reels' ? 'text-white dark:text-primary-ink' : ''}`}
+          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
           <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-fuchsia-300' : 'text-fuchsia-400 group-hover:text-fuchsia-300'}`}>
@@ -412,7 +412,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-primary-ink' : ''}`}
+            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
             <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-rose-300' : 'text-rose-400 group-hover:text-rose-300'}`}>
@@ -611,7 +611,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             </Link>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="w-6 h-10 flex items-center justify-center text-white/60 hover:text-white dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
+              className="w-6 h-10 flex items-center justify-center text-brand-text/60 hover:text-brand-text dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
             >
               <svg className={`w-4 h-4 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </button>
