@@ -537,25 +537,29 @@ function ChatView({
               className="hidden"
             />
 
-            <div className="flex-1 relative">
+            {/* Same composer shape as the other two: the field and send share
+                one rounded bar. The send colour came from an inline style
+                using the group's colour plus two hardcoded hex values, so it
+                could not follow the theme and disagreed with every other
+                send button in the app. */}
+            <div className="flex flex-1 items-center gap-1 rounded-full bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
               <input
                 value={chat.input}
                 onChange={e => { chat.handleInputChange(e.target.value); setTyping(); }}
                 onKeyDown={e => { if (e.key === 'Enter') chat.handleSend(); if (e.key === 'Escape' && chat.replyingTo) chat.setReplyingTo(null) }}
-                placeholder="Type a message..."
-                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-hidden transition-all focus:bg-brand-card focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary placeholder:text-brand-text/60"
+                placeholder="Write a message"
+                className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm text-brand-text outline-hidden placeholder:text-brand-text/40"
               />
               <button
                 onClick={chat.handleSend}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:hover:scale-100"
                 disabled={!chat.input.trim()}
-                style={{
-                  background: chat.input.trim() ? groupColor : '#f1f5f9',
-                  color: chat.input.trim() ? '#fff' : '#94a3b8',
-                  cursor: chat.input.trim() ? 'pointer' : 'default',
-                }}
+                aria-label="Send message"
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${chat.input.trim()
+                    ? 'bg-send text-white hover:bg-send-hover'
+                    : 'text-brand-text/30'
+                  }`}
               >
-                <Send className="w-4 h-4" />
+                <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
               </button>
             </div>
           </div>

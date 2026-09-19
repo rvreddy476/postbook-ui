@@ -483,55 +483,67 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
             )}
           </AnimatePresence>
 
-          {/* Input Area */}
+          {/* Composer.
+              One horizontal bar, Telegram-style: attachments on the LEFT,
+              the field in the middle, send on the RIGHT — all INSIDE the
+              same rounded box. Send used to sit outside it, which is why it
+              was clipped by the window edge at this width. */}
           <footer className="border-t border-brand-divider p-3">
-            <form onSubmit={handleSend} className="flex items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-brand-secondary transition-all focus-within:ring-brand-divider">
-                <input
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    setTyping();
-                    const now = Date.now();
-                    if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
-                      lastTypingSentRef.current = now;
-                      sendTypingIndicator(convIdRef.current).catch(() => { });
-                    }
-                  }}
-                  placeholder="Write a message..."
-                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-brand-text outline-hidden placeholder:text-brand-text/60"
-                />
-                <div className="flex items-center gap-1 text-brand-text/60">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text ${showEmojiPicker ? 'bg-brand-secondary text-brand-text' : ''}`}
-                  >
-                    <Smile className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text"
-                  >
-                    <Image className="h-4 w-4" />
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                </div>
-              </div>
+            <form
+              onSubmit={handleSend}
+              className="flex items-center gap-1 rounded-full bg-brand-secondary pl-1.5 pr-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider"
+            >
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+                aria-label="Emoji"
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:text-brand-text ${showEmojiPicker ? 'text-brand-text' : 'text-brand-text/50'}`}
+              >
+                <Smile className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Attach image"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text"
+              >
+                <Image className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
 
+              <input
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  setTyping();
+                  const now = Date.now();
+                  if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
+                    lastTypingSentRef.current = now;
+                    sendTypingIndicator(convIdRef.current).catch(() => { });
+                  }
+                }}
+                placeholder="Write a message"
+                className="min-w-0 flex-1 bg-transparent px-1 py-2 text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40"
+              />
+
+              {/* Send sits inside the bar, so it can never be clipped. It only
+                  takes colour once there is something to send. */}
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-send text-white transition-colors duration-200 hover:bg-send-hover active:scale-90 disabled:opacity-30 disabled:shadow-none"
+                aria-label="Send message"
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${input.trim()
+                    ? 'bg-send text-white hover:bg-send-hover'
+                    : 'text-brand-text/30'
+                  }`}
               >
-                <Send className="h-4 w-4 -ml-0.5" />
+                <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
               </button>
             </form>
           </footer>

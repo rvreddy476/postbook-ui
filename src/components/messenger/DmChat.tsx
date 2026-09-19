@@ -835,41 +835,45 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           </button>
         </div>
       ) : (
-        /* Input area */
-        <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
-            title="Attach file"
-          >
-            <Paperclip className="h-5 w-5 transition-transform group-hover:scale-110 group-hover:text-brand-text/60" />
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
-            onChange={handleMediaUpload} className="hidden" />
+        /* Composer — one horizontal bar: attach on the left, field in the
+           middle, send on the right, all inside the same rounded box so the
+           send control can never be clipped by the panel edge. */
+        <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
+          <div className="flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach file"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text"
+            >
+              <Paperclip className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
+              onChange={handleMediaUpload} className="hidden" />
 
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Write a message..."
-            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3.5 text-[14px] font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
-          />
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Write a message"
+              className="min-w-0 flex-1 bg-transparent px-1 py-2.5 text-sm text-brand-text outline-hidden placeholder:text-brand-text/40"
+            />
 
-          {/* Send is the one coloured thing in this window. The rose is the
-              founder's sampled colour (#b36077 from the image they shared);
-              4.32:1 against white, which clears the 3.00:1 bar for an icon. */}
-          <button
-            onClick={handleSend}
-            disabled={!hasText}
-            aria-label="Send message"
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${hasText
-                ? 'bg-send text-white hover:bg-send-hover'
-                : 'bg-brand-secondary text-brand-text/30'
-              }`}
-          >
-            <Send className={`h-4.5 w-4.5 ${hasText ? '-ml-0.5' : ''}`} />
-          </button>
+            {/* The one coloured thing here: the founder's sampled #b36077,
+                4.32:1 on white, which clears the 3.00:1 bar for an icon. It
+                only takes colour once there is something to send. */}
+            <button
+              onClick={handleSend}
+              disabled={!hasText}
+              aria-label="Send message"
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${hasText
+                  ? 'bg-send text-white hover:bg-send-hover'
+                  : 'text-brand-text/30'
+                }`}
+            >
+              <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
+            </button>
+          </div>
         </div>
       )}
     </div>
