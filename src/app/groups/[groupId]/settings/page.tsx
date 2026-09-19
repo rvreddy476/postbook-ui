@@ -190,7 +190,7 @@ export default function SpaceSettingsPage() {
     <AppShell hideSidebar>
       <div className="flex w-full items-start">
         {/* ── Left: settings menu ───────────────────────────────────── */}
-        <aside className="sticky top-0 flex h-[calc(100vh-5rem)] w-[300px] flex-shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-4 xl:w-[330px]">
+        <aside className="sticky top-0 flex h-[calc(100vh-5rem)] w-[300px] shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-4 xl:w-[330px]">
           <button
             onClick={() => router.push(`/groups?space=${groupId}`)}
             className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-text/50 transition-colors hover:text-brand-text"
@@ -201,7 +201,7 @@ export default function SpaceSettingsPage() {
 
           {/* Space identity */}
           <div className="mb-4 flex items-center gap-3 border-b border-brand-divider pb-4">
-            <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
               {avatarPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarPreview} alt={group.name} className="h-full w-full object-cover" />
@@ -267,12 +267,12 @@ export default function SpaceSettingsPage() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={coverPreview} alt="Space cover" className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-text/10 via-brand-text/5 to-brand-text/15 text-6xl font-black text-brand-text/15">
+                          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand-text/10 via-brand-text/5 to-brand-text/15 text-6xl font-black text-brand-text/15">
                             {fallbackInitial}
                           </div>
                         )}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
-                          <span className="rounded-full bg-brand-card/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
+                          <span className="rounded-full bg-brand-card/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-xs">
                             Change cover
                           </span>
                         </div>
@@ -317,7 +317,7 @@ export default function SpaceSettingsPage() {
                         type="text"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
-                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/30"
                         maxLength={100}
                         required
                       />
@@ -328,7 +328,7 @@ export default function SpaceSettingsPage() {
                       <textarea
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
-                        className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+                        className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/30"
                         rows={3}
                         maxLength={500}
                       />

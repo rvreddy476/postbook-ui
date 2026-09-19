@@ -9,7 +9,7 @@ export function AdvancedTab() {
   return (
     <div className="space-y-6">
       {/* Channel Verification */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
             <BadgeCheck className="h-5 w-5 text-blue-500" />
@@ -29,7 +29,7 @@ export function AdvancedTab() {
       </div>
 
       {/* Export Data */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
             <Download className="h-5 w-5 text-emerald-500" />
@@ -48,7 +48,7 @@ export function AdvancedTab() {
       </div>
 
       {/* Delete Channel */}
-      <div className="rounded-2xl border border-rose-200/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-rose-200/60 bg-brand-card p-6 shadow-xs">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50">
             <Trash2 className="h-5 w-5 text-rose-500" />
@@ -82,13 +82,13 @@ export function AdvancedTab() {
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmOpen(false)}
-                    className="rounded-lg bg-brand-card px-3 py-1.5 text-[12px] font-semibold text-brand-highlight shadow-sm hover:bg-brand-secondary"
+                    className="rounded-lg bg-brand-card px-3 py-1.5 text-[12px] font-semibold text-brand-highlight shadow-xs hover:bg-brand-secondary"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg bg-rose-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm hover:bg-rose-700"
+                    className="rounded-lg bg-rose-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-xs hover:bg-rose-700"
                   >
                     Permanently Delete
                   </button>

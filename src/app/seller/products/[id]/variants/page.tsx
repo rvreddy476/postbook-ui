@@ -357,7 +357,7 @@ function Field(props: {
         value={props.value}
         disabled={props.disabled}
         onChange={(e) => props.onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30 disabled:bg-[#F5F0EB] disabled:text-[#6B5544]/60"
+        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-[#8B5E3C]/30 disabled:bg-[#F5F0EB] disabled:text-[#6B5544]/60"
       />
       {props.hint && <p className="mt-1 text-[11px] text-[#6B5544]/70">{props.hint}</p>}
     </div>
@@ -385,7 +385,7 @@ function FieldNum(props: {
           const n = parseFloat(e.target.value)
           props.onChange(Number.isFinite(n) ? n : 0)
         }}
-        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5E3C]/30"
+        className="w-full px-3 py-2 rounded-lg border border-[#E8DDD3] bg-white text-sm focus:outline-hidden focus:ring-2 focus:ring-[#8B5E3C]/30"
       />
     </div>
   )

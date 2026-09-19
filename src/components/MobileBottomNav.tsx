@@ -11,7 +11,7 @@ interface MobileBottomNavProps {
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, unreadMessages = 0 }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[120] border-t border-brand-divider bg-brand-card/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-120 border-t border-brand-divider bg-brand-card/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
       <ul className="grid grid-cols-5 gap-1">
         {/* Home */}
         <li>

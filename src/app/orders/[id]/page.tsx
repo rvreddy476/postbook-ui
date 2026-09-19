@@ -126,7 +126,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           {invoiceData.download_url ? (
             <a href={invoiceData.download_url} target="_blank" rel="noreferrer"
-              className="inline-block mt-2 rounded bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-700">
+              className="inline-block mt-2 rounded-sm bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-700">
               Download invoice
             </a>
           ) : null}
@@ -139,7 +139,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             onClick={() => {
               if (confirm('Cancel this order?')) cancel.mutate({ orderId: order.id })
             }}
-            className="rounded border border-red-300 text-red-600 px-4 py-2 text-sm hover:bg-red-50"
+            className="rounded-sm border border-red-300 text-red-600 px-4 py-2 text-sm hover:bg-red-50"
           >
             Cancel Order
           </button>
@@ -148,13 +148,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <>
             <Link
               href={`/orders/${order.id}/review`}
-              className="rounded border border-indigo-300 text-indigo-600 px-4 py-2 text-sm hover:bg-indigo-50"
+              className="rounded-sm border border-indigo-300 text-indigo-600 px-4 py-2 text-sm hover:bg-indigo-50"
             >
               Write a review
             </Link>
             <Link
               href={`/orders/${order.id}/return`}
-              className="rounded border border-gray-300 text-gray-700 px-4 py-2 text-sm hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 text-gray-700 px-4 py-2 text-sm hover:bg-gray-50"
             >
               Return an item
             </Link>

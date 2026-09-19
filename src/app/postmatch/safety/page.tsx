@@ -214,14 +214,14 @@ function SafeMeetForm() {
         placeholder="Match user ID"
         value={withUserId}
         onChange={(e) => setWithUserId(e.target.value)}
-        className="w-full border rounded px-3 py-2"
+        className="w-full border rounded-sm px-3 py-2"
       />
       <input
         type="datetime-local"
         required
         value={when}
         onChange={(e) => setWhen(e.target.value)}
-        className="w-full border rounded px-3 py-2"
+        className="w-full border rounded-sm px-3 py-2"
       />
       <input
         type="text"
@@ -229,12 +229,12 @@ function SafeMeetForm() {
         placeholder="Venue name (e.g. Filter Coffee, Indiranagar)"
         value={venue}
         onChange={(e) => setVenue(e.target.value)}
-        className="w-full border rounded px-3 py-2"
+        className="w-full border rounded-sm px-3 py-2"
       />
       <button
         type="submit"
         disabled={schedule.isPending}
-        className="w-full bg-emerald-600 text-white py-2 rounded font-semibold disabled:bg-gray-300"
+        className="w-full bg-emerald-600 text-white py-2 rounded-sm font-semibold disabled:bg-gray-300"
       >
         {schedule.isPending ? 'Scheduling…' : 'Schedule safe meet'}
       </button>
@@ -354,7 +354,7 @@ function BlocksCard() {
                 type="button"
                 onClick={() => unblock.mutate(b.blocked_user_id)}
                 disabled={unblock.isPending}
-                className="text-xs px-3 py-1.5 rounded border text-rose-600 border-rose-200 disabled:text-gray-400"
+                className="text-xs px-3 py-1.5 rounded-sm border text-rose-600 border-rose-200 disabled:text-gray-400"
               >
                 Unblock
               </button>

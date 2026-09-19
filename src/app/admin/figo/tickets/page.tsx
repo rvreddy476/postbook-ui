@@ -48,7 +48,7 @@ export default function FoodTicketsPage() {
             type="button"
             onClick={() => setStatus(s.key)}
             className={[
-              "rounded px-3 py-1 text-xs font-medium transition",
+              "rounded-sm px-3 py-1 text-xs font-medium transition",
               status === s.key
                 ? "bg-amber-600 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -106,12 +106,12 @@ export default function FoodTicketsPage() {
                     <span
                       className={
                         t.status === "open"
-                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
                           : t.status === "in_progress"
-                            ? "rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800"
+                            ? "rounded-sm bg-blue-100 px-2 py-0.5 text-xs text-blue-800"
                             : t.status === "resolved"
-                              ? "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
-                              : "rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                              ? "rounded-sm bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
+                              : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                       }
                     >
                       {t.status}
@@ -131,7 +131,7 @@ export default function FoodTicketsPage() {
                           }
                           disabled={update.isPending}
                           className={[
-                            "rounded px-2 py-1 text-xs font-medium text-white",
+                            "rounded-sm px-2 py-1 text-xs font-medium text-white",
                             v.tone,
                             update.isPending ? "cursor-wait opacity-60" : "",
                           ].join(" ")}

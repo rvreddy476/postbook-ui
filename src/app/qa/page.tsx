@@ -103,7 +103,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Start your question with 'What', 'How', 'Why'…"
-              className="w-full px-4 py-3 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text placeholder-neutral-400 focus:outline-none focus:border-ask focus:ring-1 focus:ring-ask text-sm font-medium"
+              className="w-full px-4 py-3 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text placeholder-neutral-400 focus:outline-hidden focus:border-ask focus:ring-1 focus:ring-ask text-sm font-medium"
               maxLength={200}
             />
             <div className="mt-1 text-xs text-neutral-400 text-right">{title.length}/200</div>
@@ -143,7 +143,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                   placeholder="Add a tag…"
-                  className="flex-1 px-3 py-2 rounded-lg border border-brand-divider bg-brand-secondary text-sm text-brand-text focus:outline-none focus:border-ask"
+                  className="flex-1 px-3 py-2 rounded-lg border border-brand-divider bg-brand-secondary text-sm text-brand-text focus:outline-hidden focus:border-ask"
                 />
                 <button type="button" onClick={addTag} className="px-3 py-2 rounded-lg border border-brand-divider hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                   <Plus className="w-4 h-4 text-neutral-500" />
@@ -161,7 +161,7 @@ function AskModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={!title.trim() || createQuestion.isPending}
-              className="px-6 py-2.5 bg-ask hover:bg-ask-hover disabled:opacity-50 text-white rounded-full font-semibold text-sm transition-all shadow-sm active:scale-[0.98]"
+              className="px-6 py-2.5 bg-ask hover:bg-ask-hover disabled:opacity-50 text-white rounded-full font-semibold text-sm transition-all shadow-xs active:scale-[0.98]"
             >
               {createQuestion.isPending ? 'Posting…' : 'Post Question'}
             </button>
@@ -222,7 +222,7 @@ function QuestionCard({ q, passed, onPass }: { q: QuestionSummary; passed: boole
   if (passed) return null
 
   return (
-    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 mb-3 hover:shadow-sm transition-shadow">
+    <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 mb-3 hover:shadow-xs transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
@@ -332,12 +332,12 @@ function QuestionFeed({ questions, isLoading, passedIds, onPass }: {
           <div className="flex gap-2.5 mb-3">
             <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 shrink-0" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
-              <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+              <div className="h-3.5 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/3" />
+              <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
             </div>
           </div>
-          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-full mb-2" />
-          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4 mb-3" />
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-full mb-2" />
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4 mb-3" />
           <div className="flex gap-2 pt-2 border-t border-brand-divider/60">
             <div className="h-7 bg-neutral-200 dark:bg-neutral-700 rounded-full w-28" />
             <div className="h-7 bg-neutral-200 dark:bg-neutral-700 rounded-full w-8" />
@@ -440,7 +440,7 @@ export default function QAPage() {
         <div className="px-4 pb-4">
           <button
             onClick={() => setShowAskModal(true)}
-            className="w-[calc(100%-24px)] mx-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-semibold bg-ask hover:bg-ask-hover shadow-sm active:scale-[0.98] transition-all mt-3"
+            className="w-[calc(100%-24px)] mx-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-white text-sm font-semibold bg-ask hover:bg-ask-hover shadow-xs active:scale-[0.98] transition-all mt-3"
           >
             <Plus className="w-4 h-4" strokeWidth={3} /> Add Question
           </button>
@@ -493,7 +493,7 @@ export default function QAPage() {
               value={topicSearch}
               onChange={e => setTopicSearch(e.target.value)}
               placeholder="Search…"
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-brand-divider bg-brand-secondary text-xs text-brand-text/80 placeholder-neutral-400 focus:outline-none focus:border-ask"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-brand-divider bg-brand-secondary text-xs text-brand-text/80 placeholder-neutral-400 focus:outline-hidden focus:border-ask"
             />
           </div>
           <div className="space-y-0.5">
@@ -537,7 +537,7 @@ export default function QAPage() {
             </Link>
             <button
               onClick={() => setShowAskModal(true)}
-              className="md:hidden flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-semibold bg-ask hover:bg-ask-hover shadow-sm active:scale-95 transition-all"
+              className="md:hidden flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-xs font-semibold bg-ask hover:bg-ask-hover shadow-xs active:scale-95 transition-all"
             >
               <Plus className="w-3.5 h-3.5" /> Ask
             </button>
@@ -559,8 +559,8 @@ export default function QAPage() {
               <div className="px-5 py-5 space-y-4">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse">
-                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3 mb-3" />
-                    <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4 mb-4" />
+                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/3 mb-3" />
+                    <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4 mb-4" />
                   </div>
                 ))}
               </div>
@@ -590,7 +590,7 @@ export default function QAPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-brand-text">Topics you know about</h3>
-            <button className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300">
+            <button className="p-1 rounded-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300">
               <Pencil className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -627,7 +627,7 @@ export default function QAPage() {
           {trendingLoading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                <div key={i} className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm animate-pulse" />
               ))}
             </div>
           ) : trendingData?.slice(0, 5).map(q => (

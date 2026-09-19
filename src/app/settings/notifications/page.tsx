@@ -68,7 +68,7 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 checked ? "bg-brand-text/50" : "bg-brand-secondary",
             ].join(" ")}
@@ -106,7 +106,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -134,13 +134,13 @@ function PageSkeleton() {
             {[0, 1, 2].map((i) => (
                 <div
                     key={i}
-                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6 space-y-4 animate-pulse"
+                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6 space-y-4 animate-pulse"
                 >
                     <div className="flex items-center gap-4">
                         <div className="h-11 w-11 rounded-xl bg-brand-secondary" />
                         <div className="flex-1 space-y-2">
-                            <div className="h-4 w-36 rounded bg-brand-secondary" />
-                            <div className="h-3 w-52 rounded bg-brand-secondary" />
+                            <div className="h-4 w-36 rounded-sm bg-brand-secondary" />
+                            <div className="h-3 w-52 rounded-sm bg-brand-secondary" />
                         </div>
                     </div>
                     <div className="space-y-3 pt-2">
@@ -411,7 +411,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
                                         "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20",
+                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -432,7 +432,7 @@ export default function NotificationPreferencesPage() {
                                     className={[
                                         "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
                                         "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20",
+                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
                                         "disabled:cursor-not-allowed disabled:opacity-50",
                                     ].join(" ")}
                                 />
@@ -478,7 +478,7 @@ export default function NotificationPreferencesPage() {
                                             disabled={isSaving}
                                             onChange={(e) => handleMutedTypeToggle(value, e.target.checked)}
                                             className={[
-                                                "h-4 w-4 shrink-0 cursor-pointer rounded border-brand-text/30",
+                                                "h-4 w-4 shrink-0 cursor-pointer rounded-sm border-brand-text/30",
                                                 "text-brand-text/50 accent-brand-text/50",
                                                 "focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-1",
                                                 "disabled:cursor-not-allowed disabled:opacity-50",

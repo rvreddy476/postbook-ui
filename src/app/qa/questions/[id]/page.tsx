@@ -66,7 +66,7 @@ function CommentThread({ answerId, initialCount }: { answerId: string; initialCo
               value={commentBody}
               onChange={e => setCommentBody(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-brand-divider bg-brand-card text-brand-text focus:outline-none focus:border-ask"
+              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-brand-divider bg-brand-card text-brand-text focus:outline-hidden focus:border-ask"
             />
             <button
               type="submit"
@@ -170,7 +170,7 @@ function AnswerCard({
             <ThumbsUp className="w-4 h-4" />
             Like {answer.vote_score > 0 ? `· ${answer.vote_score}` : ''}
           </button>
-          <div className="w-[1px] h-5 bg-neutral-300 dark:bg-neutral-600" />
+          <div className="w-px h-5 bg-neutral-300 dark:bg-neutral-600" />
           <button
             onClick={() => voteAnswer.mutate('down')}
             className={`px-3 py-1.5 transition-colors ${answer.viewer_vote === 'down' ? 'text-red-500 bg-red-100 dark:bg-red-900/30' : 'text-brand-text/50 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'}`}
@@ -237,9 +237,9 @@ export default function QuestionDetailPage() {
     return (
       <AppShell>
         <div className="max-w-3xl mx-auto px-4 py-6 animate-pulse space-y-4">
-          <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
-          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
-          <div className="h-40 bg-neutral-200 dark:bg-neutral-700 rounded" />
+          <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
+          <div className="h-40 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
         </div>
       </AppShell>
     )
@@ -370,14 +370,14 @@ export default function QuestionDetailPage() {
               <div key={i} className="bg-brand-card border border-brand-divider rounded-xl p-5 animate-pulse">
                 <div className="flex gap-4">
                   <div className="w-8 space-y-2">
-                    <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded" />
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
-                    <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded" />
+                    <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
+                    <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-4/5" />
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-full" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-4/5" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-2/3" />
                   </div>
                 </div>
               </div>
@@ -410,7 +410,7 @@ export default function QuestionDetailPage() {
               onChange={e => setAnswerBody(e.target.value)}
               placeholder="Write a detailed answer. Include code snippets, steps, or references where helpful."
               rows={8}
-              className="w-full px-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:border-ask focus:ring-1 focus:ring-ask resize-y"
+              className="w-full px-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-hidden focus:border-ask focus:ring-1 focus:ring-ask resize-y"
             />
             {createAnswer.error && (
               <p className="text-xs text-red-600 dark:text-red-400">Failed to post answer. Please try again.</p>

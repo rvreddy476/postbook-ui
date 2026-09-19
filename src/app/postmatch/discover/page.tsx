@@ -87,7 +87,7 @@ export default function DiscoverPage() {
       {/* §P1-2 — Why am I seeing this profile? */}
       {showExplain && current && (
         <div
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+          className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
           onClick={() => setShowExplain(false)}
         >
           <div
@@ -148,17 +148,17 @@ export default function DiscoverPage() {
 
       {/* Match popup */}
       {matchPopup && (
-        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4" onClick={() => setMatchPopup(null)}>
+        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center px-4" onClick={() => setMatchPopup(null)}>
           <div className="bg-[#111] rounded-3xl p-10 text-center max-w-sm w-full shadow-2xl animate-in fade-in zoom-in" onClick={e => e.stopPropagation()}>
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center mx-auto mb-5">
+            <div className="w-20 h-20 rounded-full bg-linear-to-br from-rose-500 to-orange-500 flex items-center justify-center mx-auto mb-5">
               <span className="text-4xl">🎉</span>
             </div>
-            <h2 className="text-3xl font-black bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent mb-2">It&apos;s a Match!</h2>
+            <h2 className="text-3xl font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent mb-2">It&apos;s a Match!</h2>
             <p className="text-[#666] text-sm mb-8">You and {current?.first_name} liked each other</p>
             <div className="space-y-3">
               <button
                 onClick={() => { setMatchPopup(null); router.push(`/postmatch/chat/${matchPopup.conversation_id}`) }}
-                className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-500/20 text-sm hover:shadow-xl transition"
+                className="w-full py-3.5 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-500/20 text-sm hover:shadow-xl transition"
               >
                 Send a Message
               </button>
@@ -177,16 +177,16 @@ export default function DiscoverPage() {
         {!current || currentIndex >= cards.length ? (
           /* Empty state */
           <div className="flex flex-col items-center justify-center h-[70vh] text-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center mb-6">
+            <div className="w-24 h-24 rounded-full bg-linear-to-br from-rose-100 to-orange-100 flex items-center justify-center mb-6">
               <span className="text-5xl">✦</span>
             </div>
             <h3 className="text-2xl font-black text-white mb-2">You&apos;ve seen everyone</h3>
             <p className="text-[#666] text-sm mb-8 max-w-xs leading-relaxed">New people join every day. Come back soon or expand your preferences.</p>
             <div className="flex gap-3">
-              <button onClick={() => setCurrentIndex(0)} className="px-6 py-3 bg-[#111] border border-[#333] rounded-2xl text-sm font-bold text-[#888] hover:bg-[#1a1a1a] transition shadow-sm">
+              <button onClick={() => setCurrentIndex(0)} className="px-6 py-3 bg-[#111] border border-[#333] rounded-2xl text-sm font-bold text-[#888] hover:bg-[#1a1a1a] transition shadow-xs">
                 Refresh
               </button>
-              <Link href="/postmatch/profile" className="px-6 py-3 bg-gradient-to-r from-rose-600 to-orange-500 rounded-2xl text-sm font-bold text-white shadow-lg shadow-rose-500/20 hover:shadow-xl transition">
+              <Link href="/postmatch/profile" className="px-6 py-3 bg-linear-to-r from-rose-600 to-orange-500 rounded-2xl text-sm font-bold text-white shadow-lg shadow-rose-500/20 hover:shadow-xl transition">
                 Edit Preferences
               </Link>
             </div>
@@ -196,12 +196,12 @@ export default function DiscoverPage() {
             {/* Profile Card */}
             <div
               className={`relative bg-[#111] rounded-[28px] overflow-hidden shadow-xl shadow-black/5 transition-all duration-300 ${
-                swipeDirection === 'left' ? '-translate-x-[120%] opacity-0 rotate-[-15deg]' :
-                swipeDirection === 'right' ? 'translate-x-[120%] opacity-0 rotate-[15deg]' : ''
+                swipeDirection === 'left' ? 'translate-x-[-120%] opacity-0 rotate-[-15deg]' :
+                swipeDirection === 'right' ? 'translate-x-[120%] opacity-0 rotate-15' : ''
               }`}
             >
               {/* Photo */}
-              <div className="aspect-[3/4] bg-gradient-to-br from-rose-100 to-orange-50 relative">
+              <div className="aspect-3/4 bg-linear-to-br from-rose-100 to-orange-50 relative">
                 {current.primary_photo ? (
                   <img
                     src={current.primary_photo.url}
@@ -209,20 +209,20 @@ export default function DiscoverPage() {
                     className={`w-full h-full object-cover ${current.primary_photo.blurred ? 'blur-lg' : ''}`}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-200 to-orange-200">
+                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-rose-200 to-orange-200">
                     <span className="text-[120px] text-white/40 font-black">{current.first_name?.[0]}</span>
                   </div>
                 )}
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
 
                 {/* §P1-2 — Why am I seeing this profile? */}
                 <button
                   type="button"
                   aria-label="Why am I seeing this profile?"
                   onClick={() => setShowExplain(true)}
-                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/75 transition"
+                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 backdrop-blur-xs text-white flex items-center justify-center hover:bg-black/75 transition"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -236,7 +236,7 @@ export default function DiscoverPage() {
                   </div>
                 )}
                 {swipeDirection === 'left' && (
-                  <div className="absolute top-8 right-6 border-4 border-red-400 rounded-xl px-5 py-2 rotate-[20deg]">
+                  <div className="absolute top-8 right-6 border-4 border-red-400 rounded-xl px-5 py-2 rotate-20">
                     <span className="text-red-400 text-3xl font-black tracking-wider">NOPE</span>
                   </div>
                 )}
@@ -272,7 +272,7 @@ export default function DiscoverPage() {
                     {/* Info button */}
                     <button
                       onClick={() => setShowInfo(!showInfo)}
-                      className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center hover:bg-white/25 transition flex-shrink-0 ml-3"
+                      className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-xs flex items-center justify-center hover:bg-white/25 transition shrink-0 ml-3"
                     >
                       <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </button>
@@ -317,7 +317,7 @@ export default function DiscoverPage() {
               {/* Rewind */}
               <button
                 disabled
-                className="w-12 h-12 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-amber-400 shadow-sm opacity-40 cursor-not-allowed"
+                className="w-12 h-12 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-amber-400 shadow-xs opacity-40 cursor-not-allowed"
                 title="Rewind (Premium)"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a5 5 0 015 5v2M3 10l4-4m-4 4l4 4" /></svg>
@@ -347,7 +347,7 @@ export default function DiscoverPage() {
               <button
                 onClick={() => handleDecision('like')}
                 disabled={makeDecision.isPending}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-xl hover:shadow-rose-500/30 active:scale-90 transition-all shadow-lg disabled:opacity-50"
+                className="w-16 h-16 rounded-full bg-linear-to-br from-rose-500 to-orange-500 flex items-center justify-center text-white hover:scale-110 hover:shadow-xl hover:shadow-rose-500/30 active:scale-90 transition-all shadow-lg disabled:opacity-50"
                 title="Like"
               >
                 <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
@@ -356,7 +356,7 @@ export default function DiscoverPage() {
               {/* Boost */}
               <button
                 disabled
-                className="w-12 h-12 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-purple-400 shadow-sm opacity-40 cursor-not-allowed"
+                className="w-12 h-12 rounded-full bg-[#111] border border-[#333] flex items-center justify-center text-purple-400 shadow-xs opacity-40 cursor-not-allowed"
                 title="Boost (Premium)"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
@@ -371,7 +371,7 @@ export default function DiscoverPage() {
                 role="alert"
                 className="mt-4 mx-2 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300 flex items-start gap-3"
               >
-                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
                 </svg>
                 <div className="flex-1">
@@ -419,17 +419,17 @@ function Header({ primaryPhoto, name, showMenu, setShowMenu, router }: {
 
         {/* Center — Logo */}
         <Link href="/postmatch" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-linear-to-br from-rose-500 to-orange-500 flex items-center justify-center">
             <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-white" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </div>
-          <span className="text-lg font-black bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent tracking-tight">PostMatch</span>
+          <span className="text-lg font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent tracking-tight">PostMatch</span>
         </Link>
 
         {/* Right — Profile avatar with dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 p-[2px] hover:shadow-lg hover:shadow-rose-500/20 transition"
+            className="w-10 h-10 rounded-full bg-linear-to-br from-rose-500 to-orange-500 p-[2px] hover:shadow-lg hover:shadow-rose-500/20 transition"
           >
             <div className="w-full h-full rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
               {primaryPhoto ? (

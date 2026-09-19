@@ -23,7 +23,7 @@ const LANGUAGES = [
 
 function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
       <h2 className="mb-5 text-[14px] font-bold text-brand-text">{title}</h2>
       {children}
     </div>
@@ -124,7 +124,7 @@ export function GeneralTab() {
               type="button"
               onClick={() => ensurePublisher.mutate()}
               disabled={ensurePublisher.isPending}
-              className="mt-4 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-text disabled:opacity-50 transition-colors"
+              className="mt-4 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-brand-text disabled:opacity-50 transition-colors"
             >
               {ensurePublisher.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -155,7 +155,7 @@ export function GeneralTab() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-hidden transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               placeholder="My Awesome Channel"
             />
             <p className="mt-1 text-[11px] text-brand-text/60">{name.length}/50 characters</p>
@@ -196,7 +196,7 @@ export function GeneralTab() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-hidden transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             >
               <option value="">Select category</option>
               {CATEGORIES.map((c) => (
@@ -212,7 +212,7 @@ export function GeneralTab() {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-hidden transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             >
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -227,7 +227,7 @@ export function GeneralTab() {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+              className="h-10 w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-hidden transition-all focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               placeholder="e.g. Mumbai, India"
             />
           </div>
@@ -252,7 +252,7 @@ export function GeneralTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -264,7 +264,7 @@ export function GeneralTab() {
 
       <AnimatePresence>
         {handleModalOpen ? (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -324,7 +324,7 @@ export function GeneralTab() {
                           setHandleReason(null);
                         }}
                         maxLength={24}
-                        className="h-10 w-full rounded-xl border border-brand-divider bg-brand-card pl-7 pr-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
+                        className="h-10 w-full rounded-xl border border-brand-divider bg-brand-card pl-7 pr-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                         placeholder="new_handle"
                       />
                     </div>
@@ -357,7 +357,7 @@ export function GeneralTab() {
                       type="checkbox"
                       checked={handleConfirmed}
                       onChange={(e) => setHandleConfirmed(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
+                      className="mt-0.5 h-4 w-4 rounded-sm border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                     />
                     <span className="text-[12px] leading-relaxed text-brand-highlight">
                       I understand this change syncs across all platforms and I won&apos;t be able
@@ -379,7 +379,7 @@ export function GeneralTab() {
                   type="button"
                   onClick={handleConfirmChange}
                   disabled={!handleAvailable || !handleConfirmed || changeHandle.isPending}
-                  className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-text disabled:opacity-40"
+                  className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-brand-text disabled:opacity-40"
                 >
                   {changeHandle.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

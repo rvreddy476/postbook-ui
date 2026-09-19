@@ -122,7 +122,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mx-auto max-w-[480px] text-center px-6"
           >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 ring-8 ring-emerald-500/5">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-emerald-500/20 to-emerald-500/5 ring-8 ring-emerald-500/5">
               <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             </div>
             <h2 className="mt-6 text-[22px] font-bold text-brand-text">
@@ -139,7 +139,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             )}
 
             {postUrl && (
-              <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-sm">
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-xs">
                 <span className="flex-1 truncate text-left text-[13px] text-brand-text/60 font-mono">{postUrl}</span>
                 <button
                   type="button"
@@ -155,7 +155,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-xs"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Go to {isLongVideo ? "Posttube" : "Reels"}
@@ -163,7 +163,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               <button
                 type="button"
                 onClick={studio.clearFile}
-                className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-brand-bg hover:bg-brand-text transition-colors shadow-sm"
+                className="rounded-xl bg-brand-text px-5 py-2.5 text-[13px] font-semibold text-brand-bg hover:bg-brand-text transition-colors shadow-xs"
               >
                 Upload Another
               </button>
@@ -293,7 +293,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <button
                     type="button"
                     onClick={() => { setAttemptedNext(false); prevStep(); }}
-                    className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-xs"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Back
@@ -306,7 +306,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className={`flex items-center gap-1.5 rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-all shadow-sm ${
+                    className={`flex items-center gap-1.5 rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-all shadow-xs ${
                       currentStepErrors.length > 0 && attemptedNext
                         ? "bg-rose-600 hover:bg-rose-700 text-white"
                         : "bg-brand-text text-brand-bg hover:opacity-90"
@@ -322,7 +322,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                     type="button"
                     onClick={handlePublish}
                     disabled={studio.publishMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-50 transition-all shadow-sm shadow-brand-text/20"
+                    className="flex items-center gap-1.5 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-50 transition-all shadow-xs shadow-brand-text/20"
                   >
                     {studio.publishMutation.isPending ? (
                       <>

@@ -98,19 +98,19 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
       {/* Back Button - overlaid on cover */}
       <button
         onClick={() => onBack ? onBack() : router.back()}
-        className="absolute top-4 left-4 z-20 p-2 bg-black/30 backdrop-blur-sm rounded-full text-white hover:bg-black/50 transition-all"
+        className="absolute top-4 left-4 z-20 p-2 bg-black/30 backdrop-blur-xs rounded-full text-white hover:bg-black/50 transition-all"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
 
       {/* Cover Photo */}
-      <div className="relative w-full aspect-[3.5/1] sm:aspect-[4/1] overflow-hidden rounded-b-3xl sm:rounded-2xl">
+      <div className="relative w-full aspect-3.5/1 sm:aspect-4/1 overflow-hidden rounded-b-3xl sm:rounded-2xl">
         {coverSrc ? (
           <img src={coverSrc} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
+          <div className={`w-full h-full bg-linear-to-br ${gradient}`} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
       </div>
 
       {/* Avatar + Identity */}
@@ -126,7 +126,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
               {avatarSrc ? (
                 <img src={avatarSrc} alt={group.name} className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-2xl sm:text-3xl`}>
+                <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-2xl sm:text-3xl`}>
                   {group.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -189,7 +189,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                   {/* Primary CTA */}
                   <button
                     onClick={() => {}}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 transition-colors shadow-xs"
                   >
                     <Plus className="w-4 h-4" />
                     New Post
@@ -287,7 +287,7 @@ export default function GroupHeader({ group, viewerRole, onOpenInvite, onEditPro
                 <button
                   onClick={handleJoin}
                   disabled={joinGroup.isPending}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 shadow-sm transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-brand-text text-white text-sm font-bold rounded-xl hover:bg-brand-text/90 shadow-xs transition-all disabled:opacity-50"
                 >
                   <Users className="w-4 h-4" />
                   {joinGroup.isPending ? 'Joining...' : 'Join Group'}

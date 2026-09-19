@@ -134,7 +134,7 @@ function WindowPicker({
           onChange={(e) =>
             onChange({ ...value, from: new Date(e.target.value).toISOString() })
           }
-          className="rounded border border-slate-300 px-2 py-1"
+          className="rounded-sm border border-slate-300 px-2 py-1"
         />
       </label>
       <label className="flex flex-col">
@@ -145,7 +145,7 @@ function WindowPicker({
           onChange={(e) =>
             onChange({ ...value, to: new Date(e.target.value).toISOString() })
           }
-          className="rounded border border-slate-300 px-2 py-1"
+          className="rounded-sm border border-slate-300 px-2 py-1"
         />
       </label>
       <PrimaryButton onClick={() => onChange(defaultWindow())}>
@@ -359,7 +359,7 @@ function CouponAbuseTab({ win }: { win: { from: string; to: string } }) {
             min={1}
             max={100}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-16 rounded border border-slate-300 px-2 py-1"
+            className="w-16 rounded-sm border border-slate-300 px-2 py-1"
           />
         </label>
       }
@@ -417,8 +417,8 @@ function ComplianceTab() {
                 <span
                   className={
                     row.has_approved_fssai
-                      ? "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
-                      : "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                      ? "rounded-sm bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
+                      : "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
                   }
                 >
                   {row.has_approved_fssai ? "OK" : "MISSING"}

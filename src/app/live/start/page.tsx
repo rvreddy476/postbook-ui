@@ -331,7 +331,7 @@ export default function LiveStartPage() {
                   </div>
                   <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
                     <video ref={browserPublisher.previewRef} autoPlay playsInline muted className="h-full w-full object-contain" />
-                    <div className="pointer-events-none absolute bottom-4 left-4 rounded-lg bg-black/60 px-3 py-1.5 text-[11px] text-white/70 backdrop-blur-sm">
+                    <div className="pointer-events-none absolute bottom-4 left-4 rounded-lg bg-black/60 px-3 py-1.5 text-[11px] text-white/70 backdrop-blur-xs">
                       Camera and microphone are live locally.
                     </div>
                   </div>
@@ -383,7 +383,7 @@ export default function LiveStartPage() {
                   </span>
                 )}
                 {streamDetail && (
-                  <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white/90 backdrop-blur-sm">
+                  <span className="flex items-center gap-1.5 rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white/90 backdrop-blur-xs">
                     <Eye className="h-3 w-3" />
                     {currentViewerCount}
                   </span>
@@ -392,7 +392,7 @@ export default function LiveStartPage() {
 
               {/* Connection status */}
               <div className="absolute right-4 top-4">
-                <span className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium backdrop-blur-sm ${
+                <span className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium backdrop-blur-xs ${
                   hasEncoderSignal
                     ? "bg-emerald-500/20 text-emerald-400"
                     : isWaitingForEncoder
@@ -497,7 +497,7 @@ export default function LiveStartPage() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         maxLength={100}
-                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/20 focus:ring-1 focus:ring-brand-text/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/20 focus:ring-1 focus:ring-brand-text/10"
                         placeholder="What are you streaming?"
                       />
                     </div>
@@ -507,7 +507,7 @@ export default function LiveStartPage() {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={2}
-                        className="w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-none focus:border-brand-text/20 focus:ring-1 focus:ring-brand-text/10"
+                        className="w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden focus:border-brand-text/20 focus:ring-1 focus:ring-brand-text/10"
                         placeholder="Optional description"
                       />
                     </div>
@@ -517,7 +517,7 @@ export default function LiveStartPage() {
                         <select
                           value={visibility}
                           onChange={(e) => setVisibility(e.target.value as typeof visibility)}
-                          className="h-9 w-full appearance-none rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none"
+                          className="h-9 w-full appearance-none rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-hidden"
                         >
                           {VISIBILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
@@ -528,7 +528,7 @@ export default function LiveStartPage() {
                           type="datetime-local"
                           value={scheduleAt}
                           onChange={(e) => setScheduleAt(e.target.value)}
-                          className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none"
+                          className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-hidden"
                         />
                       </div>
                     </div>
@@ -696,7 +696,7 @@ export default function LiveStartPage() {
                                       type="button"
                                       onClick={() => streamDetail && pinChatMutation.mutate({ streamId: streamDetail.id, messageId: msg.id })}
                                       disabled={!streamDetail || msg.is_pinned}
-                                      className="rounded px-1.5 py-0.5 text-[10px] text-brand-text/40 hover:bg-brand-secondary disabled:opacity-30"
+                                      className="rounded-sm px-1.5 py-0.5 text-[10px] text-brand-text/40 hover:bg-brand-secondary disabled:opacity-30"
                                     >
                                       Pin
                                     </button>
@@ -704,7 +704,7 @@ export default function LiveStartPage() {
                                       <button
                                         type="button"
                                         onClick={() => streamDetail && muteMutation.mutate({ streamId: streamDetail.id, userId: msg.user_id })}
-                                        className="rounded px-1.5 py-0.5 text-[10px] text-rose-400 hover:bg-rose-500/10"
+                                        className="rounded-sm px-1.5 py-0.5 text-[10px] text-rose-400 hover:bg-rose-500/10"
                                       >
                                         Mute
                                       </button>
@@ -735,7 +735,7 @@ export default function LiveStartPage() {
                             maxLength={500}
                             disabled={!streamDetail || !chatEnabled || streamDetail.status !== "live"}
                             placeholder="Message as host..."
-                            className="h-8 flex-1 rounded-md border border-brand-divider bg-brand-card px-2.5 text-[11px] text-brand-text outline-none disabled:opacity-40"
+                            className="h-8 flex-1 rounded-md border border-brand-divider bg-brand-card px-2.5 text-[11px] text-brand-text outline-hidden disabled:opacity-40"
                           />
                           <button
                             type="button"
@@ -795,7 +795,7 @@ export default function LiveStartPage() {
                         value={wordFilterDraft}
                         onChange={(e) => setWordFilterDraft(e.target.value)}
                         placeholder="Add word..."
-                        className="h-8 flex-1 rounded-md border border-brand-divider bg-brand-secondary px-2.5 text-[11px] text-brand-text outline-none"
+                        className="h-8 flex-1 rounded-md border border-brand-divider bg-brand-secondary px-2.5 text-[11px] text-brand-text outline-hidden"
                       />
                       <button
                         type="button"

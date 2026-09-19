@@ -16,10 +16,10 @@ const ComposeBar: React.FC<ComposeBarProps> = ({ onCreateClick }) => {
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.id ?? 'me'}`;
 
   return (
-    <div className="bg-brand-card rounded-lg shadow-sm border border-brand-divider">
+    <div className="bg-brand-card rounded-lg shadow-xs border border-brand-divider">
       {/* Main compose row */}
       <div className="flex items-center gap-3 p-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
           <img src={avatar} alt="" className="w-full h-full object-cover" />
         </div>
         <button

@@ -81,7 +81,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     if (isLoading) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
                 {/* Sort controls */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-[#F0E6DC] bg-[#FAF5F0]">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mr-2">Sort by</span>
@@ -100,7 +100,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     if (items.length === 0) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-xs">
                 <div className="flex flex-col items-center justify-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
 
     return (
         <>
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
                 {/* Sort controls */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-[#F0E6DC] bg-[#FAF5F0]">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A] mr-2">Sort by</span>
@@ -126,7 +126,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
                             onClick={() => onSortChange(opt.value)}
                             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-200 ${
                                 sort === opt.value
-                                    ? "bg-brand-card text-[#3C2415] border border-[#D4A574] shadow-sm shadow-[#D4A574]/10"
+                                    ? "bg-brand-card text-[#3C2415] border border-[#D4A574] shadow-xs shadow-[#D4A574]/10"
                                     : "text-[#7B5B3A] border border-transparent hover:bg-brand-card hover:border-[#F0E6DC] hover:text-[#3C2415]"
                             }`}
                         >
@@ -167,7 +167,7 @@ const ContentAnalyticsTable: React.FC<ContentAnalyticsTableProps> = ({
                                     {truncateId(item.content_id)}
                                 </span>
                                 <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border flex-shrink-0 ${
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border shrink-0 ${
                                         item.content_type === "reel"
                                             ? "bg-purple-50 text-purple-600 border-purple-100"
                                             : "bg-blue-50 text-blue-600 border-blue-100"

@@ -51,7 +51,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     {
       key: 'trending',
       node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-brand-text/50" />
             <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Trending</h5>
@@ -60,8 +60,8 @@ const RightPanel: React.FC<RightPanelProps> = () => {
             <div className="space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-1.5">
-                  <div className="h-3 w-24 rounded bg-brand-secondary" />
-                  <div className="h-2 w-16 rounded bg-brand-secondary" />
+                  <div className="h-3 w-24 rounded-sm bg-brand-secondary" />
+                  <div className="h-2 w-16 rounded-sm bg-brand-secondary" />
                 </div>
               ))}
             </div>
@@ -89,7 +89,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     {
       key: 'posttube',
       node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Play className="h-4 w-4 text-brand-text/50" />
@@ -114,7 +114,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                   rel="noreferrer"
                   className="group flex gap-3"
                 >
-                  <div className="relative h-14 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
+                  <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
                     {v.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={v.thumbnail_url} alt={v.title} className="h-full w-full object-cover" />
@@ -144,7 +144,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     {
       key: 'events',
       node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Calendar className="h-4 w-4 text-brand-text/50" />
             <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">Events</h5>
@@ -164,7 +164,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     {
       key: 'news',
       node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Newspaper className="h-4 w-4 text-brand-text/50" />
             <h5 className="text-[10px] font-black uppercase tracking-widest text-brand-text/60">News</h5>

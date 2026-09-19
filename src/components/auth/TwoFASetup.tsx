@@ -125,7 +125,7 @@ export default function TwoFASetup({
               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
               setVerifyCode(val);
             }}
-            className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-[#3C2415] outline-none transition-all placeholder:text-[#D4A574]/50 focus:ring-2 focus:ring-[#D4A574]/30"
+            className="w-full rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-[#3C2415] outline-hidden transition-all placeholder:text-[#D4A574]/50 focus:ring-2 focus:ring-[#D4A574]/30"
           />
         </div>
 

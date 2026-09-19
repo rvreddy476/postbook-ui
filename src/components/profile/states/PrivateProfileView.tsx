@@ -40,7 +40,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-brand-text/50 via-brand-text to-indigo-700" />
+                    <div className="w-full h-full bg-linear-to-br from-brand-text/50 via-brand-text to-indigo-700" />
                 )}
                 <div className="absolute inset-0 bg-black/10" />
             </div>
@@ -62,7 +62,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-brand-text/50 to-brand-text flex items-center justify-center">
+                            <div className="w-full h-full bg-linear-to-br from-brand-text/50 to-brand-text flex items-center justify-center">
                                 <span className="text-3xl font-bold text-white">
                                     {profile.display_name.charAt(0).toUpperCase()}
                                 </span>
@@ -91,7 +91,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                     transition={{ duration: 0.45, delay: 0.25 }}
                     className="mt-8 mb-12"
                 >
-                    <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-8 sm:p-10 text-center">
+                    <div className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider p-8 sm:p-10 text-center">
                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-brand-secondary mb-5">
                             <Shield className="w-7 h-7 text-brand-text/60" />
                         </div>
@@ -108,7 +108,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                         <div className="mt-6 flex items-center justify-center gap-3">
                             <button
                                 onClick={onAddFriend}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                             >
                                 <UserPlus className="w-4 h-4" />
                                 Add Friend
@@ -117,7 +117,7 @@ export function PrivateProfileView({ profile, onAddFriend, onMessage }: PrivateP
                             {onMessage && (
                                 <button
                                     onClick={onMessage}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-secondary text-brand-text text-sm font-medium hover:bg-brand-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/40 focus:ring-offset-2"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-secondary text-brand-text text-sm font-medium hover:bg-brand-secondary transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/40 focus:ring-offset-2"
                                 >
                                     <MessageSquare className="w-4 h-4" />
                                     Message

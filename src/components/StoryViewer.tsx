@@ -113,7 +113,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+                className="fixed inset-0 z-100 bg-black/95 flex items-center justify-center"
             >
                 {/* Close button */}
                 <button onClick={onClose} className="absolute top-4 right-4 text-white/80 hover:text-white z-50">
@@ -133,7 +133,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 )}
 
                 {/* Story content */}
-                <div className="relative w-full max-w-[420px] aspect-[9/16] rounded-2xl overflow-hidden bg-gray-900">
+                <div className="relative w-full max-w-[420px] aspect-9/16 rounded-2xl overflow-hidden bg-gray-900">
                     {/* Progress bars */}
                     <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 p-2">
                         {currentGroup.stories.map((_, idx) => (
@@ -190,7 +190,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
 
                     {/* Caption */}
                     {currentStory.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/70 to-transparent">
                             <p className="text-white text-sm">{currentStory.caption}</p>
                         </div>
                     )}

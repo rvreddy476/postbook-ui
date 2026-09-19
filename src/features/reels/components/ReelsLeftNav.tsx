@@ -30,7 +30,7 @@ function NavItem({ href, icon, label, active, count }: NavItemProps) {
       href={href}
       className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
         active
-          ? "bg-slate-900 text-white shadow-sm"
+          ? "bg-slate-900 text-white shadow-xs"
           : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
     >
@@ -73,7 +73,7 @@ export function ReelsLeftNav() {
       <div className="mb-3 px-1">
         <Link
           href="/reels/create"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand-text"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-brand-text"
         >
           <Plus className="h-4 w-4" />
           Create Reel

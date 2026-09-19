@@ -81,7 +81,7 @@ export default function CommunityPostComposer({ communityId }: CommunityPostComp
           placeholder="Question title..."
           value={title}
           onChange={e => setTitle(e.target.value)}
-          className="w-full px-0 py-2 text-[15px] font-bold text-brand-text placeholder:text-brand-text/30 border-none outline-none bg-transparent"
+          className="w-full px-0 py-2 text-[15px] font-bold text-brand-text placeholder:text-brand-text/30 border-none outline-hidden bg-transparent"
         />
       )}
 
@@ -92,7 +92,7 @@ export default function CommunityPostComposer({ communityId }: CommunityPostComp
         onChange={e => setBody(e.target.value)}
         rows={3}
         autoFocus
-        className="w-full px-0 py-2 text-sm text-brand-text placeholder:text-brand-text/30 border-none outline-none bg-transparent resize-none"
+        className="w-full px-0 py-2 text-sm text-brand-text placeholder:text-brand-text/30 border-none outline-hidden bg-transparent resize-none"
       />
 
       {/* Actions */}

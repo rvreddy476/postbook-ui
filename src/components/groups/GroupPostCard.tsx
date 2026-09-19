@@ -92,7 +92,7 @@ function PhotoGallery({ mediaIds }: { mediaIds: string[] }) {
       </div>
 
       {lightboxIdx !== null && (
-        <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
+        <div className="fixed inset-0 z-60 bg-black/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
           <button className="absolute top-4 right-4 text-white/70 hover:text-white" onClick={() => setLightboxIdx(null)}>
             <X className="w-6 h-6" />
           </button>
@@ -296,7 +296,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
             {post.author_avatar_url ? (
               <img src={post.author_avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-sm font-bold text-white`}>
+              <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-sm font-bold text-white`}>
                 {authorInitial}
               </div>
             )}
@@ -353,7 +353,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           <>
             <div
               ref={bodyRef}
-              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden break-words ${expanded ? '' : 'line-clamp-4'} [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_a]:text-blue-500 [&_a]:underline`}
+              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden wrap-break-word ${expanded ? '' : 'line-clamp-4'} [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_a]:text-blue-500 [&_a]:underline`}
               dangerouslySetInnerHTML={{ __html: post.body }}
             />
             {isClamped && !expanded && (

@@ -113,7 +113,7 @@ export function VideoRowSkeleton({ count = 4 }: { count?: number }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2.5 px-1">
-        <div className="h-5 w-32 animate-pulse rounded bg-brand-secondary" />
+        <div className="h-5 w-32 animate-pulse rounded-sm bg-brand-secondary" />
       </div>
       <div className="flex gap-4">
         {Array.from({ length: count }).map((_, i) => (
@@ -122,8 +122,8 @@ export function VideoRowSkeleton({ count = 4 }: { count?: number }) {
             <div className="mt-3 flex gap-2.5">
               <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-brand-secondary" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-3/4 animate-pulse rounded bg-brand-secondary" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-brand-secondary" />
+                <div className="h-3.5 w-3/4 animate-pulse rounded-sm bg-brand-secondary" />
+                <div className="h-3 w-1/2 animate-pulse rounded-sm bg-brand-secondary" />
               </div>
             </div>
           </div>

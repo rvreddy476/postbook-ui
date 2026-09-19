@@ -77,8 +77,8 @@ function DeviceSkeleton() {
     <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
       <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="h-4 w-40 animate-pulse rounded bg-[#F0E6DC]" />
-        <div className="h-3 w-56 animate-pulse rounded bg-[#F0E6DC]" />
+        <div className="h-4 w-40 animate-pulse rounded-sm bg-[#F0E6DC]" />
+        <div className="h-3 w-56 animate-pulse rounded-sm bg-[#F0E6DC]" />
       </div>
     </div>
   );

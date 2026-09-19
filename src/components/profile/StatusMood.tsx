@@ -148,7 +148,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                     onChange={(e) => setStatusText(e.target.value)}
                     placeholder="What's on your mind?"
                     maxLength={80}
-                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                 />
             </div>
 
@@ -160,7 +160,7 @@ export function StatusMood({ currentStatusText, currentStatusEmoji, currentExpir
                 <select
                     value={expiresIn}
                     onChange={(e) => setExpiresIn(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                    className="w-full px-3 py-2 text-sm border border-[#F0E6DC] rounded-lg bg-[#FAF5F0] text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                 >
                     <option value="never">Don&apos;t clear</option>
                     <option value="1">1 hour</option>

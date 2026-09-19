@@ -38,7 +38,7 @@ export default function TuneBottomSheet({ isOpen, onClose, authorUsername, onTun
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 z-[200]"
+            className="fixed inset-0 bg-black/40 z-200"
           />
 
           {/* Sheet */}
@@ -47,7 +47,7 @@ export default function TuneBottomSheet({ isOpen, onClose, authorUsername, onTun
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[201] bg-brand-card rounded-t-2xl shadow-xl max-w-lg mx-auto"
+            className="fixed bottom-0 left-0 right-0 z-201 bg-brand-card rounded-t-2xl shadow-xl max-w-lg mx-auto"
           >
             {/* Handle + Close */}
             <div className="flex items-center justify-between px-5 pt-4 pb-2">

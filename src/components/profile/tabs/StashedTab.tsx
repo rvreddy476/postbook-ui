@@ -75,7 +75,7 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
                 {/* Content */}
                 <div className="flex-1 min-w-0 space-y-2.5">
                     {textPreview && (
-                        <p className="text-sm text-brand-text leading-relaxed line-clamp-3 font-[var(--font-outfit)]">
+                        <p className="text-sm text-brand-text leading-relaxed line-clamp-3 font-(--font-outfit)">
                             {textPreview}
                         </p>
                     )}
@@ -95,7 +95,7 @@ function StashedPostCard({ post, index }: { post: PostDetail; index: number }) {
 
                 {/* Thumbnail */}
                 {thumbnail && (
-                    <div className="flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-brand-secondary">
+                    <div className="shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-brand-secondary">
                         <img
                             src={thumbnail}
                             alt=""
@@ -124,7 +124,7 @@ function StashedSkeleton() {
                         <div className="h-4 bg-brand-secondary rounded-lg animate-pulse w-2/3" />
                         <div className="h-3 bg-brand-secondary rounded-lg animate-pulse w-1/4" />
                     </div>
-                    <div className="h-20 w-20 rounded-xl bg-brand-secondary animate-pulse flex-shrink-0" />
+                    <div className="h-20 w-20 rounded-xl bg-brand-secondary animate-pulse shrink-0" />
                 </div>
             ))}
         </div>
@@ -162,10 +162,10 @@ export function StashedTab({ userId }: StashedTabProps) {
     if (posts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-xs">
                     <Bookmark className="h-9 w-9 text-brand-text/30" />
                 </div>
-                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-(--font-outfit)">
                     Nothing stashed yet
                 </h3>
                 <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">

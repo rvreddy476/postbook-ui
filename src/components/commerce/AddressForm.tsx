@@ -46,19 +46,19 @@ export function AddressForm({ initialValues, submitLabel = 'Save', showDefault =
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3">
       <input required placeholder="Full name" value={form.full_name} onChange={update('full_name')}
-        className="border rounded px-3 py-2 col-span-2" />
+        className="border rounded-sm px-3 py-2 col-span-2" />
       <input required placeholder="Phone" value={form.phone} onChange={update('phone')}
-        className="border rounded px-3 py-2 col-span-2" />
+        className="border rounded-sm px-3 py-2 col-span-2" />
       <input required placeholder="Address line 1" value={form.address_line_1} onChange={update('address_line_1')}
-        className="border rounded px-3 py-2 col-span-2" />
+        className="border rounded-sm px-3 py-2 col-span-2" />
       <input placeholder="Address line 2" value={form.address_line_2} onChange={update('address_line_2')}
-        className="border rounded px-3 py-2 col-span-2" />
+        className="border rounded-sm px-3 py-2 col-span-2" />
       <input required placeholder="City" value={form.city} onChange={update('city')}
-        className="border rounded px-3 py-2" />
+        className="border rounded-sm px-3 py-2" />
       <input required placeholder="State" value={form.state} onChange={update('state')}
-        className="border rounded px-3 py-2" />
+        className="border rounded-sm px-3 py-2" />
       <input required placeholder="Postal code" value={form.postal_code} onChange={update('postal_code')}
-        className="border rounded px-3 py-2" />
+        className="border rounded-sm px-3 py-2" />
       {showDefault ? (
         <label className="col-span-2 flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" checked={!!form.is_default}
@@ -68,11 +68,11 @@ export function AddressForm({ initialValues, submitLabel = 'Save', showDefault =
       ) : null}
       <div className="col-span-2 flex gap-2">
         <button type="submit" disabled={submitting}
-          className="bg-indigo-600 text-white px-4 py-2 rounded disabled:bg-gray-300">
+          className="bg-indigo-600 text-white px-4 py-2 rounded-sm disabled:bg-gray-300">
           {submitting ? 'Saving…' : submitLabel}
         </button>
         {onCancel ? (
-          <button type="button" onClick={onCancel} className="px-4 py-2 rounded border">
+          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-sm border">
             Cancel
           </button>
         ) : null}

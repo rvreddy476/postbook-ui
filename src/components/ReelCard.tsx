@@ -203,13 +203,13 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
             onClick={handleTap}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-fuchsia-900/20 to-black">
+          <div className="w-full h-full flex items-center justify-center bg-linear-to-b from-fuchsia-900/20 to-black">
             <p className="text-white/40 text-sm">No video available</p>
           </div>
         )}
 
         {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
 
         {/* Double-tap like animation */}
         <AnimatePresence>
@@ -236,7 +236,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
               transition={{ duration: 0.3 }}
               className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
             >
-              <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-xs flex items-center justify-center">
                 <Play className="w-8 h-8 text-white ml-1" />
               </div>
             </motion.div>
@@ -246,7 +246,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ post, isActive, isMuted, onToggleMu
         {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 z-20 h-[3px] bg-brand-card/10">
           <motion.div
-            className="h-full bg-gradient-to-r from-fuchsia-500 to-rose-400"
+            className="h-full bg-linear-to-r from-fuchsia-500 to-rose-400"
             style={{ width: `${progress}%` }}
             transition={{ duration: 0.1 }}
           />

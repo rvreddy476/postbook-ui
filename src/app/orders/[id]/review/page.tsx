@@ -82,14 +82,14 @@ export default function WriteReviewPage({ params }: { params: Promise<{ id: stri
               placeholder="Summary (optional)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded-sm px-3 py-2 text-sm"
             />
             <textarea
               placeholder="What did you like or not like?"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={5}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded-sm px-3 py-2 text-sm"
             />
           </section>
 

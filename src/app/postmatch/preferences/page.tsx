@@ -63,7 +63,7 @@ export default function PostMatchPreferencesPage() {
                   max={99}
                   value={minAge}
                   onChange={(e) => setMinAge(parseInt(e.target.value) || 18)}
-                  className="w-24 bg-[#1a1a1a] border border-[#2a2a2a] rounded px-3 py-2 text-sm"
+                  className="w-24 bg-[#1a1a1a] border border-[#2a2a2a] rounded-sm px-3 py-2 text-sm"
                 />
                 <span className="text-[#888]">to</span>
                 <input
@@ -72,7 +72,7 @@ export default function PostMatchPreferencesPage() {
                   max={99}
                   value={maxAge}
                   onChange={(e) => setMaxAge(parseInt(e.target.value) || 99)}
-                  className="w-24 bg-[#1a1a1a] border border-[#2a2a2a] rounded px-3 py-2 text-sm"
+                  className="w-24 bg-[#1a1a1a] border border-[#2a2a2a] rounded-sm px-3 py-2 text-sm"
                 />
               </div>
             </section>
@@ -141,7 +141,7 @@ export default function PostMatchPreferencesPage() {
             <button
               onClick={save}
               disabled={update.isPending}
-              className="w-full bg-gradient-to-r from-rose-600 to-orange-500 text-white py-3 rounded-full font-bold disabled:opacity-50"
+              className="w-full bg-linear-to-r from-rose-600 to-orange-500 text-white py-3 rounded-full font-bold disabled:opacity-50"
             >
               {update.isPending ? 'Saving…' : 'Save preferences'}
             </button>

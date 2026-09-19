@@ -41,7 +41,7 @@ export default function QATopicsPage() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search topics..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:border-violet-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-hidden focus:border-violet-500"
             />
           </div>
           <button
@@ -61,8 +61,8 @@ export default function QATopicsPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 animate-pulse">
-                <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+                <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4 mb-2" />
+                <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
               </div>
             ))}
           </div>

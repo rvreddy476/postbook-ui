@@ -155,7 +155,7 @@ export default function CreateChannelPage() {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={100}
                 placeholder="My Awesome Channel"
-                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
               />
               <p className="text-[11px] text-brand-text/30 mt-1 text-right">{name.length}/100</p>
             </div>
@@ -171,7 +171,7 @@ export default function CreateChannelPage() {
                   value={handle}
                   onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                   placeholder="mychannel"
-                  className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+                  className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
                 />
                 {handle.length >= 3 && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -234,7 +234,7 @@ export default function CreateChannelPage() {
                 maxLength={300}
                 placeholder="What is this channel about?"
                 rows={3}
-                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all resize-none"
+                className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all resize-none"
               />
               <p className="text-[11px] text-brand-text/30 mt-1 text-right">{description.length}/300</p>
             </div>
@@ -325,7 +325,7 @@ export default function CreateChannelPage() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                         commentMode === opt.value ? 'border-brand-text' : 'border-brand-divider'
                       }`}>
                         {commentMode === opt.value && (
@@ -397,7 +397,7 @@ export default function CreateChannelPage() {
                       min="0"
                       step="0.01"
                       placeholder="4.99"
-                      className="w-full pl-8 pr-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+                      className="w-full pl-8 pr-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
                     />
                   </div>
                 </div>

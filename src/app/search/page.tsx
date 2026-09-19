@@ -114,9 +114,9 @@ function ProfileCard({ profile }: ProfileCardProps) {
     return (
         <Link
             href={`/u/${profile.username}`}
-            className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
         >
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
                 <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-brand-text/20 transition-all">
                     <img src={avatar} alt={profile.display_name} className="w-full h-full object-cover" />
                 </div>
@@ -140,7 +140,7 @@ function ProfileCard({ profile }: ProfileCardProps) {
                     {profile.follower_count.toLocaleString()} follower{profile.follower_count !== 1 ? "s" : ""}
                 </p>
             </div>
-            <div className="flex-shrink-0 text-brand-text/30 group-hover:text-brand-text/50 transition-colors">
+            <div className="shrink-0 text-brand-text/30 group-hover:text-brand-text/50 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -168,7 +168,7 @@ function SectionHeading({ icon, label, count }: { icon: React.ReactNode; label: 
 function EmptyState({ query }: { query: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                 <Search className="w-9 h-9 text-brand-text/30" />
             </div>
             <div className="text-center max-w-xs">
@@ -188,7 +188,7 @@ function LoadingSkeleton() {
         <div className="space-y-3 animate-pulse">
             {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider">
-                    <div className="w-14 h-14 rounded-full bg-brand-divider flex-shrink-0" />
+                    <div className="w-14 h-14 rounded-full bg-brand-divider shrink-0" />
                     <div className="flex-1 space-y-2">
                         <div className="h-4 bg-brand-divider rounded-lg w-1/3" />
                         <div className="h-3 bg-brand-divider rounded-lg w-1/4" />
@@ -205,7 +205,7 @@ function LoadingSkeleton() {
 function HintState() {
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
+            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
                 <Search className="w-7 h-7 text-white" />
             </div>
             <div className="text-center">
@@ -254,7 +254,7 @@ function HistoryAndSavedPanel({ onSelectQuery }: { onSelectQuery: (q: string) =>
     if (recentItems.length === 0 && savedItems.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-text/20">
                     <Search className="w-7 h-7 text-white" />
                 </div>
                 <div className="text-center">
@@ -362,7 +362,7 @@ function ProductsTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                     <ShoppingBag className="w-9 h-9 text-brand-text/30" />
                 </div>
                 <p className="text-base font-bold text-brand-text">No products found for &ldquo;{query}&rdquo;</p>
@@ -381,9 +381,9 @@ function ProductsTab({ query }: { query: string }) {
             {items.map((product) => (
                 <div
                     key={product.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <ShoppingBag className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -398,7 +398,7 @@ function ProductsTab({ query }: { query: string }) {
                     {product.url && (
                         <Link
                             href={product.url}
-                            className="flex-shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text transition-colors"
+                            className="shrink-0 px-3 py-1.5 text-sm font-bold text-white bg-brand-text rounded-lg hover:bg-brand-text transition-colors"
                         >
                             View
                         </Link>
@@ -436,7 +436,7 @@ function EventsTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                     <Calendar className="w-9 h-9 text-brand-text/30" />
                 </div>
                 <p className="text-base font-bold text-brand-text">No events found for &ldquo;{query}&rdquo;</p>
@@ -460,9 +460,9 @@ function EventsTab({ query }: { query: string }) {
             {items.map((event) => (
                 <div
                     key={event.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <Calendar className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -508,7 +508,7 @@ function MessagesTab({ query }: { query: string }) {
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                     <MessageSquare className="w-9 h-9 text-brand-text/30" />
                 </div>
                 <p className="text-base font-bold text-brand-text">No messages found for &ldquo;{query}&rdquo;</p>
@@ -522,9 +522,9 @@ function MessagesTab({ query }: { query: string }) {
             {items.map((msg) => (
                 <div
                     key={msg.id}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200"
                 >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <MessageSquare className="w-5 h-5 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -532,7 +532,7 @@ function MessagesTab({ query }: { query: string }) {
                     </div>
                     <Link
                         href="/messenger"
-                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-brand-text border border-brand-text/30 rounded-lg hover:bg-brand-text/5 transition-colors whitespace-nowrap"
+                        className="shrink-0 px-3 py-1.5 text-xs font-bold text-brand-text border border-brand-text/30 rounded-lg hover:bg-brand-text/5 transition-colors whitespace-nowrap"
                     >
                         View Conversation
                     </Link>
@@ -654,9 +654,9 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/u/${u.username}`}
                     onClick={() => onClick("users", u.user_id, position)}
-                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
                 >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white font-bold">
+                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-brand-text/50 to-fuchsia-400 shrink-0 flex items-center justify-center text-white font-bold">
                         {(u.display_name || u.username || "?").charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -676,7 +676,7 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/post/${p.post_id}`}
                     onClick={() => onClick("posts", p.post_id, position)}
-                    className="block p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                    className="block p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >
                     <p className="text-sm text-brand-text line-clamp-3">{p.text}</p>
                     <div className="flex gap-4 mt-2 text-xs text-brand-text/40 font-semibold">
@@ -693,9 +693,9 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/hashtag/${encodeURIComponent(h.hashtag)}`}
                     onClick={() => onClick("hashtags", h.hashtag, position)}
-                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <Hash className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -711,9 +711,9 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/commerce?product=${p.product_id}`}
                     onClick={() => onClick("products", p.product_id, position)}
-                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                    className="flex items-start gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <ShoppingBag className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -736,9 +736,9 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/communities/${c.community_id}`}
                     onClick={() => onClick("communities", c.community_id, position)}
-                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <Globe className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -758,9 +758,9 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                 <Link
                     href={`/channels/${ch.channel_id}`}
                     onClick={() => onClick("channels", ch.channel_id, position)}
-                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all"
+                    className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-text/10 to-fuchsia-50 flex items-center justify-center shrink-0">
                         <Radio className="w-6 h-6 text-brand-text/50" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -961,7 +961,7 @@ function SearchPageContent() {
                             onKeyDown={handleInputKeyDown}
                             placeholder="Search people, posts, hashtags..."
                             autoFocus
-                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-brand-secondary border border-brand-divider text-[15px] text-brand-text placeholder-gray-400 font-medium focus:outline-none focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/30 focus:bg-brand-card transition-all"
+                            className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-brand-secondary border border-brand-divider text-[15px] text-brand-text placeholder-gray-400 font-medium focus:outline-hidden focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/30 focus:bg-brand-card transition-all"
                         />
                         {inputValue && (
                             <button
@@ -1009,7 +1009,7 @@ function SearchPageContent() {
                                             onClick={() => handleAutocompleteSelect(item)}
                                             className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-brand-text/5 transition-colors text-left"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-text/50 to-fuchsia-400 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
+                                            <div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-text/50 to-fuchsia-400 shrink-0 flex items-center justify-center text-white text-xs font-bold select-none">
                                                 {item.kind === "hashtag" ? "#" : initial}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -1034,7 +1034,7 @@ function SearchPageContent() {
                                 <button
                                     key={tab.type}
                                     onClick={() => handleTabChange(tab.type)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all whitespace-nowrap flex-shrink-0 ${
+                                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl border-b-2 transition-all whitespace-nowrap shrink-0 ${
                                         isActive
                                             ? "border-brand-text/50 text-brand-text bg-brand-text/60"
                                             : "border-transparent text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary"

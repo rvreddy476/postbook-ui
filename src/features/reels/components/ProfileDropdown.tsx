@@ -58,7 +58,7 @@ export function ProfileDropdown() {
           name={displayName}
           seed={profile?.id}
           size="sm"
-          className="border-2 border-white shadow-sm"
+          className="border-2 border-white shadow-xs"
         />
       </button>
 
@@ -69,7 +69,7 @@ export function ProfileDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-64 rounded-[1.5rem] border border-brand-divider/50 bg-brand-card/95 p-1.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] backdrop-blur-3xl z-[1000]"
+            className="absolute right-0 mt-3 w-64 rounded-3xl border border-brand-divider/50 bg-brand-card/95 p-1.5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.12)] backdrop-blur-3xl z-1000"
           >
             {/* Identity */}
             <div className="border-b border-brand-divider/60 p-3 mb-1">

@@ -91,7 +91,7 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
               type="date"
               value={form.recordingDate}
               onChange={(e) => patch({ recordingDate: e.target.value })}
-              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[13px] text-brand-text outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[13px] text-brand-text outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
             />
           </div>
           <div>

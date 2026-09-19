@@ -84,9 +84,9 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
         {bannerSrc ? (
           <img src={bannerSrc} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} opacity-80`} />
+          <div className={`w-full h-full bg-linear-to-br ${gradient} opacity-80`} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
       </div>
 
       {/* Content */}
@@ -97,7 +97,7 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
               {avatarSrc ? (
                 <img src={avatarSrc} alt={channel.name} className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-xl`}>
+                <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-xl`}>
                   {channel.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -175,7 +175,7 @@ const ChannelHeader: React.FC<ChannelHeaderProps> = ({
           <div className="flex items-center gap-1.5">
             <h1 className="text-lg font-extrabold text-brand-text">{channel.name}</h1>
             {channel.is_verified && (
-              <BadgeCheck className="w-5 h-5 text-brand-text flex-shrink-0" />
+              <BadgeCheck className="w-5 h-5 text-brand-text shrink-0" />
             )}
           </div>
           <p className="font-mono text-[13px] text-brand-text/50">@{channel.handle}</p>

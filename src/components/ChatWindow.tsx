@@ -339,7 +339,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                   >
                     <div className={`flex items-start gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                       {/* Avatar */}
-                      <div className="mt-1 h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
+                      <div className="mt-1 h-8 w-8 shrink-0 overflow-hidden rounded-full">
                         <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                       </div>
 
@@ -369,7 +369,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
 
                         {/* Message Bubble */}
                         {msg.media_id ? (
-                          <div className={`group/media relative max-w-[220px] overflow-hidden rounded-2xl shadow-sm ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
+                          <div className={`group/media relative max-w-[220px] overflow-hidden rounded-2xl shadow-xs ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
                             <img
                               src={`/v1/media/${msg.media_id}/serve`}
                               alt=""
@@ -380,7 +380,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               href={`/v1/media/${msg.media_id}/serve`}
                               download
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/media:opacity-100 hover:bg-black/70"
+                              className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-xs transition-opacity group-hover/media:opacity-100 hover:bg-black/70"
                               title="Download"
                             >
                               <ArrowDownToLine className="h-3.5 w-3.5" />
@@ -392,7 +392,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                             )}
                           </div>
                         ) : (
-                          <div className={`max-w-[220px] break-words rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-sm ${isMe
+                          <div className={`max-w-[220px] wrap-break-word rounded-2xl px-3 py-1.5 text-[13px] leading-snug shadow-xs ${isMe
                             ? 'rounded-tr-sm bg-indigo-600 text-white'
                             : 'rounded-tl-sm border border-brand-divider bg-brand-card text-brand-text'
                             }`}>
@@ -410,7 +410,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                               <button
                                 key={emoji}
                                 onClick={() => handleToggleReaction(msg, emoji)}
-                                className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-sm transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '')
+                                className={`flex items-center gap-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-xs transition-all hover:scale-110 ${user_ids.includes(currentUser?.id || '')
                                   ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
                                   : 'border border-brand-divider bg-brand-card text-brand-highlight'
                                   }`}
@@ -430,14 +430,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
 
             {isTyping && (
               <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-5 flex items-start gap-3">
-                <div className="mt-1 h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
+                <div className="mt-1 h-8 w-8 shrink-0 overflow-hidden rounded-full">
                   <img src={contact.avatar} alt="" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <div className="mb-1 px-1">
                     <span className="text-[10px] font-bold text-brand-text">{contact.name}</span>
                   </div>
-                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-brand-secondary bg-brand-card px-5 py-3.5 shadow-sm">
+                  <div className="flex gap-1.5 rounded-2xl rounded-tl-none border border-brand-secondary bg-brand-card px-5 py-3.5 shadow-xs">
                     {[0, 1, 2].map(d => (
                       <motion.span
                         key={d}
@@ -499,7 +499,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                     }
                   }}
                   placeholder="Write a message..."
-                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-brand-text outline-none placeholder:text-brand-text/60"
+                  className="flex-1 bg-transparent py-1 text-[13px] font-medium text-brand-text outline-hidden placeholder:text-brand-text/60"
                 />
                 <div className="flex items-center gap-1 text-brand-text/60">
                   <button

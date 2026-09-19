@@ -51,7 +51,7 @@ const SheetComment: React.FC<{
 
   return (
     <div className="flex gap-3 py-3 group">
-      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/20">
+      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/20">
         <img src={avatar} alt="" className="w-full h-full object-cover" />
       </div>
       <div className="flex-1 min-w-0">
@@ -179,7 +179,7 @@ const ReelCommentSheet: React.FC<ReelCommentSheetProps> = ({
 
             {/* Input */}
             <form onSubmit={handleSubmit} className="px-4 py-3 border-t border-white/10 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/20">
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/20">
                 <img
                   src={profile?.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'}
                   alt=""
@@ -192,7 +192,7 @@ const ReelCommentSheet: React.FC<ReelCommentSheetProps> = ({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Add a comment..."
-                className="flex-1 bg-brand-card/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:bg-brand-card/15 transition-colors"
+                className="flex-1 bg-brand-card/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 outline-hidden focus:bg-brand-card/15 transition-colors"
               />
               <button
                 type="submit"

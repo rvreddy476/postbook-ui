@@ -57,14 +57,14 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
 
     if (loading) {
         return (
-            <div className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider animate-pulse">
-                <div className="h-4 w-28 bg-brand-secondary rounded mb-3" />
+            <div className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider animate-pulse">
+                <div className="h-4 w-28 bg-brand-secondary rounded-sm mb-3" />
                 <div className="flex -space-x-2 mb-2">
                     {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="w-8 h-8 rounded-full bg-brand-secondary border-2 border-brand-card" />
                     ))}
                 </div>
-                <div className="h-3 w-48 bg-brand-secondary rounded" />
+                <div className="h-3 w-48 bg-brand-secondary rounded-sm" />
             </div>
         )
     }
@@ -89,7 +89,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.05 }}
-            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
+            className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider"
         >
             <div className="flex items-center gap-2 mb-3">
                 <Users className="h-4 w-4 text-brand-text/60" />

@@ -283,10 +283,10 @@ export function ProfileHeader({
                         onError={() => setCoverFails((n) => n + 1)}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-brand-secondary via-brand-text/10 to-brand-secondary" />
+                    <div className="w-full h-full bg-linear-to-br from-brand-secondary via-brand-text/10 to-brand-secondary" />
                 )}
                 {pendingImage?.field !== "cover_media_id" && (
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10" />
+                    <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/10" />
                 )}
 
                 {/* Cover actions */}
@@ -324,7 +324,7 @@ export function ProfileHeader({
                         transition={{ duration: 0.3 }}
                         className="relative group justify-self-center md:justify-self-start z-10"
                     >
-                        <div className="h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 rounded-[1.5rem] sm:rounded-3xl overflow-hidden border-[4px] sm:border-[6px] border-brand-card shadow-xl bg-brand-secondary relative">
+                        <div className="h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 rounded-3xl sm:rounded-3xl overflow-hidden border-4 sm:border-[6px] border-brand-card shadow-xl bg-brand-secondary relative">
                             {resolvedAvatar ? (
                                 <img
                                     src={resolvedAvatar}
@@ -333,13 +333,13 @@ export function ProfileHeader({
                                     onError={() => setAvatarFails((n) => n + 1)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-brand-card bg-gradient-to-br from-brand-text/70 to-brand-text uppercase">
+                                <div className="w-full h-full flex items-center justify-center text-5xl font-black text-brand-card bg-linear-to-br from-brand-text/70 to-brand-text uppercase">
                                     {(profile.display_name || "?").charAt(0)}
                                 </div>
                             )}
 
                             {uploadMutation.isPending && uploadMutation.variables?.field === "avatar_media_id" && (
-                                <div className="absolute inset-0 bg-brand-card/70 backdrop-blur-sm flex items-center justify-center">
+                                <div className="absolute inset-0 bg-brand-card/70 backdrop-blur-xs flex items-center justify-center">
                                     <Loader2 className="w-7 h-7 animate-spin text-brand-text" />
                                 </div>
                             )}
@@ -356,7 +356,7 @@ export function ProfileHeader({
                         {isOwn && (
                             <button
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="absolute bottom-1 right-1 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 rounded-xl cursor-pointer hover:bg-black/80 transition-all shadow-lg border border-white/10"
+                                className="absolute bottom-1 right-1 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 rounded-xl cursor-pointer hover:bg-black/80 transition-all shadow-lg border border-white/10"
                             >
                                 <Camera className="w-4 h-4 text-white" />
                             </button>
@@ -368,7 +368,7 @@ export function ProfileHeader({
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.05 }}
-                        className="w-full md:pt-[4.5rem] space-y-3"
+                        className="w-full md:pt-18 space-y-3"
                     >
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
                             {/* Left: Name, handle & badges on a single line */}
@@ -410,7 +410,7 @@ export function ProfileHeader({
                                     <>
                                         <button
                                             onClick={onEditProfile}
-                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
+                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-xs"
                                         >
                                             <Settings className="w-3.5 h-3.5" />
                                             Edit Profile
@@ -418,7 +418,7 @@ export function ProfileHeader({
                                         <button
                                             onClick={toggleTheme}
                                             type="button"
-                                            className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-sm"
+                                            className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-xs"
                                             title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
                                         >
                                             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -431,7 +431,7 @@ export function ProfileHeader({
                                             isFollowing ? (
                                                 <button
                                                     onClick={onUnfollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-sm group"
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-xs group"
                                                     title="Unfollow"
                                                 >
                                                     <UserCheck className="w-4 h-4 group-hover:hidden" />
@@ -442,7 +442,7 @@ export function ProfileHeader({
                                             ) : (
                                                 <button
                                                     onClick={onFollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-brand-accent text-brand-bg hover:opacity-90 transition-all shadow-sm"
+                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-brand-accent text-brand-bg hover:opacity-90 transition-all shadow-xs"
                                                     title="Follow"
                                                 >
                                                     <UserPlus className="w-4 h-4" />
@@ -457,11 +457,11 @@ export function ProfileHeader({
                                                 targetUserId={profile.id}
                                                 targetUsername={profile.username}
                                                 relationship={relationship}
-                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-sm transition-all hover:opacity-90 disabled:opacity-60"
+                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
                                                 sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
                                                 friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
-                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-sm transition-all hover:opacity-90 disabled:opacity-60"
-                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold uppercase tracking-wider text-brand-text/60 shadow-sm transition-all hover:bg-brand-secondary disabled:opacity-60"
+                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-accent px-4 text-xs font-bold uppercase tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
+                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold uppercase tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
                                                 onFriendsClick={onRemoveFromCircle}
                                             />
                                         )}
@@ -470,7 +470,7 @@ export function ProfileHeader({
                                             onClick={canDM ? onMessage : undefined}
                                             className={`flex items-center justify-center h-10 w-10 rounded-xl border transition-all ${
                                                 canDM
-                                                    ? "border-brand-divider text-brand-text hover:bg-brand-secondary shadow-sm"
+                                                    ? "border-brand-divider text-brand-text hover:bg-brand-secondary shadow-xs"
                                                     : "border-brand-divider text-brand-text/30 cursor-not-allowed"
                                             }`}
                                             title={canDM ? "Send message" : "Add to Circle to message"}
@@ -519,12 +519,12 @@ export function ProfileHeader({
 
                     {/* Right: Stats cards — unified card system */}
                     {channel && (
-                        <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-[4.5rem]">
+                        <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-18">
                             <motion.div
                                 initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: 0.15 }}
-                                className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5 border-l-[3px] border-l-violet-500"
+                                className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 border-l-[3px] border-l-violet-500"
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">
@@ -563,7 +563,7 @@ export function ProfileHeader({
                 {/* Mobile: Social Graph (stacked below on small screens) */}
                 <div className="md:hidden space-y-3 mb-6">
                     {/* Spec §4.1 — Posts + Friends only on user profile. - Commented out per user request
-                    <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4">
+                    <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4">
                         <div className="grid grid-cols-2 gap-2">
                             {[
                                 { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
@@ -581,7 +581,7 @@ export function ProfileHeader({
 
                     {/* Mobile: PostTube Channel Stats */}
                     {channel && (
-                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-4 border-l-[3px] border-l-violet-500">
+                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4 border-l-[3px] border-l-violet-500">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
                                 <Link
@@ -612,7 +612,7 @@ export function ProfileHeader({
                 {/* 3. Bio Row */}
                 {profile.bio && (
                     <div className="pb-6">
-                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5 sm:p-6">
+                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 sm:p-6">
                             <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
                             <p className="text-[15px] not-italic font-normal leading-relaxed text-brand-text/80">
                                 {profile.bio}
@@ -627,7 +627,7 @@ export function ProfileHeader({
                                             href={link.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-sm transition-all"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-xs transition-all"
                                         >
                                             <ExternalLink className="w-3 h-3" />
                                             {link.display_label || link.platform}
@@ -649,7 +649,7 @@ export function ProfileHeader({
                                     href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-sm transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-secondary border border-brand-divider text-xs font-semibold text-brand-text/70 hover:text-brand-text hover:shadow-xs transition-all"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     {link.display_label || link.platform}

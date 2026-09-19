@@ -95,7 +95,7 @@ export default function FoodTicketDetailPage() {
               }
               disabled={update.isPending}
               className={[
-                "rounded px-3 py-1 text-xs font-medium text-white",
+                "rounded-sm px-3 py-1 text-xs font-medium text-white",
                 v.tone,
                 update.isPending ? "cursor-wait opacity-60" : "",
               ].join(" ")}
@@ -141,7 +141,7 @@ export default function FoodTicketDetailPage() {
           value={reply}
           onChange={(e) => setReply(e.target.value)}
           rows={3}
-          className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+          className="w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
           placeholder="Message the customer…"
         />
         <div className="flex items-center justify-between">
@@ -155,7 +155,7 @@ export default function FoodTicketDetailPage() {
             onClick={appendMessage}
             disabled={posting || !reply.trim()}
             className={[
-              "rounded bg-amber-600 px-3 py-1 text-sm font-medium text-white transition",
+              "rounded-sm bg-amber-600 px-3 py-1 text-sm font-medium text-white transition",
               posting || !reply.trim()
                 ? "cursor-not-allowed opacity-60"
                 : "hover:bg-amber-700",

@@ -23,7 +23,7 @@ export function VideoStage({ video, active = true, muted, onToggleMuted, onExpan
 
   return (
     <div className="relative flex h-full items-center justify-center">
-      <section className="relative h-full aspect-[9/16] max-w-[480px] overflow-hidden rounded-[18px] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.04)]">
+      <section className="relative h-full aspect-9/16 max-w-[480px] overflow-hidden rounded-[18px] bg-black shadow-[0_16px_48px_rgba(0,0,0,0.10),0_0_0_1px_rgba(0,0,0,0.04)]">
         <ReelPlayer
           videoUrl={video.video_url}
           posterUrl={video.thumbnail_url}

@@ -12,7 +12,7 @@ export default function AdminCommerceIndex() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Link
           href="/admin/commerce/sellers"
-          className="rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-300 hover:shadow-sm transition"
+          className="rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-300 hover:shadow-xs transition"
         >
           <div className="text-base font-semibold">Seller queue</div>
           <div className="mt-1 text-sm text-gray-600">
@@ -22,7 +22,7 @@ export default function AdminCommerceIndex() {
 
         <Link
           href="/admin/commerce/products"
-          className="rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-300 hover:shadow-sm transition"
+          className="rounded-xl border border-gray-200 bg-white p-5 hover:border-indigo-300 hover:shadow-xs transition"
         >
           <div className="text-base font-semibold">Product queue</div>
           <div className="mt-1 text-sm text-gray-600">

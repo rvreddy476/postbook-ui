@@ -25,8 +25,8 @@ export function ProductGrid({ products, isLoading, emptyLabel = 'No products' }:
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="aspect-square rounded-xl bg-gray-200" />
-            <div className="h-4 mt-2 rounded bg-gray-200" />
-            <div className="h-3 mt-1 w-1/2 rounded bg-gray-200" />
+            <div className="h-4 mt-2 rounded-sm bg-gray-200" />
+            <div className="h-3 mt-1 w-1/2 rounded-sm bg-gray-200" />
           </div>
         ))}
       </div>

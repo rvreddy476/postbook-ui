@@ -57,12 +57,12 @@ export function ToggleSwitch({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/40 disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/40 disabled:cursor-not-allowed disabled:opacity-40 ${
         checked ? "bg-brand-text" : "bg-brand-text/10"
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-sm transition-transform duration-200 ${
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-xs transition-transform duration-200 ${
           checked ? "translate-x-[22px]" : "translate-x-[3px]"
         }`}
       />
@@ -147,7 +147,7 @@ export function CheckOption({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded accent-brand-text"
+        className="mt-0.5 h-4 w-4 rounded-sm accent-brand-text"
       />
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
@@ -248,7 +248,7 @@ export function StudioInput({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       placeholder={placeholder}
     />
   );
@@ -275,7 +275,7 @@ export function StudioTextarea({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       rows={rows}
-      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
+      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
       placeholder={placeholder}
     />
   );
@@ -299,7 +299,7 @@ export function StudioSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full appearance-none rounded-xl border border-brand-text/10 bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+        className="h-11 w-full appearance-none rounded-xl border border-brand-text/10 bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => (

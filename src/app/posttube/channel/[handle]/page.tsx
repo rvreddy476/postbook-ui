@@ -115,11 +115,11 @@ export default function PublicChannelPage() {
         <AppShell sectionLabel="PostTube">
             <div className="min-h-screen bg-brand-card">
                 {/* Banner */}
-                <div className="relative h-40 bg-gradient-to-br from-brand-text via-brand-text/50 to-slate-300">
+                <div className="relative h-40 bg-linear-to-br from-brand-text via-brand-text/50 to-slate-300">
                     {bannerUrl && (
                         <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
                 </div>
 
                 {/* Channel info */}

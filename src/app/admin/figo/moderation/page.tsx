@@ -101,8 +101,8 @@ export default function FoodModerationPage() {
                       <span
                         className={
                           row.moderation_status === "flagged"
-                            ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
-                            : "rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
+                            ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                            : "rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
                         }
                       >
                         {row.moderation_status}
@@ -121,7 +121,7 @@ export default function FoodModerationPage() {
                           placeholder="Reason (optional)"
                           value={r}
                           onChange={(e) => setReason(row.id, e.target.value)}
-                          className="rounded border border-slate-300 px-2 py-1 text-xs"
+                          className="rounded-sm border border-slate-300 px-2 py-1 text-xs"
                         />
                         <div className="flex flex-wrap gap-1">
                           {VERDICTS.map((v) => (
@@ -137,7 +137,7 @@ export default function FoodModerationPage() {
                               }
                               disabled={moderate.isPending}
                               className={[
-                                "rounded px-2 py-1 text-xs font-medium text-white transition",
+                                "rounded-sm px-2 py-1 text-xs font-medium text-white transition",
                                 v.tone,
                                 moderate.isPending
                                   ? "cursor-wait opacity-60"

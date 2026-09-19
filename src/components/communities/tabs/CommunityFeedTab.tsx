@@ -80,12 +80,12 @@ export default function CommunityFeedTab({ communityId, isMember, viewerRole }: 
             <div className="flex items-center gap-2.5 mb-3">
               <div className="w-9 h-9 rounded-full bg-brand-bg" />
               <div className="flex-1">
-                <div className="h-3 w-24 bg-brand-bg rounded mb-1" />
-                <div className="h-2 w-16 bg-brand-bg rounded" />
+                <div className="h-3 w-24 bg-brand-bg rounded-sm mb-1" />
+                <div className="h-2 w-16 bg-brand-bg rounded-sm" />
               </div>
             </div>
-            <div className="h-3 w-full bg-brand-bg rounded mb-2" />
-            <div className="h-3 w-3/4 bg-brand-bg rounded" />
+            <div className="h-3 w-full bg-brand-bg rounded-sm mb-2" />
+            <div className="h-3 w-3/4 bg-brand-bg rounded-sm" />
           </div>
         ))}
       </div>

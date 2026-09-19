@@ -121,7 +121,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
           className="flex gap-4 overflow-x-auto no-scrollbar scrollbar-hide pb-2"
         >
           {/* Add Story Card */}
-          <div className="flex-shrink-0 cursor-pointer group" onClick={handleCreateClick}>
+          <div className="shrink-0 cursor-pointer group" onClick={handleCreateClick}>
             <div className="relative w-24 h-36 rounded-2xl overflow-hidden border border-dashed border-brand-divider bg-brand-card transition-all duration-500 group-hover:shadow-[0_0_20px_rgba(var(--foreground-rgb),0.1)] group-hover:border-brand-accent/50">
               <div className="w-full h-full flex flex-col items-center justify-center gap-2 group-hover:bg-brand-accent/10 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-brand-accent text-brand-bg flex items-center justify-center shadow-lg">
@@ -139,7 +139,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
             return (
               <div
                 key={group.authorId}
-                className="flex-shrink-0 cursor-pointer group"
+                className="shrink-0 cursor-pointer group"
                 onClick={() => handleFriendClick(index)}
               >
                 <div className={`relative w-24 h-36 rounded-2xl overflow-hidden border transition-all duration-500
@@ -150,7 +150,7 @@ const StoriesRow: React.FC<StoriesRowProps> = ({ onCreateClick }) => {
                     alt={group.authorName}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
                   {/* Avatar top-left */}
                   <div className="absolute top-2 left-2 w-8 h-8 rounded-full border-2 border-brand-accent overflow-hidden shadow-lg z-10">

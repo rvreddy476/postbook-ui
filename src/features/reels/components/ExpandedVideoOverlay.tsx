@@ -84,7 +84,7 @@ export function ExpandedVideoOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-100 flex items-center justify-center"
         >
           {/* Blurred backdrop */}
           <div
@@ -96,7 +96,7 @@ export function ExpandedVideoOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-brand-card/10 text-white backdrop-blur-sm transition hover:bg-brand-card/20"
+            className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-brand-card/10 text-white backdrop-blur-xs transition hover:bg-brand-card/20"
             aria-label="Close expanded video"
           >
             <X className="h-5 w-5" />
@@ -111,7 +111,7 @@ export function ExpandedVideoOverlay({
             className="relative z-10 flex h-[96vh] items-stretch gap-3"
           >
             {/* Expanded video — full height, proper fit */}
-            <div className="h-full aspect-[9/16] overflow-hidden rounded-[24px] bg-black shadow-2xl">
+            <div className="h-full aspect-9/16 overflow-hidden rounded-[24px] bg-black shadow-2xl">
               <ReelPlayer
                 videoUrl={videoUrl}
                 posterUrl={posterUrl}

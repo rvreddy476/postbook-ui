@@ -73,7 +73,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           placeholder="Add a title that describes your content"
           maxLength={100}
           autoFocus
-          className={`h-12 w-full rounded-xl border px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none transition-all ${
+          className={`h-12 w-full rounded-xl border px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition-all ${
             titleError
               ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10"
               : "border-brand-divider bg-brand-secondary focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
@@ -99,7 +99,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           placeholder="Tell viewers about your content. Use #hashtags and @mentions."
           maxLength={2200}
           rows={5}
-          className={`w-full rounded-xl border px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none resize-none transition-all ${
+          className={`w-full rounded-xl border px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden resize-none transition-all ${
             captionOverflow
               ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10"
               : "border-brand-divider bg-brand-secondary focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
@@ -123,7 +123,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
               onChange={(e) => patch({ hashtagInput: e.target.value })}
               onKeyDown={handleHashtagKeyDown}
               placeholder="Type a hashtag and press Enter"
-              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+              className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
             />
           </div>
           <button
@@ -190,7 +190,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                 onClick={() => patch({ coverSourceType: "video_frame" })}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${
                   form.coverSourceType === "video_frame"
-                    ? "bg-brand-card text-brand-text shadow-sm"
+                    ? "bg-brand-card text-brand-text shadow-xs"
                     : "text-brand-text/50 hover:text-brand-text"
                 }`}
               >
@@ -202,7 +202,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                 onClick={() => patch({ coverSourceType: "custom_image" })}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${
                   form.coverSourceType === "custom_image"
-                    ? "bg-brand-card text-brand-text shadow-sm"
+                    ? "bg-brand-card text-brand-text shadow-xs"
                     : "text-brand-text/50 hover:text-brand-text"
                 }`}
               >
@@ -232,7 +232,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/30">:</span>
@@ -251,7 +251,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/30">.</span>
@@ -270,7 +270,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                         const newMs = Math.min(base + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/5 transition-all"
+                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-card px-2 py-1.5 text-center font-mono text-[13px] font-semibold text-brand-text focus:border-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/5 transition-all"
                     />
                   </div>
                 </div>
@@ -296,14 +296,14 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   type="button"
                   onClick={() => extractCoverPreview.mutate(form.coverTimestampMs ?? 0)}
                   disabled={extractCoverPreview.isPending || (form.coverTimestampMs != null && form.videoDurationSec != null && form.coverTimestampMs > form.videoDurationSec * 1000)}
-                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-sm"
+                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 disabled:opacity-40 transition-all active:scale-[0.98] shadow-xs"
                 >
                   {extractCoverPreview.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
                   Extract Preview
                 </button>
 
                 {form.coverPreviewUrl && (
-                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-sm" style={{ maxWidth: isVertical ? 170 : 280 }}>
+                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-xs" style={{ maxWidth: isVertical ? 170 : 280 }}>
                     <div className="overflow-hidden rounded-lg">
                       <img src={form.coverPreviewUrl} alt="Cover preview" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
                     </div>
@@ -324,7 +324,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                 <button
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
-                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+                  className="flex items-center gap-2 rounded-xl bg-brand-accent px-4 py-2.5 text-[12px] font-bold text-brand-bg hover:opacity-90 transition-all active:scale-[0.98] shadow-xs"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose Image
@@ -337,7 +337,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
                   className="hidden"
                 />
                 {form.customCoverPreviewUrl && (
-                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-sm" style={{ maxWidth: isVertical ? 170 : 280 }}>
+                  <div className="overflow-hidden rounded-xl border border-brand-text/10 bg-brand-secondary/35 p-2.5 shadow-xs" style={{ maxWidth: isVertical ? 170 : 280 }}>
                     <div className="overflow-hidden rounded-lg">
                       <img src={form.customCoverPreviewUrl} alt="Custom cover" className="w-full object-cover" style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "260px" : "150px" }} />
                     </div>

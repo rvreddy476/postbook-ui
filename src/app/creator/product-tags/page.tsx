@@ -102,7 +102,7 @@ export default function CreatorProductTagsPage() {
                         return (
                             <li
                                 key={t.id}
-                                className="flex items-center gap-4 rounded-lg border border-slate-100 bg-white p-4 shadow-sm"
+                                className="flex items-center gap-4 rounded-lg border border-slate-100 bg-white p-4 shadow-xs"
                             >
                                 <div className="h-12 w-12 shrink-0 rounded-md bg-slate-100">
                                     {t.image_url && (

@@ -90,7 +90,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
                   className="absolute inset-0 flex items-center justify-center bg-black/20"
                 >
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full transition-all ${
-                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-white/20 backdrop-blur-sm hover:scale-105"
+                    playing ? "bg-black/40 opacity-0 hover:opacity-100" : "bg-white/20 backdrop-blur-xs hover:scale-105"
                   }`}>
                     {playing ? (
                       <Pause className="h-5 w-5 text-white" fill="white" />
@@ -127,7 +127,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         </div>
 
         {/* ── Content Link ── */}
-        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-xs">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[12px] font-semibold text-brand-text">Content link</p>
             {contentLink && (
@@ -145,7 +145,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
 
         {/* ── File Metadata ── */}
         {form.videoFile && (
-          <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
+          <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-xs">
             <p className="text-[12px] font-semibold text-brand-text mb-2">File Info</p>
             <div className="space-y-1.5">
               {[
@@ -164,7 +164,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
         )}
 
         {/* ── Publish to Feed ── */}
-        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-3.5 shadow-xs">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[12px] font-semibold text-brand-text">Publish to Feed</p>
@@ -180,7 +180,7 @@ export function PreviewPanel({ form, patch, contentType, steps }: PreviewPanelPr
               }`}
             >
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-sm transition-transform duration-200 ${
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-xs transition-transform duration-200 ${
                   form.crossPostPostbook ? "translate-x-[22px]" : "translate-x-[3px]"
                 }`}
               />

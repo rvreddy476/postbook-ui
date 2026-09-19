@@ -24,7 +24,7 @@ export default function IntroCard({ profile, onSeeAll }: IntroCardProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
-            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
+            className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider"
         >
             <h3 className="text-sm font-bold text-brand-text mb-3">Intro</h3>
 

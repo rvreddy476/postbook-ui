@@ -36,8 +36,8 @@ interface BasicInfoSectionProps {
     variant: SectionVariant
 }
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs appearance-none cursor-pointer"
 
 export function BasicInfoSection({ form, onChange, variant }: BasicInfoSectionProps) {
     const authUser = useAuthUser()

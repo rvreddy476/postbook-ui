@@ -40,7 +40,7 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-bg px-4 selection:bg-rose-100 selection:text-rose-900">
-      <div className="glass-panel rounded-[2rem] border border-white/90 p-8 shadow-[0_20px_50px_rgba(124,58,237,0.12)]">
+      <div className="glass-panel rounded-4xl border border-white/90 p-8 shadow-[0_20px_50px_rgba(124,58,237,0.12)]">
         <div className="flex flex-col items-center gap-4">
           {error ? (
             <>

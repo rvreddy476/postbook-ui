@@ -33,7 +33,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm"
+            className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -220,7 +220,7 @@ export default function TaxProfilePage() {
     }
 
     const inputClasses =
-        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
 
     return (
         <AppShell>
@@ -246,7 +246,7 @@ export default function TaxProfilePage() {
                 </div>
 
                 {isLoadingProfile ? (
-                    <div className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm">
+                    <div className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-xs">
                         <Loader2 className="h-5 w-5 animate-spin text-brand-highlight" />
                         <p className="text-sm font-medium text-brand-highlight">
                             Loading your saved tax profile...
@@ -311,7 +311,7 @@ export default function TaxProfilePage() {
                                         onClick={() => setHasGst(!hasGst)}
                                         className={[
                                             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                                            "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50",
+                                            "transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/50",
                                             hasGst ? "bg-brand-text" : "bg-brand-secondary",
                                         ].join(" ")}
                                     >

@@ -71,7 +71,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
           <div className="w-24 h-24 rounded-2xl bg-brand-secondary animate-pulse -mt-12" />
           <div className="flex-1 space-y-2 pt-2">
             <div className="h-6 w-48 bg-brand-secondary rounded-lg animate-pulse" />
-            <div className="h-4 w-32 bg-brand-secondary rounded animate-pulse" />
+            <div className="h-4 w-32 bg-brand-secondary rounded-sm animate-pulse" />
           </div>
         </div>
         <div className="h-12 bg-brand-secondary rounded-xl animate-pulse" />
@@ -126,7 +126,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
       )}
 
       {/* Tab Navigation — sticky with coral accent underline */}
-      <div className="sticky top-0 z-20 bg-brand-card/95 backdrop-blur-sm border-b border-brand-divider mt-4">
+      <div className="sticky top-0 z-20 bg-brand-card/95 backdrop-blur-xs border-b border-brand-divider mt-4">
         <div className="max-w-5xl mx-auto px-4">
           <nav className="flex items-center gap-0 overflow-x-auto scrollbar-hide -mb-px">
             {tabs.map((tab) => (
@@ -228,7 +228,7 @@ export default function GroupPage({ groupId, handle, onBack }: GroupPageProps) {
                   <div className="space-y-2">
                     {rules.slice(0, 3).map((rule, i) => (
                       <div key={rule.id} className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-secondary flex items-center justify-center text-[10px] font-bold text-brand-text/60 mt-0.5">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-brand-secondary flex items-center justify-center text-[10px] font-bold text-brand-text/60 mt-0.5">
                           {i + 1}
                         </span>
                         <p className="text-xs text-brand-highlight leading-relaxed">{rule.title}</p>

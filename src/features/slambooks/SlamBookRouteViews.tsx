@@ -266,7 +266,7 @@ function SlamMetric({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 shadow-xs">
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-brand-text/50">
         {icon}
         {label}
@@ -335,7 +335,7 @@ function ResponseInputCard({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             disabled={disabled}
-            className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 disabled:opacity-60"
+            className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 disabled:opacity-60"
           >
             <option value="">Choose an answer</option>
             {card.options.map((option) => (
@@ -387,7 +387,7 @@ function ResponseInputCard({
             disabled={disabled}
             maxLength={32}
             placeholder={placeholder}
-            className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 disabled:opacity-60"
+            className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 disabled:opacity-60"
           />
         ) : (
           <textarea
@@ -396,7 +396,7 @@ function ResponseInputCard({
             disabled={disabled}
             rows={4}
             placeholder={placeholder}
-            className="w-full rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 disabled:opacity-60"
+            className="w-full rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 disabled:opacity-60"
           />
         )}
       </div>
@@ -429,7 +429,7 @@ export function SlamBookMemoriesHub() {
   return (
     <div className="mx-auto max-w-[1180px] px-6 py-8">
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-        <Card className="overflow-hidden border-brand-divider/70 bg-gradient-to-br from-[#fff6e8] via-brand-card to-[#fffdf7]">
+        <Card className="overflow-hidden border-brand-divider/70 bg-linear-to-br from-[#fff6e8] via-brand-card to-[#fffdf7]">
           <CardContent className="px-8 py-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E9C98C] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#8a5d08]">
               <BookHeart className="h-3.5 w-3.5" />
@@ -683,7 +683,7 @@ export function SlamBookIndexRouteView() {
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     maxLength={140}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="My classmates, roommates, travel crew..."
                   />
                 </div>
@@ -695,7 +695,7 @@ export function SlamBookIndexRouteView() {
                     value={subtitle}
                     onChange={(event) => setSubtitle(event.target.value)}
                     maxLength={140}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="Optional vibe line"
                   />
                 </div>
@@ -707,7 +707,7 @@ export function SlamBookIndexRouteView() {
                     value={category}
                     onChange={(event) => setCategory(event.target.value)}
                     maxLength={40}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="personal"
                   />
                 </div>
@@ -719,7 +719,7 @@ export function SlamBookIndexRouteView() {
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     rows={4}
-                    className="w-full rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="w-full rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="Tell people what kind of memory space this is and what tone you want in answers."
                   />
                 </div>
@@ -731,7 +731,7 @@ export function SlamBookIndexRouteView() {
                     value={themeKey}
                     onChange={(event) => setThemeKey(event.target.value)}
                     maxLength={40}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="classic"
                   />
                 </div>
@@ -743,7 +743,7 @@ export function SlamBookIndexRouteView() {
                     type="datetime-local"
                     value={closesAt}
                     onChange={(event) => setClosesAt(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                   />
                 </div>
                 <div>
@@ -753,7 +753,7 @@ export function SlamBookIndexRouteView() {
                   <select
                     value={visibility}
                     onChange={(event) => setVisibility(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                   >
                     {visibilityOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -769,7 +769,7 @@ export function SlamBookIndexRouteView() {
                   <select
                     value={identityMode}
                     onChange={(event) => setIdentityMode(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                   >
                     {identityOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -785,7 +785,7 @@ export function SlamBookIndexRouteView() {
                   type="checkbox"
                   checked={approvalRequired}
                   onChange={(event) => setApprovalRequired(event.target.checked)}
-                  className="h-4 w-4 rounded border-brand-divider"
+                  className="h-4 w-4 rounded-sm border-brand-divider"
                 />
                 Require approval before responses appear on the opinion board
               </label>
@@ -899,7 +899,7 @@ export function SlamBookIndexRouteView() {
                                 ),
                               )
                             }
-                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                             placeholder="Card title"
                           />
                           <select
@@ -913,7 +913,7 @@ export function SlamBookIndexRouteView() {
                                 ),
                               )
                             }
-                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                           >
                             {responseTypeOptions.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -931,7 +931,7 @@ export function SlamBookIndexRouteView() {
                               )
                             }
                             rows={3}
-                            className="md:col-span-2 rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                            className="md:col-span-2 rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                             placeholder="Question prompt"
                           />
                           <input
@@ -945,7 +945,7 @@ export function SlamBookIndexRouteView() {
                                 ),
                               )
                             }
-                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                             placeholder="Placeholder text"
                           />
                           <input
@@ -957,7 +957,7 @@ export function SlamBookIndexRouteView() {
                                 ),
                               )
                             }
-                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                            className="h-10 rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                             placeholder="Helper text"
                           />
                           <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-brand-divider bg-[#FAFAF8] px-3 py-2 text-[12px] text-brand-text">
@@ -971,7 +971,7 @@ export function SlamBookIndexRouteView() {
                                   ),
                                 )
                               }
-                              className="h-4 w-4 rounded border-brand-divider"
+                              className="h-4 w-4 rounded-sm border-brand-divider"
                             />
                             Required answer
                           </label>
@@ -1526,7 +1526,7 @@ function SlamBookWorkspace({
                         onChange={(event) => setDisplayName(event.target.value)}
                         disabled={anonymous}
                         placeholder="How should this response be credited?"
-                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 disabled:opacity-60"
+                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 disabled:opacity-60"
                       />
                     </div>
                     <label className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-[#FAFAF8] px-4 py-3 text-[13px] text-brand-text">
@@ -1534,7 +1534,7 @@ function SlamBookWorkspace({
                         type="checkbox"
                         checked={anonymous}
                         onChange={(event) => setAnonymous(event.target.checked)}
-                        className="h-4 w-4 rounded border-brand-divider"
+                        className="h-4 w-4 rounded-sm border-brand-divider"
                       />
                       Submit this response anonymously
                     </label>
@@ -1663,7 +1663,7 @@ function SlamBookWorkspace({
                   {opinionItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className="rounded-[24px] border border-brand-divider bg-gradient-to-br from-white to-[#f9f3e7] p-5 shadow-sm"
+                      className="rounded-[24px] border border-brand-divider bg-linear-to-br from-white to-[#f9f3e7] p-5 shadow-xs"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -1792,7 +1792,7 @@ function SlamBookWorkspace({
                     <input
                       value={inviteSearchQuery}
                       onChange={(event) => setInviteSearchQuery(event.target.value)}
-                      className="w-full rounded-2xl border border-brand-divider bg-white px-4 py-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                      className="w-full rounded-2xl border border-brand-divider bg-white px-4 py-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                       placeholder="Search by name or username"
                     />
                     {inviteSearchQuery.trim().length >= 2 ? (
@@ -1834,7 +1834,7 @@ function SlamBookWorkspace({
                     value={inviteMessage}
                     onChange={(event) => setInviteMessage(event.target.value)}
                     rows={3}
-                    className="mt-3 w-full rounded-2xl border border-brand-divider bg-white px-4 py-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30"
+                    className="mt-3 w-full rounded-2xl border border-brand-divider bg-white px-4 py-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30"
                     placeholder="Optional invite message"
                   />
 
@@ -1953,7 +1953,7 @@ function SlamBookWorkspace({
                                 }))
                               }
                               rows={2}
-                              className="mt-3 w-full rounded-xl border border-brand-divider bg-white px-3 py-2 text-[12px] text-brand-text outline-none focus:border-brand-text/30"
+                              className="mt-3 w-full rounded-xl border border-brand-divider bg-white px-3 py-2 text-[12px] text-brand-text outline-hidden focus:border-brand-text/30"
                               placeholder="Optional moderation reason"
                             />
                             <div className="mt-3 flex flex-wrap gap-2">

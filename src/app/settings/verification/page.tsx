@@ -64,12 +64,12 @@ const TYPE_OPTIONS: {
 
 function PageSkeleton() {
     return (
-        <div className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6 space-y-4 animate-pulse">
+        <div className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6 space-y-4 animate-pulse">
             <div className="flex items-center gap-4">
                 <div className="h-11 w-11 rounded-xl bg-brand-secondary" />
                 <div className="flex-1 space-y-2">
-                    <div className="h-4 w-36 rounded bg-brand-secondary" />
-                    <div className="h-3 w-52 rounded bg-brand-secondary" />
+                    <div className="h-4 w-36 rounded-sm bg-brand-secondary" />
+                    <div className="h-3 w-52 rounded-sm bg-brand-secondary" />
                 </div>
             </div>
             <div className="space-y-3 pt-2">
@@ -229,7 +229,7 @@ export default function VerificationPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm p-6"
+                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6"
                 >
                     {/* ---- Approved ---- */}
                     {request?.status === "approved" && (

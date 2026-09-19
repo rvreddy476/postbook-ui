@@ -941,8 +941,8 @@ function ItemSkeleton() {
         <div className="flex items-center gap-4 rounded-xl border border-[#F0E6DC] bg-brand-card px-4 py-3">
             <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[#F0E6DC]" />
             <div className="min-w-0 flex-1 space-y-2">
-                <div className="h-4 w-48 animate-pulse rounded bg-[#F0E6DC]" />
-                <div className="h-3 w-32 animate-pulse rounded bg-[#F0E6DC]" />
+                <div className="h-4 w-48 animate-pulse rounded-sm bg-[#F0E6DC]" />
+                <div className="h-3 w-32 animate-pulse rounded-sm bg-[#F0E6DC]" />
             </div>
         </div>
     )
@@ -1246,7 +1246,7 @@ export default function SecuritySettingsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1308,7 +1308,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1367,7 +1367,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1459,7 +1459,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1536,7 +1536,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">
@@ -1597,7 +1597,7 @@ export default function SecuritySettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="rounded-2xl bg-brand-card border border-rose-200 shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-rose-200 shadow-xs"
                 >
                     <div className="p-6">
                         <div className="flex items-start gap-4">

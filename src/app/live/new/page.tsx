@@ -99,7 +99,7 @@ export default function NewLiveStreamPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg py-10 px-4">
-      <div className="mx-auto w-full max-w-xl rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm">
+      <div className="mx-auto w-full max-w-xl rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-xs">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
             <Radio className="h-5 w-5" />
@@ -124,7 +124,7 @@ export default function NewLiveStreamPage() {
               placeholder="What's the stream about?"
               maxLength={140}
               required
-              className="w-full rounded-xl border border-brand-divider bg-brand-bg px-3 py-2.5 text-sm text-brand-text outline-none focus:border-purple-400"
+              className="w-full rounded-xl border border-brand-divider bg-brand-bg px-3 py-2.5 text-sm text-brand-text outline-hidden focus:border-purple-400"
             />
             <p className="mt-1 text-[10px] text-brand-text/40">{title.length}/140</p>
           </div>
@@ -140,7 +140,7 @@ export default function NewLiveStreamPage() {
               placeholder="Add a short description so viewers know what to expect."
               rows={3}
               maxLength={500}
-              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-bg px-3 py-2.5 text-sm text-brand-text outline-none focus:border-purple-400"
+              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-bg px-3 py-2.5 text-sm text-brand-text outline-hidden focus:border-purple-400"
             />
           </div>
 
@@ -231,7 +231,7 @@ export default function NewLiveStreamPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-5 py-2 text-sm font-bold text-white shadow-xs transition-all hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {(uploading || createStream.isPending) ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

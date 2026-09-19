@@ -393,7 +393,7 @@ export default function OnboardingPage() {
       <div className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
         <div className="max-w-xl mx-auto flex items-center justify-between px-5 h-14">
           <Link href="/postmatch" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-600 to-orange-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-rose-600 to-orange-500 flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
             </div>
             <span className="text-base font-black tracking-tight text-white">PostMatch</span>
@@ -401,7 +401,7 @@ export default function OnboardingPage() {
           <span className="text-xs font-semibold text-[#666]">Step {stepIndex + 1} of {ALL_STEPS.length}</span>
         </div>
         <div className="h-1 bg-[#1a1a1a]">
-          <div className="h-full bg-gradient-to-r from-rose-600 to-orange-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-linear-to-r from-rose-600 to-orange-500 transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
         {/* Error banner */}
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium flex items-center gap-3">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
             {error}
           </div>
         )}
@@ -432,7 +432,7 @@ export default function OnboardingPage() {
                 { icon: '🚩', title: 'Report concerns', desc: 'See something wrong? Report it. We review every case.' },
               ].map((rule, i) => (
                 <div key={i} className="flex gap-4 p-4">
-                  <span className="text-2xl flex-shrink-0 mt-0.5">{rule.icon}</span>
+                  <span className="text-2xl shrink-0 mt-0.5">{rule.icon}</span>
                   <div>
                     <h3 className="font-bold text-white text-sm">{rule.title}</h3>
                     <p className="text-[#666] text-xs mt-0.5 leading-relaxed">{rule.desc}</p>
@@ -465,7 +465,7 @@ export default function OnboardingPage() {
               <div>
                 <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">First Name</label>
                 <input
-                  className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition placeholder:text-[#555]"
+                  className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white text-sm font-medium focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
                   placeholder="Your first name"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
@@ -480,7 +480,7 @@ export default function OnboardingPage() {
                 <label className="block text-xs font-bold text-[#888] mb-1.5 uppercase tracking-wider">Date of Birth</label>
                 <div className="grid grid-cols-3 gap-2">
                   <input
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
                     placeholder="DD"
                     value={dobDay}
                     onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 2); setDobDay(v); if (v.length === 2) dobMonthRef.current?.focus() }}
@@ -488,7 +488,7 @@ export default function OnboardingPage() {
                   />
                   <input
                     ref={dobMonthRef}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
                     placeholder="MM"
                     value={dobMonth}
                     onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 2); setDobMonth(v); if (v.length === 2) dobYearRef.current?.focus() }}
@@ -496,7 +496,7 @@ export default function OnboardingPage() {
                   />
                   <input
                     ref={dobYearRef}
-                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition placeholder:text-[#555]"
+                    className="bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-center text-sm font-bold text-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
                     placeholder="YYYY"
                     value={dobYear}
                     onChange={e => setDobYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -589,7 +589,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleContinue}
               disabled={isSaving}
-              className="w-full mt-6 py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all"
+              className="w-full mt-6 py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all"
             >
               Continue
             </button>
@@ -623,7 +623,7 @@ export default function OnboardingPage() {
                   const photo = photos[i]
                   if (photo) {
                     return (
-                      <div key={i} className="relative aspect-[3/4] rounded-xl overflow-hidden border border-[#333]">
+                      <div key={i} className="relative aspect-3/4 rounded-xl overflow-hidden border border-[#333]">
                         <img src={photo.preview} alt="" className="w-full h-full object-cover" />
                         {photo.uploading && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -636,7 +636,7 @@ export default function OnboardingPage() {
                           </div>
                         )}
                         {i === 0 && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 px-2 py-1">
+                          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1">
                             <span className="text-[8px] font-bold text-white uppercase tracking-wider">Primary</span>
                           </div>
                         )}
@@ -651,7 +651,7 @@ export default function OnboardingPage() {
                     )
                   }
                   return (
-                    <label key={i} className="aspect-[3/4] rounded-xl border-2 border-dashed border-[#333] flex flex-col items-center justify-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/30 transition group">
+                    <label key={i} className="aspect-3/4 rounded-xl border-2 border-dashed border-[#333] flex flex-col items-center justify-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/30 transition group">
                       <div className="w-7 h-7 rounded-full bg-[#1a1a1a] group-hover:bg-rose-100 flex items-center justify-center transition">
                         <svg className="w-4 h-4 text-[#666] group-hover:text-rose-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                       </div>
@@ -699,17 +699,17 @@ export default function OnboardingPage() {
 
                   {/* Face detection feedback */}
                   {faceStatus === 'no_face' && (
-                    <div className="absolute top-12 left-4 right-4 bg-red-500/90 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div className="absolute top-12 left-4 right-4 bg-red-500/90 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
                       <p className="text-white text-xs font-bold">No face detected. Look directly at the camera.</p>
                     </div>
                   )}
                   {faceStatus === 'multi_face' && (
-                    <div className="absolute top-12 left-4 right-4 bg-red-500/90 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div className="absolute top-12 left-4 right-4 bg-red-500/90 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
                       <p className="text-white text-xs font-bold">Multiple faces detected. Only your face should be visible.</p>
                     </div>
                   )}
                   {faceStatus === 'mismatch' && (
-                    <div className="absolute top-12 left-4 right-4 bg-amber-500/90 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div className="absolute top-12 left-4 right-4 bg-amber-500/90 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
                       <p className="text-white text-xs font-bold">Face doesn&apos;t match your profile photos. Try again.</p>
                     </div>
                   )}
@@ -717,7 +717,7 @@ export default function OnboardingPage() {
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4">
                     <button
                       onClick={() => { closeCamera(); setFaceStatus('idle') }}
-                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/30 transition"
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -766,7 +766,7 @@ export default function OnboardingPage() {
                   onClick={openCamera}
                   className="w-full flex items-center justify-center gap-3 py-8 border-2 border-dashed border-[#333] rounded-2xl hover:border-rose-400 hover:bg-rose-50/30 transition group"
                 >
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center group-hover:from-rose-200 group-hover:to-orange-200 transition">
+                  <div className="w-14 h-14 rounded-full bg-linear-to-br from-rose-100 to-orange-100 flex items-center justify-center group-hover:from-rose-200 group-hover:to-orange-200 transition">
                     <svg className="w-7 h-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /></svg>
                   </div>
                   <div className="text-left">
@@ -788,7 +788,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleContinue}
                 disabled={isSaving || photos.length < 1 || !selfie}
-                className="flex-1 py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 {isSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                 {isSaving ? 'Uploading...' : 'Continue'}
@@ -802,7 +802,7 @@ export default function OnboardingPage() {
         ═══════════════════════════════════════════════════════ */}
         {step === 'location' && (
           <div className="max-w-sm mx-auto text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-rose-100 to-orange-100 flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
             </div>
             <h1 className="text-2xl font-black mb-2">Find people near you</h1>
@@ -814,7 +814,7 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <button
                   onClick={requestLocation}
-                  className="w-full py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all"
                 >
                   Enable Location
                 </button>
@@ -844,7 +844,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleContinue}
                   disabled={isSaving}
-                  className="w-full py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   Find Matches
@@ -863,7 +863,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleContinue}
                   disabled={isSaving}
-                  className="w-full py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-2xl font-bold text-sm disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   {isSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   Continue Without Location

@@ -160,10 +160,10 @@ function LoginForm() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
       {/* Ambient monochrome glows */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/[0.06] blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/[0.05] blur-[160px]" />
+      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
       {/* Hairline ring accent behind the card */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/[0.04]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/4" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -228,7 +228,7 @@ function LoginForm() {
                       value={loginId}
                       onChange={(e) => setLoginId(e.target.value)}
                       placeholder="you@example.com or 9876543210"
-                      className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
                       required
                     />
                   </div>
@@ -255,7 +255,7 @@ function LoginForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="********"
-                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 pr-11 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 pr-11 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
                         required
                       />
                       <button
@@ -374,7 +374,7 @@ function LoginForm() {
                       value={twoFACode}
                       onChange={handleCodeChange}
                       placeholder={isRecoveryMode ? 'xxxx-xxxx-xxxx' : '000000'}
-                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-brand-text outline-none transition-all placeholder:tracking-[0.3em] placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-brand-text outline-hidden transition-all placeholder:tracking-[0.3em] placeholder:text-brand-text/30 focus:ring-4 focus:ring-brand-accent/10 focus:border-brand-accent"
                       required
                     />
                   </div>

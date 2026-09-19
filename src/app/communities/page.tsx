@@ -99,7 +99,7 @@ export default function CommunitiesPage() {
         </div>
 
         {showHero && (
-          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50/50 via-white to-sky-50/50 dark:from-brand-bg dark:via-brand-bg/50 dark:to-brand-text/5 border border-brand-divider rounded-3xl p-10 mb-8 text-center shadow-sm backdrop-blur-sm group">
+          <div className="relative overflow-hidden bg-linear-to-br from-indigo-50/50 via-white to-sky-50/50 dark:from-brand-bg dark:via-brand-bg/50 dark:to-brand-text/5 border border-brand-divider rounded-3xl p-10 mb-8 text-center shadow-xs backdrop-blur-xs group">
             <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-[2px] z-0"></div>
             <div className="relative z-10">
               <div className="w-20 h-20 rounded-2xl bg-white dark:bg-brand-divider mx-auto mb-5 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-500">
@@ -126,7 +126,7 @@ export default function CommunitiesPage() {
             placeholder="Search communities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-14 pr-5 py-4 bg-white/50 dark:bg-brand-bg/50 backdrop-blur-md border border-brand-divider rounded-2xl text-base placeholder:text-brand-text/40 focus:outline-none focus:ring-4 focus:ring-brand-text/10 focus:border-brand-text/30 transition-all text-brand-text shadow-sm hover:bg-white dark:hover:bg-brand-bg"
+            className="w-full pl-14 pr-5 py-4 bg-white/50 dark:bg-brand-bg/50 backdrop-blur-md border border-brand-divider rounded-2xl text-base placeholder:text-brand-text/40 focus:outline-hidden focus:ring-4 focus:ring-brand-text/10 focus:border-brand-text/30 transition-all text-brand-text shadow-xs hover:bg-white dark:hover:bg-brand-bg"
           />
         </div>
 
@@ -164,7 +164,7 @@ export default function CommunitiesPage() {
                   onClick={() =>
                     setSelectedCategory(selectedCategory === category.label ? null : category.label)
                   }
-                  className={`group flex flex-col items-center gap-2 p-4 rounded-2xl border backdrop-blur-sm transition-all duration-300 text-center ${
+                  className={`group flex flex-col items-center gap-2 p-4 rounded-2xl border backdrop-blur-xs transition-all duration-300 text-center ${
                     selectedCategory === category.label
                       ? 'bg-brand-text text-brand-bg border-brand-text shadow-lg -translate-y-1'
                       : 'bg-white/60 dark:bg-brand-bg/60 border-brand-divider/60 text-brand-text hover:bg-white dark:hover:bg-brand-bg hover:shadow-md hover:-translate-y-1 hover:border-brand-text/30'
@@ -185,10 +185,10 @@ export default function CommunitiesPage() {
                 key={index}
                 className="flex items-center gap-3.5 p-3 bg-brand-card border border-brand-divider rounded-xl animate-pulse"
               >
-                <div className="w-12 h-12 rounded-xl bg-brand-text/5 flex-shrink-0" />
+                <div className="w-12 h-12 rounded-xl bg-brand-text/5 shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3.5 w-32 bg-brand-text/5 rounded" />
-                  <div className="h-3 w-24 bg-brand-text/5 rounded" />
+                  <div className="h-3.5 w-32 bg-brand-text/5 rounded-sm" />
+                  <div className="h-3 w-24 bg-brand-text/5 rounded-sm" />
                 </div>
                 <div className="h-7 w-16 bg-brand-text/5 rounded-lg" />
               </div>

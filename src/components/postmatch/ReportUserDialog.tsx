@@ -73,7 +73,7 @@ export function ReportUserDialog({ userId, userName, onClose, onReported }: Prop
             <div className="flex gap-2 justify-end">
               <Link
                 href="/postmatch/safety"
-                className="px-4 py-2 rounded border text-sm"
+                className="px-4 py-2 rounded-sm border text-sm"
                 onClick={onClose}
               >
                 View in Safety Center
@@ -81,7 +81,7 @@ export function ReportUserDialog({ userId, userName, onClose, onReported }: Prop
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-red-600 text-white px-4 py-2 rounded text-sm"
+                className="bg-red-600 text-white px-4 py-2 rounded-sm text-sm"
               >
                 Done
               </button>
@@ -97,13 +97,13 @@ export function ReportUserDialog({ userId, userName, onClose, onReported }: Prop
             </div>
             <p className="text-sm text-gray-600">{errorMsg}</p>
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded border text-sm">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-sm border text-sm">
                 Close
               </button>
               <button
                 type="button"
                 onClick={() => { setErrorMsg(null); setPhase('form') }}
-                className="bg-red-600 text-white px-4 py-2 rounded text-sm"
+                className="bg-red-600 text-white px-4 py-2 rounded-sm text-sm"
               >
                 Try again
               </button>
@@ -125,7 +125,7 @@ export function ReportUserDialog({ userId, userName, onClose, onReported }: Prop
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full border rounded px-3 py-2 text-sm"
+                className="w-full border rounded-sm px-3 py-2 text-sm"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -140,18 +140,18 @@ export function ReportUserDialog({ userId, userName, onClose, onReported }: Prop
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="What happened?"
-                className="w-full border rounded px-3 py-2 text-sm"
+                className="w-full border rounded-sm px-3 py-2 text-sm"
               />
             </div>
 
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded border text-sm">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-sm border text-sm">
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submit.isPending}
-                className="bg-red-600 text-white px-4 py-2 rounded text-sm disabled:bg-gray-300"
+                className="bg-red-600 text-white px-4 py-2 rounded-sm text-sm disabled:bg-gray-300"
               >
                 {submit.isPending ? 'Submitting…' : 'Submit report'}
               </button>

@@ -176,7 +176,7 @@ export default function OrganizationDetailPage({
                       onChange={(e) =>
                         updateRole.mutate({ orgId, userId: m.user_id, role: e.target.value as OrgRole })
                       }
-                      className="text-xs border border-[#E8DDD3] rounded px-2 py-1"
+                      className="text-xs border border-[#E8DDD3] rounded-sm px-2 py-1"
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>

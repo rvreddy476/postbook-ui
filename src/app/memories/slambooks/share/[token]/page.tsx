@@ -11,7 +11,7 @@ export default async function SlamBookSharePage({
 
   return (
     <div className="min-h-screen bg-[#F7F4EE] text-brand-text">
-      <div className="border-b border-brand-divider/70 bg-white/90 backdrop-blur">
+      <div className="border-b border-brand-divider/70 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-4">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-highlight">
             <ArrowLeft className="h-4 w-4" />

@@ -121,7 +121,7 @@ export function TagPickerModal({
                         placeholder={`Search ${type === "hobby" ? "hobbies" : "interests"}...`}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full h-11 pl-10 pr-4 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
+                        className="w-full h-11 pl-10 pr-4 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
                     />
                 </div>
 
@@ -203,7 +203,7 @@ export function TagPickerModal({
                                                 ? "bg-brand-text text-brand-bg border-brand-text"
                                                 : isExisting
                                                   ? "bg-brand-secondary text-brand-text/30 border-brand-divider cursor-not-allowed"
-                                                  : `${getCategoryColor(tag.category)} hover:shadow-sm cursor-pointer`
+                                                  : `${getCategoryColor(tag.category)} hover:shadow-xs cursor-pointer`
                                         }`}
                                     >
                                         {isSelected && <Check className="w-3 h-3" />}
@@ -232,7 +232,7 @@ export function TagPickerModal({
                                 addCustomTag()
                             }
                         }}
-                        className="flex-1 h-10 px-3 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
+                        className="flex-1 h-10 px-3 rounded-xl border border-brand-divider bg-brand-card text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-brand-text/60"
                     />
                     <Button
                         variant="secondary"

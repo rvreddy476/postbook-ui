@@ -111,7 +111,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
           onClick={onClose}
         >
           <motion.div
@@ -201,7 +201,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
                 placeholder="Add your thoughts..."
                 rows={3}
                 maxLength={500}
-                className="w-full bg-brand-secondary rounded-2xl px-4 py-3 text-sm text-brand-text border border-brand-divider outline-none focus:border-brand-text/30 resize-none placeholder:text-brand-text/60"
+                className="w-full bg-brand-secondary rounded-2xl px-4 py-3 text-sm text-brand-text border border-brand-divider outline-hidden focus:border-brand-text/30 resize-none placeholder:text-brand-text/60"
                 autoFocus
               />
               <div className="flex items-center justify-between">

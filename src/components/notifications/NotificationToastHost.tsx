@@ -162,7 +162,7 @@ export default function NotificationToastHost() {
 
     const body = (
         <div className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-violet-200 bg-brand-card px-4 py-3 shadow-xl shadow-violet-500/10">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
                 <Bell className="h-4 w-4 text-violet-600" />
             </div>
             <div className="min-w-0 flex-1">
@@ -179,7 +179,7 @@ export default function NotificationToastHost() {
                 type="button"
                 onClick={() => setView(null)}
                 aria-label="Dismiss"
-                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-brand-text/40 transition-colors hover:bg-brand-bg hover:text-brand-text"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-brand-text/40 transition-colors hover:bg-brand-bg hover:text-brand-text"
             >
                 <X className="h-3.5 w-3.5" />
             </button>
@@ -187,7 +187,7 @@ export default function NotificationToastHost() {
     );
 
     return (
-        <div className="pointer-events-none fixed bottom-6 right-6 z-[80] flex flex-col gap-2">
+        <div className="pointer-events-none fixed bottom-6 right-6 z-80 flex flex-col gap-2">
             {view.deepLink ? (
                 <Link
                     key={view.key}

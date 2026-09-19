@@ -96,7 +96,7 @@ export default function PostMatchPrivacyPage() {
                 <div className="text-sm text-[#888] mt-0.5">{t.description}</div>
               </div>
               <span
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
                   on ? 'bg-rose-500' : 'bg-[#2a2a2a]'
                 }`}
               >

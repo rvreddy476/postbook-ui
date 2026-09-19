@@ -124,7 +124,7 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                         onClick={() => setActiveType(tab.key)}
                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                             activeType === tab.key
-                                ? "bg-brand-text text-white shadow-sm"
+                                ? "bg-brand-text text-white shadow-xs"
                                 : "bg-brand-text/5 text-brand-text hover:bg-brand-text/10"
                         }`}
                     >

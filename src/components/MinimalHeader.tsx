@@ -194,7 +194,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-brand-card rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-brand-divider overflow-hidden z-[200]"
+                className="absolute top-full left-0 right-0 mt-2 bg-brand-card rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-brand-divider overflow-hidden z-200"
             >
                 {isSearching ? (
                     <div className="px-4 py-6 flex flex-col items-center gap-2">
@@ -213,7 +213,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                 onClick={() => handleSelectUser(user)}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-brand-secondary transition-colors text-left"
                             >
-                                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0">
+                                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-divider shrink-0">
                                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -232,7 +232,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
 
     return (
         <>
-            <header className="fixed top-0 w-full z-[100] h-16 bg-brand-text text-brand-bg dark:bg-brand-bg/80 dark:backdrop-blur-md dark:border-b dark:border-brand-divider px-4 sm:px-10 flex items-center justify-between transition-all duration-500">
+            <header className="fixed top-0 w-full z-100 h-16 bg-brand-text text-brand-bg dark:bg-brand-bg/80 dark:backdrop-blur-md dark:border-b dark:border-brand-divider px-4 sm:px-10 flex items-center justify-between transition-all duration-500">
                 {/* Logo */}
                 <div className="flex items-center gap-3">
                     <Link href="/">
@@ -254,7 +254,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             value={searchQuery}
                             onChange={e => handleSearchChange(e.target.value)}
                             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-                            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 px-11 text-sm outline-none transition-all"
+                            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 px-11 text-sm outline-hidden transition-all"
                         />
                         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         {searchQuery && (
@@ -295,7 +295,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                 </svg>
                             </div>
                             {unreadNotifCount > 0 && (
-                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-brand-accent text-white text-[8px] font-black rounded-full shadow-sm">
+                                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-brand-accent text-white text-[8px] font-black rounded-full shadow-xs">
                                     {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                                 </div>
                             )}
@@ -309,7 +309,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                     transition={{ duration: 0.15, ease: "circOut" }}
-                                    className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-[1000]"
+                                    className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-1000"
                                 >
                                     <div className="p-4 border-b border-brand-divider/60 flex items-center justify-between">
                                         <h3 className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">Notifications</h3>
@@ -355,7 +355,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     router.push(`/u/${actorUsername || notif.actor_user_id}`);
                                                                     setIsNotifOpen(false);
                                                                 }}
-                                                                className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0 mt-0.5 shadow-sm"
+                                                                className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider shrink-0 mt-0.5 shadow-xs"
                                                             >
                                                                 <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                                                             </button>
@@ -394,7 +394,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                                 });
                                                                             }}
                                                                             disabled={acceptFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-sm active:scale-95 transition-all"
+                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-xs active:scale-95 transition-all"
                                                                         >
                                                                             Accept
                                                                         </button>
@@ -420,7 +420,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                 )}
                                                             </div>
 
-                                                            <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
+                                                            <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">
                                                                 {!notif.is_read && (
                                                                     <div className="w-2 h-2 rounded-full bg-brand-text/50" />
                                                                 )}
@@ -475,7 +475,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                     transition={{ duration: 0.15, ease: "circOut" }}
-                                    className="absolute right-0 mt-3 w-64 bg-brand-card border border-brand-divider rounded-2xl shadow-xl p-1.5 z-[1000]"
+                                    className="absolute right-0 mt-3 w-64 bg-brand-card border border-brand-divider rounded-2xl shadow-xl p-1.5 z-1000"
                                 >
                                     <div className="p-3 border-b border-brand-divider/60 mb-1">
                                         <div className="flex items-center gap-3">
@@ -547,7 +547,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                             initial={{ opacity: 0, y: -60 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -60 }}
-                            className="fixed top-16 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-[90] md:hidden shadow-lg"
+                            className="fixed top-16 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-90 md:hidden shadow-lg"
                             ref={mobileSearchRef}
                         >
                             <div className="relative">
@@ -557,7 +557,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     placeholder="Search..."
                                     value={searchQuery}
                                     onChange={e => handleSearchChange(e.target.value)}
-                                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-brand-text/10 transition-all"
+                                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-2.5 px-11 text-xs font-black uppercase tracking-widest outline-hidden focus:ring-4 focus:ring-brand-text/10 transition-all"
                                 />
                                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 {searchQuery && (

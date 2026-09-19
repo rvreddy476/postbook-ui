@@ -95,7 +95,7 @@ export default function MopeduAdminLayout({
     return (
       <main className="min-h-screen bg-brand-bg">
         <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
-          <div className="w-full rounded-3xl border border-rose-200 bg-rose-50 px-8 py-10 text-center shadow-sm">
+          <div className="w-full rounded-3xl border border-rose-200 bg-rose-50 px-8 py-10 text-center shadow-xs">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-700">
               <AlertTriangle className="h-6 w-6" />
             </div>
@@ -116,7 +116,7 @@ export default function MopeduAdminLayout({
     <main className="min-h-screen bg-brand-bg">
       <div className="mx-auto flex w-full max-w-[1400px] gap-6 px-4 py-6 md:px-6">
         <aside className="hidden w-64 shrink-0 md:block">
-          <div className="sticky top-6 rounded-2xl border border-brand-divider bg-brand-card px-3 py-4 shadow-sm">
+          <div className="sticky top-6 rounded-2xl border border-brand-divider bg-brand-card px-3 py-4 shadow-xs">
             <div className="px-2 pb-3">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
                 Internal Console
@@ -167,7 +167,7 @@ export default function MopeduAdminLayout({
             })}
           </nav>
 
-          <header className="mb-5 rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
+          <header className="mb-5 rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
               Mopedu admin
             </p>

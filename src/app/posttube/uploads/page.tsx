@@ -92,17 +92,17 @@ function UploadCard({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-text/10 to-purple-100">
+                        <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-brand-text/10 to-purple-100">
                             <Play className="h-8 w-8 text-brand-text/30" />
                         </div>
                     )}
                     {item.video_metadata?.duration_seconds && (
-                        <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        <span className="absolute bottom-2 right-2 rounded-sm bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">
                             {fmtDuration(item.video_metadata.duration_seconds)}
                         </span>
                     )}
                     {item.video_metadata?.upload_status && item.video_metadata.upload_status !== "ready" && (
-                        <span className="absolute top-2 left-2 rounded bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        <span className="absolute top-2 left-2 rounded-sm bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white">
                             {item.video_metadata.upload_status}
                         </span>
                     )}
@@ -149,7 +149,7 @@ function UploadCard({
                         </>
                     )}
                     {isVideo && item.video_metadata?.final_category && (
-                        <span className="ml-auto rounded bg-brand-secondary px-1.5 py-0.5 text-[10px] font-medium text-brand-highlight">
+                        <span className="ml-auto rounded-sm bg-brand-secondary px-1.5 py-0.5 text-[10px] font-medium text-brand-highlight">
                             {item.video_metadata.final_category}
                         </span>
                     )}
@@ -334,8 +334,8 @@ function LoadingSkeleton() {
                 <div key={i} className="rounded-xl border border-brand-divider bg-brand-card overflow-hidden animate-pulse">
                     <div className="aspect-video bg-brand-secondary" />
                     <div className="p-4 space-y-2">
-                        <div className="h-4 bg-brand-secondary rounded w-3/4" />
-                        <div className="h-3 bg-brand-secondary rounded w-1/2" />
+                        <div className="h-4 bg-brand-secondary rounded-sm w-3/4" />
+                        <div className="h-3 bg-brand-secondary rounded-sm w-1/2" />
                     </div>
                 </div>
             ))}
@@ -387,7 +387,7 @@ export default function MyUploadsPage() {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                                 isActive
-                                    ? "bg-brand-card text-brand-text shadow-sm"
+                                    ? "bg-brand-card text-brand-text shadow-xs"
                                     : "text-brand-highlight hover:text-brand-text"
                             }`}
                         >

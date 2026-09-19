@@ -37,7 +37,7 @@ export function Dialog({ open, onClose, children, title }: DialogProps) {
         <div
             ref={overlayRef}
             onClick={handleOverlayClick}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs"
         >
             <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-brand-card rounded-2xl shadow-xl mx-4">
                 <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-brand-text/10 bg-brand-card rounded-t-2xl">

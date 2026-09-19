@@ -91,14 +91,14 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
                 value={rule.title}
                 onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], title: e.target.value }; setDraft(d) }}
                 placeholder="Rule title..."
-                className="w-full px-3 py-2.5 bg-brand-secondary border border-brand-divider rounded-lg text-sm font-medium text-brand-text mb-2 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
+                className="w-full px-3 py-2.5 bg-brand-secondary border border-brand-divider rounded-lg text-sm font-medium text-brand-text mb-2 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
               />
               <textarea
                 value={rule.description}
                 onChange={(e) => { const d = [...draft]; d[i] = { ...d[i], description: e.target.value }; setDraft(d) }}
                 placeholder="Add a description (optional)..."
                 rows={2}
-                className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-xs text-brand-highlight resize-none focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
+                className="w-full px-3 py-2 bg-brand-secondary border border-brand-divider rounded-lg text-xs text-brand-highlight resize-none focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 placeholder:text-brand-text/30"
               />
             </motion.div>
           ))}
@@ -163,7 +163,7 @@ export default function GroupRulesTab({ groupId, isAdmin }: GroupRulesTabProps) 
               className="bg-brand-card rounded-xl border border-brand-divider p-4 hover:border-brand-divider transition-all"
             >
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-text/10 flex items-center justify-center text-xs font-bold text-brand-text">
+                <span className="shrink-0 w-7 h-7 rounded-full bg-brand-text/10 flex items-center justify-center text-xs font-bold text-brand-text">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">

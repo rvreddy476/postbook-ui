@@ -62,7 +62,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                     type={item.type}
                     value={(editForm as any)[item.field]}
                     onChange={(e) => setEditForm({ ...editForm, [item.field]: e.target.value })}
-                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl px-6 py-4 font-bold text-brand-text outline-none focus:ring-4 focus:ring-blue-500/5 transition-all"
+                    className="w-full bg-brand-secondary border border-brand-divider rounded-2xl px-6 py-4 font-bold text-brand-text outline-hidden focus:ring-4 focus:ring-blue-500/5 transition-all"
                   />
                 </div>
               ))}
@@ -71,14 +71,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                 <textarea
                   value={editForm.bio}
                   onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                  className="w-full bg-brand-secondary border border-brand-divider rounded-2xl px-6 py-4 font-bold text-brand-text outline-none focus:ring-4 focus:ring-blue-500/5 transition-all h-32 resize-none"
+                  className="w-full bg-brand-secondary border border-brand-divider rounded-2xl px-6 py-4 font-bold text-brand-text outline-hidden focus:ring-4 focus:ring-blue-500/5 transition-all h-32 resize-none"
                 />
               </div>
             </div>
 
             <button
               onClick={handleSave}
-              className="w-full py-6 bg-gradient-to-r from-blue-600 to-brand-text text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+              className="w-full py-6 bg-linear-to-r from-blue-600 to-brand-text text-white rounded-[2.5rem] font-black text-lg uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
             >
               Synchronize Identity
             </button>
@@ -116,7 +116,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
               { label: 'Base', val: user.location, icon: '📍' },
               { label: 'Origin', val: user.dob, icon: '🎂' }
             ].map(info => (
-              <div key={info.label} className="p-5 bg-brand-card rounded-3xl shadow-sm border border-brand-divider hover:shadow-xl transition-all">
+              <div key={info.label} className="p-5 bg-brand-card rounded-3xl shadow-xs border border-brand-divider hover:shadow-xl transition-all">
                 <p className="text-[10px] font-black uppercase text-brand-text/60 tracking-widest mb-1">{info.icon} {info.label}</p>
                 <p className="font-bold text-xs text-brand-text truncate">{info.val || 'Uncharted'}</p>
               </div>
@@ -127,7 +127,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-8">
-          <div className="flex bg-brand-card/50 backdrop-blur-xl p-2 rounded-[2rem] border border-white shadow-sm">
+          <div className="flex bg-brand-card/50 backdrop-blur-xl p-2 rounded-4xl border border-white shadow-xs">
             {['posts', 'friends', 'gallery'].map((tab) => (
               <button
                 key={tab}
@@ -162,7 +162,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gradient-to-br from-blue-600 to-brand-text rounded-[3rem] p-8 text-white shadow-2xl shadow-brand-text/20">
+          <div className="bg-linear-to-br from-blue-600 to-brand-text rounded-[3rem] p-8 text-white shadow-2xl shadow-brand-text/20">
             <h3 className="font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Active Frequencies</h3>
             <div className="flex flex-wrap gap-2">
               {(user.hobbies || 'Design, AI, Code').split(',').map(h => (
@@ -171,11 +171,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             </div>
           </div>
 
-          <div className="bg-brand-card rounded-[3rem] p-8 border border-brand-divider shadow-sm">
+          <div className="bg-brand-card rounded-[3rem] p-8 border border-brand-divider shadow-xs">
             <h3 className="text-brand-text font-black uppercase text-xs tracking-[0.3em] mb-6 italic">Network Nodes</h3>
             <div className="grid grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="aspect-square bg-brand-secondary rounded-2xl overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-sm border border-white">
+                <div key={i} className="aspect-square bg-brand-secondary rounded-2xl overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-xs border border-white">
                   <img src={`https://picsum.photos/seed/pnode${i}/150/150`} className="w-full h-full object-cover" alt="" />
                 </div>
               ))}

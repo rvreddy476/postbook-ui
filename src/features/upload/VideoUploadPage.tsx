@@ -220,7 +220,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               type="button"
               onClick={handlePublish}
               disabled={publishing || !canPublish}
-              className="flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-brand-bg shadow-sm hover:bg-brand-text disabled:opacity-40 transition-all"
+              className="flex items-center gap-2 rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-brand-bg shadow-xs hover:bg-brand-text disabled:opacity-40 transition-all"
             >
               {publishing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publishing...</> : "Publish"}
             </button>
@@ -268,7 +268,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               {/* ─── LEFT: Details form ─── */}
               <div className="space-y-6">
                 {/* Section 1: File */}
-                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-xs">
                   <div className="flex items-center gap-2 mb-4">
                     <StepDot done={true} />
                     <h2 className="text-[13px] font-bold text-brand-text">File</h2>
@@ -291,7 +291,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 </section>
 
                 {/* Section 2: Details */}
-                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-brand-divider/60 bg-brand-card p-5 shadow-xs">
                   <div className="flex items-center gap-2 mb-5">
                     <StepDot done={!!(title.trim() && category)} />
                     <h2 className="text-[13px] font-bold text-brand-text">Details</h2>
@@ -310,7 +310,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setTitle(e.target.value)}
                         maxLength={100}
                         autoFocus
-                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
                         placeholder="Add a title that describes your content"
                       />
                     </div>
@@ -326,7 +326,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                         onChange={(e) => setDescription(e.target.value)}
                         maxLength={5000}
                         rows={4}
-                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
                         placeholder="Tell viewers about your content. Use #hashtags and @mentions."
                       />
                     </div>
@@ -339,7 +339,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
                           >
                             <option value="">Select category</option>
                             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -353,7 +353,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                           <select
                             value={visibility}
                             onChange={(e) => setVisibility(e.target.value)}
-                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+                            className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
                           >
                             {VISIBILITY_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
                           </select>
@@ -368,7 +368,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                       <input
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+                        className="h-11 w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
                         placeholder="tech, tutorial, vlog (comma-separated)"
                       />
                     </div>
@@ -379,9 +379,9 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
               {/* ─── RIGHT: Preview + Poster ─── */}
               <div className="space-y-5">
                 {/* Preview card */}
-                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-sm">
+                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-xs">
                   <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Preview</p>
-                  <div className="overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-sm">
+                  <div className="overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xs">
                     <div
                       className="flex items-center justify-center bg-brand-secondary"
                       style={{ aspectRatio: isVertical ? "9/16" : "16/9", maxHeight: isVertical ? "180px" : "140px" }}
@@ -405,7 +405,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                 </div>
 
                 {/* Poster */}
-                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-sm">
+                <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-4 shadow-xs">
                   <div className="flex items-center gap-2 mb-3">
                     <StepDot done={!!posterPreview} />
                     <p className="text-[11px] font-bold uppercase tracking-widest text-brand-text/60">Poster</p>

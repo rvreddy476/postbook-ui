@@ -107,7 +107,7 @@ export function ChannelInfoPanel({
 
       {/* 5. Description */}
       <div className="mt-4">
-        <p className="whitespace-pre-line text-[13px] leading-[1.5] text-brand-highlight">
+        <p className="whitespace-pre-line text-[13px] leading-normal text-brand-highlight">
           {displayText}
         </p>
         {isLong ? (

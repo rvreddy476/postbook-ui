@@ -185,7 +185,7 @@ export function ImageAdjustEditor({
                 />
                 <div className="pointer-events-none absolute inset-0 bg-black/10" />
                 <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/35" />
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.22)_1px,transparent_1px)] bg-[size:33.333%_33.333%]" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.22)_1px,transparent_1px)] bg-size-[33.333%_33.333%]" />
             </div>
 
             {!compact && (

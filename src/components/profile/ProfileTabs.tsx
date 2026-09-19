@@ -153,10 +153,10 @@ export function ProfileTabs({
         <div className={`py-1 border-b border-brand-divider/60 ${isSticky ? "" : ""}`}>
             <div className="relative">
                 {canScrollLeft && (
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-brand-card to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-brand-card to-transparent z-10 pointer-events-none" />
                 )}
                 {canScrollRight && (
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-brand-card to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-brand-card to-transparent z-10 pointer-events-none" />
                 )}
 
                 <div
@@ -179,7 +179,7 @@ export function ProfileTabs({
                                 <span
                                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-300 ${
                                         isActive
-                                            ? `${tab.activeColor} shadow-sm scale-110`
+                                            ? `${tab.activeColor} shadow-xs scale-110`
                                             : `bg-transparent ${tab.inactiveColor} group-hover:bg-zinc-100`
                                     }`}
                                 >
@@ -190,7 +190,7 @@ export function ProfileTabs({
                                 {isActive && (
                                     <motion.div
                                         layoutId="profile-tab-indicator"
-                                        className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-gradient-to-r from-brand-text to-brand-text/60 rounded-full"
+                                        className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-linear-to-r from-brand-text to-brand-text/60 rounded-full"
                                         transition={{
                                             type: "spring",
                                             bounce: 0.2,

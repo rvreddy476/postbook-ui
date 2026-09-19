@@ -63,7 +63,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
       <div className="space-y-4">
         <div className="h-44 rounded-2xl bg-brand-text/5 animate-pulse" />
         <div className="h-7 w-56 rounded-lg bg-brand-text/5 animate-pulse" />
-        <div className="h-4 w-40 rounded bg-brand-text/5 animate-pulse" />
+        <div className="h-4 w-40 rounded-sm bg-brand-text/5 animate-pulse" />
         <div className="h-10 rounded-xl bg-brand-text/5 animate-pulse" />
       </div>
     )
@@ -97,7 +97,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={coverSrc} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${coverGrad}`}>
+          <div className={`flex h-full w-full items-center justify-center bg-linear-to-br ${coverGrad}`}>
             <span className="text-6xl font-black opacity-20">{group.name.charAt(0).toUpperCase()}</span>
           </div>
         )}
@@ -106,7 +106,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
       {/* Identity + actions — one compact row: avatar · name/meta · actions */}
       <div className="mt-4 flex flex-wrap items-center gap-3 px-1">
         {/* Space avatar */}
-        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
           {group.avatar_media_id ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -124,7 +124,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
         {/* Name + meta */}
         <div className="min-w-0">
           <h2
-            className="truncate text-lg font-[800] tracking-tight text-brand-text sm:text-xl"
+            className="truncate text-lg font-extrabold tracking-tight text-brand-text sm:text-xl"
             style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
           >
             {group.name}
@@ -232,7 +232,7 @@ export default function SpaceView({ groupId }: SpaceViewProps) {
       {showInvite && <GroupInviteModal groupId={group.id} onClose={() => setShowInvite(false)} />}
       {showCreatePost && (
         <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs"
           onClick={() => setShowCreatePost(false)}
         >
           <div onClick={(e) => e.stopPropagation()}>

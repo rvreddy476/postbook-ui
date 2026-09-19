@@ -14,7 +14,7 @@ import {
 import { useCategories } from '@/hooks/useCommerce'
 import { uploadMedia } from '@/lib/mediaUpload'
 
-const inputCls = 'w-full border border-[#E8DDD3] rounded-xl px-4 py-3 text-[#1A1A1A] bg-white focus:ring-2 focus:ring-[#8B5E3C]/20 focus:border-[#8B5E3C] outline-none transition-all text-sm font-medium placeholder:text-[#6B5544]/30'
+const inputCls = 'w-full border border-[#E8DDD3] rounded-xl px-4 py-3 text-[#1A1A1A] bg-white focus:ring-2 focus:ring-[#8B5E3C]/20 focus:border-[#8B5E3C] outline-hidden transition-all text-sm font-medium placeholder:text-[#6B5544]/30'
 const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-[#6B5544] mb-1.5'
 
 type Variant = {

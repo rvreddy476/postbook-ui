@@ -48,14 +48,14 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-brand-text/50 to-brand-text flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-brand-text/50 to-brand-text flex items-center justify-center">
                         <Film className="w-10 h-10 text-white/60" />
                     </div>
                 )}
 
                 {/* Play overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:bg-black/65 transition-colors duration-200">
+                    <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-xs flex items-center justify-center group-hover:bg-black/65 transition-colors duration-200">
                         <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
                     </div>
                 </div>

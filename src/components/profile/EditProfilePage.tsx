@@ -170,7 +170,7 @@ export function EditProfilePage() {
                         whileHover={{ scale: 1.1, x: -5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => router.back()}
-                        className="p-4 bg-brand-card shadow-xl border border-brand-divider rounded-[1.5rem] text-brand-highlight hover:text-brand-text transition-colors"
+                        className="p-4 bg-brand-card shadow-xl border border-brand-divider rounded-3xl text-brand-highlight hover:text-brand-text transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </motion.button>
@@ -186,7 +186,7 @@ export function EditProfilePage() {
                     <Button
                         onClick={handleSaveProfile}
                         disabled={updateProfile.isPending}
-                        className="h-14 px-8 rounded-[1.5rem] bg-brand-text text-brand-card hover:opacity-90 shadow-xl shadow-brand-text/10 group"
+                        className="h-14 px-8 rounded-3xl bg-brand-text text-brand-card hover:opacity-90 shadow-xl shadow-brand-text/10 group"
                     >
                         {updateProfile.isPending ? (
                             <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -249,7 +249,7 @@ export function EditProfilePage() {
 
                 {/* Main Content Area */}
                 <main className="relative min-h-[600px] bg-brand-card/40 backdrop-blur-3xl border border-brand-divider rounded-[3rem] shadow-[0_32px_64px_rgba(0,0,0,0.04)] overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-secondary/30 via-brand-card to-brand-secondary/20 -z-10" />
+                    <div className="absolute inset-0 bg-linear-to-br from-brand-secondary/30 via-brand-card to-brand-secondary/20 -z-10" />
 
                     <AnimatePresence mode="wait">
                         <motion.div

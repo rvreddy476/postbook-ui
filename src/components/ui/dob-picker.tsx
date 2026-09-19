@@ -99,7 +99,7 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
 
     const hasError = !!displayError
     const base = selectClassName ??
-        "rounded-xl border bg-brand-card px-3 py-2 text-sm font-medium text-brand-text outline-none cursor-pointer transition-all focus:ring-2 appearance-none"
+        "rounded-xl border bg-brand-card px-3 py-2 text-sm font-medium text-brand-text outline-hidden cursor-pointer transition-all focus:ring-2 appearance-none"
     const borderCls = hasError
         ? "border-rose-400 focus:ring-rose-400/20 focus:border-rose-500"
         : "border-brand-divider focus:ring-brand-accent/20 focus:border-brand-accent"

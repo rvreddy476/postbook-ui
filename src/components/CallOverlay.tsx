@@ -267,7 +267,7 @@ const CallOverlay: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[3000] flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-2xl"
+        className="fixed inset-0 z-3000 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-2xl"
         onClick={isVideo && isActive ? handleDoubleTap : undefined}
       >
         {/* Audio element for audio-only calls */}
@@ -316,7 +316,7 @@ const CallOverlay: React.FC = () => {
 
         {/* Top-left: peer name (only during active video call) */}
         {isVideo && isActive && info.remoteStream && (
-          <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-black/40 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+          <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-black/40 rounded-lg px-3 py-1.5 backdrop-blur-xs">
             {info.peerAvatar && (
               <img src={info.peerAvatar} alt="" className="w-6 h-6 rounded-full object-cover" />
             )}
@@ -337,7 +337,7 @@ const CallOverlay: React.FC = () => {
                 {info.peerAvatar ? (
                   <img src={info.peerAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-brand-text/50 to-pink-500 flex items-center justify-center text-white text-3xl font-bold">
+                  <div className="w-full h-full bg-linear-to-br from-brand-text/50 to-pink-500 flex items-center justify-center text-white text-3xl font-bold">
                     {info.peerName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -398,7 +398,7 @@ const CallOverlay: React.FC = () => {
               onClick={endCall}
               className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:bg-red-600 transition-all hover:scale-105 active:scale-95"
             >
-              <svg className="w-7 h-7 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-7 h-7 rotate-135" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
               </svg>
             </button>
@@ -473,7 +473,7 @@ const CallOverlay: React.FC = () => {
                 title="End call"
                 className="w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:bg-red-600 transition-all hover:scale-105 active:scale-95"
               >
-                <svg className="w-6 h-6 rotate-[135deg]" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 rotate-135" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
                 </svg>
               </button>

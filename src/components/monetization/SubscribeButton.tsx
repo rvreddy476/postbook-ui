@@ -65,7 +65,7 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
                 <button
                     onClick={() => setShowConfirm(!showConfirm)}
                     disabled={isPending}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#D4A574] text-[#3C2415] hover:bg-brand-card hover:shadow-sm active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FAF5F0] border border-[#D4A574] text-[#3C2415] hover:bg-brand-card hover:shadow-xs active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <div className="w-3.5 h-3.5 border-2 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
@@ -114,7 +114,7 @@ const SubscribeButton: React.FC<SubscribeButtonProps> = ({
         <button
             onClick={handleSubscribe}
             disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
             {isPending ? (
                 <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />

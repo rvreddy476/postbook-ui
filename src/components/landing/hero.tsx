@@ -19,7 +19,7 @@ export function LandingHero() {
       <div className="space-y-5 text-center lg:text-left">
         <h1 className="text-4xl font-black leading-[0.9] tracking-tighter text-brand-text sm:text-5xl xl:text-6xl">
           Create. <br />
-          <span className="bg-gradient-to-r from-brand-text via-brand-accent to-brand-text bg-clip-text text-transparent">Connect. Explore.</span>
+          <span className="bg-linear-to-r from-brand-text via-brand-accent to-brand-text bg-clip-text text-transparent">Connect. Explore.</span>
         </h1>
         <p className="mx-auto max-w-xl text-base font-medium leading-relaxed text-brand-highlight lg:mx-0 lg:text-lg">
           The infinite network for the modern visionary. Experience a classic digital sanctuary designed for authentic
@@ -133,9 +133,9 @@ function FeatureCard({ title, desc, color, href, icon }: FeatureCardProps) {
   return (
     <Link
       href={href}
-      className={`group block rounded-3xl border border-brand-divider bg-brand-card p-4 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:-translate-y-1 hover:border-brand-accent/50 hover:shadow-2xl ${c.hover}`}
+      className={`group block rounded-3xl border border-brand-divider bg-brand-card p-4 shadow-xs backdrop-blur-3xl transition-all duration-500 hover:-translate-y-1 hover:border-brand-accent/50 hover:shadow-2xl ${c.hover}`}
     >
-      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg transition-transform group-hover:scale-110 ${c.bg} ${c.shadow}`}>
+      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br text-white shadow-lg transition-transform group-hover:scale-110 ${c.bg} ${c.shadow}`}>
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {icon}
         </svg>

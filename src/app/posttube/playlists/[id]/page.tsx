@@ -42,7 +42,7 @@ export default function PlaylistDetailPage({ params }: { params: Promise<{ id: s
             <div className="space-y-2">
               {items.map((it) => (
                 <div key={it.post_id} className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="w-24 aspect-video rounded bg-gray-100 flex items-center justify-center text-gray-400 text-xs overflow-hidden">
+                  <div className="w-24 aspect-video rounded-sm bg-gray-100 flex items-center justify-center text-gray-400 text-xs overflow-hidden">
                     {it.post?.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={it.post.thumbnail_url} alt="" className="w-full h-full object-cover" />

@@ -104,9 +104,9 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
       {isMember && !hideComposer && (
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-sm transition-all group"
+          className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-xs transition-all group"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-secondary to-brand-secondary flex items-center justify-center group-hover:from-brand-text/10 group-hover:to-brand-text/5 transition-all">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-secondary to-brand-secondary flex items-center justify-center group-hover:from-brand-text/10 group-hover:to-brand-text/5 transition-all">
             <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
           </div>
           <span className="group-hover:text-brand-highlight transition-colors">Write something to your space...</span>
@@ -120,7 +120,7 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
             onClick={(e) => e.target === e.currentTarget && setShowCreate(false)}
           >
             <CreatePortal onClose={() => setShowCreate(false)} groupId={groupId} />
@@ -136,8 +136,8 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-brand-secondary" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-28 bg-brand-secondary rounded" />
-                  <div className="h-2.5 w-16 bg-brand-secondary rounded" />
+                  <div className="h-3.5 w-28 bg-brand-secondary rounded-sm" />
+                  <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
                 </div>
               </div>
               <div className="space-y-2">

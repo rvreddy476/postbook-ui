@@ -75,7 +75,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
             <div className="flex items-start gap-3 p-3.5">
                 {/* Icon / Image */}
                 {toast.imageUrl ? (
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider shrink-0">
                         <img
                             src={toast.imageUrl}
                             alt=""
@@ -84,7 +84,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
                     </div>
                 ) : (
                     <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                             isCritical
                                 ? "bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-300"
                                 : "bg-brand-secondary text-brand-accent"
@@ -128,7 +128,7 @@ function NotificationToastItem({ toast, onDismiss }: NotificationToastProps) {
                         e.stopPropagation()
                         onDismiss(toast.id)
                     }}
-                    className={`w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${
+                    className={`w-6 h-6 flex items-center justify-center rounded-full shrink-0 transition-colors ${
                         isCritical
                             ? "text-rose-400 hover:bg-rose-200/50 dark:hover:bg-rose-800/50"
                             : "text-brand-text/30 hover:text-brand-text/60 hover:bg-brand-secondary"
@@ -157,7 +157,7 @@ export function NotificationToastContainer({ toasts, onDismiss }: NotificationTo
     )
 
     return (
-        <div className="fixed top-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none">
+        <div className="fixed top-4 right-4 z-70 flex flex-col gap-2 pointer-events-none">
             <AnimatePresence mode="popLayout">
                 {toasts.map((t) => (
                     <div key={t.id} className="pointer-events-auto">

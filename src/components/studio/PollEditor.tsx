@@ -63,7 +63,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
           value={question}
           onChange={(e) => onQuestionChange(e.target.value)}
           placeholder="Ask a question…"
-          className="w-full rounded-xl px-3.5 py-2.5 text-[14px] font-medium placeholder:text-brand-highlight focus:outline-none focus:ring-1 transition-all"
+          className="w-full rounded-xl px-3.5 py-2.5 text-[14px] font-medium placeholder:text-brand-highlight focus:outline-hidden focus:ring-1 transition-all"
           style={{
             background: isDarkMode ? '#10182D' : '#F8FAFC',
             border: questionError
@@ -98,7 +98,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
                 value={opt}
                 onChange={(e) => updateOption(i, e.target.value)}
                 placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                className="flex-1 rounded-xl px-3.5 py-2.5 text-[13px] placeholder:text-brand-highlight focus:outline-none focus:ring-1 transition-all"
+                className="flex-1 rounded-xl px-3.5 py-2.5 text-[13px] placeholder:text-brand-highlight focus:outline-hidden focus:ring-1 transition-all"
                 style={{
                   background: isDarkMode ? '#10182D' : '#F8FAFC',
                   border: err
@@ -138,7 +138,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
         <select
           value={poll.duration}
           onChange={(e) => onChange({ ...poll, duration: e.target.value })}
-          className="rounded-lg px-2 py-1 text-[10px] focus:outline-none cursor-pointer"
+          className="rounded-lg px-2 py-1 text-[10px] focus:outline-hidden cursor-pointer"
           style={{
             background: isDarkMode ? '#10182D' : '#F8FAFC',
             border: isDarkMode ? '1px solid rgba(148,163,184,0.2)' : '1px solid #E2E8F0',
@@ -154,7 +154,7 @@ const PollEditor: React.FC<PollEditorProps> = ({
             type="checkbox"
             checked={poll.allowMultiple}
             onChange={(e) => onChange({ ...poll, allowMultiple: e.target.checked })}
-            className="rounded scale-75 accent-blue-600"
+            className="rounded-sm scale-75 accent-blue-600"
           />
           Multi-vote
         </label>

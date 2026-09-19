@@ -20,10 +20,10 @@ export default function CreatorCard({ username, contentCounts }: CreatorCardProp
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.15 }}
-            className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden"
+            className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider overflow-hidden"
         >
             {/* Teal gradient header */}
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-5 py-3">
+            <div className="bg-linear-to-r from-teal-500 to-teal-600 px-5 py-3">
                 <div className="flex items-center gap-2">
                     <Film className="h-4 w-4 text-white" />
                     <span className="text-sm font-bold text-white">Creator on VChat</span>

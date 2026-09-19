@@ -13,8 +13,8 @@ const ICON_OPTIONS = [
     "spotify", "twitch", "reddit", "email", "other",
 ]
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs appearance-none cursor-pointer"
 
 export function SocialLinksSection() {
     const { data: links, isLoading } = useProfileLinks()
@@ -39,7 +39,7 @@ export function SocialLinksSection() {
 
     if (isLoading) return (
         <div className="space-y-4">
-            {[1, 2].map(i => <div key={i} className="h-20 bg-brand-secondary animate-pulse rounded-[1.5rem]" />)}
+            {[1, 2].map(i => <div key={i} className="h-20 bg-brand-secondary animate-pulse rounded-3xl" />)}
         </div>
     )
 
@@ -55,7 +55,7 @@ export function SocialLinksSection() {
                     size="sm"
                     onClick={() => setShowAddForm(true)}
                     disabled={showAddForm}
-                    className="h-10 px-4 rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-secondary text-[10px] font-black uppercase tracking-widest text-brand-text shadow-sm"
+                    className="h-10 px-4 rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-secondary text-[10px] font-black uppercase tracking-widest text-brand-text shadow-xs"
                 >
                     <Plus className="w-3.5 h-3.5 mr-2" />
                     Add New Link
@@ -68,7 +68,7 @@ export function SocialLinksSection() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="p-6 rounded-[2rem] bg-brand-secondary/40/50 border border-brand-divider shadow-inner space-y-4"
+                            className="p-6 rounded-4xl bg-brand-secondary/40/50 border border-brand-divider shadow-inner space-y-4"
                         >
                             <div className="grid grid-cols-[140px_1fr] gap-4">
                                 <select
@@ -156,7 +156,7 @@ function LinkRow({
 
     if (editing) {
         return (
-            <div className="p-6 rounded-[2rem] bg-brand-card border border-brand-divider shadow-xl space-y-4">
+            <div className="p-6 rounded-4xl bg-brand-card border border-brand-divider shadow-xl space-y-4">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={inputBase} />
                 <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputBase} />
                 <div className="flex gap-2 justify-end pt-2">
@@ -172,7 +172,7 @@ function LinkRow({
     return (
         <motion.div
             layout
-            className="flex items-center gap-6 p-5 rounded-[1.5rem] bg-brand-card border border-brand-divider group hover:shadow-2xl transition-all duration-500"
+            className="flex items-center gap-6 p-5 rounded-3xl bg-brand-card border border-brand-divider group hover:shadow-2xl transition-all duration-500"
         >
             <div className="w-12 h-12 bg-brand-secondary rounded-xl flex items-center justify-center border border-brand-divider shrink-0">
                 <span className="text-[10px] font-black text-brand-text/60 uppercase tracking-tighter">
@@ -185,7 +185,7 @@ function LinkRow({
                     <span className="text-sm font-black text-brand-text uppercase tracking-tight truncate">{link.title}</span>
                     {link.is_pinned && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
                 </div>
-                <div className="flex items-center gap-3 mt-1.5 font-bold uppercase tracking-[0.05em]">
+                <div className="flex items-center gap-3 mt-1.5 font-bold uppercase tracking-wider">
                     <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-text/60 hover:text-brand-text truncate flex items-center gap-1.5 transition-colors">
                         <ExternalLink className="w-3 h-3" />
                         {link.url}

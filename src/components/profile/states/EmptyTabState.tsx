@@ -43,7 +43,7 @@ export function EmptyTabState({
             {actionLabel && onAction && (
                 <button
                     onClick={onAction}
-                    className="mt-6 inline-flex items-center px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                    className="mt-6 inline-flex items-center px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                 >
                     {actionLabel}
                 </button>

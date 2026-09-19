@@ -62,7 +62,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
   }
 
   return (
-    <div className="bg-white dark:bg-brand-bg rounded-3xl border border-brand-divider/60 overflow-hidden shadow-sm">
+    <div className="bg-white dark:bg-brand-bg rounded-3xl border border-brand-divider/60 overflow-hidden shadow-xs">
       <div className="h-[140px] relative overflow-hidden group">
         {community.banner_media_id ? (
           <img
@@ -71,21 +71,21 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient} opacity-90 group-hover:scale-105 transition-transform duration-700`} />
+          <div className={`w-full h-full bg-linear-to-br ${gradient} opacity-90 group-hover:scale-105 transition-transform duration-700`} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
       </div>
 
       <div className="px-6 pb-6 -mt-10 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-end gap-4">
-            <div className="w-24 h-24 rounded-[1.5rem] bg-brand-bg p-1 shadow-xl ring-1 ring-black/5 dark:ring-white/10 relative flex-shrink-0">
+            <div className="w-24 h-24 rounded-3xl bg-brand-bg p-1 shadow-xl ring-1 ring-black/5 dark:ring-white/10 relative shrink-0">
               <div className="w-full h-full rounded-[1.25rem] overflow-hidden">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt={community.name} className="w-full h-full object-cover" />
                 ) : (
                   <div
-                    className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-3xl`}
+                    className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-3xl`}
                   >
                     {community.name.charAt(0).toUpperCase()}
                   </div>
@@ -99,7 +99,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
                   {community.name}
                 </h1>
                 {community.is_verified && (
-                  <BadgeCheck className="w-5 h-5 text-brand-text flex-shrink-0" />
+                  <BadgeCheck className="w-5 h-5 text-brand-text shrink-0" />
                 )}
               </div>
 
@@ -121,11 +121,11 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 pt-3 sm:pt-0 sm:self-end sm:mb-2">
+          <div className="flex items-center gap-2 shrink-0 pt-3 sm:pt-0 sm:self-end sm:mb-2">
             {canEdit ? (
               <button
                 onClick={onEdit}
-                className="flex items-center gap-1.5 px-4 py-2 border border-brand-divider text-brand-text text-xs font-bold rounded-xl hover:bg-brand-bg transition-colors hover:shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 border border-brand-divider text-brand-text text-xs font-bold rounded-xl hover:bg-brand-bg transition-colors hover:shadow-xs"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit
@@ -166,19 +166,19 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
             )}
 
             <div className="flex items-center gap-1.5 p-1 bg-brand-text/5 rounded-2xl">
-              <button className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-sm">
+              <button className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-xs">
                 <Bell className="w-4 h-4" />
               </button>
               <button
                 onClick={copyLink}
-                className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-sm"
+                className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-xs"
               >
                 <Share2 className="w-4 h-4" />
               </button>
               <div className="relative" ref={moreMenuRef}>
                 <button
                   onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-sm"
+                  className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-xs"
                 >
                   <MoreHorizontal className="w-4 h-4" />
                 </button>

@@ -51,7 +51,7 @@ function ModuleCard({
     const accent = colorMap[module.color] ?? colorMap.violet
 
     return (
-        <div className="rounded-xl border border-brand-divider bg-brand-card p-5 transition-shadow hover:shadow-sm">
+        <div className="rounded-xl border border-brand-divider bg-brand-card p-5 transition-shadow hover:shadow-xs">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent}`}>
@@ -147,7 +147,7 @@ function ModuleEditForm({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-xl border border-brand-text/20 bg-brand-card p-6 shadow-sm"
+            className="rounded-xl border border-brand-text/20 bg-brand-card p-6 shadow-xs"
         >
             <h3 className="text-sm font-bold text-brand-text capitalize mb-4">
                 Edit {module} Profile
@@ -159,7 +159,7 @@ function ModuleEditForm({
                         type="checkbox"
                         checked={useGlobal}
                         onChange={(e) => setUseGlobal(e.target.checked)}
-                        className="h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
+                        className="h-4 w-4 rounded-sm border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                     />
                     <div>
                         <p className="text-sm font-medium text-brand-text">Use global identity</p>
@@ -185,7 +185,7 @@ function ModuleEditForm({
                                 value={nameOverride}
                                 onChange={(e) => setNameOverride(e.target.value)}
                                 placeholder="Custom display name for this module"
-                                className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
+                                className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-hidden"
                             />
                         </div>
                     </motion.div>
@@ -200,7 +200,7 @@ function ModuleEditForm({
                         value={bannerUrl}
                         onChange={(e) => setBannerUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-hidden"
                     />
                 </div>
 
@@ -213,7 +213,7 @@ function ModuleEditForm({
                         value={watermarkUrl}
                         onChange={(e) => setWatermarkUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-hidden"
                     />
                 </div>
             </div>
@@ -284,7 +284,7 @@ function HandleSection() {
                         onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                         placeholder="new_handle"
                         maxLength={30}
-                        className="w-full rounded-lg border border-brand-divider pl-8 pr-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-none"
+                        className="w-full rounded-lg border border-brand-divider pl-8 pr-3 py-2 text-sm focus:border-brand-text/50 focus:ring-1 focus:ring-brand-text/50 outline-hidden"
                     />
                 </div>
             </div>
@@ -294,7 +294,7 @@ function HandleSection() {
                     type="checkbox"
                     checked={confirmChecked}
                     onChange={(e) => setConfirmChecked(e.target.checked)}
-                    className="h-4 w-4 rounded border-brand-text/30 text-brand-text focus:ring-brand-text/50"
+                    className="h-4 w-4 rounded-sm border-brand-text/30 text-brand-text focus:ring-brand-text/50"
                 />
                 <span className="text-xs text-brand-highlight">
                     I understand this change has a 30-day cooldown

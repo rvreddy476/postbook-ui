@@ -74,7 +74,7 @@ export function CreateButton() {
         whileTap={{ scale: 0.95 }}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
+        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
         aria-label="Create"
       >
         <Sparkles className="h-[17px] w-[17px]" />
@@ -91,7 +91,7 @@ export function CreateButton() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-[100]"
+            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-[#EEEDF5] bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-100"
           >
             <div className="px-3 py-2 flex items-center gap-2">
               <Zap className="h-3 w-3 text-[#F59E0B]" />
@@ -110,7 +110,7 @@ export function CreateButton() {
                 }}
                 className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${option.hoverBg}`}
               >
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${option.gradient} text-white shadow-sm`}>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${option.gradient} text-white shadow-xs`}>
                   <option.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 text-left">

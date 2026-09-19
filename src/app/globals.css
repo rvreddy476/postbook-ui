@@ -1,56 +1,141 @@
-@import "../ui/theme.css";
+@import '../ui/theme.css' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  --foreground-rgb: var(--theme-foreground-rgb);
-  --background-start-rgb: var(--theme-background-start-rgb);
-  --background-end-rgb: var(--theme-background-end-rgb);
-  --prismatic-violet: var(--theme-prismatic-violet);
-  --prismatic-rose: var(--theme-prismatic-rose);
+@custom-variant dark (&:is(.dark *));
 
-  --brand-bg: var(--theme-brand-bg);
-  --brand-text: var(--theme-brand-text);
-  --brand-accent: var(--theme-brand-accent);
-  --brand-secondary: var(--theme-brand-secondary);
-  --brand-highlight: var(--theme-brand-highlight);
-  --brand-divider: var(--theme-brand-divider);
-  --brand-card: var(--theme-brand-card);
+/*
+  Fonts must live in `@theme inline`, not `@theme`.
+
+  next/font defines --font-outfit and --font-mono-face on <body> (they cannot go
+  on <html>: the inline theme script below replaces documentElement.className
+  wholesale and would wipe them). A plain @theme emits its variables at :root
+  (= <html>), and a var() inside a custom property is substituted at
+  computed-value time on the element where it is declared -- so at :root those
+  references resolve against nothing, the declaration becomes invalid, and
+  font-sans / font-mono silently fall back. `inline` writes the value straight
+  into the utility instead, which is exactly how the v3 config behaved.
+*/
+@theme inline {
+  --font-sans: var(--font-outfit), Outfit, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), 'Space Mono', monospace;
 }
 
-.dark {
-  --foreground-rgb: var(--theme-foreground-rgb);
-  --background-start-rgb: var(--theme-background-start-rgb);
-  --background-end-rgb: var(--theme-background-end-rgb);
-  --prismatic-violet: var(--theme-prismatic-violet);
-  --prismatic-rose: var(--theme-prismatic-rose);
+@theme {
+  --color-orchid-violet: var(--prismatic-violet);
+  --color-orchid-rose: var(--prismatic-rose);
+  --color-orchid-bg: rgb(var(--brand-bg));
 
-  --brand-bg: var(--theme-brand-bg);
-  --brand-text: var(--theme-brand-text);
-  --brand-accent: var(--theme-brand-accent);
-  --brand-secondary: var(--theme-brand-secondary);
-  --brand-highlight: var(--theme-brand-highlight);
-  --brand-divider: var(--theme-brand-divider);
-  --brand-card: var(--theme-brand-card);
+  --color-ask: rgb(var(--brand-accent));
+  --color-ask-hover: rgb(var(--brand-highlight));
+  --color-ask-light: rgb(var(--brand-text) / 0.08);
+  --color-ask-muted: rgb(var(--brand-text) / 0.15);
+  --color-ask-text: rgb(var(--brand-text));
+
+  --color-brand-bg: rgb(var(--brand-bg));
+  --color-brand-text: rgb(var(--brand-text));
+  --color-brand-accent: rgb(var(--brand-accent));
+  --color-brand-secondary: rgb(var(--brand-secondary));
+  --color-brand-highlight: rgb(var(--brand-highlight));
+  --color-brand-divider: var(--brand-divider);
+  --color-brand-card: rgb(var(--brand-card));
+
+  --color-background: rgb(var(--brand-bg));
+  --color-foreground: rgb(var(--brand-text));
+
+  --color-primary: rgb(var(--brand-accent));
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: rgb(var(--brand-secondary));
+  --color-secondary-foreground: rgb(var(--brand-text));
+
+  --color-muted: rgb(var(--brand-secondary));
+  --color-muted-foreground: rgb(var(--brand-highlight));
+
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: var(--brand-divider);
+  --color-input: var(--brand-divider);
+  --color-ring: rgb(var(--brand-accent));
 }
 
-html,
-body {
-  max-width: 100%;
-  overflow-x: hidden;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-body {
-  color: rgb(var(--brand-text));
-  font-family: var(--font-outfit), 'Outfit', sans-serif;
-  background-color: rgb(var(--brand-bg));
+@utility font-mono-display {
+  font-family: var(--font-mono-face), 'Space Mono', monospace;
 }
 
 @layer utilities {
-  .font-mono-display {
-    font-family: var(--font-mono), 'Space Mono', monospace;
+  :root {
+    --foreground-rgb: var(--theme-foreground-rgb);
+    --background-start-rgb: var(--theme-background-start-rgb);
+    --background-end-rgb: var(--theme-background-end-rgb);
+    --prismatic-violet: var(--theme-prismatic-violet);
+    --prismatic-rose: var(--theme-prismatic-rose);
+
+    --brand-bg: var(--theme-brand-bg);
+    --brand-text: var(--theme-brand-text);
+    --brand-accent: var(--theme-brand-accent);
+    --brand-secondary: var(--theme-brand-secondary);
+    --brand-highlight: var(--theme-brand-highlight);
+    --brand-divider: var(--theme-brand-divider);
+    --brand-card: var(--theme-brand-card);
+  }
+
+  .dark {
+    --foreground-rgb: var(--theme-foreground-rgb);
+    --background-start-rgb: var(--theme-background-start-rgb);
+    --background-end-rgb: var(--theme-background-end-rgb);
+    --prismatic-violet: var(--theme-prismatic-violet);
+    --prismatic-rose: var(--theme-prismatic-rose);
+
+    --brand-bg: var(--theme-brand-bg);
+    --brand-text: var(--theme-brand-text);
+    --brand-accent: var(--theme-brand-accent);
+    --brand-secondary: var(--theme-brand-secondary);
+    --brand-highlight: var(--theme-brand-highlight);
+    --brand-divider: var(--theme-brand-divider);
+    --brand-card: var(--theme-brand-card);
+  }
+
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    color: rgb(var(--brand-text));
+    font-family: var(--font-outfit), 'Outfit', sans-serif;
+    background-color: rgb(var(--brand-bg));
+
+    /*
+      Re-declared here, on the element where next/font actually defines
+      --font-mono-face. Tailwind's preflight styles <code>/<kbd>/<samp>/<pre>
+      with var(--default-mono-font-family), but declares that variable at :root
+      (= <html>), where --font-mono-face does not exist -- so it resolves
+      invalid and bare code elements fall back to ui-monospace instead of
+      Space Mono. Utilities are unaffected (they inline the value via
+      @theme inline); this only restores the preflight base styles.
+    */
+    --default-mono-font-family: var(--font-mono-face), 'Space Mono', monospace;
   }
 }
 
@@ -131,7 +216,7 @@ body {
 }
 
 .pb-brand-icon {
-  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-[#b80d35] shadow-2xl shadow-[#D8103F]/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
+  @apply flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-blue-600 to-[#b80d35] shadow-2xl shadow-[#D8103F]/30 ring-1 ring-white/50 transition-all duration-500 group-hover:scale-110 sm:h-12 sm:w-12;
 }
 
 .pb-brand-icon-svg {
@@ -175,7 +260,7 @@ body {
 }
 
 .pb-landing-title-gradient {
-  @apply bg-gradient-to-r from-blue-500 via-[#D8103F] to-rose-500 bg-clip-text text-transparent;
+  @apply bg-linear-to-r from-blue-500 via-[#D8103F] to-rose-500 bg-clip-text text-transparent;
 }
 
 .pb-landing-subtitle {
@@ -187,7 +272,7 @@ body {
 }
 
 .pb-feature-card {
-  @apply rounded-[2rem] border border-white/70 bg-brand-card/40 p-5 shadow-sm backdrop-blur-3xl transition-all duration-500 hover:shadow-2xl;
+  @apply rounded-4xl border border-white/70 bg-brand-card/40 p-5 shadow-xs backdrop-blur-3xl transition-all duration-500 hover:shadow-2xl;
 }
 
 .pb-feature-card--blue {
@@ -211,19 +296,19 @@ body {
 }
 
 .pb-feature-icon--blue {
-  @apply bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/20;
+  @apply bg-linear-to-br from-blue-500 to-blue-700 shadow-blue-500/20;
 }
 
 .pb-feature-icon--rose {
-  @apply bg-gradient-to-br from-rose-500 to-rose-700 shadow-rose-500/20;
+  @apply bg-linear-to-br from-rose-500 to-rose-700 shadow-rose-500/20;
 }
 
 .pb-feature-icon--amber {
-  @apply bg-gradient-to-br from-amber-400 to-yellow-600 shadow-amber-500/30;
+  @apply bg-linear-to-br from-amber-400 to-yellow-600 shadow-amber-500/30;
 }
 
 .pb-feature-icon--emerald {
-  @apply bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20;
+  @apply bg-linear-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20;
 }
 
 .pb-feature-icon-svg {

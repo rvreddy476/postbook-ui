@@ -70,7 +70,7 @@ export default function CommunityPostCommentSection({ postId, communityId, space
               {avatar ? (
                 <img src={avatar} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-[10px] font-bold text-white`}>
+                <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-[10px] font-bold text-white`}>
                   {name[0]?.toUpperCase()}
                 </div>
               )}
@@ -101,7 +101,7 @@ export default function CommunityPostCommentSection({ postId, communityId, space
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() } }}
-          className="flex-1 bg-brand-bg border border-brand-divider rounded-xl px-3 py-2 text-xs text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-1 focus:ring-brand-text/20"
+          className="flex-1 bg-brand-bg border border-brand-divider rounded-xl px-3 py-2 text-xs text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-1 focus:ring-brand-text/20"
         />
         <button
           onClick={handleSubmit}

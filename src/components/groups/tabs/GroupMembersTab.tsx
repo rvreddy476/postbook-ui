@@ -63,7 +63,7 @@ function MemberCard({
           {avatarSrc ? (
             <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-brand-secondary to-brand-text/30 flex items-center justify-center text-sm font-bold text-white">
+            <div className="w-full h-full bg-linear-to-br from-brand-secondary to-brand-text/30 flex items-center justify-center text-sm font-bold text-white">
               {(member.display_name || '?').charAt(0).toUpperCase()}
             </div>
           )}
@@ -358,8 +358,8 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
           <div key={i} className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-brand-divider animate-pulse">
             <div className="w-11 h-11 rounded-xl bg-brand-secondary" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 w-24 bg-brand-secondary rounded" />
-              <div className="h-2.5 w-16 bg-brand-secondary rounded" />
+              <div className="h-3.5 w-24 bg-brand-secondary rounded-sm" />
+              <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
             </div>
             <div className="h-6 w-14 bg-brand-secondary rounded-lg" />
           </div>
@@ -389,7 +389,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
           placeholder="Search members..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
         />
       </div>
 
@@ -421,7 +421,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       )}
 
       {/* Floating chat dock - Message opens an in-place ChatWindow. */}
-      <div className="fixed bottom-0 right-4 z-[1500] flex items-end gap-3">
+      <div className="fixed bottom-0 right-4 z-1500 flex items-end gap-3">
         {chats.map((c) => (
           <ChatWindow key={c.id} contact={c} onClose={() => closeChat(c.id)} />
         ))}

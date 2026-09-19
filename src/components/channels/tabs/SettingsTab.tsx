@@ -92,7 +92,7 @@ function TextInput({
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
         placeholder={placeholder}
-        className={`w-full bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-2 focus:ring-brand-text/20 transition ${
+        className={`w-full bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-brand-text/20 transition ${
           mono ? 'font-mono' : ''
         } ${error ? 'border-red-400 focus:ring-red-200' : ''}`}
       />
@@ -122,7 +122,7 @@ function TextArea({
         maxLength={maxLength}
         placeholder={placeholder}
         rows={rows}
-        className="w-full bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-2 focus:ring-brand-text/20 transition resize-none"
+        className="w-full bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-brand-text/20 transition resize-none"
       />
       {maxLength != null && (
         <p className="text-[10px] text-brand-text/30 text-right mt-0.5">
@@ -147,7 +147,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text outline-none focus:ring-2 focus:ring-brand-text/20 transition pr-9"
+        className="w-full appearance-none bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text outline-hidden focus:ring-2 focus:ring-brand-text/20 transition pr-9"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
@@ -167,12 +167,12 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
       role="switch"
       aria-checked={enabled}
       onClick={onToggle}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-text/20 ${
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 ${
         enabled ? 'bg-brand-text' : 'bg-brand-divider'
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition-transform duration-200 ease-in-out ${
           enabled ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
@@ -362,7 +362,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
               value={handle}
               onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
               maxLength={30}
-              className={`w-full bg-brand-bg border border-brand-divider rounded-xl pl-7 pr-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-none focus:ring-2 focus:ring-brand-text/20 transition ${
+              className={`w-full bg-brand-bg border border-brand-divider rounded-xl pl-7 pr-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-brand-text/20 transition ${
                 handleError ? 'border-red-400 focus:ring-red-200' : ''
               }`}
               placeholder="channel_handle"
@@ -524,7 +524,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
                   <input
                     type="text"
                     placeholder="New owner's username"
-                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-2 focus:ring-red-200"
+                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-red-200"
                   />
                   <button className="shrink-0 bg-red-600 text-white text-xs font-semibold rounded-xl px-4 py-2 hover:bg-red-700 transition-colors">
                     Confirm Transfer
@@ -576,7 +576,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
                     placeholder={channel.name}
-                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-none focus:ring-2 focus:ring-red-200"
+                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-red-200"
                   />
                   <button
                     disabled={deleteConfirmText !== channel.name}

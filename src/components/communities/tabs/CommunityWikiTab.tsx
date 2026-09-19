@@ -41,8 +41,8 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
       <div className="space-y-2">
         {[1, 2, 3].map(i => (
           <div key={i} className="bg-brand-card border border-brand-divider rounded-xl p-4 animate-pulse">
-            <div className="h-4 w-32 bg-brand-bg rounded mb-2" />
-            <div className="h-3 w-48 bg-brand-bg rounded" />
+            <div className="h-4 w-32 bg-brand-bg rounded-sm mb-2" />
+            <div className="h-3 w-48 bg-brand-bg rounded-sm" />
           </div>
         ))}
       </div>
@@ -65,7 +65,7 @@ export default function CommunityWikiTab({ communityId, viewerRole }: Props) {
 
       <div className="flex gap-4">
         {/* Page list sidebar */}
-        <div className="w-[200px] flex-shrink-0">
+        <div className="w-[200px] shrink-0">
           {Object.entries(grouped).length > 0 ? (
             Object.entries(grouped).map(([category, catPages]) => (
               <div key={category} className="mb-4">
@@ -189,18 +189,18 @@ function WikiEditor({ communityId, editingPage, onClose, onSaved }: {
 
       <div className="space-y-3">
         <input type="text" placeholder="Page title" value={title} onChange={e => setTitle(e.target.value)}
-          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-1 focus:ring-brand-text/20" />
+          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-1 focus:ring-brand-text/20" />
 
         {!editingPage && (
           <input type="text" placeholder="URL slug (auto-generated)" value={slug} onChange={e => setSlug(e.target.value)}
-            className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-xs font-mono text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-1 focus:ring-brand-text/20" />
+            className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-xs font-mono text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-1 focus:ring-brand-text/20" />
         )}
 
         <input type="text" placeholder="Category (optional)" value={category} onChange={e => setCategory(e.target.value)}
-          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-1 focus:ring-brand-text/20" />
+          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-1 focus:ring-brand-text/20" />
 
         <textarea placeholder="Page content..." value={content} onChange={e => setContent(e.target.value)} rows={12}
-          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:ring-1 focus:ring-brand-text/20 resize-none" />
+          className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-1 focus:ring-brand-text/20 resize-none" />
 
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 text-xs text-brand-text/50 hover:text-brand-text transition-colors">Cancel</button>

@@ -144,7 +144,7 @@ const CommentAvatar: React.FC<{ name?: string; avatar?: string; size?: 'sm' | 'm
 }) => {
   const dim = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8'
   if (avatar) {
-    return <img src={avatar} alt={name ?? ''} className={`${dim} rounded-full object-cover flex-shrink-0`} />
+    return <img src={avatar} alt={name ?? ''} className={`${dim} rounded-full object-cover shrink-0`} />
   }
   return (
     <LetterAvatar
@@ -263,7 +263,7 @@ const InlineReplyInput: React.FC<{
             placeholder={`Reply to @${parentUserName}...`}
             rows={1}
             maxLength={MAX_CHARS + 50}
-            className="w-full rounded-xl bg-brand-secondary px-3 py-2 pr-14 text-[12px] text-brand-text placeholder:text-brand-text/40 outline-none ring-1 ring-transparent focus:ring-brand-text/20 transition resize-none"
+            className="w-full rounded-xl bg-brand-secondary px-3 py-2 pr-14 text-[12px] text-brand-text placeholder:text-brand-text/40 outline-hidden ring-1 ring-transparent focus:ring-brand-text/20 transition resize-none"
           />
           <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
             <div className="relative" ref={emojiRef}>
@@ -398,9 +398,9 @@ const CommentRow: React.FC<{
             <span className="text-[13px] font-semibold text-brand-text truncate">
               {comment.user_name || 'User'}
             </span>
-            <span className="text-[11px] text-brand-text/40 flex-shrink-0">{timeAgo(comment.created_at)}</span>
+            <span className="text-[11px] text-brand-text/40 shrink-0">{timeAgo(comment.created_at)}</span>
             {comment.updated_at && (
-              <span className="text-[10px] italic text-brand-text/30 flex-shrink-0">Edited</span>
+              <span className="text-[10px] italic text-brand-text/30 shrink-0">Edited</span>
             )}
             <div className="flex-1" />
             {hasMenu && (
@@ -422,7 +422,7 @@ const CommentRow: React.FC<{
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-none ring-1 ring-brand-divider focus:ring-brand-text/40 transition resize-none"
+                className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-divider focus:ring-brand-text/40 transition resize-none"
                 rows={2}
                 maxLength={MAX_CHARS}
                 autoFocus
@@ -497,7 +497,7 @@ const CommentRow: React.FC<{
       {/* Delete confirmation */}
       {confirmDelete && (
         <div className="mt-2 ml-10 flex items-center gap-2 p-2.5 rounded-xl bg-red-50 border border-red-200">
-          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
           <span className="text-[12px] text-red-700 flex-1">Delete this comment?</span>
           <button
             onClick={() => setConfirmDelete(false)}
@@ -526,14 +526,14 @@ const CommentSkeleton: React.FC = () => (
   <div className="space-y-4 p-4">
     {[1, 2, 3].map((i) => (
       <div key={i} className="flex gap-2.5 animate-pulse">
-        <div className="w-8 h-8 rounded-full bg-brand-secondary flex-shrink-0" />
+        <div className="w-8 h-8 rounded-full bg-brand-secondary shrink-0" />
         <div className="flex-1 space-y-2">
           <div className="flex gap-2">
-            <div className="h-3 w-20 rounded bg-brand-secondary" />
-            <div className="h-3 w-12 rounded bg-brand-secondary" />
+            <div className="h-3 w-20 rounded-sm bg-brand-secondary" />
+            <div className="h-3 w-12 rounded-sm bg-brand-secondary" />
           </div>
-          <div className="h-3 w-full rounded bg-brand-secondary" />
-          <div className="h-3 w-3/4 rounded bg-brand-secondary" />
+          <div className="h-3 w-full rounded-sm bg-brand-secondary" />
+          <div className="h-3 w-3/4 rounded-sm bg-brand-secondary" />
         </div>
       </div>
     ))}
@@ -911,7 +911,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                 onClick={() => setSort(mode)}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition ${
                   sort === mode
-                    ? 'bg-brand-card text-brand-text shadow-sm'
+                    ? 'bg-brand-card text-brand-text shadow-xs'
                     : 'text-brand-text/50 hover:text-brand-text'
                 }`}
               >
@@ -939,7 +939,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
               placeholder="Add a comment..."
               rows={1}
               maxLength={MAX_CHARS + 50}
-              className="w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 pr-16 text-[13px] text-brand-text placeholder:text-brand-text/40 outline-none ring-1 ring-transparent focus:ring-brand-text/20 transition resize-none"
+              className="w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 pr-16 text-[13px] text-brand-text placeholder:text-brand-text/40 outline-hidden ring-1 ring-transparent focus:ring-brand-text/20 transition resize-none"
             />
             {/* Input actions */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">

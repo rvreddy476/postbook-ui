@@ -16,10 +16,10 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
     return (
         <Link
             href={`/page/${page.page_handle}`}
-            className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
+            className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-xs hover:border-[#D4A574] hover:shadow-md transition-all group"
         >
             {/* Avatar */}
-            <div className="h-12 w-12 rounded-lg bg-[#F0E6DC] overflow-hidden flex-shrink-0">
+            <div className="h-12 w-12 rounded-lg bg-[#F0E6DC] overflow-hidden shrink-0">
                 {avatarUrl ? (
                     <img
                         src={avatarUrl}
@@ -40,7 +40,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
                         {page.page_name}
                     </h3>
                     {page.is_verified && (
-                        <BadgeCheck className="w-3.5 h-3.5 text-[#D4A574] flex-shrink-0" />
+                        <BadgeCheck className="w-3.5 h-3.5 text-[#D4A574] shrink-0" />
                     )}
                 </div>
                 {page.category && (
@@ -55,7 +55,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
             </div>
 
             {/* Rating */}
-            <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
+            <div className="flex flex-col items-end shrink-0 gap-0.5">
                 <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 fill-[#D4A574] text-[#D4A574]" />
                     <span className="text-sm font-bold text-[#3C2415]">

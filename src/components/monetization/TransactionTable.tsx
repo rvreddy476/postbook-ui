@@ -88,7 +88,7 @@ function amountPrefix(type: Transaction["type"]): string {
 function TransactionRowSkeleton() {
     return (
         <div className="flex items-center gap-4 py-3 px-4 animate-pulse">
-            <div className="w-8 h-8 rounded-lg bg-[#F0E6DC] flex-shrink-0" />
+            <div className="w-8 h-8 rounded-lg bg-[#F0E6DC] shrink-0" />
             <div className="flex-1 space-y-1.5">
                 <div className="h-3 bg-[#F0E6DC] rounded-full w-20" />
                 <div className="h-2.5 bg-[#F0E6DC] rounded-full w-32" />
@@ -108,7 +108,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 }) => {
     if (isLoading) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
                 <div className="divide-y divide-[#F0E6DC]">
                     {Array.from({ length: compact ? 5 : 8 }).map((_, i) => (
                         <TransactionRowSkeleton key={i} />
@@ -120,7 +120,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
     if (transactions.length === 0) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-xs">
                 <div className="flex flex-col items-center justify-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     }
 
     return (
-        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-sm">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] overflow-hidden shadow-xs">
             {/* Table header */}
             <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 bg-[#FAF5F0] border-b border-[#F0E6DC]">
                 <span className="text-[9px] font-black uppercase tracking-widest text-[#7B5B3A]">Transaction</span>
@@ -152,7 +152,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <div key={tx.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:gap-4 px-4 py-3 hover:bg-[#FAF5F0]/50 transition-colors duration-200">
                             {/* Type + reference */}
                             <div className="flex items-center gap-3 min-w-0">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border flex-shrink-0 ${badge.className}`}>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0 ${badge.className}`}>
                                     {badge.label}
                                 </span>
                                 <span className="text-[10px] font-bold text-[#7B5B3A] truncate">

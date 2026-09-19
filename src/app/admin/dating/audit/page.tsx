@@ -84,7 +84,7 @@ export default function DatingAuditLog() {
           <select
             value={action}
             onChange={(e) => setAction(e.target.value)}
-            className="border rounded px-3 py-2 min-w-[12rem]"
+            className="border rounded-sm px-3 py-2 min-w-48"
           >
             {ACTIONS.map((a) => (
               <option key={a} value={a}>{a || 'any'}</option>
@@ -97,7 +97,7 @@ export default function DatingAuditLog() {
             value={actor}
             onChange={(e) => setActor(e.target.value.trim())}
             placeholder="00000000-0000-0000-0000-000000000000"
-            className="border rounded px-3 py-2 font-mono text-xs w-[22rem]"
+            className="border rounded-sm px-3 py-2 font-mono text-xs w-88"
           />
         </label>
         <label className="text-sm">
@@ -106,14 +106,14 @@ export default function DatingAuditLog() {
             value={targetUserId}
             onChange={(e) => setTargetUserId(e.target.value.trim())}
             placeholder="00000000-0000-0000-0000-000000000000"
-            className="border rounded px-3 py-2 font-mono text-xs w-[22rem]"
+            className="border rounded-sm px-3 py-2 font-mono text-xs w-88"
           />
         </label>
         {(actor || targetUserId || action) && (
           <button
             type="button"
             onClick={() => { setActor(''); setTargetUserId(''); setAction('') }}
-            className="text-xs px-3 py-2 border rounded hover:bg-gray-50"
+            className="text-xs px-3 py-2 border rounded-sm hover:bg-gray-50"
           >
             Clear filters
           </button>

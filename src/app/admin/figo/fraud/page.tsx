@@ -34,7 +34,7 @@ export default function FoodFraudPage() {
             type="button"
             onClick={() => setWindowHours(w.hours)}
             className={[
-              "rounded px-3 py-1 text-xs font-medium transition",
+              "rounded-sm px-3 py-1 text-xs font-medium transition",
               windowHours === w.hours
                 ? "bg-amber-600 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -85,10 +85,10 @@ export default function FoodFraudPage() {
                     <span
                       className={
                         row.total_score >= 30
-                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800"
+                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800"
                           : row.total_score >= 10
-                            ? "rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800"
-                            : "rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+                            ? "rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800"
+                            : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
                       }
                     >
                       {row.total_score.toFixed(1)}

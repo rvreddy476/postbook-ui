@@ -114,7 +114,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ produc
             min={1}
             value={qty}
             onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-20 border rounded px-3 py-1.5 text-sm"
+            className="w-20 border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>
 

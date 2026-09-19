@@ -25,7 +25,7 @@ const TVGallery: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {VIDEOS.map((video) => (
             <div key={video.id} className="group cursor-pointer">
-              <div className="relative aspect-video rounded-2xl overflow-hidden bg-brand-secondary mb-3 shadow-sm border border-brand-divider ring-1 ring-white/50">
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-brand-secondary mb-3 shadow-xs border border-brand-divider ring-1 ring-white/50">
                 <img src={video.thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.title} />
                 <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-black px-2 py-0.5 rounded-md backdrop-blur-md">
                   {video.duration}
@@ -37,7 +37,7 @@ const TVGallery: React.FC = () => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-secondary flex-shrink-0 overflow-hidden ring-1 ring-brand-secondary">
+                <div className="w-10 h-10 rounded-full bg-brand-secondary shrink-0 overflow-hidden ring-1 ring-brand-secondary">
                   <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${video.author}`} alt={video.author} />
                 </div>
                 <div>

@@ -30,7 +30,7 @@ export default function PosttubeHistoryPage() {
               const pct = e.duration_sec > 0 ? Math.min(100, (e.watched_sec / e.duration_sec) * 100) : 0
               return (
                 <div key={e.post_id} className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="w-32 aspect-video rounded bg-gray-100 relative overflow-hidden flex items-center justify-center text-gray-400 text-xs">
+                  <div className="w-32 aspect-video rounded-sm bg-gray-100 relative overflow-hidden flex items-center justify-center text-gray-400 text-xs">
                     {e.post?.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={e.post.thumbnail_url} alt="" className="w-full h-full object-cover" />

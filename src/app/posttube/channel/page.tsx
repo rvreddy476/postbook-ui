@@ -116,11 +116,11 @@ export default function MyChannelPage() {
     <AppShell sectionLabel="PostTube">
       <div className="min-h-screen bg-brand-card">
         {/* Banner */}
-        <div className="relative h-40 bg-gradient-to-br from-brand-text via-brand-text/50 to-purple-400">
+        <div className="relative h-40 bg-linear-to-br from-brand-text via-brand-text/50 to-purple-400">
           {bannerUrl && (
             <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
         </div>
 
         {/* Profile info */}
@@ -235,7 +235,7 @@ export default function MyChannelPage() {
       {/* Delete confirmation dialog */}
       <AnimatePresence>
         {deleteTarget && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -269,7 +269,7 @@ export default function MyChannelPage() {
                   type="button"
                   onClick={confirmDelete}
                   disabled={deleteMutation.isPending}
-                  className="rounded-xl bg-rose-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm hover:bg-rose-600 disabled:opacity-50 transition-colors"
+                  className="rounded-xl bg-rose-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs hover:bg-rose-600 disabled:opacity-50 transition-colors"
                 >
                   {deleteMutation.isPending ? "Deleting..." : "Delete"}
                 </button>

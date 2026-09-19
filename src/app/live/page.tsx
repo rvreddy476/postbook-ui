@@ -105,7 +105,7 @@ function LiveCard({ stream, creatorName }: { stream: LiveStream; creatorName: st
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-rose-500/40 via-purple-500/30 to-blue-500/40">
+          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-rose-500/40 via-purple-500/30 to-blue-500/40">
             <Radio className="h-10 w-10 text-white/80" />
           </div>
         )}

@@ -123,7 +123,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
               )}
               <button
                 onClick={() => removeFile(i)}
-                className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500"
+                className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -137,14 +137,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
                   background: isDarkMode ? '#10182D' : '#F8FAFC',
                 }}
               >
-                <FileText className="w-3.5 h-3.5 flex-shrink-0 text-brand-text/60" />
+                <FileText className="w-3.5 h-3.5 shrink-0 text-brand-text/60" />
                 <input
                   type="text"
                   value={altTexts[i] ?? ''}
                   onChange={(e) => onAltTextChange(i, e.target.value)}
                   placeholder="Describe this image (alt text)"
                   maxLength={1000}
-                  className={`flex-1 bg-transparent text-[11px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-none`}
+                  className={`flex-1 bg-transparent text-[11px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-hidden`}
                   style={{ color: isDarkMode ? '#E2E8F0' : '#0F172A' }}
                 />
               </div>

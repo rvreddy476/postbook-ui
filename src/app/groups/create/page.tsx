@@ -90,7 +90,7 @@ export default function CreateSpacePage() {
     <AppShell hideSidebar>
       <div className="flex w-full items-start">
         {/* ── Left: the form ─────────────────────────────────────────── */}
-        <aside className="sticky top-0 flex h-[calc(100vh-5rem)] w-full max-w-[400px] flex-shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-6">
+        <aside className="sticky top-0 flex h-[calc(100vh-5rem)] w-full max-w-[400px] shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-6">
           <button
             onClick={() => router.push('/groups')}
             className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-text/50 transition-colors hover:text-brand-text"
@@ -100,7 +100,7 @@ export default function CreateSpacePage() {
           </button>
 
           <h1
-            className="text-[26px] font-[800] tracking-tight text-brand-text"
+            className="text-[26px] font-extrabold tracking-tight text-brand-text"
             style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
           >
             Create space
@@ -128,7 +128,7 @@ export default function CreateSpacePage() {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Suryapet Friends"
               autoFocus
-              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
             />
             {handle && (
               <p className="mt-1.5 px-1 text-[11px] text-brand-text/40">
@@ -161,13 +161,13 @@ export default function CreateSpacePage() {
                       : 'border-brand-divider bg-brand-card hover:border-brand-text/30'
                   }`}
                 >
-                  <Icon className={`mt-0.5 h-[18px] w-[18px] flex-shrink-0 ${kind === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
+                  <Icon className={`mt-0.5 h-[18px] w-[18px] shrink-0 ${kind === value ? 'text-brand-text' : 'text-brand-text/40'}`} />
                   <span className="flex-1">
                     <span className="block text-sm font-bold text-brand-text">{label}</span>
                     <span className="block text-xs leading-snug text-brand-text/50">{desc}</span>
                   </span>
                   <span
-                    className={`mt-1 h-4 w-4 flex-shrink-0 rounded-full border-2 ${
+                    className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
                       kind === value ? 'border-brand-text bg-brand-text' : 'border-brand-text/25'
                     }`}
                   />
@@ -182,13 +182,13 @@ export default function CreateSpacePage() {
             onClick={() => setIsMature(!isMature)}
             className="mt-5 flex w-full items-center gap-3 rounded-xl border border-brand-divider p-3.5 text-left transition-all hover:border-brand-text/30"
           >
-            <TriangleAlert className="h-[18px] w-[18px] flex-shrink-0 text-brand-text/40" />
+            <TriangleAlert className="h-[18px] w-[18px] shrink-0 text-brand-text/40" />
             <span className="flex-1">
               <span className="block text-sm font-bold text-brand-text">Mature (18+)</span>
               <span className="block text-xs leading-snug text-brand-text/50">Users must be over 18 to view and contribute.</span>
             </span>
             <span
-              className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
                 isMature ? 'bg-brand-text' : 'bg-brand-text/15'
               }`}
             >
@@ -219,7 +219,7 @@ export default function CreateSpacePage() {
             <p className="mb-4 px-1 text-[13px] font-bold text-brand-text">Preview</p>
             <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card">
               {/* Cover */}
-              <div className={`flex h-44 items-center justify-center bg-gradient-to-br ${coverGrad}`}>
+              <div className={`flex h-44 items-center justify-center bg-linear-to-br ${coverGrad}`}>
                 <span className="text-6xl font-black opacity-20">
                   {(name.trim().charAt(0) || 'S').toUpperCase()}
                 </span>
@@ -228,7 +228,7 @@ export default function CreateSpacePage() {
               {/* Identity */}
               <div className="px-6 pt-4">
                 <h2
-                  className={`truncate text-2xl font-[800] tracking-tight ${name.trim() ? 'text-brand-text' : 'text-brand-text/30'}`}
+                  className={`truncate text-2xl font-extrabold tracking-tight ${name.trim() ? 'text-brand-text' : 'text-brand-text/30'}`}
                   style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
                 >
                   {previewName}
@@ -285,7 +285,7 @@ export default function CreateSpacePage() {
                 <div className="rounded-xl border border-brand-divider bg-brand-secondary/50 p-4">
                   <p className="text-sm font-bold text-brand-text">About</p>
                   <p className="mt-2 flex items-start gap-2 text-xs leading-snug text-brand-text/50">
-                    <PrivacyIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                    <PrivacyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     {kind === 'public'
                       ? 'Anyone can view, post, and comment in this space.'
                       : kind === 'restricted'
@@ -294,7 +294,7 @@ export default function CreateSpacePage() {
                   </p>
                   {isMature && (
                     <p className="mt-2 flex items-start gap-2 text-xs leading-snug text-brand-text/50">
-                      <TriangleAlert className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       Users must be over 18 to view and contribute.
                     </p>
                   )}

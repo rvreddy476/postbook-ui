@@ -470,7 +470,7 @@ export function ReelsPage() {
         <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
 
         {/* Tight 3-section row: Info | Video | Actions — centered on page */}
-        <main className={`flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 transition-all duration-[220ms] ease-out ${isCommentsOpen ? "pr-[400px]" : "pr-0"}`}>
+        <main className={`flex flex-1 min-w-0 items-center justify-center overflow-hidden py-1 transition-all duration-220 ease-out ${isCommentsOpen ? "pr-[400px]" : "pr-0"}`}>
           <div className="flex h-full items-stretch gap-4">
             {/* Section 1: Channel + Reel Info */}
             <div className="flex w-[260px] shrink-0 min-h-0">
@@ -560,7 +560,7 @@ export function ReelsPage() {
 
       {/* Report dialog for reel/video */}
       {reportOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-xs">
           <div className="w-[380px] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
             {reportSubmitted ? (
               <div className="p-6 text-center">

@@ -64,7 +64,7 @@ export default function BusinessPageDetail() {
     return (
         <div className="min-h-screen bg-[#FAF5F0] pb-16">
             {/* Top bar */}
-            <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-[#F0E6DC] bg-[#FAF5F0]/85 px-4 py-3 backdrop-blur">
+            <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-[#F0E6DC] bg-[#FAF5F0]/85 px-4 py-3 backdrop-blur-sm">
                 <button onClick={() => router.back()} className="rounded-full p-1.5 hover:bg-[#F0E6DC]">
                     <ArrowLeft className="h-5 w-5 text-[#3C2415]" />
                 </button>
@@ -72,14 +72,14 @@ export default function BusinessPageDetail() {
             </div>
 
             {/* Cover */}
-            <div className="relative h-40 w-full bg-gradient-to-br from-[#E8D9C5] to-[#D4A574]/40 sm:h-52">
+            <div className="relative h-40 w-full bg-linear-to-br from-[#E8D9C5] to-[#D4A574]/40 sm:h-52">
                 {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
             </div>
 
             <div className="mx-auto max-w-2xl px-4">
                 {/* Avatar + identity */}
                 <div className="-mt-10 flex items-end gap-4">
-                    <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-[#FAF5F0] bg-white shadow-sm">
+                    <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-[#FAF5F0] bg-white shadow-xs">
                         {avatar ? (
                             <img src={avatar} alt="" className="h-full w-full object-cover" />
                         ) : (

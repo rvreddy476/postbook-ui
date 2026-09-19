@@ -353,14 +353,14 @@ export default function SellerOnboardingPage() {
 
   // ── Wizard Layout ──────────────────────────────────────────
   const progress = ((uiStep - 1) / (STEPS.length - 1)) * 100
-  const inputCls = 'w-full border border-brand-divider rounded-xl px-4 py-2.5 text-brand-text bg-brand-bg/40 focus:bg-brand-bg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium placeholder:text-brand-text/20'
+  const inputCls = 'w-full border border-brand-divider rounded-xl px-4 py-2.5 text-brand-text bg-brand-bg/40 focus:bg-brand-bg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden transition-all text-sm font-medium placeholder:text-brand-text/20'
   const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-brand-text/40 mb-1'
 
   return (
     <AppShell activeTab="Shop">
       <div className="min-h-[calc(100vh-64px)] bg-brand-bg flex flex-col items-center">
         {/* Progress Header - Balanced */}
-        <div className="w-full bg-brand-card border-b border-brand-divider sticky top-0 z-40 shadow-sm">
+        <div className="w-full bg-brand-card border-b border-brand-divider sticky top-0 z-40 shadow-xs">
           <div className="max-w-2xl mx-auto flex items-center justify-between px-6 py-4">
             <h1 className="text-sm font-black text-brand-text uppercase tracking-wider">Store Application</h1>
             <div className="flex-1 max-w-[150px] h-1.5 bg-brand-secondary/50 rounded-full mx-6 overflow-hidden">
@@ -395,7 +395,7 @@ export default function SellerOnboardingPage() {
                   <label className={labelCls}>Page Handle</label>
                   <div className="flex items-center gap-2 px-4 py-2.5 border border-brand-divider rounded-xl bg-brand-bg/40 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
                     <span className="text-brand-text/30 text-xs font-bold select-none">postbook.com/pages/</span>
-                    <input className="flex-1 bg-transparent border-none text-sm font-medium text-brand-text outline-none placeholder:text-brand-text/20" value={pageHandle} onChange={e => setPageHandle(e.target.value)} />
+                    <input className="flex-1 bg-transparent border-none text-sm font-medium text-brand-text outline-hidden placeholder:text-brand-text/20" value={pageHandle} onChange={e => setPageHandle(e.target.value)} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

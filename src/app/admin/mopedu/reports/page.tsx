@@ -91,7 +91,7 @@ export default function MopeduReportsPage() {
   const [tab, setTab] = useState<ReportsTab>("revenue")
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {TABS.map((t) => {
             const active = tab === t.key
@@ -198,7 +198,7 @@ function RevenueTab() {
       />
 
       {report.isLoading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-sm">
+        <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-xs">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading…
         </div>
@@ -247,13 +247,13 @@ function RevenueFilters({
   canExport: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
       <div className="flex flex-wrap items-end gap-3">
         <FilterField label="Group by">
           <select
             value={by}
             onChange={(e) => setBy(e.target.value as "plan" | "city")}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="plan">Plan</option>
             <option value="city">City</option>
@@ -265,7 +265,7 @@ function RevenueFilters({
             value={since}
             max={until}
             onChange={(e) => setSince(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <FilterField label="Until">
@@ -274,7 +274,7 @@ function RevenueFilters({
             value={until}
             min={since}
             onChange={(e) => setUntil(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <div className="ml-auto">
@@ -316,7 +316,7 @@ function KpiCard({
   hint?: string
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
         {label}
       </p>
@@ -339,7 +339,7 @@ function RevenueBarChart({ rows }: { rows: RevenueReportRow[] }) {
   const max = top[0]?.fare_total_paise ?? 0
   if (top.length === 0) return null
   return (
-    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
         Top 5 by fare total
       </p>
@@ -382,7 +382,7 @@ function RevenueTable({
   onSort: (k: SortKey) => void
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
@@ -604,7 +604,7 @@ function PartnerRetentionDisplay({ data }: { data: PartnerCohortRetention }) {
         value={data.cohort_size.toLocaleString()}
         hint={`Cohort month: ${data.cohort_month}`}
       />
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
           Active partners — retention
         </p>
@@ -708,7 +708,7 @@ function CustomerCohortDisplay({
         value={data.cohort_size.toLocaleString()}
         hint={`Cohort month: ${data.cohort_month}`}
       />
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-4 shadow-xs">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-brand-text/55">
           Average rides per customer
         </p>
@@ -762,14 +762,14 @@ function CohortFilter({
   helperText?: string
 }) {
   return (
-    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
       <div className="flex flex-wrap items-end gap-3">
         <FilterField label="Cohort month">
           <input
             type="month"
             value={cohortMonth}
             onChange={(e) => setCohortMonth(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <div className="flex flex-wrap items-center gap-2">
@@ -833,7 +833,7 @@ function FilterField({
 
 function LoadingCard() {
   return (
-    <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-sm">
+    <div className="flex items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-12 text-sm text-brand-text/60 shadow-xs">
       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       Loading…
     </div>
@@ -874,7 +874,7 @@ function D2WindowPicker({
           onChange={(e) =>
             onChange({ ...value, from: new Date(e.target.value).toISOString() })
           }
-          className="rounded border border-gray-300 px-2 py-1"
+          className="rounded-sm border border-gray-300 px-2 py-1"
         />
       </label>
       <label className="flex flex-col">
@@ -885,7 +885,7 @@ function D2WindowPicker({
           onChange={(e) =>
             onChange({ ...value, to: new Date(e.target.value).toISOString() })
           }
-          className="rounded border border-gray-300 px-2 py-1"
+          className="rounded-sm border border-gray-300 px-2 py-1"
         />
       </label>
       <SecondaryButton onClick={() => onChange(defaultD2Window())}>
@@ -944,7 +944,7 @@ function D2Shell<T extends object>({
           Export CSV
         </PrimaryButton>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {query.isLoading ? (
           <LoadingCard />
         ) : query.error ? (
@@ -1123,7 +1123,7 @@ function SafetyTab() {
                 <td className="px-3 py-2">
                   <span
                     className={classNames(
-                      "rounded px-2 py-0.5 text-xs font-semibold",
+                      "rounded-sm px-2 py-0.5 text-xs font-semibold",
                       r.severity === "critical"
                         ? "bg-rose-100 text-rose-800"
                         : r.severity === "high"
@@ -1159,7 +1159,7 @@ function PartnerComplianceTab() {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="e.g. Bengaluru"
-            className="rounded border border-gray-300 px-2 py-1"
+            className="rounded-sm border border-gray-300 px-2 py-1"
           />
         </label>
       </div>
@@ -1191,7 +1191,7 @@ function PartnerComplianceTab() {
                     <span
                       className={
                         r.expired_docs > 0
-                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
                           : ""
                       }
                     >
@@ -1202,7 +1202,7 @@ function PartnerComplianceTab() {
                     <span
                       className={
                         r.expired_vehicle_docs > 0
-                          ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
                           : ""
                       }
                     >

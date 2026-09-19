@@ -54,7 +54,7 @@ export default function CreateBusinessPage() {
 
     return (
         <div className="min-h-screen bg-[#FAF5F0]">
-            <div className="sticky top-0 z-20 bg-[#FAF5F0]/80 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-[#F0E6DC]">
+            <div className="sticky top-0 z-20 bg-[#FAF5F0]/80 backdrop-blur-xs px-4 py-3 flex items-center gap-3 border-b border-[#F0E6DC]">
                 <button
                     onClick={() => router.back()}
                     className="p-1.5 rounded-full hover:bg-[#F0E6DC] transition-colors"
@@ -86,7 +86,7 @@ export default function CreateBusinessPage() {
                                 value={form.page_handle}
                                 onChange={set('page_handle')}
                                 placeholder="your-business"
-                                className="flex-1 px-3 py-2.5 text-sm text-[#3C2415] bg-white focus:outline-none"
+                                className="flex-1 px-3 py-2.5 text-sm text-[#3C2415] bg-white focus:outline-hidden"
                             />
                         </div>
                         <p className="text-xs text-[#7B5B3A]/60 mt-1">Letters, numbers, hyphens only.</p>
@@ -101,7 +101,7 @@ export default function CreateBusinessPage() {
                             value={form.page_name}
                             onChange={set('page_name')}
                             placeholder="Acme Coffee Shop"
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                         />
                     </div>
 
@@ -112,7 +112,7 @@ export default function CreateBusinessPage() {
                         <select
                             value={form.page_type}
                             onChange={set('page_type')}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                         >
                             <option value="">Select a page type</option>
                             {PAGE_TYPES.map((t) => (
@@ -136,7 +136,7 @@ export default function CreateBusinessPage() {
                             value={form.category}
                             onChange={set('category')}
                             placeholder="e.g. Italian restaurant"
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                         />
                     </div>
 
@@ -147,7 +147,7 @@ export default function CreateBusinessPage() {
                             onChange={set('description')}
                             placeholder="Tell people about your business..."
                             rows={3}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50 resize-none"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50 resize-none"
                         />
                     </div>
                 </section>
@@ -170,7 +170,7 @@ export default function CreateBusinessPage() {
                                 value={form[field as keyof typeof form]}
                                 onChange={set(field)}
                                 placeholder={placeholder}
-                                className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                                className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                             />
                         </div>
                     ))}
@@ -185,7 +185,7 @@ export default function CreateBusinessPage() {
                         <select
                             value={form.price_range}
                             onChange={set('price_range')}
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                         >
                             <option value="">Not specified</option>
                             <option value="$">$ — Budget</option>
@@ -202,7 +202,7 @@ export default function CreateBusinessPage() {
                             value={form.booking_url}
                             onChange={set('booking_url')}
                             placeholder="https://calendly.com/..."
-                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                            className="w-full px-3 py-2.5 text-sm border border-[#F0E6DC] rounded-xl bg-white text-[#3C2415] focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                         />
                     </div>
                 </section>

@@ -18,7 +18,7 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
             transition={{ duration: 0.4 }}
             className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
         >
-            <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
+            <div className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -50,7 +50,7 @@ export function UnavailableProfileView({ message }: UnavailableProfileProps) {
                 >
                     <button
                         onClick={() => router.push("/")}
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                     >
                         <Home className="w-4 h-4" />
                         Go Home

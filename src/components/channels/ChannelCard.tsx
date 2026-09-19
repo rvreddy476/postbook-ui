@@ -69,12 +69,12 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
     <div className="bg-brand-card border border-brand-divider rounded-2xl px-4 py-3 hover:bg-brand-secondary/30 transition-all duration-200">
       <div className="flex items-center gap-3.5">
         {/* Channel icon */}
-        <Link href={`/channels/${channel.id}`} className="flex-shrink-0">
+        <Link href={`/channels/${channel.id}`} className="shrink-0">
           <div className="w-12 h-12 rounded-xl overflow-hidden">
             {avatarSrc ? (
               <img src={avatarSrc} alt={channel.name} className="w-full h-full object-cover" />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-lg`}>
+              <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-lg`}>
                 {channel.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -86,7 +86,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
           <div className="flex items-center gap-1.5">
             <h3 className="text-sm font-bold text-brand-text truncate">{channel.name}</h3>
             {channel.is_verified && (
-              <BadgeCheck className="w-3.5 h-3.5 text-brand-text flex-shrink-0" />
+              <BadgeCheck className="w-3.5 h-3.5 text-brand-text shrink-0" />
             )}
           </div>
           <p className="text-xs text-brand-text/50 mt-0.5 truncate">{channel.description || 'No description'}</p>
@@ -99,7 +99,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel, onSubscribe, onUnsub
         </Link>
 
         {/* Right side: time + button */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+        <div className="flex flex-col items-end gap-2 shrink-0">
           <span className="text-[11px] text-brand-text/40 font-medium">
             {timeAgo(channel.updated_at)}
           </span>

@@ -80,7 +80,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
       className="group/card flex items-center gap-4 p-4 rounded-2xl border border-brand-divider/60 bg-white/70 dark:bg-brand-bg/70 backdrop-blur-md hover:bg-white dark:hover:bg-brand-bg hover:border-brand-text/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative"
     >
       {/* Avatar */}
-      <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 shadow-md ring-1 ring-black/5 dark:ring-white/10 group-hover/card:scale-105 transition-transform duration-300">
+      <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 shadow-md ring-1 ring-black/5 dark:ring-white/10 group-hover/card:scale-105 transition-transform duration-300">
         {community.avatar_media_id ? (
           <img
             src={`/v1/media/${community.avatar_media_id}/serve`}
@@ -88,7 +88,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradients[idx]} flex items-center justify-center text-white font-black text-2xl`}>
+          <div className={`w-full h-full bg-linear-to-br ${gradients[idx]} flex items-center justify-center text-white font-black text-2xl`}>
             {emoji}
           </div>
         )}
@@ -99,7 +99,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
         <div className="flex items-center gap-1.5">
           <h3 className="text-[13px] font-bold text-brand-text truncate leading-tight">{community.name}</h3>
           {community.is_verified && (
-            <svg className="w-3.5 h-3.5 text-brand-text flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 text-brand-text shrink-0" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           )}
@@ -119,7 +119,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community, isMyCommunity 
       </div>
 
       {/* Action */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         {isMember ? (
           <span className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-text/5 border border-brand-text/20 text-brand-text rounded-full text-[11px] font-bold">
             <Check className="w-3.5 h-3.5" />

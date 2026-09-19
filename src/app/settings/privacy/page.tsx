@@ -35,7 +35,7 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 checked ? "bg-brand-text" : "bg-brand-secondary",
             ].join(" ")}
@@ -73,7 +73,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-brand-divider shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-divider shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
     }
 
     const selectClasses =
-        "w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+        "w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
 
     return (
         <AppShell>

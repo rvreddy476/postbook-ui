@@ -107,7 +107,7 @@ export function CoverFrameSelector({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 to-slate-100">
+          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-200 to-slate-100">
             <Image className="h-8 w-8 text-brand-text/30" />
           </div>
         )}

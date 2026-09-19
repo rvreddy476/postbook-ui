@@ -74,7 +74,7 @@ interface PayoutMethodCardProps {
 function PayoutMethodCard({ method, onRemove, isRemoving }: PayoutMethodCardProps) {
     return (
         <div className="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] hover:border-[#D4A574]/50 transition-all duration-200">
-            <div className="w-9 h-9 rounded-lg bg-brand-card border border-[#F0E6DC] flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-brand-card border border-[#F0E6DC] flex items-center justify-center shrink-0">
                 <svg className="w-4 h-4 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d={methodIcon(method.method_type)} />
                 </svg>
@@ -93,7 +93,7 @@ function PayoutMethodCard({ method, onRemove, isRemoving }: PayoutMethodCardProp
             <button
                 onClick={() => onRemove(method.id)}
                 disabled={isRemoving}
-                className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-[#F0E6DC] text-[#7B5B3A] bg-brand-card hover:border-red-200 hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-[#F0E6DC] text-[#7B5B3A] bg-brand-card hover:border-red-200 hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isRemoving ? (
                     <div className="w-3 h-3 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
@@ -134,12 +134,12 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
     }
 
     const inputClass =
-        "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
+        "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
 
     return (
         <div className="bg-brand-card rounded-2xl border border-[#D4A574] p-6 shadow-md shadow-[#D4A574]/10">
             <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
@@ -225,7 +225,7 @@ function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isP
                     <button
                         type="submit"
                         disabled={isPending || methods.length === 0}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <>
@@ -263,12 +263,12 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
     }
 
     const inputClass =
-        "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
+        "w-full px-4 py-3 rounded-xl border border-[#F0E6DC] bg-[#FAF5F0] text-sm font-bold text-[#3C2415] placeholder:text-[#D4A574]/60 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/30 focus:border-[#D4A574] transition-all duration-200"
 
     return (
-        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
             <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7B5B3A] to-[#3C2415] flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#7B5B3A] to-[#3C2415] flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -323,7 +323,7 @@ function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#7B5B3A] to-[#3C2415] text-white hover:shadow-lg hover:shadow-[#7B5B3A]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#7B5B3A] to-[#3C2415] text-white hover:shadow-lg hover:shadow-[#7B5B3A]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? (
                         <>
@@ -415,7 +415,7 @@ export default function PayoutsPage() {
                 {/* Page heading */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 rounded-[0.8rem] bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
+                        <div className="w-10 h-10 rounded-[0.8rem] bg-linear-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20">
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
@@ -431,7 +431,7 @@ export default function PayoutsPage() {
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide pb-1">
                     <Link
                         href="/monetization"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -440,7 +440,7 @@ export default function PayoutsPage() {
                     </Link>
                     <Link
                         href="/monetization/tiers"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-[#FAF5F0] text-[#7B5B3A] border-transparent border hover:bg-brand-card hover:text-[#3C2415] hover:border-[#F0E6DC] transition-all duration-200"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -449,7 +449,7 @@ export default function PayoutsPage() {
                     </Link>
                     <Link
                         href="/monetization/payouts"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 bg-brand-card text-[#3C2415] border-[#D4A574] border shadow-sm shadow-[#D4A574]/10"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 bg-brand-card text-[#3C2415] border-[#D4A574] border shadow-xs shadow-[#D4A574]/10"
                     >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -469,7 +469,7 @@ export default function PayoutsPage() {
 </div>
 
 {/* Balance summary + request payout button */}
-                <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-sm mb-6">
+                <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-xs mb-6">
                     <div className="flex items-center justify-between">
                         <div>
                             {/* Phase 2 §D4: this is creator earnings (a pending payout),
@@ -488,7 +488,7 @@ export default function PayoutsPage() {
                             <button
                                 onClick={() => setShowPayoutForm(true)}
                                 disabled={walletLoading || (wallet?.balance ?? 0) <= 0 || wallet?.is_frozen}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-linear-to-r from-[#D4A574] to-[#7B5B3A] text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -499,7 +499,7 @@ export default function PayoutsPage() {
                     </div>
                     {wallet?.is_frozen && (
                         <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-100">
-                            <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-red-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-[9px] font-black uppercase tracking-widest text-red-600">
@@ -622,7 +622,7 @@ export default function PayoutsPage() {
                     {!hasNextPage && payoutHistory.length > 0 && (
                         <div className="mt-8 flex items-center gap-3">
                             <div className="flex-1 h-px bg-[#F0E6DC]" />
-                            <p className="text-[8px] font-black uppercase tracking-widest text-[#D4A574] flex-shrink-0">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-[#D4A574] shrink-0">
                                 End of payout history
                             </p>
                             <div className="flex-1 h-px bg-[#F0E6DC]" />

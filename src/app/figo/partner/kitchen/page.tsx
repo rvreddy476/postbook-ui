@@ -70,7 +70,7 @@ export default function KitchenQueuePage() {
             <select
               value={restaurantId ?? ""}
               onChange={(e) => setRestaurantId(e.target.value)}
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-sm border border-slate-300 px-2 py-1 text-sm"
             >
               {list.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -152,7 +152,7 @@ export default function KitchenQueuePage() {
                             }))
                           }
                           placeholder="Reject reason"
-                          className="rounded border border-slate-300 px-2 py-1 text-xs"
+                          className="rounded-sm border border-slate-300 px-2 py-1 text-xs"
                         />
                         <div className="flex gap-1">
                           <button
@@ -160,7 +160,7 @@ export default function KitchenQueuePage() {
                             onClick={() => accept.mutate(o.id)}
                             disabled={accept.isPending}
                             className={[
-                              "rounded bg-emerald-600 px-2 py-1 text-xs font-medium text-white",
+                              "rounded-sm bg-emerald-600 px-2 py-1 text-xs font-medium text-white",
                               accept.isPending
                                 ? "cursor-wait opacity-60"
                                 : "hover:bg-emerald-700",
@@ -178,7 +178,7 @@ export default function KitchenQueuePage() {
                             }
                             disabled={reject.isPending}
                             className={[
-                              "rounded bg-rose-600 px-2 py-1 text-xs font-medium text-white",
+                              "rounded-sm bg-rose-600 px-2 py-1 text-xs font-medium text-white",
                               reject.isPending
                                 ? "cursor-wait opacity-60"
                                 : "hover:bg-rose-700",
@@ -232,7 +232,7 @@ function Countdown({ seconds }: { seconds: number | null }) {
   }
   if (tick === 0) {
     return (
-      <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">
+      <span className="rounded-sm bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">
         BREACHED
       </span>
     )
@@ -246,7 +246,7 @@ function Countdown({ seconds }: { seconds: number | null }) {
   const mm = Math.floor(tick / 60)
   const ss = tick % 60
   return (
-    <span className={`rounded px-2 py-0.5 text-xs font-semibold ${tone}`}>
+    <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${tone}`}>
       {mm}:{ss.toString().padStart(2, "0")}
     </span>
   )

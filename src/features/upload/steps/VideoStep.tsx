@@ -264,7 +264,7 @@ export function VideoStep({ form, patch, onFileSelected, clearFile, contentType,
   return (
     <div className="relative">
       {/* Video preview / placeholder */}
-      <div className="overflow-hidden rounded-2xl border border-brand-text/10 bg-brand-text shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-text/10 bg-brand-text shadow-xs">
         {form.videoPreviewUrl ? (
           <video
             src={form.videoPreviewUrl}

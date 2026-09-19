@@ -128,7 +128,7 @@ function ToastItem({
 
 export function ToastContainer({ toasts, dismiss }: { toasts: ToastData[]; dismiss: (id: string) => void }) {
     return (
-        <div className="fixed bottom-4 right-4 z-[9999] flex flex-col-reverse gap-2 pointer-events-none">
+        <div className="fixed bottom-4 right-4 z-9999 flex flex-col-reverse gap-2 pointer-events-none">
             <AnimatePresence mode="popLayout">
                 {toasts.map((t) => (
                     <ToastItem key={t.id} toast={t} onDismiss={dismiss} />

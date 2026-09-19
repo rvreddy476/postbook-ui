@@ -77,7 +77,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -104,7 +104,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. React Developers"
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
               maxLength={100}
               required
             />
@@ -121,7 +121,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                 value={handle}
                 onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 placeholder={autoHandle || 'group-handle'}
-                className="w-full pl-9 pr-10 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
+                className="w-full pl-9 pr-10 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
                 maxLength={50}
               />
               {effectiveHandle.length >= 3 && (
@@ -150,7 +150,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What's this group about?"
-              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 resize-none"
+              className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 resize-none"
               rows={3}
               maxLength={500}
             />
@@ -167,7 +167,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                   onClick={() => setCategory(category === cat ? '' : cat)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     category === cat
-                      ? 'bg-brand-text text-white shadow-sm'
+                      ? 'bg-brand-text text-white shadow-xs'
                       : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary'
                   }`}
                 >

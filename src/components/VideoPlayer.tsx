@@ -371,7 +371,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pt-16 pb-3 px-4"
+            className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 via-black/30 to-transparent pt-16 pb-3 px-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Progress bar */}

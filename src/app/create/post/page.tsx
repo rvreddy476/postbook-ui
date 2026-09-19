@@ -486,7 +486,7 @@ export default function CreatePostPage() {
   return (
     <AppShell activeTab="Home">
       {/* Sleek, deep neon glassmorphism layout, immersive workspace */}
-      <div className="flex min-h-[calc(100vh-80px)] w-full items-start justify-center bg-gradient-to-b from-slate-900 via-[#0B0F19] to-black px-4 py-8 sm:py-12">
+      <div className="flex min-h-[calc(100vh-80px)] w-full items-start justify-center bg-linear-to-b from-slate-900 via-[#0B0F19] to-black px-4 py-8 sm:py-12">
         <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT COLUMN: THE WORKSPACE COMPOSER */}
@@ -510,7 +510,7 @@ export default function CreatePostPage() {
                     Creative Studio
                   </div>
                   <div className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                    COMPOSER <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">WORKSPACE</span>
+                    COMPOSER <span className="bg-linear-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">WORKSPACE</span>
                   </div>
                 </div>
                 <button
@@ -545,7 +545,7 @@ export default function CreatePostPage() {
                   <button
                     type="button"
                     onClick={() => setVisibilityOpen((v) => !v)}
-                    className="flex items-center gap-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 px-4 py-2 text-[12px] font-medium text-slate-200 border border-slate-700/40 transition shadow-sm"
+                    className="flex items-center gap-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 px-4 py-2 text-[12px] font-medium text-slate-200 border border-slate-700/40 transition shadow-xs"
                   >
                     <VisibilityIcon className="h-4 w-4 text-violet-400" />
                     {visibilityOption.label}
@@ -597,7 +597,7 @@ export default function CreatePostPage() {
                 >
                   {/* Subtle glass shimmer over custom color backgrounds */}
                   {background && (
-                    <div className="absolute inset-0 bg-white/[0.04] backdrop-blur-[1px] pointer-events-none" />
+                    <div className="absolute inset-0 bg-white/4 backdrop-blur-[1px] pointer-events-none" />
                   )}
 
                   <textarea
@@ -626,7 +626,7 @@ export default function CreatePostPage() {
                     rows={6}
                     autoFocus
                     placeholder={`What's on your mind, ${firstName}?`}
-                    className={`w-full resize-none bg-transparent text-[17px] leading-[1.6] outline-none relative z-10 transition-colors ${
+                    className={`w-full resize-none bg-transparent text-[17px] leading-[1.6] outline-hidden relative z-10 transition-colors ${
                       background
                         ? onDark
                           ? "text-white placeholder:text-white/50"
@@ -764,7 +764,7 @@ export default function CreatePostPage() {
                         value={pollQuestion}
                         onChange={(e) => setPollQuestion(e.target.value)}
                         placeholder="What's your poll question?"
-                        className="w-full bg-slate-950/60 text-[14px] text-white border border-slate-800/80 rounded-xl px-4 py-2.5 placeholder:text-slate-500 outline-none focus:border-violet-500/40 mb-3"
+                        className="w-full bg-slate-950/60 text-[14px] text-white border border-slate-800/80 rounded-xl px-4 py-2.5 placeholder:text-slate-500 outline-hidden focus:border-violet-500/40 mb-3"
                       />
 
                       {/* Poll Options fields */}
@@ -779,7 +779,7 @@ export default function CreatePostPage() {
                               value={opt}
                               onChange={(e) => handlePollOptionChange(oIdx, e.target.value)}
                               placeholder={`Option ${oIdx + 1} ${oIdx >= 2 ? '(Optional)' : '(Required)'}`}
-                              className="flex-1 bg-slate-950/40 text-[13px] text-white border border-slate-800 rounded-lg px-3.5 py-2 outline-none focus:border-violet-500/30"
+                              className="flex-1 bg-slate-950/40 text-[13px] text-white border border-slate-800 rounded-lg px-3.5 py-2 outline-hidden focus:border-violet-500/30"
                             />
                             {pollOptions.length > 2 && (
                               <button
@@ -810,7 +810,7 @@ export default function CreatePostPage() {
                             type="checkbox"
                             checked={pollMultiple}
                             onChange={(e) => setPollMultiple(e.target.checked)}
-                            className="rounded border-slate-700 bg-slate-950 text-violet-600 focus:ring-violet-500 h-4 w-4"
+                            className="rounded-sm border-slate-700 bg-slate-950 text-violet-600 focus:ring-violet-500 h-4 w-4"
                           />
                           <span className="text-[12px] font-semibold text-slate-300">
                             Allow Multiple Choices
@@ -823,7 +823,7 @@ export default function CreatePostPage() {
                           <select
                             value={pollDurationHours}
                             onChange={(e) => setPollDurationHours(Number(e.target.value))}
-                            className="bg-slate-950/80 text-[11px] font-semibold border border-slate-800 rounded-lg px-2.5 py-1 text-violet-300 outline-none"
+                            className="bg-slate-950/80 text-[11px] font-semibold border border-slate-800 rounded-lg px-2.5 py-1 text-violet-300 outline-hidden"
                           >
                             <option value={1}>1 Hour</option>
                             <option value={6}>6 Hours</option>
@@ -896,7 +896,7 @@ export default function CreatePostPage() {
                             type="button"
                             aria-label={swatch.label}
                             onClick={() => setBackground(swatch.value)}
-                            className="h-[28px] w-[28px] cursor-pointer rounded-full border border-slate-700/50 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center relative shadow"
+                            className="h-[28px] w-[28px] cursor-pointer rounded-full border border-slate-700/50 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center relative shadow-sm"
                             style={{
                               background: isNone
                                 ? "repeating-conic-gradient(#334155 0% 25%, #1e293b 0% 50%) 50% / 8px 8px"
@@ -923,7 +923,7 @@ export default function CreatePostPage() {
                             type="button"
                             aria-label={swatch.label}
                             onClick={() => setBackground(swatch.value)}
-                            className="h-[28px] w-[28px] cursor-pointer rounded-full border border-slate-700/50 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center relative shadow"
+                            className="h-[28px] w-[28px] cursor-pointer rounded-full border border-slate-700/50 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center relative shadow-sm"
                             style={{
                               background: swatch.value,
                             }}
@@ -945,7 +945,7 @@ export default function CreatePostPage() {
                           type="color"
                           value={customGrad1}
                           onChange={(e) => setCustomGrad1(e.target.value)}
-                          className="h-6 w-10 cursor-pointer rounded bg-transparent border-0"
+                          className="h-6 w-10 cursor-pointer rounded-sm bg-transparent border-0"
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -954,7 +954,7 @@ export default function CreatePostPage() {
                           type="color"
                           value={customGrad2}
                           onChange={(e) => setCustomGrad2(e.target.value)}
-                          className="h-6 w-10 cursor-pointer rounded bg-transparent border-0"
+                          className="h-6 w-10 cursor-pointer rounded-sm bg-transparent border-0"
                         />
                       </div>
                       <div className="flex items-center gap-2 flex-1 min-w-[120px]">
@@ -976,7 +976,7 @@ export default function CreatePostPage() {
               {/* Quick popover attachments: Location and Emojis */}
               {location && (
                 <div className="px-6 pt-4 flex">
-                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600/10 border border-violet-500/20 px-3 py-1.5 text-[12px] font-semibold text-violet-300 shadow-sm animate-fadeIn">
+                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600/10 border border-violet-500/20 px-3 py-1.5 text-[12px] font-semibold text-violet-300 shadow-xs animate-fadeIn">
                     <MapPin className="h-3.5 w-3.5 text-violet-400" />
                     {location}
                     <button
@@ -1134,7 +1134,7 @@ export default function CreatePostPage() {
                             value={locationQuery}
                             onChange={(e) => setLocationQuery(e.target.value)}
                             placeholder="Type custom location..."
-                            className="flex-1 bg-slate-950 text-xs text-white border border-slate-800 rounded-lg px-2.5 py-1.5 outline-none focus:border-violet-500/40"
+                            className="flex-1 bg-slate-950 text-xs text-white border border-slate-800 rounded-lg px-2.5 py-1.5 outline-hidden focus:border-violet-500/40"
                           />
                           <button
                             type="button"
@@ -1169,7 +1169,7 @@ export default function CreatePostPage() {
                   type="button"
                   onClick={handlePublish}
                   disabled={publishing || (!content.trim() && images.length === 0 && !pollQuestion.trim())}
-                  className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition transform hover:scale-[1.02] active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex items-center gap-3 rounded-2xl bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition transform hover:scale-[1.02] active:scale-98 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
                     {publishing ? (
@@ -1252,7 +1252,7 @@ export default function CreatePostPage() {
               </div>
 
               {/* The mock post card */}
-              <div className="rounded-2xl bg-[#1e293b]/30 border border-slate-800/60 p-4 shadow overflow-hidden relative">
+              <div className="rounded-2xl bg-[#1e293b]/30 border border-slate-800/60 p-4 shadow-sm overflow-hidden relative">
                 
                 {/* Header elements */}
                 <div className="flex items-center justify-between gap-3 mb-4">
@@ -1290,10 +1290,10 @@ export default function CreatePostPage() {
                 >
                   {/* Subtle glass shimmer over custom color backgrounds */}
                   {background && (
-                    <div className="absolute inset-0 bg-white/[0.04] pointer-events-none" />
+                    <div className="absolute inset-0 bg-white/4 pointer-events-none" />
                   )}
 
-                  <p className={`text-[15px] leading-relaxed break-words font-medium relative z-10 ${
+                  <p className={`text-[15px] leading-relaxed wrap-break-word font-medium relative z-10 ${
                     background
                       ? onDark
                         ? "text-white"
@@ -1379,9 +1379,9 @@ export default function CreatePostPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.25 }}
-              className="w-full rounded-[32px] bg-gradient-to-br from-violet-950/30 to-fuchsia-950/30 border border-violet-800/20 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden"
+              className="w-full rounded-[32px] bg-linear-to-br from-violet-950/30 to-fuchsia-950/30 border border-violet-800/20 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-fuchsia-500/10 blur-[40px] pointer-events-none" />
+              <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-fuchsia-500/10 blur-2xl pointer-events-none" />
               
               <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-fuchsia-400 mb-3">
                 Co-Pilot Assistant
@@ -1452,7 +1452,7 @@ export default function CreatePostPage() {
                           setContent(caption);
                           setCaptionSuggestions([]);
                         }}
-                        className="shrink-0 rounded-lg bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 text-[11px] font-bold transition shadow"
+                        className="shrink-0 rounded-lg bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 text-[11px] font-bold transition shadow-sm"
                       >
                         Apply
                       </button>

@@ -70,7 +70,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
             <div className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
                     <h2 className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
@@ -91,7 +91,7 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                                     {Array.from({ length: 25 }).map((_, i) => (
                                         <div
                                             key={i}
-                                            className={`w-7 h-7 rounded-sm ${
+                                            className={`w-7 h-7 rounded-xs ${
                                                 [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
                                                     ? "bg-slate-900"
                                                     : "bg-brand-card"
@@ -163,7 +163,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                 {pins.map((pin) => (
                     <div
                         key={pin.id}
-                        className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-sm"
+                        className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-xs"
                     >
                         <Pin className="w-3 h-3 text-brand-text shrink-0" />
                         <span className="text-xs font-medium text-brand-text max-w-[120px] truncate">
@@ -256,26 +256,26 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="Title *"
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-hidden focus:border-brand-text/50"
                     />
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Description"
                         rows={2}
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50 resize-none"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-hidden focus:border-brand-text/50 resize-none"
                     />
                     <input
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="URL (optional)"
                         type="url"
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-hidden focus:border-brand-text/50"
                     />
                     <select
                         value={itemType}
                         onChange={(e) => setItemType(e.target.value)}
-                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-none focus:border-brand-text/50 bg-brand-card"
+                        className="w-full text-sm border border-brand-divider rounded-xl px-3 py-2 outline-hidden focus:border-brand-text/50 bg-brand-card"
                     >
                         <option value="project">Project</option>
                         <option value="article">Article</option>
@@ -314,7 +314,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                     {items.map((item) => (
                         <div
                             key={item.id}
-                            className="border border-brand-divider rounded-xl p-4 bg-brand-card shadow-sm hover:shadow-md transition-shadow space-y-2"
+                            className="border border-brand-divider rounded-xl p-4 bg-brand-card shadow-xs hover:shadow-md transition-shadow space-y-2"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
@@ -364,16 +364,16 @@ function ComingSoonTab({
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className={`relative overflow-hidden rounded-3xl border border-brand-divider bg-gradient-to-br ${accent} px-6 py-16 text-center`}
+            className={`relative overflow-hidden rounded-3xl border border-brand-divider bg-linear-to-br ${accent} px-6 py-16 text-center`}
         >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-card shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-card shadow-xs">
                 {icon}
             </div>
             <h3 className="mt-6 text-xl font-bold text-brand-text">{title}</h3>
             <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
                 {description}
             </p>
-            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-text shadow-sm">
+            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-text shadow-xs">
                 <Sparkles className="w-3 h-3" />
                 Coming soon
             </span>
@@ -639,7 +639,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             <div
                 className={`${
                     isTabsSticky
-                        ? "sticky top-0 z-30 bg-brand-card/95 backdrop-blur-xl border-b border-brand-divider shadow-sm"
+                        ? "sticky top-0 z-30 bg-brand-card/95 backdrop-blur-xl border-b border-brand-divider shadow-xs"
                         : ""
                 } transition-all duration-200`}
             >
@@ -665,7 +665,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
                 <div className={`flex gap-6 ${hasCreatorContent ? "" : ""}`}>
                     {/* Main content — 70% or 100% */}
-                    <div className={`min-w-0 ${hasCreatorContent ? "flex-[7]" : "flex-1"}`}>
+                    <div className={`min-w-0 ${hasCreatorContent ? "flex-7" : "flex-1"}`}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeTab}
@@ -723,7 +723,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
                     {/* Right sidebar — additional cards (mutual friends, links, completion) */}
                     {hasCreatorContent && (
-                        <aside className="hidden lg:block flex-[3] shrink-0 space-y-4">
+                        <aside className="hidden lg:block flex-3 shrink-0 space-y-4">
                             {/* Additional sidebar cards */}
                             {!isOwn && localUser && (
                                 <MutualFriendsCard

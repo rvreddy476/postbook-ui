@@ -22,7 +22,7 @@ function QuestionRow({ q }: { q: QuestionSummary }) {
             <ChevronUp className="w-3 h-3" />{q.vote_score}
           </div>
           <div className="text-neutral-400">votes</div>
-          <div className={`mt-1.5 px-1.5 py-0.5 rounded text-xs font-medium ${q.is_answered ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'border border-neutral-300 dark:border-neutral-600 text-neutral-500'}`}>
+          <div className={`mt-1.5 px-1.5 py-0.5 rounded-sm text-xs font-medium ${q.is_answered ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'border border-neutral-300 dark:border-neutral-600 text-neutral-500'}`}>
             {q.answer_count}
           </div>
           <div className="text-neutral-400">ans</div>
@@ -33,7 +33,7 @@ function QuestionRow({ q }: { q: QuestionSummary }) {
           </p>
           <div className="flex flex-wrap gap-1 mt-1.5">
             {q.tags?.slice(0, 3).map(tag => (
-              <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 text-xs">
+              <span key={tag} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400 text-xs">
                 <Tag className="w-2.5 h-2.5" />{tag}
               </span>
             ))}
@@ -62,8 +62,8 @@ export default function TopicDetailPage() {
     return (
       <AppShell>
         <div className="max-w-4xl mx-auto px-4 py-6 animate-pulse">
-          <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3 mb-2" />
-          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+          <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/3 mb-2" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
         </div>
       </AppShell>
     )
@@ -149,12 +149,12 @@ export default function TopicDetailPage() {
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex gap-4 animate-pulse">
                       <div className="w-12 space-y-1">
-                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded" />
-                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded" />
+                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
+                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
                       </div>
                       <div className="flex-1 space-y-1.5">
-                        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
-                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+                        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4" />
+                        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
                       </div>
                     </div>
                   ))}

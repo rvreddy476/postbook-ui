@@ -631,7 +631,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           if (msg.type === 'system') {
             return (
               <div key={msg.id} id={`msg-${msg.id}`} className="flex justify-center py-3 transition-colors">
-                <span className="text-[11px] text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full shadow-sm border border-brand-divider italic">
+                <span className="text-[11px] text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full shadow-xs border border-brand-divider italic">
                   {msg.text || 'System message'}
                 </span>
               </div>
@@ -677,7 +677,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                 {/* Message bubble */}
                 <div
-                  className={`group/bubble relative max-w-full break-words px-4 py-2.5 text-[14px] leading-relaxed shadow-sm transition-all ${msg.isDeleted
+                  className={`group/bubble relative max-w-full wrap-break-word px-4 py-2.5 text-[14px] leading-relaxed shadow-xs transition-all ${msg.isDeleted
                       ? 'rounded-2xl bg-brand-secondary text-brand-text/60 italic'
                       : isMe
                         ? `bg-indigo-600 text-white ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
@@ -712,7 +712,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                       <button
                         key={r.emoji}
                         onClick={() => handleToggleReaction(msg.id, r.emoji)}
-                        className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm transition-all hover:scale-105 active:scale-95 ${r.user_ids.includes(myId)
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-xs transition-all hover:scale-105 active:scale-95 ${r.user_ids.includes(myId)
                             ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
                             : 'border border-brand-divider bg-brand-card text-brand-highlight hover:bg-brand-secondary'
                           }`}
@@ -825,7 +825,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             onChange={e => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Edit message..."
-            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3 text-[14px] text-brand-text outline-none transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
+            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3 text-[14px] text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
           />
           <button onClick={handleSaveEdit} className="flex h-11 items-center justify-center rounded-2xl bg-indigo-600 px-6 font-bold text-white transition-all hover:bg-indigo-700 active:scale-95">
             Save
@@ -853,7 +853,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Write a message..."
-            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3.5 text-[14px] font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
+            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3.5 text-[14px] font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
           />
 
           <button

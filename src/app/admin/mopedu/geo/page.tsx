@@ -69,7 +69,7 @@ export default function MopeduGeoPage() {
   const [tab, setTab] = useState<GeoTab>("cities")
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {TABS.map((t) => {
             const active = tab === t.key
@@ -122,7 +122,7 @@ function CitiesTab() {
         </PrimaryButton>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {cities.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -304,7 +304,7 @@ function CityFormModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
@@ -313,7 +313,7 @@ function CityFormModal({
             type="text"
             value={state}
             onChange={(e) => setState(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FormField>
         <div className="grid grid-cols-2 gap-3">
@@ -323,7 +323,7 @@ function CityFormModal({
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               maxLength={2}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:border-brand-text"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -333,7 +333,7 @@ function CityFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               maxLength={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:border-brand-text"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -450,7 +450,7 @@ function ZonesTab() {
           <select
             value={cityId}
             onChange={(e) => setCityId(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="">All cities</option>
             {cityList.map((c) => (
@@ -469,7 +469,7 @@ function ZonesTab() {
         </PrimaryButton>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {zones.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -621,7 +621,7 @@ function ZoneFormModal({
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           >
             <option value="">Select a city…</option>
@@ -637,7 +637,7 @@ function ZoneFormModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
@@ -647,7 +647,7 @@ function ZoneFormModal({
             onChange={(e) => setBoundary(e.target.value)}
             rows={6}
             placeholder='{"type":"Polygon","coordinates":[[[lng,lat],...]]}'
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-hidden focus:border-brand-text"
           />
           <p className="mt-1 text-[11px] text-brand-text/55">
             v1 only ships a textarea — draw + copy from{" "}
@@ -711,7 +711,7 @@ function FareRulesTab() {
           <select
             value={cityId}
             onChange={(e) => setCityId(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="">All cities</option>
             {cityList.map((c) => (
@@ -730,7 +730,7 @@ function FareRulesTab() {
         </PrimaryButton>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {rules.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -919,7 +919,7 @@ function SurgeQuickModal({
             min="0.1"
             value={val}
             onChange={(e) => setVal(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
@@ -1016,7 +1016,7 @@ function FareRuleFormModal({
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
             disabled={mode === "edit"}
           >
@@ -1032,7 +1032,7 @@ function FareRuleFormModal({
           <select
             value={vehicle}
             onChange={(e) => setVehicle(e.target.value as VehicleType)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             disabled={mode === "edit"}
           >
             {VEHICLE_TYPES.map((v) => (
@@ -1094,7 +1094,7 @@ function FareNumberField({
         min="0"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
       />
     </FormField>
   )

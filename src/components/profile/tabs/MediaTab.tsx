@@ -64,7 +64,7 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
             {/* Video indicators */}
             {isVideo && (
                 <>
-                    <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
+                    <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
                         <Play className="h-3 w-3 fill-white" />
                         {duration ? formatDuration(duration) : "Video"}
                     </div>
@@ -73,7 +73,7 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
 
             {/* Type badge */}
             {!isVideo && post.media && post.media.length > 1 && (
-                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
+                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
                     +{post.media.length - 1}
                 </div>
             )}
@@ -139,10 +139,10 @@ export function MediaTab({ userId }: MediaTabProps) {
     if (mediaPosts.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-xs">
                     <Image className="h-9 w-9 text-brand-text/30" />
                 </div>
-                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-(--font-outfit)">
                     No photos or videos yet
                 </h3>
                 <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">

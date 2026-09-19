@@ -198,7 +198,7 @@ function TagListSection({
     const canAdd = items.length < maxCount
 
     return (
-        <div className="rounded-[1.5rem] border border-brand-divider bg-brand-card overflow-hidden">
+        <div className="rounded-3xl border border-brand-divider bg-brand-card overflow-hidden">
             {/* Section Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-brand-secondary">
                 <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "up")}
                                             disabled={idx === 0 || isBusy}
-                                            className="p-0.5 rounded text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded-sm text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move up"
                                         >
                                             <ChevronUp className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ function TagListSection({
                                             type="button"
                                             onClick={() => onReorder(item, "down")}
                                             disabled={idx === items.length - 1 || isBusy}
-                                            className="p-0.5 rounded text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-0.5 rounded-sm text-brand-text/30 hover:text-brand-highlight disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             aria-label="Move down"
                                         >
                                             <ChevronDown className="w-3.5 h-3.5" />
@@ -294,7 +294,7 @@ function TagListSection({
                                         value={item.visibility}
                                         onChange={(e) => onVisibilityChange(item, e.target.value as AboutVisibility)}
                                         disabled={isBusy}
-                                        className="h-7 px-2 rounded-lg border border-brand-divider bg-brand-card text-[10px] font-bold text-brand-highlight focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none"
+                                        className="h-7 px-2 rounded-lg border border-brand-divider bg-brand-card text-[10px] font-bold text-brand-highlight focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none"
                                         aria-label={`Visibility for ${item.name}`}
                                     >
                                         {VISIBILITY_OPTIONS.map(opt => (

@@ -97,13 +97,13 @@ export default function LiveChatOverlay({ streamId, className = '' }: Props) {
           value={draft}
           onChange={(e) => setDraft(e.target.value.slice(0, MAX_SEND_CHARS))}
           placeholder="Type a message…"
-          className="flex-1 border rounded px-3 py-1.5 text-sm"
+          className="flex-1 border rounded-sm px-3 py-1.5 text-sm"
           maxLength={MAX_SEND_CHARS}
         />
         <button
           type="submit"
           disabled={send.isPending || !draft.trim()}
-          className="bg-rose-600 text-white text-sm px-3 py-1.5 rounded disabled:bg-gray-300"
+          className="bg-rose-600 text-white text-sm px-3 py-1.5 rounded-sm disabled:bg-gray-300"
         >
           Send
         </button>

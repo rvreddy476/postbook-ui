@@ -109,7 +109,7 @@ function PhotoCard({
          signed-URL preview once that's exposed in Phase 2. */}
       <div className="aspect-square bg-gray-100 flex items-center justify-center text-xs text-gray-400">
         Media {photo.media_id.slice(0, 8)}…
-        {photo.is_primary && <span className="ml-2 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">PRIMARY</span>}
+        {photo.is_primary && <span className="ml-2 px-1.5 py-0.5 rounded-sm bg-amber-100 text-amber-700">PRIMARY</span>}
       </div>
       <div className="p-3 space-y-2 text-sm">
         <div className="font-mono text-xs text-gray-600">
@@ -123,14 +123,14 @@ function PhotoCard({
           placeholder="Reason (required for reject)"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full border rounded px-2 py-1 text-xs"
+          className="w-full border rounded-sm px-2 py-1 text-xs"
         />
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onApprove}
             disabled={busy}
-            className="flex-1 bg-emerald-600 text-white text-sm py-1.5 rounded disabled:bg-gray-300"
+            className="flex-1 bg-emerald-600 text-white text-sm py-1.5 rounded-sm disabled:bg-gray-300"
           >
             Approve
           </button>
@@ -138,7 +138,7 @@ function PhotoCard({
             type="button"
             onClick={() => reason && onReject(reason)}
             disabled={busy || !reason}
-            className="flex-1 bg-rose-600 text-white text-sm py-1.5 rounded disabled:bg-gray-300"
+            className="flex-1 bg-rose-600 text-white text-sm py-1.5 rounded-sm disabled:bg-gray-300"
           >
             Reject
           </button>

@@ -41,8 +41,8 @@ export function ProductTagComposerButton({
                 onClick={() => setOpen(true)}
                 className={[
                     "inline-flex items-center gap-2 rounded-full bg-brand-text px-4 py-2",
-                    "text-sm font-semibold text-white shadow-sm transition",
-                    "hover:bg-black focus:outline-none focus:ring-2 focus:ring-brand-text/20",
+                    "text-sm font-semibold text-white shadow-xs transition",
+                    "hover:bg-black focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
                 ].join(" ")}
                 aria-label="Tag products in this video"
             >

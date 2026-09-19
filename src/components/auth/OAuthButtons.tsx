@@ -64,7 +64,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('google')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-sm font-semibold text-brand-text transition-all hover:bg-brand-secondary hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-sm font-semibold text-brand-text transition-all hover:bg-brand-secondary hover:shadow-xs"
         >
           <GoogleIcon />
           Google
@@ -72,7 +72,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('github')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-xs"
         >
           <GitHubIcon />
           GitHub
@@ -80,7 +80,7 @@ export default function OAuthButtons({ label = 'or continue with' }: OAuthButton
         <button
           type="button"
           onClick={() => handleOAuth('apple')}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-sm"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-text px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-xs"
         >
           <AppleIcon />
           Apple

@@ -66,7 +66,7 @@ export function LinksTab() {
   return (
     <div className="space-y-6">
       {/* Custom Links */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[14px] font-bold text-brand-text">Custom Links</h2>
@@ -112,13 +112,13 @@ export function LinksTab() {
                         value={link.title}
                         onChange={(e) => updateLink(link.id, "title", e.target.value)}
                         placeholder="Link title"
-                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                       />
                       <input
                         value={link.url}
                         onChange={(e) => updateLink(link.id, "url", e.target.value)}
                         placeholder="https://..."
-                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
+                        className="h-9 w-full rounded-lg border border-brand-divider bg-brand-card px-3 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-text/10"
                       />
                     </div>
                     <div className="flex shrink-0 gap-1 pt-1.5">
@@ -151,7 +151,7 @@ export function LinksTab() {
       </div>
 
       {/* Social Links */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-2 text-[14px] font-bold text-brand-text">Social Links</h2>
         <p className="mb-5 text-[11px] text-brand-text/60">
           Optional quick links shown with social platform icons.
@@ -164,7 +164,7 @@ export function LinksTab() {
               </label>
               <input
                 placeholder={`${platform} URL`}
-                className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-none focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+                className="h-9 w-full rounded-lg border border-brand-divider bg-brand-secondary px-3 text-[12px] text-brand-text outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
               />
             </div>
           ))}
@@ -190,7 +190,7 @@ export function LinksTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

@@ -93,7 +93,7 @@ function MopeduPartnersContent() {
   return (
     <div className="space-y-5">
       {/* Filters + search */}
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((f) => {
             const active = statusParam === f.key
@@ -125,7 +125,7 @@ function MopeduPartnersContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Name, phone, email…"
-                className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-2 text-sm outline-none focus:border-brand-text"
+                className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-2 text-sm outline-hidden focus:border-brand-text"
               />
             </div>
             <button
@@ -139,7 +139,7 @@ function MopeduPartnersContent() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {list.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

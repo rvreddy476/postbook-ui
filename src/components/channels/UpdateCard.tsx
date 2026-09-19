@@ -112,7 +112,7 @@ function PhotoGallery({ mediaIds }: { mediaIds: string[] }) {
 
       {/* Lightbox */}
       {lightboxIdx !== null && (
-        <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
+        <div className="fixed inset-0 z-60 bg-black/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
           <button className="absolute top-4 right-4 text-white/70 hover:text-white" onClick={() => setLightboxIdx(null)}>
             <X className="w-6 h-6" />
           </button>
@@ -475,7 +475,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
               {channelIcon ? (
                 <img src={channelIcon} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-[10px]`}>
+                <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-bold text-[10px]`}>
                   {channel.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -484,7 +484,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               {channel && <span className="text-xs font-bold text-brand-text">{channel.name}</span>}
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-brand-text/5 text-brand-text/40">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm text-[9px] font-semibold bg-brand-text/5 text-brand-text/40">
                 {typeInfo.emoji} {typeInfo.label}
               </span>
             </div>

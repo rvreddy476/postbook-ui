@@ -32,7 +32,7 @@ function PageCard({ page }: { page: import('@/types/profile').BusinessPage }) {
                 {coverUrl ? (
                     <img src={coverUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#3C2415] via-[#7B5B3A] to-[#D4A574]" />
+                    <div className="w-full h-full bg-linear-to-br from-[#3C2415] via-[#7B5B3A] to-[#D4A574]" />
                 )}
             </div>
 
@@ -142,7 +142,7 @@ export default function PagesDiscoveryPage() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search businesses..."
-                        className="w-full pl-10 pr-4 py-3 text-sm border border-[#F0E6DC] rounded-2xl bg-white text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-none focus:ring-2 focus:ring-[#D4A574]/50"
+                        className="w-full pl-10 pr-4 py-3 text-sm border border-[#F0E6DC] rounded-2xl bg-white text-[#3C2415] placeholder:text-[#7B5B3A]/40 focus:outline-hidden focus:ring-2 focus:ring-[#D4A574]/50"
                     />
                 </div>
 

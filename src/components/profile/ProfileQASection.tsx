@@ -30,7 +30,7 @@ export default function ProfileQASection({ userId }: Props) {
     (answers?.length ?? 0) > 0
 
   return (
-    <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider overflow-hidden">
+    <div className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider overflow-hidden">
       <div className="px-5 py-4 border-b border-brand-divider flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HelpCircle className="w-4 h-4 text-brand-text" />

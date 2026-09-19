@@ -44,7 +44,7 @@ export default function ProfileRoute() {
 
             <div className="flex pt-16">
                 {/* Left Sidebar */}
-                <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-[90]">
+                <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-90">
                     <Sidebar activeTab="Profile" setActiveTab={handleSetActiveTab} />
                 </div>
 

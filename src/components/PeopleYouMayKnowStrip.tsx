@@ -46,7 +46,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   if (visible.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-sm">
+    <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
       <div className="mb-3 flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-brand-text/60" />
@@ -66,7 +66,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
           return (
             <div
               key={user.user_id}
-              className="relative w-[150px] flex-shrink-0 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-sm"
+              className="relative w-[150px] shrink-0 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xs"
             >
               {/* Dismiss */}
               <button
@@ -91,7 +91,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                   />
                 ) : (
                   <div
-                    className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${gradientFor(user.user_id)} text-4xl font-black text-white`}
+                    className={`flex h-full w-full items-center justify-center bg-linear-to-br ${gradientFor(user.user_id)} text-4xl font-black text-white`}
                   >
                     {name.charAt(0).toUpperCase()}
                   </div>

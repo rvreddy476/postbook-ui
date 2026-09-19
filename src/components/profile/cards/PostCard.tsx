@@ -244,7 +244,7 @@ export function PostCard({ post }: PostCardProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider hover:shadow-md transition-shadow duration-300"
+            className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider hover:shadow-md transition-shadow duration-300"
         >
             {/* Pinned badge */}
             {post.is_pinned && (
@@ -260,7 +260,7 @@ export function PostCard({ post }: PostCardProps) {
             {post.text && (
                 <div className="mb-3">
                     <p
-                        className={`text-brand-text text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+                        className={`text-brand-text text-[15px] leading-relaxed whitespace-pre-wrap wrap-break-word ${
                             !expanded ? "line-clamp-4" : ""
                         }`}
                     >

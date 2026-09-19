@@ -96,7 +96,7 @@ export default function ReturnRequestPage({ params }: { params: Promise<{ id: st
             <select
               value={reasonCode}
               onChange={(e) => setReasonCode(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded-sm px-3 py-2 text-sm"
             >
               {REASON_CODES.map((r) => (
                 <option key={r.code} value={r.code}>{r.label}</option>
@@ -107,7 +107,7 @@ export default function ReturnRequestPage({ params }: { params: Promise<{ id: st
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full mt-3 border rounded px-3 py-2 text-sm"
+              className="w-full mt-3 border rounded-sm px-3 py-2 text-sm"
             />
           </section>
 

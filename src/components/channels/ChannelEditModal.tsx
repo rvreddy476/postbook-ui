@@ -126,7 +126,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
       onClick={(event) => event.target === event.currentTarget && onClose()}
     >
       <motion.div
@@ -152,12 +152,12 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
               {bannerPreview ? (
                 <img src={bannerPreview} alt="Channel banner" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-text/10 via-brand-text/5 to-brand-text/15 text-5xl font-black text-brand-text/15">
+                <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand-text/10 via-brand-text/5 to-brand-text/15 text-5xl font-black text-brand-text/15">
                   {fallbackInitial}
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-sm">
+                <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-brand-text shadow-xs">
                   Change banner
                 </span>
               </div>
@@ -215,7 +215,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:border-brand-text/50 focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:border-brand-text/50 focus:outline-hidden focus:ring-2 focus:ring-brand-text/30"
               placeholder="Enter channel name"
               maxLength={100}
             />
@@ -228,7 +228,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={3}
-              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:border-brand-text/50 focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm focus:border-brand-text/50 focus:outline-hidden focus:ring-2 focus:ring-brand-text/30"
               placeholder="What is this channel about?"
               maxLength={500}
             />
@@ -350,7 +350,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
                       onChange={(event) => setPrice(event.target.value)}
                       min="0"
                       step="0.01"
-                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 pl-8 text-sm focus:border-brand-text/50 focus:outline-none focus:ring-2 focus:ring-brand-text/30"
+                      className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-3 pl-8 text-sm focus:border-brand-text/50 focus:outline-hidden focus:ring-2 focus:ring-brand-text/30"
                       placeholder="4.99"
                     />
                   </div>

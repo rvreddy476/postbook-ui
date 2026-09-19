@@ -74,7 +74,7 @@ export default function DatingReportsQueue() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="border rounded px-3 py-2"
+            className="border rounded-sm px-3 py-2"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>{s || 'any'}</option>
@@ -86,7 +86,7 @@ export default function DatingReportsQueue() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="border rounded px-3 py-2"
+            className="border rounded-sm px-3 py-2"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c || 'any'}</option>
@@ -219,7 +219,7 @@ function ActionButton({
         }
         onClick()
       }}
-      className={`text-xs px-2 py-1 rounded ${palette} disabled:opacity-50`}
+      className={`text-xs px-2 py-1 rounded-sm ${palette} disabled:opacity-50`}
     >
       {label}
     </button>

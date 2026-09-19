@@ -61,9 +61,9 @@ function ListSkeleton() {
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-xl bg-brand-secondary" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-32 bg-brand-secondary rounded" />
-              <div className="h-3 w-48 bg-brand-secondary rounded" />
-              <div className="h-3 w-24 bg-brand-secondary rounded" />
+              <div className="h-4 w-32 bg-brand-secondary rounded-sm" />
+              <div className="h-3 w-48 bg-brand-secondary rounded-sm" />
+              <div className="h-3 w-24 bg-brand-secondary rounded-sm" />
             </div>
             <div className="h-7 w-20 bg-brand-secondary rounded-lg" />
           </div>
@@ -111,13 +111,13 @@ function FeaturedCard({ channel, onSubscribe }: { channel: BroadcastChannel; onS
     : null
   const gradient = pickColor(channel.name)
   return (
-    <Link href={`/channels/${channel.id}`} className="flex-shrink-0 w-[160px]">
+    <Link href={`/channels/${channel.id}`} className="shrink-0 w-[160px]">
       <div className="bg-brand-card border border-brand-divider rounded-2xl p-3 hover:bg-brand-secondary/30 transition-all h-full flex flex-col items-center text-center">
         <div className="w-14 h-14 rounded-xl overflow-hidden mb-2">
           {avatarSrc ? (
             <img src={avatarSrc} alt={channel.name} className="w-full h-full object-cover" />
           ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-xl`}>
+            <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-xl`}>
               {channel.name.charAt(0).toUpperCase()}
             </div>
           )}
@@ -148,12 +148,12 @@ function BroadcastCard({ channel }: { channel: BroadcastChannel }) {
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl px-4 py-3">
       <div className="flex items-center gap-3.5">
-        <Link href={`/channels/${channel.id}`} className="flex-shrink-0">
+        <Link href={`/channels/${channel.id}`} className="shrink-0">
           <div className="w-12 h-12 rounded-xl overflow-hidden">
             {avatarSrc ? (
               <img src={avatarSrc} alt={channel.name} className="w-full h-full object-cover" />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-lg`}>
+              <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-lg`}>
                 {channel.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -175,7 +175,7 @@ function BroadcastCard({ channel }: { channel: BroadcastChannel }) {
           <p className="text-[11px] text-brand-text/40 mt-0.5">Last update {timeAgo(channel.updated_at)}</p>
         </Link>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/channels/${channel.id}`}
             className="bg-brand-text text-brand-bg text-[11px] font-semibold rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
@@ -254,7 +254,7 @@ export default function ChannelsPage() {
         </div>
         <Link
           href="/channels/create"
-          className="flex items-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 transition-opacity shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg text-sm font-bold rounded-xl hover:opacity-90 transition-opacity shadow-xs"
         >
           <Plus className="w-4 h-4" />
           Create Channel
@@ -290,7 +290,7 @@ export default function ChannelsPage() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 activeCategory === cat
                   ? 'bg-brand-text text-brand-bg'
                   : 'border border-brand-divider text-brand-text hover:bg-brand-secondary/50'
@@ -311,7 +311,7 @@ export default function ChannelsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search channels..."
-            className="w-full pl-10 pr-4 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
           />
         </div>
       )}

@@ -41,7 +41,7 @@ export function MonetizationTab() {
   return (
     <div className="space-y-6">
       {/* Eligibility */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-2 text-[14px] font-bold text-brand-text">Monetization Eligibility</h2>
         <p className="mb-5 text-[11px] text-brand-text/60">
           Meet the requirements below to unlock monetization features.

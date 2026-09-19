@@ -116,9 +116,9 @@ function RestaurantCard({
   return (
     <button
       onClick={onOpen}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="overflow-hidden rounded-lg border border-neutral-200 bg-white text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative aspect-[16/9] bg-orange-50">
+      <div className="relative aspect-video bg-orange-50">
         {restaurant.hero_image_url ? (
           <img
             src={restaurant.hero_image_url}
@@ -130,7 +130,7 @@ function RestaurantCard({
             <UtensilsCrossed className="h-9 w-9" />
           </div>
         )}
-        <div className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-900 shadow">
+        <div className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-900 shadow-sm">
           {restaurant.is_open ? "Open now" : "Closed"}
         </div>
       </div>
@@ -302,7 +302,7 @@ function CartPanel() {
             <input
               value={coupon}
               onChange={(event) => setCoupon(event.target.value.toUpperCase())}
-              className="min-w-0 flex-1 rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="min-w-0 flex-1 rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
             <button
               onClick={() => couponMutation.mutate()}
@@ -450,7 +450,7 @@ function CheckoutPanel() {
                 value={form[field]}
                 onChange={(event) => setForm((prev) => ({ ...prev, [field]: event.target.value }))}
                 placeholder={field.replaceAll("_", " ")}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
               />
             ),
           )}
@@ -768,7 +768,7 @@ function PartnerOpsPanel() {
               value={restaurantForm[field]}
               onChange={(event) => setRestaurantForm((prev) => ({ ...prev, [field]: event.target.value }))}
               placeholder={field.replaceAll("_", " ")}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
           ))}
           <button
@@ -810,7 +810,7 @@ function PartnerOpsPanel() {
               <input
                 value={categoryName}
                 onChange={(event) => setCategoryName(event.target.value)}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
               />
               <button onClick={() => createCategory.mutate()} className="rounded-md bg-orange-700 px-4 py-2 text-sm font-bold text-white">
                 Add category
@@ -820,13 +820,13 @@ function PartnerOpsPanel() {
               <input
                 value={itemForm.name}
                 onChange={(event) => setItemForm((prev) => ({ ...prev, name: event.target.value }))}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
               />
               <input
                 type="number"
                 value={itemForm.base_price}
                 onChange={(event) => setItemForm((prev) => ({ ...prev, base_price: Number(event.target.value) }))}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
               />
               <button
                 onClick={() => createItem.mutate()}
@@ -983,7 +983,7 @@ function DeliveryOpsPanel() {
               value={form[field]}
               onChange={(event) => setForm((prev) => ({ ...prev, [field]: event.target.value }))}
               placeholder={field.replaceAll("_", " ")}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
           ))}
           <button onClick={() => saveProfile.mutate()} className="rounded-md bg-neutral-950 px-4 py-3 text-sm font-black text-white">
@@ -1233,8 +1233,8 @@ function AdminOpsPanel() {
         <div className="rounded-lg border border-neutral-200 bg-white p-4">
           <h3 className="mb-3 font-black">Create coupon</h3>
           <div className="grid gap-2">
-            <input value={coupon.code} onChange={(event) => setCoupon((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))} className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500" />
-            <input value={coupon.title} onChange={(event) => setCoupon((prev) => ({ ...prev, title: event.target.value }))} className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500" />
+            <input value={coupon.code} onChange={(event) => setCoupon((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))} className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500" />
+            <input value={coupon.title} onChange={(event) => setCoupon((prev) => ({ ...prev, title: event.target.value }))} className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500" />
             <button onClick={() => createCoupon.mutate()} className="rounded-md bg-neutral-950 px-4 py-3 text-sm font-black text-white">
               Create coupon
             </button>
@@ -1248,14 +1248,14 @@ function AdminOpsPanel() {
                 key={field}
                 value={serviceArea[field]}
                 onChange={(event) => setServiceArea((prev) => ({ ...prev, [field]: event.target.value }))}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+                className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
               />
             ))}
             <input
               type="number"
               value={serviceArea.radius_km}
               onChange={(event) => setServiceArea((prev) => ({ ...prev, radius_km: Number(event.target.value) }))}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
             <button onClick={() => createServiceArea.mutate()} className="rounded-md bg-orange-700 px-4 py-3 text-sm font-black text-white">
               Add service area
@@ -1277,13 +1277,13 @@ function AdminOpsPanel() {
               type="date"
               value={settlementRange.period_start}
               onChange={(event) => setSettlementRange((prev) => ({ ...prev, period_start: event.target.value }))}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
             <input
               type="date"
               value={settlementRange.period_end}
               onChange={(event) => setSettlementRange((prev) => ({ ...prev, period_end: event.target.value }))}
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+              className="rounded-md border border-neutral-200 px-3 py-2 text-sm outline-hidden focus:border-orange-500"
             />
             <button
               onClick={() => generateSettlements.mutate()}
@@ -1492,12 +1492,12 @@ function LoadingState() {
         <div key={index} className="h-72 animate-pulse rounded-lg border border-neutral-200 bg-white">
           <div className="h-36 rounded-t-lg bg-neutral-100" />
           <div className="space-y-3 p-4">
-            <div className="h-4 w-2/3 rounded bg-neutral-100" />
-            <div className="h-3 w-full rounded bg-neutral-100" />
+            <div className="h-4 w-2/3 rounded-sm bg-neutral-100" />
+            <div className="h-3 w-full rounded-sm bg-neutral-100" />
             <div className="grid grid-cols-3 gap-2">
-              <div className="h-9 rounded bg-neutral-100" />
-              <div className="h-9 rounded bg-neutral-100" />
-              <div className="h-9 rounded bg-neutral-100" />
+              <div className="h-9 rounded-sm bg-neutral-100" />
+              <div className="h-9 rounded-sm bg-neutral-100" />
+              <div className="h-9 rounded-sm bg-neutral-100" />
             </div>
           </div>
         </div>
@@ -1550,7 +1550,7 @@ export default function FigoHomePage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search biryani, dosa, cuisine"
-                className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400"
+                className="w-full bg-transparent text-sm font-medium outline-hidden placeholder:text-neutral-400"
               />
             </div>
           </div>

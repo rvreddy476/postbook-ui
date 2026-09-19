@@ -125,7 +125,7 @@ export default function MopeduCronRunsPage() {
     <div className="space-y-4">
       <form
         onSubmit={applyFilters}
-        className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm"
+        className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs"
       >
         <div className="flex flex-wrap items-end gap-3">
           <FilterField label="Job">
@@ -135,7 +135,7 @@ export default function MopeduCronRunsPage() {
                 setJob(e.target.value)
                 setOffset(0)
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             >
               {JOBS.map((j) => (
                 <option key={j} value={j}>
@@ -152,7 +152,7 @@ export default function MopeduCronRunsPage() {
                 setSince(e.target.value)
                 setOffset(0)
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             />
           </FilterField>
           <button
@@ -175,7 +175,7 @@ export default function MopeduCronRunsPage() {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {list.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -285,7 +285,7 @@ export default function MopeduCronRunsPage() {
                 <p className="mb-1 font-semibold uppercase tracking-wider text-rose-700">
                   Error summary
                 </p>
-                <p className="whitespace-pre-wrap break-words">
+                <p className="whitespace-pre-wrap wrap-break-word">
                   {selected.error_summary}
                 </p>
               </div>
@@ -338,7 +338,7 @@ function KvRow({
       </p>
       <div
         className={classNames(
-          "mt-0.5 break-words text-brand-text",
+          "mt-0.5 wrap-break-word text-brand-text",
           mono ? "font-mono text-xs" : "text-sm",
         )}
       >

@@ -68,8 +68,8 @@ const SECTION_FIELDS: Record<AboutSection, FieldDef[]> = {
 
 const FAVORITE_CATEGORIES = [] as const
 
-const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm"
-const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-sm appearance-none cursor-pointer"
+const inputBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all placeholder:text-brand-text/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs"
+const selectBase = "flex h-12 w-full rounded-2xl border border-brand-divider bg-brand-card/50 px-4 py-2 text-sm font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/20 focus-visible:border-brand-text focus-visible:bg-brand-card shadow-xs appearance-none cursor-pointer"
 
 // ─── Main Component ─────────────────────────────────────────────────
 
@@ -115,7 +115,7 @@ export function AboutSectionsPanel({ userId, filterType, section }: AboutSection
                 const sectionLabel = filterType === 'work' ? "Professional Entries" : filterType === 'education' ? "Academic Entries" : label
 
                 return (
-                    <div key={key} className={`rounded-[1.5rem] border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-brand-card border-brand-divider shadow-xl" : "bg-brand-card border-brand-divider"}`}>
+                    <div key={key} className={`rounded-3xl border transition-all duration-500 overflow-hidden ${isExpanded ? "bg-brand-card border-brand-divider shadow-xl" : "bg-brand-card border-brand-divider"}`}>
                         <button
                             type="button"
                             onClick={() => setExpandedSection(isExpanded ? null : key)}
@@ -198,7 +198,7 @@ function AboutItemRow({
     const data = item.data as Record<string, unknown>
 
     return (
-        <div className="flex items-start justify-between p-5 rounded-[1.25rem] bg-brand-card border border-brand-divider group shadow-sm">
+        <div className="flex items-start justify-between p-5 rounded-[1.25rem] bg-brand-card border border-brand-divider group shadow-xs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 flex-1">
                 {fields.map((f) => {
                     const val = data[f.key]
@@ -328,7 +328,7 @@ function AddItemForm({
         <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6 p-8 rounded-[2rem] bg-brand-card border border-brand-divider shadow-2xl mt-4 relative overflow-hidden"
+            className="space-y-6 p-8 rounded-4xl bg-brand-card border border-brand-divider shadow-2xl mt-4 relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-5">
                 <Sparkles className="w-20 h-20 text-brand-text" />

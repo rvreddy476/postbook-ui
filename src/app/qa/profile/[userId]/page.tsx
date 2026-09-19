@@ -50,11 +50,11 @@ function BadgeItem({ badge }: { badge: ContributorBadge }) {
 function QuestionRow({ q }: { q: QuestionSummary }) {
   return (
     <Link href={`/qa/questions/${q.id}`}>
-      <div className="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-1 px-1 rounded transition-colors cursor-pointer">
+      <div className="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-1 px-1 rounded-sm transition-colors cursor-pointer">
         <div className="flex items-center gap-1 text-xs text-neutral-500 shrink-0 min-w-[48px] justify-end">
           <ChevronUp className="w-3 h-3" />{q.vote_score}
         </div>
-        <div className={`px-1.5 py-0.5 rounded text-xs shrink-0 ${q.is_answered ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'border border-neutral-300 dark:border-neutral-600 text-neutral-500'}`}>
+        <div className={`px-1.5 py-0.5 rounded-sm text-xs shrink-0 ${q.is_answered ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'border border-neutral-300 dark:border-neutral-600 text-neutral-500'}`}>
           {q.answer_count}
         </div>
         <p className="flex-1 text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">{q.title}</p>
@@ -79,7 +79,7 @@ export default function QAProfilePage() {
       <AppShell>
         <div className="max-w-3xl mx-auto px-4 py-6 animate-pulse">
           <div className="h-24 bg-neutral-200 dark:bg-neutral-700 rounded-xl mb-4" />
-          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/3" />
         </div>
       </AppShell>
     )
@@ -106,7 +106,7 @@ export default function QAProfilePage() {
         {/* Profile header */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 mb-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-ask to-ask-hover flex items-center justify-center text-white text-2xl font-bold shrink-0">
+            <div className="w-16 h-16 rounded-full bg-linear-to-br from-ask to-ask-hover flex items-center justify-center text-white text-2xl font-bold shrink-0">
               {(profile.display_name || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">

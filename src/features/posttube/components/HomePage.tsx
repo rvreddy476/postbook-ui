@@ -34,7 +34,7 @@ function VideoGridSkeleton({ count = 12 }: { count?: number }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-6">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse rounded-2xl bg-brand-card dark:bg-[#1C1A28] p-3">
-          <div className="rounded-2xl bg-gradient-to-br from-[#EEEDF5] to-[#E3E1EE] dark:from-[#2A2740] dark:to-[#221F32]" style={{ aspectRatio: "16/9" }} />
+          <div className="rounded-2xl bg-linear-to-br from-[#EEEDF5] to-[#E3E1EE] dark:from-[#2A2740] dark:to-[#221F32]" style={{ aspectRatio: "16/9" }} />
           <div className="mt-3.5 flex gap-3">
             <div className="h-10 w-10 shrink-0 rounded-xl bg-[#EEEDF5] dark:bg-[#2A2740]" />
             <div className="flex-1 space-y-2 pt-1">
@@ -102,7 +102,7 @@ function FlicksRow({ videos }: { videos: PostTubeVideo[] }) {
     <section className="pb-3">
       {/* Section header */}
       <div className="mb-5 flex items-center gap-3 px-1">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-text to-black shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3)]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-br from-brand-text to-black shadow-[0_2px_8px_-2px_rgba(0,0,0,0.3)]">
           <Zap className="h-4 w-4 text-white" />
         </div>
         <div>
@@ -144,9 +144,9 @@ function FlicksRow({ videos }: { videos: PostTubeVideo[] }) {
               href={`/reels?reelId=${v.id}`}
               className="group shrink-0 w-[180px]"
             >
-              <div className="relative overflow-hidden rounded-2xl bg-[#1A1430] aspect-[9/16] shadow-[0_4px_24px_-6px_rgba(15,13,21,0.2)] dark:shadow-[0_4px_24px_-6px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.25)] group-hover:-translate-y-1">
+              <div className="relative overflow-hidden rounded-2xl bg-[#1A1430] aspect-9/16 shadow-[0_4px_24px_-6px_rgba(15,13,21,0.2)] dark:shadow-[0_4px_24px_-6px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.25)] group-hover:-translate-y-1">
                 {/* Placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#2D2640] via-[#1A1430] to-[#0F0D15]">
+                <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-[#2D2640] via-[#1A1430] to-[#0F0D15]">
                   <Zap className="h-8 w-8 text-brand-text/30" />
                 </div>
                 {/* Video first-frame fallback */}
@@ -186,7 +186,7 @@ function FlicksRow({ videos }: { videos: PostTubeVideo[] }) {
                 </div>
 
                 {/* Bottom gradient + meta */}
-                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0F0D15]/80 via-[#0F0D15]/30 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-[#0F0D15]/80 via-[#0F0D15]/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <p className="line-clamp-2 text-[12px] font-semibold text-white leading-tight drop-shadow-md">
                     {v.title}
@@ -249,8 +249,8 @@ export function HomePage() {
               onClick={() => setActiveChip(chip.value)}
               className={`shrink-0 rounded-xl px-4 py-2 text-[12px] font-semibold transition-all duration-200 ${
                 activeChip === chip.value
-                  ? "bg-gradient-to-r from-brand-text to-black text-white shadow-[0_2px_12px_-3px_rgba(0,0,0,0.4)]"
-                  : "bg-brand-secondary dark:bg-[#2A2740] text-brand-text dark:text-brand-text hover:bg-brand-secondary dark:hover:bg-[#3A3650] hover:shadow-sm"
+                  ? "bg-linear-to-r from-brand-text to-black text-white shadow-[0_2px_12px_-3px_rgba(0,0,0,0.4)]"
+                  : "bg-brand-secondary dark:bg-[#2A2740] text-brand-text dark:text-brand-text hover:bg-brand-secondary dark:hover:bg-[#3A3650] hover:shadow-xs"
               }`}
             >
               {chip.label}
@@ -268,7 +268,7 @@ export function HomePage() {
               <VideoRow
                 title="Continue watching"
                 icon={
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.35)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.35)]">
                     <History className="h-4 w-4 text-white" />
                   </div>
                 }
@@ -299,7 +299,7 @@ export function HomePage() {
                         else longVideosFeed.fetchNextPage();
                       }}
                       disabled={longVideosFeed.isFetchingNextPage}
-                      className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-brand-card dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-brand-text shadow-sm transition-all hover:border-brand-text/20 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)] disabled:opacity-50"
+                      className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-brand-card dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-brand-text shadow-xs transition-all hover:border-brand-text/20 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)] disabled:opacity-50"
                     >
                       <Sparkles className="h-4 w-4 text-[#F59E0B] transition-transform group-hover:rotate-12" />
                       {longVideosFeed.isFetchingNextPage ? "Loading..." : "Discover more"}
@@ -319,7 +319,7 @@ export function HomePage() {
                     else flicksFeed.fetchNextPage();
                   }}
                   disabled={flicksFeed.isFetchingNextPage}
-                  className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-brand-card dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-brand-text shadow-sm transition-all hover:border-brand-text/20 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)] disabled:opacity-50"
+                  className="group flex items-center gap-2 rounded-2xl border border-[#EEEDF5] dark:border-[#2A2740] bg-brand-card dark:bg-[#1C1A28] px-6 py-3 text-[13px] font-semibold text-brand-text shadow-xs transition-all hover:border-brand-text/20 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.15)] disabled:opacity-50"
                 >
                   <Zap className="h-4 w-4 text-[#F59E0B]" />
                   {flicksFeed.isFetchingNextPage ? "Loading..." : "More flicks"}
@@ -331,10 +331,10 @@ export function HomePage() {
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-28 text-center">
             <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-secondary to-brand-card dark:from-[#2A2740] dark:to-[#221F32]">
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-linear-to-br from-brand-secondary to-brand-card dark:from-[#2A2740] dark:to-[#221F32]">
                 <Tv2 className="h-10 w-10 text-brand-text" />
               </div>
-              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.4)]">
+              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-br from-[#F59E0B] to-[#F97316] shadow-[0_2px_8px_-2px_rgba(245,158,11,0.4)]">
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
             </div>
@@ -344,7 +344,7 @@ export function HomePage() {
             </p>
             <Link
               href="/posttube/upload"
-              className="mt-6 flex items-center gap-2 rounded-2xl bg-gradient-to-r from-brand-text to-black px-6 py-3 text-[13px] font-bold text-white shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4)] transition-all hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.5)] hover:-translate-y-0.5"
+              className="mt-6 flex items-center gap-2 rounded-2xl bg-linear-to-r from-brand-text to-black px-6 py-3 text-[13px] font-bold text-white shadow-[0_4px_16px_-4px_rgba(0,0,0,0.4)] transition-all hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.5)] hover:-translate-y-0.5"
             >
               <Upload className="h-4 w-4" />
               Upload Video

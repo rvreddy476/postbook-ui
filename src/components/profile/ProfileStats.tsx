@@ -34,7 +34,7 @@ export function ProfileStats({ graphCounts, contentCounts, onStatClick }: Profil
     ]
 
     return (
-        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-sm p-5">
+        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5">
             <div className="grid grid-cols-4 gap-2">
                 {stats.map((stat, i) => {
                     const Icon = stat.icon

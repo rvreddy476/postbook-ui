@@ -119,7 +119,7 @@ export default function CommunityNewPostPage() {
     },
     editorProps: {
       attributes: {
-        class: "w-full px-5 py-4 text-[15px] font-medium text-brand-text border-none outline-none bg-transparent min-h-[200px] cursor-text [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:text-brand-text/40 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_table]:border-collapse [&_table]:w-full [&_table]:my-4 [&_th]:border [&_th]:border-brand-divider [&_th]:bg-brand-text/5 [&_th]:p-2 [&_td]:border [&_td]:border-brand-divider [&_td]:p-2 focus:outline-none",
+        class: "w-full px-5 py-4 text-[15px] font-medium text-brand-text border-none outline-hidden bg-transparent min-h-[200px] cursor-text [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:text-brand-text/40 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_table]:border-collapse [&_table]:w-full [&_table]:my-4 [&_th]:border [&_th]:border-brand-divider [&_th]:bg-brand-text/5 [&_th]:p-2 [&_td]:border [&_td]:border-brand-divider [&_td]:p-2 focus:outline-hidden",
       },
     },
   })
@@ -225,24 +225,24 @@ export default function CommunityNewPostPage() {
               Back to Community
             </Link>
             <h1 className="text-3xl font-black text-brand-text tracking-tight flex items-center gap-3">
-              <span className="bg-gradient-to-tr from-brand-text to-brand-text/50 bg-clip-text text-transparent">Create Post</span>
+              <span className="bg-linear-to-tr from-brand-text to-brand-text/50 bg-clip-text text-transparent">Create Post</span>
               <PenLine className="w-6 h-6 text-brand-text/20" />
             </h1>
           </div>
 
           {/* ─── Unified Creation Card ─── */}
-          <div className="bg-white dark:bg-brand-bg rounded-[1.5rem] border border-brand-divider/60 shadow-xl overflow-visible relative z-10">
+          <div className="bg-white dark:bg-brand-bg rounded-3xl border border-brand-divider/60 shadow-xl overflow-visible relative z-10">
 
             {/* ── Header: Community Picker & Segmented Tabs ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:px-6 sm:py-4 border-b border-brand-divider/40 bg-brand-text/[0.015] rounded-t-[1.5rem]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:px-6 sm:py-4 border-b border-brand-divider/40 bg-brand-text/1.5 rounded-t-3xl">
               
               {/* Community selector */}
               <div className="relative z-30" ref={pickerRef}>
                 <button
                   onClick={() => setShowCommunityPicker(!showCommunityPicker)}
-                  className="flex items-center gap-3 px-3 py-2 bg-white dark:bg-brand-bg border border-brand-divider/60 shadow-sm rounded-xl hover:bg-brand-text/5 transition-all duration-300 max-w-sm"
+                  className="flex items-center gap-3 px-3 py-2 bg-white dark:bg-brand-bg border border-brand-divider/60 shadow-xs rounded-xl hover:bg-brand-text/5 transition-all duration-300 max-w-sm"
                 >
-                  <div className="w-7 h-7 rounded-[0.5rem] overflow-hidden flex-shrink-0 shadow-sm">
+                  <div className="w-7 h-7 rounded-lg overflow-hidden shrink-0 shadow-xs">
                     {selectedCommunity?.avatar_media_id ? (
                       <img
                         src={`/v1/media/${selectedCommunity.avatar_media_id}/serve`}
@@ -250,7 +250,7 @@ export default function CommunityNewPostPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                         {selectedCommunity?.name?.charAt(0)?.toUpperCase() || 'C'}
                       </div>
                     )}
@@ -286,7 +286,7 @@ export default function CommunityNewPostPage() {
                               community.id === selectedCommunityId ? 'bg-brand-text/5 border border-brand-text/10' : 'border border-transparent'
                             }`}
                           >
-                            <div className="w-9 h-9 rounded-[0.6rem] overflow-hidden flex-shrink-0">
+                            <div className="w-9 h-9 rounded-[0.6rem] overflow-hidden shrink-0">
                               {community.avatar_media_id ? (
                                 <img
                                   src={`/v1/media/${community.avatar_media_id}/serve`}
@@ -294,7 +294,7 @@ export default function CommunityNewPostPage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                                   {community.name.charAt(0).toUpperCase()}
                                 </div>
                               )}
@@ -318,14 +318,14 @@ export default function CommunityNewPostPage() {
               </div>
 
               {/* Content type tabs */}
-              <div className="flex bg-brand-text/5 dark:bg-brand-text/[0.04] rounded-xl border border-brand-text/10 p-1 w-full sm:w-auto">
+              <div className="flex bg-brand-text/5 dark:bg-brand-text/4 rounded-xl border border-brand-text/10 p-1 w-full sm:w-auto">
                 {POST_TABS.map(tab => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-bold transition-all duration-300 rounded-lg whitespace-nowrap ${
                       activeTab === tab.key
-                        ? 'text-brand-text shadow-sm bg-white dark:bg-brand-bg scale-100'
+                        ? 'text-brand-text shadow-xs bg-white dark:bg-brand-bg scale-100'
                         : 'text-brand-text/50 hover:text-brand-text hover:bg-brand-text/5'
                     }`}
                   >
@@ -347,7 +347,7 @@ export default function CommunityNewPostPage() {
                   onChange={e => {
                     if (e.target.value.length <= 300) setTitle(e.target.value)
                   }}
-                  className="w-full px-0 py-2 bg-transparent text-2xl font-bold text-brand-text placeholder:text-brand-text/30 focus:outline-none border-b border-brand-divider focus:border-brand-text/30 transition-all rounded-none"
+                  className="w-full px-0 py-2 bg-transparent text-2xl font-bold text-brand-text placeholder:text-brand-text/30 focus:outline-hidden border-b border-brand-divider focus:border-brand-text/30 transition-all rounded-none"
                 />
                 <span className="absolute right-0 bottom-3 text-[10px] font-bold text-brand-text/30 px-2 py-1 bg-white/80 dark:bg-brand-bg/80 rounded-md">
                   {title.length}/300
@@ -361,7 +361,7 @@ export default function CommunityNewPostPage() {
                     {tags.map(tag => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-text/5 text-brand-text text-xs font-bold rounded-xl border border-brand-text/10 shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-text/5 text-brand-text text-xs font-bold rounded-xl border border-brand-text/10 shadow-xs"
                       >
                         <span className="text-brand-text/40">#</span>
                         {tag}
@@ -373,7 +373,7 @@ export default function CommunityNewPostPage() {
                   </div>
                 )}
                 {showTagInput ? (
-                  <div className="flex items-center gap-2 bg-white dark:bg-brand-bg border border-brand-divider rounded-xl p-1 shadow-sm">
+                  <div className="flex items-center gap-2 bg-white dark:bg-brand-bg border border-brand-divider rounded-xl p-1 shadow-xs">
                     <input
                       type="text"
                       placeholder="tag name"
@@ -381,7 +381,7 @@ export default function CommunityNewPostPage() {
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                       autoFocus
-                      className="w-28 px-3 py-1 bg-transparent text-xs font-semibold text-brand-text placeholder:text-brand-text/30 focus:outline-none"
+                      className="w-28 px-3 py-1 bg-transparent text-xs font-semibold text-brand-text placeholder:text-brand-text/30 focus:outline-hidden"
                     />
                     <button onClick={addTag} className="px-3 py-1 bg-brand-text text-brand-bg rounded-lg text-xs font-bold hover:bg-brand-text/90">Add</button>
                     <button onClick={() => { setShowTagInput(false); setTagInput('') }} className="px-2 py-1 text-xs text-brand-text/40 hover:text-brand-text">Cancel</button>
@@ -390,7 +390,7 @@ export default function CommunityNewPostPage() {
                   tags.length < 10 && (
                     <button
                       onClick={() => setShowTagInput(true)}
-                      className="px-3 py-1.5 bg-white dark:bg-brand-bg border border-dashed border-brand-divider text-brand-text/50 hover:text-brand-text hover:border-brand-text/30 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1"
+                      className="px-3 py-1.5 bg-white dark:bg-brand-bg border border-dashed border-brand-divider text-brand-text/50 hover:text-brand-text hover:border-brand-text/30 text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1"
                     >
                       <Plus className="w-3 h-3" />
                       Add tag
@@ -621,7 +621,7 @@ export default function CommunityNewPostPage() {
                   placeholder="Paste URL here (e.g. https://...)"
                   value={linkUrl}
                   onChange={e => setLinkUrl(e.target.value)}
-                  className="w-full px-4 py-3 bg-transparent border border-brand-divider/60 rounded-xl text-sm font-semibold text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:border-brand-text/30 transition-all shadow-sm mt-4"
+                  className="w-full px-4 py-3 bg-transparent border border-brand-divider/60 rounded-xl text-sm font-semibold text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:border-brand-text/30 transition-all shadow-xs mt-4"
                 />
               )}
 
@@ -636,7 +636,7 @@ export default function CommunityNewPostPage() {
                           placeholder={`Option ${i + 1}`}
                           value={opt}
                           onChange={e => updatePollOption(i, e.target.value)}
-                          className="flex-1 px-4 py-2.5 border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:border-brand-text/30 transition-colors"
+                          className="flex-1 px-4 py-2.5 border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:border-brand-text/30 transition-colors"
                         />
                         {pollOptions.length > 2 && (
                           <button
@@ -665,7 +665,7 @@ export default function CommunityNewPostPage() {
                 <button
                   onClick={handlePublish}
                   disabled={!isValid || publishing}
-                  className="px-8 py-3 bg-brand-text text-brand-bg text-sm font-black rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:hover:shadow-none"
+                  className="px-8 py-3 bg-brand-text text-brand-bg text-sm font-black rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   {publishing ? 'Posting...' : 'Post'}
                 </button>

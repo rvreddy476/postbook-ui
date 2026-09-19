@@ -41,10 +41,10 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-[#6b081f] to-slate-900" />
+            <div className="h-full w-full bg-linear-to-br from-[#6b081f] to-slate-900" />
           )}
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-card/20 backdrop-blur-md ring-2 ring-white/30">
@@ -60,7 +60,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
               Featured
             </span>
             {featured.duration_seconds > 0 && (
-              <span className="flex items-center gap-1 rounded-full bg-brand-card/15 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90">
+              <span className="flex items-center gap-1 rounded-full bg-brand-card/15 backdrop-blur-xs px-2 py-0.5 text-[10px] font-medium text-white/90">
                 <Clock className="h-2.5 w-2.5" />
                 {fmtDuration(featured.duration_seconds)}
               </span>
@@ -96,9 +96,9 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-slate-200 to-slate-100" />
+              <div className="h-full w-full bg-linear-to-br from-slate-200 to-slate-100" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-3">
               <h3 className="text-[12px] font-semibold text-white line-clamp-2 leading-tight">
                 {video.title}
@@ -108,7 +108,7 @@ export function HeroSection({ featured, secondary }: HeroSectionProps) {
               </p>
             </div>
             {video.duration_seconds > 0 && (
-              <span className="absolute top-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white">
+              <span className="absolute top-2 right-2 rounded-sm bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white">
                 {fmtDuration(video.duration_seconds)}
               </span>
             )}

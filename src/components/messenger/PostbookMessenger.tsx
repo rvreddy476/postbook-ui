@@ -33,8 +33,8 @@ function SidebarSkeleton() {
         <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
           <div className="w-10 h-10 rounded-xl bg-brand-secondary shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-24 bg-brand-secondary rounded" />
-            <div className="h-2.5 w-16 bg-brand-secondary rounded" />
+            <div className="h-3 w-24 bg-brand-secondary rounded-sm" />
+            <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
           </div>
         </div>
       ))}
@@ -48,7 +48,7 @@ function SidebarSkeleton() {
 function EmptyState() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center">
-      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/10 to-brand-text/5 flex items-center justify-center mb-5">
+      <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/10 to-brand-text/5 flex items-center justify-center mb-5">
         <Send className="w-8 h-8 text-brand-text/40" />
       </div>
       <h3 className="text-lg font-bold text-brand-text mb-1">Your Messages</h3>
@@ -347,7 +347,7 @@ export default function PostbookMessenger() {
               placeholder="Search conversations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 focus:border-brand-text/20 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 focus:border-brand-text/20 transition-all"
             />
           </div>
 
@@ -367,7 +367,7 @@ export default function PostbookMessenger() {
                   onClick={() => setContactTab(tab)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest uppercase rounded-lg transition-all ${
                     isActive
-                      ? 'bg-brand-accent text-brand-bg shadow-sm'
+                      ? 'bg-brand-accent text-brand-bg shadow-xs'
                       : 'text-brand-text/60 hover:text-brand-text'
                   }`}
                 >
@@ -636,7 +636,7 @@ export default function PostbookMessenger() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 bg-brand-text text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 px-6 py-3 bg-brand-text text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           {toast}
         </div>
       )}

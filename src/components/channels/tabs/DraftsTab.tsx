@@ -74,10 +74,10 @@ function DraftCardSkeleton() {
     <div className="bg-brand-card border border-brand-divider rounded-2xl p-4 animate-pulse">
       <div className="flex items-center gap-2 mb-3">
         <div className="h-5 w-24 bg-brand-secondary rounded-full" />
-        <div className="ml-auto h-4 w-16 bg-brand-secondary rounded" />
+        <div className="ml-auto h-4 w-16 bg-brand-secondary rounded-sm" />
       </div>
-      <div className="h-4 w-3/4 bg-brand-secondary rounded mb-2" />
-      <div className="h-3 w-1/3 bg-brand-secondary rounded" />
+      <div className="h-4 w-3/4 bg-brand-secondary rounded-sm mb-2" />
+      <div className="h-3 w-1/3 bg-brand-secondary rounded-sm" />
     </div>
   )
 }
@@ -135,7 +135,7 @@ function DraftCard({
 
   return (
     <>
-      <div className="group bg-brand-card border border-brand-divider rounded-2xl p-4 transition-all hover:shadow-sm">
+      <div className="group bg-brand-card border border-brand-divider rounded-2xl p-4 transition-all hover:shadow-xs">
         {/* Top row: type badge + status badge */}
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-secondary text-brand-text/60 text-[10px] font-semibold rounded-full capitalize">

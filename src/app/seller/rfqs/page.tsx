@@ -72,7 +72,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
                   onChange={(e) =>
                     setUnitPrices((u) => ({ ...u, [it.id]: e.target.value }))
                   }
-                  className="w-24 border border-amber-300 rounded px-2 py-1 text-right"
+                  className="w-24 border border-amber-300 rounded-sm px-2 py-1 text-right"
                   placeholder="0.00"
                 />
               </td>
@@ -89,7 +89,7 @@ function QuoteForm({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
         max="90"
         value={validityDays}
         onChange={(e) => setValidityDays(parseInt(e.target.value, 10) || 7)}
-        className="w-24 border border-amber-300 rounded px-2 py-1 text-sm"
+        className="w-24 border border-amber-300 rounded-sm px-2 py-1 text-sm"
       />
       <div className="mt-3 flex gap-2">
         <button

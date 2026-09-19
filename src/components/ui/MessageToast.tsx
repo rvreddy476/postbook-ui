@@ -27,7 +27,7 @@ export function MessageToastContent({
             onClick={onClick}
             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-brand-secondary/50 transition-colors rounded-2xl"
         >
-            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white shadow-sm flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white shadow-xs shrink-0">
                 <img
                     src={senderAvatar}
                     alt={senderName}
@@ -39,7 +39,7 @@ export function MessageToastContent({
                     <span className="text-[11px] font-black text-brand-text tracking-tight truncate">
                         {senderName}
                     </span>
-                    <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest flex-shrink-0">
+                    <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest shrink-0">
                         {timestamp}
                     </span>
                 </div>

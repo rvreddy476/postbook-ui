@@ -50,7 +50,7 @@ function ToggleSwitch({
             onClick={() => onChange(!checked)}
             className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-                "transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
+                "transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/50 focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 checked ? "bg-brand-text" : "bg-brand-secondary",
             ].join(" ")}
@@ -88,7 +88,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="bg-brand-card dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-neutral-100 dark:border-neutral-800"
+            className="bg-brand-card dark:bg-neutral-900 rounded-2xl p-6 shadow-xs border border-neutral-100 dark:border-neutral-800"
         >
             <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-text/5">
@@ -173,11 +173,11 @@ function ScreenTimeSkeleton() {
                         <div className="w-full rounded-md bg-brand-secondary" style={{ height: "60px" }}>
                             <div className="bg-brand-secondary rounded-t-md w-full" style={{ height: `${h}%` }} />
                         </div>
-                        <div className="h-2 w-4 rounded bg-brand-secondary" />
+                        <div className="h-2 w-4 rounded-sm bg-brand-secondary" />
                     </div>
                 ))}
             </div>
-            <div className="h-4 w-40 rounded bg-brand-secondary" />
+            <div className="h-4 w-40 rounded-sm bg-brand-secondary" />
         </div>
     )
 }
@@ -230,7 +230,7 @@ function DailyLimitCard() {
                             max={1440}
                             value={minutes}
                             onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                         />
                         <p className="text-xs text-brand-text/60">Set 0 to disable the limit.</p>
                     </div>
@@ -296,7 +296,7 @@ function FocusModeCard() {
                             placeholder="09:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -309,7 +309,7 @@ function FocusModeCard() {
                             placeholder="17:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                 </div>
@@ -374,7 +374,7 @@ function BedtimeModeCard() {
                             placeholder="22:00"
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -387,7 +387,7 @@ function BedtimeModeCard() {
                             placeholder="07:00"
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                         />
                     </div>
                 </div>
@@ -447,7 +447,7 @@ function BreakRemindersCard() {
                         id="break-interval"
                         value={interval}
                         onChange={(e) => setInterval(parseInt(e.target.value, 10))}
-                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
                     >
                         <option value={30}>30 minutes</option>
                         <option value={60}>60 minutes</option>

@@ -72,7 +72,7 @@ const ChannelUpdateCard: React.FC<ChannelUpdateCardProps> = ({ update }) => {
       {update.media_ids.length > 0 && (
         <div className="mt-3 flex gap-2 overflow-x-auto">
           {update.media_ids.slice(0, 4).map((mediaId) => (
-            <div key={mediaId} className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-brand-secondary">
+            <div key={mediaId} className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-brand-secondary">
               <img
                 src={`/v1/media/${mediaId}/serve`}
                 alt=""
@@ -81,7 +81,7 @@ const ChannelUpdateCard: React.FC<ChannelUpdateCardProps> = ({ update }) => {
             </div>
           ))}
           {update.media_ids.length > 4 && (
-            <div className="w-20 h-20 rounded-xl flex-shrink-0 bg-brand-secondary flex items-center justify-center">
+            <div className="w-20 h-20 rounded-xl shrink-0 bg-brand-secondary flex items-center justify-center">
               <span className="text-xs font-bold text-brand-text/60">+{update.media_ids.length - 4}</span>
             </div>
           )}

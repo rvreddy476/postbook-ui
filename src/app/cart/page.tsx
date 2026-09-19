@@ -68,7 +68,7 @@ export default function CartPage() {
               value={couponDraft}
               onChange={(e) => setCouponDraft(e.target.value.toUpperCase())}
               placeholder="ENTER CODE"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono uppercase tracking-wider focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setAppliedCoupon(couponDraft.trim())
               }}

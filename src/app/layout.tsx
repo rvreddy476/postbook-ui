@@ -12,7 +12,9 @@ const outfit = Outfit({
 const spaceMono = Space_Mono({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-mono',
+  // Renamed from --font-mono: Tailwind v4 uses the theme key as the CSS variable
+  // name, so --font-mono in @theme would reference itself and be invalid.
+  variable: '--font-mono-face',
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
@@ -73,7 +75,7 @@ export default function RootLayout({
           }}
         />
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,_rgba(var(--foreground-rgb),0.08)_0px,_transparent_50%),_radial-gradient(at_100%_0%,_rgba(var(--foreground-rgb),0.06)_0px,_transparent_50%)]"></div>
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(at_0%_0%,rgba(var(--foreground-rgb),0.08)_0px,transparent_50%),radial-gradient(at_100%_0%,rgba(var(--foreground-rgb),0.06)_0px,transparent_50%)]"></div>
           <div className="absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-brand-secondary/10 blur-[120px]"></div>
         </div>
         <script

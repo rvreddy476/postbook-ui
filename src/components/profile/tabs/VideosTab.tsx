@@ -77,14 +77,14 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
 
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="h-14 w-14 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center shadow-xl">
+                    <div className="h-14 w-14 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center shadow-xl">
                         <Play className="h-6 w-6 text-white fill-white ml-0.5" />
                     </div>
                 </div>
 
                 {/* Duration badge */}
                 {duration !== undefined && duration > 0 && (
-                    <div className="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur-sm text-white text-xs font-semibold px-2 py-0.5 rounded-lg">
+                    <div className="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur-xs text-white text-xs font-semibold px-2 py-0.5 rounded-lg">
                         {formatDuration(duration)}
                     </div>
                 )}
@@ -92,7 +92,7 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
 
             {/* Details */}
             <div className="p-4 space-y-2">
-                <h3 className="text-sm font-semibold text-brand-text font-[var(--font-outfit)] line-clamp-2 leading-snug">
+                <h3 className="text-sm font-semibold text-brand-text font-(--font-outfit) line-clamp-2 leading-snug">
                     {title}
                 </h3>
                 <div className="flex items-center gap-3 text-xs text-brand-text/60">
@@ -162,10 +162,10 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
     if (videos.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-xs">
                     <Video className="h-9 w-9 text-brand-text/30" />
                 </div>
-                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-(--font-outfit)">
                     {isOwn ? "Start creating on Posttube" : "No videos yet"}
                 </h3>
                 <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">

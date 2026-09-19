@@ -52,14 +52,14 @@ export function VideoEmbedCard({ embedRef }: VideoEmbedCardProps) {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center">
                         <Video className="w-12 h-12 text-white/60" />
                     </div>
                 )}
 
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center group-hover:bg-black/65 transition-colors duration-200">
+                    <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-xs flex items-center justify-center group-hover:bg-black/65 transition-colors duration-200">
                         <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
                     </div>
                 </div>

@@ -96,7 +96,7 @@ export default function FriendCard({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 8 }}
-      className="relative rounded-2xl bg-brand-card px-4 py-3 shadow-sm border border-brand-divider"
+      className="relative rounded-2xl bg-brand-card px-4 py-3 shadow-xs border border-brand-divider"
     >
       {/* × dismiss in the top-right — invokes the secondary action
           (Remove/Delete). Floating outside the column flow. */}

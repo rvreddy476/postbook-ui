@@ -34,7 +34,7 @@ export default function GroupPostComposer({ groupId, channels }: GroupPostCompos
         <select
           value={channelId ?? ''}
           onChange={(e) => setChannelId(e.target.value || undefined)}
-          className="mb-3 text-xs bg-brand-bg border border-brand-divider rounded-lg px-3 py-1.5 text-brand-text outline-none"
+          className="mb-3 text-xs bg-brand-bg border border-brand-divider rounded-lg px-3 py-1.5 text-brand-text outline-hidden"
         >
           <option value="">All channels</option>
           {channels.map(ch => (
@@ -61,7 +61,7 @@ export default function GroupPostComposer({ groupId, channels }: GroupPostCompos
             placeholder="What's on your mind?"
             rows={4}
             autoFocus
-            className="w-full bg-brand-bg border border-brand-divider rounded-xl px-4 py-3 text-sm text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text/30 resize-none"
+            className="w-full bg-brand-bg border border-brand-divider rounded-xl px-4 py-3 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 resize-none"
           />
 
           {/* Attachment bar */}

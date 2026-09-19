@@ -83,7 +83,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
 
     if (!metrics) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#7B5B3A]">Content Details</p>
                     <button
@@ -150,7 +150,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                 return (
                                     <div
                                         key={idx}
-                                        className="flex flex-col items-center gap-1 flex-shrink-0"
+                                        className="flex flex-col items-center gap-1 shrink-0"
                                         style={{ minWidth: hourlyTrend.length > 24 ? 16 : 28 }}
                                     >
                                         <div className="relative group">
@@ -163,7 +163,7 @@ const ContentDetailPanel: React.FC<ContentDetailPanelProps> = ({ contentId, onCl
                                                 </div>
                                             </div>
                                             <div
-                                                className="w-full rounded-t-md bg-gradient-to-t from-[#D4A574] to-[#D4A574]/60 hover:from-[#7B5B3A] hover:to-[#D4A574] transition-all duration-200 cursor-pointer"
+                                                className="w-full rounded-t-md bg-linear-to-t from-[#D4A574] to-[#D4A574]/60 hover:from-[#7B5B3A] hover:to-[#D4A574] transition-all duration-200 cursor-pointer"
                                                 style={{
                                                     height: barHeight,
                                                     minWidth: hourlyTrend.length > 24 ? 8 : 16,

@@ -208,7 +208,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <article
-      className="bg-brand-card rounded-xl shadow-sm border border-brand-divider group/card"
+      className="bg-brand-card rounded-xl shadow-xs border border-brand-divider group/card"
     >
       {/* Repost indicator */}
       {post.is_repost && (
@@ -232,7 +232,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all flex-shrink-0">
+            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-blue-100 transition-all shrink-0">
               {avatar ? (
                 <img
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
@@ -240,7 +240,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
+                <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-300 to-slate-400 text-white font-bold text-base">
                   {avatarInitial}
                 </div>
               )}
@@ -293,7 +293,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="absolute right-0 mt-1 w-64 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1.5 z-[100]"
+                className="absolute right-0 mt-1 w-64 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1.5 z-100"
               >
                 {!isOwnPost && (
                   <>
@@ -509,7 +509,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           // card doesn't shrink/grow on "next" clicks (object-contain made it
           // resize when images had different aspect ratios). Single-image
           // posts keep the original natural sizing.
-          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-[9/16] max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
+          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-9/16 max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
             <div className="h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
@@ -523,7 +523,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                         muted
                         preload={dataSaver ? "none" : "metadata"}
                       />
-                      <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                      <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-linear-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
                             {avatar ? (
@@ -533,7 +533,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                                 alt=""
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
+                              <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-300 to-slate-400 text-white font-bold text-sm">
                                 {avatarInitial}
                               </div>
                             )}
@@ -572,17 +572,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media!.length - 1))}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-brand-text shadow-lg hover:bg-brand-card transition-all"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev < post.media!.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-sm text-brand-text shadow-lg hover:bg-brand-card transition-all"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/20 backdrop-blur-xs px-2 py-1 rounded-full">
                   {post.media!.map((_, i) => (
                     <div
                       key={i}
@@ -595,7 +595,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
             {/* Gallery Counter */}
             {hasMultipleMedia && (
-              <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
+              <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/40 backdrop-blur-xs text-white text-xs font-medium">
                 {activeMediaIndex + 1}/{post.media!.length}
               </div>
             )}
@@ -613,8 +613,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="flex flex-col items-center gap-1 group"
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg ${liked
-                  ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
-                  : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
+                  ? 'bg-linear-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30'
+                  : 'bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-5 h-5">
                     <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
@@ -637,7 +637,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               >
                 <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${showComments
                   ? 'bg-brand-text text-brand-bg shadow-black/10'
-                  : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
+                  : 'bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                   }`}>
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
@@ -655,7 +655,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               aria-label="Echo"
               className="flex flex-col items-center gap-1 group"
             >
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
                 <Repeat2 className="w-5 h-5" />
               </div>
               {sharesCount > 0 && (
@@ -673,7 +673,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             >
               <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
                 ? 'bg-brand-text text-brand-bg shadow-brand-text/30'
-                : 'bg-brand-card/90 backdrop-blur-sm text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
+                : 'bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
                 }`}>
                 <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-current' : ''}`} />
               </div>

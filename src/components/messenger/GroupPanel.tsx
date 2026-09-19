@@ -218,11 +218,11 @@ function ChatView({
       {/* Pinned message banner */}
       {chat.pinnedMessage && (
         <div
-          className="flex items-center gap-3 px-6 lg:px-10 py-2.5 border-b border-brand-divider cursor-pointer flex-shrink-0 hover:bg-brand-secondary/80 transition-colors"
+          className="flex items-center gap-3 px-6 lg:px-10 py-2.5 border-b border-brand-divider cursor-pointer shrink-0 hover:bg-brand-secondary/80 transition-colors"
           style={{ background: `${groupColor}06` }}
           onClick={() => scrollToMessage(chat.pinnedMessage!.message_id)}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={groupColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={groupColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <line x1="12" y1="17" x2="12" y2="22" />
             <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
           </svg>
@@ -237,7 +237,7 @@ function ChatView({
           <button
             onClick={(e) => { e.stopPropagation(); chat.handleUnpinMessage() }}
             title="Unpin message"
-            className="text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-md p-1 transition-colors flex-shrink-0"
+            className="text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-md p-1 transition-colors shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -255,7 +255,7 @@ function ChatView({
               <div key={i} className="flex gap-3 items-end">
                 <div className="w-9 h-9 rounded-full bg-brand-secondary animate-pulse" />
                 <div className="flex flex-col gap-2">
-                  <div className="w-24 h-3 rounded bg-brand-secondary animate-pulse" />
+                  <div className="w-24 h-3 rounded-sm bg-brand-secondary animate-pulse" />
                   <div className="h-12 rounded-2xl bg-brand-secondary/60 animate-pulse" style={{ width: 180 + i * 30 }} />
                 </div>
               </div>
@@ -302,7 +302,7 @@ function ChatView({
                   onContextMenu={(e) => chat.handleContextMenu(e, msg)}
                 >
                   {!mine && (
-                    <div className="w-9 flex-shrink-0 flex justify-center mt-6">
+                    <div className="w-9 shrink-0 flex justify-center mt-6">
                       {showAv && (
                         <Avatar
                           user={{ id: msg.senderId, name: sender.name, avatar: sender.avatar }}
@@ -334,7 +334,7 @@ function ChatView({
 
                     {/* Bubble */}
                     <div
-                      className={`px-4 py-2.5 text-[14px] leading-relaxed break-words ${msg.isDeleted ? 'italic' : ''}`}
+                      className={`px-4 py-2.5 text-[14px] leading-relaxed wrap-break-word ${msg.isDeleted ? 'italic' : ''}`}
                       style={{
                         borderRadius: 18,
                         borderTopLeftRadius: !mine && showAv ? 4 : 18,
@@ -402,7 +402,7 @@ function ChatView({
       {/* Context Menu */}
       {chat.contextMenu?.visible && (
         <div
-          className="fixed z-[1000] bg-brand-card border border-brand-divider rounded-xl shadow-xl py-1.5 min-w-[160px]"
+          className="fixed z-1000 bg-brand-card border border-brand-divider rounded-xl shadow-xl py-1.5 min-w-[160px]"
           style={{ left: chat.contextMenu.x, top: chat.contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -480,7 +480,7 @@ function ChatView({
 
       {/* Edit bar or Input */}
       {chat.editingMsgId ? (
-        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider flex-shrink-0">
+        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider shrink-0">
           <div className="max-w-3xl mx-auto w-full flex gap-3 items-center">
             <input
               value={chat.editText}
@@ -490,7 +490,7 @@ function ChatView({
                 if (e.key === 'Escape') { chat.setEditingMsgId(null); chat.setEditText('') }
               }}
               placeholder="Edit message..."
-              className="flex-1 py-3 px-5 rounded-xl border border-brand-text/30 bg-brand-secondary text-brand-text text-[14px] outline-none focus:bg-brand-card focus:ring-2 focus:ring-brand-secondary"
+              className="flex-1 py-3 px-5 rounded-xl border border-brand-text/30 bg-brand-secondary text-brand-text text-[14px] outline-hidden focus:bg-brand-card focus:ring-2 focus:ring-brand-secondary"
               autoFocus
             />
             <button
@@ -509,12 +509,12 @@ function ChatView({
           </div>
         </div>
       ) : (
-        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider flex-shrink-0">
+        <div className="px-6 lg:px-10 py-4 border-t border-brand-divider shrink-0">
           <div className="max-w-3xl mx-auto w-full relative flex gap-2 items-center">
             {/* Media upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
+              className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
               title="Upload media"
             >
               <Plus className="w-5 h-5" />
@@ -522,7 +522,7 @@ function ChatView({
             {/* Paperclip attachment */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
+              className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
               title="Attach file"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -543,7 +543,7 @@ function ChatView({
                 onChange={e => { chat.handleInputChange(e.target.value); setTyping(); }}
                 onKeyDown={e => { if (e.key === 'Enter') chat.handleSend(); if (e.key === 'Escape' && chat.replyingTo) chat.setReplyingTo(null) }}
                 placeholder="Type a message..."
-                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none transition-all focus:bg-brand-card focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary placeholder:text-brand-text/60"
+                className="w-full py-3.5 pl-5 pr-14 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-hidden transition-all focus:bg-brand-card focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary placeholder:text-brand-text/60"
               />
               <button
                 onClick={chat.handleSend}
@@ -603,7 +603,7 @@ function PostsView({
     <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-6 flex flex-col gap-5 scrollbar-hide bg-brand-secondary/30 relative">
       {/* CreatePortal modal for group posts */}
       {showCreatePost && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <CreatePortal onClose={() => setShowCreatePost(false)} groupId={groupId} />
         </div>
       )}
@@ -611,7 +611,7 @@ function PostsView({
       {/* Floating new post button */}
       <button
         onClick={() => setShowCreatePost(true)}
-        className="fixed bottom-8 right-8 xl:right-12 z-[100] w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
+        className="fixed bottom-8 right-8 xl:right-12 z-100 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
         style={{ backgroundColor: groupColor }}
         title="New post"
       >
@@ -649,7 +649,7 @@ function PostsView({
             const liked = likedPosts.has(post.post_id)
 
             return (
-              <div key={post.post_id} className="p-5 rounded-2xl bg-brand-card border border-brand-divider hover:shadow-sm transition-shadow">
+              <div key={post.post_id} className="p-5 rounded-2xl bg-brand-card border border-brand-divider hover:shadow-xs transition-shadow">
                 <div className="flex gap-3 mb-4">
                   <Avatar user={{ id: post.author_id, name: author.name, avatar: author.avatar }} size={40} showStatus />
                   <div className="flex-1 flex flex-col justify-center">
@@ -685,7 +685,7 @@ function PostsView({
                       onChange={e => setCommentText(e.target.value)}
                       placeholder="Write a comment..."
                       onKeyDown={e => { if (e.key === 'Enter' && commentText.trim()) { setCommentText(''); setCommentOpen(null) } }}
-                      className="flex-1 w-full py-2 px-3 rounded-lg bg-transparent border-none text-brand-text text-[13px] outline-none placeholder:text-brand-text/60"
+                      className="flex-1 w-full py-2 px-3 rounded-lg bg-transparent border-none text-brand-text text-[13px] outline-hidden placeholder:text-brand-text/60"
                     />
                     <button
                       onClick={() => { if (commentText.trim()) { setCommentText(''); setCommentOpen(null); } }}
@@ -876,7 +876,7 @@ export default function GroupPanel(props: GroupPanelProps) {
   return (
     <div className="w-full flex flex-col h-full font-sans border-l border-brand-divider">
       {/* ── Header ── */}
-      <div className="px-8 py-5 border-b border-brand-divider flex-shrink-0 z-20">
+      <div className="px-8 py-5 border-b border-brand-divider shrink-0 z-20">
         <div className="flex items-center justify-between">
           {/* Left: icon · name · info */}
           <div className="flex items-center gap-4">
@@ -889,7 +889,7 @@ export default function GroupPanel(props: GroupPanelProps) {
 
             {/* Group icon */}
             <div
-              className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm"
+              className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0 shadow-xs"
               style={{
                 background: groupAvatarUrl ? '#fff' : groupColor,
                 border: groupAvatarUrl ? '1px solid #e2e8f0' : 'none',
@@ -924,7 +924,7 @@ export default function GroupPanel(props: GroupPanelProps) {
                   key={tab.mode}
                   onClick={() => setMode(tab.mode)}
                   className={`py-2 px-5 rounded-md text-[13px] font-medium transition-all duration-200 flex items-center justify-center gap-2 ${active
-                    ? 'bg-brand-card shadow-sm text-brand-text'
+                    ? 'bg-brand-card shadow-xs text-brand-text'
                     : 'text-brand-text/60 hover:text-brand-highlight'
                   }`}
                 >
@@ -1028,13 +1028,13 @@ export default function GroupPanel(props: GroupPanelProps) {
       </AnimatePresence>
 
       {editingName && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
             <h3 className="text-[16px] font-semibold text-brand-text mb-4">Edit group name</h3>
             <input
               value={newGroupName}
               onChange={e => setNewGroupName(e.target.value)}
-              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
               autoFocus
               onKeyDown={e => {
                 if (e.key === 'Enter' && newGroupName.trim()) {
@@ -1069,14 +1069,14 @@ export default function GroupPanel(props: GroupPanelProps) {
 
       {/* ── Add member modal ── */}
       {showAddMember && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs">
           <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
             <h3 className="text-[16px] font-semibold text-brand-text mb-4">Add member</h3>
             <input
               value={addMemberId}
               onChange={e => setAddMemberId(e.target.value)}
               placeholder="Enter user ID"
-              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
+              className="w-full py-3 px-4 rounded-xl border border-brand-divider bg-brand-secondary text-brand-text text-[14px] outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary mb-4"
               autoFocus
             />
             <div className="flex gap-3 justify-end">

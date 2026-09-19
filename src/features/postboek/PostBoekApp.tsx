@@ -243,7 +243,7 @@ const PostBoekApp: React.FC = () => {
 
           {isContactListOpen && (
             <aside
-              className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-[90] w-[240px] flex-col border-r border-brand-divider relative transition-all duration-300`}
+              className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-90 w-[240px] flex-col border-r border-brand-divider relative transition-all duration-300`}
             >
               <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} onClose={() => setIsContactListOpen(false)} />
             </aside>
@@ -278,7 +278,7 @@ const PostBoekApp: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs"
             >
               <CreatePortal onClose={() => setIsCreateOpen(false)} />
             </motion.div>
@@ -286,7 +286,7 @@ const PostBoekApp: React.FC = () => {
         </AnimatePresence>
         <MobileBottomNav activeTab={activeTab} onChange={handleNavChange} />
 
-        <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
+        <div className="pointer-events-none fixed bottom-0 right-3 z-1000 flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
           <AnimatePresence>
             {activeChats.map((chat) => (
               <motion.div

@@ -93,7 +93,7 @@ function Toggle({ enabled, onToggle, label, icon }: {
         onClick={onToggle}
         className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? 'bg-brand-text' : 'bg-brand-divider'}`}
       >
-        <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   )
@@ -117,7 +117,7 @@ function WarningBanner({ variant, children }: { variant: 'warning' | 'info'; chi
 }
 
 function RichTextToolbar() {
-  const btn = 'w-7 h-7 rounded flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors'
+  const btn = 'w-7 h-7 rounded-sm flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors'
   return (
     <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-brand-card rounded-t-xl">
       <button type="button" className={btn} title="Bold"><Bold className="w-3.5 h-3.5" /></button>
@@ -298,7 +298,7 @@ export default function EditUpdateModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
@@ -361,7 +361,7 @@ export default function EditUpdateModal({
                     if (e.target.value.length <= MAX.title) setTitle(e.target.value)
                   }}
                   placeholder="Update title"
-                  className="w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                  className="w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
                 />
                 <div className="flex items-center justify-between mt-1">
                   <FieldError message={errors.title} />
@@ -387,7 +387,7 @@ export default function EditUpdateModal({
                   'Write your update...'
                 }
                 rows={5}
-                className="w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl rounded-t-none border-t-0 text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 resize-none"
+                className="w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl rounded-t-none border-t-0 text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 resize-none"
               />
               <div className="flex items-center justify-between mt-1">
                 <FieldError message={errors.body} />
@@ -425,7 +425,7 @@ export default function EditUpdateModal({
                     }}
                     onBlur={addTag}
                     placeholder={tags.length === 0 ? 'Add tags (press Enter)' : 'Add more...'}
-                    className="flex-1 min-w-[80px] bg-transparent text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-none"
+                    className="flex-1 min-w-[80px] bg-transparent text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-hidden"
                   />
                 )}
               </div>

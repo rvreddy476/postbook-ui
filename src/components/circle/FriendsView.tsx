@@ -228,7 +228,7 @@ export default function FriendsView() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search your friends…"
-                        className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-none"
+                        className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-hidden"
                     />
                     <button
                         onClick={() => {
@@ -350,7 +350,7 @@ export default function FriendsView() {
             )}
 
             {/* ---- Chat dock — in-place ChatWindows, no navigation ---- */}
-            <div className="pointer-events-none fixed bottom-0 right-3 z-[1000] flex flex-row-reverse items-end gap-3 sm:right-6 md:gap-4">
+            <div className="pointer-events-none fixed bottom-0 right-3 z-1000 flex flex-row-reverse items-end gap-3 sm:right-6 md:gap-4">
                 <AnimatePresence>
                     {chats.map((c) => (
                         <motion.div
@@ -539,7 +539,7 @@ function ModalShell({
 
     return (
         <div
-            className="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+            className="fixed inset-0 z-120 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
             onClick={onClose}
         >
             <div
@@ -743,7 +743,7 @@ function TrustedCircleModal({
                                     value={pickSearch}
                                     onChange={(e) => setPickSearch(e.target.value)}
                                     placeholder="Add a friend to your circle…"
-                                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-none"
+                                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-hidden"
                                 />
                             </div>
                             <div className="max-h-48 overflow-y-auto p-1">

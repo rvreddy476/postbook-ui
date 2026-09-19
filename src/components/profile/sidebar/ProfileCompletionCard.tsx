@@ -68,7 +68,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25, delay: 0.25 }}
-                className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
+                className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider"
             >
                 <div className="flex items-start justify-between mb-4">
                     <h3 className="text-sm font-bold text-brand-text">Complete your profile</h3>
@@ -141,7 +141,7 @@ export default function ProfileCompletionCard({ profile, onEditProfile }: Profil
 
                 <button
                     onClick={onEditProfile}
-                    className="mt-4 w-full py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-sm"
+                    className="mt-4 w-full py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-xs"
                 >
                     Edit Profile
                 </button>

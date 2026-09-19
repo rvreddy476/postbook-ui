@@ -25,7 +25,7 @@ export function ImageAdjustDialog({
     isApplying = false,
 }: ImageAdjustDialogProps) {
     return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+        <div className="fixed inset-0 z-80 flex items-center justify-center bg-black/60 p-3 backdrop-blur-xs">
             <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-2xl">
                 <div className="flex items-center justify-between border-b border-brand-divider px-4 py-3">
                     <div>

@@ -24,7 +24,7 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
   return (
     <nav className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
       <div className="max-w-lg mx-auto flex items-center justify-between px-4 h-14">
-        <Link href="/postmatch" className="text-sm font-black bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">PostMatch</Link>
+        <Link href="/postmatch" className="text-sm font-black bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">PostMatch</Link>
         <div className="flex gap-1">
           {items.map(i => (
             <Link key={i.id} href={i.href} className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${active === i.id ? 'bg-rose-50 text-rose-600' : 'text-[#666] hover:text-white'}`}>
@@ -37,7 +37,7 @@ function PostMatchNav({ active }: { active: 'discover' | 'matches' | 'chat' | 'p
   )
 }
 
-const inputCls = 'w-full border border-[#333] rounded-xl px-4 py-3 text-white bg-[#1a1a1a] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition-all text-sm font-medium placeholder:text-[#555]'
+const inputCls = 'w-full border border-[#333] rounded-xl px-4 py-3 text-white bg-[#1a1a1a] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition-all text-sm font-medium placeholder:text-[#555]'
 const labelCls = 'block text-[10px] font-black uppercase tracking-widest text-[#666] mb-1.5'
 const selectCls = `${inputCls} h-[46px] cursor-pointer`
 
@@ -172,7 +172,7 @@ export default function PostMatchProfilePage() {
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Profile header */}
         <div className="bg-[#111] rounded-2xl border border-[#222] p-6 mb-4 text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 p-[3px] mx-auto mb-3">
+          <div className="w-20 h-20 rounded-full bg-linear-to-br from-rose-500 to-orange-500 p-[3px] mx-auto mb-3">
             <div className="w-full h-full rounded-full bg-[#1a1a1a] overflow-hidden flex items-center justify-center">
               {photos.find(p => p.is_primary)?.media_url ? (
                 <img src={photos.find(p => p.is_primary)!.media_url!} alt="" className="w-full h-full object-cover" />
@@ -185,7 +185,7 @@ export default function PostMatchProfilePage() {
           {profile && (
             <div className="flex items-center justify-center gap-3 mt-2">
               <span className="text-xs text-[#666]">{profile.city}</span>
-              <span className="inline-block px-2 py-0.5 bg-rose-50 text-rose-500 rounded text-[10px] font-black uppercase tracking-wider">
+              <span className="inline-block px-2 py-0.5 bg-rose-50 text-rose-500 rounded-sm text-[10px] font-black uppercase tracking-wider">
                 {profile.profile_completion_percent}% complete
               </span>
             </div>
@@ -239,7 +239,7 @@ export default function PostMatchProfilePage() {
                     ))}
                   </div>
                 </div>
-                <button onClick={handleSaveProfile} disabled={updateProfile.isPending} className="w-full py-3 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition text-sm">
+                <button onClick={handleSaveProfile} disabled={updateProfile.isPending} className="w-full py-3 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition text-sm">
                   {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
                 </button>
               </div>
@@ -267,7 +267,7 @@ export default function PostMatchProfilePage() {
                     ))}
                   </div>
                 </div>
-                <button onClick={handleSavePreferences} disabled={updatePrefs.isPending} className="w-full py-3 bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition text-sm">
+                <button onClick={handleSavePreferences} disabled={updatePrefs.isPending} className="w-full py-3 bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-rose-500/20 disabled:opacity-50 transition text-sm">
                   {updatePrefs.isPending ? 'Saving...' : 'Save Preferences'}
                 </button>
               </div>
@@ -288,7 +288,7 @@ export default function PostMatchProfilePage() {
                       {rejectedPhotos.map(r => (
                         <li key={r.id} className="flex gap-3 text-xs">
                           {r.media_url && (
-                            <img src={r.media_url} alt="" className="w-12 h-16 rounded object-cover flex-shrink-0 opacity-60" />
+                            <img src={r.media_url} alt="" className="w-12 h-16 rounded-sm object-cover shrink-0 opacity-60" />
                           )}
                           <div className="flex-1">
                             <div className="text-white/90">{r.moderation_reason || 'No reason provided.'}</div>
@@ -301,13 +301,13 @@ export default function PostMatchProfilePage() {
                 )}
                 <div className="grid grid-cols-3 gap-3">
                   {photos.map(p => (
-                    <div key={p.id} className="relative aspect-[3/4] rounded-xl overflow-hidden border-2 border-[#222]">
+                    <div key={p.id} className="relative aspect-3/4 rounded-xl overflow-hidden border-2 border-[#222]">
                       {p.media_url ? (
                         <img src={p.media_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-[#555] text-xl">📷</div>
                       )}
-                      {p.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 px-2 py-1"><span className="text-[9px] font-black text-white uppercase tracking-widest">Primary</span></div>}
+                      {p.is_primary && <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 px-2 py-1"><span className="text-[9px] font-black text-white uppercase tracking-widest">Primary</span></div>}
                       <button
                         onClick={() => deletePhoto.mutate(p.id)}
                         disabled={deletePhoto.isPending}

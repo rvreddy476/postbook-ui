@@ -99,15 +99,15 @@ function targetTypeBadgeColor(type: string): string {
 
 function SavedItemSkeleton() {
     return (
-        <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-sm animate-pulse">
+        <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-xs animate-pulse">
             <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-brand-secondary flex-shrink-0" />
+                <div className="w-10 h-10 rounded-xl bg-brand-secondary shrink-0" />
                 <div className="flex-1 space-y-2.5 min-w-0">
                     <div className="h-3 bg-brand-secondary rounded-full w-1/3" />
                     <div className="h-3 bg-brand-secondary rounded-full w-1/2" />
                     <div className="h-2.5 bg-brand-secondary rounded-full w-1/4" />
                 </div>
-                <div className="w-16 h-8 bg-brand-secondary rounded-xl flex-shrink-0" />
+                <div className="w-16 h-8 bg-brand-secondary rounded-xl shrink-0" />
             </div>
         </div>
     )
@@ -146,11 +146,11 @@ function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
     return (
         <div
             onClick={handleNavigate}
-            className="group bg-brand-card rounded-2xl border border-brand-divider overflow-hidden shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-300 cursor-pointer"
+            className="group bg-brand-card rounded-2xl border border-brand-divider overflow-hidden shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-300 cursor-pointer"
         >
             <div className="flex items-stretch gap-4 p-4">
                 {/* Thumbnail */}
-                <div className="relative flex-shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-brand-secondary">
+                <div className="relative shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-brand-secondary">
                     {thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
@@ -245,7 +245,7 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
         return (
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
                 {[80, 100, 90, 110].map((w, i) => (
-                    <div key={i} className={`h-9 rounded-xl bg-brand-secondary animate-pulse flex-shrink-0`} style={{ width: w }} />
+                    <div key={i} className={`h-9 rounded-xl bg-brand-secondary animate-pulse shrink-0`} style={{ width: w }} />
                 ))}
             </div>
         )
@@ -256,9 +256,9 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
             {/* All tab */}
             <button
                 onClick={() => onSelect(undefined)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 transition-all duration-200 border ${
                     activeCollection === undefined
-                        ? "bg-brand-card text-brand-text border-brand-text/20 shadow-sm shadow-brand-text/10"
+                        ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
                         : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
                 }`}
             >
@@ -280,9 +280,9 @@ function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }
                 <button
                     key={col.name}
                     onClick={() => onSelect(col.name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all duration-200 border ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 transition-all duration-200 border ${
                         activeCollection === col.name
-                            ? "bg-brand-card text-brand-text border-brand-text/20 shadow-sm shadow-brand-text/10"
+                            ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
                             : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
                     }`}
                 >
@@ -435,7 +435,7 @@ export default function SavedPage() {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isFetchingNextPage ? (
                                         <>
@@ -458,7 +458,7 @@ export default function SavedPage() {
                         {!hasNextPage && allItems.length > 0 && (
                             <div className="mt-10 flex items-center gap-3">
                                 <div className="flex-1 h-px bg-brand-secondary" />
-                                <p className="text-[8px] font-black uppercase tracking-widest text-brand-text/30 flex-shrink-0">
+                                <p className="text-[8px] font-black uppercase tracking-widest text-brand-text/30 shrink-0">
                                     End of saved items
                                 </p>
                                 <div className="flex-1 h-px bg-brand-secondary" />

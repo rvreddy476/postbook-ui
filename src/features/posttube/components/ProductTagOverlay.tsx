@@ -100,8 +100,8 @@ function ProductCard({
             className={[
                 "pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2",
                 "flex items-center gap-2 rounded-2xl bg-white/95 px-3 py-2 shadow-lg",
-                "backdrop-blur-sm transition hover:scale-[1.03] hover:bg-white",
-                "focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:ring-offset-2",
+                "backdrop-blur-xs transition hover:scale-[1.03] hover:bg-white",
+                "focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:ring-offset-2",
             ].join(" ")}
             style={{ left: `${x}%`, top: `${y}%` }}
             aria-label={`View product: ${tag.label || "tagged product"}`}

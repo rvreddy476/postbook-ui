@@ -141,7 +141,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                                 className="w-full h-full object-cover group-hover:brightness-90 transition-all"
                             />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                            <div className="w-full h-full bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center">
                                 <ImageIcon className="w-8 h-8 text-zinc-300" />
                             </div>
                         )}
@@ -149,7 +149,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                             {coverUpload.isPending ? (
                                 <Loader2 className="w-5 h-5 text-white animate-spin" />
                             ) : (
-                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold">
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/50 backdrop-blur-xs rounded-lg text-white text-xs font-semibold">
                                     <Camera className="w-3.5 h-3.5" /> Change Cover
                                 </div>
                             )}
@@ -169,7 +169,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                                     className="w-full h-full object-cover group-hover:brightness-90 transition-all"
                                 />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-lg font-black text-white">
+                                <div className="w-full h-full bg-linear-to-br from-slate-200 to-slate-300 flex items-center justify-center text-lg font-black text-white">
                                     {profile.display_name.charAt(0)}
                                 </div>
                             )}
@@ -207,7 +207,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                         value={form.bio}
                         onChange={update("bio")}
                         rows={3}
-                        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                     />
                 </Field>
 
@@ -227,7 +227,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                     <select
                         value={form.category}
                         onChange={update("category")}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                     >
                         <option value="personal">Personal</option>
                         <option value="creator">Creator</option>

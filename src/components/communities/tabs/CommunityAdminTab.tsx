@@ -204,7 +204,7 @@ function LoadingSkeleton({ count }: { count: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 p-3 bg-brand-card border border-brand-divider rounded-xl animate-pulse">
           <div className="w-10 h-10 rounded-full bg-brand-bg" />
-          <div className="flex-1"><div className="h-3 w-32 bg-brand-bg rounded mb-1" /><div className="h-2 w-20 bg-brand-bg rounded" /></div>
+          <div className="flex-1"><div className="h-3 w-32 bg-brand-bg rounded-sm mb-1" /><div className="h-2 w-20 bg-brand-bg rounded-sm" /></div>
         </div>
       ))}
     </div>

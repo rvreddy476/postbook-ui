@@ -17,7 +17,7 @@ function QuestionCard({ q }: { q: QuestionSummary }) {
               <ChevronUp className="w-4 h-4" />{q.vote_score}
             </div>
             <div className="text-xs text-neutral-500">votes</div>
-            <div className="mt-1 px-2 py-0.5 rounded text-xs font-medium border border-neutral-300 dark:border-neutral-600 text-neutral-500">
+            <div className="mt-1 px-2 py-0.5 rounded-sm text-xs font-medium border border-neutral-300 dark:border-neutral-600 text-neutral-500">
               0
             </div>
             <div className="text-xs text-neutral-500">ans</div>
@@ -89,12 +89,12 @@ export default function UnansweredPage() {
               <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 animate-pulse">
                 <div className="flex gap-4">
                   <div className="w-12 space-y-1.5">
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm" />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
-                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-3/4" />
+                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
                   </div>
                 </div>
               </div>

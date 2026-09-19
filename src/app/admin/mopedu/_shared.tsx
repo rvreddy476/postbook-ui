@@ -166,7 +166,7 @@ export function ReasonInput({
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
         rows={3}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
       />
       <p className="mt-1 text-right text-[11px] text-gray-500">
         {value.length}/{maxLength}
@@ -424,7 +424,7 @@ export function MapPlaceholder({
   body?: string
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-6 py-12 text-center">
+    <div className="relative overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-linear-to-br from-blue-50 via-white to-emerald-50 px-6 py-12 text-center">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(circle_at_70%_60%,rgba(16,185,129,0.18),transparent_60%)]"
@@ -453,7 +453,7 @@ export function StatusTimeline({
         <li key={`${ev.status}-${ev.at}-${i}`} className="relative">
           <span
             aria-hidden
-            className="absolute -left-[18px] mt-1 h-2 w-2 rounded-full bg-brand-text"
+            className="absolute left-[-18px] mt-1 h-2 w-2 rounded-full bg-brand-text"
           />
           <div className="flex items-center gap-2">
             <StatusPill status={ev.status} />

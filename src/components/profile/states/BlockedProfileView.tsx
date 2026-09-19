@@ -19,7 +19,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                 transition={{ duration: 0.4 }}
                 className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
             >
-                <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
+                <div className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-secondary mb-6">
                         <UserX className="w-8 h-8 text-brand-text/60" />
                     </div>
@@ -35,7 +35,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                     <div className="mt-8">
                         <button
                             onClick={onGoHome}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                         >
                             <Home className="w-4 h-4" />
                             Go Home
@@ -54,7 +54,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
             transition={{ duration: 0.4 }}
             className="min-h-screen bg-brand-secondary flex items-center justify-center px-4"
         >
-            <div className="bg-brand-card rounded-2xl shadow-sm border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
+            <div className="bg-brand-card rounded-2xl shadow-xs border border-brand-divider p-10 sm:p-14 text-center max-w-md w-full">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-6">
                     <ShieldOff className="w-8 h-8 text-red-400" />
                 </div>
@@ -72,7 +72,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
                     {onUnblock && (
                         <button
                             onClick={onUnblock}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-secondary text-brand-text text-sm font-medium hover:bg-brand-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/40 focus:ring-offset-2"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-secondary text-brand-text text-sm font-medium hover:bg-brand-secondary transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/40 focus:ring-offset-2"
                         >
                             <ShieldOff className="w-4 h-4" />
                             Unblock
@@ -81,7 +81,7 @@ export function BlockedProfileView({ variant, username, onUnblock, onGoHome }: B
 
                     <button
                         onClick={onGoHome}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
                     >
                         <Home className="w-4 h-4" />
                         Go Home

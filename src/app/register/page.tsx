@@ -144,15 +144,15 @@ export default function RegisterPage() {
   };
 
   const inputBase =
-    'w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10';
+    'w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10';
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-brand-accent/20 selection:text-brand-text">
       {/* Ambient monochrome glows */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/[0.06] blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/[0.05] blur-[160px]" />
+      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
       {/* Hairline ring accent behind the card */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/[0.04]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/4" />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -250,7 +250,7 @@ export default function RegisterPage() {
                             key={g}
                             className={`relative flex cursor-pointer items-center justify-center rounded-xl border py-3 text-xs font-bold transition-all ${
                               gender === g
-                                ? 'border-brand-accent bg-brand-accent text-brand-bg shadow-sm'
+                                ? 'border-brand-accent bg-brand-accent text-brand-bg shadow-xs'
                                 : 'border-brand-divider bg-brand-secondary text-brand-text/50 hover:border-brand-accent/40 hover:text-brand-text/70'
                             }`}
                           >
@@ -421,7 +421,7 @@ export default function RegisterPage() {
                         onChange={handleCodeChange}
                         placeholder="000000"
                         maxLength={6}
-                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-4 text-center text-2xl font-black tracking-[0.5em] text-brand-text outline-none transition-all placeholder:tracking-[0.5em] placeholder:text-brand-text/20 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
+                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-4 text-center text-2xl font-black tracking-[0.5em] text-brand-text outline-hidden transition-all placeholder:tracking-[0.5em] placeholder:text-brand-text/20 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
                         required
                       />
 

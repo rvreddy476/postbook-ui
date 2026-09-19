@@ -17,7 +17,7 @@ function LeaderboardRow({ profile, rank }: { profile: QAProfile; rank: number })
   return (
     <div className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${
       rank <= 3
-        ? 'bg-gradient-to-r from-violet-50 to-white dark:from-violet-900/10 dark:to-neutral-900 border-ask/20 dark:border-ask/30'
+        ? 'bg-linear-to-r from-violet-50 to-white dark:from-violet-900/10 dark:to-neutral-900 border-ask/20 dark:border-ask/30'
         : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800'
     }`}>
       <div className="w-8 flex justify-center">
@@ -91,10 +91,10 @@ export default function LeaderboardPage() {
                 <div className="flex gap-4 items-center">
                   <div className="w-8 h-8 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
-                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/3" />
+                    <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-1/2" />
                   </div>
-                  <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-16" />
+                  <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded-sm w-16" />
                 </div>
               </div>
             ))}

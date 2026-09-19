@@ -93,12 +93,12 @@ export default function HashtagPage() {
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-brand-text/60 hover:text-brand-text hover:bg-brand-divider transition-colors"
+                                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-brand-text/60 hover:text-brand-text hover:bg-brand-divider transition-colors"
                                 aria-label="Go back"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0">
                                 <Hash className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -117,13 +117,13 @@ export default function HashtagPage() {
                                 )}
                             </div>
                             {/* Sort toggle */}
-                            <div className="flex-shrink-0 flex items-center gap-1 rounded-xl bg-brand-divider/60 p-1">
+                            <div className="shrink-0 flex items-center gap-1 rounded-xl bg-brand-divider/60 p-1">
                                 <button
                                     type="button"
                                     onClick={() => handleSortChange('recent')}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                                         sort === 'recent'
-                                            ? 'bg-brand-card text-brand-text shadow-sm'
+                                            ? 'bg-brand-card text-brand-text shadow-xs'
                                             : 'text-brand-text/40 hover:text-brand-text/70'
                                     }`}
                                 >
@@ -135,7 +135,7 @@ export default function HashtagPage() {
                                     onClick={() => handleSortChange('top')}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                                         sort === 'top'
-                                            ? 'bg-brand-card text-brand-text shadow-sm'
+                                            ? 'bg-brand-card text-brand-text shadow-xs'
                                             : 'text-brand-text/40 hover:text-brand-text/70'
                                     }`}
                                 >
@@ -171,7 +171,7 @@ export default function HashtagPage() {
                     {/* Loading */}
                     {isLoading && (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 animate-pulse">
+                            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 animate-pulse">
                                 <Hash className="w-6 h-6 text-white" />
                             </div>
                             <div className="flex flex-col items-center gap-1">
@@ -200,7 +200,7 @@ export default function HashtagPage() {
                     {/* Empty */}
                     {!isLoading && !isError && allPosts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                                 <Hash className="w-9 h-9 text-brand-text/30" />
                             </div>
                             <div className="text-center max-w-xs">
@@ -218,7 +218,7 @@ export default function HashtagPage() {
                             {contentTab !== 'videos' && (
                                 <a
                                     href="/create/post"
-                                    className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
+                                    className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
                                 >
                                     Create first {contentTab === 'reels' ? 'reel' : 'post'}
                                 </a>
@@ -231,7 +231,7 @@ export default function HashtagPage() {
                         <button
                             type="button"
                             onClick={handleRefresh}
-                            className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-105 active:scale-95"
+                            className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-105 active:scale-95"
                         >
                             <ArrowUp className="h-4 w-4" />
                             {newPostCount === 1 ? '1 new post' : `${newPostCount} new posts`}
@@ -254,7 +254,7 @@ export default function HashtagPage() {
                                 <button
                                     onClick={() => fetchNextPage()}
                                     disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-card border border-brand-divider text-sm font-bold text-brand-text shadow-sm hover:shadow-md hover:border-brand-text/20 active:scale-95 disabled:opacity-60 disabled:pointer-events-none transition-all duration-200"
+                                    className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-card border border-brand-divider text-sm font-bold text-brand-text shadow-xs hover:shadow-md hover:border-brand-text/20 active:scale-95 disabled:opacity-60 disabled:pointer-events-none transition-all duration-200"
                                 >
                                     {isFetchingNextPage ? (
                                         <>
@@ -270,11 +270,11 @@ export default function HashtagPage() {
                                 </button>
                             ) : (
                                 <div className="flex flex-col items-center gap-2 py-4">
-                                    <div className="h-px w-32 bg-gradient-to-r from-transparent via-brand-divider to-transparent" />
+                                    <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
                                     <p className="text-xs font-semibold text-brand-text/40 uppercase tracking-widest">
                                         All caught up
                                     </p>
-                                    <div className="h-px w-32 bg-gradient-to-r from-transparent via-brand-divider to-transparent" />
+                                    <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
                                 </div>
                             )}
                         </div>

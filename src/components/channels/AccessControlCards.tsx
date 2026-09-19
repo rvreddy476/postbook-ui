@@ -47,7 +47,7 @@ export function LockedUpdateCard({ update, channelName, onSubscribe }: {
       {/* Visible header */}
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between mb-2">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-brand-text/5 text-brand-text/40">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] font-semibold bg-brand-text/5 text-brand-text/40">
             {emoji} {update.update_type.charAt(0).toUpperCase() + update.update_type.slice(1)}
           </span>
           <span className="text-[11px] text-brand-text/40 font-medium">
@@ -66,15 +66,15 @@ export function LockedUpdateCard({ update, channelName, onSubscribe }: {
       <div className="relative px-4 pb-4">
         <div className="select-none pointer-events-none" aria-hidden="true">
           <div className="space-y-2 blur-md opacity-60">
-            <div className="h-3 w-full rounded bg-brand-text/10" />
-            <div className="h-3 w-5/6 rounded bg-brand-text/10" />
-            <div className="h-3 w-4/6 rounded bg-brand-text/10" />
+            <div className="h-3 w-full rounded-sm bg-brand-text/10" />
+            <div className="h-3 w-5/6 rounded-sm bg-brand-text/10" />
+            <div className="h-3 w-4/6 rounded-sm bg-brand-text/10" />
             <div className="h-20 w-full rounded-lg bg-brand-text/5 mt-2" />
           </div>
         </div>
 
         {/* Gradient overlay + lock CTA */}
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-transparent flex flex-col items-center justify-center px-6">
+        <div className="absolute inset-0 bg-linear-to-t from-white via-white/90 to-transparent flex flex-col items-center justify-center px-6">
           <div className="w-10 h-10 rounded-full bg-brand-text/5 flex items-center justify-center mb-3">
             <Lock className="w-5 h-5 text-brand-text/50" />
           </div>
@@ -83,7 +83,7 @@ export function LockedUpdateCard({ update, channelName, onSubscribe }: {
           </p>
           <button
             onClick={onSubscribe}
-            className="mt-3 px-5 py-2 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+            className="mt-3 px-5 py-2 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
           >
             Subscribe
           </button>
@@ -116,7 +116,7 @@ export function BlockedChannelView({ channelName }: { channelName: string }) {
         <div className="mt-8">
           <Link
             href="/channels"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Channels
@@ -159,7 +159,7 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
           <div className="mt-8">
             <Link
               href="/channels"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-white text-sm font-medium hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Channels
@@ -204,7 +204,7 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
           {onRestore && (
             <button
               onClick={onRestore}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-text text-white text-sm font-semibold hover:bg-brand-text/90 transition-colors focus:outline-hidden focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-2"
             >
               Restore Channel
             </button>

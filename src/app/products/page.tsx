@@ -77,11 +77,11 @@ export default function ProductBrowsePage() {
           placeholder="Search products"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 max-w-md border rounded px-3 py-2 text-sm"
+          className="flex-1 max-w-md border rounded-sm px-3 py-2 text-sm"
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+          className="px-4 py-2 rounded-sm bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
         >
           Search
         </button>
@@ -92,7 +92,7 @@ export default function ProductBrowsePage() {
               setSearchQuery('')
               setSubmittedQuery('')
             }}
-            className="px-3 py-2 rounded text-sm text-gray-600 hover:text-gray-900"
+            className="px-3 py-2 rounded-sm text-sm text-gray-600 hover:text-gray-900"
           >
             Clear
           </button>

@@ -143,7 +143,7 @@ const ContactList: React.FC<ContactListProps> = ({
                   if (tab.key === ChatTab.Direct) onClearGroup?.();
                 }}
                 className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[12px] font-semibold transition-all duration-200 ${activeListTab === tab.key
-                  ? 'bg-brand-accent text-brand-bg shadow-sm'
+                  ? 'bg-brand-accent text-brand-bg shadow-xs'
                   : 'text-brand-highlight hover:text-brand-text'
                   }`}
               >
@@ -162,7 +162,7 @@ const ContactList: React.FC<ContactListProps> = ({
             placeholder="Search messages..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-10 pr-4 text-sm font-medium text-brand-text outline-none transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
+            className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-10 pr-4 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
           />
         </div>
 
@@ -200,7 +200,7 @@ const ContactList: React.FC<ContactListProps> = ({
                         >
                           {/* Removed Active Indicator Bar per user request */}
 
-                          <div className="relative flex-shrink-0">
+                          <div className="relative shrink-0">
                             <div className={`h-8 w-8 overflow-hidden rounded-full ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                               }`}>
                               <img src={contact.avatar || '/default-avatar.png'} alt={contact.name} className="h-full w-full object-cover" />
@@ -216,7 +216,7 @@ const ContactList: React.FC<ContactListProps> = ({
                                 {contact.name}
                               </h3>
                               {unreadCount > 0 && (
-                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-text px-1 text-[9px] font-bold text-white shadow-sm">
+                                <span className="ml-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-text px-1 text-[9px] font-bold text-white shadow-xs">
                                   {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                               )}
@@ -274,12 +274,12 @@ const ContactList: React.FC<ContactListProps> = ({
                         >
                           {/* Removed Active Indicator Bar per user request */}
 
-                          <div className={`h-8 w-8 flex-shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
+                          <div className={`h-8 w-8 shrink-0 overflow-hidden rounded-xl ring-2 transition-all ${isActive ? 'ring-brand-secondary' : 'ring-transparent group-hover:ring-brand-secondary'
                             }`}>
                             {avatarSrc ? (
                               <img src={avatarSrc} alt={group.name} className="h-full w-full object-cover" />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-[12px] font-bold text-white shadow-inner">
+                              <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-indigo-500 to-purple-600 text-[12px] font-bold text-white shadow-inner">
                                 {group.name.charAt(0).toUpperCase()}
                               </div>
                             )}

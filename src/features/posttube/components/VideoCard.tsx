@@ -72,8 +72,8 @@ function VideoThumbnail({
 
   return (
     <>
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#2D2640] via-[#3D3560] to-[#1A1430]">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/[0.08] backdrop-blur-sm">
+      <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-[#2D2640] via-[#3D3560] to-[#1A1430]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/8 backdrop-blur-xs">
           <Play className="h-7 w-7 text-white/30 ml-0.5" />
         </div>
       </div>
@@ -172,7 +172,7 @@ function SpotlightPreview({
         muted
         playsInline
         preload="none"
-        className={`absolute inset-0 z-[5] h-full w-full object-cover transition-opacity duration-300 ${
+        className={`absolute inset-0 z-5 h-full w-full object-cover transition-opacity duration-300 ${
           playing ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       />
@@ -260,7 +260,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
           <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
           <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
           {duration && (
-            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-brand-accent/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-sm transition-opacity duration-300">
+            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-brand-accent/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-xs transition-opacity duration-300">
               {duration}
             </span>
           )}
@@ -353,7 +353,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
           <img
             src={video.channel_avatar_url}
             alt=""
-            className="h-10 w-10 shrink-0 rounded-xl bg-brand-secondary object-cover ring-2 ring-brand-divider shadow-sm"
+            className="h-10 w-10 shrink-0 rounded-xl bg-brand-secondary object-cover ring-2 ring-brand-divider shadow-xs"
             loading="lazy"
           />
           <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-brand-accent text-brand-bg ring-2 ring-brand-bg flex items-center justify-center">

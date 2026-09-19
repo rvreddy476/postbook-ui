@@ -43,7 +43,7 @@ export default function UserProfileRoute() {
             <div className="flex pt-16">
                 {/* Left Sidebar — always visible when logged in */}
                 {currentUser && (
-                    <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-[90]">
+                    <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-4rem)] z-90">
                         <Sidebar activeTab="Profile" setActiveTab={handleSetActiveTab} />
                     </div>
                 )}

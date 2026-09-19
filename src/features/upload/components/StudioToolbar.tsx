@@ -88,7 +88,7 @@ export function StudioToolbar({
                       {meta.label}
                     </span>
                     {isActive && (
-                      <div className="absolute -bottom-[9px] left-2 right-2 h-[2px] rounded-full bg-brand-text" />
+                      <div className="absolute bottom-[-9px] left-2 right-2 h-[2px] rounded-full bg-brand-text" />
                     )}
                   </button>
 

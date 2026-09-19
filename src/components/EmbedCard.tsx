@@ -90,7 +90,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-text/10 to-purple-200">
+                    <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-brand-text/10 to-purple-200">
                         {isFlick ? (
                             <Film className="h-10 w-10 text-brand-text/30" />
                         ) : (
@@ -108,13 +108,13 @@ export default function EmbedCard({ post }: EmbedCardProps) {
 
                 {/* Duration badge */}
                 {durationStr && (
-                    <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                    <span className="absolute bottom-2 right-2 rounded-sm bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">
                         {durationStr}
                     </span>
                 )}
 
                 {/* Source module badge */}
-                <span className="absolute top-2 left-2 rounded-lg bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[10px] font-semibold text-white flex items-center gap-1">
+                <span className="absolute top-2 left-2 rounded-lg bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[10px] font-semibold text-white flex items-center gap-1">
                     {isFlick ? <Film className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                     {sourceModule === "posttube" ? "Posttube" : sourceModule === "postgram" ? "Reels" : sourceModule}
                 </span>
@@ -156,7 +156,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
                         </span>
                     )}
                     {isFlick && (
-                        <span className="ml-auto rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                        <span className="ml-auto rounded-sm bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
                             Reel
                         </span>
                     )}

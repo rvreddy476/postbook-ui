@@ -50,7 +50,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">

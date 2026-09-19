@@ -55,11 +55,11 @@ export default function PostMatchChatPage() {
   return (
     <div className="h-screen flex flex-col bg-[#0a0a0a]">
       {/* Header */}
-      <header className="bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a] px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <header className="bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a] px-4 py-3 flex items-center gap-3 shrink-0">
         <button onClick={() => router.push('/postmatch/matches')} className="text-[#666] hover:text-white transition">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 p-[2px] flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-linear-to-br from-rose-500 to-orange-500 p-[2px] shrink-0">
           <div className="w-full h-full rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#666] font-black text-sm">
             {otherName[0]}
           </div>
@@ -95,7 +95,7 @@ export default function PostMatchChatPage() {
                 <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                     isMine
-                      ? 'bg-gradient-to-r from-rose-600 to-orange-500 text-white rounded-br-md'
+                      ? 'bg-linear-to-r from-rose-600 to-orange-500 text-white rounded-br-md'
                       : 'bg-[#111] border border-[#222] text-white rounded-bl-md'
                   }`}>
                     <p className="leading-relaxed">{msg.body_text}</p>
@@ -112,10 +112,10 @@ export default function PostMatchChatPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-[#0a0a0a] border-t border-[#1a1a1a] px-4 py-3 flex-shrink-0">
+      <div className="bg-[#0a0a0a] border-t border-[#1a1a1a] px-4 py-3 shrink-0">
         <div className="flex items-center gap-2 max-w-lg mx-auto">
           <input
-            className="flex-1 border border-[#333] rounded-full px-4 py-2.5 text-sm text-white bg-[#1a1a1a] focus:bg-[#111] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none transition placeholder:text-[#555]"
+            className="flex-1 border border-[#333] rounded-full px-4 py-2.5 text-sm text-white bg-[#1a1a1a] focus:bg-[#111] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-hidden transition placeholder:text-[#555]"
             placeholder="Type a message..."
             value={text}
             onChange={e => setText(e.target.value)}
@@ -124,7 +124,7 @@ export default function PostMatchChatPage() {
           <button
             onClick={handleSend}
             disabled={!text.trim() || sendMessage.isPending}
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-rose-600 to-orange-500 flex items-center justify-center text-white disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-90 transition flex-shrink-0"
+            className="w-10 h-10 rounded-full bg-linear-to-r from-rose-600 to-orange-500 flex items-center justify-center text-white disabled:opacity-30 hover:shadow-lg hover:shadow-rose-500/20 active:scale-90 transition shrink-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" /></svg>
           </button>

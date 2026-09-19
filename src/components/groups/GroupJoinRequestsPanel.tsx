@@ -21,7 +21,7 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
   if (!requests || requests.length === 0) return null
 
   return (
-    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4">
+    <div className="bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
           <UserPlus className="w-4 h-4 text-amber-600" />
@@ -40,9 +40,9 @@ export default function GroupJoinRequestsPanel({ groupId }: GroupJoinRequestsPan
           const name = profile?.display_name || profile?.username || 'User'
           const avatarUrl = profile?.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : null
           return (
-          <div key={req.id} className="flex items-center justify-between bg-brand-card/80 backdrop-blur-sm rounded-xl p-3 border border-amber-100/50">
+          <div key={req.id} className="flex items-center justify-between bg-brand-card/80 backdrop-blur-xs rounded-xl p-3 border border-amber-100/50">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-xs font-bold text-amber-600">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-linear-to-br from-amber-100 to-orange-100 flex items-center justify-center text-xs font-bold text-amber-600">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (

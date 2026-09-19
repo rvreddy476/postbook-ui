@@ -37,7 +37,7 @@ function FlickGridItem({ post, index }: { post: PostDetail; index: number }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, delay: index * 0.05, ease: "easeOut" }}
             onClick={() => router.push(`/postgram/flick/${post.id}`)}
-            className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-slate-900 group cursor-pointer"
+            className="relative aspect-9/16 rounded-2xl overflow-hidden bg-slate-900 group cursor-pointer"
         >
             {/* Thumbnail */}
             {thumbnail ? (
@@ -48,7 +48,7 @@ function FlickGridItem({ post, index }: { post: PostDetail; index: number }) {
                     loading="lazy"
                 />
             ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900">
+                <div className="w-full h-full flex items-center justify-center bg-linear-to-b from-slate-800 to-slate-900">
                     <Film className="h-10 w-10 text-brand-highlight" />
                 </div>
             )}
@@ -65,7 +65,7 @@ function FlickGridItem({ post, index }: { post: PostDetail; index: number }) {
             </div>
 
             {/* Hover caption reveal */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                 {caption && (
                     <p className="text-white text-xs leading-relaxed line-clamp-2 font-medium">
                         {caption}
@@ -82,7 +82,7 @@ function FlicksSkeleton() {
             {Array.from({ length: 6 }).map((_, i) => (
                 <div
                     key={i}
-                    className="aspect-[9/16] rounded-2xl bg-brand-secondary animate-pulse"
+                    className="aspect-9/16 rounded-2xl bg-brand-secondary animate-pulse"
                     style={{ animationDelay: `${i * 80}ms` }}
                 />
             ))}
@@ -122,10 +122,10 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
     if (flicks.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-20 w-20 rounded-full bg-brand-secondary flex items-center justify-center mb-5 shadow-xs">
                     <Film className="h-9 w-9 text-brand-text/30" />
                 </div>
-                <h3 className="text-lg font-semibold text-brand-text font-[var(--font-outfit)]">
+                <h3 className="text-lg font-semibold text-brand-text font-(--font-outfit)">
                     {isOwn ? "Share your first Reel" : "No Reels yet"}
                 </h3>
                 <p className="text-sm text-brand-text/60 mt-1.5 max-w-xs">

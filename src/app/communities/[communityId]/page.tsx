@@ -120,8 +120,8 @@ export default function CommunityDetailPage() {
             <div className="h-[120px] bg-brand-bg" />
             <div className="px-6 pb-6 -mt-10">
               <div className="w-20 h-20 rounded-2xl bg-brand-bg mb-3" />
-              <div className="h-6 w-48 bg-brand-bg rounded mb-2" />
-              <div className="h-4 w-32 bg-brand-bg rounded" />
+              <div className="h-6 w-48 bg-brand-bg rounded-sm mb-2" />
+              <div className="h-4 w-32 bg-brand-bg rounded-sm" />
             </div>
           </div>
         </div>
@@ -158,10 +158,10 @@ export default function CommunityDetailPage() {
 
         <div className="flex gap-6 mt-6">
           {/* Left Sidebar */}
-          <div className="w-[240px] flex-shrink-0 hidden md:block">
-            <div className="bg-white/60 dark:bg-brand-bg/60 backdrop-blur-xl rounded-3xl border border-brand-divider/60 p-5 sticky top-24 shadow-sm">
+          <div className="w-[240px] shrink-0 hidden md:block">
+            <div className="bg-white/60 dark:bg-brand-bg/60 backdrop-blur-xl rounded-3xl border border-brand-divider/60 p-5 sticky top-24 shadow-xs">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+                <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-xs ring-1 ring-black/5 dark:ring-white/10">
                   {community.avatar_media_id ? (
                     <img
                       src={`/v1/media/${community.avatar_media_id}/serve`}
@@ -169,7 +169,7 @@ export default function CommunityDetailPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-black text-lg">
+                    <div className="w-full h-full bg-linear-to-br from-slate-700 to-slate-500 flex items-center justify-center text-white font-black text-lg">
                       {community.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -197,7 +197,7 @@ export default function CommunityDetailPage() {
                 <div className="mb-5">
                   <button
                     onClick={() => setShowEditModal(true)}
-                    className="block w-full text-center px-4 py-2.5 border border-brand-divider text-brand-text text-sm font-bold rounded-xl hover:bg-brand-bg hover:shadow-sm transition-all duration-300"
+                    className="block w-full text-center px-4 py-2.5 border border-brand-divider text-brand-text text-sm font-bold rounded-xl hover:bg-brand-bg hover:shadow-xs transition-all duration-300"
                   >
                     Edit Community
                   </button>
@@ -253,7 +253,7 @@ export default function CommunityDetailPage() {
                   className={`relative flex items-center gap-2 px-5 py-3 text-xs font-bold rounded-2xl whitespace-nowrap transition-all duration-300 ${
                     activeNav === item.key
                       ? 'bg-brand-text text-brand-bg shadow-lg scale-100'
-                      : 'bg-white/50 dark:bg-brand-bg/50 backdrop-blur-sm text-brand-text/70 hover:bg-white dark:hover:bg-brand-bg hover:text-brand-text border border-transparent hover:border-brand-divider scale-95 hover:scale-100'
+                      : 'bg-white/50 dark:bg-brand-bg/50 backdrop-blur-xs text-brand-text/70 hover:bg-white dark:hover:bg-brand-bg hover:text-brand-text border border-transparent hover:border-brand-divider scale-95 hover:scale-100'
                   }`}
                 >
                   {item.icon}
@@ -320,7 +320,7 @@ export default function CommunityDetailPage() {
                       placeholder="Event title *"
                       value={eventTitle}
                       onChange={e => setEventTitle(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-3"
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 mb-3"
                     />
 
                     <textarea
@@ -328,7 +328,7 @@ export default function CommunityDetailPage() {
                       value={eventDesc}
                       onChange={e => setEventDesc(e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-3 resize-none"
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 mb-3 resize-none"
                     />
 
                     <div className="grid grid-cols-3 gap-3 mb-3">
@@ -338,7 +338,7 @@ export default function CommunityDetailPage() {
                           type="date"
                           value={eventDate}
                           onChange={e => setEventDate(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
                         />
                       </div>
                       <div>
@@ -347,7 +347,7 @@ export default function CommunityDetailPage() {
                           type="time"
                           value={eventStartTime}
                           onChange={e => setEventStartTime(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
                         />
                       </div>
                       <div>
@@ -356,7 +356,7 @@ export default function CommunityDetailPage() {
                           type="time"
                           value={eventEndTime}
                           onChange={e => setEventEndTime(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-text/10"
+                          className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
                         />
                       </div>
                     </div>
@@ -391,7 +391,7 @@ export default function CommunityDetailPage() {
                       placeholder={eventIsOnline ? 'Meeting link (optional)' : 'Venue address (optional)'}
                       value={eventLocation}
                       onChange={e => setEventLocation(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 mb-4"
+                      className="w-full px-3 py-2.5 border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 mb-4"
                     />
 
                     <button
@@ -572,7 +572,7 @@ export default function CommunityDetailPage() {
           </div>
 
           {/* Right Rail */}
-          <div className="w-[260px] flex-shrink-0 hidden lg:block">
+          <div className="w-[260px] shrink-0 hidden lg:block">
             <CommunityRightRail communityId={communityId} viewerRole={community.viewer_role} />
           </div>
         </div>
@@ -585,7 +585,7 @@ export default function CommunityDetailPage() {
 
         {/* Floating Action Button (FAB) */}
         {isMember && (
-          <div className="fixed bottom-8 right-8 z-[100] flex flex-col items-end" ref={createMenuRef}>
+          <div className="fixed bottom-8 right-8 z-100 flex flex-col items-end" ref={createMenuRef}>
             <AnimatePresence>
               {showCreateMenu && (
                 <motion.div
@@ -599,7 +599,7 @@ export default function CommunityDetailPage() {
                     className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
                   >
                     <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Post</span>
-                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-xs">
                       <PenLine className="w-4 h-4" />
                     </div>
                   </Link>
@@ -612,7 +612,7 @@ export default function CommunityDetailPage() {
                     className="flex items-center gap-3 px-5 py-3 bg-white/90 dark:bg-brand-bg/90 backdrop-blur-xl border border-brand-divider/80 rounded-2xl shadow-xl hover:bg-brand-bg hover:scale-105 transition-all duration-300 group justify-end"
                   >
                     <span className="text-sm font-bold text-brand-text/80 group-hover:text-brand-text mr-1">Create Event</span>
-                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-brand-text/5 text-brand-text flex items-center justify-center group-hover:bg-brand-text group-hover:text-brand-bg transition-colors shadow-xs">
                       <CalendarPlus className="w-4 h-4" />
                     </div>
                   </button>
@@ -636,7 +636,7 @@ export default function CommunityDetailPage() {
 
 function AnnouncementCard({ announcement }: { announcement: CommunityAnnouncement }) {
   return (
-    <div className="bg-gradient-to-br from-brand-text/5 to-transparent rounded-3xl border border-brand-divider/60 p-5 relative overflow-hidden">
+    <div className="bg-linear-to-br from-brand-text/5 to-transparent rounded-3xl border border-brand-divider/60 p-5 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-1 h-full bg-brand-text/40 rounded-l-3xl" />
       <div className="flex items-center gap-3 mb-3">
         {announcement.is_pinned && (
@@ -678,9 +678,9 @@ function EventCard({ event, isPast }: { event: CommunityEvent; isPast?: boolean 
     <div
       className={`group relative overflow-hidden bg-white/70 dark:bg-brand-bg/70 backdrop-blur-md rounded-3xl border border-brand-divider/60 p-5 hover:shadow-xl hover:-translate-y-1 hover:bg-white dark:hover:bg-brand-bg hover:border-brand-text/30 transition-all duration-300 ${isPast ? 'opacity-60 grayscale-[0.3]' : ''}`}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-brand-text/[0.03] rounded-bl-full pointer-events-none -z-10 group-hover:scale-110 transition-transform duration-500" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-brand-text/3 rounded-bl-full pointer-events-none -z-10 group-hover:scale-110 transition-transform duration-500" />
       <div className="flex gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/10 to-transparent flex flex-col items-center justify-center flex-shrink-0 border border-brand-divider/50 shadow-sm relative overflow-hidden">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/10 to-transparent flex flex-col items-center justify-center shrink-0 border border-brand-divider/50 shadow-xs relative overflow-hidden">
           <div className="absolute top-0 w-full h-1.5 bg-brand-text opacity-80" />
           <span className="text-[11px] font-bold text-brand-text/70 uppercase tracking-widest mt-1">
             {date.toLocaleDateString('en-US', { month: 'short' })}

@@ -84,7 +84,7 @@ export default function MopeduComplaintsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {TABS.map((t) => {
             const active = tab === t.key
@@ -111,7 +111,7 @@ export default function MopeduComplaintsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
-        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
           {list.isLoading ? (
             <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -183,7 +183,7 @@ export default function MopeduComplaintsPage() {
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
           {selected ? (
-            <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-sm">
+            <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-brand-text/60">
@@ -279,7 +279,7 @@ export default function MopeduComplaintsPage() {
                     onChange={(e) => setNote(e.target.value.slice(0, 400))}
                     rows={3}
                     placeholder="Resolution note (optional)"
-                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-brand-text"
+                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-xs outline-hidden focus:border-brand-text"
                   />
                   <div className="mt-2 flex justify-end">
                     <PrimaryButton

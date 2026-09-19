@@ -258,7 +258,7 @@ export default function AdminPage() {
   return (
     <AppShell activeTab="Home">
       <div className="mx-auto max-w-[1280px] px-6 py-8">
-        <div className="rounded-[30px] border border-amber-200 bg-amber-50 px-6 py-5 shadow-sm">
+        <div className="rounded-[30px] border border-amber-200 bg-amber-50 px-6 py-5 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-700">
@@ -301,7 +301,7 @@ export default function AdminPage() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           {metricCards.map((card) => (
-            <div key={card.label} className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-sm">
+            <div key={card.label} className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand-text/45">
                 {card.label}
               </p>
@@ -313,7 +313,7 @@ export default function AdminPage() {
         </div>
 <div className="mt-8 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
   <div className="space-y-8">
-    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F3E6D2] text-[#7B5B3A]">
           <Gavel className="h-5 w-5" />
@@ -333,7 +333,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setTakedownForm((current) => ({ ...current, entity_type: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           >
             <option value="post">Post</option>
             <option value="comment">Comment</option>
@@ -348,7 +348,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setTakedownForm((current) => ({ ...current, entity_id: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="UUID or message identifier"
           />
         </label>
@@ -361,7 +361,7 @@ export default function AdminPage() {
             setTakedownForm((current) => ({ ...current, reason: event.target.value }))
           }
           rows={3}
-          className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+          className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           placeholder="Why this content is being removed"
         />
       </label>
@@ -391,7 +391,7 @@ export default function AdminPage() {
       </div>
     </section>
 
-    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF3FF] text-[#3456A0]">
           <Shield className="h-5 w-5" />
@@ -437,7 +437,7 @@ export default function AdminPage() {
   </div>
 
   <div className="space-y-8">
-    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E8E8] text-[#8A2F2F]">
           <Ban className="h-5 w-5" />
@@ -457,7 +457,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setSuspendForm((current) => ({ ...current, user_id: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="User UUID"
           />
         </label>
@@ -469,7 +469,7 @@ export default function AdminPage() {
             onChange={(event) =>
               setSuspendForm((current) => ({ ...current, until: event.target.value }))
             }
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
           />
         </label>
         <label className="block text-[12px] font-semibold text-brand-text">
@@ -480,7 +480,7 @@ export default function AdminPage() {
               setSuspendForm((current) => ({ ...current, reason: event.target.value }))
             }
             rows={3}
-            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-none"
+            className="mt-1.5 w-full rounded-xl border border-brand-divider bg-[#FAF7F2] px-3 py-2.5 text-[13px] text-brand-text outline-hidden"
             placeholder="Reason for suspension"
           />
         </label>
@@ -511,7 +511,7 @@ export default function AdminPage() {
         ) : null}
       </div>
     </section>
-                    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+                    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF7F1] text-[#256B43]">
                           <Shield className="h-5 w-5" />
@@ -556,7 +556,7 @@ export default function AdminPage() {
                       </div>
                     </section>
 
-                    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+                    <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF1FF] text-[#3456A0]">
                           <Download className="h-5 w-5" />
@@ -642,7 +642,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <section className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-sm">
+                <section className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                   <div className="mb-5 flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-[#6B46C1]">
                       <RefreshCw className="h-5 w-5" />

@@ -20,7 +20,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
 
   return (
     <div className="space-y-7">
-      <div className="rounded-xl border border-brand-divider bg-brand-secondary p-4 shadow-sm">
+      <div className="rounded-xl border border-brand-divider bg-brand-secondary p-4 shadow-xs">
         <p className="text-[13px] font-semibold text-brand-text">Ready to publish</p>
         <p className="mt-1 text-[12px] text-brand-text/60">
           Your video uploads and starts processing when you hit Publish — it becomes
@@ -42,7 +42,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
             <p className="text-[11px] text-brand-text/50">Who can see this content</p>
           </div>
         </div>
-        <div className="space-y-1 rounded-xl border border-brand-text/10 bg-brand-card p-2 shadow-sm">
+        <div className="space-y-1 rounded-xl border border-brand-text/10 bg-brand-card p-2 shadow-xs">
           <RadioOption
             name="visibility"
             label="Public"
@@ -92,7 +92,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
             <p className="text-[11px] text-brand-text/50">Help viewers discover your content</p>
           </div>
         </div>
-        <div className={`rounded-xl border bg-brand-card shadow-sm transition-colors ${
+        <div className={`rounded-xl border bg-brand-card shadow-xs transition-colors ${
           categoryError ? "border-rose-500/40" : "border-brand-divider"
         }`}>
           <StudioSelect
@@ -123,7 +123,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
             <p className="text-[11px] text-brand-text/50">Publish now or schedule for later</p>
           </div>
         </div>
-        <div className={`rounded-xl border bg-brand-card p-4 shadow-sm transition-colors ${
+        <div className={`rounded-xl border bg-brand-card p-4 shadow-xs transition-colors ${
           scheduleError ? "border-rose-500/40" : "border-brand-divider"
         }`}>
           <ToggleRow
@@ -143,7 +143,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
                 type="datetime-local"
                 value={form.scheduleAt}
                 onChange={(e) => patch({ scheduleAt: e.target.value })}
-                className="flex-1 bg-transparent text-[13px] text-brand-text outline-none"
+                className="flex-1 bg-transparent text-[13px] text-brand-text outline-hidden"
               />
             </div>
           )}
@@ -167,7 +167,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
             <p className="text-[11px] text-brand-text/50">Also share to your Feed</p>
           </div>
         </div>
-        <div className="rounded-xl border border-brand-text/10 bg-brand-card p-4 shadow-sm">
+        <div className="rounded-xl border border-brand-text/10 bg-brand-card p-4 shadow-xs">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-brand-text">Publish to Feed</p>
@@ -178,7 +178,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
               role="switch"
               aria-checked={form.crossPostPostbook}
               onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
-              className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent/20 ${
+              className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent/20 ${
                 form.crossPostPostbook ? "bg-brand-accent" : "bg-brand-text/20"
               }`}
             >

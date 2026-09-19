@@ -34,7 +34,7 @@ function SkeletonCard() {
     return (
         <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 animate-pulse space-y-3">
             <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-brand-divider flex-shrink-0" />
+                <div className="w-14 h-14 rounded-2xl bg-brand-divider shrink-0" />
                 <div className="flex-1 space-y-2">
                     <div className="h-4 bg-brand-divider rounded-lg w-3/4" />
                     <div className="h-3 bg-brand-divider rounded-lg w-1/2" />
@@ -72,14 +72,14 @@ function AppIcon({ app }: { app: MiniApp }) {
             <img
                 src={app.icon_url}
                 alt={app.name}
-                className="w-14 h-14 rounded-2xl object-cover flex-shrink-0"
+                className="w-14 h-14 rounded-2xl object-cover shrink-0"
                 onError={() => setFailed(true)}
             />
         )
     }
 
     return (
-        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass} flex items-center justify-center flex-shrink-0 shadow-md`}>
+        <div className={`w-14 h-14 rounded-2xl bg-linear-to-br ${colorClass} flex items-center justify-center shrink-0 shadow-md`}>
             <span className="text-xl font-black text-white select-none">
                 {app.name.charAt(0).toUpperCase()}
             </span>
@@ -123,7 +123,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
     const isPending = installMutation.isPending || uninstallMutation.isPending
 
     return (
-        <div className="bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 p-5 flex flex-col gap-3">
+        <div className="bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 p-5 flex flex-col gap-3">
             {/* Header: icon + name + category */}
             <div className="flex items-start gap-3">
                 <AppIcon app={app} />
@@ -162,7 +162,7 @@ function AppCard({ app, isInstalled }: AppCardProps) {
                     <button
                         onClick={() => installMutation.mutate()}
                         disabled={isPending}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-sm shadow-brand-text/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-xs shadow-brand-text/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -209,7 +209,7 @@ export default function AppsPage() {
             {/* Sticky header */}
             <div className="sticky top-0 z-20 bg-brand-card/90 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
                         <Grid3x3 className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -221,7 +221,7 @@ export default function AppsPage() {
                         onClick={() => setShowInstalledOnly((v) => !v)}
                         className={`ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
                             showInstalledOnly
-                                ? "bg-brand-text text-white border-brand-text shadow-sm shadow-brand-text/20"
+                                ? "bg-brand-text text-white border-brand-text shadow-xs shadow-brand-text/20"
                                 : "bg-brand-card text-brand-text/80 border-brand-divider hover:border-brand-text/30 hover:text-brand-text"
                         }`}
                     >
@@ -243,9 +243,9 @@ export default function AppsPage() {
                                 <button
                                     key={cat.value}
                                     onClick={() => setActiveCategory(cat.value)}
-                                    className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                                    className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all shrink-0 ${
                                         activeCategory === cat.value
-                                            ? "bg-brand-text text-white shadow-sm shadow-brand-text/20"
+                                            ? "bg-brand-text text-white shadow-xs shadow-brand-text/20"
                                             : "bg-brand-divider text-brand-text/80 hover:bg-brand-text/10 hover:text-brand-text"
                                     }`}
                                 >
@@ -258,9 +258,9 @@ export default function AppsPage() {
             </div>
 
             {/* Hero section */}
-            <div className="bg-gradient-to-br from-brand-text/5 via-fuchsia-50/50 to-transparent border-b border-brand-divider">
+            <div className="bg-linear-to-br from-brand-text/5 via-fuchsia-50/50 to-transparent border-b border-brand-divider">
                 <div className="max-w-5xl mx-auto px-4 py-10 text-center">
-                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-xl shadow-brand-text/20 mx-auto mb-4">
+                    <div className="w-16 h-16 rounded-3xl bg-linear-to-br from-brand-text to-fuchsia-500 flex items-center justify-center shadow-xl shadow-brand-text/20 mx-auto mb-4">
                         <Grid3x3 className="w-8 h-8 text-white" />
                     </div>
                     <h2 className="text-3xl font-black text-brand-text tracking-tight">Mini Apps</h2>
@@ -282,7 +282,7 @@ export default function AppsPage() {
 
                 {!appsLoading && displayedApps.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-24 gap-4">
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                             <Grid3x3 className="w-9 h-9 text-brand-text/30" />
                         </div>
                         <div className="text-center max-w-xs">
@@ -298,7 +298,7 @@ export default function AppsPage() {
                         {showInstalledOnly && (
                             <button
                                 onClick={() => setShowInstalledOnly(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-sm shadow-brand-text/20"
+                                className="px-5 py-2.5 text-sm font-bold text-white bg-brand-text rounded-xl hover:bg-brand-text transition-all shadow-xs shadow-brand-text/20"
                             >
                                 Browse Apps
                             </button>

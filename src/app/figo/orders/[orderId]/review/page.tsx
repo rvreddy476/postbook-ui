@@ -127,7 +127,7 @@ function ItemReviewForm({
         onChange={(e) => setText(e.target.value)}
         rows={2}
         placeholder="Optional — what did you think?"
-        className="mt-2 w-full rounded border border-slate-300 px-2 py-1 text-sm"
+        className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
       />
       <div className="mt-2 flex items-center justify-between">
         {err ? (
@@ -140,7 +140,7 @@ function ItemReviewForm({
           onClick={submit}
           disabled={mutate.isPending}
           className={[
-            "rounded bg-amber-600 px-3 py-1 text-sm font-medium text-white transition",
+            "rounded-sm bg-amber-600 px-3 py-1 text-sm font-medium text-white transition",
             mutate.isPending
               ? "cursor-wait opacity-60"
               : "hover:bg-amber-700",
@@ -168,7 +168,7 @@ function Stars({
           type="button"
           onClick={() => onChange(n)}
           aria-label={`${n} stars`}
-          className="rounded"
+          className="rounded-sm"
         >
           <Star
             className={[

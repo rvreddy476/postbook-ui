@@ -21,9 +21,9 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link
                     href="/monetization/payouts"
-                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
+                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
                 >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20 group-hover:scale-105 transition-transform duration-200">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#D4A574] to-[#7B5B3A] flex items-center justify-center shadow-lg shadow-[#D4A574]/20 group-hover:scale-105 transition-transform duration-200">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
@@ -39,9 +39,9 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
 
                 <Link
                     href="/monetization/tiers"
-                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
+                    className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-brand-card border border-[#F0E6DC] shadow-xs hover:shadow-md hover:border-[#D4A574] transition-all duration-300 group"
                 >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7B5B3A] to-[#3C2415] flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20 group-hover:scale-105 transition-transform duration-200">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#7B5B3A] to-[#3C2415] flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20 group-hover:scale-105 transition-transform duration-200">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                         </svg>
@@ -57,7 +57,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
             </div>
 
             {/* Earnings chart placeholder */}
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-4 h-4 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
                     {[35, 55, 45, 70, 60, 80, 65, 90, 75, 85, 70, 95].map((h, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1">
                             <div
-                                className="w-full rounded-t-lg bg-gradient-to-t from-[#D4A574] to-[#D4A574]/40 transition-all duration-500"
+                                className="w-full rounded-t-lg bg-linear-to-t from-[#D4A574] to-[#D4A574]/40 transition-all duration-500"
                                 style={{ height: `${h}%` }}
                             />
                             <span className="text-[7px] font-bold text-[#D4A574]">
@@ -88,7 +88,7 @@ const EarningsDashboard: React.FC<EarningsDashboardProps> = ({ dashboard, isLoad
 
             {/* Tiers summary */}
             {dashboard?.tiers && dashboard.tiers.length > 0 && (
-                <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-sm">
+                <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-6 shadow-xs">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">

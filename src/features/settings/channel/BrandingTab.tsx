@@ -118,7 +118,7 @@ export function BrandingTab() {
   return (
     <div className="space-y-6">
       {/* Profile Photo */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Profile Photo</h2>
         <div className="flex items-center gap-6">
           <div className="relative">
@@ -157,7 +157,7 @@ export function BrandingTab() {
       </div>
 
       {/* Banner */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Banner Image</h2>
         <UploadField
           label=""
@@ -172,7 +172,7 @@ export function BrandingTab() {
       </div>
 
       {/* Watermark */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Video Watermark</h2>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -184,7 +184,7 @@ export function BrandingTab() {
             onClick={() => setWatermarkEnabled(!watermarkEnabled)}
             className={`relative h-6 w-11 rounded-full transition-colors ${watermarkEnabled ? "bg-brand-text" : "bg-brand-secondary"}`}
           >
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-sm transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow-xs transition-transform ${watermarkEnabled ? "left-[22px]" : "left-0.5"}`} />
           </button>
         </div>
         {watermarkEnabled ? (
@@ -199,7 +199,7 @@ export function BrandingTab() {
       </div>
 
       {/* Theme Color */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Theme Color</h2>
         <div className="flex items-center gap-4">
           <input
@@ -216,11 +216,11 @@ export function BrandingTab() {
       </div>
 
       {/* Preview Card */}
-      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider/60 bg-brand-card p-6 shadow-xs">
         <h2 className="mb-5 text-[14px] font-bold text-brand-text">Preview</h2>
         <div className="overflow-hidden rounded-xl border border-brand-divider">
           {/* Mini banner */}
-          <div className="h-20 bg-gradient-to-r from-brand-text/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
+          <div className="h-20 bg-linear-to-r from-brand-text/10 to-fuchsia-100" style={{ backgroundColor: themeColor + "20" }}>
             {bannerUrl ? <img src={bannerUrl} alt="" className="h-full w-full object-cover" /> : null}
           </div>
           {/* Mini profile */}
@@ -231,7 +231,7 @@ export function BrandingTab() {
                 name={channel?.name || "Channel"}
                 seed={channel?.id}
                 size="lg"
-                className="border-4 border-white shadow-sm"
+                className="border-4 border-white shadow-xs"
               />
             </div>
             <p className="mt-2 text-[14px] font-bold text-brand-text">{channel?.name || "Your Channel"}</p>
@@ -260,7 +260,7 @@ export function BrandingTab() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-brand-text disabled:opacity-50"
+          className="rounded-xl bg-brand-text px-6 py-2.5 text-[13px] font-semibold text-white shadow-xs transition-all hover:bg-brand-text disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
         </button>

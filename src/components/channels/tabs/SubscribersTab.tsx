@@ -52,10 +52,10 @@ function SkeletonRow() {
     <div className="flex items-center gap-3 px-4 py-3 border-b border-brand-divider animate-pulse">
       <div className="w-9 h-9 rounded-full bg-brand-secondary/60 shrink-0" />
       <div className="flex-1 min-w-0 space-y-1.5">
-        <div className="h-3 w-28 bg-brand-secondary/60 rounded" />
-        <div className="h-2.5 w-20 bg-brand-secondary/40 rounded" />
+        <div className="h-3 w-28 bg-brand-secondary/60 rounded-sm" />
+        <div className="h-2.5 w-20 bg-brand-secondary/40 rounded-sm" />
       </div>
-      <div className="h-3 w-16 bg-brand-secondary/40 rounded" />
+      <div className="h-3 w-16 bg-brand-secondary/40 rounded-sm" />
     </div>
   )
 }
@@ -237,7 +237,7 @@ export default function SubscribersTab({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-brand-text/40" />
-          <div className="h-4 w-32 bg-brand-secondary/50 rounded animate-pulse" />
+          <div className="h-4 w-32 bg-brand-secondary/50 rounded-sm animate-pulse" />
         </div>
         <div className="bg-brand-card border border-brand-divider rounded-xl overflow-hidden">
           <SkeletonRow />
@@ -282,7 +282,7 @@ export default function SubscribersTab({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search subscribers..."
-            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-violet-200 transition-shadow"
+            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-violet-200 transition-shadow"
           />
         </div>
         <div className="relative" ref={sortRef}>

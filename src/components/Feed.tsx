@@ -199,9 +199,9 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
                 <button
                   key={t.hashtag}
                   onClick={() => setSelectedHashtag(t.hashtag)}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all ${
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all ${
                     selectedHashtag === t.hashtag
-                      ? 'bg-brand-accent text-brand-bg shadow-sm'
+                      ? 'bg-brand-accent text-brand-bg shadow-xs'
                       : 'bg-brand-secondary text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary/80'
                   }`}
                 >
@@ -216,11 +216,11 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
       {/* Inline Create Post — hidden on hashtags tab */}
       {activeTab !== 'hashtags' && (
         <div
-          className="bg-brand-card border border-brand-divider rounded-3xl p-4 sm:p-5 shadow-sm mb-6 sm:mb-8 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-brand-card border border-brand-divider rounded-3xl p-4 sm:p-5 shadow-xs mb-6 sm:mb-8 cursor-pointer hover:shadow-md transition-shadow"
           onClick={onCreateClick}
         >
           <div className="flex gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 border border-brand-divider">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 border border-brand-divider">
               <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 space-y-3 sm:space-y-4">
@@ -248,7 +248,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
             onClick={handleLoadNewPosts}
-            className="mb-4 w-full rounded-2xl bg-brand-accent py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-sm transition hover:shadow-md active:scale-[0.99]"
+            className="mb-4 w-full rounded-2xl bg-brand-accent py-3 text-sm font-black uppercase tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
           >
             {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
           </motion.button>

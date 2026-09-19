@@ -36,7 +36,7 @@ export function CompleteChannelBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
-          className="mx-auto mt-4 flex max-w-2xl items-center gap-3 rounded-xl border border-brand-divider bg-gradient-to-r from-slate-50 to-white px-4 py-3 shadow-sm"
+          className="mx-auto mt-4 flex max-w-2xl items-center gap-3 rounded-xl border border-brand-divider bg-linear-to-r from-slate-50 to-white px-4 py-3 shadow-xs"
         >
           <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
           <div className="flex-1 min-w-0">

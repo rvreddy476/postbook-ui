@@ -237,7 +237,7 @@ function LivePlayer({
   errorMessage: string | null
 }) {
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-sm">
+    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
       <video
         ref={videoRef}
         autoPlay

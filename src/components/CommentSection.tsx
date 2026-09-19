@@ -108,7 +108,7 @@ function ReportDialog({
 
   if (submitted) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs">
         <div ref={dialogRef} className="w-[340px] rounded-2xl bg-brand-card p-6 shadow-2xl text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
             <Check className="h-6 w-6 text-green-600" />
@@ -125,7 +125,7 @@ function ReportDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs">
       <div ref={dialogRef} className="w-[380px] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3.5">
           <h3 className="text-[14px] font-bold text-brand-text">Report</h3>
@@ -153,7 +153,7 @@ function ReportDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tell us more..."
               rows={2}
-              className="mt-3 w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none ring-1 ring-brand-secondary focus:ring-brand-text/40 transition resize-none"
+              className="mt-3 w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition resize-none"
             />
           )}
         </div>
@@ -218,7 +218,7 @@ const ReplyItem: React.FC<{
     <div className="ml-10 mt-1.5 py-1.5">
       {/* Header: avatar + name + time */}
       <div className="flex items-center gap-2">
-        <img src={author.avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+        <img src={author.avatar} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
         <span className="text-[12px] font-semibold text-brand-text">@{author.name}</span>
         <span className="text-[11px] text-brand-text/60">{timeAgo(reply.created_at)}</span>
       </div>
@@ -232,7 +232,7 @@ const ReplyItem: React.FC<{
           setEditing(false);
         }} className="mt-1 ml-7 space-y-2">
           <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
-            className="w-full rounded-xl bg-brand-secondary px-3 py-1.5 text-[13px] text-brand-text outline-none ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
+            className="w-full rounded-xl bg-brand-secondary px-3 py-1.5 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
           <div className="flex justify-end gap-1.5">
             <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-brand-highlight font-medium px-2.5 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
             <button type="submit" disabled={editMutation.isPending || !editText.trim()}
@@ -370,7 +370,7 @@ const SingleComment: React.FC<{
     >
       {/* Header row: small avatar + name + time + 3-dot */}
       <div className="flex items-center gap-2">
-        <img src={author.avatar} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+        <img src={author.avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
         <span className="text-[12px] font-semibold text-brand-text">@{author.name}</span>
         <span className="text-[11px] text-brand-text/60">{timeAgo(comment.created_at)}</span>
       </div>
@@ -380,7 +380,7 @@ const SingleComment: React.FC<{
         {editing ? (
           <form onSubmit={handleEdit} className="space-y-2">
             <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
-              className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-none ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
+              className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
             <div className="flex justify-end gap-1.5">
               <button type="button" onClick={() => setEditing(false)} className="text-[12px] text-brand-highlight font-medium px-3 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
               <button type="submit" disabled={editMutation.isPending || !editText.trim()}
@@ -455,7 +455,7 @@ const SingleComment: React.FC<{
                 <input type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Reply..."
                   autoFocus
-                  className="w-full rounded-full bg-brand-secondary px-4 py-2 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" />
+                  className="w-full rounded-full bg-brand-secondary px-4 py-2 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" />
               </form>
               <button onClick={handleReply} disabled={!replyText.trim() || replyMutation.isPending}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-text text-white disabled:opacity-40 transition hover:bg-brand-text/90">
@@ -597,7 +597,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       {/* Sticky bottom input */}
       <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
           <form onSubmit={handleSubmit} className="relative flex flex-1 items-center">
             <div className="relative" ref={emojiRef}>
               <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -618,14 +618,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-none ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
+              className="flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
             />
             <button
               type="submit"
               disabled={!commentText.trim() || addComment.isPending}
               className={`ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
                 commentText.trim()
-                  ? 'bg-brand-text text-brand-bg shadow-sm hover:opacity-90 scale-100'
+                  ? 'bg-brand-text text-brand-bg shadow-xs hover:opacity-90 scale-100'
                   : 'bg-brand-secondary text-brand-text/30 scale-95'
               }`}
               aria-label="Post comment"

@@ -38,7 +38,7 @@ export default function PostMatchLandingPage() {
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#1a1a1a]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-600 to-orange-500 flex items-center justify-center text-white font-black text-xs">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-rose-600 to-orange-500 flex items-center justify-center text-white font-black text-xs">
               PM
             </div>
             <div>
@@ -53,7 +53,7 @@ export default function PostMatchLandingPage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href={startHref} className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-orange-500 rounded-full hover:shadow-lg hover:shadow-rose-500/20 transition">
+            <Link href={startHref} className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-linear-to-r from-rose-600 to-orange-500 rounded-full hover:shadow-lg hover:shadow-rose-500/20 transition">
               Get Started
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h15" /></svg>
             </Link>
@@ -70,7 +70,7 @@ export default function PostMatchLandingPage() {
 
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight max-w-4xl mb-6">
           Find someone who{' '}
-          <span className="bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">actually gets you.</span>
+          <span className="bg-linear-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">actually gets you.</span>
         </h1>
 
         <p className="text-lg text-[#888] max-w-2xl mb-10 leading-relaxed">
@@ -81,7 +81,7 @@ export default function PostMatchLandingPage() {
         <div className="flex flex-wrap gap-4">
           <Link
             href={startHref}
-            className="px-8 py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-rose-500/20 transition text-sm"
+            className="px-8 py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-rose-500/20 transition text-sm"
           >
             Create Your Profile
           </Link>
@@ -159,7 +159,7 @@ export default function PostMatchLandingPage() {
               { pct: '10%', label: 'Freshness' },
             ].map(f => (
               <div key={f.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <p className="text-2xl font-black bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">{f.pct}</p>
+                <p className="text-2xl font-black bg-linear-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">{f.pct}</p>
                 <p className="text-xs text-gray-400 mt-1">{f.label}</p>
               </div>
             ))}
@@ -174,7 +174,7 @@ export default function PostMatchLandingPage() {
           <p className="text-[#888] mb-10">No swiping fatigue. Just meaningful matches.</p>
           <Link
             href={startHref}
-            className="inline-block px-10 py-4 bg-gradient-to-r from-rose-600 to-orange-500 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-rose-500/20 transition text-sm"
+            className="inline-block px-10 py-4 bg-linear-to-r from-rose-600 to-orange-500 text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-rose-500/20 transition text-sm"
           >
             Create Your Profile — Free
           </Link>

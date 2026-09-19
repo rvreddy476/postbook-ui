@@ -42,7 +42,7 @@ function SectionCard({ children, delay = 0 }: { children: React.ReactNode; delay
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay }}
-            className="rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="rounded-2xl border border-brand-divider bg-brand-card p-6 shadow-xs hover:shadow-md transition-shadow"
         >
             {children}
         </motion.div>
@@ -149,7 +149,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                 </div>
                 {profile.cta_label && profile.cta_url && (
                     <div className="mt-4 pt-4 border-t border-brand-divider">
-                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-[0.15em] hover:opacity-90 transition-all shadow-sm">
+                        <a href={profile.cta_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-text text-brand-card text-xs font-bold uppercase tracking-[0.15em] hover:opacity-90 transition-all shadow-xs">
                             {profile.cta_label}
                             <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -270,7 +270,7 @@ export function AboutTab({ profile, links: externalLinks }: AboutTabProps) {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-bold text-brand-text">{str(d.title)}</p>
-                                            <span className="text-[8px] font-bold uppercase tracking-widest text-brand-highlight/60 bg-brand-secondary px-1.5 py-0.5 rounded border border-brand-divider">{entryType}</span>
+                                            <span className="text-[8px] font-bold uppercase tracking-widest text-brand-highlight/60 bg-brand-secondary px-1.5 py-0.5 rounded-sm border border-brand-divider">{entryType}</span>
                                         </div>
                                         {d.subtitle ? <p className="text-xs text-brand-text/70 mt-0.5">{str(d.subtitle)}</p> : null}
                                         {dateRange ? <p className="text-[10px] text-brand-text/50 mt-1 font-medium">{dateRange}</p> : null}

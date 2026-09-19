@@ -101,7 +101,7 @@ export default function CommerceLandingPage() {
 
       {/* ── Hero ────────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-24">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD3] rounded-full text-sm text-[#4A3728] mb-8 shadow-sm">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD3] rounded-full text-sm text-[#4A3728] mb-8 shadow-xs">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Sell products. Build your brand. Grow on VChat.
         </div>

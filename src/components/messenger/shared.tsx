@@ -51,12 +51,12 @@ export function Avatar({ user, size = 40, showStatus = false, avatarUrl }: Avata
         <img
           src={avatarUrl}
           alt={user.name}
-          className="object-cover shadow-sm"
+          className="object-cover shadow-xs"
           style={{ width: size, height: size, borderRadius: radius }}
         />
       ) : (
         <div
-          className="flex items-center justify-center text-white font-bold shadow-sm"
+          className="flex items-center justify-center text-white font-bold shadow-xs"
           style={{
             width: size,
             height: size,

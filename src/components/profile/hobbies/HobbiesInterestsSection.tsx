@@ -15,7 +15,7 @@ export function HobbiesInterestsSection({ userId }: HobbiesInterestsSectionProps
     if (isLoading) {
         return (
             <div className="space-y-3">
-                <div className="h-4 w-32 bg-muted/50 rounded animate-pulse" />
+                <div className="h-4 w-32 bg-muted/50 rounded-sm animate-pulse" />
                 <div className="flex flex-wrap gap-2">
                     {[1, 2, 3, 4].map(i => (
                         <div key={i} className="h-7 w-20 bg-muted/50 rounded-full animate-pulse" />

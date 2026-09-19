@@ -28,8 +28,8 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
 
     if (isLoading) {
         return (
-            <div className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider animate-pulse">
-                <div className="h-4 w-20 bg-brand-secondary rounded mb-3" />
+            <div className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider animate-pulse">
+                <div className="h-4 w-20 bg-brand-secondary rounded-sm mb-3" />
                 <div className="grid grid-cols-3 gap-1.5">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="aspect-square bg-brand-secondary rounded-xl" />
@@ -51,7 +51,7 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.1 }}
-            className="bg-brand-card rounded-2xl p-5 shadow-sm border border-brand-divider"
+            className="bg-brand-card rounded-2xl p-5 shadow-xs border border-brand-divider"
         >
             <div className="flex items-center gap-2 mb-3">
                 <Image className="h-4 w-4 text-brand-text/60" />

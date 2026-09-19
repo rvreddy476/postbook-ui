@@ -60,7 +60,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -70,7 +70,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
         className="w-full max-w-md mx-4 bg-brand-card rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider shrink-0">
           <h2 className="text-lg font-black text-brand-text">Add Members</h2>
           <button onClick={onClose} className="p-1 text-brand-text/60 hover:text-brand-highlight transition-colors">
             <X className="w-5 h-5" />
@@ -78,7 +78,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
         </div>
 
         {/* Search */}
-        <div className="px-6 pt-4 pb-2 flex-shrink-0">
+        <div className="px-6 pt-4 pb-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/60" />
             <input
@@ -86,7 +86,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
               placeholder="Search users..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/50"
+              className="w-full pl-10 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/50"
             />
           </div>
         </div>
@@ -99,8 +99,8 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
                 <div key={i} className="flex items-center gap-3 px-2 py-2">
                   <div className="w-10 h-10 rounded-full bg-brand-secondary animate-pulse" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="w-28 h-3 rounded bg-brand-secondary animate-pulse" />
-                    <div className="w-16 h-2 rounded bg-brand-secondary animate-pulse" />
+                    <div className="w-28 h-3 rounded-sm bg-brand-secondary animate-pulse" />
+                    <div className="w-16 h-2 rounded-sm bg-brand-secondary animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -120,7 +120,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
                     key={user.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-secondary transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider shrink-0">
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -156,7 +156,7 @@ export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalP
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-brand-divider flex-shrink-0">
+        <div className="px-6 py-4 border-t border-brand-divider shrink-0">
           <button
             onClick={onClose}
             className="w-full py-2.5 text-sm font-bold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all"

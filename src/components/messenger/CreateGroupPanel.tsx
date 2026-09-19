@@ -156,7 +156,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="w-full max-w-lg mx-4 bg-brand-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
@@ -226,7 +226,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     {avatarPreview ? (
                       <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+                      <div className="w-full h-full bg-linear-to-br from-slate-200 to-slate-300 flex items-center justify-center">
                         <Camera className="w-5 h-5 text-brand-text/60" />
                       </div>
                     )}
@@ -248,7 +248,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. React Developers"
                   maxLength={100}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                 />
                 <p className="text-[10px] text-brand-text/30 mt-1">{name.length}/100 · Minimum 3 characters</p>
               </div>
@@ -264,7 +264,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     placeholder={autoHandle || 'group-handle'}
                     maxLength={50}
-                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
+                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                   />
                 </div>
               </div>
@@ -278,7 +278,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   placeholder="What's this group about?"
                   rows={2}
                   maxLength={500}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 resize-none focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
+                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 resize-none focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                 />
               </div>
 
@@ -293,7 +293,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       onClick={() => setCategory(category === cat ? '' : cat)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         category === cat
-                          ? 'bg-brand-text text-white shadow-sm'
+                          ? 'bg-brand-text text-white shadow-xs'
                           : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary border border-brand-divider'
                       }`}
                     >
@@ -367,7 +367,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search users by name..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
                   />
                 </div>
                 <p className="text-[10px] text-brand-text/30 mt-1.5 font-medium">
@@ -383,8 +383,8 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       <div key={i} className="flex items-center gap-3 p-2 animate-pulse">
                         <div className="w-10 h-10 rounded-xl bg-brand-secondary" />
                         <div className="flex-1 space-y-1.5">
-                          <div className="h-3 w-24 bg-brand-secondary rounded" />
-                          <div className="h-2.5 w-16 bg-brand-secondary rounded" />
+                          <div className="h-3 w-24 bg-brand-secondary rounded-sm" />
+                          <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
                         </div>
                       </div>
                     ))}
@@ -453,7 +453,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                   {coverPreview ? (
                     <img src={coverPreview} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300" />
+                    <div className="w-full h-full bg-linear-to-br from-slate-200 to-slate-300" />
                   )}
                 </div>
 
@@ -464,7 +464,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       {avatarPreview ? (
                         <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-brand-text/20 to-brand-text/10 flex items-center justify-center text-brand-text font-bold text-lg">
+                        <div className="w-full h-full bg-linear-to-br from-brand-text/20 to-brand-text/10 flex items-center justify-center text-brand-text font-bold text-lg">
                           {name.charAt(0).toUpperCase()}
                         </div>
                       )}

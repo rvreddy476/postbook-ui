@@ -235,7 +235,7 @@ export function ContentStep({
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-hidden"
                     />
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/50">:</span>
@@ -254,7 +254,7 @@ export function ContentStep({
                         const newMs = Math.min(mins * 60000 + secs * 1000 + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
+                      className="w-14 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-hidden"
                     />
                   </div>
                   <span className="mt-4 text-[14px] font-bold text-brand-text/50">.</span>
@@ -273,7 +273,7 @@ export function ContentStep({
                         const newMs = Math.min(base + ms, (form.videoDurationSec ?? 0) * 1000);
                         patch({ coverTimestampMs: newMs });
                       }}
-                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-none"
+                      className="w-16 rounded-lg border border-brand-text/10 bg-brand-secondary px-2 py-1.5 text-center font-mono text-[13px] text-brand-text focus:border-brand-text focus:outline-hidden"
                     />
                   </div>
                 </div>

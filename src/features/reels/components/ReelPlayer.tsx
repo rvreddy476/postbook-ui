@@ -317,10 +317,10 @@ export function ReelPlayer({
             e.stopPropagation();
             setUserTappedPlay(true);
           }}
-          className="absolute inset-0 z-[3] flex items-center justify-center bg-black/35"
+          className="absolute inset-0 z-3 flex items-center justify-center bg-black/35"
           aria-label="Play video"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/50 backdrop-blur-sm">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/50 backdrop-blur-xs">
             <Play className="ml-1 h-7 w-7 text-white" fill="white" />
           </span>
         </button>
@@ -334,14 +334,14 @@ export function ReelPlayer({
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={"pointer-events-none absolute inset-0 z-[1] h-full w-full " + (contain ? "object-contain" : "object-cover")}
+            className={"pointer-events-none absolute inset-0 z-1 h-full w-full " + (contain ? "object-contain" : "object-cover")}
             onClick={handleClick}
           />
         ) : null}
       </AnimatePresence>
 
       {showStateOverlay ? (
-        <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/35 px-8 text-center">
+        <div className="pointer-events-none absolute inset-0 z-2 flex items-center justify-center bg-black/35 px-8 text-center">
           <div className="max-w-md">
             <p className="text-[15px] font-semibold text-white">{stateTitle}</p>
             {stateHint ? (
@@ -427,7 +427,7 @@ export function ReelPlayer({
             transition={{ duration: 0.15 }}
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-xs">
               <Play className="ml-1 h-7 w-7 text-white" fill="white" />
             </div>
           </motion.div>
@@ -454,7 +454,7 @@ export function ReelPlayer({
               animate={{ y: -8, opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="absolute rounded-full bg-brand-card/20 px-5 py-2 text-sm font-bold tracking-[0.14em] text-white backdrop-blur-sm"
+              className="absolute rounded-full bg-brand-card/20 px-5 py-2 text-sm font-bold tracking-[0.14em] text-white backdrop-blur-xs"
             >
               BOOST
             </motion.span>

@@ -32,7 +32,7 @@ function NavIcon({ href, icon, label, active, newTab }: NavIconProps) {
       rel={newTab ? "noopener noreferrer" : undefined}
       className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150 ${
         active
-          ? "bg-brand-accent text-brand-bg shadow-sm"
+          ? "bg-brand-accent text-brand-bg shadow-xs"
           : "text-brand-highlight hover:bg-brand-secondary hover:text-brand-text"
       }`}
       aria-label={label}

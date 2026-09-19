@@ -59,7 +59,7 @@ export function AvatarCoverSection({
                             onError={() => setCoverBroken(true)}
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-brand-secondary via-brand-card/40 to-brand-secondary flex items-center justify-center">
+                        <div className="w-full h-full bg-linear-to-br from-brand-secondary via-brand-card/40 to-brand-secondary flex items-center justify-center">
                             <Image className="w-12 h-12 text-brand-highlight/30" />
                         </div>
                     )}
@@ -118,7 +118,7 @@ export function AvatarCoverSection({
                         className="relative h-32 w-32 rounded-[2.5rem] bg-brand-card p-2 shadow-2xl ring-1 ring-brand-secondary cursor-pointer group"
                         onClick={() => avatarInputRef.current?.click()}
                     >
-                        <div className="w-full h-full rounded-[2rem] overflow-hidden bg-brand-secondary relative">
+                        <div className="w-full h-full rounded-4xl overflow-hidden bg-brand-secondary relative">
                             {avatarMediaId && !avatarBroken ? (
                                 <img
                                     src={`/v1/media/${avatarMediaId}/serve`}
@@ -127,7 +127,7 @@ export function AvatarCoverSection({
                                     onError={() => setAvatarBroken(true)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-highlight/50 bg-gradient-to-br from-brand-secondary to-brand-card uppercase italic">
+                                <div className="w-full h-full flex items-center justify-center text-4xl font-black text-brand-highlight/50 bg-linear-to-br from-brand-secondary to-brand-card uppercase italic">
                                     {displayName.charAt(0)}
                                 </div>
                             )}
@@ -137,7 +137,7 @@ export function AvatarCoverSection({
                                     <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="absolute inset-0 bg-brand-card/80 backdrop-blur-sm flex items-center justify-center"
+                                        className="absolute inset-0 bg-brand-card/80 backdrop-blur-xs flex items-center justify-center"
                                     >
                                         <Loader2 className="w-8 h-8 animate-spin text-brand-text" />
                                     </motion.div>

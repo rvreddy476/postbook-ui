@@ -150,7 +150,7 @@ function StepIndicator({
               disabled={!clickable}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all ${
                 active
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-slate-900 text-white shadow-xs"
                   : done
                     ? "bg-brand-secondary text-brand-text hover:bg-brand-secondary cursor-pointer"
                     : "bg-transparent text-brand-text/30 cursor-default"
@@ -198,7 +198,7 @@ function VisibilitySelector({
             onClick={() => onChange(opt.value)}
             className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${
               active
-                ? "bg-slate-900 text-white shadow-sm"
+                ? "bg-slate-900 text-white shadow-xs"
                 : "bg-[#F5F5F7] text-brand-highlight hover:bg-brand-secondary/70"
             }`}
           >
@@ -311,7 +311,7 @@ function TagInput({
               }
             }}
             placeholder={placeholder}
-            className="flex-1 rounded-lg border border-brand-divider bg-[#F9FAFB] px-3 py-2 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="flex-1 rounded-lg border border-brand-divider bg-[#F9FAFB] px-3 py-2 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
         </div>
       )}
@@ -372,7 +372,7 @@ function StepUpload({
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`relative aspect-[9/16] w-[320px] overflow-hidden rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] transition-colors ${
+          className={`relative aspect-9/16 w-[320px] overflow-hidden rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)] transition-colors ${
             isDragging ? "bg-brand-secondary ring-2 ring-slate-400" : "bg-brand-secondary"
           }`}
         >
@@ -387,7 +387,7 @@ function StepUpload({
                 playsInline
               />
               {state.uploadPhase === "uploading" && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs">
                   <div className="mb-3 h-20 w-20 rounded-full border-4 border-white/20 relative">
                     <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80">
                       <circle
@@ -409,7 +409,7 @@ function StepUpload({
                 </div>
               )}
               {state.uploadPhase === "creating_draft" && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs">
                   <Loader2 className="h-8 w-8 animate-spin text-white mb-3" />
                   <p className="text-[13px] font-medium text-white/80">Preparing draft...</p>
                 </div>
@@ -418,7 +418,7 @@ function StepUpload({
                 <button
                   type="button"
                   onClick={clearFile}
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-xs transition hover:bg-black/70"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -466,7 +466,7 @@ function StepUpload({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-text"
+            className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-semibold text-white shadow-xs transition hover:bg-brand-text"
           >
             <Film className="h-4 w-4" />
             Select Video
@@ -488,7 +488,7 @@ function StepUpload({
               type="button"
               onClick={onUpload}
               disabled={isPending}
-              className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand-text disabled:opacity-40"
+              className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40"
             >
               <Upload className="h-4 w-4" />
               Upload & Continue
@@ -533,7 +533,7 @@ function StepEdit({
   return (
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       <div className="flex flex-col items-center gap-4">
-        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-9/16 w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -598,7 +598,7 @@ function StepEdit({
                 );
                 patch({ coverTimestampMs: totalMs });
               }}
-              className="w-10 rounded border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-brand-text outline-none focus:border-slate-400"
+              className="w-10 rounded-sm border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-brand-text outline-hidden focus:border-slate-400"
               aria-label="Minutes"
             />
             <span className="text-[12px] font-bold text-brand-text/60">:</span>
@@ -616,7 +616,7 @@ function StepEdit({
                 );
                 patch({ coverTimestampMs: totalMs });
               }}
-              className="w-10 rounded border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-brand-text outline-none focus:border-slate-400"
+              className="w-10 rounded-sm border border-brand-divider bg-brand-card px-1.5 py-1 text-center text-[12px] font-mono text-brand-text outline-hidden focus:border-slate-400"
               aria-label="Seconds"
             />
             <span className="text-[11px] text-brand-text/60">
@@ -629,7 +629,7 @@ function StepEdit({
                 <img
                   src={state.coverResult.preview_url}
                   alt="Cover preview"
-                  className="h-16 w-9 rounded object-cover"
+                  className="h-16 w-9 rounded-sm object-cover"
                 />
               )}
               <div className="flex items-center gap-1.5 text-[11px] text-green-600">
@@ -709,7 +709,7 @@ function StepDetails({
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       {/* Left — Video preview (small) */}
       <div className="flex flex-col items-center gap-3 shrink-0">
-        <div className="relative aspect-[9/16] w-[200px] overflow-hidden rounded-[16px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-9/16 w-[200px] overflow-hidden rounded-[16px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -788,7 +788,7 @@ function StepDetails({
             onChange={(e) => patch({ title: e.target.value })}
             placeholder="Add a title that describes your reel"
             maxLength={100}
-            className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
           <p className="mt-1 text-right text-[11px] text-brand-text/30">{state.title.length}/100</p>
         </div>
@@ -805,7 +805,7 @@ function StepDetails({
             placeholder="Tell viewers about your reel. Use #hashtags and @mentions."
             maxLength={REEL_LIMITS.MAX_CAPTION_LENGTH}
             rows={4}
-            className="w-full resize-none rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-3 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+            className="w-full resize-none rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-3 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
           />
           <div className="mt-1.5 flex items-center justify-between px-1">
             <span className="text-[11px] text-brand-text/30">
@@ -879,7 +879,7 @@ function StepDetails({
               type="checkbox"
               checked={state.paidPromotion}
               onChange={(e) => patch({ paidPromotion: e.target.checked })}
-              className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+              className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
             />
             <div>
               <span className="text-[13px] font-medium text-brand-text">This reel contains paid promotion</span>
@@ -898,7 +898,7 @@ function StepDetails({
               type="checkbox"
               checked={state.alteredContent}
               onChange={(e) => patch({ alteredContent: e.target.checked })}
-              className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+              className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
             />
             <div>
               <span className="text-[13px] font-medium text-brand-text">This reel uses altered or synthetic content</span>
@@ -919,7 +919,7 @@ function StepDetails({
                 type="checkbox"
                 checked={state.autoChapters}
                 onChange={(e) => patch({ autoChapters: e.target.checked })}
-                className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+                className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
@@ -931,7 +931,7 @@ function StepDetails({
                 type="checkbox"
                 checked={state.featuredPlaces}
                 onChange={(e) => patch({ featuredPlaces: e.target.checked })}
-                className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+                className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
             <label className="flex cursor-pointer items-center justify-between rounded-xl bg-[#F9FAFB] px-4 py-3 transition hover:bg-brand-secondary">
@@ -943,7 +943,7 @@ function StepDetails({
                 type="checkbox"
                 checked={state.autoConcepts}
                 onChange={(e) => patch({ autoConcepts: e.target.checked })}
-                className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+                className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
           </div>
@@ -971,7 +971,7 @@ function StepDetails({
                 id="category"
                 value={state.category}
                 onChange={(e) => patch({ category: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               >
                 <option value="">Select a category</option>
                 {CATEGORIES.map((cat) => (
@@ -1023,7 +1023,7 @@ function StepDetails({
                 id="language"
                 value={state.language}
                 onChange={(e) => patch({ language: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               >
                 {LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -1050,7 +1050,7 @@ function StepDetails({
                 type="date"
                 value={state.recordingDate}
                 onChange={(e) => patch({ recordingDate: e.target.value })}
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               />
             </div>
             <div>
@@ -1063,7 +1063,7 @@ function StepDetails({
                 value={state.recordingLocation}
                 onChange={(e) => patch({ recordingLocation: e.target.value })}
                 placeholder="Search for a location..."
-                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               />
             </div>
           </div>
@@ -1107,7 +1107,7 @@ function StepDetails({
                 type="checkbox"
                 checked={state.allowEmbedding}
                 onChange={(e) => patch({ allowEmbedding: e.target.checked })}
-                className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+                className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
 
@@ -1120,7 +1120,7 @@ function StepDetails({
                 type="checkbox"
                 checked={state.publishToFeed}
                 onChange={(e) => patch({ publishToFeed: e.target.checked })}
-                className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+                className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
               />
             </label>
           </div>
@@ -1173,7 +1173,7 @@ function StepDetails({
                 role="switch"
                 aria-checked={state.likesEnabled}
                 onClick={() => patch({ likesEnabled: !state.likesEnabled })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
                   state.likesEnabled ? "bg-slate-900" : "bg-brand-secondary"
                 }`}
               >
@@ -1196,7 +1196,7 @@ function StepDetails({
                 role="switch"
                 aria-checked={state.commentsEnabled}
                 onClick={() => patch({ commentsEnabled: !state.commentsEnabled })}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
                   state.commentsEnabled ? "bg-slate-900" : "bg-brand-secondary"
                 }`}
               >
@@ -1217,7 +1217,7 @@ function StepDetails({
                   <select
                     value={state.commentAccess}
                     onChange={(e) => patch({ commentAccess: e.target.value as CommentAccess })}
-                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
                   >
                     <option value="everyone">Everyone</option>
                     <option value="followers">Followers only</option>
@@ -1232,7 +1232,7 @@ function StepDetails({
                   <select
                     value={state.commentModeration}
                     onChange={(e) => patch({ commentModeration: e.target.value as CommentModeration })}
-                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                    className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
                   >
                     <option value="none">None</option>
                     <option value="basic">Basic — hold potentially inappropriate comments</option>
@@ -1283,7 +1283,7 @@ function StepDetails({
               onChange={(e) => patch({ seoTitle: e.target.value })}
               placeholder="Custom title for search engines"
               maxLength={120}
-              className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+              className="w-full rounded-xl border border-brand-divider bg-[#F9FAFB] px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
             />
             <p className="mt-1 text-right text-[11px] text-brand-text/30">{state.seoTitle.length}/120</p>
           </div>
@@ -1324,7 +1324,7 @@ function StepReview({
     <div className="flex flex-1 min-h-0 justify-center gap-10 px-10 py-8">
       {/* Left — Video preview */}
       <div className="flex flex-col items-center gap-3 shrink-0">
-        <div className="relative aspect-[9/16] w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+        <div className="relative aspect-9/16 w-[280px] overflow-hidden rounded-[20px] bg-brand-secondary shadow-[0_8px_30px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
           {state.videoPreviewUrl && (
             <video
               src={state.videoPreviewUrl}
@@ -1336,7 +1336,7 @@ function StepReview({
             />
           )}
           {state.caption && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-4 pt-10">
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-4 pb-4 pt-10">
               <p className="text-[13px] text-white line-clamp-3">{state.caption}</p>
             </div>
           )}
@@ -1367,7 +1367,7 @@ function StepReview({
                 setShowSchedule(e.target.checked);
                 if (!e.target.checked) patch({ scheduleAt: null });
               }}
-              className="h-4 w-4 rounded border-brand-text/30 accent-slate-900"
+              className="h-4 w-4 rounded-sm border-brand-text/30 accent-slate-900"
             />
           </label>
           {showSchedule && (
@@ -1380,7 +1380,7 @@ function StepReview({
                 value={state.scheduleAt ?? ""}
                 onChange={(e) => patch({ scheduleAt: e.target.value || null })}
                 min={new Date().toISOString().slice(0, 16)}
-                className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-[13px] text-brand-text outline-none transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
+                className="w-full rounded-xl border border-brand-divider bg-brand-card px-4 py-2.5 text-[13px] text-brand-text outline-hidden transition focus:border-brand-text/30 focus:ring-2 focus:ring-brand-secondary"
               />
             </div>
           )}
@@ -1564,7 +1564,7 @@ function StepReview({
             type="button"
             onClick={onPublish}
             disabled={publishPending}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-[14px] font-bold text-white shadow-sm transition hover:bg-brand-text disabled:opacity-40"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-[14px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40"
           >
             {publishPending ? (
               <>
@@ -1658,7 +1658,7 @@ function CreateReelWizard() {
               type="button"
               onClick={nextStep}
               disabled={!canGoNext()}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-bold text-white shadow-sm transition hover:bg-brand-text disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-[12px] font-bold text-white shadow-xs transition hover:bg-brand-text disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next
               <ArrowRight className="h-3.5 w-3.5" />

@@ -28,11 +28,11 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.hashtag}`)}
-            className="group flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 transition-all duration-200 text-left w-full"
+            className="group flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 text-left w-full"
         >
             {/* Rank badge */}
             <div
-                className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200`}
+                className={`w-9 h-9 rounded-xl bg-linear-to-br ${gradientClass} flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200`}
             >
                 <span className="text-white text-xs font-black">#{rank}</span>
             </div>
@@ -51,7 +51,7 @@ function HashtagPill({ item, rank }: HashtagPillProps) {
             </div>
 
             {/* Arrow */}
-            <div className="flex-shrink-0 text-brand-text/30 group-hover:text-brand-text/50 group-hover:translate-x-0.5 transition-all duration-200">
+            <div className="shrink-0 text-brand-text/30 group-hover:text-brand-text/50 group-hover:translate-x-0.5 transition-all duration-200">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -72,9 +72,9 @@ function HashtagCard({ item }: HashtagCardProps) {
     return (
         <button
             onClick={() => router.push(`/hashtag/${item.hashtag}`)}
-            className="group flex flex-col items-center justify-center gap-2 p-5 bg-brand-card rounded-2xl border border-brand-divider shadow-sm hover:shadow-md hover:border-brand-text/10 hover:bg-brand-text/30 transition-all duration-200 aspect-square"
+            className="group flex flex-col items-center justify-center gap-2 p-5 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 hover:bg-brand-text/30 transition-all duration-200 aspect-square"
         >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20 group-hover:scale-105 transition-transform duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20 group-hover:scale-105 transition-transform duration-200">
                 <Hash className="w-6 h-6 text-white" />
             </div>
             <p className="text-sm font-bold text-brand-text group-hover:text-brand-text transition-colors truncate max-w-full px-1">
@@ -105,7 +105,7 @@ function SectionHeader({
     return (
         <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
                     {icon}
                 </div>
                 <div>
@@ -123,7 +123,7 @@ function SectionHeader({
 function ErrorCard({ message }: { message: string }) {
     return (
         <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <p className="text-sm text-red-600 font-medium">{message}</p>
         </div>
     )
@@ -136,7 +136,7 @@ function TrendingSkeletons() {
         <div className="space-y-3 animate-pulse">
             {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider">
-                    <div className="w-9 h-9 rounded-xl bg-brand-divider flex-shrink-0" />
+                    <div className="w-9 h-9 rounded-xl bg-brand-divider shrink-0" />
                     <div className="flex-1 space-y-1.5">
                         <div className="h-4 bg-brand-divider rounded-lg w-1/3" />
                         <div className="h-3 bg-brand-divider rounded-lg w-1/4" />
@@ -187,7 +187,7 @@ export default function DiscoverPage() {
             {/* Page header */}
             <div className="sticky top-0 z-10 bg-brand-card/90 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
                         <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -222,7 +222,7 @@ export default function DiscoverPage() {
 
                     {!trendingLoading && hashtags.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                                 <Hash className="w-7 h-7 text-brand-text/30" />
                             </div>
                             <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>
@@ -261,7 +261,7 @@ export default function DiscoverPage() {
                 </section>
 
                 {/* Divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-brand-divider to-transparent" />
+                <div className="h-px bg-linear-to-r from-transparent via-brand-divider to-transparent" />
 
                 {/* ── Suggested Posts ── */}
                 <section>
@@ -275,7 +275,7 @@ export default function DiscoverPage() {
 
                     {!suggestedLoading && suggestedPosts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
                                 <Sparkles className="w-7 h-7 text-brand-text/30" />
                             </div>
                             <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>

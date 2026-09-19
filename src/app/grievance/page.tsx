@@ -35,7 +35,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-brand-divider shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-divider shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -105,7 +105,7 @@ export default function GrievancePage() {
     }
 
     const inputClasses =
-        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-brand-text/20"
+        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
 
     if (referenceId) {
         return (
@@ -122,7 +122,7 @@ export default function GrievancePage() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-2xl bg-brand-card border border-brand-divider p-8 text-center shadow-sm"
+                    className="rounded-2xl bg-brand-card border border-brand-divider p-8 text-center shadow-xs"
                 >
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                         <CheckCircle className="h-8 w-8 text-emerald-600" />

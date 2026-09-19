@@ -97,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const widthCls = expanded ? 'w-64 px-4' : 'w-16 items-center px-0';
   const navClass = inFlow
     ? `relative flex h-full shrink-0 flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg dark:bg-brand-bg dark:text-brand-text ${widthCls}`
-    : `fixed left-0 top-0 z-[60] hidden h-full flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg transition-all duration-500 ease-in-out dark:bg-brand-bg dark:text-brand-text md:flex ${widthCls}`;
+    : `fixed left-0 top-0 z-60 hidden h-full flex-col border-r border-brand-divider bg-brand-text py-6 text-brand-bg transition-all duration-500 ease-in-out dark:bg-brand-bg dark:text-brand-text md:flex ${widthCls}`;
 
   // ---- One primary rail entry (link) ----
   const renderRailItem = (item: Item) => {
@@ -105,13 +105,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     const Icon = item.icon;
     const cls = `relative flex items-center rounded-xl transition-all duration-300 group ${
       expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-    } ${isActive ? 'bg-white/[0.08] dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`;
+    } ${isActive ? 'bg-white/8 dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`;
     return (
       <Link key={item.id} href={item.href ?? '#'} className={cls}>
         <Icon
           size={21}
           strokeWidth={isActive ? 2.6 : 2.2}
-          className={`flex-shrink-0 ${item.color} transition-transform duration-300 group-hover:scale-110 ${
+          className={`shrink-0 ${item.color} transition-transform duration-300 group-hover:scale-110 ${
             isActive ? 'scale-110 drop-shadow-[0_0_6px_currentColor]' : ''
           }`}
         />
@@ -125,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </span>
         )}
         {!expanded && (
-          <div className="pointer-events-none absolute left-full z-[80] ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
+          <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
             {item.label}
             <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-white dark:bg-brand-text" />
           </div>
@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {isActive && !expanded && (
           <motion.div
             layoutId="rail-active"
-            className="absolute -left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-brand-accent"
+            className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-brand-accent"
           />
         )}
       </Link>
@@ -169,12 +169,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             aria-expanded={moreOpen}
             className={`relative flex items-center rounded-xl transition-all duration-300 group ${
               expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
-            } ${moreOpen || moreActive ? 'bg-white/[0.08] dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`}
+            } ${moreOpen || moreActive ? 'bg-white/8 dark:bg-brand-accent/10' : 'hover:bg-white/5 dark:hover:bg-brand-accent/5'}`}
           >
             <LayoutGrid
               size={21}
               strokeWidth={moreOpen || moreActive ? 2.6 : 2.2}
-              className={`flex-shrink-0 text-cyan-400 transition-transform duration-300 group-hover:scale-110 ${
+              className={`shrink-0 text-cyan-400 transition-transform duration-300 group-hover:scale-110 ${
                 moreOpen || moreActive ? 'scale-110 drop-shadow-[0_0_6px_currentColor]' : ''
               }`}
             />
@@ -188,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </span>
             )}
             {!expanded && !moreOpen && (
-              <div className="pointer-events-none absolute left-full z-[80] ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
+              <div className="pointer-events-none absolute left-full z-80 ml-4 whitespace-nowrap rounded-md bg-white px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black opacity-0 shadow-xl transition-opacity group-hover:opacity-100 dark:bg-brand-text dark:text-brand-bg">
                 More
                 <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-white dark:bg-brand-text" />
               </div>
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Flyout — the rest of the services */}
           {moreOpen && (
-            <div className="absolute bottom-0 left-full z-[80] ml-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-brand-text shadow-2xl dark:border-brand-divider dark:bg-brand-card">
+            <div className="absolute bottom-0 left-full z-80 ml-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-brand-text shadow-2xl dark:border-brand-divider dark:bg-brand-card">
               <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black uppercase tracking-widest text-white/40 dark:text-brand-text/40">
                 More on VChat
               </div>
@@ -215,7 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <Icon
                         size={18}
                         strokeWidth={2.3}
-                        className={`flex-shrink-0 ${item.color} transition-transform duration-200 group-hover/mi:scale-110`}
+                        className={`shrink-0 ${item.color} transition-transform duration-200 group-hover/mi:scale-110`}
                       />
                       <span>{item.label}</span>
                     </>
@@ -264,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <User
           size={21}
           strokeWidth={2.2}
-          className="flex-shrink-0 text-slate-300 transition-transform duration-300 group-hover:scale-110"
+          className="shrink-0 text-slate-300 transition-transform duration-300 group-hover:scale-110"
         />
         {expanded && <span className="text-sm font-bold text-white/70 dark:text-brand-text/70">Account</span>}
       </Link>
@@ -272,7 +272,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Click-away backdrop for the More flyout */}
       {moreOpen && (
         <div
-          className="fixed inset-0 z-[70]"
+          className="fixed inset-0 z-70"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />

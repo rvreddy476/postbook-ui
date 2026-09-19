@@ -78,7 +78,7 @@ export default function MopeduRidesHistoryPage() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-sm">
+      <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((f) => {
             const active = status === f.key
@@ -109,7 +109,7 @@ export default function MopeduRidesHistoryPage() {
             value={pendingQ}
             onChange={(e) => setPendingQ(e.target.value)}
             placeholder="Ride id or partner phone"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <input
             type="date"
@@ -118,7 +118,7 @@ export default function MopeduRidesHistoryPage() {
               setStart(e.target.value)
               setOffset(0)
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <input
             type="date"
@@ -127,7 +127,7 @@ export default function MopeduRidesHistoryPage() {
               setEnd(e.target.value)
               setOffset(0)
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-text"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <button
             type="submit"
@@ -138,7 +138,7 @@ export default function MopeduRidesHistoryPage() {
         </form>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {list.isLoading ? (
           <div className="flex items-center justify-center py-12 text-sm text-brand-text/60">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -26,9 +26,9 @@ export function ProfileSkeleton() {
                             <div className="h-4 w-64 rounded-md bg-brand-secondary/50 animate-pulse" />
                         </div>
                         <div className="flex justify-center sm:justify-start gap-3">
-                            <div className="h-3 w-20 rounded bg-brand-secondary/50 animate-pulse" />
-                            <div className="h-3 w-24 rounded bg-brand-secondary/50 animate-pulse" />
-                            <div className="h-3 w-28 rounded bg-brand-secondary/50 animate-pulse" />
+                            <div className="h-3 w-20 rounded-sm bg-brand-secondary/50 animate-pulse" />
+                            <div className="h-3 w-24 rounded-sm bg-brand-secondary/50 animate-pulse" />
+                            <div className="h-3 w-28 rounded-sm bg-brand-secondary/50 animate-pulse" />
                         </div>
                     </div>
                 </div>
@@ -37,8 +37,8 @@ export function ProfileSkeleton() {
                 <div className="mt-4 flex gap-6">
                     {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="flex items-center gap-1.5 animate-pulse">
-                            <div className="h-4 w-8 rounded bg-brand-secondary/50" />
-                            <div className="h-3 w-14 rounded bg-brand-secondary/50" />
+                            <div className="h-4 w-8 rounded-sm bg-brand-secondary/50" />
+                            <div className="h-3 w-14 rounded-sm bg-brand-secondary/50" />
                         </div>
                     ))}
                 </div>
@@ -68,15 +68,15 @@ export function ProfileSkeleton() {
                                 className="bg-brand-card rounded-2xl border border-brand-divider p-5 animate-pulse"
                             >
                                 <div className="space-y-3">
-                                    <div className="h-4 w-full rounded bg-brand-secondary/50" />
-                                    <div className="h-4 w-4/5 rounded bg-brand-secondary/50" />
-                                    <div className="h-4 w-2/3 rounded bg-brand-secondary/50" />
+                                    <div className="h-4 w-full rounded-sm bg-brand-secondary/50" />
+                                    <div className="h-4 w-4/5 rounded-sm bg-brand-secondary/50" />
+                                    <div className="h-4 w-2/3 rounded-sm bg-brand-secondary/50" />
                                 </div>
                                 <div className="mt-4 h-48 rounded-xl bg-brand-secondary/40" />
                                 <div className="mt-4 flex gap-6">
-                                    <div className="h-4 w-14 rounded bg-brand-secondary/50" />
-                                    <div className="h-4 w-14 rounded bg-brand-secondary/50" />
-                                    <div className="h-4 w-14 rounded bg-brand-secondary/50" />
+                                    <div className="h-4 w-14 rounded-sm bg-brand-secondary/50" />
+                                    <div className="h-4 w-14 rounded-sm bg-brand-secondary/50" />
+                                    <div className="h-4 w-14 rounded-sm bg-brand-secondary/50" />
                                 </div>
                             </div>
                         ))}

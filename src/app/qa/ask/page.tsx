@@ -186,7 +186,7 @@ function AskQuestionPageInner() {
             <select
               value={communityId}
               onChange={e => setCommunityId(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-ask focus:ring-1 focus:ring-ask text-sm"
+              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-hidden focus:border-ask focus:ring-1 focus:ring-ask text-sm"
             >
               <option value="">No community (post to general feed)</option>
               {myCommunities?.map(c => (
@@ -215,7 +215,7 @@ function AskQuestionPageInner() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g. How do I implement rate limiting in Go?"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:border-ask focus:ring-1 focus:ring-ask text-sm"
+              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-hidden focus:border-ask focus:ring-1 focus:ring-ask text-sm"
               maxLength={200}
             />
             <div className="mt-1 text-xs text-neutral-400 text-right">{title.length}/200</div>
@@ -251,7 +251,7 @@ function AskQuestionPageInner() {
               onChange={e => setBody(e.target.value)}
               placeholder="Describe your question in detail. Include what you've tried, what you expected, and what actually happened."
               rows={10}
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:border-ask focus:ring-1 focus:ring-ask text-sm resize-y"
+              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-hidden focus:border-ask focus:ring-1 focus:ring-ask text-sm resize-y"
             />
           </div>
 
@@ -321,7 +321,7 @@ function AskQuestionPageInner() {
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                   placeholder="e.g. golang, performance"
-                  className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-ask"
+                  className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-hidden focus:border-ask"
                 />
                 <button
                   type="button"

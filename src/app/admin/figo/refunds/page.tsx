@@ -43,7 +43,7 @@ export default function FoodRefundsPage() {
             type="button"
             onClick={() => setStatus(s.key)}
             className={[
-              "rounded px-3 py-1 text-xs font-medium transition",
+              "rounded-sm px-3 py-1 text-xs font-medium transition",
               status === s.key
                 ? "bg-amber-600 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -105,12 +105,12 @@ export default function FoodRefundsPage() {
                       <span
                         className={
                           r.status === "requested"
-                            ? "rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
+                            ? "rounded-sm bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
                             : r.status === "approved"
-                              ? "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
+                              ? "rounded-sm bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800"
                               : r.status === "rejected"
-                                ? "rounded bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
-                                : "rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                                ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                                : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                         }
                       >
                         {r.status}
@@ -124,7 +124,7 @@ export default function FoodRefundsPage() {
                             value={reasonInput}
                             onChange={(e) => setReason(r.id, e.target.value)}
                             placeholder="Reason (optional)"
-                            className="rounded border border-slate-300 px-2 py-1 text-xs"
+                            className="rounded-sm border border-slate-300 px-2 py-1 text-xs"
                           />
                           <div className="flex gap-1">
                             <button
@@ -138,7 +138,7 @@ export default function FoodRefundsPage() {
                               }
                               disabled={decide.isPending}
                               className={[
-                                "rounded bg-emerald-600 px-2 py-1 text-xs font-medium text-white",
+                                "rounded-sm bg-emerald-600 px-2 py-1 text-xs font-medium text-white",
                                 decide.isPending
                                   ? "cursor-wait opacity-60"
                                   : "hover:bg-emerald-700",
@@ -157,7 +157,7 @@ export default function FoodRefundsPage() {
                               }
                               disabled={decide.isPending}
                               className={[
-                                "rounded bg-rose-600 px-2 py-1 text-xs font-medium text-white",
+                                "rounded-sm bg-rose-600 px-2 py-1 text-xs font-medium text-white",
                                 decide.isPending
                                   ? "cursor-wait opacity-60"
                                   : "hover:bg-rose-700",

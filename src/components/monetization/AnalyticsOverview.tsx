@@ -38,7 +38,7 @@ function Sparkline({ data, color, height = 40 }: { data: number[]; color: string
     const areaPoints = `0,${height} ${points} ${(data.length - 1) * step},${height}`
 
     return (
-        <svg width={width} height={height} className="flex-shrink-0">
+        <svg width={width} height={height} className="shrink-0">
             <defs>
                 <linearGradient id={`spark-${color}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={color} stopOpacity="0.3" />
@@ -60,7 +60,7 @@ function Sparkline({ data, color, height = 40 }: { data: number[]; color: string
 
 function StatCardSkeleton() {
     return (
-        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-sm animate-pulse">
+        <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-xs animate-pulse">
             <div className="h-2.5 bg-[#F0E6DC] rounded-full w-20 mb-3" />
             <div className="h-6 bg-[#F0E6DC] rounded-full w-24 mb-2" />
             <div className="h-10 bg-[#F0E6DC] rounded-lg w-full" />
@@ -81,7 +81,7 @@ const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ overview, trend, 
 
     if (!overview) {
         return (
-            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-sm">
+            <div className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-10 shadow-xs">
                 <div className="flex flex-col items-center justify-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#FAF5F0] border border-[#F0E6DC] flex items-center justify-center">
                         <svg className="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@ const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ overview, trend, 
             {stats.map((stat) => (
                 <div
                     key={stat.label}
-                    className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-sm hover:shadow-md hover:border-[#D4A574] transition-all duration-300"
+                    className="bg-brand-card rounded-2xl border border-[#F0E6DC] p-5 shadow-xs hover:shadow-md hover:border-[#D4A574] transition-all duration-300"
                 >
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">

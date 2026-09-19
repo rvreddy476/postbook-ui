@@ -41,7 +41,7 @@ export default function OnThisDayPage() {
   return (
     <AppShell activeTab="Memories">
       <div className="mx-auto max-w-[1080px] px-6 py-8">
-        <div className="rounded-[30px] border border-brand-divider bg-[#FFF8EC] px-6 py-6 shadow-sm">
+        <div className="rounded-[30px] border border-brand-divider bg-[#FFF8EC] px-6 py-6 shadow-xs">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F2C56F]/20 text-[#9a6400]">
@@ -74,7 +74,7 @@ export default function OnThisDayPage() {
         </div>
 
         {memoriesQuery.isLoading ? (
-          <div className="mt-8 flex items-center justify-center rounded-[28px] border border-brand-divider bg-brand-card px-6 py-16 shadow-sm">
+          <div className="mt-8 flex items-center justify-center rounded-[28px] border border-brand-divider bg-brand-card px-6 py-16 shadow-xs">
             <Loader2 className="h-6 w-6 animate-spin text-brand-highlight" />
           </div>
         ) : memoriesQuery.isError ? (
@@ -82,7 +82,7 @@ export default function OnThisDayPage() {
             Unable to load On This Day right now.
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-12 text-center shadow-sm">
+          <div className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-12 text-center shadow-xs">
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-brand-highlight">
               Nothing resurfaced today
             </p>
@@ -95,12 +95,12 @@ export default function OnThisDayPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="overflow-hidden rounded-[28px] border border-brand-divider bg-brand-card shadow-sm"
+                className="overflow-hidden rounded-[28px] border border-brand-divider bg-brand-card shadow-xs"
               >
                 {item.media_url ? (
                   <img src={item.media_url} alt="" className="h-48 w-full object-cover" />
                 ) : (
-                  <div className="h-32 w-full bg-gradient-to-br from-[#F7E6B8] via-[#FFF8EC] to-[#EFD8A2]" />
+                  <div className="h-32 w-full bg-linear-to-br from-[#F7E6B8] via-[#FFF8EC] to-[#EFD8A2]" />
                 )}
                 <div className="space-y-4 px-6 py-5">
                   <div className="flex items-center justify-between gap-3">

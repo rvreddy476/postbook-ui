@@ -95,10 +95,10 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
   return (
     <Link
       href={`/groups/${group.handle || group.id}`}
-      className="group/card flex items-center gap-3.5 p-3 rounded-xl border border-brand-divider bg-brand-card hover:border-brand-text/15 hover:shadow-sm transition-all relative"
+      className="group/card flex items-center gap-3.5 p-3 rounded-xl border border-brand-divider bg-brand-card hover:border-brand-text/15 hover:shadow-xs transition-all relative"
     >
       {/* Avatar */}
-      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-xs">
         {group.avatar_media_id ? (
           <img
             src={`/v1/media/${group.avatar_media_id}/serve`}
@@ -106,7 +106,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradients[idx]} flex items-center justify-center text-white font-bold text-base`}>
+          <div className={`w-full h-full bg-linear-to-br ${gradients[idx]} flex items-center justify-center text-white font-bold text-base`}>
             {group.name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -116,7 +116,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <h3 className="text-[13px] font-bold text-brand-text truncate leading-tight">{group.name}</h3>
-          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-brand-text/5 flex-shrink-0">
+          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-brand-text/5 shrink-0">
             <PrivacyIcon className="w-2.5 h-2.5 text-brand-text/40" />
             <span className="text-[9px] font-semibold text-brand-text/40">{privacyLabel}</span>
           </span>
@@ -141,7 +141,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
       </div>
 
       {/* Action */}
-      <div className="flex-shrink-0" ref={dropdownRef}>
+      <div className="shrink-0" ref={dropdownRef}>
         {isMember ? (
           <div className="relative">
             <button
@@ -152,7 +152,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
               Joined
             </button>
             {showDropdown && (
-              <div className="absolute right-0 top-full z-50 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-brand-divider bg-brand-card py-0.5 shadow-lg">
+              <div className="absolute right-0 top-full z-50 mt-1 min-w-32 overflow-hidden rounded-lg border border-brand-divider bg-brand-card py-0.5 shadow-lg">
                 <button
                   onClick={handleLeave}
                   className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50"

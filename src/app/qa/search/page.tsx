@@ -68,7 +68,7 @@ function QASearchPageInner() {
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Search questions, topics, tags…"
-            className="w-full pl-10 pr-10 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-sm"
+            className="w-full pl-10 pr-10 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-hidden focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-sm"
           />
           {input && (
             <button
@@ -87,7 +87,7 @@ function QASearchPageInner() {
           <select
             value={communityId}
             onChange={e => setCommunityId(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 focus:outline-none focus:border-violet-500"
+            className="px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 focus:outline-hidden focus:border-violet-500"
           >
             <option value="">All communities</option>
             {communities?.map(c => (
@@ -97,7 +97,7 @@ function QASearchPageInner() {
           <select
             value={topicId}
             onChange={e => setTopicId(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 focus:outline-none focus:border-violet-500"
+            className="px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm text-neutral-700 dark:text-neutral-200 focus:outline-hidden focus:border-violet-500"
           >
             <option value="">All topics</option>
             {topics?.map(t => (

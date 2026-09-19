@@ -156,7 +156,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-sm transition-transform hover:scale-[1.03]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-accent px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-brand-bg shadow-xs transition-transform hover:scale-[1.03]"
             >
               Join VChat
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -276,7 +276,7 @@ export default function LandingPage() {
                       {PROOF_AVATARS.map((avatar) => (
                         <div
                           key={avatar.initials}
-                          className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-brand-bg text-[10px] font-bold first:ml-0 shadow-sm"
+                          className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-brand-bg text-[10px] font-bold first:ml-0 shadow-xs"
                           style={{ backgroundColor: avatar.bg, color: avatar.fg }}
                         >
                           {avatar.initials}
@@ -295,7 +295,7 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="p-5 border border-brand-divider rounded-2xl bg-brand-card space-y-3 shadow-sm">
+                <div className="p-5 border border-brand-divider rounded-2xl bg-brand-card space-y-3 shadow-xs">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-brand-text">Platform Integrity</h4>
                   <p className="text-xs text-brand-text/60 leading-relaxed font-light">
                     Every message is securely verified, media uploads undergo automated content moderation, and analytics payouts happen directly via certified ledgers.
@@ -394,7 +394,7 @@ export default function LandingPage() {
                   { value: stats.paidOut, label: 'Paid to Creators', desc: 'Total subscription earnings payouts ledger.' },
                   { value: stats.uptime, label: 'Platform Uptime', desc: 'Continuous gateway connection success.' },
                 ].map((stat) => (
-                  <div key={stat.label} className="p-6 border border-brand-divider bg-brand-card rounded-2xl space-y-2 shadow-sm">
+                  <div key={stat.label} className="p-6 border border-brand-divider bg-brand-card rounded-2xl space-y-2 shadow-xs">
                     <div className="flex items-center gap-1.5 text-brand-text/40">
                       <TrendingUp className="h-3.5 w-3.5" />
                       <span className="text-[9px] font-bold uppercase tracking-widest">{stat.label}</span>
@@ -424,7 +424,7 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="border border-brand-divider bg-brand-card rounded-2xl overflow-hidden shadow-sm">
+              <div className="border border-brand-divider bg-brand-card rounded-2xl overflow-hidden shadow-xs">
                 {/* Console header */}
                 <div className="bg-brand-secondary px-5 py-3 border-b border-brand-divider flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -434,7 +434,7 @@ export default function LandingPage() {
                   <button
                     onClick={runDiagnostic}
                     disabled={diagnosticRunning}
-                    className="px-3 py-1 rounded bg-brand-accent text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
+                    className="px-3 py-1 rounded-sm bg-brand-accent text-brand-bg text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all"
                   >
                     {diagnosticRunning ? 'Running...' : 'Run Diagnostics'}
                   </button>

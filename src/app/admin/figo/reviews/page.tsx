@@ -63,12 +63,12 @@ function FoodAdminReviewsBody() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="e.g. 7e3c…"
-            className="rounded border border-slate-300 px-2 py-1 font-mono text-xs"
+            className="rounded-sm border border-slate-300 px-2 py-1 font-mono text-xs"
           />
         </label>
         <button
           type="submit"
-          className="rounded bg-amber-600 px-3 py-1 text-sm font-medium text-white hover:bg-amber-700"
+          className="rounded-sm bg-amber-600 px-3 py-1 text-sm font-medium text-white hover:bg-amber-700"
         >
           Load
         </button>
@@ -117,7 +117,7 @@ function FoodAdminReviewsBody() {
                 }}
                 disabled={hide.isPending}
                 className={[
-                  "rounded bg-rose-600 px-3 py-1 text-xs font-medium text-white",
+                  "rounded-sm bg-rose-600 px-3 py-1 text-xs font-medium text-white",
                   hide.isPending ? "cursor-wait opacity-60" : "hover:bg-rose-700",
                 ].join(" ")}
               >

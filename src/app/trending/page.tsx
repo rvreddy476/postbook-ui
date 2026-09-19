@@ -22,7 +22,7 @@ export default function TrendingPage() {
                 {/* Header */}
                 <div className="sticky top-0 z-10 bg-brand-card/80 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
                     <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-orange-400 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
                             <Flame className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -36,7 +36,7 @@ export default function TrendingPage() {
                     {/* Loading */}
                     {isLoading && (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 flex items-center justify-center animate-pulse">
+                            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-orange-400 to-rose-500 flex items-center justify-center animate-pulse">
                                 <Flame className="w-6 h-6 text-white" />
                             </div>
                             <Loader2 className="w-5 h-5 text-brand-text/50 animate-spin" />
@@ -57,7 +57,7 @@ export default function TrendingPage() {
                     {/* Empty */}
                     {!isLoading && !isError && tags.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-text/5 to-orange-50 border border-brand-text/10 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-orange-50 border border-brand-text/10 flex items-center justify-center">
                                 <TrendingUp className="w-9 h-9 text-brand-text/30" />
                             </div>
                             <div className="text-center max-w-xs">
@@ -68,7 +68,7 @@ export default function TrendingPage() {
                             </div>
                             <Link
                                 href="/create/post"
-                                className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-400 to-rose-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-shadow"
+                                className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-orange-400 to-rose-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-shadow"
                             >
                                 Create a post
                             </Link>
@@ -90,9 +90,9 @@ export default function TrendingPage() {
                                         className="group flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-brand-card border border-brand-divider hover:border-violet-200 hover:shadow-md transition-all duration-200"
                                     >
                                         {/* Rank badge */}
-                                        <div className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
+                                        <div className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
                                             rankGradient
-                                                ? `bg-gradient-to-br ${rankGradient} text-white shadow-sm`
+                                                ? `bg-linear-to-br ${rankGradient} text-white shadow-xs`
                                                 : 'bg-brand-divider text-brand-text/50'
                                         }`}>
                                             {rank}
@@ -109,7 +109,7 @@ export default function TrendingPage() {
                                         </div>
 
                                         {/* Trending icon */}
-                                        <div className="flex-shrink-0 flex items-center gap-1.5">
+                                        <div className="shrink-0 flex items-center gap-1.5">
                                             {tag.is_trending && (
                                                 <Flame className="w-3.5 h-3.5 text-orange-400" />
                                             )}
@@ -124,11 +124,11 @@ export default function TrendingPage() {
                     {/* Subtle footer when loaded */}
                     {tags.length > 0 && (
                         <div className="mt-8 flex flex-col items-center gap-2 py-4">
-                            <div className="h-px w-32 bg-gradient-to-r from-transparent via-brand-divider to-transparent" />
+                            <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
                             <p className="text-xs font-semibold text-brand-text/30 uppercase tracking-widest">
                                 Updates live
                             </p>
-                            <div className="h-px w-32 bg-gradient-to-r from-transparent via-brand-divider to-transparent" />
+                            <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
                         </div>
                     )}
                 </main>

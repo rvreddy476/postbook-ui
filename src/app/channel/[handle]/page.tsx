@@ -45,9 +45,9 @@ export default function ChannelProfilePage() {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#3C2415] via-[#7B5B3A] to-[#D4A574]" />
+                    <div className="w-full h-full bg-linear-to-br from-[#3C2415] via-[#7B5B3A] to-[#D4A574]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3C2415]/60 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-[#3C2415]/60 to-transparent" />
             </div>
 
             {/* Channel Info */}
@@ -89,7 +89,7 @@ export default function ChannelProfilePage() {
                     </div>
 
                     {/* Subscriber Count */}
-                    <div className="flex items-center gap-2 px-4 py-2 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-xs">
                         <Users className="w-4 h-4 text-[#7B5B3A]" />
                         <span className="text-sm font-bold text-[#3C2415]">
                             {channel.subscriber_count.toLocaleString()}
@@ -100,7 +100,7 @@ export default function ChannelProfilePage() {
 
                 {/* Description */}
                 {channel.description && (
-                    <div className="mt-6 p-4 bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-sm">
+                    <div className="mt-6 p-4 bg-brand-card rounded-2xl border border-[#F0E6DC] shadow-xs">
                         <p className="text-sm text-[#3C2415] leading-relaxed">
                             {channel.description}
                         </p>
@@ -120,7 +120,7 @@ export default function ChannelProfilePage() {
                                     href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm hover:border-[#D4A574] hover:shadow-md transition-all group"
+                                    className="flex items-center gap-3 p-3 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-xs hover:border-[#D4A574] hover:shadow-md transition-all group"
                                 >
                                     <div className="h-8 w-8 rounded-lg bg-[#F0E6DC] flex items-center justify-center">
                                         <ExternalLink className="w-4 h-4 text-[#7B5B3A] group-hover:text-[#3C2415] transition-colors" />
@@ -148,9 +148,9 @@ export default function ChannelProfilePage() {
                                 {channel.milestones.map((milestone) => (
                                     <div key={milestone.id} className="relative pl-10">
                                         {/* Dot */}
-                                        <div className="absolute left-2.5 top-3 w-3 h-3 rounded-full bg-[#D4A574] border-2 border-white shadow-sm" />
+                                        <div className="absolute left-2.5 top-3 w-3 h-3 rounded-full bg-[#D4A574] border-2 border-white shadow-xs" />
 
-                                        <div className="p-4 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-sm">
+                                        <div className="p-4 bg-brand-card rounded-xl border border-[#F0E6DC] shadow-xs">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <Trophy className="w-4 h-4 text-[#D4A574]" />

@@ -99,7 +99,7 @@ const MoodActivityPicker: React.FC<MoodActivityPickerProps> = ({ onSelect, onClo
               onChange={(e) => setActivityDetail(e.target.value)}
               placeholder={selectedActivity.placeholder}
               autoFocus
-              className={`w-full rounded-xl px-3 py-2.5 text-[13px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-none focus:ring-1`}
+              className={`w-full rounded-xl px-3 py-2.5 text-[13px] ${isDarkMode ? 'placeholder:text-brand-highlight' : 'placeholder:text-brand-text/60'} focus:outline-hidden focus:ring-1`}
               style={{
                 background: isDarkMode ? '#10182D' : '#F8FAFC',
                 border: isDarkMode ? '1px solid rgba(148,163,184,0.2)' : '1px solid #E2E8F0',

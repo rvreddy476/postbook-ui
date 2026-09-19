@@ -72,10 +72,10 @@ function SidebarCard({ video }: { video: PostTubeVideo }) {
         {video.thumbnail_url ? (
           <img src={video.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 to-slate-100" />
+          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-200 to-slate-100" />
         )}
         {video.duration_seconds > 0 ? (
-          <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[10px] font-medium text-white">
+          <span className="absolute bottom-1 right-1 rounded-sm bg-black/80 px-1 py-0.5 text-[10px] font-medium text-white">
             {fmtDuration(video.duration_seconds)}
           </span>
         ) : null}
@@ -511,7 +511,7 @@ function WatchPageContent({ videoId }: WatchPageProps) {
                   className="absolute inset-0 z-10 flex items-center justify-center bg-black/40"
                   aria-label="Play video"
                 >
-                  <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/60 backdrop-blur-sm">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/60 bg-black/60 backdrop-blur-xs">
                     <svg
                       width="28"
                       height="28"
@@ -644,8 +644,8 @@ function WatchPageContent({ videoId }: WatchPageProps) {
                   <div key={index} className="flex gap-2">
                     <div className="w-[168px] shrink-0 aspect-video animate-pulse rounded-lg bg-brand-secondary" />
                     <div className="flex-1 space-y-1.5 py-0.5">
-                      <div className="h-3.5 w-full animate-pulse rounded bg-brand-secondary" />
-                      <div className="h-3.5 w-3/4 animate-pulse rounded bg-brand-secondary" />
+                      <div className="h-3.5 w-full animate-pulse rounded-sm bg-brand-secondary" />
+                      <div className="h-3.5 w-3/4 animate-pulse rounded-sm bg-brand-secondary" />
                     </div>
                   </div>
                 ))
@@ -662,7 +662,7 @@ function WatchPageContent({ videoId }: WatchPageProps) {
       <ShareDialog postId={video.id} isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
 
       {reportOpen ? (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-xs">
           <div className="w-[380px] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
             {reportSubmitted ? (
               <div className="p-6 text-center">

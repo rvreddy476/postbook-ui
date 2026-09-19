@@ -36,7 +36,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="rounded-2xl bg-brand-card border border-brand-divider shadow-sm"
+            className="rounded-2xl bg-brand-card border border-brand-divider shadow-xs"
         >
             <div className="p-6">
                 <div className="flex items-start gap-4">
@@ -91,7 +91,7 @@ function DeleteModal({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-brand-text/40 backdrop-blur-sm p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-brand-text/40 backdrop-blur-xs p-4"
                     onClick={onClose}
                 >
                     <motion.div
@@ -123,7 +123,7 @@ function DeleteModal({
                                 value={confirmation}
                                 onChange={(e) => setConfirmation(e.target.value)}
                                 placeholder="DELETE"
-                                className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-rose-400 focus:bg-brand-card focus:outline-none focus:ring-2 focus:ring-rose-200"
+                                className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-rose-400 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-rose-200"
                             />
                         </div>
 

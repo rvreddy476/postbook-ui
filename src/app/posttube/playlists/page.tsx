@@ -43,7 +43,7 @@ export default function PosttubePlaylistsPage() {
           {!showNew ? (
             <button
               onClick={() => setShowNew(true)}
-              className="bg-violet-600 text-white px-4 py-2 rounded text-sm hover:bg-violet-700"
+              className="bg-violet-600 text-white px-4 py-2 rounded-sm text-sm hover:bg-violet-700"
             >
               + New playlist
             </button>
@@ -57,14 +57,14 @@ export default function PosttubePlaylistsPage() {
               placeholder="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded-sm px-3 py-2 text-sm"
             />
             <textarea
               placeholder="Description (optional)"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               rows={3}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border rounded-sm px-3 py-2 text-sm"
             />
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -76,11 +76,11 @@ export default function PosttubePlaylistsPage() {
             </label>
             <div className="flex gap-2">
               <button type="submit" disabled={create.isPending}
-                className="bg-violet-600 text-white px-4 py-2 rounded text-sm disabled:bg-gray-300">
+                className="bg-violet-600 text-white px-4 py-2 rounded-sm text-sm disabled:bg-gray-300">
                 {create.isPending ? 'Creating…' : 'Create'}
               </button>
               <button type="button" onClick={() => setShowNew(false)}
-                className="px-4 py-2 rounded border text-sm">
+                className="px-4 py-2 rounded-sm border text-sm">
                 Cancel
               </button>
             </div>

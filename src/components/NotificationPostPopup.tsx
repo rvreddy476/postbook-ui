@@ -38,7 +38,7 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-200 flex items-center justify-center bg-black/30 backdrop-blur-xs"
         onClick={onClose}
       >
         <motion.div
@@ -50,7 +50,7 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider shrink-0">
             <h3 className="text-sm font-black uppercase tracking-widest text-brand-text">Post Details</h3>
             <button
               onClick={onClose}

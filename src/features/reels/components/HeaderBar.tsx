@@ -64,7 +64,7 @@ export function HeaderBar({
                 value={searchValue}
                 onChange={(event) => onSearchValueChange(event.target.value)}
                 placeholder="Search reels, creators, hashtags..."
-                className="h-[40px] w-full rounded-full border border-white/20 bg-white/10 pl-11 pr-4 text-[13px] text-white placeholder:text-white/40 outline-none transition-all focus:border-white/30 focus:bg-white/20 dark:border-brand-divider dark:bg-brand-secondary dark:text-brand-text dark:placeholder:text-brand-text/30"
+                className="h-[40px] w-full rounded-full border border-white/20 bg-white/10 pl-11 pr-4 text-[13px] text-white placeholder:text-white/40 outline-hidden transition-all focus:border-white/30 focus:bg-white/20 dark:border-brand-divider dark:bg-brand-secondary dark:text-brand-text dark:placeholder:text-brand-text/30"
               />
             </div>
           </form>

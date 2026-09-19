@@ -47,7 +47,7 @@ export default function DatingPanicQueue() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="text-sm px-3 py-2 border rounded hover:bg-gray-50"
+          className="text-sm px-3 py-2 border rounded-sm hover:bg-gray-50"
         >
           Refresh now
         </button>
@@ -109,7 +109,7 @@ function PanicRow({ row }: { row: PanicRow }) {
       <button
         type="button"
         disabled
-        className="text-xs px-3 py-1.5 border rounded text-gray-400 cursor-not-allowed"
+        className="text-xs px-3 py-1.5 border rounded-sm text-gray-400 cursor-not-allowed"
         title="Acknowledge action lands in Phase 2"
       >
         Acknowledge

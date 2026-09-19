@@ -139,7 +139,7 @@ function QueueCard({
   return (
     <Link
       href={href}
-      className={`block rounded-2xl border p-5 ${palette} hover:shadow-sm transition ${
+      className={`block rounded-2xl border p-5 ${palette} hover:shadow-xs transition ${
         urgent ? 'ring-2 ring-rose-400' : ''
       }`}
     >

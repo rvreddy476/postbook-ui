@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 4 }}
-        className="absolute top-full left-0 right-0 mt-2 bg-brand-card rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-brand-divider overflow-hidden z-[200]"
+        className="absolute top-full left-0 right-0 mt-2 bg-brand-card rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-brand-divider overflow-hidden z-200"
       >
         {isSearching ? (
           <div className="px-4 py-6 flex flex-col items-center gap-2">
@@ -264,7 +264,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 onClick={() => handleSelectUser(user)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-brand-secondary transition-colors text-left"
               >
-                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl overflow-hidden border border-brand-divider shrink-0">
                   <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -282,14 +282,14 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   };
 
   return (
-    <header className={`fixed top-0 z-[100] h-20 bg-brand-text text-brand-bg border-b border-brand-divider dark:bg-brand-bg dark:text-brand-text px-6 flex items-center justify-between transition-all duration-500 ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+    <header className={`fixed top-0 z-100 h-20 bg-brand-text text-brand-bg border-b border-brand-divider dark:bg-brand-bg dark:text-brand-text px-6 flex items-center justify-between transition-all duration-500 ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Brand mark + Desktop Search */}
       <div className="flex items-center gap-4">
         {/* VC logo — constant on every route */}
         <button
           onClick={() => router.push('/')}
           title="VChat Home"
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500 shadow-lg transition-transform hover:scale-105 active:scale-95"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500 shadow-lg transition-transform hover:scale-105 active:scale-95"
         >
           <span className="text-sm font-black tracking-tighter text-white">VC</span>
         </button>
@@ -302,7 +302,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 pl-10 pr-4 text-sm outline-none transition-all"
+            className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:ring-brand-accent focus:bg-white/20 dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 pl-10 pr-4 text-sm outline-hidden transition-all"
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white/70 dark:text-brand-text/40 dark:group-focus-within:text-brand-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {searchQuery && (
@@ -341,7 +341,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Create</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Create</span>
         </button>
 
         {/* 2. Chat/Messenger */}
@@ -356,11 +356,11 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             </svg>
           </div>
           {totalUnread > 0 && (
-            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-brand-accent text-white text-[9px] font-black rounded-full shadow-sm">
+            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-brand-accent text-white text-[9px] font-black rounded-full shadow-xs">
               {totalUnread > 99 ? '99+' : totalUnread}
             </div>
           )}
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Messages</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Messages</span>
         </button>
 
         {/* 3. Reels */}
@@ -374,7 +374,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Reels</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Reels</span>
         </button>
 
         {/* 4. TV — opens PostTube in new tab */}
@@ -390,7 +390,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">TV</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">TV</span>
         </Link>
 
         {/* 5. Events */}
@@ -403,7 +403,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">Events</span>
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">Events</span>
         </button>
 
 
@@ -421,7 +421,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               </svg>
             </div>
             {unreadNotifCount > 0 && (
-              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-brand-accent text-white text-[9px] font-black rounded-full shadow-sm">
+              <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-brand-accent text-white text-[9px] font-black rounded-full shadow-xs">
                 {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
               </div>
             )}
@@ -437,7 +437,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: "circOut" }}
-                className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-[1000]"
+                className="absolute right-0 mt-3 w-[340px] bg-brand-card border border-brand-divider rounded-2xl shadow-xl overflow-hidden z-1000"
               >
                 <div className="p-4 border-b border-brand-divider/60 flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-brand-text/60 uppercase tracking-widest">Notifications</h3>
@@ -484,7 +484,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                 router.push(`/u/${actorUsername || notif.actor_user_id}`);
                                 setIsNotifOpen(false);
                               }}
-                              className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider flex-shrink-0 mt-0.5 shadow-sm"
+                              className="w-10 h-10 rounded-xl overflow-hidden border border-brand-divider shrink-0 mt-0.5 shadow-xs"
                             >
                               <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                             </button>
@@ -525,7 +525,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       });
                                     }}
                                     disabled={acceptFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-sm active:scale-95 transition-all"
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-xs active:scale-95 transition-all"
                                   >
                                     Accept
                                   </button>
@@ -553,7 +553,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             </div>
 
                             {/* Unread dot + delete button */}
-                            <div className="flex flex-col items-center gap-1.5 flex-shrink-0 mt-1">
+                            <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">
                               {!notif.is_read && (
                                 <div className="w-2 h-2 rounded-full bg-brand-text/50" />
                               )}
@@ -592,7 +592,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           <div className="w-5 h-5 text-amber-500 group-hover:text-amber-400 transition-colors">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-[200]">
+          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black uppercase tracking-widest whitespace-nowrap z-200">
             {theme === 'dark' ? 'Light' : 'Dark'}
           </span>
         </button>
@@ -624,7 +624,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: "circOut" }}
-                className="absolute right-0 mt-3 w-64 bg-brand-card border border-brand-divider rounded-2xl shadow-xl p-1.5 z-[1000]"
+                className="absolute right-0 mt-3 w-64 bg-brand-card border border-brand-divider rounded-2xl shadow-xl p-1.5 z-1000"
               >
                 {/* 1. Identity Segment - Ultra Compact */}
                 <div className="p-3 border-b border-brand-divider/60 mb-1">
@@ -698,7 +698,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             initial={{ opacity: 0, y: -80 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -80 }}
-            className="fixed top-20 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-[90] md:hidden shadow-lg"
+            className="fixed top-20 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-90 md:hidden shadow-lg"
             ref={mobileSearchRef}
           >
             <div className="relative">
@@ -708,7 +708,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={e => handleSearchChange(e.target.value)}
-                className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-3 px-12 text-xs font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-brand-text/10 transition-all"
+                className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-3 px-12 text-xs font-black uppercase tracking-widest outline-hidden focus:ring-4 focus:ring-brand-text/10 transition-all"
               />
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               {searchQuery && (

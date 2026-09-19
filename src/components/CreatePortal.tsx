@@ -403,7 +403,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     >
       <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
         {/* Header */}
-        <div className="flex flex-shrink-0 items-center justify-between px-6 pt-5">
+        <div className="flex shrink-0 items-center justify-between px-6 pt-5">
           <div>
             <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-brand-text/60">
               Compose
@@ -423,12 +423,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         {/* User row */}
-        <div className="flex flex-shrink-0 items-center justify-between px-6 pt-5">
+        <div className="flex shrink-0 items-center justify-between px-6 pt-5">
           <div className="flex items-center gap-3">
             <img
               src={avatarSrc}
               alt=""
-              className="h-11 w-11 rounded-full border-2 border-brand-secondary object-cover shadow-sm"
+              className="h-11 w-11 rounded-full border-2 border-brand-secondary object-cover shadow-xs"
             />
             <div className="min-w-0 leading-tight">
               <div className="truncate text-[14px] font-medium text-brand-text">{displayName}</div>
@@ -440,7 +440,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             <button
               type="button"
               onClick={() => setShowVisMenu((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-brand-text shadow-sm transition hover:bg-brand-secondary/80"
+              className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium uppercase tracking-wider text-brand-text shadow-xs transition hover:bg-brand-secondary/80"
             >
               <VisIcon className="h-3.5 w-3.5 text-[#2563EB]" />
               {visOption.label}
@@ -484,7 +484,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           {(mood || location) && (
             <div className="flex flex-wrap gap-1.5 px-6 pt-3">
               {mood && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#EF9F27] shadow-xs">
                   <Smile className="h-3 w-3" />
                   {mood}
                   <button onClick={() => setMood(null)} className="text-brand-text/40 hover:text-brand-text">
@@ -493,7 +493,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 </span>
               )}
               {location && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary border border-brand-divider px-2.5 py-1 text-[11px] font-medium text-[#1D9E75] shadow-xs">
                   <MapPin className="h-3 w-3" />
                   {location}
                   <button
@@ -530,11 +530,11 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 placeholder={showPoll ? 'Ask a question…' : `What's on your mind, ${firstName}?`}
                 rows={3}
                 maxLength={maxChars}
-                className={`w-full resize-none bg-transparent outline-none ${
+                className={`w-full resize-none bg-transparent outline-hidden ${
                   hasColorBg
                     ? `text-center text-[18px] font-semibold leading-relaxed ${onDark ? 'text-white placeholder:text-white/60' : 'text-neutral-900 placeholder:text-neutral-900/60'}`
-                    : 'text-[17px] leading-[1.5] text-brand-text placeholder:text-brand-text/45'
-                } ${pollQuestionError ? 'ring-1 ring-rose-500 rounded' : ''}`}
+                    : 'text-[17px] leading-normal text-brand-text placeholder:text-brand-text/45'
+                } ${pollQuestionError ? 'ring-1 ring-rose-500 rounded-sm' : ''}`}
                 style={hasColorBg && onDark ? { color: '#ffffff' } : undefined}
               />
               {pollQuestionError && (
@@ -625,7 +625,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Where are you?"
-                  className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
+                  className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-hidden"
                   autoFocus
                 />
                 <button onClick={() => setShowLocation(false)} className="text-brand-text/40 hover:text-brand-text">
@@ -658,7 +658,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                        if (hashtagDraft.trim()) commitHashtagDraft();
                      }}
                      placeholder="Enter hashtags and press Enter"
-                     className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-none"
+                     className="flex-1 bg-transparent text-[12px] text-brand-text placeholder:text-brand-text/45 outline-hidden"
                      autoFocus
                    />
                   <button
@@ -700,8 +700,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           )}
         </div>
 
-        <div className="flex flex-shrink-0 items-center justify-between gap-3 px-6 py-4">
-          <div className="flex gap-1.5 rounded-full bg-brand-secondary border border-brand-divider p-1.5 shadow-sm">
+        <div className="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
+          <div className="flex gap-1.5 rounded-full bg-brand-secondary border border-brand-divider p-1.5 shadow-xs">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -791,7 +791,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                           setBackground(null);
                           setShowBackgroundPicker(false);
                         }}
-                        className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#2563EB] hover:underline"
+                        className="text-[10px] font-medium uppercase tracking-widest text-[#2563EB] hover:underline"
                       >
                         Reset
                       </button>
@@ -830,7 +830,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                                   setBackground(swatch.value);
                                   setShowBackgroundPicker(false);
                                 }}
-                                className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-sm transition-transform hover:scale-125"
+                                className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-xs transition-transform hover:scale-125"
                                 style={{
                                   left: cx - 14,
                                   top: cy - 14,
@@ -849,7 +849,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                                setBackground(null);
                                setShowBackgroundPicker(false);
                             }}
-                            className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-sm transition-transform hover:scale-125"
+                            className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-xs transition-transform hover:scale-125"
                             style={{
                               left: arcWidth / 2 - 14,
                               top: arcHeight - 8,
@@ -886,7 +886,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         {/* Footer status bar */}
-        <div className="flex flex-shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-brand-text/60">
+        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-brand-text/60">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-[#1D9E75]" />
             {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}

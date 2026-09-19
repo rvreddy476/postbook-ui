@@ -270,7 +270,7 @@ export default function AdminProductQueuePage() {
                         {product.primary_image_media_id && (
                           <div className="relative">
                             <MediaThumb mediaId={product.primary_image_media_id} />
-                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold uppercase rounded px-1">
+                            <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold uppercase rounded-sm px-1">
                               Cover
                             </span>
                           </div>

@@ -101,7 +101,7 @@ function TextInput({ value, onChange, placeholder, maxLength, required, classNam
         type="text" value={value}
         onChange={e => { if (e.target.value.length <= maxLength) onChange(e.target.value) }}
         placeholder={placeholder}
-        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 ${className}`}
+        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 ${className}`}
       />
       <div className="flex justify-end mt-1"><CharCount current={value.length} max={maxLength} /></div>
     </div>
@@ -117,7 +117,7 @@ function TextArea({ value, onChange, placeholder, maxLength, rows = 4, className
         value={value}
         onChange={e => { if (e.target.value.length <= maxLength) onChange(e.target.value) }}
         placeholder={placeholder} rows={rows}
-        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-2 focus:ring-brand-text/10 resize-none ${className}`}
+        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 resize-none ${className}`}
       />
       <div className="flex justify-end mt-1"><CharCount current={value.length} max={maxLength} /></div>
     </div>
@@ -126,7 +126,7 @@ function TextArea({ value, onChange, placeholder, maxLength, rows = 4, className
 
 /* ===== Rich Text Toolbar ===== */
 function RichTextToolbar() {
-  const btn = "w-7 h-7 rounded flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors"
+  const btn = "w-7 h-7 rounded-sm flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors"
   return (
     <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-brand-card rounded-t-xl">
       <button type="button" className={btn} title="Bold"><Bold className="w-3.5 h-3.5" /></button>
@@ -463,7 +463,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-brand-secondary">
             {avatarSrc ? <img src={avatarSrc} alt="" className="w-full h-full object-cover" /> : (
-              <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br from-stone-700 to-stone-900">
+              <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs bg-linear-to-br from-stone-700 to-stone-900">
                 {channel.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -582,7 +582,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                       type="text" value={opt.text}
                       onChange={e => updatePollOption(opt.id, e.target.value)}
                       placeholder={`Option ${i + 1}`}
-                      className="flex-1 px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-none focus:ring-1 focus:ring-brand-text/10"
+                      className="flex-1 px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-1 focus:ring-brand-text/10"
                     />
                     <CharCount current={opt.text.length} max={MAX.pollOption} />
                     {pollQuiz && (
@@ -610,21 +610,21 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
               <div>
                 <FieldLabel>Duration</FieldLabel>
                 <select value={pollDuration} onChange={e => setPollDuration(e.target.value)}
-                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-none">
+                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden">
                   {POLL_DURATIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
               </div>
               <div className="space-y-2 pt-5">
                 <label className="flex items-center gap-2 text-xs text-brand-text/60 cursor-pointer">
-                  <input type="checkbox" checked={pollMultiple} onChange={e => setPollMultiple(e.target.checked)} className="rounded" />
+                  <input type="checkbox" checked={pollMultiple} onChange={e => setPollMultiple(e.target.checked)} className="rounded-sm" />
                   Multiple selections
                 </label>
                 <label className="flex items-center gap-2 text-xs text-brand-text/60 cursor-pointer">
-                  <input type="checkbox" checked={pollAnonymous} onChange={e => setPollAnonymous(e.target.checked)} className="rounded" />
+                  <input type="checkbox" checked={pollAnonymous} onChange={e => setPollAnonymous(e.target.checked)} className="rounded-sm" />
                   Anonymous voting
                 </label>
                 <label className="flex items-center gap-2 text-xs text-brand-text/60 cursor-pointer">
-                  <input type="checkbox" checked={pollQuiz} onChange={e => setPollQuiz(e.target.checked)} className="rounded" />
+                  <input type="checkbox" checked={pollQuiz} onChange={e => setPollQuiz(e.target.checked)} className="rounded-sm" />
                   Quiz mode
                 </label>
               </div>
@@ -655,19 +655,19 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
               <div>
                 <FieldLabel required>Start date</FieldLabel>
                 <input type="date" value={eventStartDate} onChange={e => setEventStartDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-none" />
+                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden" />
                 {errors.eventDate && <p className="text-[10px] text-red-500 mt-0.5">{errors.eventDate}</p>}
               </div>
               {!eventAllDay && (
                 <div>
                   <FieldLabel required>Start time</FieldLabel>
                   <input type="time" value={eventStartTime} onChange={e => setEventStartTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-none" />
+                    className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden" />
                 </div>
               )}
             </div>
             <label className="flex items-center gap-2 text-xs text-brand-text/60 cursor-pointer">
-              <input type="checkbox" checked={eventAllDay} onChange={e => setEventAllDay(e.target.checked)} className="rounded" />
+              <input type="checkbox" checked={eventAllDay} onChange={e => setEventAllDay(e.target.checked)} className="rounded-sm" />
               All-day event
             </label>
             {/* Location */}
@@ -694,7 +694,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             {/* RSVP */}
             <div className="grid grid-cols-2 gap-3">
               <label className="flex items-center gap-2 text-xs text-brand-text/60 cursor-pointer">
-                <input type="checkbox" checked={eventRsvp} onChange={e => setEventRsvp(e.target.checked)} className="rounded" />
+                <input type="checkbox" checked={eventRsvp} onChange={e => setEventRsvp(e.target.checked)} className="rounded-sm" />
                 Enable RSVP
               </label>
               {eventRsvp && (
@@ -702,7 +702,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                   <FieldLabel>Max attendees</FieldLabel>
                   <input type="number" value={eventMaxAttendees} onChange={e => setEventMaxAttendees(e.target.value)}
                     placeholder="Unlimited" min="0"
-                    className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-none" />
+                    className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden" />
                 </div>
               )}
             </div>
@@ -746,7 +746,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
               <div>
                 <FieldLabel>Expiry date/time</FieldLabel>
                 <input type="datetime-local" value={urgentExpiry} onChange={e => setUrgentExpiry(e.target.value)}
-                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-none" />
+                  className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden" />
               </div>
               <div>
                 <FieldLabel>Action button label</FieldLabel>
@@ -779,7 +779,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                 placeholder={tags.length === 0 ? 'Tags' : '+'}
-                className="w-16 px-2 py-1 bg-transparent text-[10px] text-brand-text/50 placeholder:text-brand-text/30 focus:outline-none"
+                className="w-16 px-2 py-1 bg-transparent text-[10px] text-brand-text/50 placeholder:text-brand-text/30 focus:outline-hidden"
               />
             )}
           </div>

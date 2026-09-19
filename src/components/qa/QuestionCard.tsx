@@ -56,7 +56,7 @@ export function QuestionCard({ q }: { q: QuestionSummary }) {
               <ChevronUp className="w-4 h-4" />{q.vote_score ?? 0}
             </div>
             <div className="text-xs text-neutral-500">votes</div>
-            <div className="mt-1 px-2 py-0.5 rounded text-xs font-medium border border-neutral-300 dark:border-neutral-600 text-neutral-500">
+            <div className="mt-1 px-2 py-0.5 rounded-sm text-xs font-medium border border-neutral-300 dark:border-neutral-600 text-neutral-500">
               {q.answer_count ?? 0}
             </div>
             <div className="text-xs text-neutral-500">ans</div>

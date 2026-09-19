@@ -28,7 +28,7 @@ export function StarRating({ value, onChange, size = 'md', className }: Props) {
             type="button"
             aria-label={`${n} star${n === 1 ? '' : 's'}`}
             onClick={() => onChange(n)}
-            className="focus:outline-none focus:ring-2 focus:ring-brand-text/40 rounded"
+            className="focus:outline-hidden focus:ring-2 focus:ring-brand-text/40 rounded-sm"
           >
             {star}
           </button>
