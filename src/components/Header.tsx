@@ -323,20 +323,26 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
       </div>
       </div>
 
-      {/* Mac-Style Navigation Group */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
+      {/* Action rail.
+          The icons sit in a recessed track, the same material as the
+          segmented control, so they read as ONE group of peers rather than
+          six loose glyphs floating on the bar. The account avatar stays
+          outside it — it is not a peer of these actions, it is who you are. */}
+      <div className="flex items-center gap-2">
         {/* Mobile Search Toggle */}
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl text-brand-text/60 hover:text-brand-text dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
+          className="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-brand-text/60 hover:text-brand-text transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </button>
 
+        <div className="flex items-center gap-0.5 rounded-full bg-brand-secondary p-1">
+
         {/* 1. Post/Manifest */}
         <button
           onClick={onCreateClick}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
+          className="group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Create Post"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -350,7 +356,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 2. Chat/Messenger */}
         <button
           onClick={onToggleContactList}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
+          className="group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Messenger"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -359,7 +365,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             </svg>
           </div>
           {totalUnread > 0 && (
-            <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-bg">
+            <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-secondary">
               {totalUnread > 99 ? '99+' : totalUnread}
             </div>
           )}
@@ -369,7 +375,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 3. Reels */}
         <button
           onClick={() => setActiveTab('Reels')}
-          className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
+          className={`group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
           <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -385,7 +391,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           href="/posttube"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="TV"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -398,7 +404,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
         {/* 5. Events */}
         <button
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95"
+          className="group relative hidden sm:flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Events"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -415,7 +421,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`group relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-200 hover:bg-brand-secondary active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
+            className={`group relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
             <div className={`w-5 h-5 transition-colors ${isNotifOpen ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -424,7 +430,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
               </svg>
             </div>
             {unreadNotifCount > 0 && (
-              <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-bg">
+              <div className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-primary-ink text-white text-[10px] font-semibold tabular-nums rounded-full ring-2 ring-brand-secondary">
                 {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
               </div>
             )}
@@ -586,17 +592,20 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           </AnimatePresence>
         </div>
 
+        </div>
+        {/* end of the action rail */}
+
         {/* Appearance moved into the profile menu — see below. The top bar is
             for things you reach constantly; theme is a preference you set once,
             so it belongs with the other account settings rather than competing
             with the actions beside it. */}
 
-        {/* 7. Profile */}
-        <div className="relative ml-1 sm:ml-2" ref={dropdownRef}>
+        {/* 7. Profile — outside the rail on purpose. */}
+        <div className="relative" ref={dropdownRef}>
           <div className="flex items-center gap-2">
             <Link href="/profile">
               <button
-                className="p-0.5 bg-primary-ink rounded-full hover:scale-105 active:scale-95 transition-all duration-500"
+                className="p-0.5 bg-primary-ink rounded-full transition-transform duration-200 ease-out active:scale-95"
               >
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-brand-bg">
                   <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
