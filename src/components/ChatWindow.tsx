@@ -280,13 +280,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-transparent transition-all hover:ring-brand-secondary">
             <img src={contact.avatar} alt={contact.name} className="h-full w-full object-cover" />
             {contact.isOnline && (
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-success" />
             )}
           </div>
           <div className="flex flex-col">
             <h3 className="text-[15px] font-extrabold tracking-tight text-brand-text">{contact.name}</h3>
             <p className="text-[11px] font-semibold tracking-wide text-brand-text/60">
-              {contact.isOnline ? <span className="text-emerald-500">Active now</span> : 'Offline'}
+              {contact.isOnline ? <span className="text-success">Active now</span> : 'Offline'}
             </p>
           </div>
         </div>
@@ -486,7 +486,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           {/* Input Area */}
           <footer className="border-t border-brand-divider p-3">
             <form onSubmit={handleSend} className="flex items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-brand-secondary transition-all focus-within:ring-slate-200">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-brand-secondary px-4 py-2 ring-1 ring-brand-secondary transition-all focus-within:ring-brand-divider">
                 <input
                   value={input}
                   onChange={(e) => {
