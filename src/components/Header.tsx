@@ -586,19 +586,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           </AnimatePresence>
         </div>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="group relative flex items-center justify-center w-10 h-10 rounded-xl hover:scale-110 active:scale-95 transition-all duration-300 mr-1"
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </div>
-          <span className="absolute -bottom-10 bg-brand-text text-brand-bg text-[9px] px-2 py-1 rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-all font-black tracking-widest whitespace-nowrap z-200">
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </span>
-        </button>
+        {/* Appearance moved into the profile menu — see below. The top bar is
+            for things you reach constantly; theme is a preference you set once,
+            so it belongs with the other account settings rather than competing
+            with the actions beside it. */}
 
         {/* 7. Profile */}
         <div className="relative ml-1 sm:ml-2" ref={dropdownRef}>
@@ -672,6 +663,37 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       <span className="text-[10px] font-black text-brand-highlight tracking-widest group-hover:text-brand-text">Settings</span>
                     </div>
                   </Link>
+
+                  {/* Appearance. A preference, not an action, so it lives with
+                      the account items and keeps its state visible rather than
+                      making you guess what the icon will do. */}
+                  <button
+                    onClick={toggleTheme}
+                    className="group w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-brand-secondary transition-colors cursor-pointer"
+                    aria-pressed={theme === 'dark'}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 group-hover:bg-primary-tint group-hover:text-primary-ink transition-colors">
+                        {theme === 'dark' ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
+                      </div>
+                      <span className="text-[10px] font-black text-brand-highlight tracking-widest group-hover:text-brand-text">
+                        Dark mode
+                      </span>
+                    </div>
+                    {/* Switch: the track fills with the accent when on, and the
+                        knob slides rather than jumping between two states. */}
+                    <span
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                        theme === 'dark' ? 'bg-primary-ink' : 'bg-brand-text/20'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-out ${
+                          theme === 'dark' ? 'translate-x-[18px]' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </span>
+                  </button>
                 </div>
 
                 {/* 3. Session Section */}

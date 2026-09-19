@@ -158,25 +158,68 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-primary-ink/20 selection:text-brand-text">
-      {/* Ambient monochrome glows */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
-      {/* Hairline ring accent behind the card */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/4" />
+    // Split layout: what the product is on one side, the form on the other.
+    // The narrative half is hidden below lg — on a phone it would push the
+    // form under the fold, and someone signing in wants the form, not the pitch.
+    <div className="relative min-h-screen bg-brand-bg selection:bg-primary-ink/20 selection:text-brand-text lg:grid lg:grid-cols-2">
+      {/* ── Left: the context half ── */}
+      <aside className="relative hidden overflow-hidden bg-primary-ink lg:flex lg:flex-col lg:justify-between lg:p-12">
+        {/* Depth without noise: two wide, very soft washes of the accent. */}
+        <div className="pointer-events-none absolute -left-32 -top-32 h-[520px] w-[520px] rounded-full bg-white/10 blur-[140px]" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 h-[560px] w-[560px] rounded-full bg-black/20 blur-[160px]" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="relative w-full max-w-md"
-      >
-        {/* Brand mark above the card — logo only */}
-        <div className="mb-6 flex px-1">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-ink shadow-md">
-            <span className="text-base font-black tracking-tighter text-brand-bg">VC</span>
+        <div className="relative flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+            <span className="text-base font-bold -tracking-[0.02em] text-white">VC</span>
           </div>
+          <span className="text-lg font-semibold -tracking-[0.014em] text-white">VChat</span>
         </div>
+
+        <div className="relative max-w-md">
+          <h1 className="text-4xl font-semibold leading-[1.08] -tracking-[0.022em] text-white">
+            Everything you share,
+            <br />
+            in one place.
+          </h1>
+          <p className="mt-5 text-base leading-relaxed text-white/70">
+            Posts, reels, long video, channels and messages — one account, one
+            feed, and the people you actually follow.
+          </p>
+
+          <ul className="mt-8 space-y-3.5">
+            {[
+              'Your feed, ranked or chronological — your choice',
+              'Reels and long video without a second app',
+              'Channels and group messaging built in',
+            ].map((line) => (
+              <li key={line} className="flex items-start gap-3 text-sm text-white/75">
+                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-white/50" />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-white/45">
+          © {new Date().getFullYear()} VChat. Trusted globally.
+        </p>
+      </aside>
+
+      {/* ── Right: the form half ── */}
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-8 lg:min-h-0">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="relative w-full max-w-md"
+        >
+          {/* Brand mark only where the narrative half is hidden, so it is not
+              shown twice on a wide screen. */}
+          <div className="mb-6 flex px-1 lg:hidden">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-ink shadow-xs">
+              <span className="text-base font-bold -tracking-[0.02em] text-white">VC</span>
+            </div>
+          </div>
 
         <div className="relative overflow-hidden rounded-[1.75rem] border border-brand-divider bg-brand-card/80 p-7 shadow-2xl backdrop-blur-xl sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -410,11 +453,12 @@ function LoginForm() {
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-[10px] font-semibold tracking-[0.25em] text-brand-text/30">
-          &copy; 2026 VChat
-        </p>
-      </motion.div>
+          {/* Footer */}
+          <p className="mt-6 text-center text-xs text-brand-text/40">
+            &copy; {new Date().getFullYear()} VChat
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 }

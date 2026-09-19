@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SegmentedControl from '@/components/ui/SegmentedControl';
 
 // ── System Status Hook ──────────────────────────────────────────
 type SystemStatus = 'operational' | 'degraded' | 'unknown';
@@ -126,25 +127,19 @@ export default function LandingPage() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1.5">
-            {[
-              { id: 'home', label: 'Home' },
-              { id: 'features', label: 'Features' },
-              { id: 'stats', label: 'Impact' },
-              { id: 'status', label: 'Diagnostics' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`relative px-4 py-2 text-xs font-bold tracking-widest transition-all rounded-full ${
-                  activeTab === tab.id
-                    ? 'bg-primary-ink text-brand-bg'
-                    : 'text-brand-text/60 hover:text-brand-text hover:bg-brand-secondary'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <nav className="hidden md:flex items-center">
+            <SegmentedControl
+              layoutId="landing-nav"
+              aria-label="Sections"
+              value={activeTab}
+              onChange={(id) => setActiveTab(id as TabType)}
+              segments={[
+                { id: 'home', label: 'Home' },
+                { id: 'features', label: 'Features' },
+                { id: 'stats', label: 'Impact' },
+                { id: 'status', label: 'Diagnostics' },
+              ]}
+            />
           </nav>
 
           <div className="hidden md:flex items-center gap-3">

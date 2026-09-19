@@ -13,6 +13,7 @@ import { getSession } from '@/services/authService';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import SegmentedControl from '@/components/ui/SegmentedControl';
 import type { PostDetail } from '@/types/profile';
 
 type FeedTab = 'for-you' | 'following' | 'hashtags';
@@ -159,27 +160,16 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      {/* Feed Tabs: For You / Following / #Hashtag */}
-      <div className="flex border-b border-brand-divider mb-5">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabSwitch(tab.key)}
-            className={`flex-1 py-3 text-sm font-bold tracking-wide transition-colors relative ${
-              activeTab === tab.key
-                ? 'text-brand-text'
-                : 'text-brand-text/40 hover:text-brand-text/60'
-            }`}
-          >
-            {tab.label}
-            {activeTab === tab.key && (
-              <motion.div
-                layoutId="feedTabIndicator"
-                className="absolute bottom-0 left-1/4 right-1/4 h-[3px] rounded-full bg-primary-ink"
-              />
-            )}
-          </button>
-        ))}
+      {/* Feed tabs — same control as the rest of the app, so switching
+          context always looks and behaves the same way. */}
+      <div className="mb-5 flex justify-center">
+        <SegmentedControl
+          layoutId="feedTabIndicator"
+          aria-label="Feed"
+          value={activeTab}
+          onChange={(id) => handleTabSwitch(id as FeedTab)}
+          segments={tabs.map((t) => ({ id: t.key, label: t.label }))}
+        />
       </div>
 
       {/* Hashtag chips row — shown only on #Hashtag tab */}
