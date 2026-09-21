@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
@@ -10,6 +10,7 @@ import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
+import api from '@/lib/api'
 import {
   fetchConversations,
   subscribeToPresenceUpdates,
@@ -239,6 +240,54 @@ export default function PostbookMessenger() {
     setActiveGroupId(null)
     setShowCreateGroup(false)
   }, [])
+
+  /**
+   * Open a conversation named in the address: /messenger?user=<id>.
+   *
+   * That is how the feed's contact list and right rail hand someone over now
+   * that the floating window is gone, so landing on an empty list would make
+   * every one of those clicks feel broken.
+   *
+   * Read from window.location rather than useSearchParams, which would force
+   * this page into a Suspense boundary. It runs once per id: the person comes
+   * from the already-loaded list when possible, and is fetched only when the
+   * list does not contain them.
+   */
+  const openedFromUrlRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const wanted = new URLSearchParams(window.location.search).get('user')
+    if (!wanted || openedFromUrlRef.current === wanted) return
+
+    const known = friends.find((f) => f.id === wanted)
+    if (known) {
+      openedFromUrlRef.current = wanted
+      setActiveDm(known)
+      setActiveGroupId(null)
+      return
+    }
+    if (isLoading) return // the list may still arrive with this person in it
+
+    let cancelled = false
+    openedFromUrlRef.current = wanted
+    void (async () => {
+      try {
+        const res = await api.get<{ data: Record<string, any> }>(`/v1/profiles/${wanted}`)
+        if (cancelled) return
+        const p = (res.data?.data?.profile ?? res.data?.data ?? {}) as Record<string, any>
+        setActiveDm({
+          id: wanted,
+          name: p.display_name || p.username || 'Conversation',
+          avatar: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : '',
+          isOnline: false,
+        })
+        setActiveGroupId(null)
+      } catch {
+        // A bad or unreachable id should leave the list usable, not blank.
+      }
+    })()
+    return () => { cancelled = true }
+  }, [friends, isLoading])
 
   const handleGroupClick = useCallback((groupId: string) => {
     setActiveGroupId(groupId)

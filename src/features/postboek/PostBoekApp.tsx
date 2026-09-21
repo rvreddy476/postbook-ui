@@ -132,20 +132,19 @@ const PostBoekApp: React.FC = () => {
     setIsContactListOpen(false);
   };
 
+  /**
+   * Picking someone opens the full messenger on their conversation.
+   *
+   * This used to push them onto `activeChats`, which the floating dock
+   * rendered. That dock is commented out below, so keeping the old body
+   * would have made every contact click do NOTHING visible — a worse result
+   * than the window it replaced. The messenger reads the id from the query
+   * string, so the conversation opens directly rather than landing on an
+   * empty list.
+   */
   const handleContactClick = useCallback((contact: User | { id: string; name: string; avatar: string }) => {
-    const user: User = 'isOnline' in contact
-      ? contact as User
-      : { id: contact.id, name: contact.name, avatar: contact.avatar, isOnline: false };
-
-    setActiveChats((prev) => {
-      if (prev.find((c) => c.id === user.id)) {
-        return prev;
-      }
-
-      const next = [user, ...prev];
-      return next.length > 2 ? next.slice(0, 2) : next;
-    });
-  }, []);
+    router.push(`/messenger?user=${encodeURIComponent(contact.id)}`);
+  }, [router]);
 
   const closeChat = (userId: string) => {
     setActiveChats((prev) => prev.filter((c) => c.id !== userId));
@@ -287,6 +286,26 @@ const PostBoekApp: React.FC = () => {
         </AnimatePresence>
         <MobileBottomNav activeTab={activeTab} onChange={handleNavChange} />
 
+        {/*
+          Floating chat dock — COMMENTED OUT at the founder's request
+          (21 Sep), not deleted, so it can come back in one step.
+
+          The chat icon now opens the full messenger on every screen size, so
+          this was the second chat surface on the same page: a smaller window
+          competing with the three-column messenger, and the reason chat work
+          kept looking "unchanged" — the two surfaces are different code.
+
+          Everything it needs is still here: `activeChats`, `closeChat` and
+          the ChatWindow import are untouched, and ContactList still calls
+          openChat. Uncomment this block to restore it.
+
+          The SAME component is still live on two other pages, deliberately,
+          because nobody asked for those to change: the Circle friends list
+          (src/components/circle/FriendsView.tsx) and a group's members tab
+          (src/components/groups/tabs/GroupMembersTab.tsx), where messaging
+          someone in place is the point and navigating away would lose the
+          list you were working through.
+
         <div className="pointer-events-none fixed bottom-0 right-3 z-1000 flex flex-row-reverse items-end gap-3 sm:right-6 md:right-5 md:gap-4 xl:right-[380px]">
           <AnimatePresence>
             {activeChats.map((chat) => (
@@ -302,6 +321,7 @@ const PostBoekApp: React.FC = () => {
             ))}
           </AnimatePresence>
         </div>
+        */}
 
         <CallOverlay />
       </div>
