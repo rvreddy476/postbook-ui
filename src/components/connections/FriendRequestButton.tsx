@@ -40,9 +40,11 @@ export function FriendRequestButton({
     targetUserId,
     targetUsername,
     relationship,
-    addLabel = "Add Friend",
+    // One vocabulary: Connections. "Add Friend" / "Friends" were the last
+    // place the old wording survived.
+    addLabel = "Connect",
     sentLabel = "Request sent",
-    friendLabel = "Friends",
+    friendLabel = "Connected",
     showIcon = true,
     showIncomingActions = true,
     allowCancel = true,

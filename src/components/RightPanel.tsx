@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTrending } from '@/hooks/useSearch';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
-import { useFriendSuggestions } from '@/hooks/useConnections';
+import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
 import { useLiveStreams } from '@/hooks/useLiveV2';
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
 import Avatar from '@/components/ui/Avatar';
@@ -52,6 +52,12 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     staleTime: 120_000,
   });
   const people = (suggestions ?? []).slice(0, 5);
+  // Real relationship state for these five, so a request already sent shows
+  // as sent after a reload instead of offering Connect again.
+  const { data: relMap } = useBatchRelationships(
+    authUser?.id ?? '',
+    people.map((p) => p.user_id),
+  );
   // Only streams that are actually live right now.
   const { data: livePages } = useLiveStreams(10);
   const liveNow = (livePages?.pages ?? []).flatMap((p: any) => p.items ?? p.data ?? []).filter((s: any) => s?.status === "live");
@@ -123,7 +129,8 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                     <FriendRequestButton
                       targetUserId={p.user_id}
                       targetUsername={p.username}
-                      addLabel="Add"
+                      relationship={relMap?.get(p.user_id)}
+                      addLabel="Connect"
                       showIncomingActions={false}
                       allowCancel={false}
                       className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"

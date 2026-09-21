@@ -8,6 +8,7 @@ import { useAuthUser } from '@/store/auth';
 import {
   useFriendSuggestions,
   useHideSuggestion,
+  useBatchRelationships,
   type SuggestionUser,
 } from '@/hooks/useConnections';
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
@@ -43,6 +44,12 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   const hideSuggestion = useHideSuggestion();
 
   const visible = (suggestions ?? []).slice(offset, offset + 10);
+  // Real relationship state, so a request already sent still reads as sent
+  // after a reload rather than offering Connect again.
+  const { data: relMap } = useBatchRelationships(
+    authUser?.id ?? '',
+    visible.map((u) => u.user_id),
+  );
   if (visible.length === 0) return null;
 
   return (
@@ -109,7 +116,8 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                 <FriendRequestButton
                   targetUserId={user.user_id}
                   targetUsername={user.username}
-                  addLabel="Add friend"
+                  relationship={relMap?.get(user.user_id)}
+                  addLabel="Connect"
                   showIncomingActions={false}
                   allowCancel={false}
                   className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-ink px-2 py-2 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-60"
