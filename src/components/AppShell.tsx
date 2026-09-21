@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavExpanded } from '@/hooks/useNavExpanded';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import NotificationToastHost from '@/components/notifications/NotificationToastHost';
@@ -53,7 +54,8 @@ export default function AppShell({ children, activeTab: activeTabOverride, hideS
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<NavItem>(activeTabOverride ?? 'Home');
-  const [navExpanded, setNavExpanded] = useState(false);
+  // Expanded by default, and remembered. See useNavExpanded.
+  const [navExpanded, setNavExpanded] = useNavExpanded();
 
   useEffect(() => {
     const syncSession = () => {

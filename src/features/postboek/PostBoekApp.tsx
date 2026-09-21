@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavExpanded } from '@/hooks/useNavExpanded';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import CallOverlay from '@/components/CallOverlay';
@@ -42,7 +43,8 @@ const PostBoekApp: React.FC = () => {
   const [isContactListOpen, setIsContactListOpen] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [groupRefreshKey, setGroupRefreshKey] = useState(0);
-  const [navExpanded, setNavExpanded] = useState(false);
+  // Expanded by default, and remembered. See useNavExpanded.
+  const [navExpanded, setNavExpanded] = useNavExpanded();
 
   const [isMobile, setIsMobile] = useState(false);
 

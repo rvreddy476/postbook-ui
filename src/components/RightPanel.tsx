@@ -10,6 +10,7 @@ import { useTrending } from '@/hooks/useSearch';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions } from '@/hooks/useConnections';
+import { useLiveStreams } from '@/hooks/useLiveV2';
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
 import Avatar from '@/components/ui/Avatar';
 import { User } from '../types';
@@ -51,6 +52,9 @@ const RightPanel: React.FC<RightPanelProps> = () => {
     staleTime: 120_000,
   });
   const people = (suggestions ?? []).slice(0, 5);
+  // Only streams that are actually live right now.
+  const { data: livePages } = useLiveStreams(10);
+  const liveNow = (livePages?.pages ?? []).flatMap((p: any) => p.items ?? p.data ?? []).filter((s: any) => s?.status === "live");
 
   /**
    * Thumbnails whose URL was present but failed to load. A present URL is not
@@ -130,6 +134,55 @@ const RightPanel: React.FC<RightPanelProps> = () => {
               })}
             </ul>
           )}
+        </div>
+      ),
+    },
+    {
+      key: 'live',
+      // Real live streams. Hidden entirely when nobody is broadcasting, which
+      // is the honest version of the mockup's "rooms" card.
+      show: liveNow.length > 0,
+      node: (
+        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-danger" />
+              </span>
+              <h5 className="text-sm font-semibold text-brand-text">Live now</h5>
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">{liveNow.length}</span>
+          </div>
+          <ul className="space-y-3">
+            {liveNow.slice(0, 3).map((s) => (
+              <li key={s.id}>
+                <button
+                  onClick={() => router.push(`/live/${s.id}`)}
+                  className="group flex w-full items-center gap-3 text-left"
+                >
+                  <div className="h-11 w-16 shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
+                    {s.cover_media_id && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/v1/media/${s.cover_media_id}/serve`}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-semibold text-brand-text transition-colors group-hover:text-primary-ink">
+                      {s.title || 'Live'}
+                    </span>
+                    <span className="block truncate text-[11px] text-muted-foreground tabular-nums">
+                      {s.viewer_peak > 0 ? `${s.viewer_peak} watching` : 'Just started'}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       ),
     },

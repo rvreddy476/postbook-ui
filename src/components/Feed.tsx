@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Smile, Hash, Loader2 } from 'lucide-react'; // ImageIcon/Smile/Hash are used by the commented-out composer below
 import PostCard from './PostCard';
 import PeopleYouMayKnowStrip from './PeopleYouMayKnowStrip';
+import StoriesRow from './StoriesRow';
 import Link from 'next/link';
 import { useHomeFeed } from '@/hooks/useFeedPosts';
 import { useMyProfile } from '@/hooks/useEditProfile';
@@ -126,6 +127,14 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   return (
     <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
+
+      {/* Moments. The component already existed and was mounted NOWHERE, so
+          the feed had no row of faces at all, which is the single biggest
+          reason it read as empty. It leads with a create tile, so it is
+          useful even before anyone you follow has posted one. */}
+      <div className="mb-5">
+        <StoriesRow onCreateClick={onCreateClick} />
+      </div>
 
       {/* Feed tabs. Full row, equal halves. With only two tabs a
           content-width pill left the control floating in the middle of an

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { NavItem } from '../types';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Avatar from '@/components/ui/Avatar';
+import { useMyProfile } from '@/hooks/useEditProfile';
 import {
   Bell,
   BookOpen,
@@ -79,7 +81,7 @@ const moreItems: Item[] = [
   { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-current' },
   { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-current' },
   { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-current' },
-  { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/commerce', color: 'text-green-400' },
+  { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/commerce', color: 'text-current' },
   { id: 'PostMatch', label: 'PostMatch', icon: Heart, href: '/postmatch', color: 'text-current' },
   { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-current' },
   { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-current' },
@@ -93,6 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   setExpanded,
   inFlow = false,
 }) => {
+  const { data: myProfile } = useMyProfile();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const isItemActive = (item: Item) =>
@@ -151,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           aria-label="Toggle menu"
           className="rounded-lg p-2 text-brand-text/60 transition-colors hover:bg-primary-ink/10 hover:text-primary-ink"
         >
-          <Menu size={20} strokeWidth={2.5} />
+          <Menu size={20} strokeWidth={1.75} />
         </button>
       </div>
 
@@ -264,16 +267,36 @@ const Sidebar: React.FC<SidebarProps> = ({
           one that could not follow the theme. */}
       <Link
         href="/profile"
-        className={`group mt-auto flex items-center gap-4 rounded-xl text-brand-text/70 transition-colors hover:bg-primary-ink/5 hover:text-brand-text ${
-          expanded ? 'w-full px-4 py-3' : 'w-full justify-center p-3'
+        className={`group mt-auto flex items-center gap-3 rounded-xl text-brand-text/70 transition-colors hover:bg-primary-ink/5 hover:text-brand-text ${
+          expanded ? 'w-full px-3 py-2.5' : 'w-full justify-center p-3'
         }`}
       >
-        <User
-          size={20}
-          strokeWidth={1.75}
-          className="shrink-0 transition-transform duration-200 ease-out group-active:scale-90"
-        />
-        {expanded && <span className="text-sm font-medium">Account</span>}
+        {/* Expanded, this is you: face, name and handle, which is what makes
+            a sidebar feel like an account rather than a menu. Collapsed, it
+            falls back to the same icon as before. */}
+        {expanded ? (
+          <>
+            <Avatar
+              src={myProfile?.avatar_media_id ? `/v1/media/${myProfile.avatar_media_id}/serve` : undefined}
+              name={myProfile?.display_name || 'You'}
+              className="h-9 w-9"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-brand-text">
+                {myProfile?.display_name || 'Your profile'}
+              </span>
+              {myProfile?.username && (
+                <span className="block truncate text-xs text-muted-foreground">@{myProfile.username}</span>
+              )}
+            </span>
+          </>
+        ) : (
+          <User
+            size={20}
+            strokeWidth={1.75}
+            className="shrink-0 transition-transform duration-200 ease-out group-active:scale-90"
+          />
+        )}
       </Link>
 
       {/* Click-away backdrop for the More flyout */}
