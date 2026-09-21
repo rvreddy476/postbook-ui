@@ -38,7 +38,7 @@ import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus, Paperclip,
-  Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image
+  Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -51,6 +51,11 @@ interface DmChatProps {
   userOnline: boolean
   userLastSeen?: string
   onBack: () => void
+  /** Optional third column, supplied by the messenger page only. */
+  detailsOpen?: boolean
+  onToggleDetails?: () => void
+  /** Reports the resolved conversation id so the details panel can read it. */
+  onConversationReady?: (id: string) => void
 }
 
 interface DisplayMessage {
@@ -115,7 +120,7 @@ function toDisplay(msg: BackendMessage): DisplayMessage {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack }: DmChatProps) {
+export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack, detailsOpen, onToggleDetails, onConversationReady }: DmChatProps) {
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
 
@@ -202,7 +207,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
-        if (!cancelled) setConversationId(conversationId)
+        if (!cancelled) {
+          setConversationId(conversationId)
+          onConversationReady?.(conversationId)
+        }
         const msgRes = await fetchMessages(conversationId)
         const raw: BackendMessage[] = Array.isArray(msgRes.data) ? msgRes.data : []
         if (!cancelled) {
@@ -582,11 +590,23 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             <button
               key={i}
               title={btn.title}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors duration-200 hover:bg-brand-secondary hover:text-brand-text active:scale-95"
             >
               {btn.icon}
             </button>
           ))}
+          {/* Thread details. Only rendered when the parent offers the panel,
+              so DmChat used anywhere else is unchanged. */}
+          {onToggleDetails && (
+            <button
+              onClick={onToggleDetails}
+              title={detailsOpen ? 'Hide thread details' : 'Show thread details'}
+              aria-pressed={!!detailsOpen}
+              className={`hidden h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 active:scale-95 xl:flex ${detailsOpen ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
+            >
+              <PanelRight className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -738,6 +738,12 @@ export function useBatchRelationships(viewerId: string, targetIds: string[]) {
                     in_circle: isConnection,
                     circle_request_sent: status === 'pending_sent',
                     circle_request_received: status === 'pending_received',
+                    // Carried through deliberately. The `as Relationship` cast
+                    // asserts every field of the type while this loop copies
+                    // only some, so anything not named here is undefined at
+                    // runtime and reads as "no mutuals" with no error anywhere.
+                    // graph-service has used both spellings for this count.
+                    mutual_circle_count: Number(rel.mutual_circle_count ?? rel.mutual_count ?? 0),
                 } as Relationship)
             }
             return map

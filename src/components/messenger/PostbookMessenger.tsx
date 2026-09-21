@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
+import ThreadDetails from './ThreadDetails'
+import SegmentedControl from '@/components/ui/SegmentedControl'
 import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
@@ -68,6 +70,10 @@ export default function PostbookMessenger() {
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
+  // Thread details: open by default on wide screens. The conversation id is
+  // reported up by DmChat, which is what resolves or creates it.
+  const [showDetails, setShowDetails] = useState(true)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [friends, setFriends] = useState<User[]>([])
@@ -301,8 +307,20 @@ export default function PostbookMessenger() {
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
       <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId ? 'hidden md:flex' : 'flex'}`}>
+        {/* Column header: what this list is, and how much of it is unread. */}
+        <div className="flex items-center justify-between px-5 pt-5">
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-semibold -tracking-[0.014em] text-brand-text">Messages</h1>
+            {friendsUnreadTotal > 0 && (
+              <span className="rounded-full bg-primary-tint px-2 py-0.5 text-[11px] font-semibold tabular-nums text-primary-ink">
+                {friendsUnreadTotal} unread
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Current user header */}
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-5 pt-3 pb-3">
           <div className="flex items-center gap-3 mb-4">
             {currentUser && (
               <>
@@ -315,9 +333,11 @@ export default function PostbookMessenger() {
                       ? currentUser.avatar : undefined
                   }
                 />
+                {/* The column is already titled above, so this row is just
+                    who you are signed in as. */}
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-[17px] font-bold text-brand-text tracking-tight">Messenger</h1>
-                  <p className="text-[11px] text-brand-text/60 font-medium">{currentUser.name}</p>
+                  <p className="truncate text-sm font-medium text-brand-text">{currentUser.name}</p>
+                  <p className="text-xs text-muted-foreground">Signed in</p>
                 </div>
                 <button
                   onClick={() => router.push('/')}
@@ -344,50 +364,29 @@ export default function PostbookMessenger() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search conversations"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-[13px] text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 focus:border-brand-text/20 transition-all"
+              className="w-full rounded-full border border-transparent bg-brand-secondary py-2 pl-9 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
             />
           </div>
 
-          {/* Tab switcher */}
-          <div className="flex p-1 rounded-xl bg-brand-secondary">
-            {(['friends', 'requests', 'groups'] as const).map((tab) => {
-              const isActive = contactTab === tab
-              const badge =
-                tab === 'friends'
-                  ? friendsUnreadTotal
-                  : tab === 'requests'
-                    ? requestConversations.length
-                    : 0
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setContactTab(tab)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-black tracking-widest rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-primary-ink text-brand-bg shadow-xs'
-                      : 'text-brand-text/60 hover:text-brand-text'
-                  }`}
-                >
-                  {tab === 'friends' ? (
-                    <MessageCircle className="w-3.5 h-3.5" />
-                  ) : tab === 'requests' ? (
-                    <MailQuestion className="w-3.5 h-3.5" />
-                  ) : (
-                    <Users className="w-3.5 h-3.5" />
-                  )}
-                  {tab === 'friends' ? 'Messages' : tab === 'requests' ? 'Requests' : 'Groups'}
-                  {badge > 0 && (
-                    <span className="text-[9px] font-bold bg-primary-ink text-white rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          {/* Direct, Groups and Requests are the real tabs this page has;
+              the shared control keeps switching identical to the rest of
+              the app, and carries each tab's own count. */}
+          <SegmentedControl
+            layoutId="messenger-scope"
+            aria-label="Conversations"
+            size="sm"
+            fullWidth
+            value={contactTab}
+            onChange={(id) => setContactTab(id as typeof contactTab)}
+            segments={[
+              { id: 'friends', label: 'Direct', badge: friendsUnreadTotal || undefined },
+              { id: 'groups', label: 'Groups' },
+              { id: 'requests', label: 'Requests', badge: requestConversations.length || undefined },
+            ]}
+          />
         </div>
 
         {/* Contact list */}
@@ -600,11 +599,27 @@ export default function PostbookMessenger() {
             userAvatar={activeDm.avatar}
             userOnline={activeDm.isOnline ?? false}
             onBack={() => setActiveDm(null)}
+            detailsOpen={showDetails}
+            onToggleDetails={() => setShowDetails((v) => !v)}
+            onConversationReady={setActiveConversationId}
           />
         ) : (
           <EmptyState />
         )}
       </div>
+
+      {/* Third column: who you are talking to, and what is in the thread.
+          Only for direct conversations — a group already has GroupPanel — and
+          only from xl, below which the conversation needs the whole width. */}
+      {activeDm && showDetails && (
+        <div className="hidden xl:flex">
+          <ThreadDetails
+            peerId={activeDm.id}
+            conversationId={activeConversationId}
+            onClose={() => setShowDetails(false)}
+          />
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/*  RIGHT PANEL                                                   */}
