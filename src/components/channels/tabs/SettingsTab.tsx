@@ -39,6 +39,22 @@ const CATEGORIES = [
   'Other',
 ] as const
 
+/**
+ * `channel_type` mixes two ideas in one column: who can find the channel
+ * (public / private) and what flavour it is (creator, brand, education,
+ * official, topic, paid). Only the first is a question a channel owner
+ * can usefully answer here, so this offers those two and leaves an
+ * existing flavour value alone unless the owner actually changes it.
+ */
+const CHANNEL_TYPE_LABELS = ['Public', 'Private'] as const
+const CHANNEL_TYPE_BY_LABEL: Record<string, string> = {
+  Public: 'public',
+  Private: 'private',
+}
+function channelTypeLabel(value: string): string {
+  return value === 'private' ? 'Private' : 'Public'
+}
+
 const SUBSCRIBER_LIST_VISIBILITY = ['Everyone', 'Subscribers Only', 'Only Me'] as const
 const DEFAULT_VISIBILITY = ['Public', 'Subscribers Only'] as const
 const NOTIFY_OPTIONS = ['Always', 'Only Urgent', 'Never'] as const
@@ -252,6 +268,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
   const [handle, setHandle] = useState(channel.handle)
   const [description, setDescription] = useState(channel.description)
   const [category, setCategory] = useState(channel.category || 'Other')
+  const [channelType, setChannelType] = useState<string>(channel.channel_type || 'public')
 
   /* ---- Subscriber Settings ---- */
   const [requireApproval, setRequireApproval] = useState(false)
@@ -300,6 +317,10 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
     if (handle !== channel.handle) changes.handle = handle
     if (description !== channel.description) changes.description = description
     if (category !== (channel.category || 'Other')) changes.category = category
+    // Only when the owner actually moved it, so a channel carrying a
+    // flavour value (creator, brand, education…) is not silently
+    // rewritten to 'public' just by opening this tab and saving.
+    if (channelType !== (channel.channel_type || 'public')) changes.channel_type = channelType
 
     changes.require_approval = requireApproval
     changes.subscriber_list_visibility = subscriberListVisibility
@@ -314,7 +335,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
 
     return changes
   }, [
-    name, handle, description, category,
+    name, handle, description, category, channelType,
     requireApproval, subscriberListVisibility, welcomeMessage,
     defaultReactions, defaultComments, defaultVisibility,
     notifyOnUpdate, emailDigest,
@@ -388,6 +409,23 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
         <div>
           <FieldLabel>Category</FieldLabel>
           <Select value={category} onChange={setCategory} options={CATEGORIES} />
+        </div>
+
+        {/* Every channel starts public — the schema default and what both
+            creation forms send. This is where that is changed, and the
+            only place it can be: creation no longer asks. */}
+        <div>
+          <FieldLabel>Who can find this channel</FieldLabel>
+          <Select
+            value={channelTypeLabel(channelType)}
+            onChange={(label) => setChannelType(CHANNEL_TYPE_BY_LABEL[label] ?? 'public')}
+            options={CHANNEL_TYPE_LABELS}
+          />
+          <p className="mt-1.5 text-[11px] text-brand-text/45">
+            {channelType === 'private'
+              ? 'Only people you invite can see this channel or its updates.'
+              : 'Anyone can find this channel and read its updates.'}
+          </p>
         </div>
 
         <div className="flex items-start gap-6">
