@@ -16,10 +16,13 @@ export class AuthRepository {
     this.sessionStore = sessionStore;
   }
 
+  // Returns the whole result, not just the user: the caller needs
+  // `verificationToken` to complete email verification, and registration
+  // issues no session, so nothing else carries it.
   async register(command: RegisterCommand) {
     const result = await this.strategy.register(command);
     this.sessionStore.save(result);
-    return result.user;
+    return result;
   }
 
   async login(command: LoginCommand): Promise<LoginResult> {

@@ -7,6 +7,20 @@ import { useVerifyEmail, useResendVerification } from '@/hooks/useSecurity';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  /**
+   * verify-email and resend both require the token registration issued —
+   * the endpoints take no user id on purpose, so the code alone is not
+   * enough. This page has no session to read it from, so it comes from
+   * the link: /auth/verify-email?token=...
+   *
+   * Read from window.location rather than useSearchParams, which would
+   * force this page into a Suspense boundary.
+   */
+  const [verificationToken, setVerificationToken] = useState('');
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('token');
+    if (t) setVerificationToken(t);
+  }, []);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -35,9 +49,13 @@ export default function VerifyEmailPage() {
       setError('Please enter the 6-digit verification code.');
       return;
     }
+    if (!verificationToken) {
+      setError('This link is missing its verification token. Register again, or sign in to request a new code.');
+      return;
+    }
     setError(null);
 
-    verifyEmail.mutate(code, {
+    verifyEmail.mutate({ verificationToken, code }, {
       onSuccess: () => {
         setSuccess(true);
         setTimeout(() => {
@@ -55,8 +73,12 @@ export default function VerifyEmailPage() {
 
   const handleResend = () => {
     if (resendCooldown > 0) return;
+    if (!verificationToken) {
+      setError('This link is missing its verification token. Register again, or sign in to request a new code.');
+      return;
+    }
 
-    resendVerification.mutate('email', {
+    resendVerification.mutate({ type: 'email', verificationToken }, {
       onSuccess: () => {
         setResendCooldown(60);
         setError(null);

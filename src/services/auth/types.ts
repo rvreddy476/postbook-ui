@@ -36,6 +36,17 @@ export interface AuthResult {
    * undefined by design. AuthSessionStore never persists it.
    */
   refreshToken?: string;
+  /**
+   * Issued by registration when the account still needs its email verified.
+   *
+   * /v1/auth/verify-email and /v1/auth/resend-verification BOTH require it:
+   * they deliberately take no user id, because on a public route a
+   * caller-supplied id would let anyone grind codes against any account
+   * they can name. So the code alone is not enough — this scopes it to the
+   * one account the server issued it for, and the flow cannot complete
+   * without carrying it from registration to the verify screen.
+   */
+  verificationToken?: string;
 }
 
 export type StepUpMethod = 'email_otp' | 'totp';

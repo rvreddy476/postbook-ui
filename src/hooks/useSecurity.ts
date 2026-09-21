@@ -256,11 +256,25 @@ export function useResetPassword() {
 /*  Verification Hooks                                                 */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Verify an email address with the code that was mailed.
+ *
+ * BOTH the code and the verification token are required. The endpoint
+ * deliberately takes no user id — on a public route a caller-supplied id
+ * would let anyone grind codes against any account they can name — so the
+ * token issued at registration is what scopes the code to one account.
+ * Sending the code alone answers 400, and the account can never verify.
+ */
 export function useVerifyEmail() {
     return useMutation({
-        mutationFn: async (code: string): Promise<{ message: string }> => {
+        mutationFn: async (
+            { verificationToken, code }: { verificationToken: string; code: string },
+        ): Promise<{ message: string }> => {
             console.info("[Auth]", "Verifying email")
-            const res = await api.post<{ data: { message: string } }>("/v1/auth/verify-email", { code })
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/verify-email", {
+                verification_token: verificationToken,
+                code,
+            })
             return res.data.data
         },
         onError: (error) => {
@@ -282,11 +296,21 @@ export function useVerifyPhone() {
     })
 }
 
+/**
+ * Resend the verification email. Takes the SAME token registration issued
+ * — it reuses that transaction rather than starting a new one — and for
+ * the same reason as verify-email, the token is required.
+ */
 export function useResendVerification() {
     return useMutation({
-        mutationFn: async (type: "email" | "phone"): Promise<{ message: string }> => {
+        mutationFn: async (
+            { type, verificationToken }: { type: "email" | "phone"; verificationToken: string },
+        ): Promise<{ message: string }> => {
             console.info("[Auth]", `Resending ${type} verification`)
-            const res = await api.post<{ data: { message: string } }>("/v1/auth/resend-verification", { type })
+            const res = await api.post<{ data: { message: string } }>("/v1/auth/resend-verification", {
+                type,
+                verification_token: verificationToken,
+            })
             return res.data.data
         },
         onError: (error) => {

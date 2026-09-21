@@ -52,6 +52,9 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Issued by registration and required by BOTH verify-email and resend.
+  // Held in state only: it is a credential, so it never goes to storage.
+  const [verificationToken, setVerificationToken] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifySuccess, setVerifySuccess] = useState(false);
@@ -95,6 +98,14 @@ export default function RegisterPage() {
 
     if (result.success) {
       if (isEmailId) {
+        if (!result.verificationToken) {
+          // Without it the verify screen cannot succeed, so say so here
+          // rather than showing a code box that will always fail.
+          setError('Account created, but the verification step could not start. Please sign in and request a new code.');
+          setIsLoading(false);
+          return;
+        }
+        setVerificationToken(result.verificationToken);
         setDirection(1);
         setScreen('verify-email');
         setIsLoading(false);
@@ -115,7 +126,7 @@ export default function RegisterPage() {
     }
     setVerifyError(null);
 
-    verifyEmail.mutate(verifyCode, {
+    verifyEmail.mutate({ verificationToken, code: verifyCode }, {
       onSuccess: () => {
         setVerifySuccess(true);
         setTimeout(() => router.push('/'), 2000);
@@ -131,7 +142,7 @@ export default function RegisterPage() {
 
   const handleResendCode = () => {
     if (resendCooldown > 0) return;
-    resendVerification.mutate('email', {
+    resendVerification.mutate({ type: 'email', verificationToken }, {
       onSuccess: () => setResendCooldown(60),
       onError: (err) => {
         const message =
@@ -484,7 +495,12 @@ export default function RegisterPage() {
                       </button>
                     </div>
 
-                    <div className="mt-6 flex items-center justify-between border-t border-brand-divider pt-5">
+                    {/* "Skip for now" is gone. It led to the feed with an
+                        unverified account, and the next sign-in refuses
+                        one — so the only thing skipping bought you was a
+                        locked account and no code in hand. Resend is the
+                        real way out, and it is the one control here. */}
+                    <div className="mt-6 flex items-center justify-center border-t border-brand-divider pt-5">
                       <button
                         type="button"
                         onClick={handleResendCode}
@@ -496,14 +512,6 @@ export default function RegisterPage() {
                           : resendVerification.isPending
                             ? 'Sending…'
                             : 'Resend code'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => router.push('/')}
-                        className="text-xs font-bold tracking-wider text-brand-text/40 transition-colors hover:text-brand-text/70"
-                      >
-                        Skip for now
                       </button>
                     </div>
                   </>

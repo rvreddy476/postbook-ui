@@ -110,9 +110,18 @@ export const mapAuthResponse = (payload: unknown, fallbackIdentifier: string): A
 
   const tokens = getTokens(payload);
 
+  // Registration returns this when the account still needs its email
+  // verified, and BOTH verify-email and resend-verification require it.
+  // Dropping it here is what left the verify screen unable to succeed.
+  const envelope = ((payload as { data?: Record<string, unknown> })?.data ??
+    payload ??
+    null) as Record<string, unknown> | null;
+  const verificationToken = getString(envelope, ['verification_token', 'verificationToken']);
+
   return {
     user,
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
+    verificationToken,
   };
 };

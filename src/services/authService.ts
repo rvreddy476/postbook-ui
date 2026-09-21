@@ -105,7 +105,13 @@ export const registerUser = async ({
   loginId,
   password,
   acceptedTerms,
-}: RegisterPayload): Promise<{ success: boolean; error?: string; user?: User }> => {
+}: RegisterPayload): Promise<{
+  success: boolean;
+  error?: string;
+  user?: User;
+  /** Needed by the verify-email and resend steps; see AuthResult. */
+  verificationToken?: string;
+}> => {
   const identifier = normalizeIdentifier(loginId);
 
   if (!firstName.trim() || !lastName.trim() || !identifier || !password.trim() || !dob) {
@@ -127,7 +133,7 @@ export const registerUser = async ({
   const phone = isEmail(identifier) ? '' : identifier;
 
   try {
-    const user = await authRepository.register({
+    const result = await authRepository.register({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       gender: mapGender(gender),
@@ -139,7 +145,11 @@ export const registerUser = async ({
       termsVersion: TERMS_VERSION,
     });
 
-    return { success: true, user };
+    return {
+      success: true,
+      user: result.user,
+      verificationToken: result.verificationToken,
+    };
   } catch (error) {
     console.error('[Auth] Registration failed:', error);
     return { success: false, error: toErrorMessage(error, 'Registration failed.') };
