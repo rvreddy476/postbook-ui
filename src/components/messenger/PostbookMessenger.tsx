@@ -72,11 +72,13 @@ export default function PostbookMessenger() {
   // No useRouter here any more: every surface this page can open — direct,
   // group, channel — opens in the column beside the list rather than
   // navigating somewhere else.
-  // The four scopes the mockup's chip row shows, plus Requests, which only
-  // appears when someone is actually waiting. 'unread' and 'friends' render
-  // the same list from different slices of it.
-  const [contactTab, setContactTab] = useState<'unread' | 'channels' | 'groups' | 'friends' | 'requests'>('friends')
-  // The sliders button beside the title. A filter, not decoration.
+  // The scopes the chip row shows, in that order. Requests only appears
+  // when someone is actually waiting.
+  const [contactTab, setContactTab] = useState<'channels' | 'groups' | 'friends' | 'requests'>('friends')
+  // Two filters that cut ACROSS the Direct list rather than being scopes
+  // of their own: the unread count beside the title, and the sliders
+  // button. Both are real filters, not decoration.
+  const [unreadOnly, setUnreadOnly] = useState(false)
   const [onlineOnly, setOnlineOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
@@ -220,10 +222,10 @@ export default function PostbookMessenger() {
    */
   const visibleFriends = useMemo(() => {
     let list = filteredFriends
-    if (contactTab === 'unread') list = list.filter((f) => getUnreadCountForUser(f.id) > 0)
+    if (unreadOnly) list = list.filter((f) => getUnreadCountForUser(f.id) > 0)
     if (onlineOnly) list = list.filter((f) => f.isOnline)
     return list
-  }, [filteredFriends, contactTab, onlineOnly, getUnreadCountForUser])
+  }, [filteredFriends, unreadOnly, onlineOnly, getUnreadCountForUser])
 
   const unreadConversationCount = useMemo(
     () => friends.filter((f) => getUnreadCountForUser(f.id) > 0).length,
@@ -428,10 +430,26 @@ export default function PostbookMessenger() {
             Messages
           </h1>
           <div className="flex items-center gap-1.5">
-            {friendsUnreadTotal > 0 && (
-              <span className="rounded-lg bg-primary-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] tabular-nums text-primary-ink">
-                {friendsUnreadTotal} unread
-              </span>
+            {/* Unread is a filter, not a tab: it cuts across Direct rather
+                than sitting beside it, and reads as a count you can act
+                on. Turning it on lands you on Direct, the only list that
+                has unread counts. */}
+            {unreadConversationCount > 0 && (
+              <button
+                onClick={() => {
+                  setUnreadOnly((v) => !v)
+                  setContactTab('friends')
+                }}
+                aria-pressed={unreadOnly}
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] transition-colors active:scale-95 ${
+                  unreadOnly
+                    ? 'bg-primary-ink text-white'
+                    : 'bg-primary-tint text-primary-ink hover:bg-primary-outline/50'
+                }`}
+              >
+                <span className="tabular-nums">{unreadConversationCount}</span>
+                Unread
+              </button>
             )}
             <button
               onClick={() => setOnlineOnly((v) => !v)}
@@ -464,15 +482,16 @@ export default function PostbookMessenger() {
             />
           </div>
 
-          {/* The scopes, as the mockup draws them: chips, not a sliding pill.
-              Requests is the one addition and appears only when somebody is
-              waiting — a chip that is always empty is just noise. */}
-          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Conversations">
+          {/* One row, fixed order, no wrapping: Direct, Groups, Channels,
+              Requests. Unread moved up beside the title — it is a filter
+              across Direct, not a scope of its own. Requests appears only
+              when somebody is waiting; a chip that is always empty is
+              noise. */}
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Conversations">
             {([
-              { id: 'unread' as const, label: 'Unread', badge: unreadConversationCount },
-              { id: 'channels' as const, label: 'Channels', badge: 0 },
-              { id: 'groups' as const, label: 'Groups', badge: 0 },
               { id: 'friends' as const, label: 'Direct', badge: 0 },
+              { id: 'groups' as const, label: 'Groups', badge: 0 },
+              { id: 'channels' as const, label: 'Channels', badge: 0 },
               ...(requestConversations.length > 0
                 ? [{ id: 'requests' as const, label: 'Requests', badge: requestConversations.length }]
                 : []),
@@ -483,8 +502,12 @@ export default function PostbookMessenger() {
                   key={chip.id}
                   role="tab"
                   aria-selected={active}
-                  onClick={() => setContactTab(chip.id)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                  onClick={() => {
+                    setContactTab(chip.id)
+                    // Unread only means anything on Direct.
+                    if (chip.id !== 'friends') setUnreadOnly(false)
+                  }}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
                     active
                       ? 'bg-primary-ink text-white'
                       : 'bg-brand-secondary text-brand-text/60 hover:text-brand-text'
@@ -506,8 +529,12 @@ export default function PostbookMessenger() {
           </div>
         </div>
 
+        {/* A hairline between the controls and the list, so the filters
+            read as chrome and the conversations as content. */}
+        <div className="h-px shrink-0 bg-brand-divider" />
+
         {/* Contact list */}
-        <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <div className="flex-1 overflow-y-auto px-3 pt-2 pb-3">
           {isLoading ? (
             <SidebarSkeleton />
           ) : contactTab === 'channels' ? (
@@ -521,12 +548,12 @@ export default function PostbookMessenger() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-0.5">
                 {filteredChannels.map((channel) => (
                   <button
                     key={channel.id}
                     onClick={() => handleChannelClick(channel.id)}
-                    className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
                       activeChannelId === channel.id
                         ? 'bg-primary-ink/5 border border-brand-divider'
                         : 'border border-transparent hover:border-brand-divider hover:bg-primary-ink/5'
@@ -560,15 +587,15 @@ export default function PostbookMessenger() {
               New Channel
             </button>
             </>
-          ) : contactTab === 'friends' || contactTab === 'unread' ? (
-            /* Direct, and Unread, which is the same list narrowed down */
+          ) : contactTab === 'friends' ? (
+            /* Direct, narrowed by whichever filters are on */
             visibleFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
                 <p className="text-[13px] font-medium text-brand-text/60">
                   {search
                     ? 'No friends match your search'
-                    : contactTab === 'unread'
+                    : unreadOnly
                       ? 'Nothing unread'
                       : onlineOnly
                         ? 'Nobody online right now'
@@ -576,7 +603,7 @@ export default function PostbookMessenger() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-0.5">
                 {visibleFriends.map((friend) => {
                   const isActive = activeDm?.id === friend.id
                   const avatarUrl = friend.avatar && (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
@@ -588,7 +615,7 @@ export default function PostbookMessenger() {
                     <button
                       key={friend.id}
                       onClick={() => handleFriendClick(friend)}
-                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
                         isActive
                           ? 'bg-primary-ink/5 border border-brand-divider'
                           : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'
@@ -630,7 +657,7 @@ export default function PostbookMessenger() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-0.5">
                 {filteredRequests.map((conv) => {
                   const peer = requestPeer(conv)
                   const avatarUrl =
@@ -642,7 +669,7 @@ export default function PostbookMessenger() {
                   return (
                     <div
                       key={conv.id}
-                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-transparent hover:border-brand-divider hover:bg-primary-ink/5 transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-brand-divider hover:bg-primary-ink/5 transition-all"
                     >
                       <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
                       <div className="flex-1 min-w-0">
@@ -687,7 +714,7 @@ export default function PostbookMessenger() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-0.5">
                   {filteredGroups.map((group) => {
                     const isActive = activeGroupId === group.id
                     const groupColor = getGroupColor(group.id)
@@ -700,7 +727,7 @@ export default function PostbookMessenger() {
                       <button
                         key={group.id}
                         onClick={() => handleGroupClick(group.id)}
-                        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
                           isActive
                             ? 'bg-primary-ink/5 border border-brand-divider'
                             : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'

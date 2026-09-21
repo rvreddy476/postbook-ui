@@ -20,8 +20,10 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('public')
-  const [joinMode, setJoinMode] = useState<'open' | 'request' | 'invite_only'>('open')
+  // Private and invite-only by default: a group is a closed room unless
+  // its owner deliberately opens it. Both are still changeable below.
+  const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('private')
+  const [joinMode, setJoinMode] = useState<'open' | 'request' | 'invite_only'>('invite_only')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,7 +127,12 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
                   type="button"
                   onClick={() => {
                     setPrivacyLevel(opt.value)
+                    // invite_only is the default and the only mode a
+                    // private group has; opening the group must move off
+                    // it, or the join-mode list below would show nothing
+                    // selected because it filters invite_only out.
                     if (opt.value === 'private') setJoinMode('invite_only')
+                    else if (joinMode === 'invite_only') setJoinMode('request')
                   }}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
                     privacyLevel === opt.value

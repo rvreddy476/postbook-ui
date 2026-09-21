@@ -29,7 +29,9 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
   // Step 1: Group identity
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('public')
+  // Private by default: a group is a closed room unless its owner
+  // deliberately opens it. Still changeable in step 1.
+  const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('private')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -124,6 +126,9 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
         description: description.trim(),
         handle,
         privacy_level: privacyLevel,
+        // A private group is invite-only by definition; an opened one
+        // asks to join rather than letting anyone walk in.
+        join_mode: privacyLevel === 'private' ? 'invite_only' : 'request',
         avatar_media_id: avatarMediaId,
         cover_media_id: coverMediaId,
       })
