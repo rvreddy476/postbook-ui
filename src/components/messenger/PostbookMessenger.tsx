@@ -6,6 +6,7 @@ import DmChat from './DmChat'
 import ThreadDetails from './ThreadDetails'
 import MessengerTopBar from './MessengerTopBar'
 import NewMessageSheet from './NewMessageSheet'
+import NewChannelSheet from './NewChannelSheet'
 import GroupPanel from './GroupPanel'
 import ChannelPanel from './ChannelPanel'
 import CreateGroupPanel from './CreateGroupPanel'
@@ -87,6 +88,7 @@ export default function PostbookMessenger() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showNewMessage, setShowNewMessage] = useState(false)
+  const [showNewChannel, setShowNewChannel] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [friends, setFriends] = useState<User[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -509,9 +511,9 @@ export default function PostbookMessenger() {
           {isLoading ? (
             <SidebarSkeleton />
           ) : contactTab === 'channels' ? (
-            /* Channels you belong to. These open the channel page: a
-               broadcast channel is not a conversation this view renders. */
-            filteredChannels.length === 0 ? (
+            /* Channels you belong to, opened in the column beside this list */
+            <>
+            {filteredChannels.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <Hash className="w-10 h-10 text-brand-secondary mb-2" />
                 <p className="text-[13px] font-medium text-brand-text/60">
@@ -547,7 +549,17 @@ export default function PostbookMessenger() {
                   </button>
                 ))}
               </div>
-            )
+            )}
+
+            {/* There was no way to start a channel from here at all. */}
+            <button
+              onClick={() => setShowNewChannel(true)}
+              className="w-full mt-2 py-4 text-[10px] font-black tracking-widest rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              New Channel
+            </button>
+            </>
           ) : contactTab === 'friends' || contactTab === 'unread' ? (
             /* Direct, and Unread, which is the same list narrowed down */
             visibleFriends.length === 0 ? (
@@ -831,6 +843,23 @@ export default function PostbookMessenger() {
               onOpened={(user) => {
                 setActiveDm(user)
                 setActiveGroupId(null)
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Create a channel without leaving the messenger. It opens in the
+          column the moment it exists, so Settings is one click away. */}
+      {showNewChannel && (
+        <div className="fixed inset-0 z-1000 flex items-start justify-center bg-brand-text/20 p-4 pt-16">
+          <div className="relative max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
+            <NewChannelSheet
+              onClose={() => setShowNewChannel(false)}
+              onCreated={(channelId) => {
+                setShowNewChannel(false)
+                handleChannelClick(channelId)
+                showToast('Channel created!')
               }}
             />
           </div>

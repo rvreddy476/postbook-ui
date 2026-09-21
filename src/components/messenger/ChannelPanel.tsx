@@ -9,16 +9,17 @@ import {
   usePinChannelUpdate,
   useSubscribeChannel,
   useUnsubscribeChannel,
+  useUpdateBroadcastChannel,
   useSparkUpdate,
   useUnsparkUpdate,
-  useStashUpdate,
-  useUnstashUpdate,
   useRecordView,
 } from '@/hooks/useBroadcastChannels'
 import ChannelComposer, { type ComposerPayload } from '@/components/channels/ChannelComposer'
 import UpdateCard from '@/components/channels/UpdateCard'
+import AnalyticsTab from '@/components/channels/tabs/AnalyticsTab'
+import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Info, Loader2, Radio, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Radio, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -35,15 +36,12 @@ interface ChannelPanelProps {
  * the same channel in the middle column beside the conversation list, the
  * way a direct chat or a group does, so the messenger stays one screen.
  *
- * It is deliberately the messenger-sized subset: the header, the stream of
- * updates, and the composer when you may publish. Analytics, drafts,
- * subscriber management and settings stay on the full channel page, which
- * the "Open full channel" control in About reaches — those are management
- * screens, not a conversation, and cramming them in here is what made the
- * old page feel like a second app.
+ * Owners and editors get Analytics and Settings here too, so running a
+ * channel never means leaving the messenger. Drafts and subscriber
+ * management are the only things still on the full channel page.
  */
 export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
-  const [tab, setTab] = useState<'updates' | 'about'>('updates')
+  const [tab, setTab] = useState<'updates' | 'about' | 'analytics' | 'settings'>('updates')
   const [error, setError] = useState<string | null>(null)
 
   const { data: channel, isLoading } = useBroadcastChannel(channelId)
@@ -51,13 +49,12 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
 
   const subscribe = useSubscribeChannel()
   const unsubscribe = useUnsubscribeChannel()
+  const updateChannel = useUpdateBroadcastChannel()
   const createUpdate = useCreateChannelUpdate()
   const deleteUpdate = useDeleteChannelUpdate()
   const pinUpdate = usePinChannelUpdate()
   const spark = useSparkUpdate()
   const unspark = useUnsparkUpdate()
-  const stash = useStashUpdate()
-  const unstash = useUnstashUpdate()
   const recordView = useRecordView()
 
   const role = channel?.viewer_role ?? ''
@@ -91,6 +88,28 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     const m = isSubscribed ? unsubscribe : subscribe
     m.mutate(channelId, { onError: () => setError('Could not change your subscription.') })
   }
+
+  const handleSettingsUpdate = (data: Record<string, unknown>) => {
+    setError(null)
+    updateChannel.mutate(
+      { channelId, ...data },
+      { onError: () => setError('Could not save those settings.') }
+    )
+  }
+
+  // Analytics and Settings belong to whoever runs the channel; a subscriber
+  // is shown Updates and About only.
+  const tabs = canPublish
+    ? ([
+        { id: 'updates', label: 'Updates' },
+        { id: 'analytics', label: 'Analytics' },
+        { id: 'settings', label: 'Settings' },
+        { id: 'about', label: 'About' },
+      ] as const)
+    : ([
+        { id: 'updates', label: 'Updates' },
+        { id: 'about', label: 'About' },
+      ] as const)
 
   if (isLoading) {
     return (
@@ -174,20 +193,34 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
           </button>
         )}
 
-        <button
-          onClick={() => setTab(tab === 'about' ? 'updates' : 'about')}
-          aria-pressed={tab === 'about'}
-          aria-label="Channel info"
-          title="Channel info"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
-            tab === 'about'
-              ? 'bg-primary-ink text-white'
-              : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'
-          }`}
-        >
-          <Info className="h-[18px] w-[18px]" strokeWidth={1.75} />
-        </button>
       </header>
+
+      {/* Tabs. Analytics and Settings are here rather than on another page,
+          so running a channel never means leaving the messenger. */}
+      <div
+        role="tablist"
+        aria-label="Channel sections"
+        className="flex shrink-0 items-center gap-1 border-b border-brand-divider bg-brand-bg px-4 pb-2"
+      >
+        {tabs.map((t) => {
+          const active = tab === t.id
+          return (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(t.id)}
+              className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                active
+                  ? 'bg-primary-tint text-primary-ink'
+                  : 'text-brand-text/55 hover:bg-brand-secondary hover:text-brand-text'
+              }`}
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
 
       {error && (
         <div className="flex shrink-0 items-center justify-between gap-3 bg-danger/10 px-4 py-2 text-[13px] font-medium text-danger">
@@ -198,7 +231,25 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
         </div>
       )}
 
-      {tab === 'about' ? (
+      {/* Both tabs render a bare `space-y-4` with no padding of their own,
+          so the panel supplies the gutter and the scroll container. */}
+      {tab === 'analytics' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="mx-auto max-w-2xl">
+            <AnalyticsTab channel={channel} updates={updates} />
+          </div>
+        </div>
+      ) : tab === 'settings' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="mx-auto max-w-2xl">
+            <SettingsTab
+              channel={channel}
+              onUpdate={handleSettingsUpdate}
+              role={role === 'editor' ? 'editor' : 'owner'}
+            />
+          </div>
+        </div>
+      ) : tab === 'about' ? (
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <div className="mx-auto max-w-xl space-y-5">
             <section>
@@ -244,14 +295,15 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               </div>
             </dl>
 
-            {/* The management screens genuinely live elsewhere. This is the
-                one link out, and it says so rather than pretending. */}
+            {/* Analytics and Settings are tabs here now. Drafts and
+                subscriber management are the only screens still elsewhere,
+                and this says which rather than pretending. */}
             {canPublish && (
               <a
                 href={`/channels/${channelId}`}
                 className="flex items-center justify-center gap-2 rounded-xl border border-brand-divider bg-brand-bg px-4 py-3 text-[13px] font-semibold text-brand-text transition-colors hover:border-primary-outline hover:text-primary-ink"
               >
-                Open full channel for analytics, drafts and settings
+                Open full channel for drafts and subscribers
               </a>
             )}
           </div>
@@ -284,10 +336,10 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
                     isOwner={canPublish}
                     onDelete={(updateId) => deleteUpdate.mutate({ channelId, updateId })}
                     onPin={(updateId, pinned) => pinUpdate.mutate({ channelId, updateId, pinned })}
+                    // A channel is a broadcast: reaction only. No stash, no
+                    // echo, no comments — those belong to a group.
                     onLike={(cid, updateId) => spark.mutate({ channelId: cid, updateId })}
                     onUnlike={(cid, updateId) => unspark.mutate({ channelId: cid, updateId })}
-                    onStash={(cid, updateId) => stash.mutate({ channelId: cid, updateId })}
-                    onUnstash={(cid, updateId) => unstash.mutate({ channelId: cid, updateId })}
                     onView={(cid, updateId) => recordView.mutate({ channelId: cid, updateId })}
                   />
                 ))}

@@ -28,6 +28,18 @@ interface UpdateCardProps {
   onRepost?: (channelId: string, updateId: string, echoType: string) => void
   onUnrepost?: (channelId: string, updateId: string) => void
   onView?: (channelId: string, updateId: string) => void
+  /**
+   * How much of the engagement bar to show.
+   *
+   * 'reaction' is the default, and the product rule set on 21 Sep: a
+   * channel is a broadcast, so a reader reacts and nothing else. Comments,
+   * echo and bookmark are what a GROUP is for.
+   *
+   * 'all' restores the full bar. Nothing passes it today; it exists so the
+   * comment, echo and bookmark code stays live and reachable, and turning
+   * them back on is one prop rather than a rewrite.
+   */
+  actions?: 'reaction' | 'all'
 }
 
 /* ===== Helpers ===== */
@@ -301,10 +313,12 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
   const expiry = meta.expiry as string
   const isExpired = expiry && new Date(expiry) < new Date()
 
+  // Themed, not raw palette: these follow the design tokens like the rest
+  // of the app, so a theme change reaches them too.
   const severityStyles = {
-    info: 'bg-blue-50 border-blue-200 text-blue-700',
-    warning: 'bg-amber-50 border-amber-200 text-amber-700',
-    critical: 'bg-red-50 border-red-200 text-red-700',
+    info: 'bg-info/10 border-info/25 text-info',
+    warning: 'bg-warning/10 border-warning/25 text-warning',
+    critical: 'bg-danger/10 border-danger/25 text-danger',
   }
 
   return (
@@ -331,7 +345,8 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
 }
 
 /* ===== MAIN CARD ===== */
-const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView }) => {
+const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView, actions = 'reaction' }) => {
+  const fullActions = actions === 'all'
   const channelId = propChannelId || channel?.id || ''
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
@@ -456,22 +471,22 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
   }
 
   return (
-    <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-all ${
-      isUrgent ? 'border-l-4 border-l-amber-500' : ''
-    } ${update.is_pinned ? 'ring-1 ring-brand-text/10' : ''}`}>
+    <div ref={cardRef} className={`bg-brand-card border border-brand-divider rounded-2xl transition-shadow hover:shadow-[0_1px_3px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.10)] ${
+      isUrgent ? 'border-l-4 border-l-warning' : ''
+    } ${update.is_pinned ? 'ring-1 ring-primary-outline' : ''}`}>
 
       {/* Pinned / Urgent indicators */}
       {update.is_pinned && (
-        <div className="flex items-center gap-1 text-brand-text/50 text-[10px] font-bold tracking-widest px-4 pt-3 pb-0">
-          <Pin className="w-3 h-3" /> Pinned
+        <div className="flex items-center gap-1.5 text-primary-ink text-[11px] font-semibold px-5 pt-4 pb-0">
+          <Pin className="w-3.5 h-3.5" strokeWidth={1.75} /> Pinned
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-5">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-2">
+        <div className="flex items-center gap-2.5 mb-3">
           {channel && (
-            <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+            <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0">
               {channelIcon ? (
                 <img src={channelIcon} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -483,9 +498,11 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              {channel && <span className="text-xs font-bold text-brand-text">{channel.name}</span>}
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm text-[9px] font-semibold bg-brand-text/5 text-brand-text/40">
-                {typeInfo.emoji} {typeInfo.label}
+              {channel && <span className="text-[13px] font-semibold text-brand-text">{channel.name}</span>}
+              {/* Lucide icon, not the emoji this used to render — an emoji
+                  renders as a different picture on every platform. */}
+              <span className="inline-flex items-center gap-1 rounded-md bg-brand-text/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-brand-text/45">
+                {typeInfo.icon} {typeInfo.label}
               </span>
             </div>
           </div>
@@ -512,13 +529,13 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
                         <Pin className="w-3.5 h-3.5" /> {update.is_pinned ? 'Unpin' : 'Pin to top'}
                       </button>
                     )}
-                    <button className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                      <MessageCircle className="w-3.5 h-3.5" /> Disable comments
-                    </button>
+                    {/* "Disable comments" used to sit here with no onClick
+                        at all — it never did anything. Channels are
+                        reaction-only now, so it has no meaning either. */}
                     <div className="border-t border-brand-divider my-1" />
                     {onDelete && (
                       <button onClick={() => { onDelete(update.id); setOverflowOpen(false) }}
-                        className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 w-full text-left">
+                        className="flex items-center gap-2 px-3 py-2 text-xs text-danger hover:bg-danger/10 w-full text-left">
                         <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
                     )}
@@ -593,14 +610,19 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
           {/* Like */}
           <button
             onClick={handleLike}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors select-none ${
-              sparked ? 'text-red-500 bg-red-50' : 'text-brand-text/45 hover:text-red-500 hover:bg-red-50/50'
+            aria-pressed={sparked}
+            aria-label={sparked ? 'Remove reaction' : 'React'}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors select-none active:scale-95 ${
+              sparked
+                ? 'bg-primary-tint text-primary-ink'
+                : 'text-brand-text/45 hover:bg-brand-secondary hover:text-primary-ink'
             }`}>
-            <Heart className={`w-3.5 h-3.5 ${sparked ? 'fill-red-500' : ''}`} />
-            <span className="font-mono text-[11px] font-semibold">{formatCount(sparkCount)}</span>
+            <Heart className={`w-4 h-4 ${sparked ? 'fill-current' : ''}`} strokeWidth={1.75} />
+            <span className="text-[12px] font-semibold tabular-nums">{formatCount(sparkCount)}</span>
           </button>
 
           {/* Comments toggle */}
+          {fullActions && (
           <button onClick={() => setShowComments(!showComments)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               showComments ? 'text-brand-text bg-brand-text/5' : 'text-brand-text/45 hover:text-brand-text hover:bg-brand-secondary/50'
@@ -608,13 +630,14 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
             <MessageCircle className="w-3.5 h-3.5" />
             <span className="font-mono text-[11px] font-semibold">{formatCount(update.comment_count)}</span>
           </button>
+          )}
 
           {/* Echo dropdown */}
-          {channel?.forward_allowed !== false && (
+          {fullActions && channel?.forward_allowed !== false && (
             <div className="relative" ref={echoRef}>
               <button onClick={() => setShowEchoMenu(!showEchoMenu)}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-                  echoed ? 'text-green-600 bg-green-50' : 'text-brand-text/45 hover:text-green-600 hover:bg-green-50/50'
+                  echoed ? 'text-success bg-success/10' : 'text-brand-text/45 hover:text-success hover:bg-success/10'
                 }`}>
                 <Repeat2 className="w-3.5 h-3.5" />
                 {echoCount > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(echoCount)}</span>}
@@ -636,22 +659,24 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
           )}
 
           {/* Bookmark */}
+          {fullActions && (
           <button onClick={handleStash}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-              stashed ? 'text-blue-500 bg-blue-50' : 'text-brand-text/45 hover:text-blue-500 hover:bg-blue-50/50'
+              stashed ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/45 hover:text-primary-ink hover:bg-primary-tint/60'
             }`}>
-            <Bookmark className={`w-3.5 h-3.5 ${stashed ? 'fill-blue-500' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 ${stashed ? 'fill-current' : ''}`} />
           </button>
+          )}
 
-          {/* View count */}
-          <span className="ml-auto flex items-center gap-1 text-[11px] text-brand-text/30 font-mono">
-            <Eye className="w-3 h-3" />
+          {/* View count — a number, not a control */}
+          <span className="ml-auto flex items-center gap-1.5 text-[12px] tabular-nums text-brand-text/35">
+            <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
             {formatCount(update.view_count)}
           </span>
         </div>
 
         {/* Comment section (lazy loaded) */}
-        {showComments && (
+        {fullActions && showComments && (
           <div className="mt-3 pt-3 border-t border-brand-divider">
             <CommentSectionLazy updateId={update.id} channelId={channelId} isOwner={isOwner} />
           </div>

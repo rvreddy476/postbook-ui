@@ -1,19 +1,32 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
 import { Avatar, getInitials, getGroupColor } from './shared'
 import CreatePortal from '@/components/CreatePortal'
 import GroupCreateModal from '@/components/groups/GroupCreateModal'
-import { useGroupDetails, useGroupMembers, useGroupFeed } from '@/hooks/useGroups'
+import {
+  useGroupDetails,
+  useGroupMembers,
+  useGroupFeedV2,
+  useSparkGroupPostV2,
+  useUnsparkGroupPostV2,
+  useEchoGroupPostV2,
+  useUnechoGroupPostV2,
+  useGroupPostComments,
+  useAddGroupPostComment,
+  useDeleteGroupPostComment,
+  useRecordGroupPostView,
+  useDeleteGroupPostV2,
+} from '@/hooks/useGroups'
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { createGroupConversation, toggleReaction, updateConversation, leaveConversation, addMemberToConversation } from '@/services/messageService'
 import { getSession } from '@/services/authService'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
-import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, RefreshCw, Pencil, LogOut, UserPlus } from 'lucide-react'
-import type { GroupMember, GroupPost } from '@/types/groups'
+import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
+import type { GroupMember, GroupPostV2 } from '@/types/groups'
 import type { Message } from '@/services/messageService'
 
 // ---------------------------------------------------------------------------
@@ -572,6 +585,284 @@ function ChatView({
 // ---------------------------------------------------------------------------
 // Posts Mode
 // ---------------------------------------------------------------------------
+
+type AuthorInfo = { name: string; avatar: string }
+
+/** One page of GET /v1/groups/{id}/feed/v2 as useGroupFeedV2 stores it. */
+type FeedPage = { data: GroupPostV2[]; offset: number }
+
+const formatCount = (n: number) => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return String(n)
+}
+
+// ── One post card ──
+// Apple-ish: one hairline border, rounded-2xl, quiet secondary text,
+// tabular-nums counts, and hover/active states that only tint.
+function PostCard({
+  post,
+  groupId,
+  groupColor,
+  myId,
+  resolveAuthor,
+  sparked,
+  echoed,
+  onToggleSpark,
+  onToggleEcho,
+  onDelete,
+}: {
+  post: GroupPostV2
+  groupId: string
+  groupColor: string
+  myId: string
+  resolveAuthor: (userId: string) => AuthorInfo
+  sparked: boolean
+  echoed: boolean
+  onToggleSpark: (post: GroupPostV2) => void
+  onToggleEcho: (post: GroupPostV2) => void
+  onDelete: (post: GroupPostV2) => void
+}) {
+  const [showComments, setShowComments] = useState(false)
+  const [draft, setDraft] = useState('')
+  const cardRef = useRef<HTMLDivElement>(null)
+  const viewRecorded = useRef(false)
+
+  // Comments are only fetched once the thread is expanded — passing
+  // undefined keeps the query disabled (see useGroupPostComments).
+  const { data: comments, isLoading: commentsLoading } = useGroupPostComments(
+    groupId,
+    showComments ? post.id : undefined,
+  )
+  const addComment = useAddGroupPostComment()
+  const deleteComment = useDeleteGroupPostComment()
+  const recordView = useRecordGroupPostView()
+
+  // A view is counted once per card per mount, when it is actually on screen.
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const obs = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !viewRecorded.current) {
+            viewRecorded.current = true
+            recordView.mutate({ groupId, postId: post.id })
+            obs.disconnect()
+          }
+        }
+      },
+      { threshold: 0.5 },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, post.id])
+
+  const author = resolveAuthor(post.author_id)
+  const isMine = !!myId && post.author_id === myId
+  const attachments = (post.attachments ?? []).filter(a => typeof a === 'string' && a.length > 0)
+  const bodyText = post.body?.trim() || post.title?.trim() || ''
+
+  const submitComment = () => {
+    const body = draft.trim()
+    if (!body || addComment.isPending) return
+    addComment.mutate(
+      { groupId, postId: post.id, body },
+      { onSuccess: () => setDraft('') },
+    )
+  }
+
+  const pillBase =
+    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium transition-colors active:scale-95'
+
+  return (
+    <div
+      ref={cardRef}
+      className="group rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 sm:px-6 transition-colors hover:border-brand-text/15"
+    >
+      {/* Badges */}
+      {(post.is_pinned || post.is_announcement) && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {post.is_pinned && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary-outline bg-primary-tint px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-primary-ink">
+              <Pin className="h-3 w-3" strokeWidth={2} />
+              Pinned
+            </span>
+          )}
+          {post.is_announcement && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+              style={{ color: groupColor, background: `${groupColor}14`, borderColor: `${groupColor}33` }}
+            >
+              <Megaphone className="h-3 w-3" strokeWidth={2} />
+              Announcement
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Author */}
+      <div className="flex items-start gap-3">
+        <Avatar user={{ id: post.author_id, name: author.name, avatar: author.avatar }} size={40} />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-semibold tracking-[-0.01em] text-brand-text">{author.name}</div>
+          <div className="mt-0.5 text-[12px] text-brand-text/50">{relativeTime(post.created_at)}</div>
+        </div>
+        {isMine && (
+          <button
+            onClick={() => onDelete(post)}
+            title="Delete post"
+            aria-label="Delete post"
+            className="rounded-full p-1.5 text-brand-text/30 opacity-0 transition-all hover:bg-brand-secondary hover:text-danger focus-visible:opacity-100 group-hover:opacity-100 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
+
+      {/* Title + body */}
+      {post.title && post.body && (
+        <h3 className="mt-4 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-brand-text">{post.title}</h3>
+      )}
+      <p
+        className={`mt-3 text-[14px] leading-[1.6] wrap-break-word whitespace-pre-wrap ${
+          bodyText ? 'text-brand-text' : 'italic text-brand-text/40'
+        }`}
+      >
+        {bodyText || 'No text'}
+      </p>
+
+      {/* Attachments (media ids from the post itself) */}
+      {attachments.length > 0 && (
+        <div className={`mt-4 grid gap-1.5 overflow-hidden rounded-xl ${attachments.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {attachments.slice(0, 4).map(id => (
+            <img
+              key={id}
+              src={`/v1/media/${id}/serve`}
+              alt=""
+              className={`w-full rounded-lg bg-brand-secondary object-cover ${attachments.length === 1 ? 'max-h-72' : 'h-36'}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Engagement bar */}
+      <div className="mt-4 flex items-center gap-1 border-t border-brand-divider pt-3">
+        <button
+          onClick={() => onToggleSpark(post)}
+          aria-pressed={sparked}
+          className={`${pillBase} ${sparked ? 'bg-brand-secondary text-danger' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
+        >
+          <Heart className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} strokeWidth={1.75} />
+          <span className="tabular-nums">{formatCount(post.spark_count)}</span>
+        </button>
+
+        <button
+          onClick={() => setShowComments(v => !v)}
+          aria-expanded={showComments}
+          className={`${pillBase} ${showComments ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
+        >
+          <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+          <span className="tabular-nums">{formatCount(post.comment_count)}</span>
+        </button>
+
+        <button
+          onClick={() => onToggleEcho(post)}
+          aria-pressed={echoed}
+          title={echoed ? 'Undo echo' : 'Echo to your feed'}
+          className={`${pillBase} ${echoed ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
+        >
+          <Repeat2 className="h-4 w-4" strokeWidth={1.75} />
+          <span className="tabular-nums">{formatCount(post.echo_count)}</span>
+        </button>
+
+        <span className="ml-auto inline-flex items-center gap-1.5 pr-1 text-[12px] text-brand-text/40">
+          <Eye className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <span className="tabular-nums">{formatCount(post.view_count)}</span>
+        </span>
+      </div>
+
+      {/* Comments */}
+      {showComments && (
+        <div className="mt-4 flex flex-col gap-3 border-t border-brand-divider pt-4">
+          {commentsLoading ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2].map(i => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <div className="h-7 w-7 animate-pulse rounded-full bg-brand-secondary" />
+                  <div className="flex flex-1 flex-col gap-1.5 pt-1">
+                    <div className="h-2.5 w-24 animate-pulse rounded-full bg-brand-secondary" />
+                    <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-brand-secondary" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (comments?.length ?? 0) === 0 ? (
+            <p className="text-[12px] text-brand-text/40">No comments yet.</p>
+          ) : (
+            comments!.map(comment => {
+              const cAuthor = resolveAuthor(comment.user_id)
+              const mine = !!myId && comment.user_id === myId
+              return (
+                <div key={comment.id} className="flex items-start gap-2.5">
+                  <Avatar user={{ id: comment.user_id, name: cAuthor.name, avatar: cAuthor.avatar }} size={28} />
+                  <div className="min-w-0 flex-1 rounded-2xl bg-brand-secondary px-3.5 py-2.5">
+                    <div className="flex items-baseline gap-2">
+                      <span className="truncate text-[12px] font-semibold text-brand-text">{cAuthor.name}</span>
+                      <span className="text-[11px] text-brand-text/40">{relativeTime(comment.created_at)}</span>
+                    </div>
+                    <p className="mt-0.5 text-[13px] leading-[1.55] wrap-break-word whitespace-pre-wrap text-brand-text/80">
+                      {comment.body}
+                    </p>
+                  </div>
+                  {mine && (
+                    <button
+                      onClick={() => deleteComment.mutate({ groupId, postId: post.id, commentId: comment.id })}
+                      disabled={deleteComment.isPending}
+                      title="Delete comment"
+                      aria-label="Delete comment"
+                      className="mt-1 rounded-full p-1.5 text-brand-text/30 transition-colors hover:bg-brand-secondary hover:text-danger active:scale-95 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    </button>
+                  )}
+                </div>
+              )
+            })
+          )}
+
+          {/* Composer */}
+          <div className="flex items-center gap-2 pt-1">
+            <div className="flex flex-1 items-center gap-1 rounded-full bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
+              <input
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitComment() }}
+                placeholder="Write a comment"
+                disabled={addComment.isPending}
+                className="min-w-0 flex-1 bg-transparent px-2.5 py-2 text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40"
+              />
+              <button
+                onClick={submitComment}
+                disabled={!draft.trim() || addComment.isPending}
+                aria-label="Post comment"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-transform active:scale-90 disabled:opacity-40"
+                style={{ backgroundColor: groupColor }}
+              >
+                <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </button>
+            </div>
+          </div>
+          {addComment.isError && (
+            <p className="text-[12px] text-danger">Could not post that comment. Try again.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PostsView({
   groupId,
   groupColor,
@@ -582,25 +873,105 @@ function PostsView({
   members: GroupMember[]
 }) {
   const me = getSession()
-  const { data: feedData, isLoading } = useGroupFeed(groupId)
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
-  const [commentOpen, setCommentOpen] = useState<string | null>(null)
-  const [commentText, setCommentText] = useState('')
+  const myId = me?.id ?? ''
+  const qc = useQueryClient()
+  const { data: feedData, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
+  const sparkMut = useSparkGroupPostV2()
+  const unsparkMut = useUnsparkGroupPostV2()
+  const echoMut = useEchoGroupPostV2()
+  const unechoMut = useUnechoGroupPostV2()
+  const deletePostMut = useDeleteGroupPostV2()
   const [showCreatePost, setShowCreatePost] = useState(false)
 
-  const memberMap = new Map<string, GroupMember>()
-  members.forEach(m => memberMap.set(m.user_id, m))
+  // /v1/groups/{id}/feed/v2 returns no per-viewer engagement flag — GroupPostV2
+  // carries the counts only. So these two Sets are ONLY the posts this viewer
+  // sparked/echoed in THIS session: they are an optimistic overlay on the
+  // server counts, not real viewer state. They reset on remount, and a spark
+  // made in another tab or an earlier session will not light up here.
+  const [sparkedHere, setSparkedHere] = useState<Set<string>>(new Set())
+  const [echoedHere, setEchoedHere] = useState<Set<string>>(new Set())
 
-  const resolveAuthor = (authorId: string) => {
-    const mb = memberMap.get(authorId)
+  const memberMap = useMemo(() => {
+    const m = new Map<string, GroupMember>()
+    members.forEach(mb => m.set(mb.user_id, mb))
+    return m
+  }, [members])
+
+  const resolveAuthor = (userId: string): AuthorInfo => {
+    const mb = memberMap.get(userId)
     const name = mb?.display_name || mb?.username || 'Unknown'
     return { name, avatar: getInitials(name) }
   }
 
-  const allPosts: GroupPost[] = feedData?.pages?.flatMap(p => p.data) ?? []
+  const allPosts = feedData?.pages?.flatMap(p => p.data) ?? []
+  // Pinned first, otherwise the server's order is kept.
+  const posts = [...allPosts.filter(p => p.is_pinned), ...allPosts.filter(p => !p.is_pinned)]
 
-  const toggleLike = (postId: string) => {
-    setLikedPosts(prev => { const n = new Set(prev); n.has(postId) ? n.delete(postId) : n.add(postId); return n })
+  // Optimistic count nudge straight into the cached feed, so the number and
+  // the icon change together and the next refetch overwrites both with truth.
+  const patchCount = (postId: string, field: 'spark_count' | 'echo_count', delta: number) => {
+    qc.setQueryData<InfiniteData<FeedPage, number>>(['group-feed-v2', groupId], prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        pages: prev.pages.map(page => ({
+          ...page,
+          data: page.data.map(p => {
+            if (p.id !== postId) return p
+            const next = Math.max(0, (p[field] ?? 0) + delta)
+            return field === 'spark_count' ? { ...p, spark_count: next } : { ...p, echo_count: next }
+          }),
+        })),
+      }
+    })
+  }
+
+  const toggleSet = (setter: typeof setSparkedHere, postId: string, on: boolean) => {
+    setter(prev => {
+      const next = new Set(prev)
+      if (on) next.add(postId)
+      else next.delete(postId)
+      return next
+    })
+  }
+
+  const handleToggleSpark = (post: GroupPostV2) => {
+    const was = sparkedHere.has(post.id)
+    const delta = was ? -1 : 1
+    patchCount(post.id, 'spark_count', delta)
+    toggleSet(setSparkedHere, post.id, !was)
+    const mut = was ? unsparkMut : sparkMut
+    mut.mutate(
+      { groupId, postId: post.id },
+      {
+        onError: () => {
+          patchCount(post.id, 'spark_count', -delta)
+          toggleSet(setSparkedHere, post.id, was)
+        },
+      },
+    )
+  }
+
+  const handleToggleEcho = (post: GroupPostV2) => {
+    const was = echoedHere.has(post.id)
+    const delta = was ? -1 : 1
+    patchCount(post.id, 'echo_count', delta)
+    toggleSet(setEchoedHere, post.id, !was)
+    const mut = was ? unechoMut : echoMut
+    mut.mutate(
+      { groupId, postId: post.id },
+      {
+        onError: () => {
+          patchCount(post.id, 'echo_count', -delta)
+          toggleSet(setEchoedHere, post.id, was)
+        },
+      },
+    )
+  }
+
+  const handleDeletePost = (post: GroupPostV2) => {
+    if (!confirm('Delete this post?')) return
+    deletePostMut.mutate({ groupId, postId: post.id })
   }
 
   return (
@@ -622,88 +993,63 @@ function PostsView({
         <Plus className="w-5 h-5" strokeWidth={2.5} />
       </button>
 
-      <div className="max-w-3xl mx-auto w-full flex flex-col gap-5">
+      <div className="max-w-3xl mx-auto w-full flex flex-col gap-4">
         {isLoading ? (
           <>
             {[1, 2].map(i => (
-              <div key={i} className="p-5 bg-brand-card border border-brand-divider rounded-2xl">
-                <div className="flex gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-brand-secondary animate-pulse" />
-                  <div className="flex flex-col justify-center gap-2">
-                    <div className="w-28 h-3 rounded-full bg-brand-secondary animate-pulse" />
-                    <div className="w-16 h-2 rounded-full bg-brand-secondary animate-pulse" />
+              <div key={i} className="rounded-2xl border border-brand-divider bg-brand-card px-5 py-5 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-brand-secondary" />
+                  <div className="flex flex-col gap-2">
+                    <div className="h-3 w-28 animate-pulse rounded-full bg-brand-secondary" />
+                    <div className="h-2 w-16 animate-pulse rounded-full bg-brand-secondary" />
                   </div>
                 </div>
-                <div className="w-full h-4 rounded-full bg-brand-secondary animate-pulse" />
-                <div className="w-3/4 h-4 rounded-full bg-brand-secondary mt-2 animate-pulse" />
+                <div className="mt-5 h-3 w-full animate-pulse rounded-full bg-brand-secondary" />
+                <div className="mt-2.5 h-3 w-3/4 animate-pulse rounded-full bg-brand-secondary" />
+                <div className="mt-5 flex gap-3 border-t border-brand-divider pt-4">
+                  <div className="h-6 w-14 animate-pulse rounded-full bg-brand-secondary" />
+                  <div className="h-6 w-14 animate-pulse rounded-full bg-brand-secondary" />
+                  <div className="h-6 w-14 animate-pulse rounded-full bg-brand-secondary" />
+                </div>
               </div>
             ))}
           </>
-        ) : allPosts.length === 0 ? (
-          <div className="text-center py-16 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-brand-secondary flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-brand-text/30" strokeWidth={1.5} />
+        ) : posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-brand-divider bg-brand-card py-16 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-secondary">
+              <FileText className="h-7 w-7 text-brand-text/30" strokeWidth={1.5} />
             </div>
-            <p className="text-[14px] font-medium text-brand-highlight">No posts yet</p>
-            <p className="text-[12px] mt-1 text-brand-text/60">Be the first to share something!</p>
+            <p className="text-[14px] font-semibold tracking-[-0.01em] text-brand-text">No posts yet</p>
+            <p className="mt-1 text-[12px] text-brand-text/50">Be the first to share something.</p>
           </div>
         ) : (
-          allPosts.map(post => {
-            const author = resolveAuthor(post.author_id)
-            const liked = likedPosts.has(post.post_id)
-
-            return (
-              <div key={post.post_id} className="p-5 rounded-2xl bg-brand-card border border-brand-divider hover:shadow-xs transition-shadow">
-                <div className="flex gap-3 mb-4">
-                  <Avatar user={{ id: post.author_id, name: author.name, avatar: author.avatar }} size={40} showStatus />
-                  <div className="flex-1 flex flex-col justify-center">
-                    <div className="font-semibold text-brand-text text-[14px]">{author.name}</div>
-                    <div className="text-brand-text/60 text-[12px] font-normal">{relativeTime(post.created_at)}</div>
-                  </div>
-                </div>
-                <p className="text-brand-text text-[14px] leading-relaxed whitespace-pre-wrap">
-                  Shared a post
-                </p>
-                <div className="flex gap-6 mt-4 pt-3 border-t border-brand-divider">
-                  <button
-                    onClick={() => toggleLike(post.post_id)}
-                    className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${liked ? 'text-red-500' : 'text-brand-text/60 hover:text-brand-highlight'}`}
-                  >
-                    <span className="text-base leading-none">{liked ? '❤️' : '🤍'}</span>
-                    Like
-                  </button>
-                  <button
-                    onClick={() => setCommentOpen(commentOpen === post.post_id ? null : post.post_id)}
-                    className="flex items-center gap-2 text-[13px] font-medium text-brand-text/60 hover:text-brand-highlight transition-colors"
-                    style={commentOpen === post.post_id ? { color: groupColor } : {}}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Comment
-                  </button>
-                </div>
-                {commentOpen === post.post_id && (
-                  <div className="mt-4 flex gap-3 items-center bg-brand-secondary p-3 rounded-xl">
-                    {me && <Avatar user={{ id: me.id, name: me.name, avatar: getInitials(me.name) }} size={32} />}
-                    <input
-                      value={commentText}
-                      onChange={e => setCommentText(e.target.value)}
-                      placeholder="Write a comment..."
-                      onKeyDown={e => { if (e.key === 'Enter' && commentText.trim()) { setCommentText(''); setCommentOpen(null) } }}
-                      className="flex-1 w-full py-2 px-3 rounded-lg bg-transparent border-none text-brand-text text-[13px] outline-hidden placeholder:text-brand-text/60"
-                    />
-                    <button
-                      onClick={() => { if (commentText.trim()) { setCommentText(''); setCommentOpen(null); } }}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-white transition-transform active:scale-95 disabled:opacity-50"
-                      disabled={!commentText.trim()}
-                      style={{ backgroundColor: groupColor }}
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })
+          <>
+            {posts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                groupId={groupId}
+                groupColor={groupColor}
+                myId={myId}
+                resolveAuthor={resolveAuthor}
+                sparked={sparkedHere.has(post.id)}
+                echoed={echoedHere.has(post.id)}
+                onToggleSpark={handleToggleSpark}
+                onToggleEcho={handleToggleEcho}
+                onDelete={handleDeletePost}
+              />
+            ))}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mx-auto mt-1 rounded-full border border-brand-divider bg-brand-card px-5 py-2 text-[13px] font-medium text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95 disabled:opacity-50"
+              >
+                {isFetchingNextPage ? 'Loading…' : 'Show older posts'}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
