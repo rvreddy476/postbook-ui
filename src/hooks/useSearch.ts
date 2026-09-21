@@ -16,10 +16,14 @@ export type SearchType = "all" | "profiles" | "posts"
 
 export interface ProfileResult {
     id: string
+    /** Link-safe: the handle when there is one, otherwise the user id. */
     username: string
+    /** The real handle, or "" when the account has none. Display only. */
+    handle?: string
     display_name: string
     bio: string
     avatar_media_id?: string
+    avatar_url?: string | null
     is_verified: boolean
     follower_count: number
 }
@@ -29,6 +33,52 @@ export interface SearchResults {
     posts: PostDetail[]
 }
 
+/**
+ * One search hit as search-service actually sends it.
+ *
+ * The wire calls this bucket `users` and keys it `user_id`; the UI calls
+ * the same thing `profiles` and keys it `id`. Nothing reconciled the two,
+ * so `data.profiles` was always undefined and every people search showed
+ * "No results" while the API was returning matches.
+ */
+interface UserSearchHit {
+    user_id?: string
+    id?: string
+    username?: string
+    display_name?: string
+    bio?: string
+    avatar_url?: string | null
+    avatar_media_id?: string
+    is_verified?: boolean
+    follower_count?: number
+}
+
+/**
+ * Normalise a wire hit into the shape the UI renders.
+ *
+ * Uses `||`, not `??`: Go marshals an absent string as `""`, not as
+ * missing, so a nullish fallback keeps the empty string and produces
+ * links like `/u/` for the many accounts that have no username yet.
+ */
+function toProfileResult(u: UserSearchHit): ProfileResult {
+    const id = u.user_id || u.id || ""
+    return {
+        id,
+        // Falls back to the id so a profile link always resolves.
+        username: u.username || id,
+        // The REAL handle, empty when the account has none. Kept apart from
+        // `username` so the UI can link by id without printing a UUID at
+        // someone as if it were their @name.
+        handle: u.username || "",
+        display_name: u.display_name || u.username || "User",
+        bio: u.bio || "",
+        avatar_media_id: u.avatar_media_id,
+        avatar_url: u.avatar_url ?? null,
+        is_verified: !!u.is_verified,
+        follower_count: u.follower_count || 0,
+    }
+}
+
 export function useUniversalSearch(
     query: string,
     type: SearchType = "all",
@@ -36,11 +86,20 @@ export function useUniversalSearch(
 ) {
     return useQuery({
         queryKey: ["search", query, type],
-        queryFn: async () => {
-            const res = await api.get<{ data: SearchResults }>("/v1/search", {
+        queryFn: async (): Promise<SearchResults> => {
+            const res = await api.get<{
+                data: { users?: UserSearchHit[]; profiles?: UserSearchHit[]; posts?: PostDetail[] }
+            }>("/v1/search", {
                 params: { q: query, type, limit: 20 },
             })
-            return res.data.data
+            const d = res.data?.data ?? {}
+            // `users` is the wire name; `profiles` is tolerated so a future
+            // rename on either side does not silently empty this list again.
+            const hits = d.users ?? d.profiles ?? []
+            return {
+                profiles: hits.map(toProfileResult).filter((p) => p.id !== ""),
+                posts: d.posts ?? [],
+            }
         },
         enabled: enabled && query.length >= 2,
     })

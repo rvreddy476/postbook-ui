@@ -15,6 +15,7 @@ import {
     useMultiEntitySearch,
     useRecordSearchClick,
     SearchType,
+    ProfileResult,
 } from "@/hooks/useSearch"
 import type {
     EntityType,
@@ -93,15 +94,10 @@ const TABS: Tab[] = [
 // ─── Profile result card ─────────────────────────────────────────────────────
 
 interface ProfileCardProps {
-    profile: {
-        id: string
-        username: string
-        display_name: string
-        bio: string
-        avatar_media_id?: string
-        is_verified: boolean
-        follower_count: number
-    }
+    // The shared type, not a copy of it. The inline duplicate that used to
+    // live here is how the wire's `users` bucket and this card drifted
+    // apart without a single type error.
+    profile: ProfileResult
 }
 
 function ProfileCard({ profile }: ProfileCardProps) {
@@ -132,7 +128,13 @@ function ProfileCard({ profile }: ProfileCardProps) {
                         {profile.display_name}
                     </span>
                 </div>
-                <p className="text-sm text-brand-text/40 truncate">@{profile.username}</p>
+                {/* Only a REAL handle is printed. `username` falls back to
+                    the user id so the profile link always resolves, and
+                    showing that at someone as if it were their @name is
+                    worse than showing nothing. */}
+                {profile.handle && (
+                    <p className="text-sm text-brand-text/40 truncate">@{profile.handle}</p>
+                )}
                 {bioSnippet && (
                     <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{bioSnippet}</p>
                 )}
@@ -652,7 +654,10 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
             const u = item as UserHit
             return (
                 <Link
-                    href={`/u/${u.username}`}
+                    // `||`, not `??`: Go sends an absent handle as "", not
+                    // as missing, so a nullish fallback would leave this
+                    // as the dead link `/u/`.
+                    href={`/u/${u.username || u.user_id}`}
                     onClick={() => onClick("users", u.user_id, position)}
                     className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 group"
                 >
@@ -664,7 +669,11 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
                             <span className="text-[15px] font-bold text-brand-text truncate">{u.display_name}</span>
                             {u.is_verified && <CheckCircle className="w-4 h-4 text-blue-500 fill-current" />}
                         </div>
-                        <p className="text-sm text-brand-text/40 truncate">@{u.username}</p>
+                        {/* Many accounts have no handle yet; a bare "@" is
+                            noise. Same rule as the ProfileCard above. */}
+                        {u.username && (
+                            <p className="text-sm text-brand-text/40 truncate">@{u.username}</p>
+                        )}
                         {u.bio && <p className="text-sm text-brand-text/60 mt-0.5 line-clamp-1">{u.bio}</p>}
                     </div>
                 </Link>
