@@ -3,36 +3,17 @@
 import React, { useRef, useState } from 'react'
 import AppShell from '@/components/AppShell'
 import { useRouter } from 'next/navigation'
-import { useCreateBroadcastChannel, useCheckHandleAvailability } from '@/hooks/useBroadcastChannels'
+import { useCreateBroadcastChannel } from '@/hooks/useBroadcastChannels'
+import { channelHandleAvailable, deriveUniqueHandle } from '@/lib/handles'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { ArrowLeft, ArrowRight, Check, Image as ImageIcon, Loader2, Radio, Upload, X } from 'lucide-react'
 import Link from 'next/link'
-
-const channelCategories = [
-  'Creator', 'Brand', 'News', 'Education', 'Technology',
-  'Entertainment', 'Sports', 'Official', 'Health', 'Finance', 'Other',
-]
 
 const commentOptions = [
   { value: 'disabled', label: 'No comments', desc: 'Broadcast only' },
   { value: 'enabled', label: 'Reactions only', desc: 'Subscribers can react, not comment' },
   { value: 'moderated', label: 'Comments enabled', desc: 'Full discussion' },
 ]
-
-function mapCategoryToChannelType(category: string) {
-  switch (category.toLowerCase()) {
-    case 'creator':
-      return 'creator'
-    case 'brand':
-      return 'brand'
-    case 'education':
-      return 'education'
-    case 'official':
-      return 'official'
-    default:
-      return 'public'
-  }
-}
 
 function loadPreview(file: File, onLoad: (value: string) => void) {
   const reader = new FileReader()
@@ -46,8 +27,6 @@ export default function CreateChannelPage() {
 
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
-  const [handle, setHandle] = useState('')
-  const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
   const [commentMode, setCommentMode] = useState('disabled')
   const [forwardAllowed, setForwardAllowed] = useState(true)
@@ -63,9 +42,9 @@ export default function CreateChannelPage() {
   const coverInputRef = useRef<HTMLInputElement>(null)
   const iconInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: handleAvailable, isLoading: checkingHandle } = useCheckHandleAvailability(handle)
-
-  const canProceed = name.trim().length >= 2 && handle.trim().length >= 3 && category !== ''
+  // The handle is derived from the name at submit time, so there is
+  // nothing to check while typing.
+  const canProceed = name.trim().length >= 2
   const canSubmit = canProceed && !submitting
 
   const handleCoverSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,16 +78,22 @@ export default function CreateChannelPage() {
         bannerMediaId = await uploadMedia(coverFile, 'image', 'cover')
       }
 
+      // No handle field: a person is asked for a handle once, when they
+      // create their account. A channel's only appears in a URL, so it is
+      // derived from the name and collisions resolve silently.
+      const handle = await deriveUniqueHandle(name.trim(), channelHandleAvailable)
+
       const result = await createChannel.mutateAsync({
         name: name.trim(),
-        handle: handle.trim(),
+        handle,
         description: description.trim(),
-        channel_type: mapCategoryToChannelType(category),
+        // Category used to pick this; without it every channel starts
+        // public and the type is changed on the Settings tab.
+        channel_type: 'public',
         comment_mode: commentMode,
         forward_allowed: forwardAllowed,
         paid_access: paidAccess,
         subscription_price_cents: paidAccess && price ? Math.round(parseFloat(price) * 100) : undefined,
-        category,
         avatar_media_id: avatarMediaId,
         banner_media_id: bannerMediaId,
       })
@@ -158,70 +143,6 @@ export default function CreateChannelPage() {
                 className="w-full px-4 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
               />
               <p className="text-[11px] text-brand-text/30 mt-1 text-right">{name.length}/100</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
-                Handle
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-brand-text/40">@</span>
-                <input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                  placeholder="mychannel"
-                  className="w-full pl-8 pr-10 py-3 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 transition-all"
-                />
-                {handle.length >= 3 && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {checkingHandle ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-brand-text/40" />
-                    ) : handleAvailable === true ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : handleAvailable === false ? (
-                      <X className="w-4 h-4 text-brand-text/40" />
-                    ) : null}
-                  </span>
-                )}
-              </div>
-              {handle.length >= 3 && !checkingHandle && (
-                <p className={`text-[11px] mt-1 ${
-                  handleAvailable === true
-                    ? 'text-green-600'
-                    : handleAvailable === false
-                      ? 'text-brand-text/40'
-                      : 'text-brand-text/50'
-                }`}>
-                  {handleAvailable === true
-                    ? `@${handle} is available`
-                    : handleAvailable === false
-                      ? `@${handle} is taken`
-                      : 'Handle availability will be confirmed when you create the channel'}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-brand-text/60 tracking-wider mb-1.5">
-                Category
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {channelCategories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      category === cat
-                        ? 'bg-brand-text text-brand-bg'
-                        : 'border border-brand-divider text-brand-text hover:bg-brand-secondary/50'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>

@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCreateGroup, useCheckHandle } from '@/hooks/useGroups'
+import { useCreateGroup } from '@/hooks/useGroups'
+import { deriveUniqueHandle, groupHandleAvailable } from '@/lib/handles'
 import {
-  X, Globe, Lock, Shield, Loader2, Users, UserPlus,
-  Check, AlertCircle, AtSign, Hash
+  X, Globe, Lock, Shield, Loader2, Users, UserPlus, Hash
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -14,38 +14,28 @@ interface GroupCreateModalProps {
   onCreated?: (groupId: string) => void
 }
 
-const CATEGORIES = [
-  'Gaming', 'Technology', 'Music', 'Sports', 'Art',
-  'Food', 'Travel', 'Education', 'Fitness', 'Business',
-  'Photography', 'Science', 'Fashion', 'Movies', 'Other'
-]
-
 export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModalProps) {
   const router = useRouter()
   const createGroup = useCreateGroup()
 
   const [name, setName] = useState('')
-  const [handle, setHandle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
   const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('public')
   const [joinMode, setJoinMode] = useState<'open' | 'request' | 'invite_only'>('open')
-
-  // Auto-generate handle from name
-  const autoHandle = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)
-  const effectiveHandle = handle || autoHandle
-  const { data: handleCheck, isLoading: checkingHandle } = useCheckHandle(effectiveHandle)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
     try {
+      // No handle field: a person is asked for a handle once, when they
+      // create their account. A group's only ever shows up in a URL, so
+      // it is derived from the name and collisions resolve silently.
+      const handle = await deriveUniqueHandle(name.trim(), groupHandleAvailable)
       const group = await createGroup.mutateAsync({
         name: name.trim(),
         description: description.trim(),
-        handle: effectiveHandle,
-        category: category || undefined,
+        handle,
         privacy_level: privacyLevel,
         join_mode: joinMode,
       })
@@ -111,38 +101,6 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
             <p className="text-[11px] text-brand-text/30 mt-1">{name.length}/100 characters</p>
           </div>
 
-          {/* Handle */}
-          <div>
-            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Handle</label>
-            <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
-              <input
-                type="text"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                placeholder={autoHandle || 'group-handle'}
-                className="w-full pl-9 pr-10 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30"
-                maxLength={50}
-              />
-              {effectiveHandle.length >= 3 && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {checkingHandle ? (
-                    <Loader2 className="w-4 h-4 text-brand-text/30 animate-spin" />
-                  ) : handleCheck?.available ? (
-                    <Check className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-rose-400" />
-                  )}
-                </div>
-              )}
-            </div>
-            <p className="text-[11px] text-brand-text/30 mt-1">
-              {effectiveHandle.length >= 3 && handleCheck && !handleCheck.available
-                ? 'This handle is taken'
-                : 'Lowercase letters, numbers, and hyphens only'}
-            </p>
-          </div>
-
           {/* Description */}
           <div>
             <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Description</label>
@@ -157,26 +115,6 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
           </div>
 
           {/* Category */}
-          <div>
-            <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Category</label>
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(category === cat ? '' : cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    category === cat
-                      ? 'bg-brand-text text-white shadow-xs'
-                      : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Privacy Level */}
           <div>
             <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-2">Privacy</label>

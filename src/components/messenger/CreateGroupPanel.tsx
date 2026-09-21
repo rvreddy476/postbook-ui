@@ -6,10 +6,11 @@ import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
 import { useCreateGroup, useInviteToGroup } from '@/hooks/useGroups'
 import { uploadMedia } from '@/lib/mediaUpload'
+import { deriveUniqueHandle, groupHandleAvailable } from '@/lib/handles'
 import {
   X, Camera, Search, Check, ChevronRight, ChevronLeft,
   Users, Loader2, Globe, Lock, Shield, Crown, UserPlus,
-  AtSign, AlertCircle, ImageIcon
+  AlertCircle, ImageIcon
 } from 'lucide-react'
 import type { User } from '@/types'
 
@@ -18,11 +19,6 @@ interface CreateGroupPanelProps {
   onCreated: (groupId: string) => void
 }
 
-const CATEGORIES = [
-  'Gaming', 'Technology', 'Music', 'Sports', 'Art',
-  'Food', 'Travel', 'Education', 'Fitness', 'Business',
-  'Photography', 'Science', 'Other'
-]
 
 export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPanelProps) {
   const me = getSession()
@@ -32,9 +28,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
   // Step 1: Group identity
   const [name, setName] = useState('')
-  const [handle, setHandle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
   const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('public')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -56,8 +50,6 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
-  const autoHandle = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)
-  const effectiveHandle = handle || autoHandle
 
   // Load users when step 2
   useEffect(() => {
@@ -122,11 +114,15 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
       let coverMediaId: string | undefined
       if (coverFile) coverMediaId = await uploadMedia(coverFile, 'image', 'cover')
 
+      // No handle field: a person is asked for a handle once, when they
+      // create their account. A group's only ever shows up in a URL, so
+      // it is derived from the name and collisions resolve silently.
+      const handle = await deriveUniqueHandle(name.trim(), groupHandleAvailable)
+
       const newGroup = await createGroup.mutateAsync({
         name: name.trim(),
         description: description.trim(),
-        handle: effectiveHandle || undefined,
-        category: category || undefined,
+        handle,
         privacy_level: privacyLevel,
         avatar_media_id: avatarMediaId,
         cover_media_id: coverMediaId,
@@ -253,22 +249,6 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 <p className="text-[10px] text-brand-text/30 mt-1">{name.length}/100 · Minimum 3 characters</p>
               </div>
 
-              {/* Handle */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Handle</label>
-                <div className="relative">
-                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
-                  <input
-                    type="text"
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    placeholder={autoHandle || 'group-handle'}
-                    maxLength={50}
-                    className="w-full pl-9 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
-                  />
-                </div>
-              </div>
-
               {/* Description */}
               <div>
                 <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Description</label>
@@ -282,26 +262,6 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                 />
               </div>
 
-              {/* Category */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-2">Category</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {CATEGORIES.map(cat => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(category === cat ? '' : cat)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        category === cat
-                          ? 'bg-brand-text text-white shadow-xs'
-                          : 'bg-brand-secondary text-brand-highlight hover:bg-brand-secondary border border-brand-divider'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Privacy */}
               <div>
@@ -471,9 +431,9 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                     </div>
                   </div>
                   <h3 className="text-base font-bold text-brand-text mt-2">{name}</h3>
-                  {effectiveHandle && (
-                    <p className="text-xs text-brand-text/60 font-medium">@{effectiveHandle}</p>
-                  )}
+                  {/* The handle is derived at create time and never shown
+                      in this preview: it would be a guess until the
+                      server confirms it is free. */}
                   {description && (
                     <p className="text-xs text-brand-highlight mt-1 line-clamp-2">{description}</p>
                   )}
@@ -483,9 +443,6 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
                       <Users className="w-3.5 h-3.5" />
                       {selectedMembers.length + 1} members
                     </span>
-                    {category && (
-                      <span className="px-2 py-0.5 bg-brand-secondary rounded-full text-[10px] font-semibold">{category}</span>
-                    )}
                     <span className="flex items-center gap-1 capitalize">
                       {privacyLevel === 'public' ? <Globe className="w-3.5 h-3.5" /> :
                        privacyLevel === 'restricted' ? <Shield className="w-3.5 h-3.5" /> :
