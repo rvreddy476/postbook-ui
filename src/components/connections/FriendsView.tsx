@@ -1,39 +1,48 @@
 'use client'
 
 /**
- * FriendsView — the Connections surface.
+ * FriendsView — the Connections surface, built to the shared screen.
+ *
+ * Layout: title on the left with a segmented control on the right, a
+ * filter/sort bar under a divider, then a grid of COMPACT HORIZONTAL
+ * cards — avatar, name, status line, mutual count, and the actions on the
+ * right. Three across on a wide screen.
  *
  * One relationship concept: a Connection. "Circle" and "Trusted Circle"
  * were removed on 21 Sep; close-friends and the circle tables are gone
  * from graph-service too.
  *
- * Three lanes, one screen: your connections, requests you received, and
- * requests you sent. Each is a grid of cards carrying only what identifies
- * a person — picture, name, and how many connections you share.
- *
- * "Online now" was removed on 22 Sep at the founder's request, and with it
- * the presence query and the per-card activity line: a card that claims
- * someone is active is a claim that has to keep being true.
+ * What the shared screen shows that is NOT here, and why:
+ *   · Job titles ("Product Designer") — no profile field carries one for a
+ *     connection, so it would be invented text on every card.
+ *   · "Active 18m ago" — presence is a live boolean from the WS gateway,
+ *     not a last-seen timestamp. Online reads "Active now"; offline shows
+ *     the handle rather than a made-up duration.
+ *   · A Favorites filter — the favorites table was dropped in graph-service
+ *     migration 012. A chip that filters nothing is worse than no chip.
  *
  *   connections / requests → graph-service
  *   mutual counts          → graph-service /connections/mutual-counts
+ *   presence               → /v1/users/online/batch + WS presence_update
  *   "Matched for you"      → suggestion-service
  */
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     UserPlus, Search, ChevronRight, MessageCircle, X, QrCode, AtSign,
-    MapPin, Contact, ShieldOff, Users,
+    MapPin, Contact, ShieldOff, Users, Inbox, Send, LayoutGrid, List,
+    ArrowUpDown, MoreHorizontal, UserMinus, ExternalLink,
 } from 'lucide-react'
 import { useAuthUser } from '@/store/auth'
 import {
     useFriends, usePendingFriendRequests, useAcceptFriendRequest,
     useRejectFriendRequest, useFriendSuggestions, useSentFriendRequests,
     useCancelFriendRequest, useFilteredFriendRequests, useUnfilterFriendRequest,
-    useMutualConnectionCounts,
+    useMutualConnectionCounts, usePresence, useRemoveFriend,
     type ConnectionUser, type SuggestionUser,
 } from '@/hooks/useConnections'
+import { useNotifications } from '@/contexts/NotificationContext'
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 /* ----------------------------- shared helpers ---------------------------- */
@@ -93,6 +102,7 @@ function mutualsLine(count: number | undefined): string {
 }
 
 type Lane = 'connections' | 'received' | 'sent'
+type Person = { user_id: string; display_name: string; username?: string; avatar_media_id?: string }
 
 /* ================================ SURFACE 1 ============================== */
 /* Connections home                                                          */
@@ -100,9 +110,13 @@ type Lane = 'connections' | 'received' | 'sent'
 export default function FriendsView() {
     const router = useRouter()
     const authUser = useAuthUser()
+    const { getUnreadCountForUser } = useNotifications()
 
     const [lane, setLane] = useState<Lane>('connections')
     const [search, setSearch] = useState('')
+    const [onlineOnly, setOnlineOnly] = useState(false)
+    const [sortAlpha, setSortAlpha] = useState(false)
+    const [listView, setListView] = useState(false)
     const [addOpen, setAddOpen] = useState(false)
     const [filteredOpen, setFilteredOpen] = useState(false)
     /** Locally settled requests, so a card leaves the grid immediately. */
@@ -117,6 +131,7 @@ export default function FriendsView() {
     const rejectReq = useRejectFriendRequest()
     const cancelReq = useCancelFriendRequest()
     const unfilterReq = useUnfilterFriendRequest()
+    const removeFriend = useRemoveFriend()
 
     const friends = useMemo(() => friendsQ.data?.items ?? [], [friendsQ.data])
     const received = useMemo(
@@ -132,6 +147,14 @@ export default function FriendsView() {
         [filteredQ.data, handled],
     )
 
+    // Presence for everyone on screen — one batch call, then the WS gateway
+    // patches the cache the instant anybody connects or disconnects.
+    const allIds = useMemo(
+        () => [...friends, ...received, ...sent].map((p) => p.user_id),
+        [friends, received, sent],
+    )
+    const presence = usePresence(allIds).data ?? {}
+
     const markHandled = (id: string) => setHandled((p) => new Set(p).add(id))
     const unmarkHandled = (id: string) =>
         setHandled((p) => {
@@ -145,53 +168,101 @@ export default function FriendsView() {
         run(id, { onError: () => unmarkHandled(id) })
     }
 
-    // One list drives the grid, whichever lane is open. Every entry is
-    // {user_id, display_name, username?, avatar_media_id?}, which is all a
-    // card renders.
+    // One list drives the grid, whichever lane is open.
     const people = useMemo(() => {
-        const base: { user_id: string; display_name: string; username?: string; avatar_media_id?: string }[] =
-            lane === 'connections' ? friends : lane === 'received' ? received : sent
+        let base: Person[] = lane === 'connections' ? friends : lane === 'received' ? received : sent
+
         const q = search.trim().toLowerCase()
-        if (!q) return base
-        return base.filter(
-            (p) =>
-                p.display_name.toLowerCase().includes(q) ||
-                (p.username ?? '').toLowerCase().includes(q),
+        if (q) {
+            base = base.filter(
+                (p) =>
+                    p.display_name.toLowerCase().includes(q) ||
+                    (p.username ?? '').toLowerCase().includes(q),
+            )
+        }
+        if (lane === 'connections' && onlineOnly) {
+            base = base.filter((p) => presence[p.user_id])
+        }
+        return [...base].sort((a, b) =>
+            sortAlpha
+                ? a.display_name.localeCompare(b.display_name)
+                : Number(!!presence[b.user_id]) - Number(!!presence[a.user_id]),
         )
-    }, [lane, friends, received, sent, search])
+    }, [lane, friends, received, sent, search, onlineOnly, sortAlpha, presence])
 
     const mutualIds = useMemo(() => people.map((p) => p.user_id), [people])
     const mutualsQ = useMutualConnectionCounts(authUser?.id, mutualIds)
     const mutuals = mutualsQ.data
 
-    const openProfile = (u: { username?: string; user_id: string }) =>
-        router.push(`/u/${u.username || u.user_id}`)
-    const openChat = (u: ConnectionUser) =>
+    const openProfile = (u: Person) => router.push(`/u/${u.username || u.user_id}`)
+    const openChat = (u: Person) =>
         router.push(`/messenger?user=${encodeURIComponent(u.user_id)}`)
 
-    const emptyText =
-        search.trim()
-            ? 'Nobody here matches that search.'
-            : lane === 'connections'
-                ? 'No connections yet — add a few people to get started.'
-                : lane === 'received'
-                    ? 'No one is waiting on you.'
-                    : 'You have no requests outstanding.'
+    const emptyText = search.trim()
+        ? 'Nobody here matches that search.'
+        : lane === 'connections'
+            ? onlineOnly
+                ? 'None of your connections are online right now.'
+                : 'No connections yet — add a few people to get started.'
+            : lane === 'received'
+                ? 'No one is waiting on you.'
+                : 'You have no requests outstanding.'
 
     const loading =
         lane === 'connections' ? friendsQ.isLoading
             : lane === 'received' ? receivedQ.isLoading
                 : sentQ.isLoading
 
+    const gridClass = listView
+        ? 'grid grid-cols-1 gap-2.5'
+        : 'grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3'
+
+    const actionsFor = (p: Person): React.ReactNode => {
+        if (lane === 'connections') {
+            return (
+                <>
+                    <IconAction
+                        onClick={() => openChat(p)}
+                        label={`Message ${p.display_name}`}
+                        badge={getUnreadCountForUser(p.user_id)}
+                    >
+                        <MessageCircle className="h-4 w-4" />
+                    </IconAction>
+                    <OverflowMenu
+                        label={`More options for ${p.display_name}`}
+                        items={[
+                            { label: 'View profile', icon: <ExternalLink className="h-3.5 w-3.5" />, onSelect: () => openProfile(p) },
+                            {
+                                label: 'Remove connection',
+                                icon: <UserMinus className="h-3.5 w-3.5" />,
+                                danger: true,
+                                onSelect: () => settle(p.user_id, (id, o) => removeFriend.mutate(id, o)),
+                            },
+                        ]}
+                    />
+                </>
+            )
+        }
+        if (lane === 'received') {
+            return (
+                <>
+                    <PillAction onClick={() => settle(p.user_id, (id, o) => acceptReq.mutate(id, o))} label="Accept" primary />
+                    <PillAction onClick={() => settle(p.user_id, (id, o) => rejectReq.mutate(id, o))} label="Decline" />
+                </>
+            )
+        }
+        return <PillAction onClick={() => settle(p.user_id, (id, o) => cancelReq.mutate(id, o))} label="Cancel" />
+    }
+
     return (
-        <div className="space-y-6">
-            {/* ---- Header ---- */}
-            <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                    <h1 className="text-[34px] font-black leading-none tracking-tight text-brand-text">
+        <div className="space-y-5">
+            {/* ---- Title + segmented control ---- */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                    <h1 className="text-[32px] font-black leading-none tracking-tight text-brand-text">
                         Connections
                     </h1>
-                    <p className="mt-2 text-sm font-medium text-brand-text/55">
+                    <p className="mt-2 text-[13px] font-medium text-brand-text/55">
                         {friends.length} {friends.length === 1 ? 'connection' : 'connections'}
                         <span className="px-1.5 text-brand-text/25">·</span>
                         {received.length} received
@@ -199,84 +270,89 @@ export default function FriendsView() {
                         {sent.length} sent
                     </p>
                 </div>
-                <button
-                    onClick={() => setAddOpen(true)}
-                    className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary-ink px-4 text-[13px] font-bold text-white transition hover:bg-primary-hover"
-                >
-                    <UserPlus className="h-4 w-4" />
-                    Find people
-                </button>
-            </div>
 
-            {/* ---- Segmented control ---- */}
-            <div
-                role="tablist"
-                aria-label="Connection lanes"
-                className="flex gap-1 rounded-full border border-brand-divider bg-brand-secondary/50 p-1"
-            >
-                <LaneTab id="connections" active={lane} onSelect={setLane} label="Connections" count={friends.length} />
-                <LaneTab id="received" active={lane} onSelect={setLane} label="Received" count={received.length} />
-                <LaneTab id="sent" active={lane} onSelect={setLane} label="Sent" count={sent.length} />
-            </div>
-
-            {/* ---- Search ---- */}
-            <div className="flex items-center gap-2.5 rounded-2xl border border-brand-divider bg-brand-card px-4 py-2.5">
-                <Search className="h-4 w-4 shrink-0 text-brand-text/35" />
-                <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by name or @handle"
-                    aria-label="Search connections"
-                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/35 outline-hidden"
-                />
-                {search && (
-                    <button onClick={() => setSearch('')} aria-label="Clear search">
-                        <X className="h-4 w-4 text-brand-text/35 transition hover:text-brand-text" />
+                <div className="flex items-center gap-2">
+                    <div
+                        role="tablist"
+                        aria-label="Connection lanes"
+                        className="flex gap-1 rounded-2xl border border-brand-divider bg-brand-secondary/60 p-1"
+                    >
+                        <LaneTab id="connections" active={lane} onSelect={setLane} label="Connections" count={friends.length} icon={<Users className="h-4 w-4" />} />
+                        <LaneTab id="received" active={lane} onSelect={setLane} label="Received" count={received.length} icon={<Inbox className="h-4 w-4" />} />
+                        <LaneTab id="sent" active={lane} onSelect={setLane} label="Sent" count={sent.length} icon={<Send className="h-4 w-4" />} />
+                    </div>
+                    <button
+                        onClick={() => setAddOpen(true)}
+                        className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary-ink px-4 text-[13px] font-bold text-white transition hover:bg-primary-hover"
+                    >
+                        <UserPlus className="h-4 w-4" />
+                        <span className="hidden sm:inline">Find people</span>
                     </button>
-                )}
+                </div>
             </div>
 
-            {/* ---- Grid ---- */}
+            {/* ---- Filter / sort bar ---- */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-brand-divider pb-4">
+                {lane === 'connections' && (
+                    <>
+                        <span className="mr-1 text-sm font-bold text-brand-text">All Connections</span>
+                        <Chip active={!onlineOnly} onClick={() => setOnlineOnly(false)} label="Everyone" />
+                        <Chip active={onlineOnly} onClick={() => setOnlineOnly(true)} label="Online Only" />
+                    </>
+                )}
+
+                <div className="ml-auto flex items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-full border border-brand-divider bg-brand-card px-3 py-1.5">
+                        <Search className="h-3.5 w-3.5 shrink-0 text-brand-text/35" />
+                        <input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search"
+                            aria-label="Search connections"
+                            className="w-28 bg-transparent text-[13px] text-brand-text placeholder-brand-text/35 outline-hidden focus:w-40 sm:w-36 sm:focus:w-52"
+                        />
+                        {search && (
+                            <button onClick={() => setSearch('')} aria-label="Clear search">
+                                <X className="h-3.5 w-3.5 text-brand-text/35 transition hover:text-brand-text" />
+                            </button>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={() => setSortAlpha((v) => !v)}
+                        className="flex items-center gap-1.5 rounded-full border border-brand-divider bg-brand-card px-3 py-1.5 text-[13px] font-semibold text-brand-text/70 transition hover:text-brand-text"
+                    >
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                        Sort: {sortAlpha ? 'Name' : 'Active'}
+                    </button>
+
+                    <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card p-0.5">
+                        <ViewToggle on={!listView} onClick={() => setListView(false)} label="Grid view">
+                            <LayoutGrid className="h-4 w-4" />
+                        </ViewToggle>
+                        <ViewToggle on={listView} onClick={() => setListView(true)} label="List view">
+                            <List className="h-4 w-4" />
+                        </ViewToggle>
+                    </div>
+                </div>
+            </div>
+
+            {/* ---- Cards ---- */}
             {loading ? (
                 <Hint text="Loading…" />
             ) : people.length === 0 ? (
                 <Hint text={emptyText} />
             ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                <div className={gridClass}>
                     {people.map((p) => (
                         <PersonCard
                             key={p.user_id}
                             person={p}
+                            online={!!presence[p.user_id]}
                             mutuals={mutuals?.get(p.user_id)}
                             onOpen={() => openProfile(p)}
-                        >
-                            {lane === 'connections' && (
-                                <CardButton
-                                    onClick={() => openChat(p as ConnectionUser)}
-                                    label="Message"
-                                    icon={<MessageCircle className="h-3.5 w-3.5" />}
-                                />
-                            )}
-                            {lane === 'received' && (
-                                <div className="flex w-full gap-1.5">
-                                    <CardButton
-                                        onClick={() => settle(p.user_id, (id, o) => acceptReq.mutate(id, o))}
-                                        label="Accept"
-                                        primary
-                                    />
-                                    <CardButton
-                                        onClick={() => settle(p.user_id, (id, o) => rejectReq.mutate(id, o))}
-                                        label="Decline"
-                                    />
-                                </div>
-                            )}
-                            {lane === 'sent' && (
-                                <CardButton
-                                    onClick={() => settle(p.user_id, (id, o) => cancelReq.mutate(id, o))}
-                                    label="Cancel request"
-                                />
-                            )}
-                        </PersonCard>
+                            actions={actionsFor(p)}
+                        />
                     ))}
                 </div>
             )}
@@ -287,38 +363,40 @@ export default function FriendsView() {
                     <button
                         onClick={() => setFilteredOpen((v) => !v)}
                         aria-expanded={filteredOpen}
-                        className="flex w-full items-center gap-3 rounded-2xl border border-brand-divider bg-brand-secondary/40 p-3.5 text-left transition hover:border-brand-text/30"
+                        className="flex w-full items-center gap-3 rounded-2xl border border-brand-divider bg-brand-secondary/40 p-3 text-left transition hover:border-brand-text/30"
                     >
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70">
-                            <ShieldOff className="h-5 w-5" />
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70">
+                            <ShieldOff className="h-4 w-4" />
                         </span>
                         <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-bold text-brand-text">
+                            <span className="block text-[13px] font-bold text-brand-text">
                                 Hidden by trust-safety
                             </span>
-                            <span className="block truncate text-xs text-brand-text/55">
+                            <span className="block truncate text-[11px] text-brand-text/55">
                                 {filtered.length} {filtered.length === 1 ? 'request' : 'requests'} · new accounts, no shared signals
                             </span>
                         </span>
                         <ChevronRight
-                            className={`h-5 w-5 shrink-0 text-brand-text/30 transition-transform ${filteredOpen ? 'rotate-90' : ''}`}
+                            className={`h-4 w-4 shrink-0 text-brand-text/30 transition-transform ${filteredOpen ? 'rotate-90' : ''}`}
                         />
                     </button>
 
                     {filteredOpen && (
-                        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        <div className={`mt-2.5 ${gridClass}`}>
                             {filtered.map((r) => (
                                 <PersonCard
                                     key={r.user_id}
                                     person={r}
+                                    online={!!presence[r.user_id]}
                                     mutuals={mutuals?.get(r.user_id)}
                                     onOpen={() => openProfile(r)}
-                                >
-                                    <CardButton
-                                        onClick={() => settle(r.user_id, (id, o) => unfilterReq.mutate(id, o))}
-                                        label="Unfilter"
-                                    />
-                                </PersonCard>
+                                    actions={
+                                        <PillAction
+                                            onClick={() => settle(r.user_id, (id, o) => unfilterReq.mutate(id, o))}
+                                            label="Unfilter"
+                                        />
+                                    }
+                                />
                             ))}
                         </div>
                     )}
@@ -330,20 +408,17 @@ export default function FriendsView() {
     )
 }
 
-/* ------------------------------- lane tab -------------------------------- */
+/* ------------------------------ chrome bits ------------------------------ */
 
 function LaneTab({
-    id,
-    active,
-    onSelect,
-    label,
-    count,
+    id, active, onSelect, label, count, icon,
 }: {
     id: Lane
     active: Lane
     onSelect: (l: Lane) => void
     label: string
     count: number
+    icon: React.ReactNode
 }) {
     const on = active === id
     return (
@@ -351,13 +426,12 @@ function LaneTab({
             role="tab"
             aria-selected={on}
             onClick={() => onSelect(id)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-bold transition ${
-                on
-                    ? 'bg-brand-card text-brand-text shadow-xs'
-                    : 'text-brand-text/55 hover:text-brand-text'
+            className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold transition ${
+                on ? 'bg-brand-card text-brand-text shadow-xs' : 'text-brand-text/55 hover:text-brand-text'
             }`}
         >
-            <span className="truncate">{label}</span>
+            <span className="shrink-0">{icon}</span>
+            <span className="hidden truncate sm:inline">{label}</span>
             {count > 0 && (
                 <span
                     className={`grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-bold ${
@@ -371,73 +445,200 @@ function LaneTab({
     )
 }
 
-/* ------------------------------ person card ------------------------------ */
-
-/**
- * The card carries three things and no more: the picture, the name, and the
- * mutual-connection count. Job titles, "active 2h ago" and match percentages
- * were all removed on 22 Sep — none of them was backed by a field the server
- * actually sends for a connection.
- */
-function PersonCard({
-    person,
-    mutuals,
-    onOpen,
-    children,
-}: {
-    person: { user_id: string; display_name: string; username?: string; avatar_media_id?: string }
-    mutuals: number | undefined
-    onOpen: () => void
-    children?: React.ReactNode
-}) {
-    return (
-        <div className="flex flex-col items-center rounded-2xl border border-brand-divider bg-brand-card p-4 text-center transition hover:border-brand-text/25">
-            <button onClick={onOpen} aria-label={person.display_name} className="shrink-0">
-                <Avatar user={person} size={72} />
-            </button>
-            <button onClick={onOpen} className="mt-3 w-full min-w-0">
-                <span className="block truncate text-sm font-bold text-brand-text">
-                    {person.display_name}
-                </span>
-            </button>
-            {/* Fixed height so every card in a row lines up, whether or not
-                the count has arrived. */}
-            <span className="mt-1 flex h-4 items-center gap-1 text-[11px] text-brand-text/50">
-                {mutuals !== undefined && mutuals > 0 && <Users className="h-3 w-3" />}
-                <span className="truncate">{mutualsLine(mutuals)}</span>
-            </span>
-            {children && <div className="mt-3 flex w-full">{children}</div>}
-        </div>
-    )
-}
-
-function CardButton({
-    onClick,
-    label,
-    icon,
-    primary,
-}: {
-    onClick: () => void
-    label: string
-    icon?: React.ReactNode
-    primary?: boolean
-}) {
+function Chip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
     return (
         <button
             onClick={onClick}
-            className={`flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold transition ${
-                primary
-                    ? 'bg-primary-ink text-white hover:bg-primary-hover'
-                    : 'border border-brand-divider text-brand-text/75 hover:border-brand-text/35 hover:text-brand-text'
+            aria-pressed={active}
+            className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition ${
+                active
+                    ? 'bg-brand-card text-brand-text shadow-xs ring-1 ring-brand-divider'
+                    : 'text-brand-text/55 hover:text-brand-text'
             }`}
         >
-            {icon}
             {label}
         </button>
     )
 }
 
+function ViewToggle({
+    on, onClick, label, children,
+}: {
+    on: boolean
+    onClick: () => void
+    label: string
+    children: React.ReactNode
+}) {
+    return (
+        <button
+            onClick={onClick}
+            aria-label={label}
+            aria-pressed={on}
+            className={`grid h-8 w-8 place-items-center rounded-full transition ${
+                on ? 'bg-primary-ink text-white' : 'text-brand-text/45 hover:text-brand-text'
+            }`}
+        >
+            {children}
+        </button>
+    )
+}
+
+/* ------------------------------ person card ------------------------------ */
+
+/**
+ * The compact row from the shared screen: avatar with a live presence dot,
+ * name, status line, mutual count, actions on the right. Three across on a
+ * wide screen, one per row in list view.
+ */
+function PersonCard({
+    person, online, mutuals, onOpen, actions,
+}: {
+    person: Person
+    online: boolean
+    mutuals: number | undefined
+    onOpen: () => void
+    actions: React.ReactNode
+}) {
+    return (
+        <div className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card p-3 transition hover:border-brand-text/25">
+            <button onClick={onOpen} aria-label={person.display_name} className="shrink-0">
+                <Avatar user={person} size={44} online={online} />
+            </button>
+
+            <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+                <span className="block truncate text-[14px] font-bold leading-tight text-brand-text">
+                    {person.display_name}
+                </span>
+                <span
+                    className={`mt-0.5 block truncate text-[11px] leading-tight ${
+                        online ? 'font-semibold text-emerald-600' : 'text-brand-text/50'
+                    }`}
+                >
+                    {online ? 'Active now' : person.username ? `@${person.username}` : ''}
+                </span>
+                {/* Fixed height so rows line up whether or not the count has
+                    arrived — an absent count is "not resolved", not zero. */}
+                <span className="mt-1 flex h-4 items-center gap-1 text-[11px] text-brand-text/45">
+                    {mutuals !== undefined && mutuals > 0 && <Users className="h-3 w-3 shrink-0" />}
+                    <span className="truncate">{mutualsLine(mutuals)}</span>
+                </span>
+            </button>
+
+            <div className="flex shrink-0 items-center gap-1.5">{actions}</div>
+        </div>
+    )
+}
+
+function IconAction({
+    onClick, label, badge = 0, children,
+}: {
+    onClick: () => void
+    label: string
+    badge?: number
+    children: React.ReactNode
+}) {
+    return (
+        <button
+            onClick={onClick}
+            aria-label={badge > 0 ? `${label} — ${badge} unread` : label}
+            className="relative grid h-9 w-9 place-items-center rounded-full border border-brand-divider text-brand-text/60 transition hover:border-brand-text/35 hover:text-brand-text"
+        >
+            {children}
+            {badge > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary-ink px-1 text-[10px] font-bold text-white ring-2 ring-brand-card">
+                    {badge > 99 ? '99+' : badge}
+                </span>
+            )}
+        </button>
+    )
+}
+
+function PillAction({
+    onClick, label, primary,
+}: {
+    onClick: () => void
+    label: string
+    primary?: boolean
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition ${
+                primary
+                    ? 'bg-primary-ink text-white hover:bg-primary-hover'
+                    : 'border border-brand-divider text-brand-text/70 hover:border-brand-text/35 hover:text-brand-text'
+            }`}
+        >
+            {label}
+        </button>
+    )
+}
+
+/** The "…" menu on a connection card. Closes on outside click and Escape. */
+function OverflowMenu({
+    label, items,
+}: {
+    label: string
+    items: { label: string; icon: React.ReactNode; onSelect: () => void; danger?: boolean }[]
+}) {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const onDown = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+        }
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpen(false)
+        }
+        window.addEventListener('mousedown', onDown)
+        window.addEventListener('keydown', onKey)
+        return () => {
+            window.removeEventListener('mousedown', onDown)
+            window.removeEventListener('keydown', onKey)
+        }
+    }, [open])
+
+    return (
+        <div ref={ref} className="relative">
+            <button
+                onClick={() => setOpen((v) => !v)}
+                aria-label={label}
+                aria-expanded={open}
+                className="grid h-9 w-9 place-items-center rounded-full border border-brand-divider text-brand-text/50 transition hover:border-brand-text/35 hover:text-brand-text"
+            >
+                <MoreHorizontal className="h-4 w-4" />
+            </button>
+            {open && (
+                <div
+                    role="menu"
+                    className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-lg"
+                >
+                    {items.map((it) => (
+                        <button
+                            key={it.label}
+                            role="menuitem"
+                            onClick={() => {
+                                setOpen(false)
+                                it.onSelect()
+                            }}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-semibold transition hover:bg-brand-secondary/60 ${
+                                it.danger ? 'text-rose-600' : 'text-brand-text/80'
+                            }`}
+                        >
+                            {it.icon}
+                            {it.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
 /* ----------------------------- shared atoms ------------------------------ */
+
 
 function Avatar({
     user,
