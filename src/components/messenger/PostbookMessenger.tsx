@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
 import ThreadDetails from './ThreadDetails'
 import MessengerTopBar from './MessengerTopBar'
 import NewMessageSheet from './NewMessageSheet'
 import GroupPanel from './GroupPanel'
+import ChannelPanel from './ChannelPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
@@ -68,7 +68,9 @@ function EmptyState() {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function PostbookMessenger() {
-  const router = useRouter()
+  // No useRouter here any more: every surface this page can open — direct,
+  // group, channel — opens in the column beside the list rather than
+  // navigating somewhere else.
   // The four scopes the mockup's chip row shows, plus Requests, which only
   // appears when someone is actually waiting. 'unread' and 'friends' render
   // the same list from different slices of it.
@@ -78,6 +80,7 @@ export default function PostbookMessenger() {
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
+  const [activeChannelId, setActiveChannelId] = useState<string | null>(null)
   // Thread details: open by default on wide screens. The conversation id is
   // reported up by DmChat, which is what resolves or creates it.
   const [showDetails, setShowDetails] = useState(true)
@@ -277,6 +280,7 @@ export default function PostbookMessenger() {
   const handleFriendClick = useCallback((friend: User) => {
     setActiveDm(friend)
     setActiveGroupId(null)
+    setActiveChannelId(null)
     setShowCreateGroup(false)
   }, [])
 
@@ -331,6 +335,16 @@ export default function PostbookMessenger() {
   const handleGroupClick = useCallback((groupId: string) => {
     setActiveGroupId(groupId)
     setActiveDm(null)
+    setActiveChannelId(null)
+    setShowCreateGroup(false)
+  }, [])
+
+  // A channel opens in the middle column like everything else here, rather
+  // than navigating to /channels/<id> and leaving the messenger behind.
+  const handleChannelClick = useCallback((channelId: string) => {
+    setActiveChannelId(channelId)
+    setActiveDm(null)
+    setActiveGroupId(null)
     setShowCreateGroup(false)
   }, [])
 
@@ -338,6 +352,7 @@ export default function PostbookMessenger() {
     setShowCreateGroup(true)
     setActiveDm(null)
     setActiveGroupId(null)
+    setActiveChannelId(null)
   }, [])
 
   const handleAcceptRequest = useCallback(
@@ -402,7 +417,7 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
-      <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId || activeChannelId ? 'hidden md:flex' : 'flex'}`}>
         {/* Column header: what this list is, how much is unread, and the
             one filter. Who you are signed in as is no longer repeated here —
             the top bar carries the avatar, home and settings. */}
@@ -508,8 +523,12 @@ export default function PostbookMessenger() {
                 {filteredChannels.map((channel) => (
                   <button
                     key={channel.id}
-                    onClick={() => router.push(`/channels/${channel.id}`)}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left border border-transparent transition-all hover:border-brand-divider hover:bg-primary-ink/5 group"
+                    onClick={() => handleChannelClick(channel.id)}
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all group ${
+                      activeChannelId === channel.id
+                        ? 'bg-primary-ink/5 border border-brand-divider'
+                        : 'border border-transparent hover:border-brand-divider hover:bg-primary-ink/5'
+                    }`}
                   >
                     <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-secondary text-brand-text/60">
                       <Hash className="h-5 w-5" strokeWidth={1.75} />
@@ -733,7 +752,11 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  MAIN CONTENT                                                  */}
       {/* ============================================================ */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!activeDm && !activeGroupId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!activeDm && !activeGroupId && !activeChannelId ? 'hidden md:flex' : 'flex'}`}>
+        {/* One column, one open thing. A direct chat, a group and a channel
+            are three shapes of the same conversation slot; GroupPanel used
+            to render as a sibling of this column, which put an empty-state
+            panel alongside the group you had just opened. */}
         {activeDm ? (
           <DmChat
             userId={activeDm.id}
@@ -744,6 +767,26 @@ export default function PostbookMessenger() {
             detailsOpen={showDetails}
             onToggleDetails={() => setShowDetails((v) => !v)}
             onConversationReady={setActiveConversationId}
+          />
+        ) : activeGroupId && selectedGroup ? (
+          <GroupPanel
+            groupId={activeGroupId}
+            groupName={selectedGroup.name}
+            groupColor={getGroupColor(activeGroupId)}
+            groupAvatarUrl={
+              selectedGroup.avatar_media_id
+                ? `/v1/media/${selectedGroup.avatar_media_id}/serve`
+                : null
+            }
+            onClose={() => setActiveGroupId(null)}
+            // Without this, creating a group from inside the panel falls
+            // back to router.push('/groups/<id>') and leaves the messenger.
+            onCreateGroup={handleGroupClick}
+          />
+        ) : activeChannelId ? (
+          <ChannelPanel
+            channelId={activeChannelId}
+            onBack={() => setActiveChannelId(null)}
           />
         ) : (
           <EmptyState />
@@ -763,23 +806,8 @@ export default function PostbookMessenger() {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/*  RIGHT PANEL                                                   */}
-      {/* ============================================================ */}
-      {activeGroupId && !showCreateGroup && selectedGroup && (
-        <GroupPanel
-          groupId={activeGroupId}
-          groupName={selectedGroup.name}
-          groupColor={getGroupColor(activeGroupId)}
-          groupAvatarUrl={
-            selectedGroup.avatar_media_id
-              ? `/v1/media/${selectedGroup.avatar_media_id}/serve`
-              : null
-          }
-          onClose={() => setActiveGroupId(null)}
-        />
-      )}
-
+      {/* GroupPanel moved into the conversation column above. CreateGroup
+          is a portalled modal, so it stays here. */}
       {showCreateGroup && (
         <CreateGroupPanel
           onClose={() => setShowCreateGroup(false)}

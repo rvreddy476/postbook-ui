@@ -878,7 +878,7 @@ export default function GroupPanel(props: GroupPanelProps) {
   }
 
   return (
-    <div className="w-full flex flex-col h-full font-sans border-l border-brand-divider">
+    <div className="w-full min-w-0 flex flex-col h-full font-sans">
       {/* ── Header ── */}
       <div className="px-8 py-5 border-b border-brand-divider shrink-0 z-20">
         <div className="flex items-center justify-between">
@@ -908,10 +908,13 @@ export default function GroupPanel(props: GroupPanelProps) {
 
             {/* Name + info */}
             <div className="flex flex-col justify-center">
-              <h1
-                className="font-semibold text-brand-text text-[16px] tracking-tight leading-tight cursor-pointer hover:text-blue-600 transition-colors"
-                onClick={() => router.push(`/groups/${groupId}`)}
-              >{groupName}</h1>
+              {/* Plain heading. This used to navigate to /groups/<id>,
+                  which threw you out of the messenger onto another page —
+                  everything the group needs (chat, posts, members, rename,
+                  add member, leave) is already on this panel. */}
+              <h1 className="font-semibold text-brand-text text-[16px] tracking-tight leading-tight">
+                {groupName}
+              </h1>
               <p className="text-brand-text/60 text-[12px] font-medium mt-0.5">
                 {groupLoading ? '...' : `${memberCount} members`}
               </p>
