@@ -16,13 +16,25 @@ export class AuthRepository {
     this.sessionStore = sessionStore;
   }
 
-  // Returns the whole result, not just the user: the caller needs
-  // `verificationToken` to complete email verification, and registration
-  // issues no session, so nothing else carries it.
+  /**
+   * Registration does NOT establish a session, so it must not save one.
+   *
+   * auth-service issues no tokens here and the account is unverified until
+   * a code is entered, so the server has nothing to honour. Saving the
+   * user locally anyway made the app believe it was signed in: the feed
+   * rendered, and every gated route — profile, settings, messenger —
+   * bounced to /login, because the middleware correctly saw no pb_auth
+   * cookie. It also yanked the person off the verify screen, since the
+   * register page redirects away when a local session exists.
+   *
+   * The session is saved by the login that follows verification.
+   *
+   * Returns the whole result, not just the user: the caller needs
+   * `verificationToken` to complete verification, and nothing else
+   * carries it.
+   */
   async register(command: RegisterCommand) {
-    const result = await this.strategy.register(command);
-    this.sessionStore.save(result);
-    return result;
+    return this.strategy.register(command);
   }
 
   async login(command: LoginCommand): Promise<LoginResult> {

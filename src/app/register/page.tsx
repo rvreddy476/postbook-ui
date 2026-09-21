@@ -15,7 +15,7 @@ import {
   User,
   Loader2,
 } from 'lucide-react';
-import { getSession, registerUser } from '@/services/authService';
+import { getSession, loginUser, registerUser } from '@/services/authService';
 import { DobPicker, validateDob } from '@/components/ui/dob-picker';
 import { useVerifyEmail, useResendVerification } from '@/hooks/useSecurity';
 
@@ -110,7 +110,11 @@ export default function RegisterPage() {
         setScreen('verify-email');
         setIsLoading(false);
       } else {
-        router.push('/');
+        // A phone signup: registration issues no session, so pushing to
+        // the feed here produced the same "looks signed in, bounces on
+        // the first gated click" state. Sign in properly instead.
+        const signIn = await loginUser(loginId, password);
+        router.push(signIn.success ? '/' : '/login');
       }
       return;
     }
@@ -127,9 +131,28 @@ export default function RegisterPage() {
     setVerifyError(null);
 
     verifyEmail.mutate({ verificationToken, code: verifyCode }, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setVerifySuccess(true);
-        setTimeout(() => router.push('/'), 2000);
+
+        /**
+         * Registration issues NO session, and verify-email returns only a
+         * message — neither sets the pb_auth cookie the middleware gates
+         * on. Landing on the feed here left the app LOOKING signed in,
+         * because the local session store had a user, while every gated
+         * route (profile, settings, messenger) bounced to /login.
+         *
+         * So sign in properly with the credentials just entered. Only
+         * now can it succeed: the account was unverified until a moment
+         * ago, and login refuses an unverified account.
+         */
+        const signIn = await loginUser(loginId, password);
+        if (signIn.success) {
+          setTimeout(() => router.push('/'), 1200);
+          return;
+        }
+        // Verified but not signed in: send them to a real login rather
+        // than a feed that will bounce on the first click.
+        setTimeout(() => router.push('/login'), 1200);
       },
       onError: (err) => {
         const message =
