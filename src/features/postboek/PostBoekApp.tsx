@@ -215,13 +215,12 @@ const PostBoekApp: React.FC = () => {
           setActiveTab={handleNavChange}
           onCreateClick={() => setIsCreateOpen(true)}
           onLogout={handleLogout}
-          onToggleContactList={() => {
-            if (isMobile) {
-              router.push('/messenger');
-            } else {
-              setIsContactListOpen(!isContactListOpen);
-            }
-          }}
+          // The chat icon opens the full messenger everywhere, not only on
+          // mobile. Two chat surfaces behind one icon — a side panel with a
+          // floating window on desktop, the full page on mobile — meant the
+          // same control led somewhere different depending on the window
+          // width, and the desktop half was the smaller of the two.
+          onToggleContactList={() => router.push('/messenger')}
           navExpanded={navExpanded}
         />
 
