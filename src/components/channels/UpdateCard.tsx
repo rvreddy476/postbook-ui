@@ -5,7 +5,7 @@ import {
   Pin, Megaphone, Image as ImageIcon, Video, Headphones, BarChart3,
   Calendar, ShoppingBag, AlertTriangle, BookOpen,
   MessageCircle, Share2, Repeat2, MoreHorizontal, Trash2, Pencil,
-  Heart, Bookmark, Eye, Copy, Flag, BellOff, ExternalLink,
+  Heart, Bookmark, Eye, Copy, Flag, BellOff, ExternalLink, SmilePlus,
   MapPin, Monitor, Clock, CheckCircle, Users, ChevronLeft, ChevronRight,
   X, Play,
 } from 'lucide-react'
@@ -28,19 +28,29 @@ interface UpdateCardProps {
   onRepost?: (channelId: string, updateId: string, echoType: string) => void
   onUnrepost?: (channelId: string, updateId: string) => void
   onView?: (channelId: string, updateId: string) => void
+  /** React with an emoji, or change the one you reacted with. */
+  onReact?: (channelId: string, updateId: string, emoji: string) => void
+  /** Remove your reaction. */
+  onUnreact?: (channelId: string, updateId: string) => void
   /**
    * How much of the engagement bar to show.
    *
-   * 'reaction' is the default, and the product rule set on 21 Sep: a
-   * channel is a broadcast, so a reader reacts and nothing else. Comments,
-   * echo and bookmark are what a GROUP is for.
+   * 'reaction' is the default, and the product rule set on 21 Sep: on a
+   * channel there is an emoji reaction and a share button, nothing else.
+   * Comments, echo and bookmark are what a GROUP is for.
    *
-   * 'all' restores the full bar. Nothing passes it today; it exists so the
-   * comment, echo and bookmark code stays live and reachable, and turning
-   * them back on is one prop rather than a rewrite.
+   * 'all' additionally restores comments, echo and bookmark. Nothing
+   * passes it today; it exists so that code stays live and reachable, and
+   * turning it back on is one prop rather than a rewrite.
    */
   actions?: 'reaction' | 'all'
 }
+
+/**
+ * The emoji a reader can pick. One reaction per viewer per update: the
+ * server replaces it rather than stacking a second one.
+ */
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'] as const
 
 /* ===== Helpers ===== */
 function formatCount(n: number): string {
@@ -345,13 +355,16 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
 }
 
 /* ===== MAIN CARD ===== */
-const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView, actions = 'reaction' }) => {
+const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView, onReact, onUnreact, actions = 'reaction' }) => {
   const fullActions = actions === 'all'
   const channelId = propChannelId || channel?.id || ''
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [sparked, setSparked] = useState(false)
   const [stashed, setStashed] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
   const [showComments, setShowComments] = useState(false)
   const [showEchoMenu, setShowEchoMenu] = useState(false)
   const [echoed, setEchoed] = useState(false)
@@ -368,6 +381,16 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
       prevReactionCount.current = update.reaction_count
     }
   }, [update.reaction_count])
+
+  // Close the emoji picker on an outside click, like the overflow menu.
+  useEffect(() => {
+    if (!pickerOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [pickerOpen])
   useEffect(() => {
     const fc = update.forward_count ?? 0
     if (fc !== prevForwardCount.current) {
@@ -423,6 +446,37 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
 
   const channelIcon = channel?.avatar_media_id ? `/v1/media/${channel.avatar_media_id}/serve` : null
   const gradient = channel ? pickColor(channel.name) : avatarColors[0]
+
+  /**
+   * The viewer's reaction and the per-emoji tallies come straight from the
+   * server (`viewer_reaction`, `reactions`), so the highlight survives a
+   * reload and is right in a second tab. No local "did I react" state.
+   */
+  const viewerReaction = update.viewer_reaction || ''
+  const tallies = (update.reactions ?? []).filter(r => Number(r.count) > 0)
+
+  // Tapping the emoji you already used removes it; any other emoji
+  // replaces it, because a viewer has at most one reaction per update.
+  const react = (emoji: string) => {
+    if (emoji === viewerReaction) onUnreact?.(channelId, update.id)
+    else onReact?.(channelId, update.id, emoji)
+  }
+
+  const share = async () => {
+    const url = `${window.location.origin}/channels/${channelId}?update=${update.id}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: channel?.name ?? 'Update', url })
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // A cancelled share sheet and a denied clipboard both land here.
+      // Neither is an error worth showing.
+    }
+  }
 
   const handleLike = () => {
     if (sparked) {
@@ -605,20 +659,65 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
           <PhotoGallery mediaIds={update.media_ids} />
         )}
 
-        {/* Engagement bar */}
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-brand-divider flex-wrap">
-          {/* Like */}
+        {/* Engagement bar — on a channel this is an emoji reaction and a
+            share button, and nothing else. */}
+        <div className="flex items-center gap-1 mt-4 pt-3 border-t border-brand-divider flex-wrap">
+          {/* Reaction tallies. The viewer's own is outlined. */}
+          {tallies.map(r => {
+            const mine = r.emoji === viewerReaction
+            return (
+              <button
+                key={r.emoji}
+                onClick={() => react(r.emoji)}
+                aria-pressed={mine}
+                aria-label={mine ? `Remove your ${r.emoji} reaction` : `React with ${r.emoji}`}
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors select-none active:scale-95 ${
+                  mine
+                    ? 'bg-primary-tint text-primary-ink ring-1 ring-primary-outline'
+                    : 'bg-brand-text/[0.04] text-brand-text/60 hover:bg-brand-secondary'
+                }`}>
+                <span className="text-[14px] leading-none">{r.emoji}</span>
+                <span className="text-[12px] font-semibold tabular-nums">{formatCount(Number(r.count))}</span>
+              </button>
+            )
+          })}
+
+          {/* Pick a reaction */}
+          <div className="relative" ref={pickerRef}>
+            <button
+              onClick={() => setPickerOpen(v => !v)}
+              aria-expanded={pickerOpen}
+              aria-label="Add a reaction"
+              title="Add a reaction"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-brand-text/45 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+              <SmilePlus className="w-4 h-4" strokeWidth={1.75} />
+              {tallies.length === 0 && <span className="text-[12px] font-semibold">React</span>}
+            </button>
+            {pickerOpen && (
+              <div className="absolute bottom-full left-0 z-50 mb-1.5 flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card p-1 shadow-lg">
+                {REACTION_EMOJIS.map(e => (
+                  <button
+                    key={e}
+                    onClick={() => { react(e); setPickerOpen(false) }}
+                    aria-label={`React with ${e}`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-[17px] leading-none transition-transform hover:scale-125 active:scale-95 ${
+                      e === viewerReaction ? 'bg-primary-tint' : 'hover:bg-brand-secondary'
+                    }`}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Share */}
           <button
-            onClick={handleLike}
-            aria-pressed={sparked}
-            aria-label={sparked ? 'Remove reaction' : 'React'}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors select-none active:scale-95 ${
-              sparked
-                ? 'bg-primary-tint text-primary-ink'
-                : 'text-brand-text/45 hover:bg-brand-secondary hover:text-primary-ink'
-            }`}>
-            <Heart className={`w-4 h-4 ${sparked ? 'fill-current' : ''}`} strokeWidth={1.75} />
-            <span className="text-[12px] font-semibold tabular-nums">{formatCount(sparkCount)}</span>
+            onClick={share}
+            aria-label="Share this update"
+            title="Share"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-brand-text/45 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+            <Share2 className="w-4 h-4" strokeWidth={1.75} />
+            <span className="text-[12px] font-semibold">{copied ? 'Link copied' : 'Share'}</span>
           </button>
 
           {/* Comments toggle */}

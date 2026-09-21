@@ -172,6 +172,41 @@ export function useDeleteBroadcastChannel() {
   })
 }
 
+/**
+ * React to an update with an emoji, or change the one you reacted with.
+ *
+ * A viewer has at most ONE reaction per update: the server replaces it
+ * rather than adding a second. It answers with the decorated update, so
+ * `reactions` and `viewer_reaction` come back correct.
+ */
+export function useReactToUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId, emoji }: { channelId: string; updateId: string; emoji: string }) => {
+      const res = await api.put<UpdateResponse>(
+        `/v1/broadcast-channels/${channelId}/updates/${updateId}/reaction`,
+        { emoji },
+      )
+      return res.data.data
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
+export function useUnreactToUpdate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, updateId }: { channelId: string; updateId: string }) => {
+      await api.delete(`/v1/broadcast-channels/${channelId}/updates/${updateId}/reaction`)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["channel-updates", vars.channelId] })
+    },
+  })
+}
+
 export function useSubscribeChannel() {
   const qc = useQueryClient()
   return useMutation({

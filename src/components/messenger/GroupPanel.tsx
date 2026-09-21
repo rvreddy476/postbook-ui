@@ -883,13 +883,9 @@ function PostsView({
   const deletePostMut = useDeleteGroupPostV2()
   const [showCreatePost, setShowCreatePost] = useState(false)
 
-  // /v1/groups/{id}/feed/v2 returns no per-viewer engagement flag — GroupPostV2
-  // carries the counts only. So these two Sets are ONLY the posts this viewer
-  // sparked/echoed in THIS session: they are an optimistic overlay on the
-  // server counts, not real viewer state. They reset on remount, and a spark
-  // made in another tab or an earlier session will not light up here.
-  const [sparkedHere, setSparkedHere] = useState<Set<string>>(new Set())
-  const [echoedHere, setEchoedHere] = useState<Set<string>>(new Set())
+  // No local "did I react" state. The feed carries `viewer_sparked` and
+  // `viewer_echoed`, so it survives a reload and is right in a second tab;
+  // optimistic toggles are written into the cached feed itself, below.
 
   const memberMap = useMemo(() => {
     const m = new Map<string, GroupMember>()
@@ -907,9 +903,21 @@ function PostsView({
   // Pinned first, otherwise the server's order is kept.
   const posts = [...allPosts.filter(p => p.is_pinned), ...allPosts.filter(p => !p.is_pinned)]
 
-  // Optimistic count nudge straight into the cached feed, so the number and
-  // the icon change together and the next refetch overwrites both with truth.
-  const patchCount = (postId: string, field: 'spark_count' | 'echo_count', delta: number) => {
+  /**
+   * Optimistic patch straight into the cached feed: the count AND the
+   * viewer's own flag move together, so the number and the filled icon
+   * never disagree, and the next refetch overwrites both with the truth.
+   *
+   * Writing the flag into the cache rather than holding it in component
+   * state is what makes this survive: the card reads one source, and a
+   * refetch replaces it wholesale instead of fighting a local override.
+   */
+  const patchEngagement = (
+    postId: string,
+    kind: 'spark' | 'echo',
+    delta: number,
+    viewerFlag: boolean,
+  ) => {
     qc.setQueryData<InfiniteData<FeedPage, number>>(['group-feed-v2', groupId], prev => {
       if (!prev) return prev
       return {
@@ -918,54 +926,37 @@ function PostsView({
           ...page,
           data: page.data.map(p => {
             if (p.id !== postId) return p
-            const next = Math.max(0, (p[field] ?? 0) + delta)
-            return field === 'spark_count' ? { ...p, spark_count: next } : { ...p, echo_count: next }
+            return kind === 'spark'
+              ? { ...p, spark_count: Math.max(0, (p.spark_count ?? 0) + delta), viewer_sparked: viewerFlag }
+              : { ...p, echo_count: Math.max(0, (p.echo_count ?? 0) + delta), viewer_echoed: viewerFlag }
           }),
         })),
       }
     })
   }
 
-  const toggleSet = (setter: typeof setSparkedHere, postId: string, on: boolean) => {
-    setter(prev => {
-      const next = new Set(prev)
-      if (on) next.add(postId)
-      else next.delete(postId)
-      return next
-    })
-  }
-
   const handleToggleSpark = (post: GroupPostV2) => {
-    const was = sparkedHere.has(post.id)
+    // `=== true` rather than `?? true`: Go sends `false` for a viewer who
+    // has not reacted and omits the field entirely for an anonymous one,
+    // and both have to read as "not reacted".
+    const was = post.viewer_sparked === true
     const delta = was ? -1 : 1
-    patchCount(post.id, 'spark_count', delta)
-    toggleSet(setSparkedHere, post.id, !was)
+    patchEngagement(post.id, 'spark', delta, !was)
     const mut = was ? unsparkMut : sparkMut
     mut.mutate(
       { groupId, postId: post.id },
-      {
-        onError: () => {
-          patchCount(post.id, 'spark_count', -delta)
-          toggleSet(setSparkedHere, post.id, was)
-        },
-      },
+      { onError: () => patchEngagement(post.id, 'spark', -delta, was) },
     )
   }
 
   const handleToggleEcho = (post: GroupPostV2) => {
-    const was = echoedHere.has(post.id)
+    const was = post.viewer_echoed === true
     const delta = was ? -1 : 1
-    patchCount(post.id, 'echo_count', delta)
-    toggleSet(setEchoedHere, post.id, !was)
+    patchEngagement(post.id, 'echo', delta, !was)
     const mut = was ? unechoMut : echoMut
     mut.mutate(
       { groupId, postId: post.id },
-      {
-        onError: () => {
-          patchCount(post.id, 'echo_count', -delta)
-          toggleSet(setEchoedHere, post.id, was)
-        },
-      },
+      { onError: () => patchEngagement(post.id, 'echo', -delta, was) },
     )
   }
 
@@ -1033,8 +1024,8 @@ function PostsView({
                 groupColor={groupColor}
                 myId={myId}
                 resolveAuthor={resolveAuthor}
-                sparked={sparkedHere.has(post.id)}
-                echoed={echoedHere.has(post.id)}
+                sparked={post.viewer_sparked === true}
+                echoed={post.viewer_echoed === true}
                 onToggleSpark={handleToggleSpark}
                 onToggleEcho={handleToggleEcho}
                 onDelete={handleDeletePost}

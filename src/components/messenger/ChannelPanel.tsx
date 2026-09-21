@@ -10,8 +10,8 @@ import {
   useSubscribeChannel,
   useUnsubscribeChannel,
   useUpdateBroadcastChannel,
-  useSparkUpdate,
-  useUnsparkUpdate,
+  useReactToUpdate,
+  useUnreactToUpdate,
   useRecordView,
 } from '@/hooks/useBroadcastChannels'
 import ChannelComposer, { type ComposerPayload } from '@/components/channels/ChannelComposer'
@@ -53,8 +53,8 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   const createUpdate = useCreateChannelUpdate()
   const deleteUpdate = useDeleteChannelUpdate()
   const pinUpdate = usePinChannelUpdate()
-  const spark = useSparkUpdate()
-  const unspark = useUnsparkUpdate()
+  const react = useReactToUpdate()
+  const unreact = useUnreactToUpdate()
   const recordView = useRecordView()
 
   const role = channel?.viewer_role ?? ''
@@ -336,10 +336,11 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
                     isOwner={canPublish}
                     onDelete={(updateId) => deleteUpdate.mutate({ channelId, updateId })}
                     onPin={(updateId, pinned) => pinUpdate.mutate({ channelId, updateId, pinned })}
-                    // A channel is a broadcast: reaction only. No stash, no
-                    // echo, no comments — those belong to a group.
-                    onLike={(cid, updateId) => spark.mutate({ channelId: cid, updateId })}
-                    onUnlike={(cid, updateId) => unspark.mutate({ channelId: cid, updateId })}
+                    // A channel is a broadcast: an emoji reaction and a
+                    // share button, nothing else. Comments, echo and
+                    // bookmark belong to a group.
+                    onReact={(cid, updateId, emoji) => react.mutate({ channelId: cid, updateId, emoji })}
+                    onUnreact={(cid, updateId) => unreact.mutate({ channelId: cid, updateId })}
                     onView={(cid, updateId) => recordView.mutate({ channelId: cid, updateId })}
                   />
                 ))}

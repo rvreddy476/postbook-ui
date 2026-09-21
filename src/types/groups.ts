@@ -89,6 +89,16 @@ export interface GroupPostV2 {
   view_count: number
   created_at: string
   updated_at: string
+  /**
+   * Whether the signed-in viewer has already sparked / echoed / stashed
+   * this post. Absent for an anonymous viewer, and absent from a server
+   * build older than this field, so read them as `=== true` and never
+   * `?? true`: Go marshals a false bool as `false`, and a genuinely
+   * missing field is `undefined`. Both must read as "not reacted".
+   */
+  viewer_sparked?: boolean
+  viewer_echoed?: boolean
+  viewer_stashed?: boolean
   // Enriched by frontend
   author_name?: string
   author_avatar_url?: string

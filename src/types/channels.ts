@@ -49,4 +49,24 @@ export interface ChannelUpdate {
   comment_count: number
   forward_count: number
   created_at: string
+  /**
+   * Per-emoji tallies for this update, highest first. Served by
+   * `Service.decorateUpdates`; absent only on a server build older than
+   * the field.
+   */
+  reactions?: ChannelReactionCount[]
+  /**
+   * The emoji the signed-in viewer reacted with, or absent if they have
+   * not reacted. This is real server state, so the highlight survives a
+   * reload and is right in a second tab.
+   *
+   * Channels have exactly one reaction per viewer: reacting again with a
+   * different emoji replaces the first.
+   */
+  viewer_reaction?: string
+}
+
+export interface ChannelReactionCount {
+  emoji: string
+  count: number
 }
