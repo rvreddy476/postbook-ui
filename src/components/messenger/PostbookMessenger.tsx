@@ -25,7 +25,7 @@ import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
 import {
-  Users, MessageCircle, Plus, Hash, Search, SlidersHorizontal,
+  Users, MessageCircle, Plus, Hash, Search,
   Globe, Lock, Shield, ChevronRight, Send, MailQuestion, Check, X
 } from 'lucide-react'
 
@@ -75,11 +75,9 @@ export default function PostbookMessenger() {
   // The scopes the chip row shows, in that order. Requests only appears
   // when someone is actually waiting.
   const [contactTab, setContactTab] = useState<'channels' | 'groups' | 'friends' | 'requests'>('friends')
-  // Two filters that cut ACROSS the Direct list rather than being scopes
-  // of their own: the unread count beside the title, and the sliders
-  // button. Both are real filters, not decoration.
+  // Unread cuts ACROSS the Direct list rather than being a scope of its
+  // own, so it lives beside the title instead of in the tab row.
   const [unreadOnly, setUnreadOnly] = useState(false)
-  const [onlineOnly, setOnlineOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
@@ -214,18 +212,14 @@ export default function PostbookMessenger() {
   }, [myGroups, search])
 
   /**
-   * What the Direct and Unread chips actually show.
-   *
-   * Both draw the same rows: Unread is Direct narrowed to conversations with
-   * something waiting, so there is one list component and no second code path
-   * to drift. The sliders filter narrows either of them to people online.
+   * The Direct list, narrowed to conversations with something waiting when
+   * the Unread button is on. One list and one code path, so the filtered
+   * and unfiltered views cannot drift apart.
    */
   const visibleFriends = useMemo(() => {
-    let list = filteredFriends
-    if (unreadOnly) list = list.filter((f) => getUnreadCountForUser(f.id) > 0)
-    if (onlineOnly) list = list.filter((f) => f.isOnline)
-    return list
-  }, [filteredFriends, unreadOnly, onlineOnly, getUnreadCountForUser])
+    if (!unreadOnly) return filteredFriends
+    return filteredFriends.filter((f) => getUnreadCountForUser(f.id) > 0)
+  }, [filteredFriends, unreadOnly, getUnreadCountForUser])
 
   const unreadConversationCount = useMemo(
     () => friends.filter((f) => getUnreadCountForUser(f.id) > 0).length,
@@ -451,19 +445,6 @@ export default function PostbookMessenger() {
                 Unread
               </button>
             )}
-            <button
-              onClick={() => setOnlineOnly((v) => !v)}
-              aria-pressed={onlineOnly}
-              aria-label="Show only people who are online"
-              title={onlineOnly ? 'Showing online only' : 'Show online only'}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                onlineOnly
-                  ? 'bg-primary-ink text-white'
-                  : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'
-              }`}
-            >
-              <SlidersHorizontal className="h-4 w-4" strokeWidth={1.75} />
-            </button>
           </div>
         </div>
 
@@ -588,7 +569,7 @@ export default function PostbookMessenger() {
             </button>
             </>
           ) : contactTab === 'friends' ? (
-            /* Direct, narrowed by whichever filters are on */
+            /* Direct, narrowed to unread when that button is on */
             visibleFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
@@ -597,9 +578,7 @@ export default function PostbookMessenger() {
                     ? 'No friends match your search'
                     : unreadOnly
                       ? 'Nothing unread'
-                      : onlineOnly
-                        ? 'Nobody online right now'
-                        : 'No conversations yet'}
+                      : 'No conversations yet'}
                 </p>
               </div>
             ) : (
