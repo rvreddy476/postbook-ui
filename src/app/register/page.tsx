@@ -46,6 +46,9 @@ export default function RegisterPage() {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Unticked by default and required. The server refuses a registration
+  // that does not explicitly accept — see RegisterCommand.acceptedTerms.
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -86,7 +89,9 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    const result = await registerUser({ firstName, lastName, gender, dob, loginId, password });
+    const result = await registerUser({
+      firstName, lastName, gender, dob, loginId, password, acceptedTerms,
+    });
 
     if (result.success) {
       if (isEmailId) {
@@ -147,12 +152,23 @@ export default function RegisterPage() {
     'w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10';
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-bg px-4 py-8 selection:bg-primary-ink/20 selection:text-brand-text">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-brand-bg selection:bg-primary-ink/20 selection:text-brand-text">
       {/* Ambient monochrome glows */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
       <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
-      {/* Hairline ring accent behind the card */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-text/4" />
+
+      {/* The brand sits in the page header, top left, where a product puts
+          it — not floating above the card in the middle of the screen. */}
+      <header className="relative z-10 flex h-16 shrink-0 items-center px-5 sm:px-8">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="VChat home">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-ink">
+            <span className="text-xs font-bold -tracking-[0.02em] text-white">VC</span>
+          </span>
+          <span className="text-[15px] font-semibold -tracking-[0.014em] text-brand-text">VChat</span>
+        </Link>
+      </header>
+
+      <div className="relative flex flex-1 items-center justify-center px-4 pb-10 pt-2">
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -160,13 +176,6 @@ export default function RegisterPage() {
         transition={{ duration: 0.45, ease: 'easeOut' }}
         className={`relative w-full transition-all duration-300 ${screen === 'register' ? 'max-w-xl' : 'max-w-md'}`}
       >
-        {/* Brand mark above the card — logo only */}
-        <div className="mb-6 flex px-1">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-ink shadow-md">
-            <span className="text-base font-black tracking-tighter text-brand-bg">VC</span>
-          </div>
-        </div>
-
         <div className="relative overflow-hidden rounded-[1.75rem] border border-brand-divider bg-brand-card/85 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
           <AnimatePresence initial={false} custom={direction} mode="wait">
             {screen === 'register' && (
@@ -332,11 +341,48 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
+                  {/* Consent. Required, unticked, and the links go to real
+                      pages: the server records WHICH version was accepted,
+                      so the person has to be able to read it first. This
+                      used to be two spans that looked clickable and did
+                      nothing, and nothing was sent — registration could
+                      not succeed at all. */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-brand-divider bg-brand-secondary/60 p-3.5 transition-colors hover:border-primary-outline">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary-ink"
+                      aria-describedby="consent-text"
+                    />
+                    <span id="consent-text" className="text-[13px] leading-relaxed text-brand-text/70">
+                      I agree to the{' '}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        className="font-semibold text-primary-ink underline underline-offset-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        className="font-semibold text-primary-ink underline underline-offset-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </span>
+                  </label>
+
                   {/* Submit */}
                   <button
                     type="submit"
-                    disabled={isLoading}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
+                    disabled={isLoading || !acceptedTerms}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:hover:scale-100"
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isLoading ? 'Creating account...' : 'Create Account'}
@@ -467,14 +513,14 @@ export default function RegisterPage() {
           </AnimatePresence>
         </div>
 
-        {/* Terms note */}
-        <p className="mt-6 text-center text-[10px] font-semibold tracking-[0.2em] text-brand-text/30">
-          By creating an account, you agree to our{' '}
-          <span className="cursor-pointer underline underline-offset-2 hover:text-brand-text/60">Terms</span>{' '}
-          and{' '}
-          <span className="cursor-pointer underline underline-offset-2 hover:text-brand-text/60">Privacy Policy</span>.
+        <p className="mt-6 text-center text-[13px] text-brand-text/50">
+          Already have an account?{' '}
+          <Link href="/login" className="font-semibold text-primary-ink hover:underline">
+            Sign in
+          </Link>
         </p>
       </motion.div>
+      </div>
     </div>
   );
 }

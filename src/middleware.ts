@@ -56,6 +56,11 @@ const PUBLIC_EXACT = new Set([
     "/grievance",
     "/apps",
     "/posts-demo",
+    // The consent links on /register point here. Gating them behind login
+    // means nobody can read what they are being asked to accept BEFORE
+    // they have an account, which is the only time it matters.
+    "/terms",
+    "/privacy",
 ])
 
 const PUBLIC_PREFIXES = [

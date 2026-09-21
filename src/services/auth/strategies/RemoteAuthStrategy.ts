@@ -89,6 +89,11 @@ export class RemoteAuthStrategy implements AuthStrategy {
       last_name: command.lastName,
       dob: command.dob,
       gender: command.gender,
+      // Without these two, auth-service answers 422 CONSENT_REQUIRED and
+      // no account is created. They were missing, which is why
+      // registration could not succeed at all.
+      accepted_terms: command.acceptedTerms,
+      terms_version: command.termsVersion,
     };
 
     const response = DIRECT_REGISTER_PATH

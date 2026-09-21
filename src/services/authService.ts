@@ -4,6 +4,7 @@ import { AuthSessionStore } from '@/services/auth/AuthSessionStore';
 import { ApiGender } from '@/services/auth/types';
 import { createAuthStrategy } from '@/services/auth/strategyFactory';
 import { HttpClientError } from '@/services/core/httpClient';
+import { TERMS_VERSION } from '@/lib/legal';
 
 interface RegisterPayload {
   firstName: string;
@@ -12,6 +13,8 @@ interface RegisterPayload {
   dob: string;
   loginId: string;
   password: string;
+  /** Must be explicitly true. A consent that defaults to granted is not consent. */
+  acceptedTerms: boolean;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
@@ -101,11 +104,23 @@ export const registerUser = async ({
   dob,
   loginId,
   password,
+  acceptedTerms,
 }: RegisterPayload): Promise<{ success: boolean; error?: string; user?: User }> => {
   const identifier = normalizeIdentifier(loginId);
 
   if (!firstName.trim() || !lastName.trim() || !identifier || !password.trim() || !dob) {
     return { success: false, error: 'Please fill all required fields.' };
+  }
+
+  // The server refuses a registration that does not explicitly accept the
+  // terms, and records WHICH version was shown. Checking here too means the
+  // person gets the real reason at the checkbox rather than a 422 after a
+  // round trip.
+  if (!acceptedTerms) {
+    return {
+      success: false,
+      error: 'Please accept the Terms of Service and Privacy Policy to continue.',
+    };
   }
 
   const email = isEmail(identifier) ? identifier : '';
@@ -120,6 +135,8 @@ export const registerUser = async ({
       email,
       phone,
       password,
+      acceptedTerms,
+      termsVersion: TERMS_VERSION,
     });
 
     return { success: true, user };

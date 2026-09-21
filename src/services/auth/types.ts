@@ -10,6 +10,13 @@ export interface RegisterCommand {
   email: string;
   phone: string;
   password: string;
+  /**
+   * Must be explicitly true. auth-service refuses a registration that omits
+   * it — a consent that defaults to granted is not consent — and records
+   * `termsVersion` so a later audit can answer WHICH text was shown.
+   */
+  acceptedTerms: boolean;
+  termsVersion: string;
 }
 
 export interface LoginCommand {
