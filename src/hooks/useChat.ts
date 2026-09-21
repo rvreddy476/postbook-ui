@@ -174,6 +174,20 @@ export function useChat(conversationId: string | null | undefined, currentUserId
       if (msg.conversation_id !== conversationId) return
       setMessages(prev => {
         if (prev.some(m => m.id === msg.id)) return prev
+        // The server delivers a message to the sender's OWN sessions too,
+        // so a second tab or the phone sees it. That means this tab gets
+        // its own message back while an optimistic copy is still on
+        // screen — settle it in place rather than appending a twin.
+        if (msg.sender_id === currentUserId) {
+          const pending = prev.findIndex(
+            m => m.id.startsWith('opt-') && m.text === msg.text,
+          )
+          if (pending >= 0) {
+            const next = [...prev]
+            next[pending] = toChat(msg)
+            return next
+          }
+        }
         return [...prev, toChat(msg)]
       })
       if (msg.sender_id !== currentUserId) {

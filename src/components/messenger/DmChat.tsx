@@ -240,6 +240,22 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       if (msg.conversation_id !== convIdRef.current) return
       setMessages(prev => {
         if (prev.some(m => m.id === msg.id)) return prev
+        // The server now delivers a message to the sender's OWN sessions
+        // too, so a second tab or the phone sees it. That means this tab
+        // gets its own message back while an optimistic copy is still on
+        // screen. Settle it in place rather than appending a twin — the
+        // send's own response settles the same entry, and whichever
+        // arrives first wins.
+        if (msg.sender_id === myId) {
+          const pending = prev.findIndex(
+            m => m.id.startsWith('opt-') && m.text === msg.text,
+          )
+          if (pending >= 0) {
+            const next = [...prev]
+            next[pending] = toDisplay(msg)
+            return next
+          }
+        }
         return [...prev, toDisplay(msg)]
       })
       if (msg.sender_id !== myId && convIdRef.current) {
