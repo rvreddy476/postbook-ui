@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useAuthUser } from '@/store/auth'
-import FriendsView from '@/components/circle/FriendsView'
+import FriendsView from '@/components/connections/FriendsView'
 import MinimalHeader from '@/components/MinimalHeader'
 import Sidebar from '@/components/Sidebar'
 import { getSession, logoutUser } from '@/services/authService'

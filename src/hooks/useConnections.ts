@@ -71,16 +71,12 @@ const markRelationshipRequestSent = (relationship: Relationship | null | undefin
     followed_by: relationship?.followed_by ?? false,
     is_connection: false,
     connection_status: "pending_sent",
-    in_circle: false,
-    circle_request_sent: true,
-    circle_request_received: false,
     blocked: relationship?.blocked ?? false,
     blocked_by: relationship?.blocked_by ?? false,
     is_muted: relationship?.is_muted,
     can_dm: relationship?.can_dm ?? false,
     can_see_online: relationship?.can_see_online ?? false,
     can_add_to_group: relationship?.can_add_to_group ?? false,
-    mutual_circle_count: relationship?.mutual_circle_count ?? 0,
 })
 
 function applyRequestSentToCaches(qc: ReturnType<typeof useQueryClient>, userId: string) {
@@ -735,16 +731,17 @@ export function useBatchRelationships(viewerId: string, targetIds: string[]) {
                     followed_by: !!rel.followed_by,
                     is_connection: isConnection,
                     connection_status: isConnection ? 'accepted' : status,
-                    in_circle: isConnection,
-                    circle_request_sent: status === 'pending_sent',
-                    circle_request_received: status === 'pending_received',
-                    // Carried through deliberately. The `as Relationship` cast
-                    // asserts every field of the type while this loop copies
-                    // only some, so anything not named here is undefined at
-                    // runtime and reads as "no mutuals" with no error anywhere.
-                    // graph-service has used both spellings for this count.
-                    mutual_circle_count: Number(rel.mutual_circle_count ?? rel.mutual_count ?? 0),
-                } as Relationship)
+                    // Every field written explicitly, and no `as Relationship`
+                    // cast: the cast asserted the whole type while the loop
+                    // copied only some of it, so anything unnamed was
+                    // undefined at runtime with no error anywhere.
+                    blocked: !!rel.blocked,
+                    blocked_by: !!rel.blocked_by,
+                    is_muted: !!rel.is_muted,
+                    can_dm: !!rel.can_dm,
+                    can_see_online: !!rel.can_see_online,
+                    can_add_to_group: !!rel.can_add_to_group,
+                })
             }
             return map
         },
@@ -753,60 +750,6 @@ export function useBatchRelationships(viewerId: string, targetIds: string[]) {
     })
 }
 
-// ---------- Close Friends ("Trusted Circle") ----------
-
-/**
- * The current user's close friends ("Trusted Circle") — from graph-service.
- * GET /v1/graph/close-friends returns a bare array of user-id strings; this
- * hydrates them into ConnectionUser objects.
- */
-export function useCloseFriends() {
-    return useQuery({
-        queryKey: ["close-friends"],
-        queryFn: async (): Promise<ConnectionUser[]> => {
-            const res = await api.get<{ data: string[] }>("/v1/graph/close-friends")
-            const ids = res.data?.data ?? []
-            const profiles = await hydrateProfiles(ids)
-            return ids.map((id) => {
-                const p = profiles.get(id)
-                return {
-                    user_id: id,
-                    display_name: p?.display_name || p?.username || "User",
-                    username: p?.username || "",
-                    avatar_media_id: p?.avatar_media_id,
-                }
-            })
-        },
-    })
-}
-
-/** Add a user to the current user's close-friends list. Argument is a UUID. */
-export function useAddCloseFriend() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (userId: string) => {
-            await api.post(`/v1/graph/close-friends/${userId}`)
-        },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["close-friends"] }),
-        onError: (error) => {
-            console.error("[Connections] Failed to add close friend", error)
-        },
-    })
-}
-
-/** Remove a user from the current user's close-friends list. */
-export function useRemoveCloseFriend() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (userId: string) => {
-            await api.delete(`/v1/graph/close-friends/${userId}`)
-        },
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["close-friends"] }),
-        onError: (error) => {
-            console.error("[Connections] Failed to remove close friend", error)
-        },
-    })
-}
 
 // ---------- Presence (online status) ----------
 

@@ -73,9 +73,9 @@ export function FriendRequestButton({
     const state = useMemo(() => {
         const status = relationship?.connection_status
         return {
-            inCircle: !!relationship?.in_circle || status === "accepted",
-            requestSent: localRequestSent || !!relationship?.circle_request_sent || status === "pending_sent",
-            requestReceived: !!relationship?.circle_request_received || status === "pending_received",
+            isConnected: !!relationship?.is_connection || status === "accepted",
+            requestSent: localRequestSent || status === "pending_sent",
+            requestReceived: status === "pending_received",
         }
     }, [relationship, localRequestSent])
 
@@ -87,7 +87,7 @@ export function FriendRequestButton({
         declineRequest.isPending
 
     const handleSend = () => {
-        if (!target || state.requestSent || state.inCircle) return
+        if (!target || state.requestSent || state.isConnected) return
         setLocalRequestSent(true)
         sendRequest.mutate(target, {
             onSuccess: onSent,
@@ -109,7 +109,7 @@ export function FriendRequestButton({
         })
     }
 
-    if (state.inCircle) {
+    if (state.isConnected) {
         return (
             <button
                 type="button"

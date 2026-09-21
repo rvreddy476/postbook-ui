@@ -53,7 +53,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
           <h5 className="text-[13px] font-bold text-brand-text">People you may know</h5>
         </div>
         <button
-          onClick={() => router.push('/circle')}
+          onClick={() => router.push('/connections')}
           className="text-xs font-bold text-brand-highlight transition-colors hover:text-brand-text"
         >
           See all

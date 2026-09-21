@@ -55,7 +55,7 @@ const tabDefinitions: TabDef[] = [
     },
     {
         key: "connections",
-        label: "Circle",
+        label: "Connections",
         icon: Users,
         activeColor: "bg-pink-100 text-pink-600",
         inactiveColor: "text-pink-400",

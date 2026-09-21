@@ -61,7 +61,7 @@ type Item = {
 const primaryItems: Item[] = [
   { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
   { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
-  { id: 'Circle', label: 'Circle', icon: UserRoundPlus, href: '/circle', color: 'text-current' },
+  { id: 'Circle', label: 'Connections', icon: UserRoundPlus, href: '/connections', color: 'text-current' },
   { id: 'Groups', label: 'MySpace', icon: Users, href: '/groups', color: 'text-current' },
   { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels', color: 'text-current' },
   // Communities feature disabled — consolidated into Groups ("MySpace").

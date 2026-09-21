@@ -94,21 +94,15 @@ export interface Relationship {
     // `connection_status` is one of: none, pending_sent, pending_received, accepted.
     is_connection?: boolean
     connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
-    // Circle axis (legacy/aggregated-profile shape, kept for UI compatibility)
-    in_circle: boolean
-    circle_request_sent: boolean
-    circle_request_received: boolean
     // Block
     blocked: boolean
     blocked_by: boolean
     // Mute
     is_muted?: boolean
-    // Derived permissions (gated by circle)
+    // Derived permissions
     can_dm: boolean
     can_see_online: boolean
     can_add_to_group: boolean
-    // Mutual circle count
-    mutual_circle_count: number
 }
 
 export interface UserProfileBatchResponse {

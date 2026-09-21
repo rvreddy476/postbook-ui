@@ -105,7 +105,7 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
 
     const tabs: { key: ConnectionType; label: string; count: number }[] = []
     if (showFriends) {
-        tabs.push({ key: "friends", label: "Circle", count: graphCounts.friend_count })
+        tabs.push({ key: "friends", label: "Connections", count: graphCounts.friend_count })
     }
     tabs.push(
         { key: "followers", label: "Followers", count: graphCounts.follower_count },

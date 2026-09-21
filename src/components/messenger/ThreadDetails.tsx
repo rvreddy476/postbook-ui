@@ -107,9 +107,15 @@ export default function ThreadDetails({ peerId, conversationId, onClose }: Threa
                 {profile.location}
               </span>
             )}
-            {!!relationship?.mutual_circle_count && (
+            {/* A "mutual connections" chip used to sit here reading
+                `mutual_circle_count`. No Go code ever produced that field,
+                so it was always 0 and the chip never rendered. Removed
+                rather than left as a promise the backend does not keep;
+                GET /v1/graph/mutuals is where a real count would come
+                from if we want one. */}
+            {relationship?.is_connection && (
               <span className="rounded-full bg-primary-tint px-2.5 py-1 text-[11px] font-medium text-primary-ink">
-                {relationship.mutual_circle_count} mutual
+                Connected
               </span>
             )}
           </div>

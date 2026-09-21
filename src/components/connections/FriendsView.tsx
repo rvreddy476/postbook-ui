@@ -1,19 +1,16 @@
 'use client'
 
 /**
- * FriendsView — the AtPost "Friends" module: one home surface + three
- * modals/sheets (Trusted Circle, Add Friends, Requests).
+ * FriendsView — the Connections surface: one home screen plus two
+ * sheets (Add Friends, Requests).
  *
- * LAYOUT redesign only — every section is wired to the existing data hooks
- * in useConnections.ts / useUserSettings.ts; no new hooks, no backend change.
- * Rendered strictly on AtPost's light "Paper/Asphalt" brand palette
- * (brand-bg / brand-text / brand-card / brand-secondary / brand-divider) —
- * no non-brand colours are introduced.
+ * There is ONE relationship concept here: a Connection. "Circle" and
+ * "Trusted Circle" were removed on 21 Sep — Circle was only ever a UI
+ * label for connections, and Trusted Circle was close-friends, a second
+ * private tier nobody had used (zero rows, zero posts addressed to it).
  *
- *   friends / requests  → graph-service
- *   "Pulse · live now"   → placeholder activity over the first real friends
- *   "Trusted Circle"     → graph-service close-friends + tc_* user settings
- *   "Matched for you"    → suggestion-service
+ *   connections / requests → graph-service
+ *   "Matched for you"      → suggestion-service
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -32,14 +29,10 @@ import { useAuthUser } from '@/store/auth'
 import {
     useFriends, usePendingFriendRequests, useAcceptFriendRequest,
     useRejectFriendRequest, useFriendSuggestions,
-    useCloseFriends, useAddCloseFriend, useRemoveCloseFriend, usePresence,
+    usePresence,
     useFilteredFriendRequests, useUnfilterFriendRequest,
     type ConnectionUser, type SuggestionUser, type FriendRequestEntry,
 } from '@/hooks/useConnections'
-import {
-    useUserSettings, useUpdateUserSettings,
-    type UserSettings, type TrustedCircleSettingKey,
-} from '@/hooks/useUserSettings'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
@@ -104,7 +97,7 @@ export default function FriendsView() {
     const { getUnreadCountForUser } = useNotifications()
 
     const [activeModal, setActiveModal] =
-        useState<'trusted' | 'add' | 'requests' | null>(null)
+        useState<'add' | 'requests' | null>(null)
     const [sortAlpha, setSortAlpha] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
     const [search, setSearch] = useState('')
@@ -113,7 +106,6 @@ export default function FriendsView() {
     const friendsQ = useFriends(authUser?.id, 50)
     const requestsQ = usePendingFriendRequests()
     const suggestionsQ = useFriendSuggestions(authUser?.id, 20)
-    const closeQ = useCloseFriends()
 
     const friends = useMemo(() => friendsQ.data?.items ?? [], [friendsQ.data])
     const friendIds = useMemo(() => friends.map((f) => f.user_id), [friends])
@@ -121,11 +113,6 @@ export default function FriendsView() {
     const presence = presenceQ.data ?? {}
 
     const requests = requestsQ.data?.items ?? []
-    const closeFriends = closeQ.data ?? []
-    const closeIds = useMemo(
-        () => new Set(closeFriends.map((c) => c.user_id)),
-        [closeFriends],
-    )
 
     useEffect(() => {
         if (searchOpen) searchRef.current?.focus()
@@ -182,17 +169,17 @@ export default function FriendsView() {
             <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                     <h1 className="text-[34px] font-black leading-none tracking-tight text-brand-text">
-                        Friends
+                        Connections
                     </h1>
                     <p className="mt-1.5 text-sm font-medium text-brand-text/60">
-                        {friends.length} in orbit
+                        {friends.length} connections
                         <span className="px-1.5 text-brand-text/30">·</span>
                         {requests.length} pending
                     </p>
                 </div>
                 <button
                     onClick={() => setSearchOpen((v) => !v)}
-                    aria-label="Search friends"
+                    aria-label="Search connections"
                     aria-pressed={searchOpen}
                     className={`grid h-10 w-10 place-items-center rounded-full border transition ${
                         searchOpen
@@ -204,7 +191,7 @@ export default function FriendsView() {
                 </button>
                 <button
                     onClick={() => setActiveModal('add')}
-                    aria-label="Add friends"
+                    aria-label="Add connections"
                     className="grid h-10 w-10 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70 transition hover:text-brand-text"
                 >
                     <LayoutGrid className="h-[18px] w-[18px]" />
@@ -219,7 +206,7 @@ export default function FriendsView() {
                         ref={searchRef}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search your friends…"
+                        placeholder="Search your connections…"
                         className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-hidden"
                     />
                     <button
@@ -255,21 +242,6 @@ export default function FriendsView() {
                 </section>
             )}
 
-            {/* ---- Trusted Circle row ---- */}
-            <RowCard onClick={() => setActiveModal('trusted')}>
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary-ink text-white">
-                    <Shield className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-bold text-brand-text">
-                        Trusted Circle
-                    </span>
-                    <span className="block truncate text-xs text-brand-text/55">
-                        {closeFriends.length} {closeFriends.length === 1 ? 'person sees' : 'people see'} your inner posts
-                    </span>
-                </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-brand-text/30" />
-            </RowCard>
 
             {/* ---- New requests row ---- */}
             {requests.length > 0 && (
@@ -288,10 +260,10 @@ export default function FriendsView() {
                 </RowCard>
             )}
 
-            {/* ---- All friends ---- */}
+            {/* ---- All connections ---- */}
             <section>
                 <div className="mb-3 flex items-end justify-between">
-                    <Eyebrow text={`All friends · ${friends.length}`} />
+                    <Eyebrow text={`All connections · `} />
                     <button
                         onClick={() => setSortAlpha((v) => !v)}
                         className="flex items-center gap-1 text-xs font-semibold text-brand-text/55 transition hover:text-brand-text"
@@ -302,11 +274,11 @@ export default function FriendsView() {
                 </div>
 
                 {friendsQ.isLoading ? (
-                    <Hint text="Loading your friends…" />
+                    <Hint text="Loading your connections…" />
                 ) : friends.length === 0 ? (
-                    <Hint text="No friends yet — add a few people to build your orbit." />
+                    <Hint text="No connections yet — add a few people to get started." />
                 ) : listed.length === 0 ? (
-                    <Hint text="No friends match your search." />
+                    <Hint text="No connections match your search." />
                 ) : (
                     <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card">
                         {listed.map((f, i) => (
@@ -314,7 +286,6 @@ export default function FriendsView() {
                                 key={f.user_id}
                                 friend={f}
                                 online={!!presence[f.user_id]}
-                                trusted={closeIds.has(f.user_id)}
                                 unread={getUnreadCountForUser(f.user_id)}
                                 first={i === 0}
                                 onOpen={() => openProfile(f)}
@@ -326,14 +297,6 @@ export default function FriendsView() {
             </section>
 
             {/* ---- Modals / sheets ---- */}
-            {activeModal === 'trusted' && (
-                <TrustedCircleModal
-                    friends={friends}
-                    closeFriends={closeFriends}
-                    closeIds={closeIds}
-                    onClose={() => setActiveModal(null)}
-                />
-            )}
             {activeModal === 'add' && (
                 <AddFriendsModal onClose={() => setActiveModal(null)} />
             )}
@@ -419,7 +382,7 @@ function Hint({ text }: { text: string }) {
     )
 }
 
-/** A tappable card-shaped row used for Trusted Circle / new-requests entries. */
+/** A tappable card-shaped row used for new-requests entries. */
 function RowCard({
     children,
     onClick,
@@ -458,7 +421,6 @@ function AvatarStack({ users }: { users: { user_id: string; display_name: string
 function FriendRow({
     friend,
     online,
-    trusted,
     unread,
     first,
     onOpen,
@@ -466,7 +428,6 @@ function FriendRow({
 }: {
     friend: ConnectionUser
     online: boolean
-    trusted: boolean
     unread: number
     first: boolean
     onOpen: () => void
@@ -486,7 +447,6 @@ function FriendRow({
                     <span className="truncate text-sm font-bold text-brand-text">
                         {friend.display_name}
                     </span>
-                    {trusted && <Shield className="h-3.5 w-3.5 shrink-0 text-brand-text/50" />}
                 </div>
                 <div
                     className={`truncate text-xs ${
@@ -593,395 +553,7 @@ function ModalFooter({ text }: { text: string }) {
     )
 }
 
-/* ================================ SURFACE 2 ============================== */
-/* Trusted Circle modal                                                      */
-
-const TC_TOGGLE_DEFS: { key: TrustedCircleSettingKey; label: string }[] = [
-    { key: 'tc_close_friends_posts', label: 'Close-friends Flicks & stories' },
-    { key: 'tc_location_pings', label: 'Live location pings' },
-    { key: 'tc_after_hours_posts', label: 'After-hours posts' },
-    { key: 'tc_audio_room_invite', label: 'Audio Room auto-invite' },
-]
-
-type TcTogglesState = Record<TrustedCircleSettingKey, boolean>
-
-function TrustedCircleModal({
-    friends,
-    closeFriends,
-    closeIds,
-    onClose,
-}: {
-    friends: ConnectionUser[]
-    closeFriends: ConnectionUser[]
-    closeIds: Set<string>
-    onClose: () => void
-}) {
-    const authUser = useAuthUser()
-    const addClose = useAddCloseFriend()
-    const removeClose = useRemoveCloseFriend()
-    const settingsQ = useUserSettings()
-    const updateSettings = useUpdateUserSettings()
-
-    const [ids, setIds] = useState<Set<string>>(new Set(closeIds))
-    const [busy, setBusy] = useState<Set<string>>(new Set())
-    const [picking, setPicking] = useState(false)
-    const [pickSearch, setPickSearch] = useState('')
-    const [menuFor, setMenuFor] = useState<string | null>(null)
-
-    // Optimistic copy of the four tc_* toggles, seeded once settings load.
-    const [tc, setTc] = useState<TcTogglesState | null>(null)
-    useEffect(() => {
-        if (settingsQ.data && tc === null) {
-            setTc({
-                tc_close_friends_posts: !!settingsQ.data.tc_close_friends_posts,
-                tc_location_pings: !!settingsQ.data.tc_location_pings,
-                tc_after_hours_posts: !!settingsQ.data.tc_after_hours_posts,
-                tc_audio_room_invite: !!settingsQ.data.tc_audio_room_invite,
-            })
-        }
-    }, [settingsQ.data, tc])
-
-    const [togglingKey, setTogglingKey] = useState<TrustedCircleSettingKey | null>(null)
-    const toggleSetting = (key: TrustedCircleSettingKey) => {
-        if (!tc || togglingKey) return
-        const next = !tc[key]
-        setTc({ ...tc, [key]: next })
-        setTogglingKey(key)
-        updateSettings.mutate({ [key]: next } as Partial<UserSettings>, {
-            onError: () => setTc((p) => (p ? { ...p, [key]: !next } : p)),
-            onSettled: () => setTogglingKey(null),
-        })
-    }
-
-    const setMembership = (f: ConnectionUser, addToCircle: boolean) => {
-        if (busy.has(f.user_id)) return
-        setBusy((p) => new Set(p).add(f.user_id))
-        setIds((p) => {
-            const n = new Set(p)
-            if (addToCircle) n.add(f.user_id)
-            else n.delete(f.user_id)
-            return n
-        })
-        const mutation = addToCircle ? addClose : removeClose
-        mutation.mutate(f.user_id, {
-            onError: () =>
-                setIds((p) => {
-                    const n = new Set(p)
-                    if (addToCircle) n.delete(f.user_id)
-                    else n.add(f.user_id)
-                    return n
-                }),
-            onSettled: () =>
-                setBusy((p) => {
-                    const n = new Set(p)
-                    n.delete(f.user_id)
-                    return n
-                }),
-        })
-    }
-
-    // Current members reflect optimistic `ids` on top of the loaded list.
-    const memberMap = useMemo(() => {
-        const m = new Map<string, ConnectionUser>()
-        for (const c of closeFriends) m.set(c.user_id, c)
-        for (const f of friends) if (ids.has(f.user_id) && !m.has(f.user_id)) m.set(f.user_id, f)
-        return m
-    }, [closeFriends, friends, ids])
-    const members = useMemo(
-        () => [...memberMap.values()].filter((m) => ids.has(m.user_id)),
-        [memberMap, ids],
-    )
-
-    const addable = useMemo(() => {
-        const q = pickSearch.trim().toLowerCase()
-        return friends
-            .filter((f) => !ids.has(f.user_id))
-            .filter(
-                (f) =>
-                    !q ||
-                    f.display_name.toLowerCase().includes(q) ||
-                    (f.username && f.username.toLowerCase().includes(q)),
-            )
-    }, [friends, ids, pickSearch])
-
-    const atCap = ids.size >= 10
-
-    return (
-        <ModalShell onClose={onClose}>
-            <ModalHeader
-                icon={<Shield className="h-5 w-5" />}
-                title="Trusted Circle"
-                subtitle={`Your inner ${ids.size} — they see what others can't.`}
-                onClose={onClose}
-            />
-
-            <div className="flex-1 overflow-y-auto">
-                {/* Orbit visual */}
-                <div className="flex justify-center px-5 pt-5">
-                    <OrbitVisual you={authUser?.id ?? 'you'} members={members} />
-                </div>
-
-                {/* Members */}
-                <div className="px-3 pt-4">
-                    <div className="flex items-center justify-between px-2">
-                        <Eyebrow text={`Members · ${ids.size} of 10`} />
-                        <button
-                            onClick={() => setPicking((v) => !v)}
-                            disabled={atCap && !picking}
-                            className="flex items-center gap-1 rounded-full border border-brand-divider px-2.5 py-1 text-[11px] font-bold text-brand-text transition hover:border-brand-text/40 disabled:opacity-40"
-                        >
-                            <Plus className="h-3 w-3" /> Add
-                        </button>
-                    </div>
-
-                    {/* Friend picker */}
-                    {picking && (
-                        <div className="mt-2 overflow-hidden rounded-2xl border border-brand-divider bg-brand-secondary/40">
-                            <div className="flex items-center gap-2 border-b border-brand-divider px-3 py-2">
-                                <Search className="h-3.5 w-3.5 text-brand-text/40" />
-                                <input
-                                    value={pickSearch}
-                                    onChange={(e) => setPickSearch(e.target.value)}
-                                    placeholder="Add a friend to your circle…"
-                                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-hidden"
-                                />
-                            </div>
-                            <div className="max-h-48 overflow-y-auto p-1">
-                                {atCap ? (
-                                    <p className="px-3 py-4 text-center text-xs text-brand-text/50">
-                                        Your circle is full (10 of 10). Remove someone first.
-                                    </p>
-                                ) : addable.length === 0 ? (
-                                    <p className="px-3 py-4 text-center text-xs text-brand-text/50">
-                                        {friends.length === 0
-                                            ? 'Add friends first, then build your circle.'
-                                            : 'Everyone is already in your circle.'}
-                                    </p>
-                                ) : (
-                                    addable.map((f) => (
-                                        <button
-                                            key={f.user_id}
-                                            onClick={() => setMembership(f, true)}
-                                            disabled={busy.has(f.user_id)}
-                                            className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition hover:bg-brand-card disabled:opacity-50"
-                                        >
-                                            <Avatar user={f} size={36} />
-                                            <span className="min-w-0 flex-1">
-                                                <span className="block truncate text-sm font-semibold text-brand-text">
-                                                    {f.display_name}
-                                                </span>
-                                                {f.username && (
-                                                    <span className="block truncate text-xs text-brand-text/50">
-                                                        @{f.username}
-                                                    </span>
-                                                )}
-                                            </span>
-                                            {busy.has(f.user_id) ? (
-                                                <Loader2 className="h-4 w-4 animate-spin text-brand-text/40" />
-                                            ) : (
-                                                <Plus className="h-4 w-4 text-brand-text/50" />
-                                            )}
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Member rows */}
-                    <div className="mt-2">
-                        {members.length === 0 ? (
-                            <p className="px-2 py-6 text-center text-sm text-brand-text/50">
-                                No one in your circle yet. Tap “Add” to bring people in.
-                            </p>
-                        ) : (
-                            members.map((m) => (
-                                <div
-                                    key={m.user_id}
-                                    className="flex items-center gap-3 rounded-xl px-2 py-2"
-                                >
-                                    <Avatar user={m} size={40} />
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-sm font-bold text-brand-text">
-                                            {m.display_name}
-                                        </span>
-                                        <span className="block truncate text-xs text-brand-text/50">
-                                            {m.username ? `@${m.username}` : 'In your circle'}
-                                        </span>
-                                    </span>
-                                    <div className="relative">
-                                        <button
-                                            onClick={() =>
-                                                setMenuFor((p) => (p === m.user_id ? null : m.user_id))
-                                            }
-                                            disabled={busy.has(m.user_id)}
-                                            aria-label="Member options"
-                                            className="grid h-8 w-8 place-items-center rounded-full text-brand-text/50 transition hover:bg-brand-secondary hover:text-brand-text disabled:opacity-50"
-                                        >
-                                            {busy.has(m.user_id) ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            )}
-                                        </button>
-                                        {menuFor === m.user_id && (
-                                            <div className="absolute right-0 top-9 z-10 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-lg">
-                                                <button
-                                                    onClick={() => {
-                                                        setMenuFor(null)
-                                                        setMembership(m, false)
-                                                    }}
-                                                    className="block w-full px-3 py-2.5 text-left text-sm font-medium text-brand-text transition hover:bg-brand-secondary"
-                                                >
-                                                    Remove from circle
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                {/* Toggles */}
-                <div className="mt-2 px-3 pb-2">
-                    <div className="px-2">
-                        <Eyebrow text="What they alone see" />
-                    </div>
-                    <div className="mt-1.5 rounded-2xl border border-brand-divider">
-                        {settingsQ.isLoading || tc === null ? (
-                            <div className="flex items-center gap-2 px-4 py-5 text-xs text-brand-text/40">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Loading settings…
-                            </div>
-                        ) : (
-                            TC_TOGGLE_DEFS.map(({ key, label }, i) => (
-                                <ToggleRow
-                                    key={key}
-                                    label={label}
-                                    checked={tc[key]}
-                                    busy={togglingKey === key}
-                                    first={i === 0}
-                                    onToggle={() => toggleSetting(key)}
-                                />
-                            ))
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <ModalFooter text="Adds are silent. They never get notified they're in your circle." />
-        </ModalShell>
-    )
-}
-
 /** Central "you" avatar with close-friend avatars scattered in orbit. */
-function OrbitVisual({
-    you,
-    members,
-}: {
-    you: string
-    members: ConnectionUser[]
-}) {
-    const size = 188
-    const center = size / 2
-    const shown = members.slice(0, 9)
-    // Two staggered orbits so even small circles look intentional.
-    const placements = shown.map((m, i) => {
-        const ringInner = i % 2 === 0
-        const r = ringInner ? size * 0.3 : size * 0.43
-        const av = ringInner ? 34 : 30
-        const per = shown.length <= 1 ? 1 : shown.length
-        const angle = (i / per) * Math.PI * 2 - Math.PI / 2 + (ringInner ? 0 : 0.5)
-        return {
-            m,
-            av,
-            x: Math.cos(angle) * r + center - av / 2,
-            y: Math.sin(angle) * r + center - av / 2,
-        }
-    })
-    return (
-        <div className="relative" style={{ width: size, height: size }}>
-            {/* orbit rings */}
-            <div
-                className="absolute rounded-full border border-dashed border-brand-text/15"
-                style={{ inset: size * 0.07 }}
-            />
-            <div
-                className="absolute rounded-full border border-dashed border-brand-text/10"
-                style={{ inset: size * 0.2 }}
-            />
-            {/* you */}
-            <div
-                className="absolute grid place-items-center rounded-full bg-primary-ink text-white shadow-lg"
-                style={{ width: 54, height: 54, left: center - 27, top: center - 27 }}
-            >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src={avatarUrl(you)}
-                    alt="You"
-                    className="h-[46px] w-[46px] rounded-full object-cover"
-                />
-            </div>
-            {placements.map(({ m, av, x, y }) => (
-                <div key={m.user_id} className="absolute" style={{ left: x, top: y }}>
-                    <Avatar user={m} size={av} ring />
-                </div>
-            ))}
-            {shown.length === 0 && (
-                <span className="absolute inset-x-0 bottom-1 text-center text-[10px] font-medium text-brand-text/40">
-                    Add people to fill your orbit
-                </span>
-            )}
-        </div>
-    )
-}
-
-function ToggleRow({
-    label,
-    checked,
-    busy,
-    first,
-    onToggle,
-}: {
-    label: string
-    checked: boolean
-    busy: boolean
-    first: boolean
-    onToggle: () => void
-}) {
-    return (
-        <div
-            className={`flex items-center gap-3 px-4 py-3 ${
-                first ? '' : 'border-t border-brand-divider'
-            }`}
-        >
-            <span className="min-w-0 flex-1 text-sm font-medium text-brand-text">
-                {label}
-            </span>
-            {busy && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-brand-text/40" />}
-            <button
-                type="button"
-                role="switch"
-                aria-checked={checked}
-                aria-label={label}
-                onClick={onToggle}
-                disabled={busy}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-                    checked ? 'bg-brand-text' : 'bg-brand-text/20'
-                }`}
-            >
-                <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-brand-card shadow transition-transform ${
-                        checked ? 'translate-x-[22px]' : 'translate-x-0.5'
-                    }`}
-                />
-            </button>
-        </div>
-    )
-}
-
 /* ================================ SURFACE 3 ============================== */
 /* Add Friends modal                                                         */
 
@@ -1016,8 +588,8 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
         <ModalShell onClose={onClose}>
             <ModalHeader
                 icon={<UserPlus className="h-5 w-5" />}
-                title="Add friends"
-                subtitle="Bring people into your orbit."
+                title="Add connections"
+                subtitle="Find people to connect with."
                 onClose={onClose}
             />
 

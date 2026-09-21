@@ -63,7 +63,7 @@ const PostBoekApp: React.FC = () => {
       return;
     }
     if (tab === 'Friends') {
-      router.push('/circle');
+      router.push('/connections');
       return;
     }
     if (tab === 'Reels') {
@@ -301,7 +301,7 @@ const PostBoekApp: React.FC = () => {
 
           The SAME component is still live on two other pages, deliberately,
           because nobody asked for those to change: the Circle friends list
-          (src/components/circle/FriendsView.tsx) and a group's members tab
+          (src/components/connections/FriendsView.tsx) and a group's members tab
           (src/components/groups/tabs/GroupMembersTab.tsx), where messaging
           someone in place is the point and navigating away would lose the
           list you were working through.

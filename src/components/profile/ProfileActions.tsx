@@ -34,11 +34,11 @@ interface ProfileActionsProps {
     isMuted?: boolean
     onFollow: () => void
     onUnfollow: () => void
-    onSendCircleRequest: () => void
-    onAcceptCircleRequest: () => void
-    onDeclineCircleRequest: () => void
-    onCancelCircleRequest: () => void
-    onRemoveFromCircle: () => void
+    onSendConnectionRequest: () => void
+    onAcceptConnectionRequest: () => void
+    onDeclineConnectionRequest: () => void
+    onCancelConnectionRequest: () => void
+    onRemoveConnection: () => void
     onEditProfile: () => void
     onMessage?: () => void
     onBlock?: () => void
@@ -63,11 +63,11 @@ export function ProfileActions({
     isMuted = false,
     onFollow,
     onUnfollow,
-    onSendCircleRequest,
-    onAcceptCircleRequest,
-    onDeclineCircleRequest,
-    onCancelCircleRequest,
-    onRemoveFromCircle,
+    onSendConnectionRequest,
+    onAcceptConnectionRequest,
+    onDeclineConnectionRequest,
+    onCancelConnectionRequest,
+    onRemoveConnection,
     onEditProfile,
     onMessage,
     onBlock,
@@ -132,9 +132,10 @@ export function ProfileActions({
     }
 
     const isFollowing = relationship?.following ?? false
-    const inCircle = relationship?.in_circle ?? false
-    const circleRequestSent = relationship?.circle_request_sent ?? false
-    const circleRequestReceived = relationship?.circle_request_received ?? false
+    const status = relationship?.connection_status
+    const isConnected = relationship?.is_connection || status === "accepted"
+    const requestSent = status === "pending_sent"
+    const requestReceived = status === "pending_received"
     const isBlocked = relationship?.blocked ?? false
     const canDM = relationship?.can_dm ?? false
 
@@ -164,19 +165,19 @@ export function ProfileActions({
         })
     }
 
-    if (!inCircle && !circleRequestSent) {
+    if (!isConnected && !requestSent) {
         menuItems.push({
-            label: "Add to Circle",
+            label: "Connect",
             icon: <Users className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onSendCircleRequest() },
+            onClick: () => { setMenuOpen(false); onSendConnectionRequest() },
         })
     }
 
-    if (inCircle) {
+    if (isConnected) {
         menuItems.push({
-            label: "Remove from Circle",
+            label: "Remove connection",
             icon: <Users className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onRemoveFromCircle() },
+            onClick: () => { setMenuOpen(false); onRemoveConnection() },
             destructive: true,
         })
     }
@@ -281,7 +282,7 @@ export function ProfileActions({
                             ? "border-brand-divider text-brand-text hover:border-brand-text/20 hover:bg-brand-text/5"
                             : "opacity-40 cursor-not-allowed"
                     }`}
-                    title={canDM ? "Send message" : "Add to Circle first"}
+                    title={canDM ? "Send message" : "Connect first"}
                 >
                     {!canDM && <Lock className="mr-1 h-3 w-3" />}
                     <MessageSquare className="h-4 w-4" />
@@ -341,7 +342,7 @@ export function ProfileActions({
 
             {!canDM && (
                 <p className="text-xs text-brand-text/60">
-                    Add {displayName || username} to your Circle to unlock messaging
+                    Connect with {displayName || username} to unlock messaging
                 </p>
             )}
         </div>

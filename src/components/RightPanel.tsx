@@ -78,7 +78,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
               <h5 className="text-sm font-semibold text-brand-text">People you may know</h5>
             </div>
             <button
-              onClick={() => router.push('/circle')}
+              onClick={() => router.push('/connections')}
               className="text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
             >
               See all
