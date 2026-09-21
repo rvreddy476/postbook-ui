@@ -23,6 +23,7 @@ import {
 import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { useBatchProfiles } from '@/hooks/useProfile'
 import type { User } from '@/types'
 import {
   Users, MessageCircle, Plus, Hash, Search,
@@ -193,7 +194,13 @@ export default function PostbookMessenger() {
     let list = friends
     if (search.trim()) {
       const q = search.toLowerCase()
-      list = list.filter((f) => f.name.toLowerCase().includes(q))
+      // Match the handle too — it is the unique one, so it is what you
+      // type when two people share a display name.
+      list = list.filter(
+        (f) =>
+          f.name.toLowerCase().includes(q) ||
+          (f.username ?? '').toLowerCase().includes(q),
+      )
     }
     return [...list].sort((a, b) => {
       const aU = getUnreadCountForUser(a.id), bU = getUnreadCountForUser(b.id)
@@ -267,13 +274,27 @@ export default function PostbookMessenger() {
     [currentUser?.id]
   )
 
+  // chat.user_profiles caches only display_name and avatar, so a request
+  // row has no handle of its own. Resolve it from profile-service instead
+  // of widening the chat-side cache for one label.
+  const requestPeerIds = useMemo(
+    () => requestConversations.map((c) => requestPeer(c).id).filter(Boolean),
+    [requestConversations, requestPeer]
+  )
+  const { data: requestProfiles } = useBatchProfiles(requestPeerIds)
+
   const filteredRequests = useMemo(() => {
     if (!search.trim()) return requestConversations
     const q = search.toLowerCase()
-    return requestConversations.filter((c) =>
-      requestPeer(c).name.toLowerCase().includes(q)
-    )
-  }, [requestConversations, search, requestPeer])
+    return requestConversations.filter((c) => {
+      const peer = requestPeer(c)
+      // Searching by handle works too — it is the unique one.
+      const handle = requestProfiles?.get(peer.id)?.username ?? ''
+      return (
+        peer.name.toLowerCase().includes(q) || handle.toLowerCase().includes(q)
+      )
+    })
+  }, [requestConversations, search, requestPeer, requestProfiles])
 
   const handleFriendClick = useCallback((friend: User) => {
     setActiveDm(friend)
@@ -624,9 +645,21 @@ export default function PostbookMessenger() {
                             <span className="text-[10px] text-brand-text/40 font-bold shrink-0 ml-2">{lastMsg.time}</span>
                           )}
                         </div>
+                        {/* Handle under the name. Two accounts can carry the
+                            same display name — "Rq s" appeared twice in this
+                            very list — and then the handle is the only thing
+                            that tells the rows apart, being unique by
+                            construction. */}
+                        {friend.username && (
+                          <span className="block truncate text-[11px] leading-tight text-brand-text/40">
+                            @{friend.username}
+                          </span>
+                        )}
                         <div className="flex items-center justify-between mt-0.5">
                           <span className="text-xs text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
-                            {lastMsg?.text ?? (friend.isOnline ? 'Online' : 'Offline')}
+                            {/* `||`, not `??`: an empty preview is a string,
+                                not null, so `??` kept the blank line. */}
+                            {lastMsg?.text || (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
                             <span className="bg-primary-ink text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
@@ -678,6 +711,14 @@ export default function PostbookMessenger() {
                           <span className="text-sm font-bold truncate block text-brand-text">
                             {peer.name}
                           </span>
+                          {/* Handle under the name here too: deciding whether
+                              to accept a stranger is exactly when knowing
+                              WHICH account this is matters most. */}
+                          {requestProfiles?.get(peer.id)?.username && (
+                            <span className="block truncate text-[11px] leading-tight text-brand-text/40">
+                              @{requestProfiles.get(peer.id)!.username}
+                            </span>
+                          )}
                           <span className="text-xs text-brand-text/60 truncate block tracking-wide leading-tight mt-0.5">
                             {lastMsg || 'Wants to send you a message'}
                           </span>
