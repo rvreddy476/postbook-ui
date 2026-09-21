@@ -18,14 +18,16 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+// Used only by the commented-out chat dock at the end of this file.
+// import { motion, AnimatePresence } from 'framer-motion'
 import {
     UserPlus, Search, LayoutGrid, Shield, ShieldOff, ChevronRight,
     MessageCircle, ArrowUpDown, X, QrCode, AtSign, MapPin, Contact,
     Loader2, MoreHorizontal, Plus,
 } from 'lucide-react'
-import ChatWindow from '@/components/ChatWindow'
-import type { User } from '@/types'
+// Both used only by the commented-out chat dock at the end of this file.
+// import ChatWindow from '@/components/ChatWindow'
+// import type { User } from '@/types'
 import { useAuthUser } from '@/store/auth'
 import {
     useFriends, usePendingFriendRequests, useAcceptFriendRequest,
@@ -162,27 +164,17 @@ export default function FriendsView() {
     const openProfile = (u: { username?: string; user_id: string }) =>
         router.push(`/u/${u.username || u.user_id}`)
 
-    // Facebook-style chat dock — tapping a friend's message icon opens an
-    // in-place ChatWindow rather than navigating away from the Friends page.
-    // ChatWindow runs standalone here: useNotifications() falls back to its
-    // no-op value when no NotificationProvider is mounted.
-    const [chats, setChats] = useState<User[]>([])
-    const openChat = (f: ConnectionUser, online: boolean) => {
-        setChats((prev) => {
-            if (prev.some((c) => c.id === f.user_id)) return prev
-            const contact: User = {
-                id: f.user_id,
-                name: f.display_name,
-                username: f.username,
-                avatar: avatarUrl(f.user_id, f.avatar_media_id),
-                isOnline: online,
-            }
-            const next = [contact, ...prev]
-            return next.length > 3 ? next.slice(0, 3) : next
-        })
-    }
-    const closeChat = (id: string) =>
-        setChats((prev) => prev.filter((c) => c.id !== id))
+    /**
+     * Message opens the full messenger on that friend's conversation.
+     *
+     * This used to push the friend onto `chats`, which the floating dock at
+     * the bottom of this file rendered. That dock is commented out at the
+     * founder's request (21 Sep), so keeping the old body would have made
+     * the Message button do NOTHING visible. The messenger reads the id
+     * from the query string, so the conversation opens directly.
+     */
+    const openChat = (f: ConnectionUser) =>
+        router.push(`/messenger?user=${encodeURIComponent(f.user_id)}`)
 
     return (
         <div className="space-y-7">
@@ -326,7 +318,7 @@ export default function FriendsView() {
                                 unread={getUnreadCountForUser(f.user_id)}
                                 first={i === 0}
                                 onOpen={() => openProfile(f)}
-                                onMessage={() => openChat(f, !!presence[f.user_id])}
+                                onMessage={() => openChat(f)}
                             />
                         ))}
                     </div>
@@ -349,7 +341,14 @@ export default function FriendsView() {
                 <RequestsModal onClose={() => setActiveModal(null)} />
             )}
 
-            {/* ---- Chat dock — in-place ChatWindows, no navigation ---- */}
+            {/*
+              Floating chat dock — COMMENTED OUT at the founder's request
+              (21 Sep), not deleted, so it can come back in one step.
+
+              Message now opens the full messenger (see `openChat` above).
+              Restoring this block means restoring the `chats` state and
+              `closeChat` with it; the ChatWindow import is still here.
+
             <div className="pointer-events-none fixed bottom-0 right-3 z-1000 flex flex-row-reverse items-end gap-3 sm:right-6 md:gap-4">
                 <AnimatePresence>
                     {chats.map((c) => (
@@ -365,6 +364,7 @@ export default function FriendsView() {
                     ))}
                 </AnimatePresence>
             </div>
+            */}
         </div>
     )
 }

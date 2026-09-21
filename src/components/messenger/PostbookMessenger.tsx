@@ -7,7 +7,6 @@ import DmChat from './DmChat'
 import ThreadDetails from './ThreadDetails'
 import MessengerTopBar from './MessengerTopBar'
 import NewMessageSheet from './NewMessageSheet'
-import SegmentedControl from '@/components/ui/SegmentedControl'
 import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
 import { fetchUsers } from '@/services/userService'
@@ -21,10 +20,11 @@ import {
   type Conversation,
 } from '@/services/messageService'
 import { useMyGroups } from '@/hooks/useGroups'
+import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
 import {
-  Users, MessageCircle, Plus, Settings, Hash, Home,
+  Users, MessageCircle, Plus, Hash, Search, SlidersHorizontal,
   Globe, Lock, Shield, ChevronRight, Send, MailQuestion, Check, X
 } from 'lucide-react'
 
@@ -69,7 +69,12 @@ function EmptyState() {
 /* ------------------------------------------------------------------ */
 export default function PostbookMessenger() {
   const router = useRouter()
-  const [contactTab, setContactTab] = useState<'friends' | 'groups' | 'requests'>('friends')
+  // The four scopes the mockup's chip row shows, plus Requests, which only
+  // appears when someone is actually waiting. 'unread' and 'friends' render
+  // the same list from different slices of it.
+  const [contactTab, setContactTab] = useState<'unread' | 'channels' | 'groups' | 'friends' | 'requests'>('friends')
+  // The sliders button beside the title. A filter, not decoration.
+  const [onlineOnly, setOnlineOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
@@ -200,6 +205,37 @@ export default function PostbookMessenger() {
     }
     return [...list]
   }, [myGroups, search])
+
+  /**
+   * What the Direct and Unread chips actually show.
+   *
+   * Both draw the same rows: Unread is Direct narrowed to conversations with
+   * something waiting, so there is one list component and no second code path
+   * to drift. The sliders filter narrows either of them to people online.
+   */
+  const visibleFriends = useMemo(() => {
+    let list = filteredFriends
+    if (contactTab === 'unread') list = list.filter((f) => getUnreadCountForUser(f.id) > 0)
+    if (onlineOnly) list = list.filter((f) => f.isOnline)
+    return list
+  }, [filteredFriends, contactTab, onlineOnly, getUnreadCountForUser])
+
+  const unreadConversationCount = useMemo(
+    () => friends.filter((f) => getUnreadCountForUser(f.id) > 0).length,
+    [friends, getUnreadCountForUser]
+  )
+
+  // Channels the signed-in user belongs to. Rows leave for the channel page:
+  // a broadcast channel is not a conversation this messenger can render.
+  const { data: myChannels } = useMyBroadcastChannels()
+  const filteredChannels = useMemo(() => {
+    const list = myChannels ?? []
+    if (!search.trim()) return list
+    const q = search.toLowerCase()
+    return list.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.handle.toLowerCase().includes(q)
+    )
+  }, [myChannels, search])
 
   const selectedGroup = useMemo(
     () => (myGroups ?? []).find((g) => g.id === activeGroupId) ?? null,
@@ -356,10 +392,8 @@ export default function PostbookMessenger() {
   return (
     <div className="flex h-screen w-screen flex-col font-sans text-brand-text overflow-hidden">
       {/* The page sits outside the app shell, so it carries its own bar:
-          a way home, one search, where else to go, and compose. */}
+          a way home, global search, notifications, settings and compose. */}
       <MessengerTopBar
-        search={search}
-        onSearchChange={setSearch}
         onCompose={() => setShowNewMessage(true)}
         unread={friendsUnreadTotal}
       />
@@ -369,97 +403,150 @@ export default function PostbookMessenger() {
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
       <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId ? 'hidden md:flex' : 'flex'}`}>
-        {/* Column header: what this list is, and how much of it is unread. */}
-        <div className="flex items-center justify-between px-5 pt-5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-semibold -tracking-[0.014em] text-brand-text">Messages</h1>
+        {/* Column header: what this list is, how much is unread, and the
+            one filter. Who you are signed in as is no longer repeated here —
+            the top bar carries the avatar, home and settings. */}
+        <div className="flex items-center justify-between gap-2 px-5 pt-5">
+          <h1 className="text-[13px] font-bold uppercase tracking-[0.08em] text-brand-text">
+            Messages
+          </h1>
+          <div className="flex items-center gap-1.5">
             {friendsUnreadTotal > 0 && (
-              <span className="rounded-full bg-primary-tint px-2 py-0.5 text-[11px] font-semibold tabular-nums text-primary-ink">
+              <span className="rounded-lg bg-primary-tint px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] tabular-nums text-primary-ink">
                 {friendsUnreadTotal} unread
               </span>
             )}
+            <button
+              onClick={() => setOnlineOnly((v) => !v)}
+              aria-pressed={onlineOnly}
+              aria-label="Show only people who are online"
+              title={onlineOnly ? 'Showing online only' : 'Show online only'}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                onlineOnly
+                  ? 'bg-primary-ink text-white'
+                  : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'
+              }`}
+            >
+              <SlidersHorizontal className="h-4 w-4" strokeWidth={1.75} />
+            </button>
           </div>
         </div>
 
-        {/* Current user header */}
         <div className="px-5 pt-3 pb-3">
-          <div className="flex items-center gap-3 mb-4">
-            {currentUser && (
-              <>
-                <Avatar
-                  user={currentUser}
-                  size={42}
-                  showStatus
-                  avatarUrl={
-                    currentUser.avatar && (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('/'))
-                      ? currentUser.avatar : undefined
-                  }
-                />
-                {/* The column is already titled above, so this row is just
-                    who you are signed in as. */}
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium text-brand-text">{currentUser.name}</p>
-                  <p className="text-xs text-muted-foreground">Signed in</p>
-                </div>
-                <button
-                  onClick={() => router.push('/')}
-                  aria-label="Back to home"
-                  title="Home"
-                  className="w-9 h-9 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-text/70 hover:text-brand-text hover:bg-brand-divider transition-all"
-                >
-                  <Home className="w-[18px] h-[18px]" />
-                </button>
-                <button
-                  onClick={() => router.push('/settings')}
-                  aria-label="Settings"
-                  title="Settings"
-                  className="w-9 h-9 rounded-xl bg-brand-secondary flex items-center justify-center text-brand-text/70 hover:text-brand-text hover:bg-brand-divider transition-all"
-                >
-                  <Settings className="w-[18px] h-[18px]" />
-                </button>
-              </>
-            )}
+          {/* Filters the list beside it. The bar's search is the global one
+              (people, posts, everything) and goes to /search, so the two
+              fields do different jobs rather than repeating each other. */}
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-9 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
+            />
           </div>
 
-          {/* The search that used to sit here now lives in MessengerTopBar,
-              which owns the same `search` state. Two identical fields on one
-              screen is the "2 Searches" complaint already made about the feed
-              header, so this one is gone rather than duplicated. */}
-
-          {/* Direct, Groups and Requests are the real tabs this page has;
-              the shared control keeps switching identical to the rest of
-              the app, and carries each tab's own count. */}
-          <SegmentedControl
-            layoutId="messenger-scope"
-            aria-label="Conversations"
-            size="sm"
-            fullWidth
-            value={contactTab}
-            onChange={(id) => setContactTab(id as typeof contactTab)}
-            segments={[
-              { id: 'friends', label: 'Direct', badge: friendsUnreadTotal || undefined },
-              { id: 'groups', label: 'Groups' },
-              { id: 'requests', label: 'Requests', badge: requestConversations.length || undefined },
-            ]}
-          />
+          {/* The scopes, as the mockup draws them: chips, not a sliding pill.
+              Requests is the one addition and appears only when somebody is
+              waiting — a chip that is always empty is just noise. */}
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Conversations">
+            {([
+              { id: 'unread' as const, label: 'Unread', badge: unreadConversationCount },
+              { id: 'channels' as const, label: 'Channels', badge: 0 },
+              { id: 'groups' as const, label: 'Groups', badge: 0 },
+              { id: 'friends' as const, label: 'Direct', badge: 0 },
+              ...(requestConversations.length > 0
+                ? [{ id: 'requests' as const, label: 'Requests', badge: requestConversations.length }]
+                : []),
+            ]).map((chip) => {
+              const active = contactTab === chip.id
+              return (
+                <button
+                  key={chip.id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setContactTab(chip.id)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+                    active
+                      ? 'bg-primary-ink text-white'
+                      : 'bg-brand-secondary text-brand-text/60 hover:text-brand-text'
+                  }`}
+                >
+                  {chip.label}
+                  {chip.badge > 0 && (
+                    <span
+                      className={`tabular-nums text-[11px] font-bold ${
+                        active ? 'text-white/70' : 'text-primary-ink'
+                      }`}
+                    >
+                      {chip.badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Contact list */}
         <div className="flex-1 overflow-y-auto px-3 pb-3">
           {isLoading ? (
             <SidebarSkeleton />
-          ) : contactTab === 'friends' ? (
-            /* Friends list */
-            filteredFriends.length === 0 ? (
+          ) : contactTab === 'channels' ? (
+            /* Channels you belong to. These open the channel page: a
+               broadcast channel is not a conversation this view renders. */
+            filteredChannels.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
+                <Hash className="w-10 h-10 text-brand-secondary mb-2" />
                 <p className="text-[13px] font-medium text-brand-text/60">
-                  {search ? 'No friends match your search' : 'No conversations yet'}
+                  {search ? 'No channels match your search' : 'No channels yet'}
                 </p>
               </div>
             ) : (
               <div className="space-y-1.5">
-                {filteredFriends.map((friend) => {
+                {filteredChannels.map((channel) => (
+                  <button
+                    key={channel.id}
+                    onClick={() => router.push(`/channels/${channel.id}`)}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left border border-transparent transition-all hover:border-brand-divider hover:bg-primary-ink/5 group"
+                  >
+                    <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-secondary text-brand-text/60">
+                      <Hash className="h-5 w-5" strokeWidth={1.75} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="block truncate text-sm font-bold text-brand-text group-hover:text-primary-ink transition-colors">
+                        {channel.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs leading-tight tracking-wide text-brand-text/60">
+                        @{channel.handle}
+                        <span className="px-1.5 text-brand-text/30">·</span>
+                        {channel.subscriber_count} subscribers
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-brand-text/30" />
+                  </button>
+                ))}
+              </div>
+            )
+          ) : contactTab === 'friends' || contactTab === 'unread' ? (
+            /* Direct, and Unread, which is the same list narrowed down */
+            visibleFriends.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
+                <p className="text-[13px] font-medium text-brand-text/60">
+                  {search
+                    ? 'No friends match your search'
+                    : contactTab === 'unread'
+                      ? 'Nothing unread'
+                      : onlineOnly
+                        ? 'Nobody online right now'
+                        : 'No conversations yet'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {visibleFriends.map((friend) => {
                   const isActive = activeDm?.id === friend.id
                   const avatarUrl = friend.avatar && (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
                     ? friend.avatar : undefined

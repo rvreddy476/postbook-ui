@@ -2,18 +2,21 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useGroupMembers, useUpdateMemberRole, useRemoveMember, useBanMember } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useBatchRelationships } from '@/hooks/useConnections'
 import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile'
 import { useAuthUser } from '@/store/auth'
-import ChatWindow from '@/components/ChatWindow'
+// Used only by the commented-out chat dock at the end of this file.
+// import ChatWindow from '@/components/ChatWindow'
 import {
   Crown, ShieldCheck, Wrench, UserMinus, Search, Shield,
   MoreHorizontal, ChevronDown, Ban, MessageCircle, UserPlus, Check
 } from 'lucide-react'
 import type { GroupMember } from '@/types/groups'
-import type { User } from '@/types'
+// Used only by the commented-out chat dock at the end of this file.
+// import type { User } from '@/types'
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 interface GroupMembersTabProps {
@@ -187,8 +190,8 @@ function MemberCard({
 
 export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembersTabProps) {
   const authUser = useAuthUser()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [chats, setChats] = useState<User[]>([])
   // Optimistic overrides while the relationships batch refetches.
   const [followOverride, setFollowOverride] = useState<Map<string, boolean>>(new Map())
   const { data: members, isLoading } = useGroupMembers(groupId, 100)
@@ -209,21 +212,16 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   // Viewer <-> member relationships drive the per-row CTA.
   const { data: relMap } = useBatchRelationships(authUser?.id ?? '', memberUserIds)
 
-  const openChat = (m: GroupMember) => {
-    setChats((prev) => {
-      if (prev.some((c) => c.id === m.user_id)) return prev
-      const contact: User = {
-        id: m.user_id,
-        name: m.display_name || m.username || 'Member',
-        username: m.username || m.user_id,
-        avatar: m.avatar_media_id ? `/v1/media/${m.avatar_media_id}/serve` : '',
-        isOnline: false,
-      }
-      const next = [contact, ...prev]
-      return next.length > 3 ? next.slice(0, 3) : next
-    })
-  }
-  const closeChat = (id: string) => setChats((prev) => prev.filter((c) => c.id !== id))
+  /**
+   * Message opens the full messenger on that member's conversation.
+   *
+   * This used to push the member onto `chats`, which the floating dock at
+   * the bottom of this file rendered. That dock is commented out at the
+   * founder's request (21 Sep), so keeping the old body would have made the
+   * Message button do NOTHING visible.
+   */
+  const openChat = (m: GroupMember) =>
+    router.push(`/messenger?user=${encodeURIComponent(m.user_id)}`)
 
   const setOverride = (userId: string, val: boolean) =>
     setFollowOverride((prev) => new Map(prev).set(userId, val))
@@ -420,12 +418,18 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
         </div>
       )}
 
-      {/* Floating chat dock - Message opens an in-place ChatWindow. */}
+      {/*
+        Floating chat dock — COMMENTED OUT at the founder's request
+        (21 Sep), not deleted, so it can come back in one step. Message
+        now opens the full messenger (see `openChat` above); restoring
+        this block means restoring the `chats` state and `closeChat`.
+
       <div className="fixed bottom-0 right-4 z-1500 flex items-end gap-3">
         {chats.map((c) => (
           <ChatWindow key={c.id} contact={c} onClose={() => closeChat(c.id)} />
         ))}
       </div>
+      */}
     </div>
   )
 }

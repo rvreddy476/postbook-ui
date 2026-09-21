@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, Search, Settings, SquarePen } from 'lucide-react';
@@ -9,8 +9,6 @@ import Avatar from '@/components/ui/Avatar';
 import { useMyProfile } from '@/hooks/useEditProfile';
 
 interface MessengerTopBarProps {
-  search: string;
-  onSearchChange: (value: string) => void;
   onCompose: () => void;
   unread?: number;
 }
@@ -19,31 +17,27 @@ interface MessengerTopBarProps {
  * The messenger's own top bar.
  *
  * The messenger is a full-screen page outside the app shell, so it had no
- * header at all: no way home, no search above the columns, and no compose.
+ * header at all: no way home, no global search, and no compose.
  *
  * Every control here goes somewhere real. The mockup's "@" mentions icon is
  * deliberately absent — there is no mentions view to open, and an icon that
  * leads nowhere is worse than one that is missing.
  *
- * There is ONE search, not two. The mockup shows a global search here and a
- * conversation search in the left column; this is the conversation search,
- * moved up. Two fields on one screen is the complaint the founder already
- * made about the feed header.
+ * This search is the GLOBAL one: it hands the query to /search, which
+ * covers people, posts and the rest. The left column has its own field that
+ * filters the conversation list. Two fields, two different jobs — the point
+ * of the earlier "2 Searches" complaint was repetition, not the count.
  */
-export default function MessengerTopBar({
-  search,
-  onSearchChange,
-  onCompose,
-  unread = 0,
-}: MessengerTopBarProps) {
+export default function MessengerTopBar({ onCompose, unread = 0 }: MessengerTopBarProps) {
   const router = useRouter();
   const { data: profile } = useMyProfile();
+  const [query, setQuery] = useState('');
 
-  const navItems = [
-    { label: 'Channels', href: '/channels', active: false },
-    { label: 'Direct', href: '/messenger', active: true },
-    { label: 'Spaces', href: '/groups', active: false },
-  ];
+  const runSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-brand-divider bg-brand-bg px-4">
@@ -57,34 +51,17 @@ export default function MessengerTopBar({
         </span>
       </Link>
 
-      {/* The one search on this page: it filters the list beside it. */}
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/40" />
+      {/* Global search. Enter hands the query to /search. */}
+      <form role="search" onSubmit={runSearch} className="relative w-full max-w-md">
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/40" />
         <input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search conversations"
-          className="w-full rounded-full border border-transparent bg-brand-secondary py-2 pl-9 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search everything"
+          placeholder="Jump to workspace, chat, or files..."
+          className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-10 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
         />
-      </div>
-
-      {/* Where else you can go. Links, not tabs: each one leaves this page. */}
-      <nav className="mx-auto hidden items-center gap-0.5 rounded-full bg-brand-text/[0.06] p-1 lg:flex">
-        {navItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            aria-current={item.active ? 'page' : undefined}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-              item.active
-                ? 'bg-brand-bg text-brand-text shadow-xs'
-                : 'text-brand-text/55 hover:text-brand-text/80'
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      </form>
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         <button
