@@ -811,3 +811,32 @@ export function usePresence(userIds: string[]) {
 
     return query
 }
+
+/**
+ * Mutual connections — "you both know N people" — for a whole list in one
+ * request (POST /v1/graph/connections/mutual-counts).
+ *
+ * The pre-existing /v1/graph/mutuals is per pair AND counts mutual
+ * FOLLOWERS, so a card grid using it would be N+1 requests answering a
+ * different question. This hook is backed by one SQL query over the
+ * connections table.
+ *
+ * Every requested id comes back, zero included, so an absent key means the
+ * request has not resolved — not "no mutuals".
+ */
+export function useMutualConnectionCounts(viewerId: string | undefined, targetIds: string[]) {
+    const capped = targetIds.slice(0, 100)
+    return useQuery({
+        queryKey: ["connections", "mutual-counts", viewerId, ...capped.slice().sort()],
+        queryFn: async (): Promise<Map<string, number>> => {
+            const res = await api.post<{ counts?: Record<string, number> }>(
+                "/v1/graph/connections/mutual-counts",
+                { viewer_id: viewerId, target_ids: capped },
+            )
+            const counts = res.data?.counts ?? {}
+            return new Map(Object.entries(counts))
+        },
+        staleTime: 60_000,
+        enabled: !!viewerId && capped.length > 0,
+    })
+}

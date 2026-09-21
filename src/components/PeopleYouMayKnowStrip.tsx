@@ -43,13 +43,20 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   const { data: suggestions } = useFriendSuggestions(authUser?.id, 20);
   const hideSuggestion = useHideSuggestion();
 
-  const visible = (suggestions ?? []).slice(offset, offset + 10);
-  // Real relationship state, so a request already sent still reads as sent
-  // after a reload rather than offering Connect again.
+  const pool = suggestions ?? [];
   const { data: relMap } = useBatchRelationships(
     authUser?.id ?? '',
-    visible.map((u) => u.user_id),
+    pool.map((u) => u.user_id),
   );
+  // Someone already asked is not a suggestion: leaving them here invites
+  // the same request twice and crowds out someone actionable. Nothing is
+  // filtered until the relationships resolve.
+  const eligible = pool.filter((u) => {
+    const rel = relMap?.get(u.user_id);
+    if (!rel) return true;
+    return rel.connection_status !== 'pending_sent' && !rel.is_connection;
+  });
+  const visible = eligible.slice(offset, offset + 10);
   if (visible.length === 0) return null;
 
   return (

@@ -1,39 +1,39 @@
 'use client'
 
 /**
- * FriendsView — the Connections surface: one home screen plus two
- * sheets (Add Friends, Requests).
+ * FriendsView — the Connections surface.
  *
- * There is ONE relationship concept here: a Connection. "Circle" and
- * "Trusted Circle" were removed on 21 Sep — Circle was only ever a UI
- * label for connections, and Trusted Circle was close-friends, a second
- * private tier nobody had used (zero rows, zero posts addressed to it).
+ * One relationship concept: a Connection. "Circle" and "Trusted Circle"
+ * were removed on 21 Sep; close-friends and the circle tables are gone
+ * from graph-service too.
+ *
+ * Three lanes, one screen: your connections, requests you received, and
+ * requests you sent. Each is a grid of cards carrying only what identifies
+ * a person — picture, name, and how many connections you share.
+ *
+ * "Online now" was removed on 22 Sep at the founder's request, and with it
+ * the presence query and the per-card activity line: a card that claims
+ * someone is active is a claim that has to keep being true.
  *
  *   connections / requests → graph-service
+ *   mutual counts          → graph-service /connections/mutual-counts
  *   "Matched for you"      → suggestion-service
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-// Used only by the commented-out chat dock at the end of this file.
-// import { motion, AnimatePresence } from 'framer-motion'
 import {
-    UserPlus, Search, LayoutGrid, Shield, ShieldOff, ChevronRight,
-    MessageCircle, ArrowUpDown, X, QrCode, AtSign, MapPin, Contact,
-    Loader2, MoreHorizontal, Plus,
+    UserPlus, Search, ChevronRight, MessageCircle, X, QrCode, AtSign,
+    MapPin, Contact, ShieldOff, Users,
 } from 'lucide-react'
-// Both used only by the commented-out chat dock at the end of this file.
-// import ChatWindow from '@/components/ChatWindow'
-// import type { User } from '@/types'
 import { useAuthUser } from '@/store/auth'
 import {
     useFriends, usePendingFriendRequests, useAcceptFriendRequest,
-    useRejectFriendRequest, useFriendSuggestions,
-    usePresence,
-    useFilteredFriendRequests, useUnfilterFriendRequest,
-    type ConnectionUser, type SuggestionUser, type FriendRequestEntry,
+    useRejectFriendRequest, useFriendSuggestions, useSentFriendRequests,
+    useCancelFriendRequest, useFilteredFriendRequests, useUnfilterFriendRequest,
+    useMutualConnectionCounts,
+    type ConnectionUser, type SuggestionUser,
 } from '@/hooks/useConnections'
-import { useNotifications } from '@/contexts/NotificationContext'
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 /* ----------------------------- shared helpers ---------------------------- */
@@ -42,10 +42,6 @@ function avatarUrl(userId: string, avatarMediaId?: string): string {
     return avatarMediaId
         ? `/v1/media/${avatarMediaId}/serve`
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`
-}
-
-function firstName(name: string): string {
-    return name.trim().split(/\s+/)[0] || name
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -81,254 +77,363 @@ function matchPercent(s: SuggestionUser): number {
         const pct = s.score <= 1 ? s.score * 100 : s.score
         return Math.max(1, Math.min(100, Math.round(pct)))
     }
-    const mutual = s.mutual_friend_count ?? 0
-    if (mutual > 0) return Math.min(95, 45 + mutual * 8)
-    return 40
+    const mutuals = s.mutual_friend_count ?? 0
+    return Math.max(12, Math.min(96, 40 + mutuals * 7))
 }
 
+/**
+ * "N mutual connections", or nothing at all while the count is still in
+ * flight. An absent entry means unresolved — never "zero" — so the line is
+ * left blank rather than asserting something the server has not said.
+ */
+function mutualsLine(count: number | undefined): string {
+    if (count === undefined) return ''
+    if (count === 0) return 'No mutual connections'
+    return `${count} mutual connection${count === 1 ? '' : 's'}`
+}
+
+type Lane = 'connections' | 'received' | 'sent'
+
 /* ================================ SURFACE 1 ============================== */
-/* Friends Home                                                              */
+/* Connections home                                                          */
 
 export default function FriendsView() {
     const router = useRouter()
     const authUser = useAuthUser()
-    // Shared, real-time unread-message counts — same source the Messenger
-    // screen uses (NotificationContext, now mounted app-wide).
-    const { getUnreadCountForUser } = useNotifications()
 
-    const [activeModal, setActiveModal] =
-        useState<'add' | 'requests' | null>(null)
-    const [sortAlpha, setSortAlpha] = useState(false)
-    const [searchOpen, setSearchOpen] = useState(false)
+    const [lane, setLane] = useState<Lane>('connections')
     const [search, setSearch] = useState('')
-    const searchRef = useRef<HTMLInputElement>(null)
+    const [addOpen, setAddOpen] = useState(false)
+    const [filteredOpen, setFilteredOpen] = useState(false)
+    /** Locally settled requests, so a card leaves the grid immediately. */
+    const [handled, setHandled] = useState<Set<string>>(new Set())
 
     const friendsQ = useFriends(authUser?.id, 50)
-    const requestsQ = usePendingFriendRequests()
-    const suggestionsQ = useFriendSuggestions(authUser?.id, 20)
+    const receivedQ = usePendingFriendRequests()
+    const sentQ = useSentFriendRequests()
+    const filteredQ = useFilteredFriendRequests()
+
+    const acceptReq = useAcceptFriendRequest()
+    const rejectReq = useRejectFriendRequest()
+    const cancelReq = useCancelFriendRequest()
+    const unfilterReq = useUnfilterFriendRequest()
 
     const friends = useMemo(() => friendsQ.data?.items ?? [], [friendsQ.data])
-    const friendIds = useMemo(() => friends.map((f) => f.user_id), [friends])
-    const presenceQ = usePresence(friendIds)
-    const presence = presenceQ.data ?? {}
-
-    const requests = requestsQ.data?.items ?? []
-
-    useEffect(() => {
-        if (searchOpen) searchRef.current?.focus()
-    }, [searchOpen])
-
-    const listed = useMemo(() => {
-        const q = search.trim().toLowerCase()
-        let list = friends
-        if (q) {
-            list = list.filter(
-                (f) =>
-                    f.display_name.toLowerCase().includes(q) ||
-                    (f.username && f.username.toLowerCase().includes(q)),
-            )
-        }
-        if (sortAlpha) {
-            list = [...list].sort((a, b) =>
-                a.display_name.localeCompare(b.display_name),
-            )
-        } else {
-            // online-first
-            list = [...list].sort(
-                (a, b) =>
-                    Number(!!presence[b.user_id]) - Number(!!presence[a.user_id]),
-            )
-        }
-        return list
-    }, [friends, search, sortAlpha, presence])
-
-    // Friends who are actually online right now (live presence) — surfaced
-    // as a compact strip at the top.
-    const onlineFriends = useMemo(
-        () => friends.filter((f) => presence[f.user_id]),
-        [friends, presence],
+    const received = useMemo(
+        () => (receivedQ.data?.items ?? []).filter((r) => !handled.has(r.user_id)),
+        [receivedQ.data, handled],
     )
+    const sent = useMemo(
+        () => (sentQ.data?.items ?? []).filter((r) => !handled.has(r.user_id)),
+        [sentQ.data, handled],
+    )
+    const filtered = useMemo(
+        () => (filteredQ.data?.items ?? []).filter((r) => !handled.has(r.user_id)),
+        [filteredQ.data, handled],
+    )
+
+    const markHandled = (id: string) => setHandled((p) => new Set(p).add(id))
+    const unmarkHandled = (id: string) =>
+        setHandled((p) => {
+            const n = new Set(p)
+            n.delete(id)
+            return n
+        })
+    /** Optimistic: hide the card, put it back if the server refuses. */
+    const settle = (id: string, run: (id: string, opts: { onError: () => void }) => void) => {
+        markHandled(id)
+        run(id, { onError: () => unmarkHandled(id) })
+    }
+
+    // One list drives the grid, whichever lane is open. Every entry is
+    // {user_id, display_name, username?, avatar_media_id?}, which is all a
+    // card renders.
+    const people = useMemo(() => {
+        const base: { user_id: string; display_name: string; username?: string; avatar_media_id?: string }[] =
+            lane === 'connections' ? friends : lane === 'received' ? received : sent
+        const q = search.trim().toLowerCase()
+        if (!q) return base
+        return base.filter(
+            (p) =>
+                p.display_name.toLowerCase().includes(q) ||
+                (p.username ?? '').toLowerCase().includes(q),
+        )
+    }, [lane, friends, received, sent, search])
+
+    const mutualIds = useMemo(() => people.map((p) => p.user_id), [people])
+    const mutualsQ = useMutualConnectionCounts(authUser?.id, mutualIds)
+    const mutuals = mutualsQ.data
+
     const openProfile = (u: { username?: string; user_id: string }) =>
         router.push(`/u/${u.username || u.user_id}`)
+    const openChat = (u: ConnectionUser) =>
+        router.push(`/messenger?user=${encodeURIComponent(u.user_id)}`)
 
-    /**
-     * Message opens the full messenger on that friend's conversation.
-     *
-     * This used to push the friend onto `chats`, which the floating dock at
-     * the bottom of this file rendered. That dock is commented out at the
-     * founder's request (21 Sep), so keeping the old body would have made
-     * the Message button do NOTHING visible. The messenger reads the id
-     * from the query string, so the conversation opens directly.
-     */
-    const openChat = (f: ConnectionUser) =>
-        router.push(`/messenger?user=${encodeURIComponent(f.user_id)}`)
+    const emptyText =
+        search.trim()
+            ? 'Nobody here matches that search.'
+            : lane === 'connections'
+                ? 'No connections yet — add a few people to get started.'
+                : lane === 'received'
+                    ? 'No one is waiting on you.'
+                    : 'You have no requests outstanding.'
+
+    const loading =
+        lane === 'connections' ? friendsQ.isLoading
+            : lane === 'received' ? receivedQ.isLoading
+                : sentQ.isLoading
 
     return (
-        <div className="space-y-7">
+        <div className="space-y-6">
             {/* ---- Header ---- */}
             <div className="flex items-start gap-3">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                     <h1 className="text-[34px] font-black leading-none tracking-tight text-brand-text">
                         Connections
                     </h1>
-                    <p className="mt-1.5 text-sm font-medium text-brand-text/60">
-                        {friends.length} connections
-                        <span className="px-1.5 text-brand-text/30">·</span>
-                        {requests.length} pending
+                    <p className="mt-2 text-sm font-medium text-brand-text/55">
+                        {friends.length} {friends.length === 1 ? 'connection' : 'connections'}
+                        <span className="px-1.5 text-brand-text/25">·</span>
+                        {received.length} received
+                        <span className="px-1.5 text-brand-text/25">·</span>
+                        {sent.length} sent
                     </p>
                 </div>
                 <button
-                    onClick={() => setSearchOpen((v) => !v)}
-                    aria-label="Search connections"
-                    aria-pressed={searchOpen}
-                    className={`grid h-10 w-10 place-items-center rounded-full border transition ${
-                        searchOpen
-                            ? 'border-brand-text bg-brand-text text-brand-bg'
-                            : 'border-brand-divider bg-brand-card text-brand-text/70 hover:text-brand-text'
-                    }`}
+                    onClick={() => setAddOpen(true)}
+                    className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary-ink px-4 text-[13px] font-bold text-white transition hover:bg-primary-hover"
                 >
-                    <Search className="h-[18px] w-[18px]" />
-                </button>
-                <button
-                    onClick={() => setActiveModal('add')}
-                    aria-label="Add connections"
-                    className="grid h-10 w-10 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70 transition hover:text-brand-text"
-                >
-                    <LayoutGrid className="h-[18px] w-[18px]" />
+                    <UserPlus className="h-4 w-4" />
+                    Find people
                 </button>
             </div>
 
-            {/* ---- Search field (revealed) ---- */}
-            {searchOpen && (
-                <div className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-4 py-3">
-                    <Search className="h-4 w-4 shrink-0 text-brand-text/40" />
-                    <input
-                        ref={searchRef}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search your connections…"
-                        className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/40 outline-hidden"
-                    />
-                    <button
-                        onClick={() => {
-                            setSearch('')
-                            setSearchOpen(false)
-                        }}
-                        aria-label="Close search"
-                    >
-                        <X className="h-4 w-4 text-brand-text/40" />
+            {/* ---- Segmented control ---- */}
+            <div
+                role="tablist"
+                aria-label="Connection lanes"
+                className="flex gap-1 rounded-full border border-brand-divider bg-brand-secondary/50 p-1"
+            >
+                <LaneTab id="connections" active={lane} onSelect={setLane} label="Connections" count={friends.length} />
+                <LaneTab id="received" active={lane} onSelect={setLane} label="Received" count={received.length} />
+                <LaneTab id="sent" active={lane} onSelect={setLane} label="Sent" count={sent.length} />
+            </div>
+
+            {/* ---- Search ---- */}
+            <div className="flex items-center gap-2.5 rounded-2xl border border-brand-divider bg-brand-card px-4 py-2.5">
+                <Search className="h-4 w-4 shrink-0 text-brand-text/35" />
+                <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name or @handle"
+                    aria-label="Search connections"
+                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-text/35 outline-hidden"
+                />
+                {search && (
+                    <button onClick={() => setSearch('')} aria-label="Clear search">
+                        <X className="h-4 w-4 text-brand-text/35 transition hover:text-brand-text" />
                     </button>
+                )}
+            </div>
+
+            {/* ---- Grid ---- */}
+            {loading ? (
+                <Hint text="Loading…" />
+            ) : people.length === 0 ? (
+                <Hint text={emptyText} />
+            ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {people.map((p) => (
+                        <PersonCard
+                            key={p.user_id}
+                            person={p}
+                            mutuals={mutuals?.get(p.user_id)}
+                            onOpen={() => openProfile(p)}
+                        >
+                            {lane === 'connections' && (
+                                <CardButton
+                                    onClick={() => openChat(p as ConnectionUser)}
+                                    label="Message"
+                                    icon={<MessageCircle className="h-3.5 w-3.5" />}
+                                />
+                            )}
+                            {lane === 'received' && (
+                                <div className="flex w-full gap-1.5">
+                                    <CardButton
+                                        onClick={() => settle(p.user_id, (id, o) => acceptReq.mutate(id, o))}
+                                        label="Accept"
+                                        primary
+                                    />
+                                    <CardButton
+                                        onClick={() => settle(p.user_id, (id, o) => rejectReq.mutate(id, o))}
+                                        label="Decline"
+                                    />
+                                </div>
+                            )}
+                            {lane === 'sent' && (
+                                <CardButton
+                                    onClick={() => settle(p.user_id, (id, o) => cancelReq.mutate(id, o))}
+                                    label="Cancel request"
+                                />
+                            )}
+                        </PersonCard>
+                    ))}
                 </div>
             )}
 
-            {/* ---- Online now ---- */}
-            {onlineFriends.length > 0 && (
+            {/* ---- Held back by trust-safety (received lane only) ---- */}
+            {lane === 'received' && filtered.length > 0 && (
                 <section>
-                    <Eyebrow text={`Online now · ${onlineFriends.length}`} />
-                    <div className="mt-3 flex gap-4 overflow-x-auto pb-1 scrollbar-hide">
-                        {onlineFriends.map((f) => (
-                            <button
-                                key={f.user_id}
-                                onClick={() => openProfile(f)}
-                                className="flex w-[58px] shrink-0 flex-col items-center gap-1.5"
-                            >
-                                <Avatar user={f} size={48} online />
-                                <span className="w-full truncate text-center text-[11px] font-semibold text-brand-text">
-                                    {firstName(f.display_name)}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
+                    <button
+                        onClick={() => setFilteredOpen((v) => !v)}
+                        aria-expanded={filteredOpen}
+                        className="flex w-full items-center gap-3 rounded-2xl border border-brand-divider bg-brand-secondary/40 p-3.5 text-left transition hover:border-brand-text/30"
+                    >
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70">
+                            <ShieldOff className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-bold text-brand-text">
+                                Hidden by trust-safety
+                            </span>
+                            <span className="block truncate text-xs text-brand-text/55">
+                                {filtered.length} {filtered.length === 1 ? 'request' : 'requests'} · new accounts, no shared signals
+                            </span>
+                        </span>
+                        <ChevronRight
+                            className={`h-5 w-5 shrink-0 text-brand-text/30 transition-transform ${filteredOpen ? 'rotate-90' : ''}`}
+                        />
+                    </button>
+
+                    {filteredOpen && (
+                        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                            {filtered.map((r) => (
+                                <PersonCard
+                                    key={r.user_id}
+                                    person={r}
+                                    mutuals={mutuals?.get(r.user_id)}
+                                    onOpen={() => openProfile(r)}
+                                >
+                                    <CardButton
+                                        onClick={() => settle(r.user_id, (id, o) => unfilterReq.mutate(id, o))}
+                                        label="Unfilter"
+                                    />
+                                </PersonCard>
+                            ))}
+                        </div>
+                    )}
                 </section>
             )}
 
-
-            {/* ---- New requests row ---- */}
-            {requests.length > 0 && (
-                <RowCard onClick={() => setActiveModal('requests')}>
-                    <AvatarStack users={requests} />
-                    <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold text-brand-text">
-                            {requests.length} new {requests.length === 1 ? 'request' : 'requests'}
-                        </span>
-                        <span className="block truncate text-xs text-brand-text/55">
-                            {requests.slice(0, 3).map((r) => firstName(r.display_name)).join(', ')}
-                            {requests.length > 3 ? ' and more' : ''}
-                        </span>
-                    </span>
-                    <ChevronRight className="h-5 w-5 shrink-0 text-brand-text/30" />
-                </RowCard>
-            )}
-
-            {/* ---- All connections ---- */}
-            <section>
-                <div className="mb-3 flex items-end justify-between">
-                    <Eyebrow text={`All connections · `} />
-                    <button
-                        onClick={() => setSortAlpha((v) => !v)}
-                        className="flex items-center gap-1 text-xs font-semibold text-brand-text/55 transition hover:text-brand-text"
-                    >
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                        {sortAlpha ? 'A–Z' : 'Active'}
-                    </button>
-                </div>
-
-                {friendsQ.isLoading ? (
-                    <Hint text="Loading your connections…" />
-                ) : friends.length === 0 ? (
-                    <Hint text="No connections yet — add a few people to get started." />
-                ) : listed.length === 0 ? (
-                    <Hint text="No connections match your search." />
-                ) : (
-                    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card">
-                        {listed.map((f, i) => (
-                            <FriendRow
-                                key={f.user_id}
-                                friend={f}
-                                online={!!presence[f.user_id]}
-                                unread={getUnreadCountForUser(f.user_id)}
-                                first={i === 0}
-                                onOpen={() => openProfile(f)}
-                                onMessage={() => openChat(f)}
-                            />
-                        ))}
-                    </div>
-                )}
-            </section>
-
-            {/* ---- Modals / sheets ---- */}
-            {activeModal === 'add' && (
-                <AddFriendsModal onClose={() => setActiveModal(null)} />
-            )}
-            {activeModal === 'requests' && (
-                <RequestsModal onClose={() => setActiveModal(null)} />
-            )}
-
-            {/*
-              Floating chat dock — COMMENTED OUT at the founder's request
-              (21 Sep), not deleted, so it can come back in one step.
-
-              Message now opens the full messenger (see `openChat` above).
-              Restoring this block means restoring the `chats` state and
-              `closeChat` with it; the ChatWindow import is still here.
-
-            <div className="pointer-events-none fixed bottom-0 right-3 z-1000 flex flex-row-reverse items-end gap-3 sm:right-6 md:gap-4">
-                <AnimatePresence>
-                    {chats.map((c) => (
-                        <motion.div
-                            key={c.id}
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                            className="pointer-events-auto"
-                        >
-                            <ChatWindow contact={c} onClose={() => closeChat(c.id)} />
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </div>
-            */}
+            {addOpen && <AddFriendsModal onClose={() => setAddOpen(false)} />}
         </div>
+    )
+}
+
+/* ------------------------------- lane tab -------------------------------- */
+
+function LaneTab({
+    id,
+    active,
+    onSelect,
+    label,
+    count,
+}: {
+    id: Lane
+    active: Lane
+    onSelect: (l: Lane) => void
+    label: string
+    count: number
+}) {
+    const on = active === id
+    return (
+        <button
+            role="tab"
+            aria-selected={on}
+            onClick={() => onSelect(id)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-bold transition ${
+                on
+                    ? 'bg-brand-card text-brand-text shadow-xs'
+                    : 'text-brand-text/55 hover:text-brand-text'
+            }`}
+        >
+            <span className="truncate">{label}</span>
+            {count > 0 && (
+                <span
+                    className={`grid h-[18px] min-w-[18px] place-items-center rounded-full px-1 text-[10px] font-bold ${
+                        on ? 'bg-primary-ink text-white' : 'bg-brand-text/10 text-brand-text/60'
+                    }`}
+                >
+                    {count > 99 ? '99+' : count}
+                </span>
+            )}
+        </button>
+    )
+}
+
+/* ------------------------------ person card ------------------------------ */
+
+/**
+ * The card carries three things and no more: the picture, the name, and the
+ * mutual-connection count. Job titles, "active 2h ago" and match percentages
+ * were all removed on 22 Sep — none of them was backed by a field the server
+ * actually sends for a connection.
+ */
+function PersonCard({
+    person,
+    mutuals,
+    onOpen,
+    children,
+}: {
+    person: { user_id: string; display_name: string; username?: string; avatar_media_id?: string }
+    mutuals: number | undefined
+    onOpen: () => void
+    children?: React.ReactNode
+}) {
+    return (
+        <div className="flex flex-col items-center rounded-2xl border border-brand-divider bg-brand-card p-4 text-center transition hover:border-brand-text/25">
+            <button onClick={onOpen} aria-label={person.display_name} className="shrink-0">
+                <Avatar user={person} size={72} />
+            </button>
+            <button onClick={onOpen} className="mt-3 w-full min-w-0">
+                <span className="block truncate text-sm font-bold text-brand-text">
+                    {person.display_name}
+                </span>
+            </button>
+            {/* Fixed height so every card in a row lines up, whether or not
+                the count has arrived. */}
+            <span className="mt-1 flex h-4 items-center gap-1 text-[11px] text-brand-text/50">
+                {mutuals !== undefined && mutuals > 0 && <Users className="h-3 w-3" />}
+                <span className="truncate">{mutualsLine(mutuals)}</span>
+            </span>
+            {children && <div className="mt-3 flex w-full">{children}</div>}
+        </div>
+    )
+}
+
+function CardButton({
+    onClick,
+    label,
+    icon,
+    primary,
+}: {
+    onClick: () => void
+    label: string
+    icon?: React.ReactNode
+    primary?: boolean
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold transition ${
+                primary
+                    ? 'bg-primary-ink text-white hover:bg-primary-hover'
+                    : 'border border-brand-divider text-brand-text/75 hover:border-brand-text/35 hover:text-brand-text'
+            }`}
+        >
+            {icon}
+            {label}
+        </button>
     )
 }
 
@@ -381,106 +486,6 @@ function Hint({ text }: { text: string }) {
         </div>
     )
 }
-
-/** A tappable card-shaped row used for new-requests entries. */
-function RowCard({
-    children,
-    onClick,
-}: {
-    children: React.ReactNode
-    onClick: () => void
-}) {
-    return (
-        <button
-            onClick={onClick}
-            className="flex w-full items-center gap-3.5 rounded-2xl border border-brand-divider bg-brand-card p-3.5 text-left transition hover:border-brand-text/30"
-        >
-            {children}
-        </button>
-    )
-}
-
-/** Three overlapping avatars (used by the new-requests row). */
-function AvatarStack({ users }: { users: { user_id: string; display_name: string; avatar_media_id?: string }[] }) {
-    const shown = users.slice(0, 3)
-    return (
-        <span className="flex shrink-0 -space-x-3">
-            {shown.map((u) => (
-                <img
-                    key={u.user_id}
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    src={avatarUrl(u.user_id, u.avatar_media_id)}
-                    alt={u.display_name}
-                    className="h-10 w-10 rounded-full object-cover ring-2 ring-brand-card"
-                />
-            ))}
-        </span>
-    )
-}
-
-function FriendRow({
-    friend,
-    online,
-    unread,
-    first,
-    onOpen,
-    onMessage,
-}: {
-    friend: ConnectionUser
-    online: boolean
-    unread: number
-    first: boolean
-    onOpen: () => void
-    onMessage: () => void
-}) {
-    return (
-        <div
-            className={`flex items-center gap-3 px-3.5 py-3 ${
-                first ? '' : 'border-t border-brand-divider'
-            }`}
-        >
-            <button onClick={onOpen} className="shrink-0" aria-label={friend.display_name}>
-                <Avatar user={friend} size={44} online={online} />
-            </button>
-            <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-                <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-bold text-brand-text">
-                        {friend.display_name}
-                    </span>
-                </div>
-                <div
-                    className={`truncate text-xs ${
-                        online ? 'font-semibold text-emerald-600' : 'text-brand-text/55'
-                    }`}
-                >
-                    {online
-                        ? 'Active now'
-                        : friend.username
-                            ? `@${friend.username}`
-                            : 'Offline'}
-                </div>
-            </button>
-            <button
-                onClick={onMessage}
-                aria-label={
-                    unread > 0
-                        ? `Message ${friend.display_name} — ${unread} unread`
-                        : `Message ${friend.display_name}`
-                }
-                className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/60 transition hover:border-brand-text/30 hover:text-brand-text"
-            >
-                <MessageCircle className="h-4 w-4" />
-                {unread > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary-ink px-1 text-[10px] font-bold text-white ring-2 ring-brand-card">
-                        {unread > 99 ? '99+' : unread}
-                    </span>
-                )}
-            </button>
-        </div>
-    )
-}
-
-/* ------------------------------ modal shell ------------------------------ */
 
 function ModalShell({
     children,
@@ -703,220 +708,5 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
 
             <ModalFooter text="Matches blend shared groups, hashtag overlap, and mutuals. You stay hidden from people you haven't added." />
         </ModalShell>
-    )
-}
-
-/* ================================ SURFACE 4 ============================== */
-/* Requests modal                                                            */
-
-/**
- * Derive an "origin" chip for a request. graph-service request rows carry a
- * `source` field, but the FriendRequestEntry data hook does not surface it
- * (and we must not change the hook). We fall back to a neutral, deterministic
- * label so the chip is always present and stable per sender.
- */
-const ORIGIN_CHIPS = ['Mutual friends', 'Suggested', 'Search', 'Profile visit'] as const
-function originChip(req: FriendRequestEntry): string {
-    const src = (req as { source?: string }).source
-    if (src && src.trim()) {
-        return src
-            .replace(/[_-]+/g, ' ')
-            .replace(/\b\w/g, (c) => c.toUpperCase())
-            .trim()
-    }
-    let h = 0
-    for (let i = 0; i < req.user_id.length; i++) h = (h * 31 + req.user_id.charCodeAt(i)) >>> 0
-    return ORIGIN_CHIPS[h % ORIGIN_CHIPS.length]
-}
-
-function RequestsModal({ onClose }: { onClose: () => void }) {
-    const router = useRouter()
-    const requestsQ = usePendingFriendRequests()
-    const filteredQ = useFilteredFriendRequests()
-    const acceptReq = useAcceptFriendRequest()
-    const rejectReq = useRejectFriendRequest()
-    const unfilterReq = useUnfilterFriendRequest()
-
-    const [handled, setHandled] = useState<Set<string>>(new Set())
-    const [filteredOpen, setFilteredOpen] = useState(false)
-
-    const requests = (requestsQ.data?.items ?? []).filter((r) => !handled.has(r.user_id))
-    const filtered = (filteredQ.data?.items ?? []).filter((r) => !handled.has(r.user_id))
-
-    const markHandled = (id: string) => setHandled((p) => new Set(p).add(id))
-    const unmarkHandled = (id: string) =>
-        setHandled((p) => {
-            const n = new Set(p)
-            n.delete(id)
-            return n
-        })
-
-    const handleAccept = (id: string) => {
-        markHandled(id)
-        acceptReq.mutate(id, { onError: () => unmarkHandled(id) })
-    }
-    const handleDecline = (id: string) => {
-        markHandled(id)
-        rejectReq.mutate(id, { onError: () => unmarkHandled(id) })
-    }
-    const handleUnfilter = (id: string) => {
-        markHandled(id)
-        unfilterReq.mutate(id, { onError: () => unmarkHandled(id) })
-    }
-    const openProfile = (u: { username?: string; user_id: string }) => {
-        onClose()
-        router.push(`/u/${u.username || u.user_id}`)
-    }
-
-    return (
-        <ModalShell onClose={onClose}>
-            <ModalHeader
-                icon={<UserPlus className="h-5 w-5" />}
-                title="Friend requests"
-                subtitle={`${requests.length} ${requests.length === 1 ? 'person wants' : 'people want'} in. Tap a name for the full profile.`}
-                onClose={onClose}
-            />
-
-            <div className="flex-1 overflow-y-auto p-5">
-                <Eyebrow text={`Incoming · ${requests.length}`} />
-
-                <div className="mt-2 space-y-2">
-                    {requestsQ.isLoading ? (
-                        <Hint text="Loading requests…" />
-                    ) : requests.length === 0 ? (
-                        <Hint text="No incoming requests right now." />
-                    ) : (
-                        requests.map((r) => (
-                            <RequestRow
-                                key={r.user_id}
-                                req={r}
-                                onOpen={() => openProfile(r)}
-                                onAccept={() => handleAccept(r.user_id)}
-                                onDecline={() => handleDecline(r.user_id)}
-                            />
-                        ))
-                    )}
-                </div>
-
-                {/* Hidden by trust-safety */}
-                {filtered.length > 0 && (
-                    <div className="mt-4">
-                        <button
-                            onClick={() => setFilteredOpen((v) => !v)}
-                            className="flex w-full items-center gap-3 rounded-2xl border border-brand-divider bg-brand-secondary/40 p-3.5 text-left transition hover:border-brand-text/30"
-                        >
-                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-brand-divider bg-brand-card text-brand-text/70">
-                                <ShieldOff className="h-5 w-5" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block text-sm font-bold text-brand-text">
-                                    Hidden by trust-safety
-                                </span>
-                                <span className="block truncate text-xs text-brand-text/55">
-                                    {filtered.length} {filtered.length === 1 ? 'request' : 'requests'} · new accounts, no shared signals
-                                </span>
-                            </span>
-                            <ChevronRight
-                                className={`h-5 w-5 shrink-0 text-brand-text/30 transition-transform ${
-                                    filteredOpen ? 'rotate-90' : ''
-                                }`}
-                            />
-                        </button>
-
-                        {filteredOpen && (
-                            <div className="mt-2 space-y-2">
-                                {filtered.map((r) => (
-                                    <div
-                                        key={r.user_id}
-                                        className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-3 py-2.5"
-                                    >
-                                        <button
-                                            onClick={() => openProfile(r)}
-                                            className="shrink-0"
-                                            aria-label={r.display_name}
-                                        >
-                                            <Avatar user={r} size={40} />
-                                        </button>
-                                        <button
-                                            onClick={() => openProfile(r)}
-                                            className="min-w-0 flex-1 text-left"
-                                        >
-                                            <span className="block truncate text-sm font-bold text-brand-text">
-                                                {r.display_name}
-                                            </span>
-                                            <span className="block truncate text-xs text-brand-text/55">
-                                                {r.username ? `@${r.username}` : 'Held back by trust-safety'}
-                                            </span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleUnfilter(r.user_id)}
-                                            className="shrink-0 rounded-full border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition hover:border-brand-text/40"
-                                        >
-                                            Unfilter
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            <ModalFooter text="Decline is silent. Senders never see they were declined." />
-        </ModalShell>
-    )
-}
-
-function RequestRow({
-    req,
-    onOpen,
-    onAccept,
-    onDecline,
-}: {
-    req: FriendRequestEntry
-    onOpen: () => void
-    onAccept: () => void
-    onDecline: () => void
-}) {
-    const [busy, setBusy] = useState(false)
-    return (
-        <div className="flex items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-3 py-3">
-            <button onClick={onOpen} className="shrink-0" aria-label={req.display_name}>
-                <Avatar user={req} size={44} />
-            </button>
-            <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-                <div className="truncate text-sm font-bold text-brand-text">
-                    {req.display_name}
-                </div>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="truncate text-xs text-brand-text/55">
-                        {req.username ? `@${req.username}` : 'Wants to connect'}
-                    </span>
-                    <span className="shrink-0 rounded-full border border-brand-divider px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-brand-text/50">
-                        {originChip(req)}
-                    </span>
-                </div>
-            </button>
-            <button
-                onClick={() => {
-                    setBusy(true)
-                    onDecline()
-                }}
-                disabled={busy}
-                className="shrink-0 rounded-full border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text/70 transition hover:border-brand-text/40 disabled:opacity-50"
-            >
-                Decline
-            </button>
-            <button
-                onClick={() => {
-                    setBusy(true)
-                    onAccept()
-                }}
-                disabled={busy}
-                className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-primary-hover disabled:opacity-50"
-            >
-                Accept
-            </button>
-        </div>
     )
 }

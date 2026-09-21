@@ -44,20 +44,39 @@ function formatViews(n: number): string {
 const RightPanel: React.FC<RightPanelProps> = () => {
   const router = useRouter();
   const authUser = useAuthUser();
-  const { data: suggestions, isLoading: suggestionsLoading } = useFriendSuggestions(authUser?.id, 5);
+  // Over-fetch: people already asked are filtered out below, so asking for
+  // exactly five would leave gaps in the rail.
+  const { data: suggestions, isLoading: suggestionsLoading } = useFriendSuggestions(authUser?.id, 20);
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
   const { data: tubeFeed } = useQuery({
     queryKey: ['posttube-trending-rail'],
     queryFn: () => getCategoryFeed('trending', { limit: 3 }),
     staleTime: 120_000,
   });
-  const people = (suggestions ?? []).slice(0, 5);
-  // Real relationship state for these five, so a request already sent shows
-  // as sent after a reload instead of offering Connect again.
+  const candidates = (suggestions ?? []).slice(0, 20);
   const { data: relMap } = useBatchRelationships(
     authUser?.id ?? '',
-    people.map((p) => p.user_id),
+    candidates.map((p) => p.user_id),
   );
+  /**
+   * Someone you have already asked is not a suggestion.
+   *
+   * This section exists to surface people you have NOT acted on; leaving
+   * a pending request in it invites you to send the same request again
+   * and pushes out someone you could actually act on. Filtered here
+   * rather than in suggestion-service so it reflects a request the moment
+   * it is sent, without waiting for that service's next recompute.
+   *
+   * Until the relationships resolve, nothing is filtered — briefly
+   * showing a row is better than an empty rail that fills in.
+   */
+  const people = candidates
+    .filter((p) => {
+      const rel = relMap?.get(p.user_id);
+      if (!rel) return true;
+      return rel.connection_status !== 'pending_sent' && !rel.is_connection;
+    })
+    .slice(0, 5);
   // Only streams that are actually live right now.
   const { data: livePages } = useLiveStreams(10);
   const liveNow = (livePages?.pages ?? []).flatMap((p: any) => p.items ?? p.data ?? []).filter((s: any) => s?.status === "live");
