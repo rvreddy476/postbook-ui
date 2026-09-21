@@ -513,12 +513,6 @@ export default function RegisterPage() {
           </AnimatePresence>
         </div>
 
-        <p className="mt-6 text-center text-[13px] text-brand-text/50">
-          Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-primary-ink hover:underline">
-            Sign in
-          </Link>
-        </p>
       </motion.div>
       </div>
     </div>
