@@ -294,6 +294,20 @@ export default function PostbookMessenger() {
    * from the already-loaded list when possible, and is fetched only when the
    * list does not contain them.
    */
+  /**
+   * Open a lane named in the address: /messenger?lane=requests.
+   *
+   * This is where the message-request notification lands. Without it the
+   * tap would arrive on Direct and the request the notification was about
+   * would not be on screen.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const lane = new URLSearchParams(window.location.search).get('lane')
+    if (lane === 'requests') setContactTab('requests')
+    else if (lane === 'groups' || lane === 'channels') setContactTab(lane)
+  }, [])
+
   const openedFromUrlRef = useRef<string | null>(null)
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -650,15 +664,25 @@ export default function PostbookMessenger() {
                       key={conv.id}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-brand-divider hover:bg-primary-ink/5 transition-all"
                     >
-                      <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-bold truncate block text-brand-text">
-                          {peer.name}
-                        </span>
-                        <span className="text-xs text-brand-text/60 truncate block tracking-wide leading-tight mt-0.5">
-                          {lastMsg || 'Wants to send you a message'}
-                        </span>
-                      </div>
+                      {/* Opening the request opens the conversation. Typing
+                          a reply there accepts it server-side, so the
+                          common case — you read it and answer — costs one
+                          tap instead of two. Accept, Decline and Block
+                          remain for deciding without replying. */}
+                      <button
+                        onClick={() => handleFriendClick(peer)}
+                        className="flex flex-1 min-w-0 items-center gap-3 text-left"
+                      >
+                        <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-bold truncate block text-brand-text">
+                            {peer.name}
+                          </span>
+                          <span className="text-xs text-brand-text/60 truncate block tracking-wide leading-tight mt-0.5">
+                            {lastMsg || 'Wants to send you a message'}
+                          </span>
+                        </div>
+                      </button>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={() => handleAcceptRequest(conv)}
