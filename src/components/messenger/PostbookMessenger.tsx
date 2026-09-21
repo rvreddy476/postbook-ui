@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
 import DmChat from './DmChat'
 import ThreadDetails from './ThreadDetails'
+import MessengerTopBar from './MessengerTopBar'
+import NewMessageSheet from './NewMessageSheet'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import GroupPanel from './GroupPanel'
 import CreateGroupPanel from './CreateGroupPanel'
@@ -22,7 +24,7 @@ import { useMyGroups } from '@/hooks/useGroups'
 import { useNotifications } from '@/contexts/NotificationContext'
 import type { User } from '@/types'
 import {
-  Search, Users, MessageCircle, Plus, Settings, Hash, Home,
+  Users, MessageCircle, Plus, Settings, Hash, Home,
   Globe, Lock, Shield, ChevronRight, Send, MailQuestion, Check, X
 } from 'lucide-react'
 
@@ -76,6 +78,7 @@ export default function PostbookMessenger() {
   const [showDetails, setShowDetails] = useState(true)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
+  const [showNewMessage, setShowNewMessage] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [friends, setFriends] = useState<User[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -351,7 +354,17 @@ export default function PostbookMessenger() {
   )
 
   return (
-    <div className="flex h-screen w-screen font-sans text-brand-text overflow-hidden">
+    <div className="flex h-screen w-screen flex-col font-sans text-brand-text overflow-hidden">
+      {/* The page sits outside the app shell, so it carries its own bar:
+          a way home, one search, where else to go, and compose. */}
+      <MessengerTopBar
+        search={search}
+        onSearchChange={setSearch}
+        onCompose={() => setShowNewMessage(true)}
+        unread={friendsUnreadTotal}
+      />
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
       {/* ============================================================ */}
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
@@ -408,17 +421,10 @@ export default function PostbookMessenger() {
             )}
           </div>
 
-          {/* Search */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search conversations"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-full border border-transparent bg-brand-secondary py-2 pl-9 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
-            />
-          </div>
+          {/* The search that used to sit here now lives in MessengerTopBar,
+              which owns the same `search` state. Two identical fields on one
+              screen is the "2 Searches" complaint already made about the feed
+              header, so this one is gone rather than duplicated. */}
 
           {/* Direct, Groups and Requests are the real tabs this page has;
               the shared control keeps switching identical to the rest of
@@ -696,6 +702,24 @@ export default function PostbookMessenger() {
             showToast('Group created!')
           }}
         />
+      )}
+
+      </div>
+
+      {/* Compose: the same sheet the feed's chat panel uses, so starting a
+          conversation works identically wherever you begin it. */}
+      {showNewMessage && (
+        <div className="fixed inset-0 z-1000 flex items-start justify-center bg-brand-text/20 p-4 pt-16">
+          <div className="relative h-[520px] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
+            <NewMessageSheet
+              onClose={() => setShowNewMessage(false)}
+              onOpened={(user) => {
+                setActiveDm(user)
+                setActiveGroupId(null)
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Toast */}
