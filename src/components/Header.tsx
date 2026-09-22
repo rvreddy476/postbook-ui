@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { User, NavItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -133,6 +134,36 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const acceptFriend = useAcceptFriendRequest();
   const rejectFriend = useRejectFriendRequest();
   const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
+  const qc = useQueryClient();
+
+  /**
+   * Accept / Decline used to have onSuccess and nothing else. A failure —
+   * the founder hit six 500s in a row from a notification whose request
+   * had already been cancelled — showed no message, re-enabled the button,
+   * and invited the next click. "Nothing is happening" was exactly right.
+   *
+   * Now the server's reason is shown, and if the request is simply gone
+   * (already accepted, declined or cancelled elsewhere) the row is settled
+   * and the lists refreshed, so a stale notification cannot be clicked
+   * forever.
+   */
+  const settleRequestFailure = (err: unknown, notif: ActivityNotification) => {
+    const message =
+      (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+        ?.message ?? (err instanceof Error ? err.message : 'Request failed');
+    const gone = /no pending connection request/i.test(message);
+    if (gone) {
+      setHandledIds(prev => new Set(prev).add(notif.notification_id));
+      if (notif.bucket != null && notif.ts != null) {
+        markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
+      }
+      qc.invalidateQueries({ queryKey: ['friend-requests'] });
+      qc.invalidateQueries({ queryKey: ['activity-notifications'] });
+      toast({ type: 'info', title: 'This request is no longer pending' });
+      return;
+    }
+    toast({ type: 'error', title: "Couldn't update the request", description: message });
+  };
 
   // Theme toggle state
   const [theme, setTheme] = useState<string>('light');
@@ -613,8 +644,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       acceptFriend.mutate(notif.actor_user_id, {
                                         onSuccess: () => {
                                           setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                          toast({ type: 'success', title: 'Friend request accepted' });
+                                          if (notif.bucket != null && notif.ts != null) {
+                                            markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
+                                          }
+                                          toast({ type: 'success', title: 'Connection request accepted' });
                                         },
+                                        onError: (err) => settleRequestFailure(err, notif),
                                       });
                                     }}
                                     disabled={acceptFriend.isPending}
@@ -627,8 +662,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                       rejectFriend.mutate(notif.actor_user_id, {
                                         onSuccess: () => {
                                           setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                          toast({ type: 'info', title: 'Friend request declined' });
+                                          if (notif.bucket != null && notif.ts != null) {
+                                            markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
+                                          }
+                                          toast({ type: 'info', title: 'Connection request declined' });
                                         },
+                                        onError: (err) => settleRequestFailure(err, notif),
                                       });
                                     }}
                                     disabled={rejectFriend.isPending}

@@ -123,8 +123,13 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
                                     if (notif?.notification_id) {
                                         // Trigger callback (for toast/sound)
                                         callbackRef.current?.(notif)
-                                        // Invalidate the query to refresh the list
+                                        // Refresh the list AND the badge. Only the
+                                        // list was invalidated before, so a live
+                                        // event updated the panel while the number
+                                        // on the bell waited for the 30s poll —
+                                        // which read as "no notification arrived".
                                         qc.invalidateQueries({ queryKey: ["activity-notifications"] })
+                                        qc.invalidateQueries({ queryKey: ["unread-count"] })
                                     }
                                 } catch {
                                     // Ignore malformed events
