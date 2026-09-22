@@ -44,6 +44,7 @@ import { useBatchProfiles } from '@/hooks/useProfile'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { initiateCall } from '@/services/callService'
 import { uploadMedia } from '@/lib/mediaUpload'
+import { useMediaKinds } from '@/hooks/useMediaKinds'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
@@ -749,6 +750,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   }, [readReceipts, peerLastReadAt])
 
   const findMessage = useCallback((msgId: string) => messages.find(m => m.id === msgId), [messages])
+  // The wire says only "media"; media-service says what it is.
+  const mediaKinds = useMediaKinds(
+    useMemo(() => messages.map(m => m.mediaId).filter((id): id is string => Boolean(id)), [messages]),
+  )
   const hasText = input.trim().length > 0
 
   // ========================================================================
@@ -901,6 +906,11 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           const groupStart = isGroupStart(i)
           const groupEnd = isGroupEnd(i)
           const replyTarget = msg.replyToId ? findMessage(msg.replyToId) : null
+          // A just-sent message still carries the kind the picker knew;
+          // everything read back from the server says only 'media'.
+          const mediaKind = msg.mediaId
+            ? (['image', 'video', 'audio'].includes(msg.type) ? msg.type : mediaKinds[msg.mediaId])
+            : undefined
           // The live message wins, because it reflects a later edit or delete.
           // The server's send-time snapshot is all that is left when the
           // original is not in this page â the usual case for an older
@@ -1010,16 +1020,19 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                   {msg.isDeleted ? (
                     'This message was deleted'
-                  ) : msg.type === 'image' && msg.mediaId ? (
+                  ) : mediaKind === 'image' && msg.mediaId ? (
                     <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
-                  ) : msg.type === 'video' && msg.mediaId ? (
+                  ) : mediaKind === 'video' && msg.mediaId ? (
                     <video src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
-                  ) : msg.type === 'audio' && msg.mediaId ? (
+                  ) : mediaKind === 'audio' && msg.mediaId ? (
                     <audio src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full" />
-                  ) : msg.type === 'file' && msg.mediaId ? (
+                  ) : msg.mediaId ? (
+                    // Kind not resolved yet, or media-service would not say.
+                    // A link always works; guessing <img> would draw a broken
+                    // image for every clip.
                     <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer"
                       className={`font-semibold underline underline-offset-2 ${isMe ? 'text-white/90 hover:text-white' : 'text-brand-text/60 hover:text-brand-text/60'}`}>
-                      Attached File
+                      Attachment
                     </a>
                   ) : msg.text}
                 </div>

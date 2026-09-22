@@ -25,6 +25,7 @@ import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { createGroupConversation, toggleReaction, updateConversation, leaveConversation, addMemberToConversation } from '@/services/messageService'
 import { getSession } from '@/services/authService'
 import { uploadMedia } from '@/lib/mediaUpload'
+import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
 import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
 import type { GroupMember, GroupPostV2 } from '@/types/groups'
@@ -91,6 +92,11 @@ function ChatView({
   const [attachError, setAttachError] = useState<string | null>(null)
 
   const chat = useChat(activeConvId ?? null, myId)
+
+  // The chat wire says only "media"; media-service says what it is.
+  const mediaKinds = useMediaKinds(
+    useMemo(() => chat.messages.map(m => m.mediaId).filter((id): id is string => Boolean(id)), [chat.messages]),
+  )
   // M1: track who's actively viewing this group chat + drive
   // conversation.enter/heartbeat/leave + typing.start.
   useConversationPresence(activeConvId ?? null)
@@ -311,6 +317,11 @@ function ChatView({
               const showAv = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.type === 'system'
               const sender = resolveSender(msg.senderId)
               const replyTarget = msg.replyToId ? chat.findMessage(msg.replyToId) : null
+              // Read back from the server a media message says only 'media';
+              // only the sending tab still holds the picked kind.
+              const mediaKind = msg.mediaId
+                ? (['image', 'video', 'audio'].includes(msg.type) ? msg.type : mediaKinds[msg.mediaId])
+                : undefined
               // The live message wins (it reflects a later edit or delete);
               // the server's send-time snapshot is all that is left when the
               // original is outside the loaded page. Navigation is offered
@@ -420,17 +431,20 @@ function ChatView({
 
                       {msg.isDeleted ? (
                         'This message was deleted'
-                      ) : msg.type === 'image' && msg.mediaId ? (
+                      ) : mediaKind === 'image' && msg.mediaId ? (
                         <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
-                      ) : msg.type === 'video' && msg.mediaId ? (
+                      ) : mediaKind === 'video' && msg.mediaId ? (
                         <video src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
-                      ) : msg.type === 'audio' && msg.mediaId ? (
+                      ) : mediaKind === 'audio' && msg.mediaId ? (
                         <audio src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full" />
-                      ) : msg.type === 'file' && msg.mediaId ? (
-                        <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">📎 Attachment</a>
+                      ) : msg.mediaId ? (
+                        // Kind unresolved: a link always works, whereas
+                        // assuming <img> draws a broken image for every clip.
+                        <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer" className="underline">Attachment</a>
                       ) : (
                         msg.text
                       )}
+
                     </div>
 
                     {/* Edited indicator */}
