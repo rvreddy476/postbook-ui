@@ -1,5 +1,6 @@
 "use client"
 
+import { ensureAccessToken } from "@/lib/accessToken"
 import { useQuery } from "@tanstack/react-query"
 import type { UserProfile, UserLink, GraphCounts, ContentCounts, Relationship } from "@/types/profile"
 
@@ -20,14 +21,14 @@ export function useAggregatedProfile(username: string) {
     return useQuery({
         queryKey: ["aggregated-profile", username],
         queryFn: async () => {
-            // Read auth headers from localStorage to forward to BFF
+            // Auth headers forwarded to the BFF. The token comes from memory
+            // now, not localStorage; the user id still comes from the cached
+            // session record, which is not a credential and proves nothing on
+            // its own.
             const headers: Record<string, string> = { "Content-Type": "application/json" }
+            const accessToken = await ensureAccessToken()
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`
             try {
-                const tokenRaw = localStorage.getItem("postbook_auth_tokens")
-                if (tokenRaw) {
-                    const tokens = JSON.parse(tokenRaw) as { accessToken?: string }
-                    if (tokens.accessToken) headers["Authorization"] = `Bearer ${tokens.accessToken}`
-                }
                 const sessionRaw = localStorage.getItem("postbook_session")
                 if (sessionRaw) {
                     const session = JSON.parse(sessionRaw) as { id?: string }

@@ -7,6 +7,47 @@ import { NotificationProvider } from "@/contexts/NotificationContext"
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat"
 import { useAuthUser } from "@/store/auth"
 import { connectToHub } from "@/services/messageService"
+import { ensureAccessToken, lastRefreshOutcome } from "@/lib/accessToken"
+import { getSession, logoutUser } from "@/services/authService"
+
+/**
+ * SessionReconciler makes the httpOnly refresh cookie the single authority
+ * on whether this browser is signed in.
+ *
+ * The cached user record in localStorage and the cookies used to be two
+ * independent sources of truth, and they drifted: clear one and the other
+ * still said "signed in". That is how a browser could keep behaving as a
+ * live session after a sign-out whose cookie-clearing request never landed.
+ *
+ * So on every load we try to mint an access token from the cookie. If the
+ * server says that cookie is finished — 401/403, and NOT merely unreachable
+ * — then the cached record is a claim nothing backs, and it goes. That fires
+ * session-changed, which lands the user on /login.
+ *
+ * A network failure is deliberately not a sign-out: an origin that is down
+ * must not log anybody out.
+ *
+ * Renders nothing.
+ */
+function SessionReconciler() {
+    useEffect(() => {
+        let cancelled = false
+        void (async () => {
+            // Nothing cached means nothing to reconcile — and a signed-out
+            // visitor should not have the refresh cookie probed on every view.
+            if (!getSession()) return
+            await ensureAccessToken()
+            if (cancelled) return
+            if (lastRefreshOutcome() === "invalid") {
+                logoutUser()
+            }
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [])
+    return null
+}
 
 /**
  * PresenceHeartbeat marks the logged-in web user online for the whole
@@ -56,6 +97,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return (
         <QueryClientProvider client={queryClient}>
             <ToastProvider>
+                <SessionReconciler />
                 <PresenceHeartbeat />
                 <AppNotifications>{children}</AppNotifications>
             </ToastProvider>

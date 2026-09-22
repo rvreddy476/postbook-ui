@@ -3,19 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import NotificationSocket from "@/lib/notificationSocket"
 
-const TOKEN_KEY = "postbook_auth_tokens"
-
-function getAccessToken(): string | null {
-    if (typeof window === "undefined") return null
-    try {
-        const raw = localStorage.getItem(TOKEN_KEY)
-        if (!raw) return null
-        const record = JSON.parse(raw) as { accessToken?: string }
-        return record.accessToken ?? null
-    } catch {
-        return null
-    }
-}
+// The token is no longer read from localStorage here — the socket resolves
+// it from memory inside connect(), which also means this effect no longer
+// has to bail out on a cold tab that has not minted one yet.
 
 /**
  * React hook that manages the NotificationSocket lifecycle.
@@ -33,10 +23,7 @@ export function useNotificationSocket() {
     const [isConnected, setIsConnected] = useState(false)
 
     useEffect(() => {
-        const token = getAccessToken()
-        if (!token) return
-
-        const socket = new NotificationSocket(token)
+        const socket = new NotificationSocket("")
         socketRef.current = socket
 
         // Track connection state

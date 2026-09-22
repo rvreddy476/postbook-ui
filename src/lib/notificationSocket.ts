@@ -6,21 +6,14 @@
  * reconnection (up to 10 attempts, max 30s delay).
  */
 
+import { ensureAccessToken } from "@/lib/accessToken"
+
 type Listener = (data: any) => void
 
-const TOKEN_KEY = "postbook_auth_tokens"
-
-function getStoredAccessToken(): string | null {
-    if (typeof window === "undefined") return null
-    try {
-        const raw = localStorage.getItem(TOKEN_KEY)
-        if (!raw) return null
-        const record = JSON.parse(raw) as { accessToken?: string }
-        return record.accessToken ?? null
-    } catch {
-        return null
-    }
-}
+// The token is no longer read from localStorage. It lives in memory and is
+// resolved at connect time — see connect(), which awaits ensureAccessToken()
+// so a cold tab opens its socket as soon as the refresh cookie is spent
+// instead of silently never connecting.
 
 function buildWsUrl(token: string): string {
     if (typeof window === "undefined") return ""
@@ -72,12 +65,29 @@ class NotificationSocket {
         return this._isConnected
     }
 
-    /** Open the WebSocket connection. Safe to call multiple times. */
-    connect(): void {
+    /**
+     * Open the WebSocket connection. Safe to call multiple times.
+     *
+     * Resolves the token itself rather than taking one from the constructor,
+     * because the token now lives in memory: a tab that has just loaded has
+     * none until the httpOnly refresh cookie has been spent once. Taking it
+     * up front would mean every cold tab opened its socket with `null` — i.e.
+     * never connected, with no error anywhere.
+     */
+    async connect(): Promise<void> {
         if (this.destroyed) return
         if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
             return
         }
+
+        const token = (await ensureAccessToken()) ?? this.token
+        if (this.destroyed) return
+        if (!token) {
+            // No session. Not an error, and not worth retrying in a loop —
+            // a sign-in mints a token and the caller connects again.
+            return
+        }
+        this.token = token
 
         const url = buildWsUrl(this.token)
         if (!url) return
@@ -225,11 +235,8 @@ class NotificationSocket {
             return
         }
 
-        // Refresh token on reconnect in case it was rotated
-        const freshToken = getStoredAccessToken()
-        if (freshToken) {
-            this.token = freshToken
-        }
+        // connect() re-resolves the token itself, so a rotation between
+        // attempts is picked up without reading it here.
 
         const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts), 30_000)
         this.reconnectAttempts++
@@ -261,10 +268,14 @@ let sharedSocket: NotificationSocket | null = null
 export function getSharedNotificationSocket(): NotificationSocket | null {
     if (typeof window === "undefined") return null
     if (sharedSocket) return sharedSocket
-    const token = getStoredAccessToken()
-    if (!token) return null
-    sharedSocket = new NotificationSocket(token)
-    sharedSocket.connect()
+    // The instance is created without a token and resolves one inside
+    // connect(). It used to return null when localStorage held no token,
+    // which with an in-memory token would be true on every cold tab — and
+    // callers register their listeners on the returned object, in effects
+    // that do not run again, so a null here meant presence and live updates
+    // stayed dead for the whole page.
+    sharedSocket = new NotificationSocket("")
+    void sharedSocket.connect()
     return sharedSocket
 }
 

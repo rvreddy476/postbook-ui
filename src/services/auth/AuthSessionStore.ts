@@ -1,29 +1,33 @@
 import { User } from '@/types';
 import { AuthResult } from '@/services/auth/types';
+import {
+  clearAccessToken,
+  peekAccessToken,
+  purgeLegacyTokenStorage,
+  setAccessToken,
+} from '@/lib/accessToken';
 
 const SESSION_KEY = 'postbook_session';
-const TOKEN_KEY = 'postbook_auth_tokens';
 const SESSION_CHANGE_EVENT = 'postbook:session-changed';
 
 /**
- * What still lives in localStorage, and why.
+ * What still lives in localStorage, and what deliberately does not.
  *
- * The refresh token used to be here. It is the highest-value thing an
- * injected script could steal: long-lived, and enough to mint access tokens
- * indefinitely. It now lives in an httpOnly cookie set by the BFF routes
- * under /api/auth (see src/app/api/auth/_lib/session.ts) and is never
- * written here again.
+ * Neither token is here any more.
  *
- * The access token stays, deliberately. It is short-lived, and several
- * surfaces outside this lane read it from this exact key — the notification
- * socket, messageService, useActivityNotifications, useAggregatedProfile.
- * Moving it to memory as well (what src/lib/postmatchApi.ts does for
- * PostMatch) means changing all of those, which belongs in a follow-up.
+ * The refresh token lives in an httpOnly cookie set by the BFF routes under
+ * /api/auth (src/app/api/auth/_lib/session.ts). The access token lives in a
+ * module variable in src/lib/accessToken.ts, minted from that cookie on
+ * demand. Both were once readable by any injected script, which made one XSS
+ * anywhere in the app — or in anything it loads — enough to lift a
+ * replayable session.
+ *
+ * What remains under `postbook_session` is the User object, so a name and an
+ * avatar render without a round trip. It is not a credential and proves
+ * nothing to the server: it is a CACHE of the session, never its authority.
+ * The refresh cookie is the authority, which is what stops the two drifting
+ * apart the way they used to.
  */
-interface TokenRecord {
-  accessToken?: string;
-  updatedAt: number;
-}
 
 const canUseStorage = () => typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 
@@ -68,15 +72,13 @@ export class AuthSessionStore {
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
 
-    // Note what is NOT here: result.refreshToken. When the session came
-    // through a BFF route it is already undefined (the route stripped it from
-    // the response). When it came from OAuth it is still in memory, so it is
-    // handed to the cookie and dropped.
-    const tokenRecord: TokenRecord = {
-      accessToken: result.accessToken,
-      updatedAt: Date.now(),
-    };
-    localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenRecord));
+    // Neither token is written to storage. The access token goes to memory;
+    // the refresh token goes to the httpOnly cookie via adoptRefreshToken and
+    // is then dropped. When the session came through a BFF route the refresh
+    // token is already undefined here (the route stripped it from the
+    // response before it reached JS at all).
+    setAccessToken(result.accessToken ?? null);
+    purgeLegacyTokenStorage();
 
     adoptRefreshToken(result.accessToken, result.refreshToken);
 
@@ -101,21 +103,16 @@ export class AuthSessionStore {
     }
   }
 
+  /**
+   * The in-memory access token, if one has been minted in this tab.
+   *
+   * Synchronous, and may be null on a cold tab before the first refresh.
+   * The only caller is logout, where a null token simply means the
+   * "sign out everywhere" variant cannot be attempted — the single-session
+   * revocation rides the refresh cookie and works regardless.
+   */
   getAccessToken(): string | null {
-    if (!canUseStorage()) {
-      return null;
-    }
-
-    try {
-      const raw = localStorage.getItem(TOKEN_KEY);
-      if (!raw) {
-        return null;
-      }
-      const record = JSON.parse(raw) as TokenRecord;
-      return record.accessToken ?? null;
-    } catch {
-      return null;
-    }
+    return peekAccessToken();
   }
 
   /**
@@ -125,12 +122,17 @@ export class AuthSessionStore {
    * accidentally revoke a live session.
    */
   clear() {
+    // The in-memory token first, and unconditionally: it exists even where
+    // localStorage does not, and leaving it behind would keep this tab
+    // authenticated after a sign-out.
+    clearAccessToken();
+
     if (!canUseStorage()) {
       return;
     }
 
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(TOKEN_KEY);
+    purgeLegacyTokenStorage();
     emitSessionChange();
   }
 }

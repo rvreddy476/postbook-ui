@@ -1,49 +1,33 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
+import {
+    clearAccessToken,
+    ensureAccessToken,
+    forceRefresh,
+    peekAccessToken,
+    purgeLegacyTokenStorage,
+} from "@/lib/accessToken"
 
 const SESSION_KEY = "postbook_session"
-const TOKEN_KEY = "postbook_auth_tokens"
 
 const canUseStorage = () =>
     typeof window !== "undefined" && typeof localStorage !== "undefined"
 
 /**
- * Only the access token lives here now.
+ * The access token is NOT stored here any more — it lives in memory, in
+ * src/lib/accessToken.ts, derived on demand from the httpOnly refresh cookie.
  *
- * The refresh token used to sit alongside it under the same key, readable by
- * any injected script. It now lives in an httpOnly cookie set by the BFF
- * routes under /api/auth; see src/app/api/auth/_lib/session.ts.
+ * It used to sit in localStorage under `postbook_auth_tokens`, readable by
+ * any injected script, so one XSS anywhere in the app — or in any dependency
+ * it loads — exfiltrated a replayable session. See accessToken.ts.
  */
-interface TokenRecord {
-    accessToken?: string
-    updatedAt: number
-}
 
-const getAccessToken = (): string | null => {
-    if (!canUseStorage()) return null
-    try {
-        const raw = localStorage.getItem(TOKEN_KEY)
-        if (!raw) return null
-        const record = JSON.parse(raw) as TokenRecord
-        return record.accessToken ?? null
-    } catch {
-        return null
-    }
-}
-
-const saveAccessToken = (accessToken: string) => {
-    if (!canUseStorage()) return
-    const record: TokenRecord = { accessToken, updatedAt: Date.now() }
-    localStorage.setItem(TOKEN_KEY, JSON.stringify(record))
-}
-
-// Removes only the expired access token — does NOT touch the session user
-// record and does NOT fire session-changed. Keeps the user visually logged in
-// while preventing a stale token from being sent on future requests. If the
-// session is genuinely over, the refresh route has already dropped the
-// session cookies and middleware redirects on the next navigation.
+// Drops the expired access token — does NOT touch the session user record and
+// does NOT fire session-changed. Keeps the user visually logged in while
+// preventing a stale token from being sent again. If the session is genuinely
+// over, the refresh route has already dropped the cookies and middleware
+// redirects on the next navigation.
 const clearExpiredTokens = () => {
-    if (!canUseStorage()) return
-    localStorage.removeItem(TOKEN_KEY)
+    clearAccessToken()
 }
 
 const getUserId = (): string | null => {
@@ -81,38 +65,33 @@ export const getCurrentUserId = getUserId
  *
  * Runs once per page load, and only when a legacy token is actually present.
  */
-const migrateLegacyRefreshToken = () => {
+const migrateLegacyTokenStorage = () => {
     if (!canUseStorage()) return
 
     let legacyRefresh: string | undefined
     let accessToken: string | undefined
 
     try {
-        const raw = localStorage.getItem(TOKEN_KEY)
+        const raw = localStorage.getItem("postbook_auth_tokens")
         if (!raw) return
         const record = JSON.parse(raw) as {
             accessToken?: string
             refreshToken?: string
         }
-        if (typeof record.refreshToken !== "string" || !record.refreshToken.trim()) {
-            return
-        }
-        legacyRefresh = record.refreshToken.trim()
-        accessToken = record.accessToken
-
-        // Rewrite the record without the refresh token first, so it is gone
-        // from storage even if the request below never completes.
-        saveAccessToken(accessToken ?? "")
+        legacyRefresh = record.refreshToken?.trim() || undefined
+        accessToken = record.accessToken?.trim() || undefined
     } catch {
-        return
+        // Unreadable record — still delete it below.
     }
 
-    if (!accessToken) {
-        // No access token to prove the session with, so the adopt route would
-        // refuse it. The token is already removed from storage above; the user
-        // signs in again, which is the correct outcome for a half-session.
-        return
-    }
+    // Unconditional, and first: whatever happens next, no token stays on disk.
+    purgeLegacyTokenStorage()
+
+    // An access token alone is not worth adopting — it expires in minutes and
+    // ensureAccessToken() will mint a fresh one from the cookie. Only a
+    // legacy REFRESH token is worth converting, and only with an access token
+    // to prove the pair with, which is what /api/auth/session requires.
+    if (!legacyRefresh || !accessToken) return
 
     void fetch("/api/auth/session", {
         method: "POST",
@@ -124,7 +103,7 @@ const migrateLegacyRefreshToken = () => {
 }
 
 if (typeof window !== "undefined") {
-    migrateLegacyRefreshToken()
+    migrateLegacyTokenStorage()
 }
 
 /**
@@ -163,8 +142,13 @@ const api = axios.create({
     withCredentials: false,
 })
 
-api.interceptors.request.use((config) => {
-    const token = getAccessToken()
+api.interceptors.request.use(async (config) => {
+    // Async on purpose. The token lives in memory, so a freshly opened tab
+    // has none until the refresh cookie has been spent once. Awaiting here
+    // means the very first request of a cold tab carries a token instead of
+    // 401-ing and relying on the retry path — and ensureAccessToken()
+    // single-flights, so twelve simultaneous requests still refresh once.
+    const token = await ensureAccessToken()
     if (token) {
         config.headers["Authorization"] = `Bearer ${token}`
     }
@@ -199,46 +183,10 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-type RefreshResult = "success" | "invalid" | "unavailable"
-
-let refreshPromise: Promise<RefreshResult> | null = null
-
-async function refreshAccessToken(): Promise<RefreshResult> {
-    try {
-        // No body: the refresh token is in the httpOnly pb_rt cookie, which
-        // the browser attaches to this same-origin request and JS cannot read.
-        const res = await fetch("/api/auth/refresh", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-        })
-
-        if (!res.ok) {
-            // 401/403 means the session is over — the route has already
-            // dropped the cookies. Anything else (502/503, upstream down) is
-            // temporary and must not sign the user out.
-            return res.status === 401 || res.status === 403 ? "invalid" : "unavailable"
-        }
-
-        const payload = await res.json()
-        // Match the same extraction order as responseMapper.ts:getTokens()
-        // Handles: { data: { access_token } }, { data: { tokens: { access_token } } },
-        //          { tokens: { access_token } }, { access_token }
-        const primary = payload?.data ?? payload?.result ?? payload
-        const tokens = primary?.tokens ?? primary
-        const newAccess = tokens?.access_token ?? tokens?.accessToken ?? tokens?.token
-
-        if (newAccess) {
-            // The rotated refresh token is not in this payload — the route
-            // stripped it and put it back in the cookie.
-            saveAccessToken(newAccess)
-            return "success"
-        }
-        return "invalid"
-    } catch {
-        return "unavailable"
-    }
-}
+// The refresh itself, its single-flight guard and the "invalid vs merely
+// unreachable" distinction all live in src/lib/accessToken.ts now, so every
+// caller — axios, the sockets, the fetch-based hooks — shares one in-flight
+// request against a refresh token the server rotates on every use.
 
 api.interceptors.response.use(
     (response) => response,
@@ -248,19 +196,12 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true
 
-            if (!refreshPromise) {
-                refreshPromise = refreshAccessToken().finally(() => {
-                    refreshPromise = null
-                })
-            }
-
-            const result = await refreshPromise
-
-            if (result === "success") {
-                const newToken = getAccessToken()
-                if (newToken) {
-                    originalRequest.headers["Authorization"] = `Bearer ${newToken}`
-                }
+            // forceRefresh, not ensureAccessToken: we hold a token and it has
+            // just been refused, so "there is already a token" is exactly the
+            // wrong reason to skip the refresh.
+            const newToken = await forceRefresh()
+            if (newToken) {
+                originalRequest.headers["Authorization"] = `Bearer ${newToken}`
                 return api(originalRequest)
             }
 
@@ -272,5 +213,7 @@ api.interceptors.response.use(
         return Promise.reject(error)
     }
 )
+
+export { peekAccessToken }
 
 export default api

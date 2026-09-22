@@ -1,5 +1,6 @@
 "use client"
 
+import { ensureAccessToken } from '@/lib/accessToken'
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -54,21 +55,18 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
         if (!authUser?.id) return
 
         const userId = authUser.id
-        // Read tokens from localStorage for headers
-        let accessToken = ""
-        try {
-            const raw = localStorage.getItem("postbook_auth_tokens")
-            if (raw) {
-                const record = JSON.parse(raw) as { accessToken?: string }
-                accessToken = record.accessToken ?? ""
-            }
-        } catch { /* ignore */ }
 
         // EventSource doesn't support custom headers, so we use fetch-based SSE
         const controller = new AbortController()
 
         const connect = async () => {
             try {
+                // Resolved per attempt, from memory. This used to be read from
+                // localStorage once, outside the effect, so a reconnect after a
+                // rotation carried the old token — and a cold tab carried none.
+                const accessToken = (await ensureAccessToken()) ?? ""
+                if (controller.signal.aborted) return
+
                 const response = await fetch("/api/notifications/stream", {
                     headers: {
                         "X-User-Id": userId,

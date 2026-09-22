@@ -1,3 +1,4 @@
+import { ensureAccessToken } from '@/lib/accessToken';
 import { User } from '@/types';
 import {
   isLiveRealtimeEventType,
@@ -116,7 +117,6 @@ const wsUrlForPath = (path: string) => {
 const WS_PATH = '/v1/ws/connect';
 const API_BASE = '/api/chat';
 const SESSION_KEY = 'postbook_session';
-const TOKEN_KEY = 'postbook_auth_tokens';
 
 let socket: WebSocket | null = null;
 let chatChannel: BroadcastChannel | null = null;
@@ -315,17 +315,16 @@ const getSessionUser = () => {
   return session ? JSON.parse(session) as User : null;
 };
 
-const getAccessToken = () => {
-  if (!canUseBrowserApis()) return null;
-  try {
-    const raw = localStorage.getItem(TOKEN_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { accessToken?: string };
-    return parsed.accessToken ?? null;
-  } catch {
-    return null;
-  }
-};
+/**
+ * The access token, from memory.
+ *
+ * This used to read localStorage directly. It is async now: the token is
+ * minted from the httpOnly refresh cookie and a cold tab has none until that
+ * has happened once. ensureAccessToken single-flights, so the socket and the
+ * REST calls that start together spend the refresh cookie once between them
+ * — which matters, because the server rotates it on every use.
+ */
+const getAccessToken = () => ensureAccessToken();
 
 const closeChatSocket = (reason?: string) => {
   if (!canUseBrowserApis()) return;
@@ -398,7 +397,7 @@ const parseResponsePayload = async (res: Response): Promise<unknown> => {
 const chatClient = {
   async request<TResponse = any>(path: string, options: RequestInit = {}, background = false) {
     const user = getSessionUser();
-    const accessToken = getAccessToken();
+    const accessToken = await getAccessToken();
     const headers = new Headers(options.headers);
     if (user) {
       headers.set('X-User-Id', user.id);
@@ -439,7 +438,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
   try {
     // Fetch a signed chat token from the proxy
     const headers = new Headers({ 'X-User-Id': user.id });
-    const accessToken = getAccessToken();
+    const accessToken = await getAccessToken();
     if (accessToken) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }
