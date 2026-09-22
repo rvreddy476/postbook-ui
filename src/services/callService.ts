@@ -229,9 +229,15 @@ async function createCallViaAPI(contact: User, type: CallType): Promise<CallSess
     // values Android sends). Sending the bare `audio` / `video` matched
     // neither, so the P0 gate read every 1:1 call as a GROUP call and
     // refused it with 403 — one ring, then the overlay vanished.
+    //
+    // source_type is WHERE the call was started from, not its shape — the
+    // database allows chat | profile | group | circle | connections and
+    // nothing else. 'direct' failed that CHECK, so the insert died with a
+    // 500 after the create had already passed every policy gate. Android
+    // sends 'profile' when it has no conversation id, so that is the value.
     const res = await api.post<{ data: CallSession }>('/v1/calls', {
       call_type: type === 'video' ? 'direct_video' : 'direct_audio',
-      source_type: 'direct',
+      source_type: 'profile',
       audio_only: type === 'audio',
       target_user_ids: [contact.id],
     });
