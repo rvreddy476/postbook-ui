@@ -26,10 +26,20 @@ interface ConfirmUploadResponse {
  *
  * Returns the media_id string.
  */
+/**
+ * `fileType` is exactly what media-service accepts on /v1/media/init
+ * (`oneof=image video audio`). There is no document type: a PDF or a zip has
+ * nowhere to go, so callers must not offer one.
+ *
+ * `chat` is the subtype for a message attachment. It matters: a chat asset is
+ * served from the protected prefix and message-service reserves it against the
+ * message on send, which is what keeps one conversation's media out of
+ * another's.
+ */
 export async function uploadMedia(
     file: File,
-    fileType: "image" | "video",
-    mediaSubtype: "general" | "avatar" | "cover" | "gif" = "general"
+    fileType: "image" | "video" | "audio",
+    mediaSubtype: "general" | "avatar" | "cover" | "gif" | "chat" = "general"
 ): Promise<string> {
     // Step 1: Init upload
     const initRes = await api.post<InitUploadResponse>("/v1/media/init", {

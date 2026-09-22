@@ -104,7 +104,7 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
                     >
                         {profile.avatar_media_id ? (
                             <img
-                                src={`/api/media/${profile.avatar_media_id}/thumbnail`}
+                                src={`/v1/media/${profile.avatar_media_id}/serve`}
                                 alt={profile.display_name || profile.username}
                                 className="w-full h-full object-cover"
                             />

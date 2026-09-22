@@ -24,8 +24,9 @@ import {
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { createGroupConversation, toggleReaction, updateConversation, leaveConversation, addMemberToConversation } from '@/services/messageService'
 import { getSession } from '@/services/authService'
+import { uploadMedia } from '@/lib/mediaUpload'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
-import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
+import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
 import type { GroupMember, GroupPostV2 } from '@/types/groups'
 import type { Message } from '@/services/messageService'
 
@@ -86,6 +87,8 @@ function ChatView({
   const [chatError, setChatError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // See DmChat: a failed attachment must say so, not only log.
+  const [attachError, setAttachError] = useState<string | null>(null)
 
   const chat = useChat(activeConvId ?? null, myId)
   // M1: track who's actively viewing this group chat + drive
@@ -165,20 +168,23 @@ function ChatView({
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setAttachError(null)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const uploadRes = await fetch('/api/media/upload', { method: 'POST', body: formData })
-      const uploadJson = await uploadRes.json()
-      const mediaId = uploadJson.data?.id || uploadJson.id
-      if (!mediaId) throw new Error('Upload failed')
-      let messageType = 'file'
-      if (file.type.startsWith('image/')) messageType = 'image'
-      else if (file.type.startsWith('video/')) messageType = 'video'
-      else if (file.type.startsWith('audio/')) messageType = 'audio'
-      await chat.handleSendMedia(mediaId, messageType)
+      // media-service's three-step flow, the same one the composer and avatar
+      // pickers use. The old code POSTed a FormData to /api/media/upload,
+      // which is not a route in this app at all — it 404'd, the JSON parse
+      // threw, and the catch below swallowed it. Every chat attachment has
+      // failed silently.
+      const kind = file.type.startsWith('image/') ? 'image'
+        : file.type.startsWith('video/') ? 'video'
+        : file.type.startsWith('audio/') ? 'audio'
+        : null
+      if (!kind) throw new Error(`Unsupported attachment type: ${file.type || 'unknown'}`)
+      const mediaId = await uploadMedia(file, kind, 'chat')
+      await chat.handleSendMedia(mediaId, kind)
     } catch (err) {
       console.error('[GroupChat] media upload failed:', err)
+      setAttachError(err instanceof Error ? err.message : 'Could not send that attachment.')
     }
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -415,13 +421,13 @@ function ChatView({
                       {msg.isDeleted ? (
                         'This message was deleted'
                       ) : msg.type === 'image' && msg.mediaId ? (
-                        <img src={`/api/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
+                        <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
                       ) : msg.type === 'video' && msg.mediaId ? (
-                        <video src={`/api/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
+                        <video src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
                       ) : msg.type === 'audio' && msg.mediaId ? (
-                        <audio src={`/api/media/${msg.mediaId}/serve`} controls className="max-w-full" />
+                        <audio src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full" />
                       ) : msg.type === 'file' && msg.mediaId ? (
-                        <a href={`/api/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">📎 Attachment</a>
+                        <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">📎 Attachment</a>
                       ) : (
                         msg.text
                       )}
@@ -578,29 +584,39 @@ function ChatView({
         </div>
       ) : (
         <div className="px-6 lg:px-10 py-4 border-t border-brand-divider shrink-0">
+          {/* A failed attachment is said out loud. It used to be a
+              console.error only, which is how a dead upload route survived
+              this long. */}
+          {attachError && (
+            <div
+              role="alert"
+              className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger"
+            >
+              <span>{attachError}</span>
+              <button
+                onClick={() => setAttachError(null)}
+                className="shrink-0 font-semibold underline underline-offset-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           <div className="max-w-3xl mx-auto w-full relative flex gap-2 items-center">
-            {/* Media upload */}
+            {/* One media button. There used to be a Plus and a paperclip
+                side by side, both opening the same picker; and a paperclip
+                reads as "document", which is not what this accepts. */}
             <button
               onClick={() => fileInputRef.current?.click()}
+              aria-label="Add photo or video"
               className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
-              title="Upload media"
+              title="Add photo or video"
             >
-              <Plus className="w-5 h-5" />
-            </button>
-            {/* Paperclip attachment */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-highlight transition-colors"
-              title="Attach file"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
+              <ImagePlus className="w-[18px] h-[18px]" strokeWidth={1.75} />
             </button>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
+              accept="image/*,video/*,audio/*"
               onChange={handleMediaUpload}
               className="hidden"
             />

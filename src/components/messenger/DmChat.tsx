@@ -43,6 +43,7 @@ import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { initiateCall } from '@/services/callService'
+import { uploadMedia } from '@/lib/mediaUpload'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
@@ -200,6 +201,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const editInputRef = useRef<HTMLInputElement | null>(null)
   const lastTypingSentRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // Attachments used to fail into console.error alone, which is why a dead
+  // upload route went unnoticed. The composer now says so.
+  const [attachError, setAttachError] = useState<string | null>(null)
 
   // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
@@ -671,19 +675,24 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const handleMediaUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !convIdRef.current) return
+    setAttachError(null)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const uploadRes = await fetch('/api/media/upload', { method: 'POST', body: formData })
-      const uploadJson = await uploadRes.json()
-      const mediaId = uploadJson.data?.id || uploadJson.id
-      if (!mediaId) throw new Error('Upload failed')
-      let messageType = 'file'
-      if (file.type.startsWith('image/')) messageType = 'image'
-      else if (file.type.startsWith('video/')) messageType = 'video'
-      else if (file.type.startsWith('audio/')) messageType = 'audio'
-      await sendMediaMessage(convIdRef.current, mediaId, messageType)
-    } catch (err) { console.error('[DmChat] media upload failed:', err) }
+      // media-service's three-step flow, the same one the composer and avatar
+      // pickers use. The old code POSTed a FormData to /api/media/upload,
+      // which is not a route in this app at all — it 404'd, the JSON parse
+      // threw, and the catch below swallowed it. Every chat attachment has
+      // failed silently.
+      const kind = file.type.startsWith('image/') ? 'image'
+        : file.type.startsWith('video/') ? 'video'
+        : file.type.startsWith('audio/') ? 'audio'
+        : null
+      if (!kind) throw new Error(`Unsupported attachment type: ${file.type || 'unknown'}`)
+      const mediaId = await uploadMedia(file, kind, 'chat')
+      await sendMediaMessage(convIdRef.current, mediaId, kind)
+    } catch (err) {
+      console.error('[DmChat] media upload failed:', err)
+      setAttachError(err instanceof Error ? err.message : 'Could not send that attachment.')
+    }
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
@@ -1002,13 +1011,13 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                   {msg.isDeleted ? (
                     'This message was deleted'
                   ) : msg.type === 'image' && msg.mediaId ? (
-                    <img src={`/api/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
+                    <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
                   ) : msg.type === 'video' && msg.mediaId ? (
-                    <video src={`/api/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
+                    <video src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
                   ) : msg.type === 'audio' && msg.mediaId ? (
-                    <audio src={`/api/media/${msg.mediaId}/serve`} controls className="max-w-full" />
+                    <audio src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full" />
                   ) : msg.type === 'file' && msg.mediaId ? (
-                    <a href={`/api/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer"
+                    <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer"
                       className={`font-semibold underline underline-offset-2 ${isMe ? 'text-white/90 hover:text-white' : 'text-brand-text/60 hover:text-brand-text/60'}`}>
                       Attached File
                     </a>
@@ -1161,8 +1170,26 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         </div>
       )}
 
+      {/* A failed attachment is said out loud. It used to be a console.error
+          only, which is how a dead upload route survived this long. */}
+      {attachError && (
+        <div
+          role="alert"
+          className="flex shrink-0 items-center justify-between gap-3 border-t border-brand-divider bg-danger/10 px-6 py-2.5 text-[12px] text-danger"
+        >
+          <span>{attachError}</span>
+          <button
+            onClick={() => setAttachError(null)}
+            className="shrink-0 font-semibold underline underline-offset-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Reply bar */}
       {replyingTo && (
+
         <div className="flex shrink-0 items-center justify-between border-t border-brand-divider bg-brand-secondary/80 px-6 py-3 backdrop-blur-md">
           <div className="flex flex-1 flex-col border-l-[3px] border-brand-accent pl-3">
             <span className="text-[12px] font-bold text-brand-text/60">
@@ -1240,7 +1267,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             >
               <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
+            <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*"
               onChange={handleMediaUpload} className="hidden" />
 
             <input

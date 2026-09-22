@@ -70,7 +70,7 @@ export default function FeaturedMediaCard({ userId, onSeeAll }: FeaturedMediaCar
                         >
                             {mediaId && (
                                 <img
-                                    src={`/api/media/${mediaId}/thumbnail`}
+                                    src={`/v1/media/${mediaId}/serve`}
                                     alt=""
                                     className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                                 />
