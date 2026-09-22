@@ -25,6 +25,68 @@ import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { playNotificationSound } from '@/hooks/useNotificationSound';
 import { useGlobalToast } from '@/contexts/ToastContext';
 
+/**
+ * The sentence shown beside the actor's name.
+ *
+ * This was a chain of inline `type === '…' && '…'` expressions covering
+ * follow, reaction, comment, comment_reaction, friend_request and
+ * friend_accepted — and nothing else. A `dm` notification, which is most of
+ * a real inbox, matched none of them and rendered a name followed by
+ * NOTHING: a count in the badge and rows that said nothing. Anything
+ * unrecognised now falls back to a sentence rather than to emptiness.
+ */
+function describeNotification(type: string): string {
+  switch (type) {
+    case 'friend_request':
+      return 'sent you a connection request'
+    case 'friend_accepted':
+      return 'accepted your connection request'
+    case 'follow':
+      return 'started following you'
+    case 'reaction':
+      return 'sparked your post ✦'
+    case 'comment_reaction':
+      return 'sparked your comment ✦'
+    case 'comment':
+      return 'commented on your post'
+    case 'dm':
+      return 'sent you a message'
+    case 'message_request':
+      return 'wants to send you a message'
+    case 'mention':
+      return 'mentioned you'
+    case 'creator_uploaded_video':
+      return 'uploaded a new video'
+    case 'creator_uploaded_flick':
+      return 'uploaded a new flick'
+    default:
+      return 'sent you a notification'
+  }
+}
+
+/**
+ * Where a notification should take you.
+ *
+ * Message notifications were written with a `/messages/<conversationId>`
+ * deep link, and `/messages` is not a route in this app — only `/messenger`
+ * is — so tapping one navigated to a 404. The server emits the right link
+ * now, but every row already in the database still carries the old one, so
+ * they are translated here too.
+ */
+function notificationHref(deepLink: string | undefined, actorId: string, actorUsername?: string): string {
+  if (deepLink) {
+    const legacyRequests = deepLink === '/messages/requests'
+    if (legacyRequests) return '/messenger?lane=requests'
+    if (deepLink.startsWith('/messages/')) {
+      // The old link carries a conversation id, which the messenger cannot
+      // open directly; the actor is the peer, and ?user= resolves it.
+      return `/messenger?user=${encodeURIComponent(actorId)}`
+    }
+    return deepLink
+  }
+  return `/u/${actorUsername || actorId}`
+}
+
 interface HeaderProps {
   currentUser: User;
   activeTab: NavItem;
@@ -232,9 +294,8 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         setIsNotifOpen(false);
       }
     } else {
-      // Navigate for user-related notifications (follow, friend_request, etc.)
-      const target = notif.deep_link || `/u/${actorUsername || notif.actor_user_id}`;
-      router.push(target);
+      // Navigate for user-related notifications (follow, friend_request, dm…)
+      router.push(notificationHref(notif.deep_link, notif.actor_user_id, actorUsername));
       setIsNotifOpen(false);
     }
   };
@@ -535,12 +596,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                 <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
                                   <span className="font-black text-brand-text">{actorName}</span>
                                   {' '}
-                                  {notif.type === 'friend_request' && 'sent you a friend request'}
-                                  {notif.type === 'friend_accepted' && 'accepted your friend request'}
-                                  {notif.type === 'follow' && 'started following you'}
-                                  {notif.type === 'reaction' && 'sparked your post \u2726'}
-                                  {notif.type === 'comment_reaction' && 'sparked your comment \u2726'}
-                                  {notif.type === 'comment' && 'commented on your post'}
+                                  {describeNotification(notif.type)}
                                 </p>
                                 <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                   {formatTimeAgo(notif.created_at)}
