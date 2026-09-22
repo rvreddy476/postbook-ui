@@ -60,6 +60,12 @@ function describeNotification(type: string): string {
       return 'uploaded a new video'
     case 'creator_uploaded_flick':
       return 'uploaded a new flick'
+    case 'incoming_call':
+      return 'called you'
+    case 'incoming_video_call':
+      return 'video called you'
+    case 'missed_call':
+      return 'tried to call you'
     default:
       return 'sent you a notification'
   }
@@ -78,9 +84,11 @@ function notificationHref(deepLink: string | undefined, actorId: string, actorUs
   if (deepLink) {
     const legacyRequests = deepLink === '/messages/requests'
     if (legacyRequests) return '/messenger?lane=requests'
-    if (deepLink.startsWith('/messages/')) {
-      // The old link carries a conversation id, which the messenger cannot
-      // open directly; the actor is the peer, and ?user= resolves it.
+    if (deepLink.startsWith('/messages/') || deepLink.startsWith('/call/')) {
+      // Neither /messages/<id> nor /call/<id> (nor /call/history) is a
+      // route in this app. The actor is the peer either way, and the
+      // messenger's ?user= opens the conversation with them — which is
+      // where a call is placed from.
       return `/messenger?user=${encodeURIComponent(actorId)}`
     }
     return deepLink

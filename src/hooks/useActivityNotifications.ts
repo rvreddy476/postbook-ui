@@ -1,6 +1,6 @@
 "use client"
 
-import { ensureAccessToken } from '@/lib/accessToken'
+import { ensureAccessToken, forceRefresh } from '@/lib/accessToken'
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -81,17 +81,36 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
                 // Resolved per attempt, from memory. This used to be read from
                 // localStorage once, outside the effect, so a reconnect after a
                 // rotation carried the old token — and a cold tab carried none.
-                const accessToken = (await ensureAccessToken()) ?? ""
+                const accessToken = await ensureAccessToken()
                 if (controller.signal.aborted) return
+                if (!accessToken) {
+                    // No session to stream for. Do not hammer the route with
+                    // an empty Authorization header every few seconds — that
+                    // is a 401 per attempt in the server log and nothing
+                    // else. The 30s poll still runs; try the stream again
+                    // once a token exists.
+                    await new Promise(r => setTimeout(r, 30_000))
+                    if (!controller.signal.aborted) connect()
+                    return
+                }
 
                 const response = await fetch("/api/notifications/stream", {
                     headers: {
                         "X-User-Id": userId,
-                        "Authorization": accessToken ? `Bearer ${accessToken}` : "",
+                        "Authorization": `Bearer ${accessToken}`,
                     },
                     signal: controller.signal,
                 })
 
+                if (response.status === 401) {
+                    // The token we hold was refused. Mint a fresh one before
+                    // reconnecting; retrying with the same one is what made
+                    // this stream fail forever once a token had expired.
+                    await forceRefresh()
+                    await new Promise(r => setTimeout(r, 2000))
+                    if (!controller.signal.aborted) connect()
+                    return
+                }
                 if (!response.ok || !response.body) return
 
                 const reader = response.body.getReader()

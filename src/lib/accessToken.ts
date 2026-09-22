@@ -150,7 +150,18 @@ async function refreshOnce(): Promise<string | null> {
  * second concurrent spend would present an already-used one.
  */
 export function ensureAccessToken(): Promise<string | null> {
-    if (memAccessToken) return Promise.resolve(memAccessToken)
+    // A token that is expired, or about to be, is not "a token we have".
+    // Without this check a tab left open past the token's lifetime kept
+    // presenting the dead one: every fetch-based caller — the notification
+    // stream, the chat client — got 401 and simply retried with the same
+    // token forever, because only the axios path knew how to refresh on
+    // 401. Refresh proactively instead, 30s before expiry.
+    if (memAccessToken && !isExpiringSoon(memAccessToken)) return Promise.resolve(memAccessToken)
+    if (memAccessToken) {
+        // Expired or nearly so: mint a new one; fall through to the
+        // single-flight refresh below.
+        memAccessToken = null
+    }
     // A refresh cookie the server has already rejected is not worth
     // re-presenting on every request for the rest of the page's life.
     if (refreshRejected) return Promise.resolve(null)
@@ -189,6 +200,24 @@ export function purgeLegacyTokenStorage() {
         localStorage.removeItem(LEGACY_TOKEN_KEY)
     } catch {
         // Private mode / quota — nothing to clean up in that case anyway.
+    }
+}
+
+/**
+ * Whether a JWT is expired or within 30s of it. An unreadable token is
+ * treated as expiring: presenting it would only earn a 401 anyway.
+ * This is not verification — the server does that — only a reason to
+ * refresh before the server has to tell us.
+ */
+function isExpiringSoon(jwt: string): boolean {
+    try {
+        const payload = JSON.parse(atob(jwt.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/") ?? "")) as {
+            exp?: unknown
+        }
+        if (typeof payload.exp !== "number") return false
+        return payload.exp * 1000 - Date.now() < 30_000
+    } catch {
+        return true
     }
 }
 
