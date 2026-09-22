@@ -139,7 +139,34 @@ export function useMarkNotificationRead() {
         mutationFn: async ({ bucket, ts }: { bucket: number; ts: string }) => {
             await api.post("/v1/notifications/read", { bucket, ts })
         },
-        onSuccess: () => {
+        // Same reasoning as useMarkAllRead: the number moves when you act,
+        // not when the network agrees.
+        onMutate: async ({ ts }) => {
+            await qc.cancelQueries({ queryKey: ["unread-count"] })
+            const previousCount = qc.getQueryData<{ count: number }>(["unread-count"])
+            if (previousCount && previousCount.count > 0) {
+                qc.setQueryData(["unread-count"], { count: previousCount.count - 1 })
+            }
+            qc.setQueriesData<NotificationsResponse>(
+                { queryKey: ["activity-notifications"] },
+                (old) =>
+                    old
+                        ? {
+                              ...old,
+                              items: old.items.map((n) =>
+                                  n.ts === ts ? { ...n, is_read: true } : n,
+                              ),
+                          }
+                        : old,
+            )
+            return { previousCount }
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousCount !== undefined) {
+                qc.setQueryData(["unread-count"], context.previousCount)
+            }
+        },
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ["activity-notifications"] })
             qc.invalidateQueries({ queryKey: ["unread-count"] })
         },
@@ -228,7 +255,39 @@ export function useMarkAllRead() {
         mutationFn: async () => {
             await api.patch("/v1/notifications/read-all")
         },
-        onSuccess: () => {
+        // Clear the badge IMMEDIATELY, before the request resolves.
+        //
+        // It used to update only in onSuccess, so the number on the bell
+        // depended on a round trip completing. Anything that stopped that
+        // request — a slow hop, a 401 in flight, a refetch that lost the
+        // race — left the badge sitting there with its old number while the
+        // server had already marked everything read. Opening the panel
+        // visibly did nothing, which is the bug as the user experiences it.
+        //
+        // The badge is a view of "have I looked at these", and opening the
+        // panel settles that question locally. If the request really does
+        // fail, onError puts the old value back and the 30s poll reconciles
+        // against the server, which stays the authority.
+        onMutate: async () => {
+            await qc.cancelQueries({ queryKey: ["unread-count"] })
+            const previousCount = qc.getQueryData(["unread-count"])
+            qc.setQueryData(["unread-count"], { count: 0 })
+            qc.setQueriesData<NotificationsResponse>(
+                { queryKey: ["activity-notifications"] },
+                (old) =>
+                    old
+                        ? { ...old, items: old.items.map((n) => ({ ...n, is_read: true })) }
+                        : old,
+            )
+            return { previousCount }
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousCount !== undefined) {
+                qc.setQueryData(["unread-count"], context.previousCount)
+            }
+            qc.invalidateQueries({ queryKey: ["activity-notifications"] })
+        },
+        onSettled: () => {
             qc.invalidateQueries({ queryKey: ["activity-notifications"] })
             qc.invalidateQueries({ queryKey: ["unread-count"] })
         },

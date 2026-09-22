@@ -288,7 +288,14 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                     {/* Notifications */}
                     <div className="relative" ref={notifRef}>
                         <button
-                            onClick={() => setIsNotifOpen(!isNotifOpen)}
+                            onClick={() => {
+                                const opening = !isNotifOpen;
+                                setIsNotifOpen(opening);
+                                // Opening the panel is reading them — same
+                                // rule as the main Header, which this one
+                                // was missing entirely.
+                                if (opening && unreadNotifCount > 0) markAllRead.mutate();
+                            }}
                             className={`group relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95 ${isNotifOpen ? 'text-white dark:text-primary-ink' : ''}`}
                             title="Notifications"
                         >
