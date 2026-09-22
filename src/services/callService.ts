@@ -36,6 +36,34 @@ const ICE_SERVERS: RTCIceServer[] = [
 let callInfo: CallInfo | null = null;
 let pc: RTCPeerConnection | null = null;
 let pendingCandidates: RTCIceCandidateInit[] = [];
+/**
+ * Our own ICE candidates, held until the pair is allowed to exchange them.
+ *
+ * ws-gateway relays `ice_candidate` only once call-service has moved the
+ * pair to `active`, which happens when the callee accepts the invite. The
+ * caller starts gathering the moment it sets its local description — well
+ * before that — so every early candidate it sent was silently dropped and
+ * the connection had nothing to work with. Buffer them, release on answer.
+ */
+let localCandidateBuffer: RTCIceCandidateInit[] = [];
+let candidatesUnlocked = false;
+
+function sendLocalCandidate(candidate: RTCIceCandidateInit) {
+  if (!callInfo) return;
+  sendSignaling({
+    type: 'ice_candidate',
+    target_user_id: callInfo.peerId,
+    call_id: callInfo.callId,
+    candidate,
+  });
+}
+
+function unlockCandidates() {
+  candidatesUnlocked = true;
+  const held = localCandidateBuffer;
+  localCandidateBuffer = [];
+  held.forEach(sendLocalCandidate);
+}
 const stateListeners = new Set<(info: CallInfo | null) => void>();
 
 function notify() {
@@ -64,6 +92,8 @@ function cleanup() {
     callInfo.localStream.getTracks().forEach(t => t.stop());
   }
   pendingCandidates = [];
+  localCandidateBuffer = [];
+  candidatesUnlocked = false;
   callInfo = null;
   notify();
 }
@@ -83,14 +113,10 @@ function createPeerConnection(): RTCPeerConnection {
   const conn = new RTCPeerConnection({ iceServers: getIceServers() });
 
   conn.onicecandidate = (e) => {
-    if (e.candidate && callInfo) {
-      sendSignaling({
-        type: 'ice_candidate',
-        target_user_id: callInfo.peerId,
-        call_id: callInfo.callId,
-        candidate: e.candidate.toJSON(),
-      });
-    }
+    if (!e.candidate || !callInfo) return;
+    const candidate = e.candidate.toJSON();
+    if (candidatesUnlocked) sendLocalCandidate(candidate);
+    else localCandidateBuffer.push(candidate);
   };
 
   conn.ontrack = (e) => {
@@ -131,11 +157,15 @@ async function flushPendingCandidates() {
 
 async function createCallViaAPI(contact: User, type: CallType): Promise<CallSession | null> {
   try {
+    // `target_user_ids`, not `invitee_user_ids`: call-service binds the
+    // former as required. The old name made every create a 400, and with
+    // no session ws-gateway then dropped the offer as "no active call
+    // between pair" — so a call could never reach the other side.
     const res = await api.post<{ data: CallSession }>('/v1/calls', {
       call_type: type,
       source_type: 'direct',
       audio_only: type === 'audio',
-      invitee_user_ids: [contact.id],
+      target_user_ids: [contact.id],
     });
     return res.data.data;
   } catch (err) {
@@ -178,6 +208,20 @@ async function acceptInviteViaAPI(callId: string, inviteId: string): Promise<voi
   }
 }
 
+/** The viewer's invite id for a ringing call, from /v1/calls/invites/pending. */
+async function findInviteIdForCall(callId: string): Promise<string | undefined> {
+  try {
+    const res = await api.get<{ data: Array<{ invite_id: string; call_id: string }> }>(
+      '/v1/calls/invites/pending',
+    );
+    const list = Array.isArray(res.data?.data) ? res.data.data : [];
+    return list.find(inv => inv.call_id === callId)?.invite_id;
+  } catch (err) {
+    console.error('Failed to look up call invite:', err);
+    return undefined;
+  }
+}
+
 async function declineInviteViaAPI(callId: string, inviteId: string): Promise<void> {
   try {
     await api.post(`/v1/calls/${callId}/invites/${inviteId}/decline`);
@@ -206,10 +250,23 @@ export function initiateCall(contact: User, type: CallType) {
       const session = await createCallViaAPI(contact, type);
       if (!callInfo || callInfo.state !== 'outgoing') return;
 
-      if (session) {
-        updateState({ callId: session.id, callSession: session });
-        subscribeToCallRoom(session.id);
+      if (!session) {
+        // Without a session call-service never authorises the pair, and
+        // ws-gateway drops the offer without a word. Sending it anyway
+        // used to leave the caller "ringing" forever at a wall of silence.
+        console.error('Call not created; not sending an offer the gateway would drop');
+        cleanup();
+        return;
       }
+      updateState({ callId: session.id, callSession: session });
+      subscribeToCallRoom(session.id);
+
+      // Join for ICE servers. This was only ever done by the callee, so the
+      // caller built its peer connection on bare Google STUN — no TURN, no
+      // relay — and anything behind a real NAT never connected.
+      const joinResp = await joinCallViaAPI(session.id);
+      if (!callInfo || callInfo.state !== 'outgoing') return;
+      if (joinResp) updateState({ joinResponse: joinResp });
 
       const stream = await getMedia(type);
       if (!callInfo || callInfo.state !== 'outgoing') {
@@ -256,12 +313,21 @@ export function acceptCall() {
 
   (async () => {
     try {
-      // Accept invite via REST API if we have a call ID
       const callId = callInfo?.callId;
-      const inviteId = (callInfo as any)?._inviteId as string | undefined;
+
+      // The invite id is what accept/decline need, and it is what moves the
+      // pair to `active` so ICE can flow. Nothing pushes it over the socket
+      // — the caller's offer carries only the call id — so it comes from
+      // the pending-invites list, which exists for exactly this.
+      let inviteId = (callInfo as any)?._inviteId as string | undefined;
+      if (callId && !inviteId) {
+        inviteId = await findInviteIdForCall(callId);
+        if (inviteId && callInfo) (callInfo as any)._inviteId = inviteId;
+      }
       if (callId && inviteId) {
         await acceptInviteViaAPI(callId, inviteId);
       }
+      if (!callInfo) return;
 
       // Join the call to get ICE servers
       if (callId) {
@@ -270,8 +336,9 @@ export function acceptCall() {
           updateState({ joinResponse: joinResp });
         }
       }
+      if (!callInfo) return;
 
-      const stream = await getMedia(callInfo!.type);
+      const stream = await getMedia(callInfo.type);
       if (!callInfo) {
         stream.getTracks().forEach(t => t.stop());
         return;
@@ -294,6 +361,9 @@ export function acceptCall() {
         call_id: callInfo!.callId,
         sdp: answer.sdp,
       });
+      // Accepting the invite moved the pair to `active`, so our candidates
+      // are relayable from here on.
+      unlockCandidates();
     } catch (err) {
       console.error('Failed to accept call:', err);
       cleanup();
@@ -389,6 +459,22 @@ function handleSignal(signal: CallSignal) {
   switch (signal.type) {
     case 'call_offer': {
       if (callInfo) {
+        // The same call arriving twice (a ring that carried the invite id
+        // followed by the offer that carries the SDP, or a resend) is not a
+        // second caller. Answering it with `call_busy` hung up on the very
+        // call being set up. Merge instead.
+        const sameCall =
+          callInfo.state === 'incoming' &&
+          callInfo.peerId === signal.sender_id &&
+          (!callInfo.callId || !signal.call_id || callInfo.callId === signal.call_id);
+        if (sameCall) {
+          (callInfo as any)._offerSdp = signal.sdp;
+          if (signal.call_id && !callInfo.callId) {
+            updateState({ callId: signal.call_id });
+            subscribeToCallRoom(signal.call_id);
+          }
+          return;
+        }
         sendSignaling({ type: 'call_busy', target_user_id: signal.sender_id });
         return;
       }
@@ -455,6 +541,9 @@ function handleSignal(signal: CallSignal) {
         try {
           await pc!.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
           await flushPendingCandidates();
+          // An answer means the callee accepted, so the pair is `active`
+          // and everything we buffered while ringing can go out now.
+          unlockCandidates();
         } catch (err) {
           console.error('Failed to handle call answer:', err);
           cleanup();

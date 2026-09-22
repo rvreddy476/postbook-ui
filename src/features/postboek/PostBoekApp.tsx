@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavExpanded } from '@/hooks/useNavExpanded';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import CallOverlay from '@/components/CallOverlay';
 import ChatWindow from '@/components/ChatWindow';
 import ContactList from '@/components/ContactList';
 import CreatePortal from '@/components/CreatePortal';
@@ -326,7 +325,8 @@ const PostBoekApp: React.FC = () => {
         </div>
         */}
 
-        <CallOverlay />
+        {/* CallOverlay is mounted app-wide in providers.tsx now; a second
+            copy here would render two overlays for one call. */}
       </div>
     </NotificationProvider>
   );

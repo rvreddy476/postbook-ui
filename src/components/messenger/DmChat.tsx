@@ -37,6 +37,8 @@ import { getSession } from '@/services/authService'
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { initiateCall } from '@/services/callService'
+import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus, Paperclip,
   Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight
@@ -124,6 +126,13 @@ function toDisplay(msg: BackendMessage): DisplayMessage {
 export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack, detailsOpen, onToggleDetails, onConversationReady }: DmChatProps) {
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
+
+  // initiateCall takes the app's User shape; the props carry exactly what
+  // a call needs to show — id, name, avatar.
+  const peerAsUser: User = useMemo(
+    () => ({ id: userId, name: userName, avatar: userAvatar, isOnline: userOnline }),
+    [userId, userName, userAvatar, userOnline],
+  )
 
   // The badge is client state, separate from the server's read cursor.
   // markConversationRead() below writes the cursor; these clear the number
@@ -626,14 +635,28 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* These had no onClick at all — the only wired call buttons lived
+              in the floating ChatWindow, which is rendered nowhere. So on the
+              messenger, the page people actually use, Phone and Video were
+              decorative and "calls do nothing" was exactly true. */}
           {[
-            { icon: <Phone className="h-4 w-4" />, title: 'Voice call' },
-            { icon: <Video className="h-4 w-4" />, title: 'Video call' },
-            { icon: <MoreVertical className="h-4 w-4" />, title: 'More' },
+            {
+              icon: <Phone className="h-4 w-4" />,
+              title: 'Voice call',
+              onClick: () => initiateCall(peerAsUser, 'audio'),
+            },
+            {
+              icon: <Video className="h-4 w-4" />,
+              title: 'Video call',
+              onClick: () => initiateCall(peerAsUser, 'video'),
+            },
+            { icon: <MoreVertical className="h-4 w-4" />, title: 'More', onClick: undefined },
           ].map((btn, i) => (
             <button
               key={i}
               title={btn.title}
+              aria-label={btn.title}
+              onClick={btn.onClick}
               className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors duration-200 hover:bg-brand-secondary hover:text-brand-text active:scale-95"
             >
               {btn.icon}

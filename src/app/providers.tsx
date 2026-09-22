@@ -9,6 +9,7 @@ import { useAuthUser } from "@/store/auth"
 import { connectToHub } from "@/services/messageService"
 import { ensureAccessToken, lastRefreshOutcome } from "@/lib/accessToken"
 import { getSession, logoutUser } from "@/services/authService"
+import CallOverlay from "@/components/CallOverlay"
 
 /**
  * SessionReconciler makes the httpOnly refresh cookie the single authority
@@ -99,6 +100,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ToastProvider>
                 <SessionReconciler />
                 <PresenceHeartbeat />
+                {/* Global on purpose. Importing CallOverlay is what registers
+                    the signalling listener (callService subscribes at module
+                    load), and both were mounted only on the "/" route — so on
+                    /messenger an incoming call_offer had no listener and no
+                    overlay: it was dropped before anything could ring. */}
+                <CallOverlay />
                 <AppNotifications>{children}</AppNotifications>
             </ToastProvider>
         </QueryClientProvider>
