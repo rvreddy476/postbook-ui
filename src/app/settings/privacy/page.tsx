@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import AppShell from '@/components/AppShell'
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -9,6 +9,7 @@ import {
     Eye,
     Shield,
     Tag,
+    CheckCheck,
     ChevronRight,
 } from "lucide-react"
 import api from "@/lib/api"
@@ -122,6 +123,8 @@ function useSaveToast() {
 /* ------------------------------------------------------------------ */
 
 type Audience = "everyone" | "friends" | "only_me"
+/** The values chat-service's policy loader understands. */
+type ReceiptAudience = "everyone" | "connections_only" | "no_one"
 
 export default function PrivacyPage() {
     const [profileVisibility, setProfileVisibility] = useState<Audience>("everyone")
@@ -130,7 +133,37 @@ export default function PrivacyPage() {
     const [appearInSuggestions, setAppearInSuggestions] = useState(true)
     const [allowTagging, setAllowTagging] = useState<"everyone" | "friends" | "nobody">("everyone")
     const [sensitiveFilter, setSensitiveFilter] = useState(true)
+    // The server's own default when unset (policy.go), so an unreachable
+    // settings read leaves the control showing what is actually in force.
+    const [readReceipts, setReadReceipts] = useState<ReceiptAudience>("connections_only")
     const { show, Toast } = useSaveToast()
+
+    // Seed the controls from the stored settings.
+    //
+    // Without this the page rendered defaults and Save wrote them back, so
+    // opening Privacy and pressing Save silently reset any value the user
+    // had previously chosen elsewhere.
+    useEffect(() => {
+        let cancelled = false
+        void (async () => {
+            try {
+                const res = await api.get<{ data?: Record<string, unknown> }>("/v1/users/me/settings")
+                const s = res.data?.data
+                if (cancelled || !s) return
+                if (s.account_visibility === "private") setProfileVisibility("friends")
+                if (typeof s.auto_filter_abusive_content === "boolean") {
+                    setSensitiveFilter(s.auto_filter_abusive_content)
+                }
+                const receipts = s.who_can_see_read_receipts
+                if (receipts === "everyone" || receipts === "connections_only" || receipts === "no_one") {
+                    setReadReceipts(receipts)
+                }
+            } catch {
+                // Leave the defaults; Save still works.
+            }
+        })()
+        return () => { cancelled = true }
+    }, [])
 
     // Endpoint audit: this used to PUT /v1/users/me/privacy, which exists in
     // neither the api-gateway route table nor user-service. Privacy settings
@@ -148,6 +181,7 @@ export default function PrivacyPage() {
             await api.put("/v1/users/me/settings", {
                 account_visibility: profileVisibility === "everyone" ? "public" : "private",
                 auto_filter_abusive_content: sensitiveFilter,
+                who_can_see_read_receipts: readReceipts,
             })
             show("Saved!")
         } catch {
@@ -237,6 +271,39 @@ export default function PrivacyPage() {
                             <ToggleSwitch checked={appearInSuggestions} onChange={setAppearInSuggestions} />
                         </div>
                     </div>
+                </div>
+            </SectionCard>
+
+            {/* Section 1b — Messaging.
+                Read receipts are mutual by design, as in every messenger
+                that has them: switching them off hides the ticks on your
+                messages AND stops you seeing anyone else's. The server
+                enforces both directions — chat-service consults the
+                READER's setting before disclosing their receipt — so this
+                is a real privacy control, not a local display toggle. */}
+            <SectionCard
+                icon={<CheckCheck className="h-6 w-6 text-brand-text/50" />}
+                title="Messaging"
+                description="Control what your chats reveal about you."
+                delay={0.08}
+            >
+                <div className="space-y-1.5">
+                    <label htmlFor="read-receipts" className="block text-xs font-semibold text-brand-highlight">
+                        Who can see when I&apos;ve read a message
+                    </label>
+                    <select
+                        id="read-receipts"
+                        value={readReceipts}
+                        onChange={(e) => setReadReceipts(e.target.value as ReceiptAudience)}
+                        className={selectClasses}
+                    >
+                        <option value="everyone">Everyone</option>
+                        <option value="connections_only">Connections only</option>
+                        <option value="no_one">No one</option>
+                    </select>
+                    <p className="pt-1 text-xs text-brand-highlight">
+                        Turning this off also hides other people&apos;s read receipts from you.
+                    </p>
                 </div>
             </SectionCard>
 

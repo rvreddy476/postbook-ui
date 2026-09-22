@@ -62,6 +62,15 @@
   --theme-send: 179 96 119;
   --theme-send-hover: 158 77 104;
 
+  /*
+    Read-receipt "seen" tick — the one place a delivery state earns colour:
+    grey single tick = sent, this double tick = read, the convention people
+    already know. Cerulean rather than that other app's blue so it stays in
+    this product's family. #2f6ba3, the same value the white theme uses to
+    carry text, so it clears 4.5:1 and reads clearly at glyph size.
+  */
+  --theme-receipt-seen: 47 107 163;
+
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
 }
@@ -111,6 +120,9 @@
   /* Lifted for the dark ground, same hue. */
   --theme-send: 201 124 146;
   --theme-send-hover: 214 146 165;
+
+  /* Lifted likewise: #2f6ba3 is too dark to read on the dark ground. */
+  --theme-receipt-seen: 106 168 224;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;

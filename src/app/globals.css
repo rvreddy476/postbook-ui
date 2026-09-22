@@ -118,6 +118,7 @@
   --color-info: rgb(var(--info));
   --color-send: rgb(var(--send));
   --color-send-hover: rgb(var(--send-hover));
+  --color-receipt-seen: rgb(var(--receipt-seen));
 
   --color-secondary: rgb(var(--brand-secondary));
   --color-secondary-foreground: rgb(var(--brand-text));
@@ -197,6 +198,7 @@
     --info: var(--theme-info);
     --send: var(--theme-send);
     --send-hover: var(--theme-send-hover);
+    --receipt-seen: var(--theme-receipt-seen);
   }
 
   .dark {
@@ -227,6 +229,7 @@
     --info: var(--theme-info);
     --send: var(--theme-send);
     --send-hover: var(--theme-send-hover);
+    --receipt-seen: var(--theme-receipt-seen);
   }
 
   html,

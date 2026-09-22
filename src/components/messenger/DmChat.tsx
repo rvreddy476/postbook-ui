@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
 import data from '@emoji-mart/data'
 
 // Same lazy pattern as ChatWindow / CommentSection: emoji-mart is ~200KB and
@@ -46,7 +46,9 @@ import { initiateCall } from '@/services/callService'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
-  Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight,
+  // Pin stays imported for the pinned-message banner; only the per-message
+  // action rail dropped it.
+  Send, Pin, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, Image, PanelRight,
   Smile, SmilePlus, ImagePlus,
 } from 'lucide-react'
 
@@ -85,11 +87,9 @@ interface DisplayMessage {
 
 interface ContextMenuState {
   visible: boolean
-  /** Horizontal centre of the bubble, in viewport px. */
-  x: number
-  /** Top edge of the bubble, in viewport px — the bar sits just above it. */
-  y: number
-  /** Which side the bubble sits on; the bar hugs that side. */
+  /** The bubble's viewport rect; the rail is placed against it. */
+  rect: { left: number; right: number; top: number; bottom: number }
+  /** True when the bubble is mine (right side) — the rail then goes left. */
   mine: boolean
   messageId: string
   senderId: string
@@ -165,11 +165,24 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   /** A full emoji picker opened from a message's action bar ("+" after the quick row). */
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
   const emojiPanelRef = useRef<HTMLDivElement | null>(null)
+  const actionBarRef = useRef<HTMLDivElement | null>(null)
+  /**
+   * Where the action rail sits. Measured after render rather than guessed:
+   * its width depends on whether Edit/Delete are present, and an unmeasured
+   * guess would push it off-screen on a narrow column.
+   *
+   * Placed BESIDE the bubble on the opposite side — my messages sit right,
+   * so the rail goes left, and vice versa — falling back to above the
+   * bubble when there isn't room on that side.
+   */
+  const [actionBarStyle, setActionBarStyle] = useState<React.CSSProperties>({ visibility: 'hidden' })
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
+  /** The peer's read watermark (ms), from the conversation's durable cursor. */
+  const [peerLastReadAt, setPeerLastReadAt] = useState<number | null>(null)
   const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
   // Mirror convIdRef into state so the M1 presence hook can react when the
   // direct conversation is resolved (createOrGet is async on first open).
@@ -243,6 +256,19 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
+
+        // The peer's durable read watermark. The live `read_receipt` frame
+        // only arrives while this conversation is open, so without this a
+        // reload lost every "Seen" mark. The server withholds it when the
+        // reader has read receipts switched off, so rendering it is safe.
+        const convMembers = (convRes.data?.members ?? convRes.members ?? []) as Array<{
+          user_id?: string
+          last_read_at?: string
+        }>
+        const peer = convMembers.find(m => m.user_id && m.user_id !== myId)
+        if (!cancelled) {
+          setPeerLastReadAt(peer?.last_read_at ? Date.parse(peer.last_read_at) : null)
+        }
         if (!cancelled) {
           setConversationId(conversationId)
           onConversationReady?.(conversationId)
@@ -364,6 +390,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         if (!readers.includes(evt.user_id)) next.set(evt.message_id, [...readers, evt.user_id])
         return next
       })
+      // Advance the watermark too, so every earlier message shows as seen —
+      // the peer reading message N means they read everything before it.
+      const at = Date.parse(evt.read_at)
+      if (!Number.isNaN(at)) setPeerLastReadAt(prev => (prev === null || at > prev ? at : prev))
     })
     return unsub
   }, [myId, clearUnreadBadge])
@@ -406,6 +436,38 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     window.addEventListener('click', handler)
     return () => window.removeEventListener('click', handler)
   }, [contextMenu])
+
+  // Position the rail once it has been measured.
+  useLayoutEffect(() => {
+    if (!contextMenu?.visible) {
+      setActionBarStyle({ visibility: 'hidden' })
+      return
+    }
+    const el = actionBarRef.current
+    if (!el) return
+    const { rect, mine } = contextMenu
+    const bar = el.getBoundingClientRect()
+    const gap = 8
+    const margin = 8
+
+    // Preferred side: opposite the bubble.
+    let left = mine ? rect.left - gap - bar.width : rect.right + gap
+    // If it does not fit there, try the other side before giving up.
+    if (left < margin) {
+      const flipped = rect.right + gap
+      left = flipped + bar.width <= window.innerWidth - margin ? flipped : margin
+    } else if (left + bar.width > window.innerWidth - margin) {
+      const flipped = rect.left - gap - bar.width
+      left = flipped >= margin ? flipped : window.innerWidth - margin - bar.width
+    }
+
+    // Vertically centred on the bubble, clamped into the viewport.
+    let top = rect.top + (rect.bottom - rect.top) / 2 - bar.height / 2
+    top = Math.max(margin, Math.min(top, window.innerHeight - margin - bar.height))
+
+    setActionBarStyle({ left, top, visibility: 'visible' })
+    // The picker changes the element's height, so re-measure when it opens.
+  }, [contextMenu, reactionPickerFor])
 
   // The composer's emoji panel closes on a click anywhere outside it, and
   // on Escape — same rule ChatWindow's picker follows.
@@ -578,12 +640,11 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
    */
   const openActionsFor = useCallback((bubble: HTMLElement, msg: DisplayMessage) => {
     if (msg.isDeleted) return
-    const rect = bubble.getBoundingClientRect()
+    const r = bubble.getBoundingClientRect()
     setReactionPickerFor(null)
     setContextMenu({
       visible: true,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
+      rect: { left: r.left, right: r.right, top: r.top, bottom: r.bottom },
       mine: msg.senderId === myId,
       messageId: msg.id,
       senderId: msg.senderId,
@@ -653,6 +714,20 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     }
     return null
   }, [messages, myId])
+
+  /**
+   * Has the peer seen this message of mine?
+   *
+   * Two sources, because either alone is incomplete: the live receipt frame
+   * (exact, but only while the conversation is open) and the peer's durable
+   * watermark (survives a reload, and covers every message before it).
+   */
+  const isSeenByPeer = useCallback((msg: DisplayMessage): boolean => {
+    if (readReceipts.has(msg.id)) return true
+    if (peerLastReadAt === null) return false
+    const sentAt = Date.parse(msg.ts)
+    return !Number.isNaN(sentAt) && sentAt <= peerLastReadAt
+  }, [readReceipts, peerLastReadAt])
 
   const findMessage = useCallback((msgId: string) => messages.find(m => m.id === msgId), [messages])
   const hasText = input.trim().length > 0
@@ -902,15 +977,25 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                   </div>
                 )}
 
-                {/* Time + read receipt */}
+                {/* Time + delivery state.
+                    Ticks on EVERY message of mine, not only the last, and
+                    the seen state is a colour change rather than the word
+                    "Seen" — the WhatsApp convention the founder asked for.
+                    A single grey tick is sent; double blue is read. Nothing
+                    renders for the peer's messages. */}
                 {groupEnd && (
                   <div className="mt-1.5 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-brand-text/60">
                     {msg.time}
-                    {isMe && msg.id === lastSentMsgId && readReceipts.has(msg.id) && (
-                      <span className="flex items-center gap-0.5 text-brand-text/60">
-                        <Check className="h-3.5 w-3.5" />
-                        Seen
-                      </span>
+                    {isMe && !msg.isDeleted && (
+                      isSeenByPeer(msg) ? (
+                        <span className="flex items-center text-receipt-seen" title="Seen">
+                          <CheckCheck className="h-4 w-4" strokeWidth={2.25} />
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-brand-text/40" title="Sent">
+                          <Check className="h-3.5 w-3.5" strokeWidth={2.25} />
+                        </span>
+                      )
                     )}
                   </div>
                 )}
@@ -929,23 +1014,23 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       {contextMenu?.visible && (
         <div
           role="menu"
-          className={`fixed z-50 flex flex-col gap-1.5 ${contextMenu.mine ? 'items-end' : 'items-start'}`}
-          style={{
-            left: contextMenu.x,
-            top: contextMenu.y - 8,
-            transform: 'translate(-50%, -100%)',
-            maxWidth: 'min(92vw, 360px)',
-          }}
+          ref={actionBarRef}
+          className="fixed z-50 flex flex-col gap-1.5"
+          style={actionBarStyle}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Quick reactions */}
+          {/* ONE row: quick reactions, "+" for the full picker, then the
+              actions. It sits BESIDE the bubble on the side the bubble is
+              not on — my messages are on the right, so the rail is on the
+              left, and the other way round for theirs. Pin was removed at
+              the founder's request. */}
           <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => handleToggleReaction(contextMenu.messageId, emoji)}
                 aria-label={`React ${emoji}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-125 active:scale-95"
               >
                 {emoji}
               </button>
@@ -953,15 +1038,47 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             <button
               onClick={() => setReactionPickerFor(p => (p === contextMenu.messageId ? null : contextMenu.messageId))}
               aria-label="More reactions"
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${reactionPickerFor === contextMenu.messageId ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
+              title="More reactions"
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${reactionPickerFor === contextMenu.messageId ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
-              <SmilePlus className="h-5 w-5" strokeWidth={1.75} />
+              <SmilePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </button>
+
+            <span className="mx-0.5 h-5 w-px shrink-0 bg-brand-divider" aria-hidden="true" />
+
+            <button
+              onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
+              aria-label="Reply"
+              title="Reply"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+            >
+              <Reply className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+            {contextMenu.senderId === myId && (
+              <>
+                <button
+                  onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
+                  aria-label="Edit"
+                  title="Edit"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+                >
+                  <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </button>
+                <button
+                  onClick={() => handleDelete(contextMenu.messageId)}
+                  aria-label="Delete"
+                  title="Delete"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-danger transition-colors hover:bg-danger/10"
+                >
+                  <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Full picker for a reaction */}
+          {/* Full picker, under the rail so it never covers the message */}
           {reactionPickerFor === contextMenu.messageId && (
-            <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+            <div className={`overflow-hidden rounded-2xl border border-brand-divider shadow-xl ${contextMenu.mine ? 'self-end' : 'self-start'}`}>
               <Suspense fallback={
                 <div className="flex h-[320px] w-[320px] items-center justify-center bg-brand-card">
                   <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
@@ -979,42 +1096,6 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
               </Suspense>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
-            <button
-              onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
-            >
-              <Reply className="h-4 w-4" /> Reply
-            </button>
-            <button
-              onClick={() => {
-                if (pinnedMessage?.message_id === contextMenu.messageId) handleUnpinMessage()
-                else handlePinMessage(contextMenu.messageId)
-              }}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
-            >
-              <Pin className="h-4 w-4" />
-              {pinnedMessage?.message_id === contextMenu.messageId ? 'Unpin' : 'Pin'}
-            </button>
-            {contextMenu.senderId === myId && (
-              <>
-                <button
-                  onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
-                >
-                  <Pencil className="h-4 w-4" /> Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(contextMenu.messageId)}
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-danger transition-colors hover:bg-danger/10"
-                >
-                  <Trash2 className="h-4 w-4" /> Delete
-                </button>
-              </>
-            )}
-          </div>
         </div>
       )}
 
