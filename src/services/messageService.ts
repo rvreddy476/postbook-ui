@@ -253,8 +253,20 @@ export interface CallSignal {
   target_user_id?: string;
   call_id?: string;
   call_type?: 'audio' | 'video';
+  /** Android's ring frame flags video this way; web sends call_type too. */
+  video?: boolean;
   sdp?: string;
-  candidate?: RTCIceCandidateInit;
+  /**
+   * ICE candidate. Android's frame carries the candidate as a STRING with
+   * sdp_mid and sdp_mline_index beside it; the web used to send the whole
+   * RTCIceCandidateInit object. Both are accepted on receipt; the string
+   * form is what is sent, so a phone can parse it.
+   */
+  candidate?: RTCIceCandidateInit | string;
+  sdp_mid?: string;
+  sdp_mline_index?: number;
+  sender_name?: string;
+  sender_avatar?: string;
   [key: string]: unknown;
 }
 
