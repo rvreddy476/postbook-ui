@@ -225,8 +225,12 @@ async function createCallViaAPI(contact: User, type: CallType): Promise<CallSess
     // `target_user_ids`: what call-service binds as required. The old
     // `invitee_user_ids` made every create a 400, after which the gateway
     // dropped the ring as "no active call between pair".
+    // call-service's call types are `direct_audio` / `direct_video` (the
+    // values Android sends). Sending the bare `audio` / `video` matched
+    // neither, so the P0 gate read every 1:1 call as a GROUP call and
+    // refused it with 403 — one ring, then the overlay vanished.
     const res = await api.post<{ data: CallSession }>('/v1/calls', {
-      call_type: type,
+      call_type: type === 'video' ? 'direct_video' : 'direct_audio',
       source_type: 'direct',
       audio_only: type === 'audio',
       target_user_ids: [contact.id],
