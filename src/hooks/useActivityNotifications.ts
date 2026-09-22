@@ -31,12 +31,29 @@ interface NotificationsResponse {
 export function useActivityNotifications(limit = 20) {
     return useQuery({
         queryKey: ["activity-notifications", limit],
-        queryFn: async () => {
-            const res = await api.get<{ data: NotificationsResponse }>(
-                "/v1/notifications",
-                { params: { limit } }
-            )
-            return res.data.data
+        queryFn: async (): Promise<NotificationsResponse> => {
+            const res = await api.get<unknown>("/v1/notifications", { params: { limit } })
+
+            // notification-service answers `{"data": [ … ]}` — a bare array.
+            // This read `res.data.data.items`, which is undefined against that
+            // shape, so the list was ALWAYS empty: the panel showed nothing
+            // while the bell showed a count, because the count comes from a
+            // different endpoint (/unread-count) that parses correctly.
+            //
+            // Both shapes are accepted rather than just swapping to the array,
+            // so a server that later adds the {items, next_cursor} envelope
+            // does not silently blank the panel all over again.
+            const body = res.data as {
+                data?: ActivityNotification[] | NotificationsResponse
+            } | null
+            const payload = body?.data
+            if (Array.isArray(payload)) {
+                return { items: payload, next_cursor: null }
+            }
+            return {
+                items: payload?.items ?? [],
+                next_cursor: payload?.next_cursor ?? null,
+            }
         },
         refetchInterval: 30000,
         staleTime: 10000,
