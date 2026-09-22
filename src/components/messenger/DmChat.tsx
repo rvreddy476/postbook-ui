@@ -1,6 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+import data from '@emoji-mart/data'
+
+// Same lazy pattern as ChatWindow / CommentSection: emoji-mart is ~200KB and
+// only needed once someone opens a picker.
+const EmojiPicker = lazy(() => import('@emoji-mart/react'))
 import { Avatar, getInitials } from './shared'
 import {
   getOrCreateDirectConversation,
@@ -40,8 +45,9 @@ import { useNotifications } from '@/contexts/NotificationContext'
 import { initiateCall } from '@/services/callService'
 import type { User } from '@/types'
 import {
-  ArrowLeft, Phone, Video, MoreVertical, Plus, Paperclip,
-  Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight
+  ArrowLeft, Phone, Video, MoreVertical, Plus,
+  Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight,
+  Smile, SmilePlus, ImagePlus,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -79,8 +85,12 @@ interface DisplayMessage {
 
 interface ContextMenuState {
   visible: boolean
+  /** Horizontal centre of the bubble, in viewport px. */
   x: number
+  /** Top edge of the bubble, in viewport px — the bar sits just above it. */
   y: number
+  /** Which side the bubble sits on; the bar hugs that side. */
+  mine: boolean
   messageId: string
   senderId: string
   ts: string
@@ -150,6 +160,11 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  /** The composer's emoji picker. */
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  /** A full emoji picker opened from a message's action bar ("+" after the quick row). */
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
+  const emojiPanelRef = useRef<HTMLDivElement | null>(null)
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null)
@@ -387,10 +402,28 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
   useEffect(() => {
     if (!contextMenu) return
-    const handler = () => setContextMenu(null)
+    const handler = () => { setContextMenu(null); setReactionPickerFor(null) }
     window.addEventListener('click', handler)
     return () => window.removeEventListener('click', handler)
   }, [contextMenu])
+
+  // The composer's emoji panel closes on a click anywhere outside it, and
+  // on Escape — same rule ChatWindow's picker follows.
+  useEffect(() => {
+    if (!showEmojiPicker) return
+    const onDown = (e: MouseEvent) => {
+      if (emojiPanelRef.current && !emojiPanelRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowEmojiPicker(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [showEmojiPicker])
 
   useEffect(() => {
     if (editingMsgId && editInputRef.current) editInputRef.current.focus()
@@ -488,6 +521,28 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     inputRef.current?.focus()
   }, [])
 
+  /** Composer picker: insert at the caret, keep focus, leave the panel open. */
+  const handleEmojiSelect = useCallback((emoji: { native: string }) => {
+    const el = inputRef.current
+    const start = el?.selectionStart ?? input.length
+    const end = el?.selectionEnd ?? input.length
+    const next = input.slice(0, start) + emoji.native + input.slice(end)
+    setInput(next)
+    requestAnimationFrame(() => {
+      if (!el) return
+      el.focus()
+      const pos = start + emoji.native.length
+      el.setSelectionRange(pos, pos)
+    })
+  }, [input])
+
+  /** Message action bar "+": react with any emoji, not just the quick six. */
+  const handleReactionEmojiSelect = useCallback((emoji: { native: string }) => {
+    if (!reactionPickerFor) return
+    handleToggleReaction(reactionPickerFor, emoji.native)
+    setReactionPickerFor(null)
+  }, [reactionPickerFor, handleToggleReaction])
+
   const handlePinMessage = useCallback(async (msgId: string) => {
     if (!convIdRef.current) return
     try {
@@ -513,11 +568,34 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     }
   }, [])
 
+  /**
+   * Open the action bar for a message, anchored just above its bubble.
+   *
+   * This used to be a right-click-only menu placed at the mouse position —
+   * which on a phone does not exist. A tap on the bubble now opens it, and
+   * it sits above the message the way WhatsApp's does, so the thing you are
+   * reacting to stays in view under it.
+   */
+  const openActionsFor = useCallback((bubble: HTMLElement, msg: DisplayMessage) => {
+    if (msg.isDeleted) return
+    const rect = bubble.getBoundingClientRect()
+    setReactionPickerFor(null)
+    setContextMenu({
+      visible: true,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      mine: msg.senderId === myId,
+      messageId: msg.id,
+      senderId: msg.senderId,
+      ts: msg.ts,
+    })
+  }, [myId])
+
   const handleContextMenu = useCallback((e: React.MouseEvent, msg: DisplayMessage) => {
     e.preventDefault()
-    if (msg.isDeleted) return
-    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, messageId: msg.id, senderId: msg.senderId, ts: msg.ts })
-  }, [])
+    const bubble = (e.currentTarget as HTMLElement).querySelector<HTMLElement>('[data-bubble]')
+    if (bubble) openActionsFor(bubble, msg)
+  }, [openActionsFor])
 
   const handleMediaUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -764,7 +842,20 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                 {/* Message bubble */}
                 <div
-                  className={`group/bubble relative max-w-full wrap-break-word px-4 py-2.5 text-[14px] leading-relaxed shadow-xs transition-all ${msg.isDeleted
+                  data-bubble
+                  role={msg.isDeleted ? undefined : 'button'}
+                  tabIndex={msg.isDeleted ? undefined : 0}
+                  onClick={(e) => {
+                    // A tap opens the action bar above this bubble. Media
+                    // controls inside the bubble keep their own clicks.
+                    if ((e.target as HTMLElement).closest('video, audio, a')) return
+                    e.stopPropagation()
+                    openActionsFor(e.currentTarget, msg)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openActionsFor(e.currentTarget, msg) }
+                  }}
+                  className={`group/bubble relative max-w-full wrap-break-word px-4 py-2.5 text-[14px] leading-relaxed shadow-xs transition-all ${msg.isDeleted ? '' : 'cursor-pointer'} ${msg.isDeleted
                       ? 'rounded-2xl bg-brand-secondary text-brand-text/60 italic'
                       : isMe
                         ? `bg-brand-text text-brand-bg ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
@@ -831,58 +922,99 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         <div ref={bottomRef} />
       </div>
 
-      {/* Context Menu */}
+      {/* Message action bar — sits just above the tapped bubble, the way
+          WhatsApp's does: a row of quick reactions with a "+" for the full
+          picker, and a row of actions under it. Opened by tap or by
+          right-click. */}
       {contextMenu?.visible && (
         <div
-          className="fixed bg-brand-card rounded-xl border border-brand-divider shadow-xl p-1.5 z-50 min-w-[180px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+          className={`fixed z-50 flex flex-col gap-1.5 ${contextMenu.mine ? 'items-end' : 'items-start'}`}
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y - 8,
+            transform: 'translate(-50%, -100%)',
+            maxWidth: 'min(92vw, 360px)',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Quick emoji row */}
-          <div className="flex gap-1 px-1.5 py-1.5 border-b border-brand-divider mb-1">
+          {/* Quick reactions */}
+          <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => handleToggleReaction(contextMenu.messageId, emoji)}
-                className="text-lg px-1.5 py-0.5 rounded-md hover:bg-brand-secondary transition-colors"
+                aria-label={`React ${emoji}`}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-95"
               >
                 {emoji}
               </button>
             ))}
+            <button
+              onClick={() => setReactionPickerFor(p => (p === contextMenu.messageId ? null : contextMenu.messageId))}
+              aria-label="More reactions"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${reactionPickerFor === contextMenu.messageId ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
+            >
+              <SmilePlus className="h-5 w-5" strokeWidth={1.75} />
+            </button>
           </div>
 
-          <button
-            onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
-          >
-            <Reply className="w-4 h-4 text-brand-text/60" /> Reply
-          </button>
-          <button
-            onClick={() => {
-              if (pinnedMessage?.message_id === contextMenu.messageId) handleUnpinMessage()
-              else handlePinMessage(contextMenu.messageId)
-            }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
-          >
-            <Pin className="w-4 h-4 text-brand-text/60" />
-            {pinnedMessage?.message_id === contextMenu.messageId ? 'Unpin' : 'Pin'}
-          </button>
-          {contextMenu.senderId === myId && (
-            <>
-              <button
-                onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-brand-highlight hover:bg-brand-secondary transition-colors text-left"
-              >
-                <Pencil className="w-4 h-4 text-brand-text/60" /> Edit
-              </button>
-              <button
-                onClick={() => handleDelete(contextMenu.messageId)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-danger hover:bg-danger/10 transition-colors text-left"
-              >
-                <Trash2 className="w-4 h-4" /> Delete
-              </button>
-            </>
+          {/* Full picker for a reaction */}
+          {reactionPickerFor === contextMenu.messageId && (
+            <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+              <Suspense fallback={
+                <div className="flex h-[320px] w-[320px] items-center justify-center bg-brand-card">
+                  <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
+                </div>
+              }>
+                <EmojiPicker
+                  data={data}
+                  onEmojiSelect={handleReactionEmojiSelect}
+                  theme="light"
+                  previewPosition="none"
+                  skinTonePosition="none"
+                  perLine={8}
+                  maxFrequentRows={1}
+                />
+              </Suspense>
+            </div>
           )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
+            <button
+              onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+            >
+              <Reply className="h-4 w-4" /> Reply
+            </button>
+            <button
+              onClick={() => {
+                if (pinnedMessage?.message_id === contextMenu.messageId) handleUnpinMessage()
+                else handlePinMessage(contextMenu.messageId)
+              }}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+            >
+              <Pin className="h-4 w-4" />
+              {pinnedMessage?.message_id === contextMenu.messageId ? 'Unpin' : 'Pin'}
+            </button>
+            {contextMenu.senderId === myId && (
+              <>
+                <button
+                  onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-brand-text/80 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+                >
+                  <Pencil className="h-4 w-4" /> Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(contextMenu.messageId)}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-danger transition-colors hover:bg-danger/10"
+                >
+                  <Trash2 className="h-4 w-4" /> Delete
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -925,14 +1057,45 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         /* Composer — one horizontal bar: attach on the left, field in the
            middle, send on the right, all inside the same rounded box so the
            send control can never be clipped by the panel edge. */
-        <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
+        <div className="relative shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
+          {/* Emoji picker, floated above the bar */}
+          {showEmojiPicker && (
+            <div ref={emojiPanelRef} className="absolute bottom-full left-4 mb-2 overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+              <Suspense fallback={
+                <div className="flex h-[380px] w-[352px] items-center justify-center bg-brand-card">
+                  <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
+                </div>
+              }>
+                <EmojiPicker
+                  data={data}
+                  onEmojiSelect={handleEmojiSelect}
+                  theme="light"
+                  previewPosition="none"
+                  skinTonePosition="none"
+                  perLine={9}
+                  maxFrequentRows={2}
+                />
+              </Suspense>
+            </div>
+          )}
+
           <div className="flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
             <button
+              onClick={() => setShowEmojiPicker(v => !v)}
+              aria-label="Emoji"
+              aria-pressed={showEmojiPicker}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-brand-text' : 'text-brand-text/50 hover:text-brand-text'}`}
+            >
+              <Smile className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+            {/* A photo icon, not a paperclip: what people attach in a chat
+                is a picture or a clip, and the paperclip read as "document". */}
+            <button
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach file"
+              aria-label="Add photo or video"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text"
             >
-              <Paperclip className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </button>
             <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip"
               onChange={handleMediaUpload} className="hidden" />
