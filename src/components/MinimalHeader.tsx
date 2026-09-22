@@ -180,11 +180,14 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
     const handleLogout = () => {
         if (onLogout) {
             onLogout();
-        } else {
-            localStorage.removeItem('postbook_session');
-            localStorage.removeItem('postbook_auth_tokens');
-            router.push('/login');
+            return;
         }
+        // The fallback used to drop two localStorage keys and route away,
+        // which revokes nothing: the refresh token stayed valid server-side
+        // and pb_auth stayed set, so middleware kept letting that browser
+        // into gated routes. It looked like a sign-out and was not one.
+        // Every path now goes through the endpoint that actually revokes.
+        window.location.assign('/api/auth/logout');
     };
 
     const renderSearchResults = () => {

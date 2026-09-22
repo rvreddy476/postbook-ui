@@ -42,6 +42,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  /** Notifications that were unread when this panel was opened. Opening
+   *  clears the badge, but these stay highlighted until it closes. */
+  const [justReadIds, setJustReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -424,7 +427,28 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 6. Notifications */}
         <div className="relative" ref={notifRef}>
           <button
-            onClick={() => setIsNotifOpen(!isNotifOpen)}
+            onClick={() => {
+              const opening = !isNotifOpen;
+              setIsNotifOpen(opening);
+              // Opening the panel IS reading them, so the badge clears.
+              // It used to clear only when you clicked each row or pressed
+              // "Mark all as read", so reading the list left the number
+              // standing.
+              //
+              // The rows keep their unread styling until the panel closes
+              // — justReadIds remembers which ones were new — so clearing
+              // the badge does not also erase what you had not seen.
+              if (opening && unreadNotifCount > 0) {
+                setJustReadIds(
+                  new Set(
+                    activityNotifs.filter(n => !n.is_read).map(n => n.notification_id),
+                  ),
+                );
+                markAllRead.mutate();
+              } else if (!opening) {
+                setJustReadIds(new Set());
+              }
+            }}
             className={`group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${isNotifOpen ? 'text-primary-ink' : ''}`}
             title="Notifications"
           >
@@ -489,7 +513,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             layout
                             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-brand-text/30' : ''}`}
+                            className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read || justReadIds.has(notif.notification_id) ? "bg-brand-text/30" : ""}`}
                           >
                             {/* Avatar — click to go to profile */}
                             <button
@@ -567,7 +591,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
                             {/* Unread dot + delete button */}
                             <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">
-                              {!notif.is_read && (
+                              {(!notif.is_read || justReadIds.has(notif.notification_id)) && (
                                 <div className="w-2 h-2 rounded-full bg-brand-text/50" />
                               )}
                               <button

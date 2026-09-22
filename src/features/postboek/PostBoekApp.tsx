@@ -130,6 +130,9 @@ const PostBoekApp: React.FC = () => {
     setActiveGroupId(null);
     setIsCreateOpen(false);
     setIsContactListOpen(false);
+    // The cookies are cleared by a navigation, not a background fetch that a
+    // route change can abandon. See AppShell.handleLogout.
+    window.location.assign('/api/auth/logout');
   };
 
   /**

@@ -145,3 +145,37 @@ export async function POST(req: NextRequest) {
     clearSession(res)
     return res
 }
+
+/**
+ * Logout as a NAVIGATION rather than a background fetch.
+ *
+ * The POST above is correct but fire-and-forget: the client starts it and
+ * immediately routes to /login without awaiting it. When that request does
+ * not land — origin down, tunnel down, offline, tab closed mid-flight — the
+ * local session is gone but the cookies are NOT, so `pb_auth` survives and
+ * middleware keeps waving that browser into every gated route. The user has
+ * been told they signed out and they have not.
+ *
+ * Sending the browser here instead makes the clear part of a navigation the
+ * browser has to complete: the same revocation runs, the same cookies are
+ * cleared on the response, and the redirect to /login only happens because
+ * that response arrived. If the network is down the browser stays put and
+ * shows an error, which is the honest outcome — better than a UI that claims
+ * a session ended while the refresh token is still live server-side.
+ */
+export async function GET(req: NextRequest) {
+    const cleared = await POST(
+        new NextRequest(req.url, { method: "POST", headers: req.headers }),
+    )
+
+    const target = new URL("/login", req.url)
+    const res = NextResponse.redirect(target, { status: 303 })
+
+    // Carry over the Set-Cookie headers the POST produced; a fresh response
+    // does not inherit them.
+    for (const cookie of cleared.headers.getSetCookie()) {
+        res.headers.append("set-cookie", cookie)
+    }
+    res.headers.set("Cache-Control", "no-store, must-revalidate")
+    return res
+}

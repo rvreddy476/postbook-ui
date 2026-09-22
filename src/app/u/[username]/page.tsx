@@ -36,7 +36,9 @@ export default function UserProfileRoute() {
 
     const handleLogout = () => {
         logoutUser()
-        router.push("/login")
+        // A navigation, not a background fetch a route change can abandon —
+        // see AppShell.handleLogout for why that distinction matters.
+        window.location.assign("/api/auth/logout")
     }
 
     const body = (

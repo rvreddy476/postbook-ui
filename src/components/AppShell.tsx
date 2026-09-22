@@ -107,13 +107,26 @@ export default function AppShell({ children, activeTab: activeTabOverride, hideS
   }, [router]);
 
   const handleLogout = useCallback(() => {
+    // Clear what this tab owns, then hand the rest to a real navigation.
+    //
+    // This used to be logoutUser() + router.push('/login'). logoutUser() is
+    // synchronous and discards the revocation promise, so the request that
+    // clears pb_auth/pb_rt raced a client-side route change. When it lost —
+    // origin down, offline, tab closed mid-flight — the local session was
+    // gone but the cookies were NOT, so middleware kept waving that browser
+    // into every gated route and the refresh token stayed live server-side.
+    // The user is told they signed out, and they have not.
+    //
+    // GET /api/auth/logout runs the same revocation, clears the cookies on
+    // its own response, and 303s to /login. A browser cannot half-finish a
+    // navigation the way it can abandon a background fetch.
     logoutUser();
     try {
       localStorage.removeItem('postbook_unread_state');
     } catch {}
     setCurrentUser(null);
-    router.push('/login');
-  }, [router]);
+    window.location.assign('/api/auth/logout');
+  }, []);
 
   if (!currentUser) {
     return <div className="min-h-screen" />;

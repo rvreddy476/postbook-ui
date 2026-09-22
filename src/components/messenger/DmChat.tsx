@@ -36,6 +36,7 @@ import {
 import { getSession } from '@/services/authService'
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
+import { useNotifications } from '@/contexts/NotificationContext'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus, Paperclip,
   Send, Pin, Reply, Pencil, Trash2, X, Check, Loader2, Image, PanelRight
@@ -124,6 +125,17 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
 
+  // The badge is client state, separate from the server's read cursor.
+  // markConversationRead() below writes the cursor; these clear the number
+  // the user actually sees. DmChat never called them — only the retired
+  // floating ChatWindow did — so reading a conversation in the messenger
+  // left its count standing for good.
+  const {
+    markConversationRead: clearUnreadBadge,
+    markConversationAsViewed,
+    unmarkConversationAsViewed,
+  } = useNotifications()
+
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -210,6 +222,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         if (!cancelled) {
           setConversationId(conversationId)
           onConversationReady?.(conversationId)
+          // While this conversation is on screen, an arriving message is
+          // already read — it must not add to the badge.
+          markConversationAsViewed(conversationId)
         }
         const msgRes = await fetchMessages(conversationId)
         const raw: BackendMessage[] = Array.isArray(msgRes.data) ? msgRes.data : []
@@ -217,7 +232,12 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           const displayed = raw.map(m => toDisplay(m)).reverse()
           setMessages(displayed)
           if (displayed.length > 0) {
-            markConversationRead(conversationId, displayed[displayed.length - 1].id).catch(() => { })
+            const last = displayed[displayed.length - 1]
+            markConversationRead(conversationId, last.id).catch(() => { })
+            clearUnreadBadge(conversationId, last.ts)
+          } else {
+            // An empty conversation still clears a stale count.
+            clearUnreadBadge(conversationId)
           }
           getPinnedMessage(conversationId).then(pinned => {
             if (!cancelled) setPinnedMessage(pinned)
@@ -231,7 +251,12 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       }
     }
     init()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      // Leaving the conversation: later arrivals count again.
+      if (convIdRef.current) unmarkConversationAsViewed(convIdRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myId])
 
   // Real-time subscriptions
@@ -260,10 +285,13 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       })
       if (msg.sender_id !== myId && convIdRef.current) {
         markConversationRead(convIdRef.current, msg.id).catch(() => { })
+        // You are looking at it, so it is read on both sides of the app:
+        // the server cursor above and the badge here.
+        clearUnreadBadge(convIdRef.current, msg.ts || msg.created_at)
       }
     })
     return unsub
-  }, [myId])
+  }, [myId, clearUnreadBadge])
 
   useEffect(() => {
     const unsub = subscribeToMessageEdits((evt: MessageEditedEvent) => {
@@ -301,7 +329,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       }
     })
     return unsub
-  }, [myId])
+  }, [myId, clearUnreadBadge])
 
   useEffect(() => {
     const unsub = subscribeToReadReceipts((evt: ReadReceiptEvent) => {
@@ -314,7 +342,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       })
     })
     return unsub
-  }, [myId])
+  }, [myId, clearUnreadBadge])
 
   useEffect(() => {
     const unsub = subscribeToReactions((evt: ReactionUpdate) => {
