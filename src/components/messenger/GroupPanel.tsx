@@ -305,6 +305,19 @@ function ChatView({
               const showAv = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.type === 'system'
               const sender = resolveSender(msg.senderId)
               const replyTarget = msg.replyToId ? chat.findMessage(msg.replyToId) : null
+              // The live message wins (it reflects a later edit or delete);
+              // the server's send-time snapshot is all that is left when the
+              // original is outside the loaded page. Navigation is offered
+              // only when the original is actually on screen.
+              const quote = msg.replyToId
+                ? {
+                    text: replyTarget
+                      ? (replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text)
+                      : (msg.replyToPreview || 'Original message'),
+                    senderId: replyTarget?.senderId ?? msg.replyToSenderId,
+                    canNavigate: Boolean(replyTarget),
+                  }
+                : null
 
               return (
                 <div
@@ -337,14 +350,6 @@ function ChatView({
                       <span className="text-[10px] text-brand-text/60 italic mb-0.5 ml-1">Forwarded</span>
                     )}
 
-                    {/* Reply preview */}
-                    {replyTarget && !msg.isDeleted && (
-                      <div className="text-[11px] text-brand-text/60 px-3 py-1 border-l-2 rounded-r-lg mb-1 ml-1 max-w-full truncate"
-                        style={{ borderColor: groupColor, background: `${groupColor}08` }}>
-                        {replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text}
-                      </div>
-                    )}
-
                     {/* Bubble */}
                     <div
                       className={`px-4 py-2.5 text-[14px] leading-relaxed wrap-break-word ${msg.isDeleted ? 'italic' : ''}`}
@@ -357,6 +362,56 @@ function ChatView({
                         border: msg.isDeleted ? '1px solid #e2e8f0' : mine ? 'none' : '1px solid #e2e8f0',
                       }}
                     >
+                      {/*
+                        The quoted message sits INSIDE the reply as a quiet
+                        card, so a reply reads as one message with context
+                        rather than as two messages. It used to render as a
+                        sibling above the bubble.
+                      */}
+                      {quote && !msg.isDeleted && (
+                        <div
+                          role={quote.canNavigate ? 'button' : undefined}
+                          tabIndex={quote.canNavigate ? 0 : undefined}
+                          aria-label={quote.canNavigate ? 'Go to the quoted message' : undefined}
+                          onClick={(e) => {
+                            if (!quote.canNavigate) return
+                            e.stopPropagation()
+                            scrollToMessage(msg.replyToId!)
+                          }}
+                          onKeyDown={(e) => {
+                            if (!quote.canNavigate) return
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              scrollToMessage(msg.replyToId!)
+                            }
+                          }}
+                          className={`mb-2 flex gap-2 rounded-lg px-2 py-1.5 text-left ${quote.canNavigate ? 'cursor-pointer' : ''}`}
+                          style={{ background: mine ? 'rgba(255,255,255,0.16)' : `${groupColor}0f` }}
+                        >
+                          <span
+                            className="w-[3px] shrink-0 self-stretch rounded-full"
+                            style={{ background: mine ? 'rgba(255,255,255,0.7)' : groupColor }}
+                          />
+                          <span className="min-w-0">
+                            {quote.senderId && (
+                              <span
+                                className="block text-[11px] font-semibold leading-tight"
+                                style={{ color: mine ? 'rgba(255,255,255,0.85)' : groupColor }}
+                              >
+                                {quote.senderId === myId ? 'You' : resolveSender(quote.senderId).name}
+                              </span>
+                            )}
+                            <span
+                              className="block line-clamp-2 text-[12px] leading-snug"
+                              style={{ color: mine ? 'rgba(255,255,255,0.75)' : '#64748b' }}
+                            >
+                              {quote.text}
+                            </span>
+                          </span>
+                        </div>
+                      )}
+
                       {msg.isDeleted ? (
                         'This message was deleted'
                       ) : msg.type === 'image' && msg.mediaId ? (

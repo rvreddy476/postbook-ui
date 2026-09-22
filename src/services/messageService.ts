@@ -26,6 +26,14 @@ export interface Message {
   feeling?: string;
   reactions?: { emoji: string; user_ids: string[] }[];
   reply_to_id?: string;
+  /**
+   * Quote snapshot, denormalised by the server at send time so a reply
+   * renders without fetching the original — which may be far outside the
+   * loaded page. The client used to drop both fields, so a reply to an
+   * older message quoted nothing at all.
+   */
+  reply_to_preview?: string;
+  reply_to_sender_id?: string;
   forwarded_from_id?: string;
   is_edited?: boolean;
   edited_at?: string;
@@ -86,6 +94,8 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   feeling: raw.feeling as string | undefined,
   reactions: raw.reactions as { emoji: string; user_ids: string[] }[] | undefined,
   reply_to_id: raw.reply_to_id as string | undefined,
+  reply_to_preview: raw.reply_to_preview as string | undefined,
+  reply_to_sender_id: raw.reply_to_sender_id as string | undefined,
   forwarded_from_id: raw.forwarded_from_id as string | undefined,
   is_edited: raw.is_edited as boolean | undefined,
   edited_at: raw.edited_at as string | undefined,
@@ -488,6 +498,8 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           text: data.payload.text,
           media_id: data.payload.media_id,
           reply_to_id: data.payload.reply_to_id,
+          reply_to_preview: data.payload.reply_to_preview,
+          reply_to_sender_id: data.payload.reply_to_sender_id,
           forwarded_from_id: data.payload.forwarded_from_id,
           created_at: data.payload.created_at
         };
@@ -646,6 +658,8 @@ export interface SendMessageOptions {
   text?: string;
   media_id?: string;
   reply_to_id?: string;
+  reply_to_preview?: string;
+  reply_to_sender_id?: string;
   forwarded_from_id?: string;
   feeling?: string;
 }
@@ -708,9 +722,22 @@ export const sendMediaMessage = async (conversationId: string, mediaId: string, 
   });
 };
 
-export const replyToMessage = async (conversationId: string, replyToId: string, text: string) => {
+/**
+ * The quote snapshot travels with the reply. The server stores exactly what it
+ * is given, so omitting it leaves the quote blank forever — and the original
+ * may be far outside whatever page the reader has loaded, so the client cannot
+ * recover it later. The server truncates; no need to trim here.
+ */
+export const replyToMessage = async (
+  conversationId: string,
+  replyToId: string,
+  text: string,
+  quote?: { preview?: string; senderId?: string },
+) => {
   return sendMessage(conversationId, text, undefined, {
     reply_to_id: replyToId,
+    reply_to_preview: quote?.preview,
+    reply_to_sender_id: quote?.senderId,
   });
 };
 

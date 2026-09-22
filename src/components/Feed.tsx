@@ -128,28 +128,34 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     <div className="mx-auto w-full animate-fadeIn pb-32">
       <div ref={scrollRef} />
 
-      {/* Moments. The component already existed and was mounted NOWHERE, so
-          the feed had no row of faces at all, which is the single biggest
-          reason it read as empty. It leads with a create tile, so it is
-          useful even before anyone you follow has posted one. */}
-      <div className="mb-5">
-        <StoriesRow onCreateClick={onCreateClick} />
-      </div>
+      {/*
+        Moments — COMMENTED OUT at the founder's request (22 Sep). There is no
+        story content yet, so the rail rendered as a heading and a lone "Add"
+        tile: a section that announces emptiness. Restore this block when
+        stories have something to show; the component and its import are left
+        in place so that is one step.
 
-      {/* Feed tabs. Full row, equal halves. With only two tabs a
-          content-width pill left the control floating in the middle of an
-          empty row, and the halves were unequal because "Following" is the
-          longer word. Spanning the row gives it the same edges as the posts
-          below it and makes the two choices read as equal. */}
-      <div className="mb-5">
+        <div className="mb-5">
+          <StoriesRow onCreateClick={onCreateClick} />
+        </div>
+      */}
+
+      {/* Feed tabs. Small and left-aligned, on a hairline rule that runs to
+          the edge of the column. The full-width version was a slab: two
+          half-page blocks with a white pill the size of a button, which on
+          the near-white page wash read as a piece of furniture rather than a
+          choice. At this size it is a control you glance at, and the rule
+          ties it to the column edges the posts already use. */}
+      <div className="mb-5 flex items-center gap-4">
         <SegmentedControl
           layoutId="feedTabIndicator"
           aria-label="Feed"
-          fullWidth
+          size="sm"
           value={activeTab}
           onChange={(id) => handleTabSwitch(id as FeedTab)}
           segments={tabs.map((t) => ({ id: t.key, label: t.label }))}
         />
+        <span aria-hidden className="h-px flex-1 bg-brand-divider" />
       </div>
 
       {/*

@@ -44,6 +44,10 @@ export interface ChatMessage {
   type: string
   mediaId?: string
   replyToId?: string
+  /** Quote snapshot from the server; the only text available when the
+   *  original message is outside the loaded page. */
+  replyToPreview?: string
+  replyToSenderId?: string
   forwardedFromId?: string
   isEdited?: boolean
   editedAt?: string
@@ -86,6 +90,8 @@ function toChat(msg: BackendMessage): ChatMessage {
     type: msg.type || 'text',
     mediaId: msg.media_id,
     replyToId: msg.reply_to_id,
+    replyToPreview: msg.reply_to_preview,
+    replyToSenderId: msg.reply_to_sender_id,
     forwardedFromId: msg.forwarded_from_id,
     isEdited: msg.is_edited,
     editedAt: msg.edited_at,
@@ -340,6 +346,8 @@ export function useChat(conversationId: string | null | undefined, currentUserId
       ts: new Date().toISOString(),
       type: 'text',
       replyToId: replyingTo?.id,
+      replyToPreview: replyingTo?.text,
+      replyToSenderId: replyingTo?.senderId,
     }
 
     setMessages(prev => [...prev, optimistic])
@@ -349,7 +357,10 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     try {
       let res
       if (replyingTo) {
-        res = await replyToMessage(conversationId, replyingTo.id, text)
+        res = await replyToMessage(conversationId, replyingTo.id, text, {
+          preview: replyingTo.text,
+          senderId: replyingTo.senderId,
+        })
       } else {
         res = await sendMessage(conversationId, text)
       }

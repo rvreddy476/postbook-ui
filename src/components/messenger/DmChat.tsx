@@ -78,6 +78,10 @@ interface DisplayMessage {
   type: string
   mediaId?: string
   replyToId?: string
+  /** Quote snapshot from the server; the only text available when the
+   *  original message sits outside the loaded page. */
+  replyToPreview?: string
+  replyToSenderId?: string
   forwardedFromId?: string
   isEdited?: boolean
   editedAt?: string
@@ -122,6 +126,8 @@ function toDisplay(msg: BackendMessage): DisplayMessage {
     type: msg.type || 'text',
     mediaId: msg.media_id,
     replyToId: msg.reply_to_id,
+    replyToPreview: msg.reply_to_preview,
+    replyToSenderId: msg.reply_to_sender_id,
     forwardedFromId: msg.forwarded_from_id,
     isEdited: msg.is_edited,
     editedAt: msg.edited_at,
@@ -513,13 +519,17 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       id: optimisticId, senderId: myId, text,
       time: formatTime(new Date().toISOString()),
       ts: new Date().toISOString(), type: 'text', replyToId: replyingTo?.id,
+      replyToPreview: replyingTo?.text, replyToSenderId: replyingTo?.senderId,
     }
     setMessages(prev => [...prev, optimistic])
     setInput('')
     setReplyingTo(null)
     try {
       let res
-      if (replyingTo) res = await replyToMessage(convIdRef.current!, replyingTo.id, text)
+      if (replyingTo) res = await replyToMessage(convIdRef.current!, replyingTo.id, text, {
+        preview: replyingTo.text,
+        senderId: replyingTo.senderId,
+      })
       else res = await sendMessage(convIdRef.current!, text)
       const real = res.data as BackendMessage
       setMessages(prev => prev.map(m => (m.id === optimisticId ? toDisplay(real) : m)))
@@ -882,6 +892,20 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           const groupStart = isGroupStart(i)
           const groupEnd = isGroupEnd(i)
           const replyTarget = msg.replyToId ? findMessage(msg.replyToId) : null
+          // The live message wins, because it reflects a later edit or delete.
+          // The server's send-time snapshot is all that is left when the
+          // original is not in this page â the usual case for an older
+          // message, since this view loads exactly one page and never pages
+          // back. Navigation is offered only when the original is on screen.
+          const quote = msg.replyToId
+            ? {
+                text: replyTarget
+                  ? (replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text)
+                  : (msg.replyToPreview || 'Original message'),
+                senderId: replyTarget?.senderId ?? msg.replyToSenderId,
+                canNavigate: Boolean(replyTarget),
+              }
+            : null
 
           return (
             <div
@@ -908,13 +932,6 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                   <p className="text-[10px] text-brand-text/60 italic mb-0.5">Forwarded</p>
                 )}
 
-                {/* Reply preview */}
-                {replyTarget && !msg.isDeleted && (
-                  <div className="text-[11px] text-brand-text/60 px-3 py-1.5 border-l-2 border-brand-text bg-brand-text/5 rounded-r-lg mb-0.5 max-w-full truncate">
-                    {replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text}
-                  </div>
-                )}
-
                 {/* Message bubble */}
                 <div
                   data-bubble
@@ -937,6 +954,51 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                         : `border border-brand-divider bg-brand-card text-brand-text ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
                     }`}
                 >
+                  {/*
+                    The quoted message: a card INSIDE the reply, one step
+                    quieter than the body above it, so the reply reads as the
+                    message and the quote as its context. It used to render as
+                    a sibling before the bubble, which made every reply look
+                    like two messages.
+                  */}
+                  {quote && !msg.isDeleted && (
+                    <div
+                      role={quote.canNavigate ? 'button' : undefined}
+                      tabIndex={quote.canNavigate ? 0 : undefined}
+                      aria-label={quote.canNavigate ? 'Go to the quoted message' : undefined}
+                      onClick={(e) => {
+                        if (!quote.canNavigate) return
+                        // Without this the tap also opens the action rail.
+                        e.stopPropagation()
+                        scrollToMessage(msg.replyToId!)
+                      }}
+                      onKeyDown={(e) => {
+                        if (!quote.canNavigate) return
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          scrollToMessage(msg.replyToId!)
+                        }
+                      }}
+                      className={`mb-2 flex gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${quote.canNavigate ? 'cursor-pointer' : ''} ${isMe
+                          ? `bg-brand-bg/15 ${quote.canNavigate ? 'hover:bg-brand-bg/25' : ''}`
+                          : `bg-brand-text/[0.06] ${quote.canNavigate ? 'hover:bg-brand-text/10' : ''}`
+                        }`}
+                    >
+                      <span className={`w-[3px] shrink-0 self-stretch rounded-full ${isMe ? 'bg-brand-bg/70' : 'bg-brand-accent'}`} />
+                      <span className="min-w-0">
+                        {quote.senderId && (
+                          <span className={`block text-[11px] font-semibold leading-tight ${isMe ? 'text-brand-bg/80' : 'text-primary'}`}>
+                            {quote.senderId === myId ? 'You' : userName}
+                          </span>
+                        )}
+                        <span className={`block line-clamp-2 text-[12px] leading-snug ${isMe ? 'text-brand-bg/70' : 'text-brand-text/60'}`}>
+                          {quote.text}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+
                   {msg.isDeleted ? (
                     'This message was deleted'
                   ) : msg.type === 'image' && msg.mediaId ? (
@@ -1102,7 +1164,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       {/* Reply bar */}
       {replyingTo && (
         <div className="flex shrink-0 items-center justify-between border-t border-brand-divider bg-brand-secondary/80 px-6 py-3 backdrop-blur-md">
-          <div className="flex flex-1 flex-col border-l-[3px] border-brand-divider pl-3">
+          <div className="flex flex-1 flex-col border-l-[3px] border-brand-accent pl-3">
             <span className="text-[12px] font-bold text-brand-text/60">
               Replying to {replyingTo.senderId === myId ? 'yourself' : userName}
             </span>
