@@ -5,12 +5,12 @@ import { User, NavItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { searchUsers } from '@/services/userService';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, ChevronLeft } from 'lucide-react';
 import {
   useActivityNotifications,
   useNotificationStream,
@@ -110,6 +110,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, onCreateClick, onLogout, onToggleContactList, navExpanded = false, fullWidth = false }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -394,7 +395,28 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     // only ever sat next to the logo and drifted whenever either side changed.
     <header className={`fixed top-0 z-100 h-20 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Column 1 — brand mark, constant on every route */}
-      <div className="flex items-center justify-self-start">
+      <div className="flex items-center gap-2 justify-self-start">
+        {/* Back, on phones only. A phone's browser has no app back button
+            in reach and the sidebar is collapsed, so a page like a profile
+            or a conversation had no visible way out except the address bar.
+            Hidden from md up — desktop has the sidebar and a browser back
+            button under the mouse. Hidden on the home route too, where
+            "back" would only leave the app. Falls back to home when there
+            is no history to go back to (a link opened in a fresh tab). */}
+        {pathname !== '/' && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) router.back();
+              else router.push('/');
+            }}
+            aria-label="Back"
+            title="Back"
+            className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
         <button
           onClick={() => router.push('/')}
           title="VChat Home"
