@@ -1,6 +1,7 @@
 'use client';
 
 import RichTextRenderer from '@/components/studio/RichTextRenderer';
+import JournalBody from '@/components/JournalBody';
 import { scrimFor } from '@/components/studio/postStyle';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
@@ -412,7 +413,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         const bgImage = rich?.background_media_id;
         const textColor = rich?.text_color;
         const hasStyledBg = Boolean(bg || bgImage) && !hasMedia;
-        const align = rich?.align ?? 'center';
+        /*
+          Centre is the right default for a STYLED text card — a few words on
+          a colour, where centring is the point. It is the wrong default for
+          everything else, and a journal entry inherited it: paragraphs of
+          prose were being centred, which leaves no straight left edge for the
+          eye to return to on each line. Only a styled card centres by
+          default now.
+        */
+        const align = rich?.align ?? (hasStyledBg ? 'center' : 'left');
         const valign = rich?.valign ?? 'middle';
         const scale = Math.min(Math.max(rich?.scale ?? 1, 1), 2);
         const richDoc = rich?.format === 'tiptap' ? rich.doc : undefined;
@@ -441,16 +450,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             />
           );
           if (!hasStyledBg) {
-            return (
-              <div className="px-3 pb-3 text-[15px] leading-relaxed sm:px-4">
-                {heading && (
-                  <h2 className="mb-2 text-[19px] font-semibold -tracking-[0.018em] text-brand-text">
-                    {heading}
-                  </h2>
-                )}
-                {body}
-              </div>
-            );
+            // Set as an article: a measure, a title with display size, an
+            // article's leading, a reading time, and a collapse for long
+            // entries. See JournalBody.
+            return <JournalBody doc={richDoc} title={heading || undefined} />;
           }
           return (
             <div
