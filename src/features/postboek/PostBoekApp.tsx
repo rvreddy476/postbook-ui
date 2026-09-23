@@ -259,9 +259,18 @@ const PostBoekApp: React.FC = () => {
                 : 'scrollbar-hide px-2 pb-28 pt-4 sm:px-3 md:pb-8 lg:px-4 lg:pt-6'
               }`}
           >
+            {/*
+              A reading column, not the whole viewport.
+
+              This was w-full, so with the left rail collapsed and the right
+              rail hidden below lg, a post card stretched the entire window and
+              a line of text ran for hundreds of characters. Capping it keeps
+              the measure readable and matches the reference: one centred
+              column with the rails either side of it.
+            */}
             <div className={`mx-auto ${isReelsMode || isGroupMode
               ? 'h-full max-w-none w-full'
-              : 'w-full'
+              : 'w-full max-w-[680px]'
               }`}>
               {renderContent()}
             </div>

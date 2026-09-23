@@ -14,7 +14,7 @@ import { getSession } from '@/services/authService';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import SegmentedControl from '@/components/ui/SegmentedControl';
+import { ArrowRight, X } from 'lucide-react';
 import type { PostDetail } from '@/types/profile';
 
 type FeedTab = 'for-you' | 'following';
@@ -66,6 +66,13 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     and carrying an anchor so the count and the refetch agree on which posts
     were counted. It was already written and had no call sites.
   */
+  /*
+    Dismissing the banner hides THIS batch, not the feature. The count keeps
+    rising in the background and the next poll — ten minutes later — brings it
+    back with the newer number, which is the behaviour the X in the reference
+    implies: "not now", not "never".
+  */
+  const [newPostsDismissed, setNewPostsDismissed] = useState(false);
   const deltaFeedType = activeTab === 'following' ? 'following' : 'home';
   const { newCount: newPostCount, setAnchor, consumeNew } = useFeedDelta({
     feedType: deltaFeedType,
@@ -126,6 +133,13 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posts[0]?.id, deltaFeedType, setAnchor]);
 
+  // A newer count is a new batch, so an earlier dismissal no longer applies.
+  useEffect(() => {
+    if (newPostCount > 0) setNewPostsDismissed(false);
+    // Only when the number itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newPostCount]);
+
   const handleLoadNewPosts = () => {
     // Advance the anchor and clear the count together, so the next poll
     // measures from what the user is about to see.
@@ -166,22 +180,45 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
         </div>
       */}
 
-      {/* Feed tabs. Small and left-aligned, on a hairline rule that runs to
-          the edge of the column. The full-width version was a slab: two
-          half-page blocks with a white pill the size of a button, which on
-          the near-white page wash read as a piece of furniture rather than a
-          choice. At this size it is a control you glance at, and the rule
-          ties it to the column edges the posts already use. */}
-      <div className="mb-5 flex items-center gap-4">
-        <SegmentedControl
-          layoutId="feedTabIndicator"
-          aria-label="Feed"
-          size="sm"
-          value={activeTab}
-          onChange={(id) => handleTabSwitch(id as FeedTab)}
-          segments={tabs.map((t) => ({ id: t.key, label: t.label }))}
-        />
-        <span aria-hidden className="h-px flex-1 bg-brand-divider" />
+      {/*
+        Feed tabs, underlined rather than a pill, after the reference the
+        founder shared. The rule runs the width of the column and the active
+        tab sits on it, so the tabs read as part of the page rather than as a
+        control dropped onto it.
+
+        The reference also carries topic tabs — Tech, Design, Product, Life —
+        and a Customize control. They are not here: there is no topic feed
+        behind them (feed-service takes ranked or chronological, and topics
+        exist only as hashtags), so they would be four buttons that change
+        nothing.
+      */}
+      <div className="mb-5 flex items-center gap-6 border-b border-brand-divider" role="tablist" aria-label="Feed">
+        {tabs.map((t) => {
+          const selected = t.key === activeTab;
+          return (
+            <button
+              key={t.key}
+              role="tab"
+              type="button"
+              aria-selected={selected}
+              onClick={() => handleTabSwitch(t.key)}
+              className={`relative -mb-px pb-3 text-[15px] transition-colors ${
+                selected
+                  ? 'font-semibold text-primary-ink'
+                  : 'font-medium text-brand-text/55 hover:text-brand-text'
+              }`}
+            >
+              {t.label}
+              {selected && (
+                <motion.span
+                  layoutId="feedTabIndicator"
+                  className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-primary-ink"
+                  transition={{ type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/*
@@ -216,17 +253,39 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
       */}
 
       <AnimatePresence>
-        {newPostCount > 0 && (
-          <motion.button
+        {newPostCount > 0 && !newPostsDismissed && (
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            onClick={handleLoadNewPosts}
-            className="mb-4 w-full rounded-2xl bg-primary-ink py-3 text-sm font-black tracking-widest text-brand-bg shadow-xs transition hover:shadow-md active:scale-[0.99]"
+            className="mb-4 flex items-center gap-3 rounded-2xl border border-brand-outline bg-primary-tint px-4 py-3"
           >
-            {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'} - tap to refresh
-          </motion.button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold text-brand-text">
+                {newPostCount} fresh {newPostCount === 1 ? 'post' : 'posts'} waiting
+              </p>
+              <p className="truncate text-[12px] text-brand-text/60">
+                Catch up on what&apos;s new since you last looked
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLoadNewPosts}
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-primary-hover"
+            >
+              Tap to load
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.25} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewPostsDismissed(true)}
+              aria-label="Dismiss"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-brand-text/45 transition-colors hover:bg-brand-text/[0.06] hover:text-brand-text"
+            >
+              <X className="h-4 w-4" strokeWidth={2} />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 

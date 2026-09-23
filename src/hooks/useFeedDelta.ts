@@ -18,10 +18,22 @@ interface UseFeedDeltaOptions {
   enabled?: boolean
 }
 
-// Polling intervals per feed type (ms)
+/*
+  Polling intervals per feed type (ms).
+
+  home and following are TEN MINUTES, at the founder's request: the banner
+  should not interrupt for each post as it arrives. Checking every 15 seconds
+  turned it into a live ticker that grew by one while you were reading, which
+  is exactly the nagging a "catch up when you want to" affordance is supposed
+  to avoid. Ten minutes makes it a periodic invitation instead.
+
+  The count is still accurate whenever it does appear — the server counts
+  everything since the anchor, so a longer interval means a later banner, never
+  a smaller number. Refreshing the page always shows the current state.
+*/
 const POLL_INTERVALS: Record<string, number> = {
-  home: 15000,
-  following: 20000,
+  home: 600000,
+  following: 600000,
   group: 30000,
   group_channel: 30000,
   channel: 30000,
