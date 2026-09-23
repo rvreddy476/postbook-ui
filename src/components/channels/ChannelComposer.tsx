@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { uploadMedia } from '@/lib/mediaUpload'
+import RichTextEditor from '@/components/studio/RichTextEditor'
+import type { RichNode } from '@/components/studio/postStyle'
 import type { BroadcastChannel } from '@/types/channels'
 
 /* ===== Types ===== */
@@ -124,26 +126,17 @@ function TextArea({ value, onChange, placeholder, maxLength, rows = 4, className
   )
 }
 
-/* ===== Rich Text Toolbar ===== */
-function RichTextToolbar() {
-  const btn = "w-7 h-7 rounded-sm flex items-center justify-center text-brand-text/40 hover:text-brand-text hover:bg-brand-bg transition-colors"
-  return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-brand-divider bg-brand-card rounded-t-xl">
-      <button type="button" className={btn} title="Bold"><Bold className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Italic"><Italic className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Underline"><Underline className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></button>
-      <div className="w-px h-4 bg-brand-divider mx-1" />
-      <button type="button" className={btn} title="Link"><Link2 className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Bullet list"><List className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Numbered list"><ListOrdered className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Code"><Code className="w-3.5 h-3.5" /></button>
-      <button type="button" className={btn} title="Quote"><Quote className="w-3.5 h-3.5" /></button>
-      <div className="w-px h-4 bg-brand-divider mx-1" />
-      <button type="button" className={btn} title="Emoji"><Smile className="w-3.5 h-3.5" /></button>
-    </div>
-  )
-}
+/*
+  A "rich text toolbar" used to sit here: bold, italic, underline,
+  strikethrough, link, lists, code, quote, emoji — ten buttons, and not one of
+  them had an onClick. It rendered above four different composer bodies and
+  did nothing at all, which is worse than having no toolbar: it tells the
+  author their update can be formatted and then silently refuses.
+
+  The announcement body now uses the real editor (the one the post composer
+  uses). The other three bodies are short captions where a document adds
+  nothing, so they are plain fields and no longer pretend otherwise.
+*/
 
 /* ===== File Upload Zone ===== */
 function FileUploadZone({ accept, maxFiles, files, onAdd, onRemove, label }: {
@@ -395,10 +388,23 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
         break
     }
 
+    /*
+      The document goes in metadata.rich. channel_updates.metadata is a jsonb
+      column the service already stores, returns and merges BY KEY (it keeps
+      `event` there the same way), so a formatted body needs no schema change
+      and cannot collide with what is already in there.
+    */
+    if (richDoc) meta.rich = { format: 'tiptap', doc: richDoc }
+
     base.metadata = meta
     return base
   }
 
+  /*
+    The formatted body, kept beside the plain one. Only the announcement
+    composer produces it; the other update types are plain by design.
+  */
+  const [richDoc, setRichDoc] = useState<RichNode | null>(null)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [publishSuccess, setPublishSuccess] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
@@ -504,8 +510,16 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             </div>
             <div>
               <FieldLabel required>Content</FieldLabel>
-              <RichTextToolbar />
-              <TextArea value={body} onChange={setBody} placeholder="Write your update..." maxLength={MAX.body} rows={5} className="rounded-t-none border-t-0" />
+              {/*
+                The editor emits the document AND the plain text, because both
+                are needed and they are not interchangeable: `body` is what
+                search, previews and notifications read, the document is what
+                the card renders.
+              */}
+              <RichTextEditor
+                placeholder="Write your update…"
+                onChange={({ doc, text }) => { setRichDoc(doc); setBody(text) }}
+              />
               {errors.body && <p className="text-[10px] text-red-500 mt-0.5">{errors.body}</p>}
             </div>
             <FileUploadZone
@@ -545,8 +559,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             </div>
             <div>
               <FieldLabel>Description</FieldLabel>
-              <RichTextToolbar />
-              <TextArea value={body} onChange={setBody} placeholder="Describe your video..." maxLength={MAX.body} rows={3} className="rounded-t-none border-t-0" />
+              <TextArea value={body} onChange={setBody} placeholder="Describe your video..." maxLength={MAX.body} rows={3} />
             </div>
             <div>
               <FieldLabel required>Video file</FieldLabel>
@@ -642,8 +655,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             </div>
             <div>
               <FieldLabel required>Description</FieldLabel>
-              <RichTextToolbar />
-              <TextArea value={eventDesc} onChange={setEventDesc} placeholder="Event details..." maxLength={MAX.eventDesc} rows={3} className="rounded-t-none border-t-0" />
+              <TextArea value={eventDesc} onChange={setEventDesc} placeholder="Event details..." maxLength={MAX.eventDesc} rows={3} />
               {errors.eventDesc && <p className="text-[10px] text-red-500 mt-0.5">{errors.eventDesc}</p>}
             </div>
             <FileUploadZone
@@ -738,8 +750,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             </div>
             <div>
               <FieldLabel required>Content</FieldLabel>
-              <RichTextToolbar />
-              <TextArea value={body} onChange={setBody} placeholder="Describe the situation..." maxLength={MAX.urgentBody} rows={4} className="rounded-t-none border-t-0" />
+              <TextArea value={body} onChange={setBody} placeholder="Describe the situation..." maxLength={MAX.urgentBody} rows={4} />
               {errors.body && <p className="text-[10px] text-red-500 mt-0.5">{errors.body}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">

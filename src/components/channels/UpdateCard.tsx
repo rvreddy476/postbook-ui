@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import type { ChannelUpdate, BroadcastChannel } from '@/types/channels'
 import { usePollResults, useVoteOnPoll } from '@/hooks/useBroadcastChannels'
+import RichTextRenderer from '@/components/studio/RichTextRenderer'
+import type { RichNode } from '@/components/studio/postStyle'
 
 /* ===== Props ===== */
 interface UpdateCardProps {
@@ -355,8 +357,20 @@ function UrgentBanner({ update }: { update: ChannelUpdate }) {
 }
 
 /* ===== MAIN CARD ===== */
+/**
+ * A formatted body, when the author wrote one.
+ *
+ * metadata is free-form jsonb, so this reads defensively: anything that is not
+ * a tiptap document is ignored and the plain body is drawn instead.
+ */
+function richBodyOf(update: { metadata?: unknown }): RichNode | undefined {
+  const meta = update.metadata as { rich?: { format?: string; doc?: RichNode } } | undefined
+  return meta?.rich?.format === 'tiptap' ? meta.rich.doc : undefined
+}
+
 const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: propChannelId, isOwner, onDelete, onPin, onEdit, onLike, onUnlike, onStash, onUnstash, onRepost, onUnrepost, onView, onReact, onUnreact, actions = 'reaction' }) => {
   const fullActions = actions === 'all'
+  const richDoc = richBodyOf(update)
   const channelId = propChannelId || channel?.id || ''
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
@@ -622,9 +636,25 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
         {/* Body with expand */}
         {update.body && update.update_type !== 'poll' && (
           <>
+            {richDoc ? (
+              /*
+                A formatted body, rendered through the same whitelist the feed
+                uses. The document arrives in metadata, which any client can
+                write, so none of it may reach the DOM as markup — see
+                RichTextRenderer. The plain `body` is still what search and
+                previews read; this only changes what is drawn.
+              */
+              <div
+                ref={bodyRef}
+                className={`text-sm leading-relaxed text-brand-text/75 ${expanded ? '' : 'line-clamp-3'}`}
+              >
+                <RichTextRenderer doc={richDoc} />
+              </div>
+            ) : (
             <p ref={bodyRef} className={`text-sm text-brand-text/75 leading-relaxed whitespace-pre-wrap ${expanded ? '' : 'line-clamp-3'}`}>
               {update.body}
             </p>
+            )}
             {isClamped && !expanded && (
               <button onClick={() => setExpanded(true)} className="text-xs font-semibold text-brand-text mt-1 hover:underline">
                 ...Show more
