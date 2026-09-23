@@ -36,7 +36,6 @@ export function useAddComment() {
         onSuccess: (_data, variables) => {
             qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -68,7 +67,6 @@ export function useDeleteComment() {
         onSuccess: (_data, variables) => {
             qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
         },
     })
 }

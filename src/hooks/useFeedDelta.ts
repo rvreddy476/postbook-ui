@@ -36,6 +36,15 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
   const [newCount, setNewCount] = useState(0)
   const [newestAnchor, setNewestAnchor] = useState<string | null>(null)
   const anchorRef = useRef<string | null>(null)
+  /*
+    The polling effect below is guarded on having an anchor, and the anchor
+    lives in a REF — so setting it changed no dependency, the effect never
+    re-ran, and the interval was never started. The hook could not poll at
+    all. This mirrors the ref into state purely so the effect has something
+    to depend on; the ref stays the value the request reads, because
+    consumeNew has to advance it without waiting for a render.
+  */
+  const [hasAnchor, setHasAnchor] = useState(false)
 
   const checkDelta = useCallback(async () => {
     if (!anchorRef.current) return
@@ -53,6 +62,8 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
       const data = res.data.data
       if (data) {
         setNewCount(data.newCount ?? data.new_count ?? 0)
+        // Kept for callers that want to know the newest id; NOT used as the
+        // next anchor — see consumeNew.
         const anchor = data.newestAnchor ?? data.newest_anchor
         if (anchor) {
           setNewestAnchor(anchor)
@@ -66,24 +77,36 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
   // Set initial anchor
   const setAnchor = useCallback((anchor: string) => {
     anchorRef.current = anchor
+    setHasAnchor(true)
     setNewCount(0)
   }, [])
 
-  // Consume new items (reset count, advance anchor)
+  /*
+    Consume new items: clear the count and let the CALLER re-anchor.
+
+    This used to set the anchor to the response's `newest_anchor`. That field
+    is a post ID, and the server parses the anchor as an RFC3339 timestamp
+    only (feed-service/internal/service/delta.go:25) — so the first tap poisoned
+    the anchor and every poll after it answered 500. The hook swallows errors,
+    so the count would simply have stopped updating with nothing to show why.
+    Verified against the running service: an ISO anchor returns a count, the
+    same call with a post ID returns INTERNAL_ERROR.
+
+    Anchoring from the newest post the caller has actually RENDERED is also
+    the more honest measure: it counts from what the reader has seen, not from
+    what the server last knew about.
+  */
   const consumeNew = useCallback(() => {
-    if (newestAnchor) {
-      anchorRef.current = newestAnchor
-    }
     setNewCount(0)
-  }, [newestAnchor])
+  }, [])
 
   // Polling
   useEffect(() => {
-    if (!enabled || !anchorRef.current) return
+    if (!enabled || !hasAnchor) return
     const interval = POLL_INTERVALS[feedType] ?? 30000
     const timer = setInterval(checkDelta, interval)
     return () => clearInterval(timer)
-  }, [enabled, feedType, checkDelta])
+  }, [enabled, hasAnchor, feedType, checkDelta])
 
   return { newCount, setAnchor, consumeNew, checkDelta }
 }

@@ -12,7 +12,6 @@ export function useTogglePin() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -35,7 +34,6 @@ export function useToggleBookmark() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -99,7 +97,6 @@ export function useSharePost() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -114,7 +111,6 @@ export function useBookmark() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -128,7 +124,6 @@ export function useUnbookmark() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })

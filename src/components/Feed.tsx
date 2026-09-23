@@ -8,7 +8,8 @@ import StoriesRow from './StoriesRow';
 import Link from 'next/link';
 import { useHomeFeed } from '@/hooks/useFeedPosts';
 import { useMyProfile } from '@/hooks/useEditProfile';
-import { subscribeToFeedUpdates, subscribeToPostUpdates } from '@/services/messageService';
+import { subscribeToPostUpdates } from '@/services/messageService';
+import { useFeedDelta } from '@/hooks/useFeedDelta';
 import { getSession } from '@/services/authService';
 import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
@@ -49,8 +50,26 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = feed;
 
   const queryClient = useQueryClient();
-  const [newPostCount, setNewPostCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /*
+    "N new posts", from a signal that actually arrives.
+
+    This banner used to count WebSocket frames of type "new_post". post-service
+    still publishes those to the Redis channel feed:new_post, but ws-gateway
+    was deliberately unsubscribed from global channels as a privacy fix — a
+    global fan-out channel shows every author's activity to every connected
+    socket. Nothing has delivered the frame to a browser since, so the counter
+    could never leave 0 and the banner could never appear.
+
+    useFeedDelta polls GET /v1/feed/delta instead: per-viewer, server-filtered,
+    and carrying an anchor so the count and the refetch agree on which posts
+    were counted. It was already written and had no call sites.
+  */
+  const deltaFeedType = activeTab === 'following' ? 'following' : 'home';
+  const { newCount: newPostCount, setAnchor, consumeNew } = useFeedDelta({
+    feedType: deltaFeedType,
+  });
 
   const posts: PostDetail[] = (() => {
     const all = data?.pages.flatMap((page: any) => page.data) ?? [];
@@ -61,14 +80,6 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
       return true;
     });
   })();
-
-  useEffect(() => {
-    return subscribeToFeedUpdates((update) => {
-      if (update.author_id !== currentUserId) {
-        setNewPostCount((prev) => prev + 1);
-      }
-    });
-  }, [currentUserId]);
 
   useEffect(() => {
     return subscribeToPostUpdates((update) => {
@@ -94,7 +105,6 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
         };
       };
       queryClient.setQueriesData({ queryKey: ['home-feed'] }, updatePost);
-      queryClient.setQueriesData({ queryKey: ['feed-posts'] }, updatePost);
       queryClient.setQueriesData({ queryKey: ['profile-posts'] }, updatePost);
 
       if (update.update_type === 'comment') {
@@ -103,8 +113,23 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
     });
   }, [queryClient]);
 
+  /*
+    Anchor on the newest post we have actually rendered. Without this the
+    banner had nothing to count FROM: it reported a number and then refetched,
+    with no guarantee the refetch contained the posts it had counted.
+  */
+  useEffect(() => {
+    const newest = posts[0];
+    if (newest?.created_at) setAnchor(newest.created_at);
+    // Only the newest post matters; re-anchoring on every list change would
+    // reset the count the moment anything below the fold shifted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts[0]?.id, deltaFeedType, setAnchor]);
+
   const handleLoadNewPosts = () => {
-    setNewPostCount(0);
+    // Advance the anchor and clear the count together, so the next poll
+    // measures from what the user is about to see.
+    consumeNew();
     queryClient.invalidateQueries({ queryKey: ['home-feed'] });
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -112,7 +137,8 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
   const handleTabSwitch = (tab: FeedTab) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
-    setNewPostCount(0);
+    // No manual reset: the effect above re-anchors on the new tab's newest
+    // post, which clears the count as a consequence rather than by hand.
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 

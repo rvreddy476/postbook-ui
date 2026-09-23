@@ -24,7 +24,6 @@ export function useCastVote() {
         onSuccess: (_data, variables) => {
             qc.invalidateQueries({ queryKey: ["poll", variables.postId] })
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })

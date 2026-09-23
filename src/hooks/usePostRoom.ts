@@ -39,7 +39,6 @@ export function usePostRoom(postId: string | undefined) {
                 // Invalidate post detail cache so counts refresh
                 qc.invalidateQueries({ queryKey: ["post-detail", postId] })
                 qc.invalidateQueries({ queryKey: ["home-feed"] })
-                qc.invalidateQueries({ queryKey: ["feed-posts"] })
             }
         })
 

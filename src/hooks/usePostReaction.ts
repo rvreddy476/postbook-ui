@@ -20,7 +20,6 @@ export function useToggleLike() {
         },
         onMutate: async (postId: string) => {
             await qc.cancelQueries({ queryKey: ["home-feed"] })
-            await qc.cancelQueries({ queryKey: ["feed-posts"] })
             await qc.cancelQueries({ queryKey: ["profile-posts"] })
 
             const updatePost = (old: any) => {
@@ -46,7 +45,6 @@ export function useToggleLike() {
             }
 
             qc.setQueriesData({ queryKey: ["home-feed"] }, updatePost)
-            qc.setQueriesData({ queryKey: ["feed-posts"] }, updatePost)
             qc.setQueriesData({ queryKey: ["profile-posts"] }, updatePost)
         },
         onSettled: (_data, _err, postId) => {
@@ -55,7 +53,6 @@ export function useToggleLike() {
             // would cause the list to remount and the page to "shake".
             // Next natural refetch (focus, mount, manual) picks up server state.
             qc.invalidateQueries({ queryKey: ["home-feed"], refetchType: "none" })
-            qc.invalidateQueries({ queryKey: ["feed-posts"], refetchType: "none" })
             qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" })
             qc.invalidateQueries({ queryKey: ["post-detail", postId], refetchType: "none" })
         },
@@ -75,7 +72,6 @@ export function useToggleReaction() {
         },
         onMutate: async ({ postId, reactionType }) => {
             await qc.cancelQueries({ queryKey: ["home-feed"] })
-            await qc.cancelQueries({ queryKey: ["feed-posts"] })
             await qc.cancelQueries({ queryKey: ["profile-posts"] })
 
             const updatePost = (old: any) => {
@@ -103,14 +99,12 @@ export function useToggleReaction() {
             }
 
             qc.setQueriesData({ queryKey: ["home-feed"] }, updatePost)
-            qc.setQueriesData({ queryKey: ["feed-posts"] }, updatePost)
             qc.setQueriesData({ queryKey: ["profile-posts"] }, updatePost)
         },
         onSettled: (_data, _err, { postId }) => {
             // No refetch — onMutate already wrote optimistic state. Marking
             // stale lets natural refetch triggers sync later.
             qc.invalidateQueries({ queryKey: ["home-feed"], refetchType: "none" })
-            qc.invalidateQueries({ queryKey: ["feed-posts"], refetchType: "none" })
             qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" })
             qc.invalidateQueries({ queryKey: ["post-detail", postId], refetchType: "none" })
             qc.invalidateQueries({ queryKey: ["reaction-counts", postId], refetchType: "none" })
@@ -141,7 +135,6 @@ export function useReactToPost() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })
@@ -155,7 +148,6 @@ export function useUnreactToPost() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
-            qc.invalidateQueries({ queryKey: ["feed-posts"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
     })

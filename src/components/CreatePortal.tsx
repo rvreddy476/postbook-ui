@@ -60,6 +60,7 @@ const FlowerPaletteIcon: React.FC<{ size?: number; className?: string }> = ({ si
 );
 
 import { useMyProfile } from '@/hooks/useEditProfile';
+import { useGlobalToast } from '@/contexts/ToastContext';
 import { useCreatePost } from '@/hooks/useFeedPosts';
 import { useCreateGroupPost } from '@/hooks/useGroups';
 import { uploadMedia } from '@/lib/mediaUpload';
@@ -158,6 +159,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const { data: profile } = useMyProfile();
   const createPost = useCreatePost();
+  const toast = useGlobalToast();
   const createGroupPost = useCreateGroupPost();
 
   /**
@@ -334,14 +336,18 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
     try {
       let mediaIds: string[] | undefined;
+      // Kept beside the ids: the create response carries no media, so this is
+      // what lets the card render its picture before fan-out hydrates it.
+      let mediaWithKinds: { media_id: string; kind: string }[] | undefined;
       if (files.length > 0) {
         const uploaded = await Promise.all(
-          files.map((file) => {
+          files.map(async (file) => {
             const fileType: 'image' | 'video' = file.type.startsWith('video') ? 'video' : 'image';
-            return uploadMedia(file, fileType, 'general');
+            return { media_id: await uploadMedia(file, fileType, 'general'), kind: fileType };
           }),
         );
-        mediaIds = uploaded;
+        mediaWithKinds = uploaded;
+        mediaIds = uploaded.map((m) => m.media_id);
       }
 
       let contentType: string = POST_CONTENT_TYPES.POST;
@@ -447,6 +453,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         rich_text: richText,
         hashtags: finalHashtags.length > 0 ? finalHashtags : undefined,
         idempotencyKey: nextCreateKey(),
+        media: mediaWithKinds,
       };
 
       if (groupId) {
@@ -456,6 +463,9 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       }
       // The intent is done; the next composer session gets its own key.
       createKeyRef.current = '';
+      // Says the write landed even when the reader has scrolled away from the
+      // top of the feed, where the new card is.
+      toast({ type: 'success', title: 'Posted' });
       onClose();
     } catch (err: unknown) {
       let message = 'Failed to create post. Try again.';
