@@ -22,7 +22,24 @@ import type { RichNode } from './postStyle';
  * worse by this file; they are worth closing on their own.)
  */
 
-const SAFE_MARKS = new Set(['bold', 'italic', 'underline', 'strike', 'code', 'link', 'superscript', 'subscript']);
+const SAFE_MARKS = new Set(['bold', 'italic', 'underline', 'strike', 'code', 'link', 'superscript', 'subscript', 'highlight']);
+
+/**
+ * Alignment is the one node attribute that reaches the output, so it is
+ * mapped through a fixed table rather than interpolated. An attribute value
+ * that came from the document must never become a class name or a style
+ * string directly — that is how "align" turns into an injection point.
+ */
+const ALIGN_CLASS: Record<string, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+  justify: 'text-justify',
+};
+const alignClass = (attrs: RichNode['attrs']): string => {
+  const value = attrs?.textAlign;
+  return (typeof value === 'string' && ALIGN_CLASS[value]) || '';
+};
 
 const safeHref = (raw: unknown): string | null => {
   if (typeof raw !== 'string') return null;
@@ -51,6 +68,7 @@ function applyMarks(text: string, marks: RichNode['marks'], key: React.Key): Rea
       case 'code': node = <code className="rounded bg-brand-text/10 px-1 py-0.5 text-[0.9em]">{node}</code>; break;
       case 'superscript': node = <sup>{node}</sup>; break;
       case 'subscript': node = <sub>{node}</sub>; break;
+      case 'highlight': node = <mark className="rounded bg-warning/25 px-0.5 text-inherit">{node}</mark>; break;
       case 'link': {
         const href = safeHref(mark.attrs?.href);
         node = href ? (
@@ -83,13 +101,13 @@ function renderNode(node: RichNode, key: React.Key): React.ReactNode {
     case 'doc':
       return <React.Fragment key={key}>{renderNodes(node.content)}</React.Fragment>;
     case 'paragraph':
-      return <p key={key} className="mb-3 last:mb-0">{renderNodes(node.content)}</p>;
+      return <p key={key} className={`mb-3 last:mb-0 ${alignClass(node.attrs)}`}>{renderNodes(node.content)}</p>;
     case 'heading': {
       // Only the levels the toolbar offers; anything else is a paragraph.
       const level = Number(node.attrs?.level);
       const cls = level === 1 ? 'text-[1.5em] font-bold' : 'text-[1.2em] font-semibold';
       const Tag = (level === 1 ? 'h2' : 'h3') as 'h2' | 'h3';
-      return <Tag key={key} className={`mt-4 mb-2 first:mt-0 ${cls}`}>{renderNodes(node.content)}</Tag>;
+      return <Tag key={key} className={`mt-4 mb-2 first:mt-0 ${cls} ${alignClass(node.attrs)}`}>{renderNodes(node.content)}</Tag>;
     }
     case 'bulletList':
       return <ul key={key} className="mb-3 list-disc pl-5 last:mb-0">{renderNodes(node.content)}</ul>;

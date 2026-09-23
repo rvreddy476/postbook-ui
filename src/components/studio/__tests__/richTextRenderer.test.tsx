@@ -56,3 +56,25 @@ describe('RichTextRenderer whitelist', () => {
     ] })).toBe('Title\nBody');
   });
 });
+
+describe('RichTextRenderer attributes', () => {
+  it('maps a known alignment and ignores an invented one', () => {
+    const ok = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+      doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { textAlign: 'center' }, content: [{ type: 'text', text: 'c' }] }] },
+    }));
+    expect(ok).toContain('text-center');
+
+    const bad = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+      doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { textAlign: '"><script>alert(1)</script>' }, content: [{ type: 'text', text: 'c' }] }] },
+    }));
+    expect(bad).not.toContain('script');
+    expect(bad).toContain('c');
+  });
+
+  it('renders a highlight as a mark element', () => {
+    const html = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+      doc: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'h', marks: [{ type: 'highlight' }] }] }] },
+    }));
+    expect(html).toContain('<mark');
+  });
+});

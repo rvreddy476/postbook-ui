@@ -71,21 +71,6 @@
   */
   --theme-receipt-seen: 47 107 163;
 
-  /*
-    Composer action tiles. The founder's Create-post reference gives each
-    action a soft tile in its own colour, and this is the only place in the
-    product those hues appear. They live here because colour belongs in one
-    file: a tile renders as `bg-tile-x/10` with a `text-tile-x` icon, never a
-    hex inside a component. Every value clears 4.5:1 on white, so the icon and
-    the label beneath it stay readable.
-  */
-  --theme-tile-photo: 22 122 84;
-  --theme-tile-video: 109 74 199;
-  --theme-tile-poll: 190 50 98;
-  --theme-tile-journal: 138 83 0;
-  --theme-tile-place: 47 107 163;
-  --theme-tile-tag: 84 95 190;
-  --theme-tile-more: 83 100 113;
 
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
@@ -140,14 +125,6 @@
   /* Lifted likewise: #2f6ba3 is too dark to read on the dark ground. */
   --theme-receipt-seen: 106 168 224;
 
-  /* Lifted for the dark ground; same hues, same one-file rule. */
-  --theme-tile-photo: 74 200 150;
-  --theme-tile-video: 173 148 246;
-  --theme-tile-poll: 240 126 165;
-  --theme-tile-journal: 251 191 36;
-  --theme-tile-place: 106 168 224;
-  --theme-tile-tag: 150 160 240;
-  --theme-tile-more: 139 152 165;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;
