@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import AppShell from '@/components/AppShell'
 import { useRouter } from 'next/navigation'
 import { useCreateGroup, useCheckHandle } from '@/hooks/useGroups'
+import { useIdempotencyKey } from '@/lib/idempotency'
 import {
   Globe, Lock, Shield, TriangleAlert, Loader2, ArrowLeft,
   MessageSquare, Users, Image as ImageIcon, Info, ScrollText, Smile, ImagePlus,
@@ -40,6 +41,11 @@ export default function CreateSpacePage() {
   const [isMature, setIsMature] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Was `create-${Date.now()}`, which is a different key on every click of
+  // Create — so a retry after a lost response created a second space. One key
+  // per visit to this page instead.
+  const idempotency = useIdempotencyKey()
+
   const handle = slugify(name)
   const { data: handleCheck } = useCheckHandle(handle)
 
@@ -71,13 +77,23 @@ export default function CreateSpacePage() {
         who_can_post: 'all_members',
         who_can_invite: 'all_members',
         is_mature: isMature,
-        idempotency_key: `create-${Date.now()}`,
+        idempotency_key: idempotency.current(),
       })
       // Land back on MySpace with the new space selected in the rail
       // and opened in the middle column.
       router.push(`/groups?space=${group.id}`)
-    } catch {
-      setError('Could not create the space. Try a different name.')
+    } catch (err: unknown) {
+      /*
+        "Try a different name" was a guess, and a wrong one: it hid the real
+        reason (a 400 for a missing idempotency key, a 404 from a closed
+        gateway) behind advice that could never help. Show what the server said.
+      */
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setError(
+        body?.message ||
+          (err instanceof Error && err.message) ||
+          'Could not create the space. Please try again.',
+      )
     }
   }
 

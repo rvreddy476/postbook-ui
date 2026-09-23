@@ -4,8 +4,9 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCreateGroup } from '@/hooks/useGroups'
 import { deriveUniqueHandle, groupHandleAvailable } from '@/lib/handles'
+import { useIdempotencyKey } from '@/lib/idempotency'
 import {
-  X, Globe, Lock, Shield, Loader2, Users, UserPlus, Hash
+  X, Globe, Lock, Shield, Loader2, Users, UserPlus, AlertCircle
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -24,10 +25,16 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
   // its owner deliberately opens it. Both are still changeable below.
   const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('private')
   const [joinMode, setJoinMode] = useState<'open' | 'request' | 'invite_only'>('invite_only')
+  const [error, setError] = useState<string | null>(null)
+
+  // One key per dialog-open, so a retry after a lost response returns the group
+  // already created rather than creating a second one.
+  const idempotency = useIdempotencyKey()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
+    setError(null)
 
     try {
       // No handle field: a person is asked for a handle once, when they
@@ -40,6 +47,7 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
         handle,
         privacy_level: privacyLevel,
         join_mode: joinMode,
+        idempotency_key: idempotency.current(),
       })
       onClose()
       if (onCreated) {
@@ -47,8 +55,19 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
         return
       }
       router.push(`/groups/${group.id}`)
-    } catch {
-      // Error handled by React Query
+    } catch (err: unknown) {
+      /*
+        This was `catch {}` with a comment claiming React Query handled it.
+        Nothing rendered `createGroup.error`, so every failure here was silent:
+        the button stopped spinning and the dialog just sat there. Surface the
+        server's own words, as CreateGroupPanel does.
+      */
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setError(
+        body?.message ||
+          (err instanceof Error && err.message) ||
+          'Could not create the group. Please try again.',
+      )
     }
   }
 
@@ -88,6 +107,13 @@ export default function GroupCreateModal({ onClose, onCreated }: GroupCreateModa
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+          {error && (
+            <div role="alert" className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
+              <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span className="font-medium">{error}</span>
+            </div>
+          )}
+
           {/* Name */}
           <div>
             <label className="block text-xs font-bold tracking-wider text-brand-highlight mb-1.5">Group Name</label>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useCreateGroup } from '@/hooks/useGroups'
 import { deriveUniqueHandle, groupHandleAvailable } from '@/lib/handles'
+import { useIdempotencyKey } from '@/lib/idempotency'
 import { AlertCircle, Loader2, Users, X } from 'lucide-react'
 
 /**
@@ -44,6 +45,14 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
 
   const createGroup = useCreateGroup()
 
+  /*
+    One key for as long as this dialog is open. This panel mounts on open and
+    unmounts on close, so that is one key per intent: typing in the fields does
+    not change it, and pressing "Create group" again after a lost response
+    returns the group already created instead of making a second one.
+  */
+  const idempotency = useIdempotencyKey()
+
   useEffect(() => {
     nameRef.current?.focus()
   }, [])
@@ -74,6 +83,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
         handle,
         privacy_level: 'private',
         join_mode: 'invite_only',
+        idempotency_key: idempotency.current(),
       })
 
       onCreated(newGroup.id)
