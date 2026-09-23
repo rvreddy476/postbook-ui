@@ -120,6 +120,15 @@
   --color-send-hover: rgb(var(--send-hover));
   --color-receipt-seen: rgb(var(--receipt-seen));
 
+  /* Composer tiles; values in src/ui/theme.css. */
+  --color-tile-photo: rgb(var(--tile-photo));
+  --color-tile-video: rgb(var(--tile-video));
+  --color-tile-poll: rgb(var(--tile-poll));
+  --color-tile-journal: rgb(var(--tile-journal));
+  --color-tile-place: rgb(var(--tile-place));
+  --color-tile-tag: rgb(var(--tile-tag));
+  --color-tile-more: rgb(var(--tile-more));
+
   --color-secondary: rgb(var(--brand-secondary));
   --color-secondary-foreground: rgb(var(--brand-text));
 
@@ -197,6 +206,13 @@
     --danger: var(--theme-danger);
     --info: var(--theme-info);
     --send: var(--theme-send);
+    --tile-photo: var(--theme-tile-photo);
+    --tile-video: var(--theme-tile-video);
+    --tile-poll: var(--theme-tile-poll);
+    --tile-journal: var(--theme-tile-journal);
+    --tile-place: var(--theme-tile-place);
+    --tile-tag: var(--theme-tile-tag);
+    --tile-more: var(--theme-tile-more);
     --send-hover: var(--theme-send-hover);
     --receipt-seen: var(--theme-receipt-seen);
   }
@@ -228,6 +244,13 @@
     --danger: var(--theme-danger);
     --info: var(--theme-info);
     --send: var(--theme-send);
+    --tile-photo: var(--theme-tile-photo);
+    --tile-video: var(--theme-tile-video);
+    --tile-poll: var(--theme-tile-poll);
+    --tile-journal: var(--theme-tile-journal);
+    --tile-place: var(--theme-tile-place);
+    --tile-tag: var(--theme-tile-tag);
+    --tile-more: var(--theme-tile-more);
     --send-hover: var(--theme-send-hover);
     --receipt-seen: var(--theme-receipt-seen);
   }

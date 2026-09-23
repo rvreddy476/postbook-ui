@@ -10,16 +10,23 @@ import {
   ChevronDown,
   Globe,
   Hash,
+  Image as ImageIcon,
   ImagePlus,
   Loader2,
   Lock,
   MapPin,
+  AlignCenter,
+  AlignCenterVertical,
+  AlignLeft,
+  AlignStartVertical,
+  MoreHorizontal,
   Plus,
   Send,
   ShieldCheck,
   Smile,
   Type,
   Users,
+  Video as VideoIcon,
   X,
 } from 'lucide-react';
 
@@ -59,6 +66,17 @@ import { uploadMedia } from '@/lib/mediaUpload';
 import { POST_CONTENT_TYPES } from '@/types/profile';
 
 import PollEditor, { type PollState } from '@/components/studio/PollEditor';
+import RichTextEditor from '@/components/studio/RichTextEditor';
+import {
+  DEFAULT_TEMPLATE,
+  POST_TEMPLATES,
+  scrimFor,
+  templateById,
+  type PostAlign,
+  type PostRichText,
+  type PostVerticalAlign,
+  type RichNode,
+} from '@/components/studio/postStyle';
 import MoodActivityPicker from '@/components/studio/MoodActivityPicker';
 
 interface CreatePortalProps {
@@ -112,6 +130,31 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [hashtagDraft, setHashtagDraft] = useState('');
   const [background, setBackground] = useState<string | null>(null);
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
+  // Feeling, Activity and Background live behind the More tile rather than
+  // each taking a slot of their own in a seven-tile row.
+  const [showMore, setShowMore] = useState(false);
+
+  /*
+    Presentation, all of it stored on the post in rich_text.
+
+    post-service keeps that column as arbitrary JSON, so the template, the
+    alignment, the colours, the scale and the uploaded background image all
+    persist and come back on read with no backend change — the web was only
+    ever putting {background, text_color} in a column that was always general.
+  */
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
+  const [align, setAlign] = useState<PostAlign>('left');
+  const [valign, setValign] = useState<PostVerticalAlign>('top');
+  const [scale, setScale] = useState(1);
+  const [textColor, setTextColor] = useState<string | null>(null);
+  // The author's own background image: uploaded on pick, so the post carries
+  // a media id rather than a blob that dies with the tab.
+  const [bgMediaId, setBgMediaId] = useState<string | null>(null);
+  const [bgPreview, setBgPreview] = useState<string | null>(null);
+  const [bgUploading, setBgUploading] = useState(false);
+  const bgInputRef = useRef<HTMLInputElement>(null);
+  // Journal's document, kept beside the plain text the rest of the product reads.
+  const [richDoc, setRichDoc] = useState<RichNode | null>(null);
   /*
     Journal = a longer written entry with a heading. There is no journal
     content_type on the backend (POST_CONTENT_TYPES is post|poll|reel|video),
@@ -162,6 +205,51 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return createKeyRef.current;
   };
 
+  /*
+    Choosing a template sets every field it owns at once, so a template is a
+    starting point you can then adjust rather than a mode that locks the
+    controls. Picking "Plain" clears back to an ordinary card.
+  */
+  const applyTemplate = (id: string) => {
+    const tpl = templateById(id);
+    setTemplateId(id);
+    setAlign(tpl.style.align ?? 'left');
+    setValign(tpl.style.valign ?? 'top');
+    setScale(tpl.style.scale ?? 1);
+    setBackground(tpl.style.background ?? null);
+    setTextColor(tpl.style.text_color ?? null);
+  };
+
+  const handleBackgroundImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setBgUploading(true);
+    // Shown immediately; the upload replaces it with a durable media id.
+    const localUrl = URL.createObjectURL(file);
+    setBgPreview(localUrl);
+    try {
+      if (!file.type.startsWith('image/')) {
+        throw new Error('A background has to be an image.');
+      }
+      const mediaId = await uploadMedia(file, 'image', 'general');
+      setBgMediaId(mediaId);
+      // Words over a photo need a light default to read at all.
+      if (!textColor) setTextColor('#FFFFFF');
+    } catch (err) {
+      setBgPreview(null);
+      setError(err instanceof Error ? err.message : 'Could not upload that background.');
+    } finally {
+      setBgUploading(false);
+      if (bgInputRef.current) bgInputRef.current.value = '';
+    }
+  };
+
+  const clearBackgroundImage = () => {
+    setBgMediaId(null);
+    setBgPreview(null);
+  };
+
   const avatarSrc = profile?.avatar_media_id
     ? `/v1/media/${profile.avatar_media_id}/serve`
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User';
@@ -173,6 +261,18 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const onDark = !!bgSwatch.dark;
   const isTextOnly = files.length === 0 && !showPoll;
   const hasColorBg = background !== null && isTextOnly;
+  // A photo behind the words counts as styling too.
+  const hasBgImage = Boolean(bgPreview) && isTextOnly;
+  const isStyledCard = hasColorBg || hasBgImage;
+  /*
+    Which way the text has to read. The template's own colour wins when it
+    set one; otherwise the swatch's `dark` flag decides, which is what the
+    background picker has always used.
+  */
+  const styleOnDark = isStyledCard
+    ? (textColor ? textColor.toUpperCase() !== '#111111' && textColor.toLowerCase() !== '#000000' : onDark || hasBgImage)
+    : false;
+  const bodyTextColor = textColor ?? (styleOnDark ? '#FFFFFF' : '#111111');
 
   const validPollOptions = poll.options.filter((o) => o.trim()).length >= 2;
   const canPost = Boolean(text.trim() || journalTitle.trim() || files.length > 0 || (showPoll && validPollOptions));
@@ -351,9 +451,35 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           }
         : null;
 
-      const richText = hasColorBg && background
-        ? { background, text_color: onDark ? '#ffffff' : '#111111' }
-        : null;
+      /*
+        Everything about how this post LOOKS, in one JSON object on the post.
+        post-service stores rich_text as arbitrary JSON and hands it back on
+        read, so the template, placement, scale, colours, the author's
+        background image and the Journal document all survive the round trip
+        and PostCard renders from exactly these fields.
+
+        Null when there is nothing to say: an ordinary text post should not
+        carry a style object at all.
+      */
+      const richText: PostRichText | null = (() => {
+        const styled = isTextOnly && (background || bgMediaId || scale !== 1 || align !== 'left' || valign !== 'top');
+        if (!styled && !richDoc) return null;
+        const value: PostRichText = {};
+        if (styled) {
+          if (background) value.background = background;
+          value.text_color = bodyTextColor;
+          value.align = align;
+          value.valign = valign;
+          value.scale = scale;
+          value.template = templateId;
+          if (bgMediaId) value.background_media_id = bgMediaId;
+        }
+        if (richDoc) {
+          value.format = 'tiptap';
+          value.doc = richDoc;
+        }
+        return value;
+      })();
 
       // Merge any pending hashtag draft so users who type then click POST
       // without pressing Enter don't lose their tag.
@@ -469,6 +595,84 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return { Icon, kind, detail: detail.join(' · ') };
   }, [files, hasColorBg, hashtagDraft, hashtags, location, mood, poll, showJournal, showPoll]);
 
+  /*
+    The tiles, and the modes behind them.
+
+    Poll and Journal reshape the body, so they cannot both be on: picking one
+    clears the other. Photo and Video open the same picker with a different
+    `accept`, because the wire carries one media list either way — the split
+    exists so "add a video" is something you can find, rather than something
+    you discover by opening the photo picker.
+
+    Each tile's colour is a token from src/ui/theme.css. Nothing here is a hex.
+  */
+  const openPicker = (accept: string) => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.accept = accept;
+    fileInputRef.current.click();
+  };
+
+  const chooseMode = (mode: 'poll' | 'journal') => {
+    if (mode === 'poll') {
+      const next = !showPoll;
+      setShowPoll(next);
+      if (next) setShowJournal(false);
+      else setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
+      return;
+    }
+    const next = !showJournal;
+    setShowJournal(next);
+    if (next) setShowPoll(false);
+  };
+
+  const hasVideoFile = files.some((f) => f.type.startsWith('video'));
+  const tiles = [
+    {
+      key: 'photo', label: 'Photo', Icon: ImageIcon, title: 'Add photos',
+      tint: 'bg-tile-photo/10', fg: 'text-tile-photo', ring: 'ring-tile-photo',
+      active: files.length > 0 && !hasVideoFile,
+      disabled: files.length >= 10 || showPoll,
+      onClick: () => openPicker('image/*'),
+    },
+    {
+      key: 'video', label: 'Video', Icon: VideoIcon, title: 'Add a video',
+      tint: 'bg-tile-video/10', fg: 'text-tile-video', ring: 'ring-tile-video',
+      active: hasVideoFile,
+      disabled: files.length >= 10 || showPoll,
+      onClick: () => openPicker('video/*'),
+    },
+    {
+      key: 'poll', label: 'Poll', Icon: BarChart3, title: 'Ask a question with options',
+      tint: 'bg-tile-poll/10', fg: 'text-tile-poll', ring: 'ring-tile-poll',
+      active: showPoll, disabled: files.length > 0,
+      onClick: () => chooseMode('poll'),
+    },
+    {
+      key: 'journal', label: 'Journal', Icon: BookOpen, title: 'Write something longer, with a title',
+      tint: 'bg-tile-journal/10', fg: 'text-tile-journal', ring: 'ring-tile-journal',
+      active: showJournal, disabled: showPoll,
+      onClick: () => chooseMode('journal'),
+    },
+    {
+      key: 'place', label: 'Place', Icon: MapPin, title: 'Add a place',
+      tint: 'bg-tile-place/10', fg: 'text-tile-place', ring: 'ring-tile-place',
+      active: showLocation || Boolean(location.trim()), disabled: false,
+      onClick: () => setShowLocation((v) => !v),
+    },
+    {
+      key: 'tag', label: 'Tag', Icon: Hash, title: 'Add hashtags',
+      tint: 'bg-tile-tag/10', fg: 'text-tile-tag', ring: 'ring-tile-tag',
+      active: showHashtagInput || hashtags.length > 0, disabled: false,
+      onClick: () => setShowHashtagInput((v) => !v),
+    },
+    {
+      key: 'more', label: 'More', Icon: MoreHorizontal, title: 'Feeling, activity and background',
+      tint: 'bg-tile-more/10', fg: 'text-tile-more', ring: 'ring-tile-more',
+      active: showMore || Boolean(mood) || Boolean(background), disabled: false,
+      onClick: () => setShowMore((v) => !v),
+    },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -479,39 +683,34 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       onClick={(e) => e.stopPropagation()}
     >
       <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between px-6 pt-5">
-          <div>
-            {/* "CREATE POST" was typed in capitals rather than styled that
-                way, which is why the capitalisation sweep could not reach it. */}
-            <div className="text-xl font-semibold -tracking-[0.018em] text-brand-text">
-              Create post
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider text-brand-text transition-transform hover:scale-105 active:scale-95"
-          >
-            <X className="h-[18px] w-[18px]" />
-          </button>
-        </div>
-
-        {/* User row */}
-        <div className="flex shrink-0 items-center justify-between px-6 pt-5">
-          <div className="flex items-center gap-3">
+        {/*
+          One header instead of two rows. The title sat alone above a separate
+          identity row, so the dialog opened with two competing headers and the
+          avatar was a third block. Avatar, title and who you are posting as now
+          read as one line, with the two controls that act on the whole post -
+          audience and close - grouped on the right.
+        */}
+        <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-5">
+          <div className="flex min-w-0 items-center gap-3">
             <img
               src={avatarSrc}
               alt=""
-              className="h-11 w-11 rounded-full border-2 border-brand-secondary object-cover shadow-xs"
+              className="h-12 w-12 shrink-0 rounded-full border border-brand-divider object-cover"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[14px] font-medium text-brand-text">{displayName}</div>
-              <div className="mt-0.5 text-[11px] text-brand-text/60">{handle}</div>
+              <div className="text-[19px] font-semibold -tracking-[0.018em] text-brand-text">
+                Create post
+              </div>
+              {/* The reference says "Share your story" here. Naming the
+                  account is worth more: it is the one fact you cannot get
+                  back if you post from the wrong one. */}
+              <div className="mt-0.5 truncate text-[12px] text-brand-text/60">
+                Posting as {displayName} · {handle}
+              </div>
             </div>
           </div>
 
+          <div className="flex shrink-0 items-center gap-2">
           <div className="relative">
             <button
               type="button"
@@ -552,6 +751,15 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               )}
             </AnimatePresence>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary border border-brand-divider text-brand-text transition-colors hover:bg-brand-divider/40"
+          >
+            <X className="h-[18px] w-[18px]" />
+          </button>
+          </div>
         </div>
 
         {/* Scrollable middle */}
@@ -587,15 +795,33 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               has its own dedicated Question input. */}
           {!showPoll && (
           <div className="px-6 pt-4">
+            {/*
+              The writing card IS the preview. Template, alignment, vertical
+              placement, scale, colour and an uploaded background all apply
+              here exactly as PostCard will apply them once posted, so what
+              you compose is what appears in the feed.
+            */}
             <div
-              className={`rounded-[20px] p-5 transition-colors duration-300 ${
-                hasColorBg ? '' : 'bg-brand-secondary border border-brand-divider text-brand-text'
-              }`}
-              style={hasColorBg ? {
-                backgroundColor: background!,
-                color: onDark ? '#ffffff' : '#111',
+              className={`relative overflow-hidden rounded-[20px] p-5 transition-colors duration-300 ${
+                isStyledCard ? '' : 'bg-brand-secondary border border-brand-divider text-brand-text'
+              } ${valign === 'middle' && isStyledCard ? 'flex min-h-[240px] flex-col justify-center' : ''}`}
+              style={isStyledCard ? {
+                backgroundColor: background ?? '#101828',
+                backgroundImage: bgPreview ? `url(${bgPreview})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                color: bodyTextColor,
               } : undefined}
             >
+              {/* Scrim: a caption over an arbitrary photo is unreadable without one. */}
+              {hasBgImage && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={{ background: scrimFor(bodyTextColor) }}
+                />
+              )}
+              <div className={hasBgImage ? 'relative' : undefined}>
               {showJournal && (
                 <input
                   value={journalTitle}
@@ -603,10 +829,26 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   placeholder="Title"
                   maxLength={120}
                   className={`mb-3 w-full border-b bg-transparent pb-2 text-lg font-semibold -tracking-[0.018em] outline-hidden ${
-                    hasColorBg ? 'border-white/25 placeholder:text-current/50' : 'border-brand-divider text-brand-text placeholder:text-brand-text/35'
+                    styleOnDark ? 'border-white/25 placeholder:text-current/50' : 'border-brand-divider text-brand-text placeholder:text-brand-text/35'
                   }`}
                 />
               )}
+
+              {/*
+                Journal is a real editor, not a bigger textarea. It emits the
+                ProseMirror document, which is what gets stored in rich_text
+                and what the feed renders back through a whitelist.
+              */}
+              {showJournal ? (
+                <RichTextEditor
+                  onDark={styleOnDark}
+                  placeholder="Write your entry…"
+                  onChange={({ doc, text: plain }) => {
+                    setRichDoc(doc);
+                    setText(plain);
+                  }}
+                />
+              ) : (
               <textarea
                 ref={textareaRef}
                 value={text}
@@ -624,9 +866,19 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 } ${pollQuestionError ? 'ring-1 ring-rose-500 rounded-sm' : ''}`}
                 style={hasColorBg && onDark ? { color: '#ffffff' } : undefined}
               />
-              {pollQuestionError && (
-                <div className="mt-1 text-[11px] font-medium text-rose-600">{pollQuestionError}</div>
               )}
+              {pollQuestionError && (
+                <div className="mt-1 text-[11px] font-medium text-danger">{pollQuestionError}</div>
+              )}
+
+              {/* Count belongs with the words it counts. */}
+              <div
+                className={`mt-2 text-right text-[11px] tabular-nums ${
+                  charCount > maxChars * 0.9 ? 'font-semibold text-danger' : 'text-brand-text/40'
+                } ${hasColorBg ? 'text-current/60' : ''}`}
+              >
+                {charCount.toLocaleString()} / {maxChars.toLocaleString()}
+              </div>
 
               {/* Media previews */}
               {previews.length > 0 && (
@@ -661,8 +913,160 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   </button>
                 </div>
               )}
+              </div>
             </div>
           </div>
+          )}
+
+          {/*
+            Templates. Text and Journal only: a background behind a photo grid
+            is noise, so the strip is not offered when there is media, and a
+            poll has its own editor.
+          */}
+          {isTextOnly && (
+            <div className="px-6 pt-3">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {POST_TEMPLATES.map((tpl) => {
+                  const active = tpl.id === templateId && !bgMediaId;
+                  const swatch = tpl.style.background ?? 'var(--color-brand-secondary)';
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => { clearBackgroundImage(); applyTemplate(tpl.id); }}
+                      aria-pressed={active}
+                      className={`shrink-0 rounded-xl border p-1 transition-colors ${
+                        active ? 'border-primary-ink' : 'border-brand-divider hover:border-brand-text/30'
+                      }`}
+                    >
+                      <span
+                        className="flex h-12 w-16 items-center justify-center rounded-lg text-[11px] font-semibold"
+                        style={{
+                          background: swatch,
+                          color: tpl.style.text_color ?? 'rgb(var(--brand-text))',
+                          border: tpl.style.background ? 'none' : '1px solid var(--brand-divider)',
+                        }}
+                      >
+                        Aa
+                      </span>
+                      <span className="mt-1 block text-center text-[10px] text-brand-text/60">{tpl.label}</span>
+                    </button>
+                  );
+                })}
+
+                {/* The author's own image, uploaded rather than kept as a blob. */}
+                <button
+                  type="button"
+                  onClick={() => bgInputRef.current?.click()}
+                  disabled={bgUploading}
+                  aria-pressed={Boolean(bgMediaId)}
+                  className={`shrink-0 rounded-xl border p-1 transition-colors disabled:opacity-50 ${
+                    bgMediaId ? 'border-primary-ink' : 'border-brand-divider hover:border-brand-text/30'
+                  }`}
+                >
+                  <span
+                    className="flex h-12 w-16 items-center justify-center rounded-lg border border-dashed border-brand-divider bg-brand-secondary"
+                    style={bgPreview ? { backgroundImage: `url(${bgPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                  >
+                    {bgUploading
+                      ? <Loader2 className="h-4 w-4 animate-spin text-brand-text/60" />
+                      : !bgPreview && <ImagePlus className="h-4 w-4 text-brand-text/50" />}
+                  </span>
+                  <span className="mt-1 block text-center text-[10px] text-brand-text/60">Yours</span>
+                </button>
+
+                {bgMediaId && (
+                  <button
+                    type="button"
+                    onClick={clearBackgroundImage}
+                    className="shrink-0 self-start rounded-lg px-2 py-1 text-[11px] font-medium text-brand-text/60 hover:text-brand-text"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* Placement and size, once the card is styled enough to show it. */}
+              {isStyledCard && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-full bg-brand-secondary p-1">
+                    {([['left', AlignLeft, 'Align left'], ['center', AlignCenter, 'Align centre']] as const).map(([value, Icon, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setAlign(value)}
+                        aria-label={label}
+                        aria-pressed={align === value}
+                        title={label}
+                        className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${align === value ? 'bg-brand-card text-primary-ink' : 'text-brand-text/60 hover:text-brand-text'}`}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1 rounded-full bg-brand-secondary p-1">
+                    {([['top', AlignStartVertical, 'Top'], ['middle', AlignCenterVertical, 'Middle']] as const).map(([value, Icon, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setValign(value)}
+                        aria-label={label}
+                        aria-pressed={valign === value}
+                        title={label}
+                        className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${valign === value ? 'bg-brand-card text-primary-ink' : 'text-brand-text/60 hover:text-brand-text'}`}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <label className="flex items-center gap-2 rounded-full bg-brand-secondary px-3 py-1.5 text-[11px] text-brand-text/60">
+                    Size
+                    <input
+                      type="range"
+                      min={1}
+                      max={2}
+                      step={0.1}
+                      value={scale}
+                      onChange={(e) => setScale(Number(e.target.value))}
+                      className="h-1 w-20 accent-primary-ink"
+                      aria-label="Text size"
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-2 rounded-full bg-brand-secondary px-3 py-1.5 text-[11px] text-brand-text/60">
+                    Text
+                    <input
+                      type="color"
+                      value={bodyTextColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                      aria-label="Text colour"
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-2 rounded-full bg-brand-secondary px-3 py-1.5 text-[11px] text-brand-text/60">
+                    Card
+                    <input
+                      type="color"
+                      value={background ?? '#101828'}
+                      onChange={(e) => setBackground(e.target.value)}
+                      className="h-5 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                      aria-label="Card colour"
+                    />
+                  </label>
+                </div>
+              )}
+
+              <input
+                ref={bgInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImage}
+                className="hidden"
+              />
+            </div>
           )}
 
           {/* Poll editor */}
@@ -808,218 +1212,144 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-3 pb-4">
-          {/* What you can add, NAMED.
-              This was six icons in six different colours with no labels, so
-              the composer's abilities were guessable at best — a poll and a
-              feeling looked like decoration. Colour now carries state (added
-              or not) instead of identity, and every control says what it is. */}
-          {/* This row used to sit in a filled, bordered slab, which made a set
-              of optional extras the heaviest block in the dialog. The pills
-              carry their own state; the container is just spacing. */}
-          <div className="flex flex-wrap items-center gap-1">
+        {/*
+          Seven tiles, after the founder's reference. A tile carries its own
+          colour from src/ui/theme.css (never a hex here) and a label, so every
+          action is recognisable at a glance and named outright.
+
+          Photo, Video, Poll and Journal are MODES: picking one changes the
+          body above, and they are mutually exclusive, because a post cannot be
+          a poll and a journal entry at the same time. Place, Tag and More are
+          additions that layer onto whichever mode is active.
+
+          The reference also had an "Event" tile. post-service has no event
+          content type — post, poll, reel and video are the whole set — so that
+          tile could only ever have been a button that did nothing. Journal
+          takes its place: it is real and already supported here.
+        */}
+        <div className="grid shrink-0 grid-cols-4 gap-2 px-6 pt-4 sm:grid-cols-7">
+          {tiles.map((tile) => (
             <button
+              key={tile.key}
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={files.length >= 10}
-              title="Add a photo"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 ${files.length > 0 ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
+              onClick={tile.onClick}
+              disabled={tile.disabled}
+              aria-pressed={tile.active}
+              title={tile.title}
+              className={`flex flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 transition-colors disabled:opacity-35 ${
+                tile.active ? 'bg-brand-secondary' : 'hover:bg-brand-secondary/70'
+              }`}
             >
-              <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
-              Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowPoll((v) => !v);
-                if (showPoll) setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
-              }}
-              title="Ask a question with options"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showPoll ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <BarChart3 className="h-4 w-4" strokeWidth={1.75} />
-              Poll
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowJournal((v) => !v)}
-              title="Write something longer"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showJournal ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <BookOpen className="h-4 w-4" strokeWidth={1.75} />
-              Journal
-            </button>
-            {/* Feeling and Activity share one picker with two tabs; each
-                button opens its own tab, and pressing the open one closes it. */}
-            <button
-              type="button"
-              onClick={() => {
-                if (showMood && moodTab === 'feeling') { setShowMood(false); return; }
-                setMoodTab('feeling');
-                setShowMood(true);
-              }}
-              title="How you are feeling"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <Smile className="h-4 w-4" strokeWidth={1.75} />
-              Feeling
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (showMood && moodTab === 'activity') { setShowMood(false); return; }
-                setMoodTab('activity');
-                setShowMood(true);
-              }}
-              title="What you are doing"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
-              Activity
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowLocation((v) => !v)}
-              title="Add a place"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showLocation || location ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <MapPin className="h-4 w-4" strokeWidth={1.75} />
-              Place
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowHashtagInput((v) => !v)}
-              title="Add a hashtag"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showHashtagInput || hashtags.length > 0 ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <Hash className="h-4 w-4" strokeWidth={1.75} />
-              Tag
-            </button>
-            {/* Design: paints the textarea card background. Disabled when
-                media or a poll is present (color backgrounds are text-only
-                by design). */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowBackgroundPicker((v) => !v)}
-                aria-label="Design"
-                title="Design background"
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition hover:scale-105 ${
-                  showBackgroundPicker || background ? 'ring-2 ring-offset-1 ring-primary' : ''
+              <span
+                className={`flex h-11 w-11 items-center justify-center rounded-[14px] ${tile.tint} ${
+                  tile.active ? 'ring-2 ring-offset-2 ring-offset-brand-card ' + tile.ring : ''
                 }`}
               >
-                <FlowerPaletteIcon size={26} />
-              </button>
-              <AnimatePresence>
-                {showBackgroundPicker && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute bottom-full right-0 z-30 mb-3 rounded-2xl border border-brand-divider bg-brand-card px-5 pb-4 pt-3 shadow-xl"
+                <tile.Icon className={`h-5 w-5 ${tile.fg}`} strokeWidth={2} />
+              </span>
+              <span className={`text-[11px] font-medium ${tile.active ? 'text-brand-text' : 'text-brand-text/70'}`}>
+                {tile.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* More: the actions that do not earn a tile of their own. */}
+        <AnimatePresence>
+          {showMore && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.16 }}
+              className="shrink-0 overflow-hidden px-6"
+            >
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-2xl bg-brand-secondary p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showMood && moodTab === 'feeling') { setShowMood(false); return; }
+                    setMoodTab('feeling');
+                    setShowMood(true);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <Smile className="h-4 w-4" strokeWidth={1.75} />
+                  Feeling
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showMood && moodTab === 'activity') { setShowMood(false); return; }
+                    setMoodTab('activity');
+                    setShowMood(true);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
+                  Activity
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBackgroundPicker((v) => !v)}
+                  disabled={!isTextOnly}
+                  title={isTextOnly ? 'Colour the card behind your words' : 'Backgrounds work only on text-only posts'}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-35 ${(showBackgroundPicker || background) ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <FlowerPaletteIcon size={16} />
+                  Background
+                </button>
+                {background && (
+                  <button
+                    type="button"
+                    onClick={() => setBackground(null)}
+                    className="rounded-full px-3 py-1.5 text-xs font-medium text-brand-text/60 hover:text-brand-text"
                   >
-                    {!isTextOnly && (
-                      <div className="mb-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-700">
-                        Backgrounds work only on text-only posts. Remove
-                        any media or poll first.
-                      </div>
-                    )}
-                    <div className="mb-2 flex items-center justify-between gap-6">
-                      <div className="text-[10px] font-medium tracking-[0.15em] text-brand-text/60">
-                        Background
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBackground(null);
-                          setShowBackgroundPicker(false);
-                        }}
-                        className="text-[10px] font-medium tracking-widest text-primary-ink hover:underline"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                    {/* Rainbow half-arc: swatches arrayed across the top
-                        of a circle so they trace a smile-shaped arc. The
-                        arc's radius / arc-degrees feel right for ~8 colours;
-                        the null/no-bg swatch sits centred underneath the
-                        peak as the "neutral" pick. */}
-                    {(() => {
-                      const swatches = BACKGROUNDS.filter((s) => s.value !== null);
-                      const noneSwatch = BACKGROUNDS.find((s) => s.value === null)!;
-                      const radius = 80;
-                      const arcSpan = 160; // degrees
-                      const start = 180 + (180 - arcSpan) / 2; // left of arc
-                      const arcWidth = radius * 2 + 28;
-                      const arcHeight = radius + 26;
-                      return (
-                        <div
-                          className="relative mx-auto"
-                          style={{ width: arcWidth, height: arcHeight }}
-                        >
-                          {swatches.map((swatch, idx) => {
-                            const t = swatches.length === 1 ? 0.5 : idx / (swatches.length - 1);
-                            const angle = start + t * arcSpan;
-                            const rad = (angle * Math.PI) / 180;
-                            const cx = arcWidth / 2 + radius * Math.cos(rad);
-                            const cy = arcHeight + radius * Math.sin(rad);
-                            const selected = swatch.value === background;
-                            return (
-                              <button
-                                key={swatch.label}
-                                type="button"
-                                aria-label={swatch.label}
-                                onClick={() => {
-                                  setBackground(swatch.value);
-                                  setShowBackgroundPicker(false);
-                                }}
-                                className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-xs transition-transform hover:scale-125"
-                                style={{
-                                  left: cx - 14,
-                                  top: cy - 14,
-                                  background: swatch.value!,
-                                  outline: selected ? '2px solid #2563EB' : 'none',
-                                  outlineOffset: selected ? '1px' : 0,
-                                }}
-                              />
-                            );
-                          })}
-                          {/* No-background (transparent) swatch in the center, below the arc peak */}
-                          <button
-                            type="button"
-                            aria-label={noneSwatch.label}
-                            onClick={() => {
-                               setBackground(null);
-                               setShowBackgroundPicker(false);
-                            }}
-                            className="absolute h-7 w-7 cursor-pointer rounded-full border-2 border-white shadow-xs transition-transform hover:scale-125"
-                            style={{
-                              left: arcWidth / 2 - 14,
-                              top: arcHeight - 8,
-                              background:
-                                'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
-                              outline: background === null ? '2px solid #2563EB' : 'none',
-                              outlineOffset: background === null ? '1px' : 0,
-                            }}
-                          />
-                        </div>
-                      );
-                    })()}
-                  </motion.div>
+                    Clear background
+                  </button>
                 )}
-              </AnimatePresence>
-            </div>
+              </div>
+              {showBackgroundPicker && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-brand-secondary p-3">
+                  {BACKGROUNDS.map((swatch) => (
+                    <button
+                      key={swatch.label}
+                      type="button"
+                      aria-label={swatch.label}
+                      title={swatch.label}
+                      onClick={() => setBackground(swatch.value)}
+                      className="h-7 w-7 rounded-full border border-brand-divider transition-transform hover:scale-110"
+                      style={{
+                        background:
+                          swatch.value ??
+                          'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
+                        outline: swatch.value === background ? '2px solid rgb(var(--brand-ink))' : 'none',
+                        outlineOffset: '2px',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* What you are about to publish, and the one button that does it. */}
+        <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-brand-divider px-6 py-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-brand-text/60">
+            <summary.Icon className="h-4 w-4 shrink-0 text-brand-text/45" strokeWidth={1.75} />
+            <span className="font-semibold text-brand-text">{summary.kind}</span>
+            {summary.detail && <span className="truncate">· {summary.detail}</span>}
+            <span className="inline-flex items-center gap-1">
+              · seen by <VisIcon className="h-3 w-3" /> {visOption.label}
+            </span>
           </div>
 
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            // Sentence case at a normal size. It was ALL CAPS with 0.15em
-            // tracking on a 22px badge, which made the one button you press
-            // every time the loudest object in the dialog.
-            className="flex shrink-0 items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-primary-hover disabled:opacity-40"
+            className="flex shrink-0 items-center gap-2 rounded-full bg-primary-ink px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-primary-hover disabled:opacity-40"
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
@@ -1030,18 +1360,14 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           </button>
         </div>
 
-        {/* Footer status bar. The tiny all-caps widest-tracked text here was
-            the hardest thing in the dialog to read, for the least important
-            information in it. */}
-        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3 text-[12px] text-brand-text/60">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-success" />
-            {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}
-          </div>
-          <div className={charCount > maxChars * 0.9 ? 'font-semibold text-brand-text' : ''}>
-            {charCount.toLocaleString()} / {maxChars.toLocaleString()}
-          </div>
-        </div>
+        {/*
+          The footer status bar is gone. It said "Auto-saved as draft", and
+          nothing was: post-service has no draft route and this component
+          never called one, so the reassurance was false — close the dialog
+          and the text was lost. The character count it also carried now sits
+          inside the writing card, where the words are. If drafts are wanted,
+          that is a backend route first.
+        */}
 
         <input
           ref={fileInputRef}

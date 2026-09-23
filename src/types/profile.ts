@@ -1,3 +1,5 @@
+import type { PostRichText } from '@/components/studio/postStyle'
+
 export interface UserProfile {
     id: string
     username: string
@@ -218,11 +220,9 @@ export interface PostDetail {
         upload_status: string
         final_category: string
     }
-    // Rich text / styling metadata (stored as JSONB)
-    rich_text?: {
-        background?: string
-        text_color?: string
-    } | null
+    // Rich text / styling metadata (stored as JSONB). The full shape is in
+    // components/studio/postStyle.ts, shared with the composer that writes it.
+    rich_text?: PostRichText | null
     // Repost metadata — set when this feed entry is a repost
     is_repost?: boolean
     reposted_by?: string

@@ -1,5 +1,6 @@
 "use client"
 
+import type { PostRichText } from '@/components/studio/postStyle'
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { PostDetail } from "@/types/profile"
@@ -31,10 +32,11 @@ interface CreatePostPayload {
         allows_multiple?: boolean
         duration_hours?: number
     } | null
-    rich_text?: {
-        background?: string
-        text_color?: string
-    } | null
+    // Presentation, stored as arbitrary JSON by post-service. It carried two
+    // fields here while the column was always general; the shape lives in
+    // components/studio/postStyle.ts so the composer, the payload and the
+    // feed renderer cannot drift apart.
+    rich_text?: PostRichText | null
     hashtags?: string[]
     /**
      * post-service requires a UUID Idempotency-Key on create and refuses

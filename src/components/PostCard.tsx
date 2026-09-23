@@ -1,5 +1,7 @@
 'use client';
 
+import RichTextRenderer from '@/components/studio/RichTextRenderer';
+import { scrimFor } from '@/components/studio/postStyle';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
 import { useToggleLike, useToggleReaction } from '@/hooks/usePostReaction';
@@ -387,14 +389,73 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* Post Text with clickable hashtags and @mentions */}
       {!post.body_redacted && post.text && (() => {
-        const bg = post.rich_text?.background;
-        const textColor = post.rich_text?.text_color;
-        const hasStyledBg = !!bg && !post.media?.length;
+        /*
+          A styled post renders exactly as its author composed it.
+
+          Everything here comes from the post's own rich_text, which
+          post-service stores as arbitrary JSON: the template's colours, the
+          alignment, where the body sits, how large it is, and an uploaded
+          background image. The values are stored ON THE POST rather than read
+          from the theme, so the post looks the same to every reader in either
+          theme — which is the point of choosing a template.
+
+          Media wins over styling: a background behind a photo grid is noise,
+          so a style that arrives alongside media is ignored rather than
+          honoured.
+        */
+        const rich = post.rich_text;
+        const hasMedia = Boolean(post.media?.length);
+        const bg = rich?.background;
+        const bgImage = rich?.background_media_id;
+        const textColor = rich?.text_color;
+        const hasStyledBg = Boolean(bg || bgImage) && !hasMedia;
+        const align = rich?.align ?? 'center';
+        const valign = rich?.valign ?? 'middle';
+        const scale = Math.min(Math.max(rich?.scale ?? 1, 1), 2);
+        const richDoc = rich?.format === 'tiptap' ? rich.doc : undefined;
+
+        /*
+          A Journal post carries a document. It is rendered through
+          RichTextRenderer's whitelist rather than as HTML: the body was
+          written by somebody else, and nothing stops a modified client
+          putting markup in rich_text, so no part of it may reach the DOM as
+          markup. The plain `text` column is still what search, previews and
+          notifications read — this only changes what the card shows.
+        */
+        if (richDoc) {
+          const body = (
+            <RichTextRenderer
+              doc={richDoc}
+              className={`${hasStyledBg ? 'font-semibold' : 'text-brand-text'} ${align === 'center' ? 'text-center' : 'text-left'}`}
+            />
+          );
+          if (!hasStyledBg) {
+            return <div className="px-3 pb-3 text-[15px] leading-relaxed sm:px-4">{body}</div>;
+          }
+          return (
+            <div
+              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${valign === 'middle' ? 'flex min-h-[200px] flex-col justify-center' : 'min-h-[160px]'}`}
+              style={{
+                background: bg || '#101828',
+                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                color: textColor || '#ffffff',
+                fontSize: `${scale}em`,
+              }}
+            >
+              {bgImage && (
+                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
+              )}
+              <div className="relative">{body}</div>
+            </div>
+          );
+        }
 
         const textContent = (
           <p
-            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? 'text-center text-[20px] font-semibold' : 'text-[15px] text-brand-text'}`}
-            style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}
+            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-[15px] text-brand-text'}`}
+            style={hasStyledBg ? { color: textColor || '#ffffff', fontSize: `${scale * 1.25}rem` } : undefined}
           >
             {post.text.split(/(#[\p{L}\p{M}\p{N}_]+|@\w+)/gu).map((part, i) => {
               if (part.startsWith('#')) {
@@ -421,10 +482,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         if (hasStyledBg) {
           return (
             <div
-              className="mx-3 sm:mx-4 mb-3 rounded-xl p-6 min-h-[160px] flex items-center justify-center"
-              style={{ background: bg }}
+              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${
+                valign === 'middle' ? 'flex min-h-[160px] flex-col justify-center' : 'min-h-[160px]'
+              }`}
+              style={{
+                background: bg || '#101828',
+                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
             >
-              {textContent}
+              {bgImage && (
+                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
+              )}
+              <div className="relative">{textContent}</div>
             </div>
           );
         }
