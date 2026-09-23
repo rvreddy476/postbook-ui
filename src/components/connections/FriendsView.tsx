@@ -892,6 +892,7 @@ function AddFriendsModal({ onClose }: { onClose: () => void }) {
                                     </span>
                                 </button>
                                 <FriendRequestButton
+                allowSend={false}
                                     targetUserId={s.user_id}
                                     targetUsername={s.username}
                                     addLabel="+ Add"

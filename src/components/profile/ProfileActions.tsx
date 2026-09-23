@@ -260,6 +260,7 @@ export function ProfileActions({
                 </Button>
 
                 <FriendRequestButton
+                allowSend={false}
                     targetUserId={username ?? ""}
                     targetUsername={username}
                     relationship={relationship}

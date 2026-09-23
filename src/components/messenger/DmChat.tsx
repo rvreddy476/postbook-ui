@@ -39,6 +39,7 @@ import {
   PinnedMessage,
 } from '@/services/messageService'
 import { getSession } from '@/services/authService'
+import { useGlobalToast } from '@/contexts/ToastContext'
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useNotifications } from '@/contexts/NotificationContext'
@@ -204,7 +205,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   // Attachments used to fail into console.error alone, which is why a dead
   // upload route went unnoticed. The composer now says so.
+  const toast = useGlobalToast()
   const [attachError, setAttachError] = useState<string | null>(null)
+  // See where this is set: the thread is awaiting the other side's accept.
+  const [isRequestThread, setIsRequestThread] = useState(false)
 
   // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
@@ -267,6 +271,21 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
+        /*
+          A conversation the server marks is_request is one the other person
+          has not accepted. The first message goes through as a REQUEST: text
+          only, one message, nothing more until they accept — and accepting is
+          what forms the connection (message-service calls
+          ensureGraphConnection on accept).
+
+          Worth saying out loud after the send. Nothing else on screen
+          distinguishes a request from an ordinary thread, so without it a
+          message that is sitting unaccepted looks exactly like one that was
+          delivered and ignored.
+        */
+        setIsRequestThread(
+          Boolean(convRes.data?.is_request ?? (convRes as { is_request?: boolean }).is_request),
+        )
 
         // The peer's durable read watermark. The live `read_receipt` frame
         // only arrives while this conversation is open, so without this a
@@ -538,8 +557,17 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       else res = await sendMessage(convIdRef.current!, text)
       const real = res.data as BackendMessage
       setMessages(prev => prev.map(m => (m.id === optimisticId ? toDisplay(real) : m)))
+      // Only the FIRST message of a request needs saying; after that the
+      // banner above the thread carries it.
+      if (isRequestThread && messages.length === 0) {
+        toast({
+          type: 'success',
+          title: 'Message request sent',
+          description: 'They will see it once they accept. Accepting connects you.',
+        })
+      }
     } catch (err) { console.error('[DmChat] send failed:', err) }
-  }, [input, myId, replyingTo])
+  }, [input, myId, replyingTo, isRequestThread, messages.length, toast])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

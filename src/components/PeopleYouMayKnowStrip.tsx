@@ -121,6 +121,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                     : `@${user.username ?? ''}`}
                 </p>
                 <FriendRequestButton
+                allowSend={false}
                   targetUserId={user.user_id}
                   targetUsername={user.username}
                   relationship={relMap?.get(user.user_id)}

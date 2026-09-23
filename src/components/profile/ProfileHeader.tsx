@@ -38,6 +38,7 @@ import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
 import TierPicker from "@/components/monetization/TierPicker"
 import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
+import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
 import { ImageAdjustDialog } from "@/components/media/ImageAdjustDialog"
 
@@ -454,6 +455,7 @@ export function ProfileHeader({
                                         {/* Add Friend / Circle — for normal user accounts */}
                                         {!isCreatorOrBusiness && (
                                             <FriendRequestButton
+                allowSend={false}
                                                 targetUserId={profile.id}
                                                 targetUsername={profile.username}
                                                 relationship={relationship}
@@ -466,18 +468,25 @@ export function ProfileHeader({
                                             />
                                         )}
 
-                                        <button
-                                            onClick={canDM ? onMessage : undefined}
-                                            className={`flex items-center justify-center h-10 w-10 rounded-xl border transition-all ${
-                                                canDM
-                                                    ? "border-brand-divider text-brand-text hover:bg-brand-secondary shadow-xs"
-                                                    : "border-brand-divider text-brand-text/30 cursor-not-allowed"
-                                            }`}
-                                            title={canDM ? "Send message" : "Add to Circle to message"}
-                                        >
-                                            {!canDM && <Lock className="w-3.5 h-3.5" />}
-                                            <MessageSquare className="w-4.5 h-4.5" />
-                                        </button>
+                                        {/*
+                                          Never locked.
+
+                                          This used to grey itself out with a
+                                          padlock and "Add to Circle to
+                                          message" whenever canDM was false —
+                                          which, with every account on the
+                                          default privacy setting, is every
+                                          stranger. It told people the one
+                                          thing they came to do was unavailable
+                                          when in fact it was available as a
+                                          message REQUEST, which is how a
+                                          connection is now formed at all.
+                                        */}
+                                        <MessageButton
+                                            targetUserId={profile.id}
+                                            onMessage={() => onMessage?.()}
+                                            className="bg-primary-grad flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                                        />
                                     </>
                                 )}
                             </div>

@@ -285,6 +285,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
 
     return (
       <FriendRequestButton
+                allowSend={false}
         targetUserId={m.user_id}
         targetUsername={m.username}
         relationship={rel}

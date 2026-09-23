@@ -20,6 +20,19 @@ type FriendRequestButtonProps = {
     friendLabel?: string
     showIcon?: boolean
     showIncomingActions?: boolean
+    /**
+     * Whether this surface may START a connection.
+     *
+     * False everywhere now: the founder removed Connect from the product, and
+     * a connection is formed by ACCEPTING A MESSAGE REQUEST instead —
+     * message-service already does exactly that on accept, via
+     * ensureGraphConnection. The outgoing half of this button is therefore
+     * dead as a product decision, not as dead code.
+     *
+     * The incoming half stays. Requests sent before the change still exist,
+     * and a pending one with nowhere to be accepted would be a trap.
+     */
+    allowSend?: boolean
     allowCancel?: boolean
     className?: string
     sentClassName?: string
@@ -47,6 +60,7 @@ export function FriendRequestButton({
     friendLabel = "Connected",
     showIcon = true,
     showIncomingActions = true,
+    allowSend = true,
     allowCancel = true,
     className,
     sentClassName,
@@ -158,6 +172,12 @@ export function FriendRequestButton({
                 </button>
             </div>
         )
+    }
+
+    // Nothing to show when this surface cannot initiate: an outgoing request
+    // it can neither create nor usefully explain is just a label.
+    if (!allowSend) {
+        return null
     }
 
     if (state.requestSent) {
