@@ -120,6 +120,11 @@
   --color-send-hover: rgb(var(--send-hover));
   --color-receipt-seen: rgb(var(--receipt-seen));
 
+  /* Gradient stops and the page tint; values in src/ui/theme.css. */
+  --color-brand-lift: rgb(var(--brand-lift));
+  --color-brand-deep: rgb(var(--brand-deep));
+  --color-canvas-tint: rgb(var(--canvas-tint));
+
   /* Composer action icons; values in src/ui/theme.css. */
   --color-tile-photo: rgb(var(--tile-photo));
   --color-tile-video: rgb(var(--tile-video));
@@ -174,6 +179,26 @@
 }
 
 @layer utilities {
+  /*
+    The primary call to action, with light in it.
+
+    A flat fill on a flat page is what made the product read as dull. This is
+    one gradient between two stops of the SAME cerulean (src/ui/theme.css), so
+    it brightens without introducing a colour the palette does not have, and
+    it lives here rather than being spelled out at each button — bg-primary-ink
+    appears 272 times and colour belongs in one file.
+
+    Applied to the few controls that carry a page: Post, Connect, Tap to load.
+    Every other button keeps the flat fill on purpose; a page where everything
+    shines has nothing that stands out.
+  */
+  .bg-primary-grad {
+    background-image: linear-gradient(135deg, var(--color-brand-lift) 0%, var(--color-brand-deep) 100%);
+  }
+  .bg-primary-grad:hover {
+    background-image: linear-gradient(135deg, var(--color-brand-lift) 20%, var(--color-brand-deep) 120%);
+  }
+
   :root {
     --foreground-rgb: var(--theme-foreground-rgb);
     --background-start-rgb: var(--theme-background-start-rgb);
@@ -206,6 +231,9 @@
     --danger: var(--theme-danger);
     --info: var(--theme-info);
     --send: var(--theme-send);
+    --brand-lift: var(--theme-brand-lift);
+    --brand-deep: var(--theme-brand-deep);
+    --canvas-tint: var(--theme-canvas-tint);
     --tile-photo: var(--theme-tile-photo);
     --tile-video: var(--theme-tile-video);
     --tile-poll: var(--theme-tile-poll);
@@ -244,6 +272,9 @@
     --danger: var(--theme-danger);
     --info: var(--theme-info);
     --send: var(--theme-send);
+    --brand-lift: var(--theme-brand-lift);
+    --brand-deep: var(--theme-brand-deep);
+    --canvas-tint: var(--theme-canvas-tint);
     --tile-photo: var(--theme-tile-photo);
     --tile-video: var(--theme-tile-video);
     --tile-poll: var(--theme-tile-poll);
@@ -259,6 +290,23 @@
   body {
     max-width: 100%;
     overflow-x: hidden;
+    /*
+      The page ground, with a little light in it.
+
+      A flat near-white behind near-white cards gave the whole product the
+      greyness the founder called dull: everything the same value, nothing
+      sitting above anything. This is a very soft vertical wash between the
+      canvas and a tint of the SAME cerulean — no new hue, both values in
+      src/ui/theme.css — so cards read as lifted off the page instead of
+      drawn onto it. It is fixed so it does not slide while the feed scrolls.
+    */
+    background-image: linear-gradient(
+      180deg,
+      var(--color-canvas-tint) 0%,
+      var(--color-canvas) 42%,
+      var(--color-canvas) 100%
+    );
+    background-attachment: fixed;
   }
 
   /*

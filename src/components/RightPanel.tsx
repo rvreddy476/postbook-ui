@@ -152,7 +152,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       addLabel="Connect"
                       showIncomingActions={false}
                       allowCancel={false}
-                      className="shrink-0 rounded-full bg-primary-ink px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
+                      className="bg-primary-grad shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
                       sentClassName="bg-brand-secondary text-muted-foreground"
                     />
                   </li>

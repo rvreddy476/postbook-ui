@@ -90,6 +90,20 @@
   --theme-tile-tag: 180 83 9;
   --theme-tile-more: 83 100 113;
 
+  /*
+    Lift. The page read as flat and grey — correct colours, no life in them.
+
+    These are the SAME cerulean family, not new hues: a lighter and a deeper
+    stop of the accent for gradients on the things you press, and a tint for
+    the page wash so white cards sit on something rather than dissolving into
+    it. Adding brightness by inventing colours would have broken the one-file
+    rule and the palette at once; adding stops of the colour that is already
+    there does neither.
+  */
+  --theme-brand-lift: 92 166 224;
+  --theme-brand-deep: 40 90 138;
+  --theme-canvas-tint: 233 240 249;
+
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
 }
@@ -152,6 +166,11 @@
   --theme-tile-place: 106 168 224;
   --theme-tile-tag: 251 191 36;
   --theme-tile-more: 139 152 165;
+
+  /* Same stops, lifted for the dark ground. */
+  --theme-brand-lift: 122 186 238;
+  --theme-brand-deep: 58 116 172;
+  --theme-canvas-tint: 12 18 26;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;

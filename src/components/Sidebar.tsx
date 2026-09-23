@@ -147,8 +147,25 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <nav className={navClass}>
-      {/* Collapse toggle */}
+      {/*
+        The wordmark, and the collapse toggle.
+
+        The product's name used to appear only as a "VC" badge in the header —
+        an abbreviation of a name the reader had never been shown. It is
+        written out here instead, at the top of the rail, which is where a
+        product says what it is. Collapsed, the rail keeps the toggle alone;
+        there is no room for a word and a truncated one is worse than none.
+      */}
       <div className={`mb-4 flex items-center ${expanded ? 'justify-between px-2' : 'justify-center'}`}>
+        {expanded && (
+          <Link
+            href="/"
+            className="rounded-lg px-2 py-1 text-[20px] font-bold -tracking-[0.02em] text-primary-ink transition-opacity hover:opacity-80"
+            title="Home"
+          >
+            VChat
+          </Link>
+        )}
         <button
           onClick={() => setExpanded?.(!expanded)}
           aria-label="Toggle menu"

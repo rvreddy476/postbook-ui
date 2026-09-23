@@ -212,7 +212,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <article
-      className="bg-brand-card rounded-xl shadow-xs border border-brand-divider group/card"
+      // Rounder, with a shadow that exists and a card that answers the
+      // pointer. shadow-xs on a hairline border read as a grey box drawn on a
+      // grey page — correct colours, no depth, which is what "dull" was.
+      className="group/card rounded-2xl border border-brand-divider bg-brand-card shadow-[0_1px_2px_rgba(15,20,25,0.04),0_8px_24px_-12px_rgba(15,20,25,0.10)] transition-shadow duration-200 hover:shadow-[0_1px_2px_rgba(15,20,25,0.05),0_12px_32px_-12px_rgba(15,20,25,0.16)]"
     >
       {/* Repost indicator */}
       {post.is_repost && (

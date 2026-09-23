@@ -272,7 +272,7 @@ const Feed: React.FC<FeedProps> = ({ onCreateClick }) => {
             <button
               type="button"
               onClick={handleLoadNewPosts}
-              className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-primary-hover"
+              className="bg-primary-grad flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
             >
               Tap to load
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.25} />

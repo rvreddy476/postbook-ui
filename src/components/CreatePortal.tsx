@@ -1080,7 +1080,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex shrink-0 items-center gap-2 rounded-full bg-primary-ink px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-primary-hover disabled:opacity-40"
+            className="bg-primary-grad flex shrink-0 items-center gap-2 rounded-full px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />

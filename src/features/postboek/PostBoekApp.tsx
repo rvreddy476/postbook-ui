@@ -241,7 +241,7 @@ const PostBoekApp: React.FC = () => {
           setExpanded={setNavExpanded}
         />
 
-        <div className={`relative flex h-full flex-1 overflow-hidden pt-20 transition-all duration-500 ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
+        <div className={`relative flex h-full flex-1 overflow-hidden pt-16 transition-all duration-500 ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
 
           {isContactListOpen && (
             <aside

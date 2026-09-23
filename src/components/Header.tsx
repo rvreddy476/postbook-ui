@@ -393,7 +393,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     // both 1fr, so the middle one is centred on the BAR regardless of how wide
     // the logo or the action rail happen to be. With space-between the search
     // only ever sat next to the logo and drifted whenever either side changed.
-    <header className={`fixed top-0 z-100 h-20 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+    <header className={`fixed top-0 z-100 h-16 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Column 1 — brand mark, constant on every route */}
       <div className="flex items-center gap-2 justify-self-start">
         {/* Back, on phones only. A phone's browser has no app back button
@@ -417,13 +417,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             <ChevronLeft className="h-5 w-5" />
           </button>
         )}
-        <button
-          onClick={() => router.push('/')}
-          title="VChat Home"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-ink shadow-xs transition-transform duration-200 ease-out active:scale-95"
-        >
-          <span className="text-sm font-bold -tracking-[0.02em] text-white">VC</span>
-        </button>
+        {/*
+          The "VC" badge lived here and is now the wordmark on the left rail,
+          spelled out. Two marks for one product, one of them an abbreviation
+          nobody had been taught, was a name doing less work than the space it
+          took.
+        */}
       </div>
 
       {/* Column 2 — search, centred on the bar */}
