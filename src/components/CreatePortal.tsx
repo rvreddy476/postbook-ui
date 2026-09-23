@@ -276,6 +276,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Leaving a media post drops what it had collected, so an attachment cannot
+  // ride along invisibly on a poll or a journal entry.
+  const clearFiles = () => setFiles([]);
+
   const handleSubmit = useCallback(async () => {
     if (!canPost || isSubmitting) return;
 
@@ -489,17 +493,43 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     fileInputRef.current.click();
   };
 
-  const chooseMode = (mode: 'poll' | 'journal') => {
-    if (mode === 'poll') {
-      const next = !showPoll;
-      setShowPoll(next);
-      if (next) setShowJournal(false);
-      else setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
+  /*
+    One kind of post at a time.
+
+    Photo, Video, Poll and Journal are the four shapes a post can take, and
+    they were only half exclusive: Poll and Journal cleared each other, but
+    Photo did not clear Journal. So pressing the image icon while writing an
+    entry attached a media grid UNDER the editor — two different bodies in one
+    post, which is not a thing the wire can express and not what anyone meant
+    by it. Journal now takes its pictures inside the editor, where they belong.
+
+    Switching away from a mode clears what that mode collected, so a half-built
+    poll or a stray attachment cannot ride along invisibly on a post of another
+    kind.
+  */
+  const chooseMode = (mode: 'photo' | 'video' | 'poll' | 'journal') => {
+    const leavingJournal = () => { setShowJournal(false); setRichDoc(null); setJournalTitle(''); };
+    const leavingPoll = () => { setShowPoll(false); setPoll({ options: ['', ''], duration: '1d', allowMultiple: false }); setPollOptionErrors({}); setPollQuestionError(null); };
+
+    if (mode === 'photo' || mode === 'video') {
+      if (showJournal) leavingJournal();
+      if (showPoll) leavingPoll();
+      openPicker(mode === 'photo' ? 'image/*' : 'video/*');
       return;
     }
-    const next = !showJournal;
-    setShowJournal(next);
-    if (next) setShowPoll(false);
+
+    if (mode === 'poll') {
+      if (showPoll) { leavingPoll(); return; }
+      if (showJournal) leavingJournal();
+      clearFiles();
+      setShowPoll(true);
+      return;
+    }
+
+    if (showJournal) { leavingJournal(); return; }
+    if (showPoll) leavingPoll();
+    clearFiles();
+    setShowJournal(true);
   };
 
   const hasVideoFile = files.some((f) => f.type.startsWith('video'));
@@ -507,23 +537,23 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     {
       key: 'photo', fg: 'text-tile-photo', label: 'Photo', Icon: ImageIcon, title: 'Add photos',
       active: files.length > 0 && !hasVideoFile,
-      disabled: files.length >= 10 || showPoll,
-      onClick: () => openPicker('image/*'),
+      disabled: files.length >= 10,
+      onClick: () => chooseMode('photo'),
     },
     {
       key: 'video', fg: 'text-tile-video', label: 'Video', Icon: VideoIcon, title: 'Add a video',
       active: hasVideoFile,
-      disabled: files.length >= 10 || showPoll,
-      onClick: () => openPicker('video/*'),
+      disabled: files.length >= 10,
+      onClick: () => chooseMode('video'),
     },
     {
       key: 'poll', fg: 'text-tile-poll', label: 'Poll', Icon: BarChart3, title: 'Ask a question with options',
-      active: showPoll, disabled: files.length > 0,
+      active: showPoll, disabled: false,
       onClick: () => chooseMode('poll'),
     },
     {
       key: 'journal', fg: 'text-tile-journal', label: 'Journal', Icon: BookOpen, title: 'Write something longer, with a title',
-      active: showJournal, disabled: showPoll,
+      active: showJournal, disabled: false,
       onClick: () => chooseMode('journal'),
     },
     {
@@ -702,6 +732,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               */}
               {showJournal ? (
                 <RichTextEditor
+                  onError={setError}
                   placeholder="Start writing…"
                   onChange={({ doc, text: plain }) => {
                     setRichDoc(doc);

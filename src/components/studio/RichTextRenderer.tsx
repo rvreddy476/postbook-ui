@@ -54,6 +54,27 @@ const safeHref = (raw: unknown): string | null => {
   }
 };
 
+/**
+ * A media source that is safe to put in a src attribute.
+ *
+ * Same rules as a link, minus the relative-path leniency in one respect:
+ * a `data:` URI is refused outright. It is the obvious way to smuggle a
+ * payload past a host check, it defeats every CSP that names origins, and
+ * nothing in this product needs one — an uploaded image is a media id.
+ */
+export const safeMediaSrc = (raw: unknown): string | null => {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim();
+  if (!value) return null;
+  if (value.startsWith('/') && !value.startsWith('//')) return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
 function applyMarks(text: string, marks: RichNode['marks'], key: React.Key): React.ReactNode {
   if (!marks || marks.length === 0) return text;
   let node: React.ReactNode = text;
@@ -127,6 +148,22 @@ function renderNode(node: RichNode, key: React.Key): React.ReactNode {
           <code>{renderNodes(node.content)}</code>
         </pre>
       );
+    case 'image': {
+      // A src that does not pass the check drops the node entirely rather
+      // than rendering a broken image with an attacker's URL in it.
+      const src = safeMediaSrc(node.attrs?.src);
+      if (!src) return null;
+      const alt = typeof node.attrs?.alt === 'string' ? node.attrs.alt : '';
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={key} src={src} alt={alt} className="my-3 max-w-full rounded-xl" loading="lazy" />
+      );
+    }
+    case 'video': {
+      const src = safeMediaSrc(node.attrs?.src);
+      if (!src) return null;
+      return <video key={key} src={src} controls preload="metadata" className="my-3 max-w-full rounded-xl" />;
+    }
     case 'horizontalRule':
       return <hr key={key} className="my-4 border-current/20" />;
     case 'hardBreak':

@@ -7,6 +7,10 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
+import Image from '@tiptap/extension-image';
+import Video from './VideoNode';
+import { uploadMedia } from '@/lib/mediaUpload';
+import { safeMediaSrc } from './RichTextRenderer';
 import {
   AlignCenter,
   AlignJustify,
@@ -19,7 +23,9 @@ import {
   Code2,
   Highlighter,
   Italic,
+  ImagePlus,
   Link2,
+  Loader2,
   Redo2,
   Strikethrough,
   Underline as UnderlineIcon,
@@ -50,6 +56,8 @@ interface RichTextEditorProps {
   className?: string;
   /** Rendered at the right end of the toolbar (the composer puts Post there). */
   toolbarEnd?: React.ReactNode;
+  /** A failed insert says so where the composer shows its other errors. */
+  onError?: (message: string) => void;
 }
 
 function Tool({
@@ -182,7 +190,107 @@ function BlockMenu({ editor }: { editor: Editor }) {
   );
 }
 
-function Toolbar({ editor, toolbarEnd }: { editor: Editor; toolbarEnd?: React.ReactNode }) {
+/**
+ * Insert an image or a video INTO the document \u2014 upload one, or give a URL.
+ *
+ * This is what the composer's Photo and Video icons do for an ordinary post,
+ * brought inside the editor: in Journal mode a picture belongs where you are
+ * writing, not in a grid stapled underneath the entry, which is exactly what
+ * the outside icons produced.
+ *
+ * An upload goes through media-service like every other one, so the document
+ * stores a media id's serve path rather than a blob URL that dies with the tab.
+ */
+function InsertMedia({ editor, onError }: { editor: Editor; onError: (message: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const insert = (src: string, kind: 'image' | 'video') => {
+    if (kind === 'image') editor.chain().focus().setImage({ src }).run();
+    else editor.chain().focus().setVideo({ src }).run();
+  };
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const isVideo = file.type.startsWith('video/');
+      if (!file.type.startsWith('image/') && !isVideo) {
+        throw new Error('Only an image or a video can go in the text.');
+      }
+      const mediaId = await uploadMedia(file, isVideo ? 'video' : 'image', 'general');
+      insert('/v1/media/' + mediaId + '/serve', isVideo ? 'video' : 'image');
+      setOpen(false);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Could not add that file.');
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const fromUrl = () => {
+    const input = window.prompt('Image or video address');
+    if (input === null) return;
+    const raw = input.trim();
+    if (!raw) return;
+    const value = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+    // The same check the feed will apply. Refusing here means a bad address
+    // is caught while you can still fix it, instead of silently vanishing
+    // from the post once it is published.
+    const src = safeMediaSrc(value);
+    if (!src) {
+      onError('That address cannot be used. Give an http or https link.');
+      return;
+    }
+    insert(src, /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(src) ? 'video' : 'image');
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={wrapRef}>
+      <Tool label="Insert image or video" active={open} onClick={() => setOpen((v) => !v)}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} /> : <ImagePlus className="h-4 w-4" strokeWidth={1.75} />}
+      </Tool>
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-xl">
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="w-full px-3 py-1.5 text-left text-[12px] text-brand-text transition-colors hover:bg-brand-secondary disabled:opacity-40"
+          >
+            Upload a file\u2026
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={fromUrl}
+            className="w-full px-3 py-1.5 text-left text-[12px] text-brand-text transition-colors hover:bg-brand-secondary"
+          >
+            From a URL\u2026
+          </button>
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*,video/*" onChange={onFile} className="hidden" />
+    </div>
+  );
+}
+
+function Toolbar({ editor, toolbarEnd, onError }: { editor: Editor; toolbarEnd?: React.ReactNode; onError: (message: string) => void }) {
   const setLink = () => {
     const previous = (editor.getAttributes('link').href as string) ?? '';
     const input = window.prompt('Link address', previous);
@@ -257,6 +365,7 @@ function Toolbar({ editor, toolbarEnd }: { editor: Editor; toolbarEnd?: React.Re
       <Tool label="Code block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
         <Code2 className="h-4 w-4" strokeWidth={1.75} />
       </Tool>
+      <InsertMedia editor={editor} onError={onError} />
 
       {toolbarEnd && (
         <>
@@ -274,7 +383,13 @@ export default function RichTextEditor({
   onChange,
   className,
   toolbarEnd,
+  onError,
 }: RichTextEditorProps) {
+  const [localError, setLocalError] = useState<string | null>(null);
+  const report = (message: string) => {
+    if (onError) onError(message);
+    else setLocalError(message);
+  };
   const editor = useEditor({
     // Next renders this on the server too, and TipTap warns that SSR and the
     // first client render can disagree; client-only is what TipTap itself
@@ -286,6 +401,10 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Highlight,
+      // allowBase64 off: a data: URI is the obvious way to smuggle a payload
+      // past a host check and nothing here needs one — an upload is a media id.
+      Image.configure({ inline: false, allowBase64: false }),
+      Video,
     ],
     // RichNode is deliberately looser than TipTap's JSONContent: it models a
     // document that ARRIVED FROM THE SERVER, where every field is optional
@@ -314,7 +433,12 @@ export default function RichTextEditor({
 
   return (
     <div className={`overflow-hidden rounded-2xl border border-brand-divider bg-brand-card ${className ?? ''}`}>
-      <Toolbar editor={editor} toolbarEnd={toolbarEnd} />
+      <Toolbar editor={editor} toolbarEnd={toolbarEnd} onError={report} />
+      {localError && (
+        <div role="alert" className="border-b border-brand-divider bg-danger/10 px-4 py-2 text-[12px] text-danger">
+          {localError}
+        </div>
+      )}
       <div className="px-4 py-3 text-[15px] text-brand-text">
         <EditorContent editor={editor} />
       </div>

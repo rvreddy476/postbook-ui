@@ -78,3 +78,35 @@ describe('RichTextRenderer attributes', () => {
     expect(html).toContain('<mark');
   });
 });
+
+describe('RichTextRenderer media', () => {
+  it('renders an uploaded image and a video', () => {
+    const html = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+      doc: { type: 'doc', content: [
+        { type: 'image', attrs: { src: '/v1/media/abc/serve', alt: 'a photo' } },
+        { type: 'video', attrs: { src: 'https://example.com/clip.mp4' } },
+      ] },
+    }));
+    expect(html).toContain('/v1/media/abc/serve');
+    expect(html).toContain('a photo');
+    expect(html).toContain('<video');
+  });
+
+  it('drops a javascript: and a data: media source entirely', () => {
+    for (const src of ['javascript:alert(1)', 'data:text/html;base64,PHNjcmlwdD4=']) {
+      const html = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+        doc: { type: 'doc', content: [{ type: 'image', attrs: { src } }] },
+      }));
+      expect(html).not.toContain('javascript');
+      expect(html).not.toContain('data:');
+      expect(html).not.toContain('<img');
+    }
+  });
+
+  it('drops a protocol-relative source, which inherits the page scheme', () => {
+    const html = renderToStaticMarkup(React.createElement(RichTextRenderer, {
+      doc: { type: 'doc', content: [{ type: 'image', attrs: { src: '//evil.example/x.png' } }] },
+    }));
+    expect(html).not.toContain('evil.example');
+  });
+});
