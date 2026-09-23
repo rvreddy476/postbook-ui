@@ -482,10 +482,18 @@ export function ProfileHeader({
                                           message REQUEST, which is how a
                                           connection is now formed at all.
                                         */}
+                                        {/*
+                                          Labelled here rather than icon-only:
+                                          a profile is where someone decides
+                                          whether to reach out, so it should
+                                          say whether this will be a message or
+                                          a request — and, afterwards, that the
+                                          request has been sent.
+                                        */}
                                         <MessageButton
                                             targetUserId={profile.id}
                                             onMessage={() => onMessage?.()}
-                                            className="bg-primary-grad flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                                            variant="full"
                                         />
                                     </>
                                 )}
