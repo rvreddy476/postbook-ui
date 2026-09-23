@@ -3,15 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Play, TrendingUp, Users } from 'lucide-react';
+import { MessageCircle, Play, TrendingUp, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useTrending } from '@/hooks/useSearch';
+import { usePermissions, messageAffordance } from '@/hooks/usePermissions';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
 import { useLiveStreams } from '@/hooks/useLiveV2';
-import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
 import Avatar from '@/components/ui/Avatar';
 import { User } from '../types';
 
@@ -41,7 +41,7 @@ function formatViews(n: number): string {
  * - The cards used to reshuffle every 12 seconds. Content that moves while you
  *   are reading it takes control away from you, so the order is fixed now.
  */
-const RightPanel: React.FC<RightPanelProps> = () => {
+const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
   const router = useRouter();
   const authUser = useAuthUser();
   // Over-fetch: people already asked are filtered out below, so asking for
@@ -77,6 +77,17 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       return rel.connection_status !== 'pending_sent' && !rel.is_connection;
     })
     .slice(0, 5);
+
+  /*
+    What the viewer may do with the people on screen, decided by
+    graph-service rather than inferred here. Only the five rendered, so the
+    batch is small and it re-asks when the list changes.
+  */
+  const { data: permissions } = usePermissions(
+    people.map((p) => p.user_id),
+    ['message'],
+  );
+
   // Only streams that are actually live right now.
   const { data: livePages } = useLiveStreams(10);
   const liveNow = (livePages?.pages ?? []).flatMap((p: any) => p.items ?? p.data ?? []).filter((s: any) => s?.status === "live");
@@ -145,16 +156,49 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                         </span>
                       </span>
                     </button>
-                    <FriendRequestButton
-                      targetUserId={p.user_id}
-                      targetUsername={p.username}
-                      relationship={relMap?.get(p.user_id)}
-                      addLabel="Connect"
-                      showIncomingActions={false}
-                      allowCancel={false}
-                      className="bg-primary-grad shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
-                      sentClassName="bg-brand-secondary text-muted-foreground"
-                    />
+                    {(() => {
+                      /*
+                        One control: message. Connect and Follow are gone from
+                        this rail at the founder's request — a suggestion list
+                        is for starting a conversation, and asking a stranger
+                        to accept a connection before you have said anything
+                        is the heavier half of the exchange first.
+
+                        Whether you MAY message, and whether it arrives as a
+                        thread or as a request, is the server's decision, not
+                        this component's. See usePermissions: message has three
+                        answers, not two, and the middle one — a text-only
+                        request until they accept — is the common case here.
+                      */
+                      const affordance = messageAffordance(permissions?.get(p.user_id)?.message);
+                      const disabled = affordance.state === 'loading' || affordance.state === 'blocked';
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (disabled) return;
+                            onContactClick({
+                              id: p.user_id,
+                              name,
+                              avatar: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : '',
+                              username: p.username,
+                            } as User);
+                          }}
+                          disabled={disabled}
+                          aria-label={affordance.state === 'loading' ? 'Checking' : affordance.label}
+                          title={affordance.state === 'loading' ? undefined : affordance.label}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all ${
+                            affordance.state === 'open'
+                              ? 'bg-primary-grad text-white shadow-sm hover:shadow-md active:scale-[0.98]'
+                              : affordance.state === 'request'
+                                ? 'border border-brand-outline bg-primary-tint text-primary-ink hover:bg-primary-tint/70 active:scale-[0.98]'
+                                : 'cursor-not-allowed text-brand-text/25'
+                          }`}
+                        >
+                          <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        </button>
+                      );
+                    })()}
                   </li>
                 );
               })}
