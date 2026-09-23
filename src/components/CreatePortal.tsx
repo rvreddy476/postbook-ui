@@ -395,6 +395,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         if (richDoc) {
           value.format = 'tiptap';
           value.doc = richDoc;
+          // The heading is typed outside the editor, so the document does not
+          // contain it. Carried here, it is what the card draws above the body.
+          const heading = journalTitle.trim();
+          if (showJournal && heading) value.title = heading;
         }
         return value;
       })();

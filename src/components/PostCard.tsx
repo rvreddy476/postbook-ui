@@ -423,6 +423,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           notifications read — this only changes what the card shows.
         */
         if (richDoc) {
+          /*
+            The entry's heading. It is typed in its own field above the
+            editor, so it is NOT in the document — it rode only in the post's
+            plain `text`, which search and previews read but the card does
+            not draw. That is why a Journal post showed its body and no title.
+            It is plain text from rich_text, rendered as text, never markup.
+          */
+          const heading = typeof rich?.title === 'string' ? rich.title.trim() : '';
           const body = (
             <RichTextRenderer
               doc={richDoc}
@@ -430,7 +438,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             />
           );
           if (!hasStyledBg) {
-            return <div className="px-3 pb-3 text-[15px] leading-relaxed sm:px-4">{body}</div>;
+            return (
+              <div className="px-3 pb-3 text-[15px] leading-relaxed sm:px-4">
+                {heading && (
+                  <h2 className="mb-2 text-[19px] font-semibold -tracking-[0.018em] text-brand-text">
+                    {heading}
+                  </h2>
+                )}
+                {body}
+              </div>
+            );
           }
           return (
             <div
@@ -447,7 +464,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               {bgImage && (
                 <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
               )}
-              <div className="relative">{body}</div>
+              <div className="relative">
+                {heading && <h2 className="mb-2 text-[1.15em] font-bold">{heading}</h2>}
+                {body}
+              </div>
             </div>
           );
         }

@@ -43,6 +43,16 @@ export interface PostRichText {
   /** Rich body, TipTap JSON. Present on a Journal post; absent on a plain one. */
   format?: 'tiptap';
   doc?: RichNode;
+  /**
+   * A Journal entry's heading.
+   *
+   * It has to live here, beside the document, because a Journal post RENDERS
+   * from the document — and the title is typed in its own field above the
+   * editor, so it was never in the document to render. It went into the
+   * post's plain `text` alone, which is what search and previews read but
+   * not what the card draws, so the heading simply never appeared.
+   */
+  title?: string;
 }
 
 export interface PostTemplate {
