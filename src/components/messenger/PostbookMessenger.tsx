@@ -152,6 +152,21 @@ export default function PostbookMessenger() {
     })
   }, [])
 
+  /*
+    The server's reason, when it gave one.
+
+    A flat 'Could not accept request' hid "only the recipient can accept this
+    request" for days - the message that says exactly what is wrong. Anything
+    the server bothered to word is better than a generic failure.
+  */
+  const serverMessage = (err: unknown, fallback: string): string => {
+    const body = (err as { body?: { error?: { message?: string } } })?.body
+    const fromBody = body?.error?.message
+    if (fromBody) return fromBody
+    const msg = (err as { message?: string })?.message
+    return msg && msg !== 'Request failed' ? msg : fallback
+  }
+
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2800)
@@ -163,7 +178,9 @@ export default function PostbookMessenger() {
       // dedicated "Requests" folder (spec §3.3) and excluded here.
       const conv = conversations.find(
         (c) =>
-          !c.is_request &&
+          // A request this user SENT stays visible to them; only an
+          // incoming one is held back for the Requests folder.
+          (!c.is_request || c.created_by === currentUser?.id) &&
           (c.members?.some((m) => m.user_id === userId) ||
             (c as { participants?: string[] }).participants?.includes(userId) ||
             (c as { other_user_id?: string }).other_user_id === userId)
@@ -187,7 +204,7 @@ export default function PostbookMessenger() {
       }
       return { text: lastMsg.text || '(media)', time: timeDisplay, unread: getUnreadCountForUser(userId) }
     },
-    [conversations, getUnreadCountForUser]
+    [conversations, getUnreadCountForUser, currentUser?.id]
   )
 
   const filteredFriends = useMemo(() => {
@@ -250,11 +267,40 @@ export default function PostbookMessenger() {
     [myGroups, activeGroupId]
   )
 
-  // Message Requests folder (spec §3.3) — conversations awaiting the
-  // recipient's accept/decline decision, kept out of the main inbox.
+  /*
+    Message Requests folder (spec §3.3).
+
+    DIRECTION MATTERS. Both sides of a pending request carry
+    is_request = true, so filtering on that alone put the SENDER's own
+    outgoing request in their Requests lane, labelled "Wants to send you a
+    message" and offering Accept — which the server refused with "only the
+    recipient can accept this request", surfaced as a bare "Could not accept
+    request". The request being accepted was the user's own.
+
+    `created_by` is the requester, so a request is INCOMING only when
+    somebody else created it.
+  */
   const requestConversations = useMemo(
-    () => conversations.filter((c) => c.is_request === true),
-    [conversations]
+    () => conversations.filter((c) => c.is_request === true && c.created_by !== currentUser?.id),
+    [conversations, currentUser?.id]
+  )
+
+  /*
+    The other half: a request this user SENT, still waiting on the other
+    person. It is not something to accept, but it is a real thread with a
+    real message in it, so it belongs in Direct, marked as waiting - not
+    vanished, which is what excluding every is_request conversation from the
+    inbox used to do to it.
+  */
+  const sentRequestPeerIds = useMemo(
+    () =>
+      new Set(
+        conversations
+          .filter((c) => c.is_request === true && c.created_by === currentUser?.id)
+          .flatMap((c) => (c.members ?? []).map((m) => m.user_id))
+          .filter((id) => id && id !== currentUser?.id)
+      ),
+    [conversations, currentUser?.id]
   )
 
   // Resolves the counterparty of a 1:1 request conversation into a
@@ -406,7 +452,7 @@ export default function PostbookMessenger() {
         }
       } catch (err) {
         console.error('Failed to accept message request:', err)
-        showToast('Could not accept request')
+        showToast(serverMessage(err, 'Could not accept request'))
       } finally {
         setPendingRequestId(null)
       }
@@ -424,7 +470,7 @@ export default function PostbookMessenger() {
         showToast('Request declined')
       } catch (err) {
         console.error('Failed to decline message request:', err)
-        showToast('Could not decline request')
+        showToast(serverMessage(err, 'Could not decline request'))
       } finally {
         setPendingRequestId(null)
       }
@@ -624,6 +670,11 @@ export default function PostbookMessenger() {
                     ? friend.avatar : undefined
                   const lastMsg = getLastMessage(friend.id)
                   const unread = getUnreadCountForUser(friend.id)
+                  // A request this user sent that the other person has not
+                  // answered yet. Worth saying: otherwise a thread with one
+                  // message in it looks like an ordinary conversation that
+                  // is being ignored.
+                  const awaitingTheirAccept = sentRequestPeerIds.has(friend.id)
 
                   return (
                     <button
@@ -659,7 +710,9 @@ export default function PostbookMessenger() {
                           <span className="text-xs text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
                             {/* `||`, not `??`: an empty preview is a string,
                                 not null, so `??` kept the blank line. */}
-                            {lastMsg?.text || (friend.isOnline ? 'Online' : 'Offline')}
+                            {awaitingTheirAccept
+                              ? 'Request sent · waiting for them to accept'
+                              : lastMsg?.text || (friend.isOnline ? 'Online' : 'Offline')}
                           </span>
                           {unread > 0 && (
                             <span className="bg-primary-ink text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
