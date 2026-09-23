@@ -202,25 +202,17 @@ function BlockMenu({ editor }: { editor: Editor }) {
  * stores a media id's serve path rather than a blob URL that dies with the tab.
  */
 function InsertMedia({ editor, onError }: { editor: Editor; onError: (message: string) => void }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
+  /*
+    One button, straight to the file picker.
 
-  const insert = (src: string, kind: 'image' | 'video') => {
-    if (kind === 'image') editor.chain().focus().setImage({ src }).run();
-    else editor.chain().focus().setVideo({ src }).run();
-  };
-
+    It opened a two-item menu — upload, or paste a URL — and the founder's
+    read was right: the link control two icons along already takes an address,
+    so the menu asked a question that had been answered, and it put a step in
+    front of the thing people actually come here to do.
+  */
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -231,8 +223,12 @@ function InsertMedia({ editor, onError }: { editor: Editor; onError: (message: s
         throw new Error('Only an image or a video can go in the text.');
       }
       const mediaId = await uploadMedia(file, isVideo ? 'video' : 'image', 'general');
-      insert('/v1/media/' + mediaId + '/serve', isVideo ? 'video' : 'image');
-      setOpen(false);
+      const src = '/v1/media/' + mediaId + '/serve';
+      // Checked on the way in as well as on the way out, so a source the feed
+      // would refuse never gets written into the document in the first place.
+      if (!safeMediaSrc(src)) throw new Error('That file cannot be used here.');
+      if (isVideo) editor.chain().focus().setVideo({ src }).run();
+      else editor.chain().focus().setImage({ src }).run();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Could not add that file.');
     } finally {
@@ -241,52 +237,17 @@ function InsertMedia({ editor, onError }: { editor: Editor; onError: (message: s
     }
   };
 
-  const fromUrl = () => {
-    const input = window.prompt('Image or video address');
-    if (input === null) return;
-    const raw = input.trim();
-    if (!raw) return;
-    const value = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
-    // The same check the feed will apply. Refusing here means a bad address
-    // is caught while you can still fix it, instead of silently vanishing
-    // from the post once it is published.
-    const src = safeMediaSrc(value);
-    if (!src) {
-      onError('That address cannot be used. Give an http or https link.');
-      return;
-    }
-    insert(src, /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(src) ? 'video' : 'image');
-    setOpen(false);
-  };
-
   return (
-    <div className="relative" ref={wrapRef}>
-      <Tool label="Insert image or video" active={open} onClick={() => setOpen((v) => !v)}>
+    <>
+      <Tool
+        label="Insert an image or a video"
+        disabled={busy}
+        onClick={() => fileRef.current?.click()}
+      >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} /> : <ImagePlus className="h-4 w-4" strokeWidth={1.75} />}
       </Tool>
-      {open && (
-        <div className="absolute left-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-xl">
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => fileRef.current?.click()}
-            disabled={busy}
-            className="w-full px-3 py-1.5 text-left text-[12px] text-brand-text transition-colors hover:bg-brand-secondary disabled:opacity-40"
-          >
-            Upload a file\u2026
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={fromUrl}
-            className="w-full px-3 py-1.5 text-left text-[12px] text-brand-text transition-colors hover:bg-brand-secondary"
-          >
-            From a URL\u2026
-          </button>
-        </div>
-      )}
       <input ref={fileRef} type="file" accept="image/*,video/*" onChange={onFile} className="hidden" />
-    </div>
+    </>
   );
 }
 
