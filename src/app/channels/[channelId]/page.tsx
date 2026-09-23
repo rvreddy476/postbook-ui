@@ -454,7 +454,18 @@ function ChannelDetailContent() {
                         onPin={can.publish(role) ? handlePin : undefined}
                         onLike={handleLike} onUnlike={handleUnlike}
                         onStash={handleStash} onUnstash={handleUnstash}
-                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView} />
+                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView}
+                        /*
+                          actions="all" turns on comment, repost and save.
+
+                          Every handler above was already being passed and the
+                          buttons were still not there: UpdateCard's `actions`
+                          prop defaults to 'reaction', and fullActions gates
+                          the comment toggle, the echo menu, the bookmark and
+                          the comment section itself. So the page wired up four
+                          behaviours that nothing could reach.
+                        */
+                        actions="all" />
                     ))}
                     {regularUpdates.map(u => (
                       <UpdateCard key={u.id} update={u} channel={channel} channelId={channelId} isOwner={can.publish(role)}
@@ -462,7 +473,18 @@ function ChannelDetailContent() {
                         onPin={can.publish(role) ? handlePin : undefined}
                         onLike={handleLike} onUnlike={handleUnlike}
                         onStash={handleStash} onUnstash={handleUnstash}
-                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView} />
+                        onRepost={handleRepost} onUnrepost={handleUnrepost} onView={handleView}
+                        /*
+                          actions="all" turns on comment, repost and save.
+
+                          Every handler above was already being passed and the
+                          buttons were still not there: UpdateCard's `actions`
+                          prop defaults to 'reaction', and fullActions gates
+                          the comment toggle, the echo menu, the bookmark and
+                          the comment section itself. So the page wired up four
+                          behaviours that nothing could reach.
+                        */
+                        actions="all" />
                     ))}
                   </div>
                 ) : (

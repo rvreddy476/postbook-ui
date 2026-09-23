@@ -55,7 +55,11 @@ export default function NewChannelSheet({ onClose, onCreated }: NewChannelSheetP
         // is the only thing it will create. Visibility is changeable in the
         // channel's settings once the pilot opens.
         // Channels are broadcast: readers react, they do not reply.
-        comment_mode: 'disabled',
+        // Subscribers may comment. This was 'disabled' on the reasoning that a
+        // channel is broadcast and readers only react — the founder's call is
+        // that a channel post carries comment, save and repost like any other,
+        // so the people who subscribed can reply. Still not open to strangers.
+        comment_mode: 'subscribers_only',
         reaction_mode: 'enabled',
         forward_allowed: true,
       })
