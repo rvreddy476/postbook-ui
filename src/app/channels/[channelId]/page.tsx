@@ -7,6 +7,7 @@ import {
   useBroadcastChannel,
   useChannelUpdates,
   useChannelSubscribers,
+  useChannelAdmins,
   useSubscribeChannel,
   useUnsubscribeChannel,
   useCreateChannelUpdate,
@@ -25,6 +26,7 @@ import ChannelComposer, { type ComposerPayload } from '@/components/channels/Cha
 import ChannelEditModal from '@/components/channels/ChannelEditModal'
 import ChannelSidebar from '@/components/channels/ChannelSidebar'
 import UpdateCard from '@/components/channels/UpdateCard'
+import OverviewTab from '@/components/channels/tabs/OverviewTab'
 import AnalyticsTab from '@/components/channels/tabs/AnalyticsTab'
 import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscribersTab from '@/components/channels/tabs/SubscribersTab'
@@ -55,7 +57,7 @@ function formatDate(dateStr: string): string {
 
 /* ===== Role & Capability ===== */
 type ChannelRole = 'owner' | 'editor' | 'subscriber' | 'visitor'
-type TabId = 'updates' | 'subscribers' | 'analytics' | 'drafts' | 'about' | 'settings'
+type TabId = 'overview' | 'updates' | 'subscribers' | 'analytics' | 'drafts' | 'about' | 'settings'
 
 function getRole(channel: BroadcastChannel): ChannelRole {
   if (channel.viewer_role === 'admin' || channel.viewer_role === 'owner') return 'owner'
@@ -73,7 +75,7 @@ const can = {
   deleteChannel: (r: ChannelRole) => r === 'owner',
 }
 
-const ADMIN_TABS: TabId[] = ['updates', 'subscribers', 'analytics', 'drafts', 'about', 'settings']
+const ADMIN_TABS: TabId[] = ['overview', 'updates', 'subscribers', 'analytics', 'drafts', 'about', 'settings']
 const PUBLIC_TABS: TabId[] = ['updates', 'about']
 
 function isValidTab(tab: string | null, role: ChannelRole): tab is TabId {
@@ -89,12 +91,12 @@ function getTabsForRole(role: ChannelRole, subCount: number, draftCount: number)
     in the URL (?tab=) and in saved links, so renaming them would break every
     one of those to change two labels.
 
-    NO OVERVIEW tab, at the founder's request. The reference opens on a
-    dashboard of counts and charts; a channel with one subscriber and no posts
-    has nothing to put in it, and the page should open on the thing the
-    channel IS.
+    Overview is first in the list but NOT the landing tab: `resolvedTab`
+    still falls back to 'updates', because a channel should open on the thing
+    it IS. An owner who wants the dashboard asks for it; an owner who opens
+    the channel wants to see and write posts.
 
-    NO MODERATION tab either, and that one is not a choice: the report queue
+    NO MODERATION tab, and that one is not a choice: the report queue
     (/internal/channel-reports) is behind the internal service key, for
     platform moderators rather than a channel's own admin. Giving a channel
     owner that queue needs a server route that does not exist, so a tab here
@@ -102,6 +104,7 @@ function getTabsForRole(role: ChannelRole, subCount: number, draftCount: number)
   */
   if (can.publish(role)) {
     return [
+      { id: 'overview', label: 'Overview' },
       { id: 'updates', label: 'Posts' },
       { id: 'subscribers', label: 'Members', badge: subCount || undefined },
       { id: 'drafts', label: 'Drafts', badge: draftCount || undefined },
@@ -173,6 +176,11 @@ function ChannelDetailContent() {
   /* Subscribers (lazy) */
   const { data: subscribers, isLoading: loadingSubs } = useChannelSubscribers(
     can.viewSubscribers(role) && activeTab === 'subscribers' ? channelId : undefined
+  )
+
+  /* Owner and admins — only the Overview tab shows them. */
+  const { data: channelAdmins } = useChannelAdmins(
+    can.viewAnalytics(role) && activeTab === 'overview' ? channelId : undefined
   )
 
   /* UI state */
@@ -536,6 +544,16 @@ function ChannelDetailContent() {
             )}
 
             {/* TAB: SUBSCRIBERS */}
+            {activeTab === 'overview' && can.viewAnalytics(role) && (
+              <OverviewTab
+                channel={channel}
+                updates={allUpdates}
+                admins={channelAdmins}
+                onViewPosts={() => setActiveTab('updates')}
+                onViewMembers={() => setActiveTab('subscribers')}
+              />
+            )}
+
             {activeTab === 'subscribers' && can.viewSubscribers(role) && (
               <SubscribersTab channel={channel} subscribers={subscribers} isLoading={loadingSubs} />
             )}

@@ -79,6 +79,27 @@ export function useChannelSubscribers(channelId: string | undefined) {
   })
 }
 
+/**
+ * The channel's owner and admins, owner first.
+ *
+ * A separate call from useChannelSubscribers on purpose: /subscribers is a
+ * page of everybody, so on a large channel the people who run it are not
+ * necessarily in it, and the owner is not guaranteed to hold a subscriber
+ * row at all. /admins answers the question directly, and channel-service
+ * already returns owner-then-admins ordered by join date.
+ */
+export function useChannelAdmins(channelId: string | undefined) {
+  return useQuery({
+    queryKey: ["channel-admins", channelId],
+    queryFn: async () => {
+      const res = await api.get<MembersResponse>(`/v1/broadcast-channels/${channelId}/admins`)
+      return res.data.data
+    },
+    enabled: !!channelId,
+    staleTime: 60_000,
+  })
+}
+
 export function useCheckHandleAvailability(handle: string) {
   return useQuery({
     queryKey: ["channel-handle-check", handle],

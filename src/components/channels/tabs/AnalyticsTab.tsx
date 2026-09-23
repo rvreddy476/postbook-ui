@@ -16,7 +16,7 @@ function StatCard({ label, value, change, trend }: { label: string; value: strin
       <p className="text-2xl font-extrabold text-brand-text font-mono mt-1">{value}</p>
       {change && (
         <div className={`flex items-center gap-1 mt-1.5 text-[11px] font-semibold ${
-          trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-red-500' : 'text-brand-text/40'
+          trend === 'up' ? 'text-success' : trend === 'down' ? 'text-danger' : 'text-brand-text/40'
         }`}>
           {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : trend === 'down' ? <TrendingDown className="w-3 h-3" /> : null}
           {change}
