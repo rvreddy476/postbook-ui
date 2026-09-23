@@ -442,19 +442,6 @@ function ChannelDetailContent() {
                   </button>
                 )}
 
-                <AnimatePresence>
-                  {showComposer && can.publish(role) && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                      <div className="relative">
-                        <button onClick={() => setShowComposer(false)} className="absolute top-3 right-3 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-brand-text/40 hover:bg-brand-secondary transition-colors">
-                          <X className="w-4 h-4" />
-                        </button>
-                        <ChannelComposer channel={channel} onPublish={handlePublish} isPublishing={createUpdate.isPending} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {/* Feed */}
                 {loadingUpdates ? (
                   <div className="space-y-4">
@@ -548,6 +535,49 @@ function ChannelDetailContent() {
       {/* Edit modal */}
       <AnimatePresence>
         {showEditModal && can.editChannel(role) && <ChannelEditModal channel={channel} onClose={() => setShowEditModal(false)} />}
+      </AnimatePresence>
+
+      {/*
+        The composer, over the page rather than in it.
+
+        It used to render inline at the top of the Updates tab, and it is a
+        full form — six update types, title, body, attachments, scheduling. On
+        a channel with few updates that meant opening it replaced the channel:
+        the feed was pushed below the fold and the page became a form. A
+        channel should be its feed, with somewhere to post from; posting is a
+        thing you do ON it, not the thing it is.
+      */}
+      <AnimatePresence>
+        {showComposer && can.publish(role) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs sm:p-6"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowComposer(false) }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="New update"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="relative my-auto w-full max-w-2xl"
+            >
+              <button
+                onClick={() => setShowComposer(false)}
+                aria-label="Close"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-brand-card/80 text-brand-text/50 backdrop-blur-xs transition-colors hover:bg-brand-secondary hover:text-brand-text"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <ChannelComposer channel={channel} onPublish={handlePublish} isPublishing={createUpdate.isPending} />
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Error toast */}
