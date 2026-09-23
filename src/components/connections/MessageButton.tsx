@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Loader2, MessagesSquare } from 'lucide-react';
+import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { usePermissions, messageAffordance } from '@/hooks/usePermissions';
 import { getOrCreateDirectConversation } from '@/services/messageService';
 import { useGlobalToast } from '@/contexts/ToastContext';
@@ -32,8 +32,14 @@ import { useGlobalToast } from '@/contexts/ToastContext';
 
 interface MessageButtonProps {
     targetUserId: string;
-    /** Opens the conversation. Used when the pair can already talk. */
-    onMessage: () => void;
+    /*
+      There is deliberately NO navigation callback.
+
+      This took a navigation callback and called it when the pair could
+      already talk, which is how a control told not to open the messenger
+      ended up opening the messenger. Removing the prop means a future edit
+      cannot quietly restore that: there is nothing here to navigate with.
+    */
     /** "icon" for a list row, "full" for a profile's action bar. */
     variant?: 'icon' | 'full';
     className?: string;
@@ -41,7 +47,6 @@ interface MessageButtonProps {
 
 export default function MessageButton({
     targetUserId,
-    onMessage,
     variant = 'icon',
     className,
 }: MessageButtonProps) {
@@ -52,29 +57,41 @@ export default function MessageButton({
     const [busy, setBusy] = useState(false);
     const [sent, setSent] = useState(false);
 
-    // A thread they can already have goes straight to the messenger; only a
-    // REQUEST is sent in place. Sending where a conversation already exists
-    // would take someone away from a thread they could simply open.
+    // Only used for the LABEL, never for what the click does. This used to
+    // decide between sending and navigating, and it is false in two cases —
+    // "they can already talk" and "the permission check has not answered
+    // yet" — so a click landing before the response navigated to the
+    // messenger. A race, which is why it happened sometimes and not others.
     const isRequest = affordance.state === 'request';
 
     const handleClick = async () => {
         if (busy || sent) return;
-        if (!isRequest) {
-            onMessage();
-            return;
-        }
+        /*
+          IT NEVER NAVIGATES.
+
+          There was a branch here that opened the thread when the pair could
+          already talk. That was my own addition, not what was asked for, and
+          combined with the loading case above it meant the button sometimes
+          did the one thing it was told not to do. The instruction is simple:
+          a tap sends, and says so.
+        */
         setBusy(true);
         try {
             // Creating the conversation IS the request; there is nothing else
-            // to send. The server rate-limits this, so a refusal here is a
-            // real answer and is shown as one.
-            await getOrCreateDirectConversation(targetUserId);
+            // to send. It is idempotent, so a pair who can already talk get
+            // their existing thread back rather than a second one.
+            const res = await getOrCreateDirectConversation(targetUserId);
+            const conversation = (res?.data ?? res) as { is_request?: boolean } | undefined;
+            // The SERVER decides which of the two this was, not the client's
+            // cached permission guess.
+            const wasRequest = conversation?.is_request !== false;
             setSent(true);
             toast({
                 type: 'success',
-                title: 'Message request sent',
-                description:
-                    'Please wait for them to accept. Once they do, you are connected and can talk freely.',
+                title: wasRequest ? 'Message request sent' : 'Conversation ready',
+                description: wasRequest
+                    ? 'Please wait for them to accept. Once they do, you are connected and can talk freely.'
+                    : 'Open it from Messages whenever you like.',
             });
         } catch (err) {
             toast({
@@ -94,7 +111,7 @@ export default function MessageButton({
           ? 'Send a message request'
           : 'Message';
 
-    const Icon = busy ? Loader2 : sent ? Check : MessagesSquare;
+    const Icon = busy ? Loader2 : sent ? Check : MessageCircle;
 
     if (variant === 'full') {
         return (

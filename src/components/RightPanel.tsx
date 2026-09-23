@@ -16,7 +16,12 @@ import Avatar from '@/components/ui/Avatar';
 import { User } from '../types';
 
 interface RightPanelProps {
-  onContactClick: (contact: User) => void;
+  /**
+   * Kept so the two call sites need no change, but no longer used: the
+   * suggestion rail sends a message request in place rather than opening a
+   * conversation, so it has nowhere to navigate to.
+   */
+  onContactClick?: (contact: User) => void;
 }
 
 function formatViews(n: number): string {
@@ -41,7 +46,7 @@ function formatViews(n: number): string {
  * - The cards used to reshuffle every 12 seconds. Content that moves while you
  *   are reading it takes control away from you, so the order is fixed now.
  */
-const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
+const RightPanel: React.FC<RightPanelProps> = () => {
   const router = useRouter();
   const authUser = useAuthUser();
   // Over-fetch: people already asked are filtered out below, so asking for
@@ -150,17 +155,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ onContactClick }) => {
                       Message only. Connect is gone from the product; a
                       connection forms when a message request is accepted.
                     */}
-                    <MessageButton
-                      targetUserId={p.user_id}
-                      onMessage={() =>
-                        onContactClick({
-                          id: p.user_id,
-                          name,
-                          avatar: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : '',
-                          username: p.username,
-                        } as User)
-                      }
-                    />
+                    <MessageButton targetUserId={p.user_id} />
                   </li>
                 );
               })}

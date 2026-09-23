@@ -492,7 +492,6 @@ export function ProfileHeader({
                                         */}
                                         <MessageButton
                                             targetUserId={profile.id}
-                                            onMessage={() => onMessage?.()}
                                             variant="full"
                                         />
                                     </>
