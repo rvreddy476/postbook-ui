@@ -36,6 +36,15 @@ interface CreatePostPayload {
         text_color?: string
     } | null
     hashtags?: string[]
+    /**
+     * post-service requires a UUID Idempotency-Key on create and refuses
+     * without one, because "server committed, response lost" is the normal
+     * outcome of publishing from a phone. It belongs in the payload rather
+     * than being minted inside the request: react-query hands the same
+     * variables to every retry, so the key stays stable and a retry returns
+     * the post that was already created instead of writing a second one.
+     */
+    idempotencyKey?: string
 }
 
 export function useFeedPosts(userId: string | undefined) {
@@ -106,8 +115,10 @@ export function usePostDetail(postId: string | undefined) {
 export function useCreatePost() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (payload: CreatePostPayload) => {
-            const res = await api.post<{ data: PostDetail }>("/v1/posts", payload)
+        mutationFn: async ({ idempotencyKey, ...payload }: CreatePostPayload) => {
+            const res = await api.post<{ data: PostDetail }>("/v1/posts", payload, {
+                headers: { "Idempotency-Key": idempotencyKey ?? crypto.randomUUID() },
+            })
             return res.data.data
         },
         onSuccess: () => {

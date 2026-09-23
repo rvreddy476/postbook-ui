@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity as ActivityIcon,
+  AlertCircle,
   BarChart3,
   BookOpen,
   ChevronDown,
@@ -17,6 +18,7 @@ import {
   Send,
   ShieldCheck,
   Smile,
+  Type,
   Users,
   X,
 } from 'lucide-react';
@@ -142,6 +144,23 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const { data: profile } = useMyProfile();
   const createPost = useCreatePost();
   const createGroupPost = useCreateGroupPost();
+
+  /**
+   * One durable key per composer session.
+   *
+   * post-service requires a UUID Idempotency-Key on create and refuses the
+   * request without one — the web sent none, so nothing could be posted at
+   * all. It lives in a ref rather than being minted at each attempt because a
+   * failed POST may in fact have committed before the response was lost: a
+   * second attempt with the SAME key returns the post already created, while
+   * a fresh key would publish it twice. Cleared after a successful post, so
+   * reopening the composer is a new intent.
+   */
+  const createKeyRef = useRef<string>('');
+  const nextCreateKey = () => {
+    if (!createKeyRef.current) createKeyRef.current = crypto.randomUUID();
+    return createKeyRef.current;
+  };
 
   const avatarSrc = profile?.avatar_media_id
     ? `/v1/media/${profile.avatar_media_id}/serve`
@@ -379,6 +398,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         poll: pollPayload,
         rich_text: richText,
         hashtags: finalHashtags.length > 0 ? finalHashtags : undefined,
+        idempotencyKey: nextCreateKey(),
       };
 
       if (groupId) {
@@ -386,6 +406,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       } else {
         await createPost.mutateAsync(payload);
       }
+      // The intent is done; the next composer session gets its own key.
+      createKeyRef.current = '';
       onClose();
     } catch (err: unknown) {
       let message = 'Failed to create post. Try again.';
@@ -409,6 +431,43 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const visOption = VIS_OPTIONS.find((v) => v.value === visibility) ?? VIS_OPTIONS[0];
   const VisIcon = visOption.Icon;
+
+  /**
+   * What this composer is about to publish, in words.
+   *
+   * The controls said what they DO — Photo, Poll, Feeling — but nothing said
+   * what you had ended up with. With a photo attached, a feeling set and a
+   * background chosen, the only way to know which of those actually shapes
+   * the post was to press Post and look at the feed. This is the one line
+   * that answers it, and it sits directly above the button that acts on it.
+   */
+  const summary = useMemo(() => {
+    const hasVideo = files.some((f) => f.type.startsWith('video'));
+    const Icon = showPoll ? BarChart3
+      : files.length > 0 ? ImagePlus
+      : showJournal ? BookOpen
+      : Type;
+    const kind = showPoll ? 'Poll'
+      : files.length > 0 ? (hasVideo ? 'Video post' : 'Photo post')
+      : showJournal ? 'Journal entry'
+      : hasColorBg ? 'Text post on a background'
+      : 'Text post';
+
+    const detail: string[] = [];
+    if (files.length > 0) {
+      detail.push(`${files.length} ${files.length === 1 ? 'file' : 'files'}`);
+    }
+    if (showPoll) {
+      const filled = poll.options.filter((o) => o.trim()).length;
+      if (filled > 0) detail.push(`${filled} ${filled === 1 ? 'option' : 'options'}`);
+    }
+    if (mood) detail.push(mood);
+    if (location.trim()) detail.push(location.trim());
+    const tagCount = hashtags.length + (hashtagDraft.trim() ? 1 : 0);
+    if (tagCount > 0) detail.push(`${tagCount} ${tagCount === 1 ? 'tag' : 'tags'}`);
+
+    return { Icon, kind, detail: detail.join(' · ') };
+  }, [files, hasColorBg, hashtagDraft, hashtags, location, mood, poll, showJournal, showPoll]);
 
   return (
     <motion.div
@@ -722,27 +781,49 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             </div>
           )}
 
-          {/* Error */}
+        </div>
+
+        {/*
+          What you are about to publish, and who will see it. The error sits
+          here too rather than up in the body: it explains why the button
+          beneath it did nothing, so it belongs beside the button.
+        */}
+        <div className="shrink-0 px-6 pt-4">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-brand-text/60">
+            <summary.Icon className="h-4 w-4 shrink-0 text-brand-text/45" strokeWidth={1.75} />
+            <span className="font-semibold text-brand-text">{summary.kind}</span>
+            {summary.detail && <span>· {summary.detail}</span>}
+            <span className="inline-flex items-center gap-1">
+              · seen by <VisIcon className="h-3 w-3" /> {visOption.label}
+            </span>
+          </div>
           {error && (
-            <div className="mx-6 mt-3 rounded-xl bg-rose-50 px-3 py-2 text-[12px] font-medium text-rose-700">
-              {error}
+            <div
+              role="alert"
+              className="mt-2.5 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger"
+            >
+              <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span className="font-medium">{error}</span>
             </div>
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-3 pb-4">
           {/* What you can add, NAMED.
               This was six icons in six different colours with no labels, so
               the composer's abilities were guessable at best — a poll and a
               feeling looked like decoration. Colour now carries state (added
               or not) instead of identity, and every control says what it is. */}
-          <div className="flex flex-wrap gap-1.5 rounded-2xl bg-brand-secondary border border-brand-divider p-1.5">
+          {/* This row used to sit in a filled, bordered slab, which made a set
+              of optional extras the heaviest block in the dialog. The pills
+              carry their own state; the container is just spacing. */}
+          <div className="flex flex-wrap items-center gap-1">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={files.length >= 10}
               title="Add a photo"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 ${files.length > 0 ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 ${files.length > 0 ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <ImagePlus className="h-4 w-4" strokeWidth={1.75} />
               Photo
@@ -754,7 +835,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 if (showPoll) setPoll({ options: ['', ''], duration: '1d', allowMultiple: false });
               }}
               title="Ask a question with options"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showPoll ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showPoll ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <BarChart3 className="h-4 w-4" strokeWidth={1.75} />
               Poll
@@ -763,7 +844,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               type="button"
               onClick={() => setShowJournal((v) => !v)}
               title="Write something longer"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showJournal ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showJournal ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <BookOpen className="h-4 w-4" strokeWidth={1.75} />
               Journal
@@ -778,7 +859,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 setShowMood(true);
               }}
               title="How you are feeling"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <Smile className="h-4 w-4" strokeWidth={1.75} />
               Feeling
@@ -791,7 +872,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 setShowMood(true);
               }}
               title="What you are doing"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
               Activity
@@ -800,7 +881,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               type="button"
               onClick={() => setShowLocation((v) => !v)}
               title="Add a place"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showLocation || location ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showLocation || location ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <MapPin className="h-4 w-4" strokeWidth={1.75} />
               Place
@@ -809,7 +890,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               type="button"
               onClick={() => setShowHashtagInput((v) => !v)}
               title="Add a hashtag"
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showHashtagInput || hashtags.length > 0 ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card hover:text-brand-text'}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showHashtagInput || hashtags.length > 0 ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
               <Hash className="h-4 w-4" strokeWidth={1.75} />
               Tag
@@ -935,26 +1016,29 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             type="button"
             onClick={handleSubmit}
             disabled={!canPost || isSubmitting}
-            className="flex items-center gap-2.5 rounded-full bg-primary-ink px-5 py-3 text-[12px] font-medium tracking-[0.15em] text-white transition hover:bg-primary-hover disabled:opacity-40"
+            // Sentence case at a normal size. It was ALL CAPS with 0.15em
+            // tracking on a 22px badge, which made the one button you press
+            // every time the loudest object in the dialog.
+            className="flex shrink-0 items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-primary-hover disabled:opacity-40"
           >
-            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brand-bg/15">
-              {isSubmitting ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Send className="h-3 w-3" />
-              )}
-            </span>
-            {isSubmitting ? 'POSTING' : 'POST'}
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+            ) : (
+              <Send className="h-4 w-4" strokeWidth={2} />
+            )}
+            {isSubmitting ? 'Posting…' : 'Post'}
           </button>
         </div>
 
-        {/* Footer status bar */}
-        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3.5 text-[10px] font-semibold tracking-widest text-brand-text/60">
+        {/* Footer status bar. The tiny all-caps widest-tracked text here was
+            the hardest thing in the dialog to read, for the least important
+            information in it. */}
+        <div className="flex shrink-0 items-center justify-between bg-brand-secondary border-t border-brand-divider px-6 py-3 text-[12px] text-brand-text/60">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-success" />
             {isSubmitting ? 'Publishing…' : 'Auto-saved as draft'}
           </div>
-          <div>
+          <div className={charCount > maxChars * 0.9 ? 'font-semibold text-brand-text' : ''}>
             {charCount.toLocaleString()} / {maxChars.toLocaleString()}
           </div>
         </div>

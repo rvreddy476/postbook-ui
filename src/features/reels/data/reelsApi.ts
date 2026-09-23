@@ -610,6 +610,8 @@ export interface CreateReelInput {
   cover_media_id?: string;
   content_type?: string;
   publish_to_feed?: boolean;
+  /** Stable across retries of one publish; see createReel. */
+  idempotencyKey?: string;
 }
 
 export async function createReel(input: CreateReelInput): Promise<Reel> {
@@ -630,7 +632,12 @@ export async function createReel(input: CreateReelInput): Promise<Reel> {
   if (input.cover_media_id) {
     body.cover_media_id = input.cover_media_id;
   }
-  const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", body);
+  // post-service refuses a create without a UUID Idempotency-Key. Taking it
+  // from the caller keeps it stable across a retry of the same publish; a
+  // fresh one per attempt would publish the reel twice.
+  const res = await api.post<ApiResponse<PostDetail>>("/v1/posts", body, {
+    headers: { "Idempotency-Key": input.idempotencyKey ?? crypto.randomUUID() },
+  });
   return postDetailToReel(res.data.data);
 }
 
