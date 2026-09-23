@@ -324,7 +324,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
                   <>
                     <div className="border-t border-brand-divider my-1" />
                     <button onClick={() => { onDelete(post.id); setOverflowOpen(false) }}
-                      className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 w-full text-left">
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-danger hover:bg-danger/10 w-full text-left">
                       <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </>
@@ -353,7 +353,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           <>
             <div
               ref={bodyRef}
-              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden wrap-break-word ${expanded ? '' : 'line-clamp-4'} [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_a]:text-blue-500 [&_a]:underline`}
+              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden wrap-break-word ${expanded ? '' : 'line-clamp-4'} [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_a]:text-primary-ink [&_a]:underline`}
               dangerouslySetInnerHTML={{ __html: post.body }}
             />
             {isClamped && !expanded && (
@@ -387,9 +387,9 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           <button
             onClick={handleLike}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors select-none ${
-              sparked ? 'text-red-500 bg-red-50' : 'text-brand-text/45 hover:text-red-500 hover:bg-red-50/50'
+              sparked ? 'text-danger bg-danger/10' : 'text-brand-text/45 hover:text-danger hover:bg-danger/10'
             }`}>
-            <Heart className={`w-3.5 h-3.5 ${sparked ? 'fill-red-500' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${sparked ? 'fill-current' : ''}`} />
             <span className="font-mono text-[11px] font-semibold">{formatCount(sparkCount)}</span>
           </button>
 
@@ -406,7 +406,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           <div className="relative" ref={echoRef}>
             <button onClick={() => setShowEchoMenu(!showEchoMenu)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-                echoed ? 'text-green-600 bg-green-50' : 'text-brand-text/45 hover:text-green-600 hover:bg-green-50/50'
+                echoed ? 'text-success bg-success/10' : 'text-brand-text/45 hover:text-success hover:bg-success/10'
               }`}>
               <Repeat2 className="w-3.5 h-3.5" />
               {echoCount > 0 && <span className="font-mono text-[11px] font-semibold">{formatCount(echoCount)}</span>}
@@ -429,9 +429,9 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           {/* Bookmark/Stash */}
           <button onClick={handleStash}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
-              stashed ? 'text-blue-500 bg-blue-50' : 'text-brand-text/45 hover:text-blue-500 hover:bg-blue-50/50'
+              stashed ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/45 hover:text-primary-ink hover:bg-primary-tint/60'
             }`}>
-            <Bookmark className={`w-3.5 h-3.5 ${stashed ? 'fill-blue-500' : ''}`} />
+            <Bookmark className={`w-3.5 h-3.5 ${stashed ? 'fill-current' : ''}`} />
           </button>
 
           {/* View count */}

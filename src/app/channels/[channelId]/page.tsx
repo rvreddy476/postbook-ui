@@ -102,7 +102,7 @@ function ErrorToast({ msg, onDismiss }: { msg: string; onDismiss: () => void }) 
   useEffect(() => { const t = setTimeout(onDismiss, 5000); return () => clearTimeout(t) }, [onDismiss])
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 bg-red-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg flex items-center gap-3">
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 bg-danger text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg flex items-center gap-3">
       <ShieldAlert className="w-4 h-4 shrink-0" />{msg}
       <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100"><X className="w-3.5 h-3.5" /></button>
     </motion.div>
@@ -243,7 +243,7 @@ function ChannelDetailContent() {
       <AppShell>
         <div className="animate-pulse">
           <div className="h-32 sm:h-40 bg-brand-secondary" />
-          <div className="bg-white border-b border-brand-divider px-4 sm:px-6 pb-4">
+          <div className="bg-brand-card border-b border-brand-divider px-4 sm:px-6 pb-4">
             <div className="-mt-7 flex items-end gap-4">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-brand-secondary shrink-0" />
               <div className="space-y-2 py-2 flex-1">
@@ -254,7 +254,7 @@ function ChannelDetailContent() {
             <div className="flex gap-4 mt-6">{[1,2,3,4].map(i => <div key={i} className="h-8 w-20 bg-brand-secondary rounded-sm" />)}</div>
           </div>
           <div className="p-5 space-y-4">
-            {[1,2,3].map(i => <div key={i} className="bg-white rounded-2xl border border-brand-divider p-4 animate-pulse space-y-2"><div className="h-3 w-20 bg-brand-secondary rounded-sm" /><div className="h-4 w-48 bg-brand-secondary rounded-sm" /><div className="h-3 w-full bg-brand-secondary rounded-sm" /></div>)}
+            {[1,2,3].map(i => <div key={i} className="bg-brand-card rounded-2xl border border-brand-divider p-4 animate-pulse space-y-2"><div className="h-3 w-20 bg-brand-secondary rounded-sm" /><div className="h-4 w-48 bg-brand-secondary rounded-sm" /><div className="h-3 w-full bg-brand-secondary rounded-sm" /></div>)}
           </div>
         </div>
       </AppShell>
@@ -289,7 +289,21 @@ function ChannelDetailContent() {
   const regularUpdates = allUpdates.filter(u => !u.is_pinned)
   const bannerSrc = channel.banner_media_id ? `/v1/media/${channel.banner_media_id}/serve` : null
   const avatarSrc = channel.avatar_media_id ? `/v1/media/${channel.avatar_media_id}/serve` : null
-  const gradient = ['from-stone-700 to-stone-900', 'from-zinc-600 to-zinc-800', 'from-neutral-600 to-neutral-800'][channel.name.charCodeAt(0) % 3]
+  /*
+    A channel with no cover picks one of these, keyed on its name so it is
+    stable rather than random on every render.
+
+    They were stone, zinc and neutral — three greys with a brown cast, on the
+    largest surface of the page. That is where "dull" came from: the widest
+    block of colour on the screen was deliberately colourless. These are the
+    product's own cerulean, stepped, so an empty channel still looks like it
+    belongs to this product.
+  */
+  const gradient = [
+    'from-brand-lift to-brand-deep',
+    'from-brand-deep to-brand-text',
+    'from-brand-accent to-brand-deep',
+  ][channel.name.charCodeAt(0) % 3]
 
   return (
     <AppShell>
@@ -315,7 +329,7 @@ function ChannelDetailContent() {
         </div>
 
         {/* ===== HEADER ===== */}
-        <div className="bg-white border-b border-brand-divider">
+        <div className="bg-brand-card border-b border-brand-divider">
           <div className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pt-3">
               {/* Left: avatar + info */}
@@ -362,7 +376,7 @@ function ChannelDetailContent() {
                           <button onClick={() => { navigator.clipboard.writeText(window.location.href); setShowMoreMenu(false) }} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Copy className="w-3.5 h-3.5" /> Copy channel link</button>
                           <button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Share2 className="w-3.5 h-3.5" /> Share channel</button>
                           <button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left"><Eye className="w-3.5 h-3.5" /> View as subscriber</button>
-                          {can.deleteChannel(role) && (<><div className="border-t border-brand-divider my-1" /><button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 w-full text-left"><Trash2 className="w-3.5 h-3.5" /> Delete channel</button></>)}
+                          {can.deleteChannel(role) && (<><div className="border-t border-brand-divider my-1" /><button onClick={() => setShowMoreMenu(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-danger hover:bg-danger/10 w-full text-left"><Trash2 className="w-3.5 h-3.5" /> Delete channel</button></>)}
                         </div>
                       )}
                     </div>
@@ -444,7 +458,7 @@ function ChannelDetailContent() {
                 {/* Feed */}
                 {loadingUpdates ? (
                   <div className="space-y-4">
-                    {[1,2,3].map(i => <div key={i} className="bg-white rounded-2xl border border-brand-divider p-4 animate-pulse space-y-2"><div className="h-3 w-20 bg-brand-secondary rounded-sm" /><div className="h-4 w-48 bg-brand-secondary rounded-sm" /><div className="h-3 w-full bg-brand-secondary rounded-sm" /></div>)}
+                    {[1,2,3].map(i => <div key={i} className="bg-brand-card rounded-2xl border border-brand-divider p-4 animate-pulse space-y-2"><div className="h-3 w-20 bg-brand-secondary rounded-sm" /><div className="h-4 w-48 bg-brand-secondary rounded-sm" /><div className="h-3 w-full bg-brand-secondary rounded-sm" /></div>)}
                   </div>
                 ) : allUpdates.length > 0 ? (
                   <div className="space-y-4">
