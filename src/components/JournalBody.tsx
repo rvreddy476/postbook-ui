@@ -20,8 +20,12 @@ import type { RichNode } from '@/components/studio/postStyle';
  * article's leading. The rule down the left marks it as an entry without
  * needing a badge to say so.
  *
- * Long entries collapse. An 800-word piece in a feed pushes everything else
- * off the screen, and a reader scrolling past it has to scroll past ALL of it.
+ * Long entries collapse, and EXPANDING GIVES THE CARD ITS OWN SCROLL rather
+ * than letting the entry grow without limit. An 800-word piece in a feed
+ * pushes everything else off the screen, and a reader who opened it and
+ * changed their mind has to scroll past all of it to reach the next post.
+ * Bounded and scrollable, a long entry stays a card in a feed: you read it in
+ * place, and the feed is still there when you look up.
  */
 
 /** Average adult reading speed, words per minute. Rounded up, floor of one. */
@@ -29,6 +33,40 @@ const WORDS_PER_MINUTE = 220;
 
 /** Above this many characters the entry is collapsed behind "Read more". */
 const COLLAPSE_OVER_CHARS = 900;
+
+/**
+ * How tall an opened entry may get before it scrolls inside the card.
+ *
+ * Tall enough to read several paragraphs without touching the scrollbar,
+ * short enough that the post below is still reachable in one gesture.
+ */
+const EXPANDED_MAX_HEIGHT = '32rem';
+
+/**
+ * How an entry of this length should be laid out, opened or not.
+ *
+ * Pulled out of the component so the rule can be tested without driving React
+ * state. The three states are the thing worth pinning, and "an opened long
+ * entry SCROLLS inside the card rather than growing without limit" is the one
+ * a refactor would most easily lose — it looks like a styling detail and is
+ * actually the difference between a card and a wall.
+ */
+export function journalLayout(plainLength: number, expanded: boolean) {
+    const isLong = plainLength > COLLAPSE_OVER_CHARS;
+    return {
+        isLong,
+        /** Clipped behind a fade and "Read more". */
+        collapsed: isLong && !expanded,
+        /** Opened, but bounded: the card scrolls, not the feed. */
+        scrolls: isLong && expanded,
+    };
+}
+
+/** Words per minute, with a floor of one. Exported to be tested directly. */
+export function readingMinutes(plain: string) {
+    const words = plain.split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+}
 
 export default function JournalBody({
     doc,
@@ -40,22 +78,28 @@ export default function JournalBody({
     const plain = useMemo(() => docToPlainText(doc), [doc]);
     const [expanded, setExpanded] = useState(false);
 
-    const readingMinutes = useMemo(() => {
-        const words = plain.split(/\s+/).filter(Boolean).length;
-        return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
-    }, [plain]);
-
-    const isLong = plain.length > COLLAPSE_OVER_CHARS;
-    const collapsed = isLong && !expanded;
+    const minutes = useMemo(() => readingMinutes(plain), [plain]);
+    const { isLong, collapsed, scrolls } = journalLayout(plain.length, expanded);
 
     return (
         <div className="px-3 pb-4 sm:px-4">
             <article
+                // Scrollable only once opened, and only when it is long
+                // enough to need it. A region that scrolls must be reachable
+                // from the keyboard, or its content is unreadable without a
+                // pointer — hence tabIndex and the label.
+                {...(scrolls
+                    ? { tabIndex: 0, role: 'region' as const, 'aria-label': title ? `${title}, scrollable` : 'Journal entry, scrollable' }
+                    : {})}
+                style={scrolls ? { maxHeight: EXPANDED_MAX_HEIGHT } : undefined}
                 className={[
                     // The left rule is the whole marker. A coloured "JOURNAL"
                     // pill would announce the format louder than the writing.
                     'relative border-l-2 border-brand-outline pl-4 sm:pl-5',
                     collapsed ? 'max-h-[22rem] overflow-hidden' : '',
+                    scrolls
+                        ? 'overflow-y-auto overscroll-contain pr-2 scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent'
+                        : '',
                 ].join(' ')}
             >
                 <header className="mb-3">
@@ -64,7 +108,7 @@ export default function JournalBody({
                         Journal
                         <span aria-hidden>·</span>
                         <span className="normal-case tracking-normal">
-                            {readingMinutes} min read
+                            {minutes} min read
                         </span>
                     </div>
                     {title && (

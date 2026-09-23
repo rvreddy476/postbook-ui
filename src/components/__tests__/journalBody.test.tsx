@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
-import JournalBody from '../JournalBody';
+import JournalBody, { journalLayout, readingMinutes } from '../JournalBody';
 import type { RichNode } from '../studio/postStyle';
 
 const paragraph = (text: string): RichNode => ({
@@ -70,5 +70,58 @@ describe('JournalBody', () => {
     const html = renderToStaticMarkup(React.createElement(JournalBody, { doc: doc('body') }));
     expect(html).toContain('body');
     expect(html).toContain('Journal');
+  });
+});
+
+describe('journalLayout', () => {
+  it('leaves a short entry alone in both states', () => {
+    for (const expanded of [false, true]) {
+      expect(journalLayout(100, expanded)).toEqual({
+        isLong: false,
+        collapsed: false,
+        scrolls: false,
+      });
+    }
+  });
+
+  it('collapses a long entry until it is opened', () => {
+    expect(journalLayout(5000, false)).toEqual({
+      isLong: true,
+      collapsed: true,
+      scrolls: false,
+    });
+  });
+
+  it('SCROLLS an opened long entry rather than letting it grow', () => {
+    // The whole point of the change: opened does not mean unbounded. A very
+    // long entry that expanded freely would push the rest of the feed off
+    // the screen, and a reader who changed their mind would have to scroll
+    // past all of it.
+    expect(journalLayout(5000, true)).toEqual({
+      isLong: true,
+      collapsed: false,
+      scrolls: true,
+    });
+  });
+
+  it('never both collapses and scrolls', () => {
+    for (const len of [0, 899, 900, 901, 100000]) {
+      for (const expanded of [false, true]) {
+        const l = journalLayout(len, expanded);
+        expect(l.collapsed && l.scrolls).toBe(false);
+      }
+    }
+  });
+});
+
+describe('readingMinutes', () => {
+  it('never reports zero', () => {
+    expect(readingMinutes('')).toBe(1);
+    expect(readingMinutes('one')).toBe(1);
+  });
+
+  it('rounds up rather than down', () => {
+    // 221 words is just over a minute and must not read as one.
+    expect(readingMinutes(Array.from({ length: 221 }, () => 'w').join(' '))).toBe(2);
   });
 });
