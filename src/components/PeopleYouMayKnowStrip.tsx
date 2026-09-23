@@ -12,6 +12,7 @@ import {
   type SuggestionUser,
 } from '@/hooks/useConnections';
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
+import { useSentRequests } from '@/hooks/useSentRequests';
 
 const AVATAR_GRADIENTS = [
   'from-rose-400 to-orange-400',
@@ -43,6 +44,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   const { data: suggestions } = useFriendSuggestions(authUser?.id, 20);
   const hideSuggestion = useHideSuggestion();
 
+  const { hasSent } = useSentRequests();
   const pool = suggestions ?? [];
   const { data: relMap } = useBatchRelationships(
     authUser?.id ?? '',
@@ -52,6 +54,10 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
   // the same request twice and crowds out someone actionable. Nothing is
   // filtered until the relationships resolve.
   const eligible = pool.filter((u) => {
+    // Already messaged: gone, and the next candidate takes the slot. The
+    // connection_status check stays for requests sent before the product
+    // moved to message requests, which a message request never sets.
+    if (hasSent(u.user_id)) return false;
     const rel = relMap?.get(u.user_id);
     if (!rel) return true;
     return rel.connection_status !== 'pending_sent' && !rel.is_connection;

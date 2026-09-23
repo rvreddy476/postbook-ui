@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useTrending } from '@/hooks/useSearch';
 import MessageButton from '@/components/connections/MessageButton';
+import { useSentRequests } from '@/hooks/useSentRequests';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
@@ -53,6 +54,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
   // exactly five would leave gaps in the rail.
   const { data: suggestions, isLoading: suggestionsLoading } = useFriendSuggestions(authUser?.id, 20);
   const { data: trendingData, isLoading: trendingLoading } = useTrending();
+  const { hasSent } = useSentRequests();
   const { data: tubeFeed } = useQuery({
     queryKey: ['posttube-trending-rail'],
     queryFn: () => getCategoryFeed('trending', { limit: 3 }),
@@ -77,6 +79,10 @@ const RightPanel: React.FC<RightPanelProps> = () => {
    */
   const people = candidates
     .filter((p) => {
+      // Already sent a message request: gone from here, and the next
+      // candidate takes the slot. connection_status is still checked for
+      // requests sent before the product moved to message requests.
+      if (hasSent(p.user_id)) return false;
       const rel = relMap?.get(p.user_id);
       if (!rel) return true;
       return rel.connection_status !== 'pending_sent' && !rel.is_connection;

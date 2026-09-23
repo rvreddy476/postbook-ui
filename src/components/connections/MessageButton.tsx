@@ -5,6 +5,7 @@ import { Check, Loader2, MessageCircle } from 'lucide-react';
 import { usePermissions, messageAffordance } from '@/hooks/usePermissions';
 import { getOrCreateDirectConversation } from '@/services/messageService';
 import { useGlobalToast } from '@/contexts/ToastContext';
+import { markRequestSent } from '@/hooks/useSentRequests';
 
 /**
  * The one way to reach somebody.
@@ -86,6 +87,13 @@ export default function MessageButton({
             // cached permission guess.
             const wasRequest = conversation?.is_request !== false;
             setSent(true);
+            /*
+              Record it so every suggestion list drops this person at once.
+              Those lists filtered on connection_status === 'pending_sent',
+              which a MESSAGE request never sets — so somebody just messaged
+              stayed in "People you may know" asking to be messaged again.
+            */
+            markRequestSent(targetUserId);
             toast({
                 type: 'success',
                 title: wasRequest ? 'Message request sent' : 'Conversation ready',
