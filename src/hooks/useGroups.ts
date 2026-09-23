@@ -2,6 +2,7 @@
 
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
+import type { AddPeopleResult } from "@/components/messenger/groupComposition"
 import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
 interface GroupsResponse { data: Group[] }
@@ -266,6 +267,45 @@ export function useLeaveGroup() {
       qc.invalidateQueries({ queryKey: ["group", groupId] })
       qc.invalidateQueries({ queryKey: ["my-groups"] })
       qc.invalidateQueries({ queryKey: ["group-members", groupId] })
+    },
+  })
+}
+
+/**
+ * Put several people in a group at once.
+ *
+ * Each person gets their own answer, decided by THEIR privacy setting, not the
+ * group's: someone who allows it is added straight in, someone who does not is
+ * sent an invitation, and someone who has blocked the caller is skipped. So
+ * the reply is three counts rather than a success flag — the caller cannot
+ * assume the number of people it picked is the number that went in.
+ *
+ * Counts, never names. group-service withholds the names on purpose: returning
+ * them would let the caller work out who refused by subtracting, which is the
+ * one thing a block is supposed to hide. Who is actually in the group is read
+ * from the member list, where an invited person and a blocked one look the
+ * same until one accepts.
+ */
+export function useAddPeopleToGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ groupId, userIds }: { groupId: string; userIds: string[] }): Promise<AddPeopleResult> => {
+      const res = await api.post<{ data: AddPeopleResult }>(`/v1/groups/${groupId}/invite`, { user_ids: userIds })
+      const d = res.data?.data
+      // Go sends 0 for an unset int rather than omitting it, so || is right
+      // here and ?? would be too: both give 0. What matters is that a server
+      // build older than this field yields 0 rather than undefined reaching
+      // the summary as "NaN people added".
+      return {
+        added: d?.added || 0,
+        invited: d?.invited || 0,
+        skipped: d?.skipped || 0,
+      }
+    },
+    onSuccess: (_, { groupId }) => {
+      qc.invalidateQueries({ queryKey: ["group-invites", groupId] })
+      qc.invalidateQueries({ queryKey: ["group-members", groupId] })
+      qc.invalidateQueries({ queryKey: ["group", groupId] })
     },
   })
 }
