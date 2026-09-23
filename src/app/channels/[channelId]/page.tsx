@@ -84,17 +84,33 @@ function isValidTab(tab: string | null, role: ChannelRole): tab is TabId {
 interface TabDef { id: TabId; label: string; badge?: number }
 
 function getTabsForRole(role: ChannelRole, subCount: number, draftCount: number): TabDef[] {
+  /*
+    The reference's words: Posts, Members. The ids stay as they are — they are
+    in the URL (?tab=) and in saved links, so renaming them would break every
+    one of those to change two labels.
+
+    NO OVERVIEW tab, at the founder's request. The reference opens on a
+    dashboard of counts and charts; a channel with one subscriber and no posts
+    has nothing to put in it, and the page should open on the thing the
+    channel IS.
+
+    NO MODERATION tab either, and that one is not a choice: the report queue
+    (/internal/channel-reports) is behind the internal service key, for
+    platform moderators rather than a channel's own admin. Giving a channel
+    owner that queue needs a server route that does not exist, so a tab here
+    would be a button that 404s.
+  */
   if (can.publish(role)) {
     return [
-      { id: 'updates', label: 'Updates' },
-      { id: 'subscribers', label: 'Subscribers', badge: subCount || undefined },
-      { id: 'analytics', label: 'Analytics' },
+      { id: 'updates', label: 'Posts' },
+      { id: 'subscribers', label: 'Members', badge: subCount || undefined },
       { id: 'drafts', label: 'Drafts', badge: draftCount || undefined },
+      { id: 'analytics', label: 'Analytics' },
       { id: 'about', label: 'About' },
       { id: 'settings', label: 'Settings' },
     ]
   }
-  return [{ id: 'updates', label: 'Updates' }, { id: 'about', label: 'About' }]
+  return [{ id: 'updates', label: 'Posts' }, { id: 'about', label: 'About' }]
 }
 
 /* ===== Error Toast ===== */
@@ -309,7 +325,7 @@ function ChannelDetailContent() {
     <AppShell>
       <div className="min-h-screen">
         {/* ===== COVER ===== */}
-        <div className="relative h-32 sm:h-40 w-full overflow-hidden bg-brand-text">
+        <div className="relative h-24 sm:h-28 w-full overflow-hidden bg-brand-text">
           {bannerSrc ? (
             <img src={bannerSrc} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -328,8 +344,15 @@ function ChannelDetailContent() {
           )}
         </div>
 
-        {/* ===== HEADER ===== */}
-        <div className="bg-brand-card border-b border-brand-divider">
+        {/*
+          ===== HEADER =====
+
+          One card carrying the channel's identity and its actions, with the
+          tabs along the bottom of it — the shape of the reference. It used to
+          be a bare strip flush against the cover, so the name, the actions and
+          the tabs all floated on the page with nothing holding them together.
+        */}
+        <div className="border-b border-brand-divider bg-brand-card">
           <div className="px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pt-3">
               {/* Left: avatar + info */}
@@ -350,7 +373,18 @@ function ChannelDetailContent() {
                     <h1 className="text-lg sm:text-xl font-extrabold text-brand-text tracking-tight truncate">{channel.name}</h1>
                     {channel.is_verified && <BadgeCheck className="w-5 h-5 text-brand-text shrink-0" />}
                     {can.publish(role) && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-text/8 text-brand-text/55 shrink-0">{role === 'owner' ? 'Your channel' : 'Editor'}</span>}
-                    {channel.channel_type !== 'public' && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-text/8 text-brand-text/55 capitalize shrink-0">{channel.channel_type}</span>}
+                    {channel.channel_type !== 'public' && <span className="shrink-0 rounded-full bg-brand-text/8 px-2 py-0.5 text-[10px] font-semibold capitalize text-brand-text/55">{channel.channel_type}</span>}
+                    {/* What the channel is about, and that it is live — both
+                        already on the record, neither previously shown. */}
+                    {channel.category && (
+                      <span className="shrink-0 rounded-full bg-primary-tint px-2 py-0.5 text-[10px] font-semibold capitalize text-primary-ink">
+                        {channel.category}
+                      </span>
+                    )}
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                      Active
+                    </span>
                   </div>
                   <p className="text-xs text-brand-text/40 font-mono mt-0.5">@{channel.handle}</p>
                   {channel.description && <p className="text-sm text-brand-text/55 mt-1 sm:mt-1.5 leading-relaxed max-w-xl line-clamp-2">{channel.description}</p>}
@@ -415,8 +449,10 @@ function ChannelDetailContent() {
             <div className="flex overflow-x-auto scrollbar-none -mb-px">
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 sm:px-4 py-2.5 text-xs font-medium whitespace-nowrap border-b-[2.5px] transition-all shrink-0 ${
-                    activeTab === tab.id ? 'text-brand-text border-brand-text font-bold' : 'text-brand-text/35 border-transparent hover:text-brand-text/60'
+                  className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-[14px] transition-colors sm:px-4 ${
+                    activeTab === tab.id
+                      ? 'border-primary-ink font-semibold text-primary-ink'
+                      : 'border-transparent font-medium text-brand-text/50 hover:text-brand-text'
                   }`}>
                   {tab.label}
                   {tab.badge !== undefined && <span className="ml-1.5 text-[9px] font-bold bg-brand-text/8 text-brand-text/50 px-1.5 py-0.5 rounded-full">{formatCount(tab.badge)}</span>}
