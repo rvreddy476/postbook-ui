@@ -164,6 +164,27 @@ api.interceptors.request.use(async (config) => {
         if (csrfToken) {
             config.headers["X-CSRF-Token"] = csrfToken
         }
+
+        /*
+          Every write carries an Idempotency-Key, whether or not the call site
+          thought to add one.
+
+          post-service refuses a create without a UUID key, because "server
+          committed, response lost" is the normal outcome of publishing from a
+          phone; other services are adopting the same rule. Leaving it to each
+          call site means every new one is a chance to forget, and forgetting
+          shows up as a create that fails outright.
+
+          A call site that HAS a stable key still wins: this only fills the
+          gap. That matters, because a key minted here is fresh per attempt —
+          it satisfies the server but cannot dedupe a retry. Anything where a
+          duplicate would be costly (publishing a post, taking a payment)
+          should still pass its own key that survives the retry, as the
+          composer does.
+        */
+        if (!config.headers["Idempotency-Key"]) {
+            config.headers["Idempotency-Key"] = crypto.randomUUID()
+        }
     }
 
     // Removed: an `X-Admin-Role: rider:admin` header that this client attached

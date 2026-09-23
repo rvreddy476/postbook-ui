@@ -505,39 +505,39 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const hasVideoFile = files.some((f) => f.type.startsWith('video'));
   const tiles = [
     {
-      key: 'photo', label: 'Photo', Icon: ImageIcon, title: 'Add photos',
+      key: 'photo', fg: 'text-tile-photo', label: 'Photo', Icon: ImageIcon, title: 'Add photos',
       active: files.length > 0 && !hasVideoFile,
       disabled: files.length >= 10 || showPoll,
       onClick: () => openPicker('image/*'),
     },
     {
-      key: 'video', label: 'Video', Icon: VideoIcon, title: 'Add a video',
+      key: 'video', fg: 'text-tile-video', label: 'Video', Icon: VideoIcon, title: 'Add a video',
       active: hasVideoFile,
       disabled: files.length >= 10 || showPoll,
       onClick: () => openPicker('video/*'),
     },
     {
-      key: 'poll', label: 'Poll', Icon: BarChart3, title: 'Ask a question with options',
+      key: 'poll', fg: 'text-tile-poll', label: 'Poll', Icon: BarChart3, title: 'Ask a question with options',
       active: showPoll, disabled: files.length > 0,
       onClick: () => chooseMode('poll'),
     },
     {
-      key: 'journal', label: 'Journal', Icon: BookOpen, title: 'Write something longer, with a title',
+      key: 'journal', fg: 'text-tile-journal', label: 'Journal', Icon: BookOpen, title: 'Write something longer, with a title',
       active: showJournal, disabled: showPoll,
       onClick: () => chooseMode('journal'),
     },
     {
-      key: 'place', label: 'Place', Icon: MapPin, title: 'Add a place',
+      key: 'place', fg: 'text-tile-place', label: 'Place', Icon: MapPin, title: 'Add a place',
       active: showLocation || Boolean(location.trim()), disabled: false,
       onClick: () => setShowLocation((v) => !v),
     },
     {
-      key: 'tag', label: 'Tag', Icon: Hash, title: 'Add hashtags',
+      key: 'tag', fg: 'text-tile-tag', label: 'Tag', Icon: Hash, title: 'Add hashtags',
       active: showHashtagInput || hashtags.length > 0, disabled: false,
       onClick: () => setShowHashtagInput((v) => !v),
     },
     {
-      key: 'more', label: 'More', Icon: MoreHorizontal, title: 'Feeling, activity and background',
+      key: 'more', fg: 'text-tile-more', label: 'More', Icon: MoreHorizontal, title: 'Feeling, activity and background',
       active: showMore || Boolean(mood) || Boolean(background), disabled: false,
       onClick: () => setShowMore((v) => !v),
     },
@@ -933,12 +933,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               aria-label={tile.label}
               title={tile.title}
               className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-25 ${
-                tile.active
-                  ? 'bg-brand-text/10 text-brand-text'
-                  : 'text-brand-text/55 hover:bg-brand-text/[0.06] hover:text-brand-text'
+                tile.active ? 'bg-brand-text/[0.08]' : 'hover:bg-brand-text/[0.06]'
               }`}
             >
-              <tile.Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              {/* Each action keeps its own colour; the tint behind it is what
+                  shows state, so colour never has to mean two things. */}
+              <tile.Icon className={`h-[18px] w-[18px] ${tile.fg}`} strokeWidth={1.75} />
             </button>
           ))}
         </div>

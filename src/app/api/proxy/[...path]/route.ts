@@ -17,6 +17,20 @@ const FORWARDED_HEADERS = [
     // are copied to the browser by the header loop below.
     "range",
     "if-range",
+    /*
+      Idempotency-Key. post-service REFUSES a create without one, and this
+      allowlist silently dropped it: the client set the header, this hop threw
+      it away, and the server answered "Idempotency-Key header is required"
+      for a request that had carried exactly that. Adding the header at the
+      call sites changed nothing, because nothing a call site does can survive
+      a header filter it does not know about.
+
+      Note what is deliberately NOT here: X-Scopes. Several admin pages set
+      it, but a scope claimed by a browser is not a scope — the gateway
+      derives them from the token. Forwarding it would let any client assert
+      its own privileges.
+    */
+    "idempotency-key",
 ]
 
 async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
