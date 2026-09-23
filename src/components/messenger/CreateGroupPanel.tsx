@@ -1,573 +1,193 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { fetchUsers } from '@/services/userService'
-import { getSession } from '@/services/authService'
-import { useCreateGroup, useInviteToGroup } from '@/hooks/useGroups'
-import { uploadMedia } from '@/lib/mediaUpload'
+import { useCreateGroup } from '@/hooks/useGroups'
 import { deriveUniqueHandle, groupHandleAvailable } from '@/lib/handles'
-import {
-  X, Camera, Search, Check, ChevronRight, ChevronLeft,
-  Users, Loader2, Globe, Lock, Shield, Crown, UserPlus,
-  AlertCircle, ImageIcon
-} from 'lucide-react'
-import type { User } from '@/types'
+import { AlertCircle, Loader2, Users, X } from 'lucide-react'
+
+/**
+ * Create a group: a name, a description, done.
+ *
+ * This was three steps — details, then pick members, then review — and the
+ * second was a gate: you could not create a group without adding at least one
+ * person to it. That is backwards. A group is a place, and a place can exist
+ * before anyone is in it. Being asked for its members, its privacy, its
+ * avatar and its cover before it exists is a lot of decisions demanded of
+ * someone who has not yet seen the thing they are deciding about.
+ *
+ * Everything those steps collected is editable inside the group afterwards,
+ * where each choice has something to attach to. So this asks for the two
+ * things that cannot be defaulted, creates the group, and opens it.
+ *
+ * The defaults are the conservative ones: private, invite-only. A group open
+ * to the world by default would be a privacy decision taken on the creator's
+ * behalf, silently, which is not a default anyone should be given.
+ */
 
 interface CreateGroupPanelProps {
   onClose: () => void
+  /** Both call sites use this to open the new group. */
   onCreated: (groupId: string) => void
 }
 
+const NAME_MIN = 3
+const NAME_MAX = 60
+const DESCRIPTION_MAX = 300
 
 export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPanelProps) {
-  const me = getSession()
-
-  // Step state
-  const [step, setStep] = useState<1 | 2 | 3>(1)
-
-  // Step 1: Group identity
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  // Private by default: a group is a closed room unless its owner
-  // deliberately opens it. Still changeable in step 1.
-  const [privacyLevel, setPrivacyLevel] = useState<'public' | 'restricted' | 'private'>('private')
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [coverPreview, setCoverPreview] = useState<string | null>(null)
-
-  // Step 2: Members
-  const [allUsers, setAllUsers] = useState<User[]>([])
-  const [usersLoading, setUsersLoading] = useState(false)
-  const [search, setSearch] = useState('')
-  const [selectedMembers, setSelectedMembers] = useState<User[]>([])
-
-  // Step 3: Creating
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
 
   const createGroup = useCreateGroup()
-  const inviteToGroup = useInviteToGroup()
-  const avatarInputRef = useRef<HTMLInputElement>(null)
-  const coverInputRef = useRef<HTMLInputElement>(null)
 
-
-  // Load users when step 2
   useEffect(() => {
-    if (step === 2 && allUsers.length === 0) {
-      const load = async () => {
-        setUsersLoading(true)
-        try {
-          const users = await fetchUsers(50, 0)
-          setAllUsers(me?.id ? users.filter(u => u.id !== me.id) : users)
-        } catch (err) {
-          console.error('Failed to load users:', err)
-        } finally {
-          setUsersLoading(false)
-        }
-      }
-      load()
+    nameRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !creating) onClose()
     }
-  }, [step, allUsers.length, me?.id])
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, creating])
 
-  const filteredUsers = useMemo(() => {
-    const q = search.toLowerCase().trim()
-    if (!q) return allUsers
-    return allUsers.filter(u =>
-      u.name.toLowerCase().includes(q) ||
-      (u.loginId && u.loginId.toLowerCase().includes(q))
-    )
-  }, [allUsers, search])
-
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setAvatarFile(file)
-    const reader = new FileReader()
-    reader.onload = ev => setAvatarPreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
-  }
-
-  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCoverFile(file)
-    const reader = new FileReader()
-    reader.onload = ev => setCoverPreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
-  }
-
-  const toggleMember = (user: User) => {
-    setSelectedMembers(prev =>
-      prev.some(m => m.id === user.id)
-        ? prev.filter(m => m.id !== user.id)
-        : [...prev, user]
-    )
-  }
+  const canCreate = name.trim().length >= NAME_MIN && !creating
 
   const handleCreate = async () => {
+    if (!canCreate) return
     setCreating(true)
     setError(null)
     try {
-      let avatarMediaId: string | undefined
-      if (avatarFile) avatarMediaId = await uploadMedia(avatarFile, 'image', 'avatar')
-
-      let coverMediaId: string | undefined
-      if (coverFile) coverMediaId = await uploadMedia(coverFile, 'image', 'cover')
-
-      // No handle field: a person is asked for a handle once, when they
-      // create their account. A group's only ever shows up in a URL, so
-      // it is derived from the name and collisions resolve silently.
+      // No handle field: a person is asked for a handle once, when they make
+      // their account. A group's only ever appears in a URL, so it is derived
+      // from the name and collisions resolve silently.
       const handle = await deriveUniqueHandle(name.trim(), groupHandleAvailable)
 
       const newGroup = await createGroup.mutateAsync({
         name: name.trim(),
         description: description.trim(),
         handle,
-        privacy_level: privacyLevel,
-        // A private group is invite-only by definition; an opened one
-        // asks to join rather than letting anyone walk in.
-        join_mode: privacyLevel === 'private' ? 'invite_only' : 'request',
-        avatar_media_id: avatarMediaId,
-        cover_media_id: coverMediaId,
+        privacy_level: 'private',
+        join_mode: 'invite_only',
       })
-
-      for (const member of selectedMembers) {
-        try {
-          await inviteToGroup.mutateAsync({ groupId: newGroup.id, userId: member.id })
-        } catch (err) {
-          console.error(`Failed to invite ${member.name}:`, err)
-        }
-      }
 
       onCreated(newGroup.id)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create group. Please try again.'
-      setError(message)
+      /*
+        The server's own words. A flat "Failed to create group" hid a 404 for
+        days — the gateway was gating /v1/groups behind a dormant-product flag
+        — and no amount of retrying would have revealed it.
+      */
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setError(
+        body?.message ||
+          (err instanceof Error && err.message) ||
+          'Could not create the group. Please try again.',
+      )
     } finally {
       setCreating(false)
     }
   }
 
-  const canProceedStep1 = name.trim().length >= 3
-  const canProceedStep2 = selectedMembers.length >= 1
-
-  // ---- RENDER ----
-
   return createPortal(
     <div
-      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-xs"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
+      onClick={(e) => { if (e.target === e.currentTarget && !creating) onClose() }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create group"
     >
-      <div className="w-full max-w-lg mx-4 bg-brand-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-brand-divider shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-brand-text/10 flex items-center justify-center">
-            <Users className="w-4.5 h-4.5 text-brand-text" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-brand-text">Create Group</h2>
-            <p className="text-[11px] text-brand-text/60 font-medium">
-              Step {step} of 3 — {step === 1 ? 'Identity' : step === 2 ? 'Add Members' : 'Review & Create'}
+      <div className="animate-in fade-in zoom-in-95 w-full max-w-md overflow-hidden rounded-2xl bg-brand-card shadow-2xl duration-200">
+        <div className="flex items-center gap-3 border-b border-brand-divider px-5 py-4">
+          <span className="bg-primary-grad flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
+            <Users className="h-5 w-5" strokeWidth={2} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[17px] font-semibold -tracking-[0.018em] text-brand-text">
+              New group
+            </h2>
+            <p className="text-[12px] text-brand-text/60">
+              Add people and settings once it exists
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-lg transition-all"
+            disabled={creating}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text disabled:opacity-40"
           >
-            <X className="w-5 h-5" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
 
-        {/* Progress bar */}
-        <div className="flex gap-1 px-5 pt-3 pb-1 shrink-0">
-          {[1, 2, 3].map(s => (
-            <div
-              key={s}
-              className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                s <= step ? 'bg-brand-text' : 'bg-brand-secondary'
-              }`}
+        <div className="space-y-4 px-5 py-5">
+          <div>
+            <label htmlFor="group-name" className="mb-1.5 block text-[13px] font-medium text-brand-text">
+              Group name
+            </label>
+            <input
+              id="group-name"
+              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
+              placeholder="What is this group called?"
+              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
             />
-          ))}
-        </div>
+          </div>
 
-        {/* Step Content */}
-        <div className="flex-1 overflow-y-auto">
-          {step === 1 && (
-            <div className="p-5 space-y-5">
-              {/* Cover Photo Upload */}
-              <div
-                onClick={() => coverInputRef.current?.click()}
-                className="relative w-full h-32 rounded-xl overflow-hidden cursor-pointer group border-2 border-dashed border-brand-divider hover:border-brand-text/30 transition-all"
-              >
-                {coverPreview ? (
-                  <>
-                    <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
-                      <span className="text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Change Cover</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="w-full h-full bg-brand-secondary flex flex-col items-center justify-center gap-1.5">
-                    <ImageIcon className="w-6 h-6 text-brand-text/30 group-hover:text-brand-text/50 transition-colors" />
-                    <span className="text-[11px] font-semibold text-brand-text/60">Add Cover Photo</span>
-                  </div>
-                )}
-                <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
-              </div>
-
-              {/* Avatar Upload */}
-              <div className="flex justify-center -mt-10 relative z-10">
-                <div
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="w-16 h-16 rounded-2xl overflow-hidden cursor-pointer group bg-brand-card p-0.5 shadow-lg ring-2 ring-white"
-                >
-                  <div className="w-full h-full rounded-[14px] overflow-hidden bg-brand-secondary relative">
-                    {avatarPreview ? (
-                      <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-linear-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-brand-text/60" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
-                      <Camera className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </div>
-                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
-              </div>
-              <p className="text-center text-[11px] text-brand-text/60 font-medium -mt-1">Group Icon</p>
-
-              {/* Name */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Group Name *</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. React Developers"
-                  maxLength={100}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm font-medium text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
-                />
-                <p className="text-[10px] text-brand-text/30 mt-1">{name.length}/100 · Minimum 3 characters</p>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-1.5">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What's this group about?"
-                  rows={2}
-                  maxLength={500}
-                  className="w-full px-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 resize-none focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
-                />
-              </div>
-
-
-              {/* Privacy */}
-              <div>
-                <label className="block text-[11px] font-bold tracking-wider text-brand-highlight mb-2">Privacy</label>
-                <div className="space-y-2">
-                  {([
-                    { value: 'public' as const, icon: <Globe className="w-4 h-4" />, label: 'Public', desc: 'Anyone can find and join' },
-                    { value: 'restricted' as const, icon: <Shield className="w-4 h-4" />, label: 'Restricted', desc: 'Visible, but content is members-only' },
-                    { value: 'private' as const, icon: <Lock className="w-4 h-4" />, label: 'Private', desc: 'Only invited members can find it' },
-                  ]).map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setPrivacyLevel(opt.value)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
-                        privacyLevel === opt.value
-                          ? 'border-brand-text/40 bg-brand-text/5'
-                          : 'border-brand-divider hover:border-brand-divider'
-                      }`}
-                    >
-                      <div className={privacyLevel === opt.value ? 'text-brand-text' : 'text-brand-text/60'}>{opt.icon}</div>
-                      <div>
-                        <p className="text-sm font-semibold text-brand-text">{opt.label}</p>
-                        <p className="text-[11px] text-brand-text/60">{opt.desc}</p>
-                      </div>
-                      {privacyLevel === opt.value && <Check className="w-4 h-4 text-brand-text ml-auto" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div>
+            <label htmlFor="group-description" className="mb-1.5 block text-[13px] font-medium text-brand-text">
+              Description <span className="font-normal text-brand-text/45">· optional</span>
+            </label>
+            <textarea
+              id="group-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+              placeholder="What is it for?"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
+            />
+            <div className="mt-1 text-right text-[11px] text-brand-text/40">
+              {description.length} / {DESCRIPTION_MAX}
             </div>
-          )}
+          </div>
 
-          {step === 2 && (
-            <div className="flex flex-col h-full">
-              {/* Selected members chips */}
-              {selectedMembers.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-2 border-b border-brand-secondary">
-                  {selectedMembers.map(m => (
-                    <div
-                      key={m.id}
-                      className="flex items-center gap-1.5 pl-1 pr-2 py-1 bg-brand-text/5 border border-brand-text/15 rounded-full"
-                    >
-                      <img src={m.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
-                      <span className="text-[11px] font-semibold text-brand-text max-w-[60px] truncate">{m.name}</span>
-                      <button
-                        onClick={() => toggleMember(m)}
-                        className="w-4 h-4 rounded-full bg-brand-secondary hover:bg-rose-200 flex items-center justify-center transition-colors"
-                      >
-                        <X className="w-2.5 h-2.5 text-brand-highlight" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Search */}
-              <div className="px-5 pt-3 pb-2">
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search users by name..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-brand-secondary border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 focus:border-brand-text/30 transition-all"
-                  />
-                </div>
-                <p className="text-[10px] text-brand-text/30 mt-1.5 font-medium">
-                  {selectedMembers.length} selected · Add at least 1 member to continue
-                </p>
-              </div>
-
-              {/* User list */}
-              <div className="flex-1 overflow-y-auto px-3 pb-3">
-                {usersLoading ? (
-                  <div className="space-y-2 px-2 pt-2">
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <div key={i} className="flex items-center gap-3 p-2 animate-pulse">
-                        <div className="w-10 h-10 rounded-xl bg-brand-secondary" />
-                        <div className="flex-1 space-y-1.5">
-                          <div className="h-3 w-24 bg-brand-secondary rounded-sm" />
-                          <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredUsers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-2">
-                    <Search className="w-8 h-8 text-brand-secondary" />
-                    <p className="text-sm text-brand-text/60 font-medium">
-                      {search.trim() ? 'No users found' : 'No users available'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {filteredUsers.map(user => {
-                      const isSelected = selectedMembers.some(m => m.id === user.id)
-                      return (
-                        <button
-                          key={user.id}
-                          onClick={() => toggleMember(user)}
-                          className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left ${
-                            isSelected
-                              ? 'bg-brand-text/5 border border-brand-text/10'
-                              : 'hover:bg-brand-secondary border border-transparent'
-                          }`}
-                        >
-                          {/* Checkbox */}
-                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                            isSelected
-                              ? 'bg-brand-text border-brand-text'
-                              : 'border-brand-text/30'
-                          }`}>
-                            {isSelected && <Check className="w-3 h-3 text-white" />}
-                          </div>
-
-                          {/* Avatar */}
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-brand-secondary shrink-0">
-                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-brand-text truncate">{user.name}</p>
-                            {user.loginId && (
-                              <p className="text-[11px] text-brand-text/60">@{user.loginId}</p>
-                            )}
-                          </div>
-
-                          {user.isOnline && (
-                            <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="p-5 space-y-5">
-              {/* Group preview card */}
-              <div className="rounded-xl border border-brand-divider overflow-hidden">
-                {/* Cover */}
-                <div className="h-24 relative">
-                  {coverPreview ? (
-                    <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-linear-to-br from-slate-200 to-slate-300" />
-                  )}
-                </div>
-
-                {/* Avatar + name */}
-                <div className="px-4 pb-4 -mt-6 relative">
-                  <div className="w-14 h-14 rounded-xl bg-brand-card p-0.5 shadow-lg inline-block">
-                    <div className="w-full h-full rounded-[10px] overflow-hidden bg-brand-secondary">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-linear-to-br from-brand-text/20 to-brand-text/10 flex items-center justify-center text-brand-text font-bold text-lg">
-                          {name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <h3 className="text-base font-bold text-brand-text mt-2">{name}</h3>
-                  {/* The handle is derived at create time and never shown
-                      in this preview: it would be a guess until the
-                      server confirms it is free. */}
-                  {description && (
-                    <p className="text-xs text-brand-highlight mt-1 line-clamp-2">{description}</p>
-                  )}
-
-                  <div className="flex items-center gap-3 mt-3 text-xs text-brand-text/60">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
-                      {selectedMembers.length + 1} members
-                    </span>
-                    <span className="flex items-center gap-1 capitalize">
-                      {privacyLevel === 'public' ? <Globe className="w-3.5 h-3.5" /> :
-                       privacyLevel === 'restricted' ? <Shield className="w-3.5 h-3.5" /> :
-                       <Lock className="w-3.5 h-3.5" />}
-                      {privacyLevel}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Members list */}
-              <div>
-                <h3 className="text-[11px] font-bold tracking-wider text-brand-text/60 mb-2">Members</h3>
-
-                {/* Creator = Admin */}
-                {me && (
-                  <div className="flex items-center gap-3 p-2.5 bg-brand-secondary rounded-xl mb-1.5">
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-brand-secondary">
-                      <img src={me.avatar} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-brand-text truncate">{me.name}</p>
-                      <p className="text-[10px] text-brand-text/60">You</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-wider bg-amber-50 text-amber-600 rounded-md">
-                      <Crown className="w-2.5 h-2.5" />Admin
-                    </span>
-                  </div>
-                )}
-
-                {selectedMembers.map(m => (
-                  <div key={m.id} className="flex items-center gap-3 p-2.5 rounded-xl mb-1">
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-brand-secondary">
-                      <img src={m.avatar} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-brand-text truncate">{m.name}</p>
-                    </div>
-                    <span className="text-[9px] font-bold tracking-wider text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md">
-                      Member
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                  <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                  <p className="text-xs text-rose-600 font-medium">{error}</p>
-                </div>
-              )}
+          {error && (
+            <div role="alert" className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
+              <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <span className="font-medium">{error}</span>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-3 px-5 py-4 border-t border-brand-divider shrink-0">
-          {step > 1 && (
-            <button
-              onClick={() => setStep((step - 1) as 1 | 2)}
-              disabled={creating}
-              className="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all disabled:opacity-50"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
-          )}
-
-          <div className="flex-1" />
-
-          {step === 1 && (
-            <button
-              onClick={() => setStep(2)}
-              disabled={!canProceedStep1}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Add Members
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
-
-          {step === 2 && (
-            <div className="flex items-center gap-3">
-              {!canProceedStep2 && (
-                <span className="text-[11px] text-rose-400 font-semibold">Add at least 1 member</span>
-              )}
-              <button
-                onClick={() => setStep(3)}
-                disabled={!canProceedStep2}
-                className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Review
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {step === 3 && (
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-primary-ink rounded-xl hover:bg-primary-ink/90 transition-all disabled:opacity-60"
-            >
-              {creating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  Create Group
-                </>
-              )}
-            </button>
-          )}
+        <div className="flex items-center justify-end gap-2 border-t border-brand-divider px-5 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={creating}
+            className="rounded-full px-4 py-2.5 text-[13px] font-semibold text-brand-text/60 transition-colors hover:text-brand-text disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={!canCreate}
+            className="bg-primary-grad flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
+          >
+            {creating && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
+            {creating ? 'Creating…' : 'Create group'}
+          </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

@@ -107,7 +107,12 @@ export function useCreateBroadcastChannel() {
       name: string
       handle: string
       description: string
-      channel_type: string
+      /**
+       * Omit it and the server chooses. Under the invite-only pilot that is
+       * private, and any publicly visible type is refused outright -- so a
+       * caller that asks for public is asking for a 403.
+       */
+      channel_type?: string
       comment_mode?: string
       paid_access?: boolean
       subscription_price_cents?: number

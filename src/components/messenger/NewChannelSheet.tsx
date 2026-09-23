@@ -46,7 +46,14 @@ export default function NewChannelSheet({ onClose, onCreated }: NewChannelSheetP
         name: name.trim(),
         handle,
         description: description.trim(),
-        channel_type: 'public',
+        // channel_type is DELIBERATELY not sent.
+        //
+        // Channels are in an invite-only pilot, and the pilot refuses any
+        // publicly visible type outright — this asked for 'public' and was
+        // answered 403 every time, which surfaced as "Could not create that
+        // channel". Omitting it takes the pilot's own default, private, which
+        // is the only thing it will create. Visibility is changeable in the
+        // channel's settings once the pilot opens.
         // Channels are broadcast: readers react, they do not reply.
         comment_mode: 'disabled',
         reaction_mode: 'enabled',
@@ -54,8 +61,16 @@ export default function NewChannelSheet({ onClose, onCreated }: NewChannelSheetP
       })
       if (channel?.id) onCreated(channel.id)
       else setError('The channel was created but returned no id.')
-    } catch {
-      setError('Could not create that channel.')
+    } catch (err) {
+      /*
+        The server's own words, not a flat string.
+
+        This was `catch {}` with "Could not create that channel", which hid a
+        403 saying the account was not on the pilot allowlist — a reason that
+        is actionable and that no amount of retrying would have revealed.
+      */
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setError(body?.message || (err instanceof Error && err.message) || 'Could not create that channel.')
     }
   }
 
