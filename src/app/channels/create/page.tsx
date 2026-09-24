@@ -124,8 +124,8 @@ export default function CreateChannelPage() {
         </div>
 
         <div className="flex items-center gap-2 mb-8">
-          <div className={`h-1 flex-1 rounded-full transition-colors ${step >= 1 ? 'bg-brand-text' : 'bg-brand-divider'}`} />
-          <div className={`h-1 flex-1 rounded-full transition-colors ${step >= 2 ? 'bg-brand-text' : 'bg-brand-divider'}`} />
+          <div className={`h-1 flex-1 rounded-full transition-colors ${step >= 1 ? 'bg-primary-ink' : 'bg-brand-divider'}`} />
+          <div className={`h-1 flex-1 rounded-full transition-colors ${step >= 2 ? 'bg-primary-ink' : 'bg-brand-divider'}`} />
         </div>
 
         {step === 1 && (
@@ -250,7 +250,7 @@ export default function CreateChannelPage() {
                         commentMode === opt.value ? 'border-brand-text' : 'border-brand-divider'
                       }`}>
                         {commentMode === opt.value && (
-                          <div className="w-2 h-2 rounded-full bg-brand-text" />
+                          <div className="w-2 h-2 rounded-full bg-primary-ink" />
                         )}
                       </div>
                       <div>
@@ -272,7 +272,7 @@ export default function CreateChannelPage() {
                 type="button"
                 onClick={() => setForwardAllowed(!forwardAllowed)}
                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                  forwardAllowed ? 'bg-brand-text' : 'bg-brand-divider'
+                  forwardAllowed ? 'bg-primary-ink' : 'bg-brand-divider'
                 }`}
               >
                 <span
@@ -293,7 +293,7 @@ export default function CreateChannelPage() {
                   type="button"
                   onClick={() => setPaidAccess(!paidAccess)}
                   className={`relative w-11 h-6 rounded-full transition-colors ${
-                    paidAccess ? 'bg-brand-text' : 'bg-brand-divider'
+                    paidAccess ? 'bg-primary-ink' : 'bg-brand-divider'
                   }`}
                 >
                   <span

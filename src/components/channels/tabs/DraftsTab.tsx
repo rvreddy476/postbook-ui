@@ -106,7 +106,7 @@ function DeleteConfirmDialog({
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-danger/100 hover:bg-danger transition-colors"
           >
             Delete
           </button>
@@ -142,7 +142,7 @@ function DraftCard({
             {typeInfo.emoji} {typeInfo.label}
           </span>
           {isScheduled ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-semibold rounded-full border border-amber-200">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-warning/10 text-warning text-[10px] font-semibold rounded-full border border-warning/30">
               <Calendar className="w-2.5 h-2.5" />
               Scheduled for {formatScheduledDate(draft.scheduled_at!)}
             </span>
@@ -186,7 +186,7 @@ function DraftCard({
           {onDelete && (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-auto"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors ml-auto"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete

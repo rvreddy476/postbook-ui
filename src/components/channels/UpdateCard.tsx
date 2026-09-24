@@ -304,7 +304,7 @@ function EventDisplay({ update }: { update: ChannelUpdate }) {
             <button
               key={opt} onClick={() => setRsvp(opt)}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
-                rsvp === opt ? 'bg-brand-text text-brand-bg' : 'border border-brand-divider text-brand-text/60 hover:bg-brand-secondary/50'
+                rsvp === opt ? 'bg-primary-ink text-white' : 'border border-brand-divider text-brand-text/60 hover:bg-brand-secondary/50'
               }`}
             >
               {opt}

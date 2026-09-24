@@ -60,23 +60,26 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 function CharCount({ current, max }: { current: number; max: number }) {
   const pct = current / max
   return (
-    <span className={`text-[10px] font-mono ${pct >= 1 ? 'text-red-500 font-bold' : pct >= 0.9 ? 'text-amber-500' : 'text-brand-text/30'}`}>
+    <span className={`text-[10px] font-mono ${pct >= 1 ? 'text-danger font-bold' : pct >= 0.9 ? 'text-warning' : 'text-brand-text/30'}`}>
       {current}/{max}
     </span>
   )
 }
 
-function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+// A quiet heading, matching the composer's. The red asterisk is gone for the
+// same reason it went there: nothing has gone wrong yet, and what is missing
+// is named when saving is refused.
+function FieldLabel({ children }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-[11px] font-bold text-brand-text/50 tracking-wider mb-1.5">
-      {children}{required && <span className="text-red-400 ml-0.5">*</span>}
+    <label className="mb-1.5 block text-[12px] font-semibold text-brand-text/55">
+      {children}
     </label>
   )
 }
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
-  return <p className="text-[10px] text-red-500 mt-0.5">{message}</p>
+  return <p className="text-[10px] text-danger mt-0.5">{message}</p>
 }
 
 function Toggle({ enabled, onToggle, label, icon }: {
@@ -91,7 +94,7 @@ function Toggle({ enabled, onToggle, label, icon }: {
       <button
         type="button"
         onClick={onToggle}
-        className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? 'bg-brand-text' : 'bg-brand-divider'}`}
+        className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? 'bg-primary-ink' : 'bg-brand-divider'}`}
       >
         <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
@@ -104,12 +107,12 @@ function WarningBanner({ variant, children }: { variant: 'warning' | 'info'; chi
   return (
     <div className={`flex items-start gap-2.5 rounded-xl border p-3 text-xs font-medium ${
       isWarning
-        ? 'border-amber-300 bg-amber-50 text-amber-800'
-        : 'border-blue-300 bg-blue-50 text-blue-800'
+        ? 'border-warning/30 bg-warning/10 text-warning'
+        : 'border-primary-outline bg-primary-tint text-primary-ink'
     }`}>
       {isWarning
-        ? <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-        : <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
+        ? <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warning" />
+        : <Info className="w-4 h-4 shrink-0 mt-0.5 text-primary-ink" />
       }
       <span>{children}</span>
     </div>
@@ -408,7 +411,7 @@ export default function EditUpdateModal({
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="hover:text-red-500 transition-colors"
+                      className="hover:text-danger transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -471,9 +474,9 @@ export default function EditUpdateModal({
                         disabled={alertIsCritical}
                         className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-colors ${
                           isCurrent
-                            ? sev === 'critical' ? 'bg-red-500 text-white'
-                            : sev === 'warning' ? 'bg-amber-500 text-white'
-                            : 'bg-blue-500 text-white'
+                            ? sev === 'critical' ? 'bg-danger/100 text-white'
+                            : sev === 'warning' ? 'bg-warning/100 text-white'
+                            : 'bg-primary-tint0 text-white'
                             : 'border border-brand-divider text-brand-text/60'
                         } ${isLocked || alertIsCritical ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
@@ -490,18 +493,18 @@ export default function EditUpdateModal({
 
             {/* --- Error summary --- */}
             {Object.keys(errors).length > 1 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <p className="text-[11px] font-bold text-red-600 mb-1">Please fix the following:</p>
+              <div className="bg-danger/10 border border-danger/30 rounded-xl p-3">
+                <p className="text-[11px] font-bold text-danger mb-1">Please fix the following:</p>
                 {Object.values(errors).map((msg, i) => (
-                  <p key={i} className="text-[10px] text-red-500">• {msg}</p>
+                  <p key={i} className="text-[10px] text-danger">• {msg}</p>
                 ))}
               </div>
             )}
 
             {/* --- Save error --- */}
             {saveError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <p className="text-xs font-bold text-red-600">{saveError}</p>
+              <div className="bg-danger/10 border border-danger/30 rounded-xl p-3">
+                <p className="text-xs font-bold text-danger">{saveError}</p>
               </div>
             )}
           </div>

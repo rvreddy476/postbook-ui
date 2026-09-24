@@ -515,7 +515,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
               aria-pressed={on}
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
                 on
-                  ? 'bg-brand-text text-brand-bg'
+                  ? 'bg-primary-ink text-white'
                   : 'border border-brand-divider text-brand-text/60 hover:bg-brand-secondary'
               }`}
             >
@@ -718,7 +718,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 {(['in-person', 'online', 'hybrid'] as const).map(loc => (
                   <button key={loc} type="button" onClick={() => setEventLocationType(loc)}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
-                      eventLocationType === loc ? 'bg-brand-text text-brand-bg' : 'border border-brand-divider text-brand-text/60'
+                      eventLocationType === loc ? 'bg-primary-ink text-white' : 'border border-brand-divider text-brand-text/60'
                     }`}>
                     {loc === 'in-person' ? <MapPin className="w-3 h-3" /> : loc === 'online' ? <Monitor className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
                     {loc.charAt(0).toUpperCase() + loc.slice(1)}

@@ -214,7 +214,7 @@ export default function OverviewTab({
                               cannot be drawn. This is the same shape from data
                               that exists, and it is labelled as what it is.
                             */}
-                            <div className="flex h-32 items-end gap-2">
+                            <div className="flex h-32 items-stretch gap-2">
                                 {activity.map((m) => (
                                     <div key={m.key} className="flex flex-1 flex-col items-center gap-2">
                                         <div className="flex w-full flex-1 items-end">

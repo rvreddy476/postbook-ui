@@ -26,19 +26,19 @@ function roleBadge(role: string) {
   switch (role) {
     case 'admin':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-primary-tint text-primary-ink text-[10px] font-bold tracking-wider">
           <ShieldCheck className="w-3 h-3" /> Admin
         </span>
       )
     case 'moderator':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-bold tracking-wider">
           <ShieldCheck className="w-3 h-3" /> Mod
         </span>
       )
     case 'pending':
       return (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 text-[10px] font-bold tracking-wider">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-[10px] font-bold tracking-wider">
           <Clock className="w-3 h-3" /> Pending
         </span>
       )
@@ -93,7 +93,7 @@ function ActionsDropdown({ userId, onRemove, onBlock }: { userId: string; onRemo
                   onClick={() => setConfirming('remove')}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-brand-text hover:bg-brand-secondary/40 transition-colors"
                 >
-                  <UserX className="w-3.5 h-3.5 text-red-500" />
+                  <UserX className="w-3.5 h-3.5 text-danger" />
                   Remove subscriber
                 </button>
               )}
@@ -102,7 +102,7 @@ function ActionsDropdown({ userId, onRemove, onBlock }: { userId: string; onRemo
                   onClick={() => setConfirming('block')}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-brand-text hover:bg-brand-secondary/40 transition-colors"
                 >
-                  <Ban className="w-3.5 h-3.5 text-red-500" />
+                  <Ban className="w-3.5 h-3.5 text-danger" />
                   Block user
                 </button>
               )}
@@ -120,7 +120,7 @@ function ActionsDropdown({ userId, onRemove, onBlock }: { userId: string; onRemo
                     setOpen(false)
                     setConfirming(null)
                   }}
-                  className="flex-1 px-2 py-1 rounded-lg bg-red-500 text-white text-[11px] font-semibold hover:bg-red-600 transition-colors"
+                  className="flex-1 px-2 py-1 rounded-lg bg-danger/100 text-white text-[11px] font-semibold hover:bg-danger transition-colors"
                 >
                   Confirm
                 </button>
@@ -282,7 +282,7 @@ export default function SubscribersTab({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search subscribers..."
-            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-violet-200 transition-shadow"
+            className="w-full pl-8 pr-3 py-2 rounded-xl border border-brand-divider bg-brand-card text-xs text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:border-brand-accent transition-shadow"
           />
         </div>
         <div className="relative" ref={sortRef}>
@@ -300,7 +300,7 @@ export default function SubscribersTab({
                   key={key}
                   onClick={() => { setSort(key); setSortOpen(false) }}
                   className={`w-full px-3 py-1.5 text-left text-xs font-medium transition-colors ${
-                    sort === key ? 'text-violet-600 bg-violet-50' : 'text-brand-text/60 hover:bg-brand-secondary/40'
+                    sort === key ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:bg-brand-secondary/40'
                   }`}
                 >
                   {sortLabels[key]}
@@ -313,9 +313,9 @@ export default function SubscribersTab({
 
       {/* Pending approvals */}
       {pendingMembers.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-orange-200">
-            <p className="text-[10px] font-bold text-orange-600 tracking-wider">
+        <div className="bg-warning/10 border border-warning/30 rounded-xl overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-warning/30">
+            <p className="text-[10px] font-bold text-warning tracking-wider">
               {pendingMembers.length} Pending {pendingMembers.length === 1 ? 'Approval' : 'Approvals'}
             </p>
           </div>
@@ -325,10 +325,10 @@ export default function SubscribersTab({
             return (
             <div
               key={member.user_id}
-              className="flex items-center gap-3 px-4 py-3 border-b border-orange-200 last:border-b-0"
+              className="flex items-center gap-3 px-4 py-3 border-b border-warning/30 last:border-b-0"
             >
-              <div className="w-9 h-9 rounded-full bg-orange-200/60 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-orange-600">
+              <div className="w-9 h-9 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-warning">
                   {name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -340,7 +340,7 @@ export default function SubscribersTab({
                 {onApprove && (
                   <button
                     onClick={() => onApprove(member.user_id)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-[11px] font-semibold hover:bg-emerald-600 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-success/100 text-white text-[11px] font-semibold hover:bg-success transition-colors"
                   >
                     <CheckCircle2 className="w-3 h-3" /> Approve
                   </button>

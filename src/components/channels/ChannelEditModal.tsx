@@ -264,7 +264,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
                   onClick={() => setCategory(option)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                     category === option
-                      ? 'bg-brand-text text-brand-bg'
+                      ? 'bg-primary-ink text-white'
                       : 'border border-brand-divider text-brand-text hover:bg-brand-secondary/50'
                   }`}
                 >
@@ -306,7 +306,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
                   type="button"
                   onClick={() => setForwardAllowed(!forwardAllowed)}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    forwardAllowed ? 'bg-brand-text' : 'bg-brand-divider'
+                    forwardAllowed ? 'bg-primary-ink' : 'bg-brand-divider'
                   }`}
                 >
                   <span
@@ -328,7 +328,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
                   type="button"
                   onClick={() => setPaidAccess(!paidAccess)}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    paidAccess ? 'bg-brand-text' : 'bg-brand-divider'
+                    paidAccess ? 'bg-primary-ink' : 'bg-brand-divider'
                   }`}
                 >
                   <span
@@ -359,7 +359,7 @@ export default function ChannelEditModal({ channel, onClose }: ChannelEditModalP
             </div>
           </div>
 
-          {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
+          {error && <p className="text-sm font-bold text-danger">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button

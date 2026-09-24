@@ -15,6 +15,7 @@ import {
   useRecordView,
   useChannelAdmins,
   useSetChannelMuted,
+  useChannelSubscribers,
 } from '@/hooks/useBroadcastChannels'
 import ChannelComposer, { type ComposerPayload } from '@/components/channels/ChannelComposer'
 import UpdateCard from '@/components/channels/UpdateCard'
@@ -22,8 +23,9 @@ import OverviewTab from '@/components/channels/tabs/OverviewTab'
 import AnalyticsTab from '@/components/channels/tabs/AnalyticsTab'
 import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
+import SubscribersTab from '@/components/channels/tabs/SubscribersTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Pencil, Radio, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Pencil, Radio, Settings2, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -45,7 +47,7 @@ interface ChannelPanelProps {
  * management are the only things still on the full channel page.
  */
 export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
-  const [tab, setTab] = useState<'overview' | 'updates' | 'about' | 'analytics' | 'settings'>('updates')
+  const [tab, setTab] = useState<'overview' | 'updates' | 'members' | 'about' | 'analytics' | 'settings'>('updates')
   const [error, setError] = useState<string | null>(null)
   const [showComposer, setShowComposer] = useState(false)
 
@@ -70,6 +72,9 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   // Only the Overview shows who runs the channel, so only it pays for them.
   const { data: channelAdmins } = useChannelAdmins(
     canPublish && tab === 'overview' ? channelId : undefined
+  )
+  const { data: subscribers, isLoading: subscribersLoading } = useChannelSubscribers(
+    canPublish && tab === 'members' ? channelId : undefined
   )
 
   // Pinned first, then newest. The API returns them in one list.
@@ -129,6 +134,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     ? ([
         { id: 'overview', label: 'Overview' },
         { id: 'updates', label: 'Posts' },
+        { id: 'members', label: 'Members' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'settings', label: 'Settings' },
         { id: 'about', label: 'About' },
@@ -162,7 +168,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-brand-secondary">
       {/* Header — same shape as a DM's, so the column reads consistently */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-brand-divider bg-brand-bg px-4 py-3">
+      <header className="flex shrink-0 items-start gap-3 border-b border-brand-divider bg-brand-bg px-5 py-4">
         {onBack && (
           <button
             onClick={onBack}
@@ -173,7 +179,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
           </button>
         )}
 
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-secondary text-brand-text/60">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-divider bg-brand-secondary text-brand-text/60">
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -183,28 +189,49 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h2 className="truncate text-[15px] font-semibold -tracking-[0.014em] text-brand-text">
+            <h2 className="truncate text-[17px] font-semibold -tracking-[0.018em] text-brand-text">
               {channel.name}
             </h2>
             {channel.is_verified && (
               <BadgeCheck className="h-4 w-4 shrink-0 text-primary-ink" aria-label="Verified" />
             )}
+            {/* What it is and that it is live, on the same line as the name:
+                both are already on the record and neither was shown. */}
+            <span className="shrink-0 rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] font-medium capitalize text-brand-text/60">
+              {channel.channel_type} channel
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              Active
+            </span>
           </div>
-          <p className="truncate text-xs text-brand-text/60">
+          <p className="truncate text-[12px] text-brand-text/55">
             @{channel.handle}
             <span className="px-1.5 text-brand-text/30">·</span>
             {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
           </p>
+          {channel.description && (
+            <p className="mt-1 line-clamp-1 text-[12px] text-brand-text/60">{channel.description}</p>
+          )}
         </div>
 
         {/* Subscribing is the one action that belongs to a channel itself.
             Owners and editors are members by definition, so they get the
             bell state and no way to unsubscribe from their own channel. */}
         {canPublish ? (
-          <span className="flex items-center gap-1.5 rounded-full bg-primary-tint px-3 py-1.5 text-[13px] font-semibold text-primary-ink">
-            <Radio className="h-3.5 w-3.5" strokeWidth={2} />
-            You publish here
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden items-center gap-1.5 rounded-full bg-primary-tint px-3 py-1.5 text-[13px] font-semibold text-primary-ink sm:flex">
+              <Radio className="h-3.5 w-3.5" strokeWidth={2} />
+              You publish here
+            </span>
+            <button
+              onClick={() => setTab('settings')}
+              className="bg-primary-grad flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+            >
+              <Settings2 className="h-3.5 w-3.5" strokeWidth={2} />
+              Edit channel
+            </button>
+          </div>
         ) : (
           <button
             onClick={toggleSubscription}
@@ -269,6 +296,16 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               updates={updates}
               admins={channelAdmins}
               onViewPosts={() => setTab('updates')}
+            />
+          </div>
+        </div>
+      ) : tab === 'members' && canPublish ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="mx-auto max-w-3xl">
+            <SubscribersTab
+              channel={channel}
+              subscribers={subscribers}
+              isLoading={subscribersLoading}
             />
           </div>
         </div>

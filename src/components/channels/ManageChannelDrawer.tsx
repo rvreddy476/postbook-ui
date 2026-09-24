@@ -32,9 +32,9 @@ interface PendingAction {
 }
 
 const badgeColorMap = {
-  amber: 'bg-amber-500',
-  red: 'bg-red-500',
-  blue: 'bg-blue-500',
+  amber: 'bg-warning/100',
+  red: 'bg-danger/100',
+  blue: 'bg-primary-tint0',
 } as const
 
 export default function ManageChannelDrawer({

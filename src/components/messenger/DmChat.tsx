@@ -997,7 +997,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                   className={`group/bubble relative max-w-full wrap-break-word px-4 py-2.5 text-[14px] leading-relaxed shadow-xs transition-all ${msg.isDeleted ? '' : 'cursor-pointer'} ${msg.isDeleted
                       ? 'rounded-2xl bg-brand-secondary text-brand-text/60 italic'
                       : isMe
-                        ? `bg-brand-text text-brand-bg ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
+                        ? `bg-primary-ink text-white ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
                         : `border border-brand-divider bg-brand-card text-brand-text ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
                     }`}
                 >

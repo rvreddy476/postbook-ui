@@ -174,8 +174,8 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="text-center max-w-md w-full">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-6">
-          <Trash2 className="w-8 h-8 text-red-400" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-danger/10 mb-6">
+          <Trash2 className="w-8 h-8 text-danger/60" />
         </div>
 
         <h2 className="text-xl font-semibold text-brand-text">
@@ -194,7 +194,7 @@ export function DeletedChannelView({ channelName, isOwner, recoveryDaysLeft, onR
           </div>
           <div className="h-2 w-full rounded-full bg-brand-secondary overflow-hidden">
             <div
-              className="h-full rounded-full bg-brand-text/70 transition-all"
+              className="h-full rounded-full bg-primary-ink/70 transition-all"
               style={{ width: `${progressPct}%` }}
             />
           </div>

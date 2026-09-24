@@ -177,7 +177,7 @@ const ActionMenu: React.FC<{
             onClose()
           }}
           className={`flex w-full items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium transition hover:bg-brand-secondary ${
-            item.danger ? 'text-red-600' : 'text-brand-text'
+            item.danger ? 'text-danger' : 'text-brand-text'
           }`}
         >
           {item.icon}
@@ -329,8 +329,8 @@ const CommentRow: React.FC<{
                 onClick={() => onSpark(comment.id)}
                 className={`flex items-center gap-1 text-[12px] transition ${
                   sparked
-                    ? 'text-amber-500 font-semibold'
-                    : 'text-brand-text/40 hover:text-amber-500'
+                    ? 'text-warning font-semibold'
+                    : 'text-brand-text/40 hover:text-warning'
                 }`}
               >
                 <Sparkles className={`w-3.5 h-3.5 ${sparked ? 'fill-amber-500' : ''}`} />
@@ -352,9 +352,9 @@ const CommentRow: React.FC<{
 
       {/* Delete confirmation */}
       {confirmDelete && (
-        <div className="mt-2 ml-10 flex items-center gap-2 p-2.5 rounded-xl bg-red-50 border border-red-200">
-          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-          <span className="text-[12px] text-red-700 flex-1">Delete this comment?</span>
+        <div className="mt-2 ml-10 flex items-center gap-2 p-2.5 rounded-xl bg-danger/10 border border-danger/30">
+          <AlertCircle className="w-4 h-4 text-danger shrink-0" />
+          <span className="text-[12px] text-danger flex-1">Delete this comment?</span>
           <button
             onClick={() => setConfirmDelete(false)}
             className="text-[12px] font-medium text-brand-text/60 px-2.5 py-1 rounded-full hover:bg-white transition"
@@ -366,7 +366,7 @@ const CommentRow: React.FC<{
               onDelete(comment.id)
               setConfirmDelete(false)
             }}
-            className="text-[12px] font-semibold text-white bg-red-600 px-2.5 py-1 rounded-full hover:bg-red-700 transition"
+            className="text-[12px] font-semibold text-white bg-danger px-2.5 py-1 rounded-full hover:bg-danger transition"
           >
             Delete
           </button>
@@ -726,14 +726,14 @@ export default function CommentSection({ updateId, channelId, isOwner = false, i
         {/* Character counter */}
         {inputText.length > 0 && (
           <div className="flex items-center justify-end mt-1 mr-1">
-            <span className={`text-[10px] ${overLimit ? 'text-red-500 font-semibold' : 'text-brand-text/30'}`}>
+            <span className={`text-[10px] ${overLimit ? 'text-danger font-semibold' : 'text-brand-text/30'}`}>
               {inputText.length}/{MAX_CHARS}
             </span>
           </div>
         )}
         {/* Optimistic error */}
         {optimisticError && (
-          <div className="mt-1.5 ml-10 flex items-center gap-1.5 text-[12px] text-red-500">
+          <div className="mt-1.5 ml-10 flex items-center gap-1.5 text-[12px] text-danger">
             <AlertCircle className="w-3.5 h-3.5" />
             {optimisticError}
           </div>

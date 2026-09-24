@@ -119,8 +119,8 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
     return (
       <div className="bg-brand-card border border-brand-divider rounded-2xl p-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-            <BadgeCheck className="w-4.5 h-4.5 text-emerald-600" />
+          <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+            <BadgeCheck className="w-4.5 h-4.5 text-success" />
           </div>
           <div>
             <p className="text-sm font-bold text-brand-text">Verified channel</p>
@@ -139,7 +139,7 @@ function VerificationCard({ channel }: { channel: BroadcastChannel }) {
       </p>
       <div className="w-full h-2 bg-brand-bg rounded-full overflow-hidden">
         <div
-          className="h-full bg-brand-text rounded-full transition-all"
+          className="h-full bg-primary-grad rounded-full transition-all"
           style={{ width: `${progress}%` }}
         />
       </div>

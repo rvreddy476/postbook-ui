@@ -292,7 +292,7 @@ export default function ChannelsPage() {
               onClick={() => setActiveCategory(cat)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 activeCategory === cat
-                  ? 'bg-brand-text text-brand-bg'
+                  ? 'bg-primary-ink text-white'
                   : 'border border-brand-divider text-brand-text hover:bg-brand-secondary/50'
               }`}
             >

@@ -66,6 +66,23 @@ const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 /*  Reusable primitives                                                */
 /* ------------------------------------------------------------------ */
 
+/*
+  The settings sections.
+
+  NO "RULES" SECTION, and that is not an oversight. channel-service has no
+  rules column — not in broadcast_channels, not on the wire, not in any
+  handler. A Rules tab would be a text box that forgets what you type the
+  moment you reload. Groups do have rules; channels need the field adding
+  server-side first, which is a migration rather than a UI change.
+*/
+const SETTINGS_SECTIONS = [
+  { id: 'general', label: 'General' },
+  { id: 'permissions', label: 'Permissions' },
+  { id: 'notifications', label: 'Notifications' },
+] as const
+
+type SettingsSection = (typeof SETTINGS_SECTIONS)[number]['id']
+
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-brand-card border border-brand-divider rounded-2xl overflow-hidden">
@@ -110,9 +127,9 @@ function TextInput({
         placeholder={placeholder}
         className={`w-full bg-brand-bg border border-brand-divider rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-brand-text/20 transition ${
           mono ? 'font-mono' : ''
-        } ${error ? 'border-red-400 focus:ring-red-200' : ''}`}
+        } ${error ? 'border-danger/30 focus:ring-danger' : ''}`}
       />
-      {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
+      {error && <p className="text-[11px] text-danger mt-1">{error}</p>}
     </div>
   )
 }
@@ -184,7 +201,7 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
       aria-checked={enabled}
       onClick={onToggle}
       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 ${
-        enabled ? 'bg-brand-text' : 'bg-brand-divider'
+        enabled ? 'bg-primary-ink' : 'bg-brand-divider'
       }`}
     >
       <span
@@ -264,6 +281,11 @@ function MediaUploadPlaceholder({
 
 export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProps) {
   /* ---- Channel Profile ---- */
+  /* Which section is open. Not in the URL: this lives inside a tab that is
+     already in the URL, and two levels of query state for one screen is more
+     bookkeeping than it is worth. */
+  const [section, setSection] = useState<SettingsSection>('general')
+
   const [name, setName] = useState(channel.name)
   const [handle, setHandle] = useState(channel.handle)
   const [description, setDescription] = useState(channel.description)
@@ -285,6 +307,23 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
   /* ---- Notification Settings ---- */
   const [notifyOnUpdate, setNotifyOnUpdate] = useState<string>('Always')
   const [emailDigest, setEmailDigest] = useState<string>('Weekly')
+
+  /*
+    Cancel puts every field back to what the server last said — the channel
+    prop — rather than closing the screen. The settings are one form with one
+    Save, so "cancel" can only sensibly mean "undo what I typed"; closing
+    would also discard it but would additionally take the user somewhere they
+    did not ask to go.
+  */
+  const resetForm = useCallback(() => {
+    setName(channel.name)
+    setHandle(channel.handle)
+    setDescription(channel.description)
+    setCategory(channel.category || 'Other')
+    setChannelType(channel.channel_type || 'public')
+    setDefaultReactions(channel.reaction_mode === 'enabled')
+    setDefaultComments(channel.comment_mode === 'enabled' || channel.comment_mode === 'moderated')
+  }, [channel])
 
   /* ---- Danger Zone ---- */
   const [showTransferConfirm, setShowTransferConfirm] = useState(false)
@@ -353,10 +392,44 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
   }, [hasErrors, collectChanges, onUpdate])
 
   return (
-    <div className="space-y-4">
+    <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card">
+      <header className="border-b border-brand-divider px-5 py-4">
+        <h2 className="text-[17px] font-semibold -tracking-[0.018em] text-brand-text">Channel Settings</h2>
+        <p className="mt-0.5 text-[12px] text-brand-text/55">
+          Manage your channel information and preferences
+        </p>
+
+        {/* Sections rather than one long scroll: this was four stacked cards
+            and a danger zone in a single column, so changing the description
+            meant scrolling past every notification default. */}
+        <nav role="tablist" aria-label="Settings sections" className="-mb-4 mt-3 flex items-center gap-1 overflow-x-auto">
+          {SETTINGS_SECTIONS.map((sec) => {
+            const active = section === sec.id
+            return (
+              <button
+                key={sec.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSection(sec.id)}
+                className={[
+                  'shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-[13px] transition-colors',
+                  active
+                    ? 'border-primary-ink font-semibold text-primary-ink'
+                    : 'border-transparent font-medium text-brand-text/50 hover:text-brand-text',
+                ].join(' ')}
+              >
+                {sec.label}
+              </button>
+            )
+          })}
+        </nav>
+      </header>
+
+      <div className="space-y-4 px-5 py-5">
       {/* ============================================================ */}
       {/*  Channel Profile                                             */}
       {/* ============================================================ */}
+      {section === 'general' && (
       <SectionCard title="Channel Profile">
         <div>
           <FieldLabel>Channel Name</FieldLabel>
@@ -384,12 +457,12 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
               onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
               maxLength={30}
               className={`w-full bg-brand-bg border border-brand-divider rounded-xl pl-7 pr-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-brand-text/20 transition ${
-                handleError ? 'border-red-400 focus:ring-red-200' : ''
+                handleError ? 'border-danger/30 focus:ring-danger' : ''
               }`}
               placeholder="channel_handle"
             />
           </div>
-          {handleError && <p className="text-[11px] text-red-500 mt-1">{handleError}</p>}
+          {handleError && <p className="text-[11px] text-danger mt-1">{handleError}</p>}
           <p className="text-[10px] text-brand-text/30 mt-0.5">
             3-30 characters. Letters, numbers, and underscores only.
           </p>
@@ -443,10 +516,13 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           </div>
         </div>
       </SectionCard>
+      )}
 
       {/* ============================================================ */}
       {/*  Subscriber Settings                                         */}
       {/* ============================================================ */}
+      {section === 'permissions' && (
+      <>
       <SectionCard title="Subscriber Settings">
         <ToggleRow
           label="Require approval to subscribe"
@@ -505,10 +581,13 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           />
         </div>
       </SectionCard>
+      </>
+      )}
 
       {/* ============================================================ */}
       {/*  Notification Settings                                        */}
       {/* ============================================================ */}
+      {section === 'notifications' && (
       <SectionCard title="Notification Settings">
         <div>
           <FieldLabel>Notify subscribers on new update</FieldLabel>
@@ -520,14 +599,17 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           <Select value={emailDigest} onChange={setEmailDigest} options={EMAIL_DIGEST_OPTIONS} />
         </div>
       </SectionCard>
+      )}
 
       {/* ============================================================ */}
       {/*  Danger Zone (owner only)                                     */}
       {/* ============================================================ */}
+      {section === 'general' && (
+      <>
       {role === 'owner' && (
-        <div className="bg-white border border-red-200 rounded-2xl overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-red-200 bg-red-50/50">
-            <h3 className="text-sm font-bold text-red-700 flex items-center gap-1.5">
+        <div className="bg-white border border-danger/30 rounded-2xl overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-danger/30 bg-danger/10/50">
+            <h3 className="text-sm font-bold text-danger flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4" />
               Danger Zone
             </h3>
@@ -544,7 +626,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
               <button
                 type="button"
                 onClick={() => setShowTransferConfirm(true)}
-                className="shrink-0 flex items-center gap-1.5 border border-red-300 text-red-600 text-xs font-semibold rounded-xl px-3.5 py-2 hover:bg-red-50 transition-colors"
+                className="shrink-0 flex items-center gap-1.5 border border-danger/30 text-danger text-xs font-semibold rounded-xl px-3.5 py-2 hover:bg-danger/10 transition-colors"
               >
                 <ArrowRightLeft className="w-3.5 h-3.5" />
                 Transfer
@@ -552,9 +634,9 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
             </div>
 
             {showTransferConfirm && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-sm text-red-700 font-semibold">Confirm transfer</p>
-                <p className="text-[11px] text-red-600/70 mt-1">
+              <div className="bg-danger/10 border border-danger/30 rounded-xl p-4">
+                <p className="text-sm text-danger font-semibold">Confirm transfer</p>
+                <p className="text-[11px] text-danger/70 mt-1">
                   Enter the username of the new owner and confirm. This action cannot be undone
                   without the new owner&apos;s consent.
                 </p>
@@ -562,9 +644,9 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
                   <input
                     type="text"
                     placeholder="New owner's username"
-                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-red-200"
+                    className="flex-1 bg-white border border-danger/30 rounded-xl px-3.5 py-2 text-sm text-brand-text placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-danger"
                   />
-                  <button className="shrink-0 bg-red-600 text-white text-xs font-semibold rounded-xl px-4 py-2 hover:bg-red-700 transition-colors">
+                  <button className="shrink-0 bg-danger text-white text-xs font-semibold rounded-xl px-4 py-2 hover:bg-danger transition-colors">
                     Confirm Transfer
                   </button>
                   <button
@@ -577,7 +659,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
               </div>
             )}
 
-            <div className="border-t border-red-200 pt-4">
+            <div className="border-t border-danger/30 pt-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-brand-text">Delete channel</p>
@@ -589,7 +671,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold rounded-xl px-3.5 py-2 hover:bg-red-700 transition-colors"
+                  className="shrink-0 flex items-center gap-1.5 bg-danger text-white text-xs font-semibold rounded-xl px-3.5 py-2 hover:bg-danger transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Delete Channel
@@ -598,14 +680,14 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
             </div>
 
             {showDeleteConfirm && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-sm text-red-700 font-semibold">Are you absolutely sure?</p>
-                <p className="text-[11px] text-red-600/70 mt-1">
+              <div className="bg-danger/10 border border-danger/30 rounded-xl p-4">
+                <p className="text-sm text-danger font-semibold">Are you absolutely sure?</p>
+                <p className="text-[11px] text-danger/70 mt-1">
                   This will schedule your channel <strong>{channel.name}</strong> for deletion.
                   You have a <strong>30-day recovery period</strong> during which you can contact
                   support to restore it. After 30 days, all data is permanently erased.
                 </p>
-                <p className="text-[11px] text-red-600/70 mt-2">
+                <p className="text-[11px] text-danger/70 mt-2">
                   Type <strong className="font-mono">{channel.name}</strong> to confirm:
                 </p>
                 <div className="flex items-center gap-2 mt-2">
@@ -614,11 +696,11 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
                     placeholder={channel.name}
-                    className="flex-1 bg-white border border-red-200 rounded-xl px-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-red-200"
+                    className="flex-1 bg-white border border-danger/30 rounded-xl px-3.5 py-2 text-sm text-brand-text font-mono placeholder:text-brand-text/30 outline-hidden focus:ring-2 focus:ring-danger"
                   />
                   <button
                     disabled={deleteConfirmText !== channel.name}
-                    className="shrink-0 bg-red-600 text-white text-xs font-semibold rounded-xl px-4 py-2 hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="shrink-0 bg-danger text-white text-xs font-semibold rounded-xl px-4 py-2 hover:bg-danger transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Permanently Delete
                   </button>
@@ -637,23 +719,30 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           </div>
         </div>
       )}
+      </>
+      )}
 
-      {/* ============================================================ */}
-      {/*  Save Button                                                  */}
-      {/* ============================================================ */}
-      <div className="sticky bottom-4 z-10">
+      </div>
+
+      {/* Pinned, so Save is reachable from any section without scrolling to
+          the bottom of the longest one. */}
+      <div className="flex items-center justify-end gap-2 border-t border-brand-divider bg-brand-card px-5 py-3.5">
+        <button
+          type="button"
+          onClick={resetForm}
+          disabled={saving}
+          className="rounded-full px-4 py-2.5 text-[13px] font-semibold text-brand-text/60 transition-colors hover:text-brand-text disabled:opacity-40"
+        >
+          Cancel
+        </button>
         <button
           type="button"
           onClick={handleSave}
           disabled={saving || hasErrors}
-          className="w-full flex items-center justify-center gap-2 bg-primary-ink text-white text-sm font-bold rounded-2xl py-3 hover:bg-primary-hover transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
+          className="bg-primary-grad flex items-center gap-2 rounded-full px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
         >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
     </div>

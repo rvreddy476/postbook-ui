@@ -333,7 +333,7 @@ function ChannelDetailContent() {
     <AppShell>
       <div className="min-h-screen">
         {/* ===== COVER ===== */}
-        <div className="relative h-24 sm:h-28 w-full overflow-hidden bg-brand-text">
+        <div className="relative h-24 sm:h-28 w-full overflow-hidden bg-primary-grad">
           {bannerSrc ? (
             <img src={bannerSrc} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -371,7 +371,7 @@ function ChannelDetailContent() {
                     : <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-white font-black text-lg sm:text-xl`}>{channel.name.charAt(0).toUpperCase()}</div>}
                   </div>
                   {can.editChannel(role) && (
-                    <button onClick={() => setShowEditModal(true)} className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand-text flex items-center justify-center border-2 border-white">
+                    <button onClick={() => setShowEditModal(true)} className="bg-primary-grad absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-brand-card">
                       <Pencil className="w-2.5 h-2.5 text-brand-bg" />
                     </button>
                   )}
