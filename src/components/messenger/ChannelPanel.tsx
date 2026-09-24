@@ -25,7 +25,7 @@ import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
 import SubscribersTab from '@/components/channels/tabs/SubscribersTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Camera, Hash, Loader2, Lock, Maximize2, Minimize2, Pencil, Radio, Settings2, Users, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Camera, ChevronDown, ChevronUp, Hash, Loader2, Lock, Pencil, Plus, Radio, Settings2, Users, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -190,7 +190,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-brand-secondary">
+    <div className="relative flex min-h-0 flex-1 flex-col bg-brand-secondary">
       {/*
         The channel's own front page: its cover, with everything that
         identifies it sitting on top, and the sections underneath.
@@ -227,7 +227,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               onClick={() => setExpanded(false)}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold text-brand-text/55 transition-colors hover:bg-brand-secondary hover:text-brand-text"
             >
-              <Minimize2 className="h-3.5 w-3.5" strokeWidth={2} />
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.4} />
               Show cover
             </button>
           </div>
@@ -349,9 +349,10 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
             onClick={() => setExpanded(true)}
             aria-label="Hide cover"
             title="Hide cover"
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-xs transition-colors hover:bg-black/55"
+            className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/35 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur-xs transition-colors hover:bg-black/55"
           >
-            <Maximize2 className="h-4 w-4" strokeWidth={2} />
+            <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.4} />
+            Hide cover
           </button>
         </div>
         )}
@@ -580,37 +581,29 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
             )}
           </div>
 
-          {canPublish ? (
-            /*
-              A BAR, not the composer.
+          {/*
+            A button, not a bar.
 
-              ChannelComposer is a whole form — six update types, a title, a
-              rich-text body, attachments — and it was rendered inline at the
-              bottom of this tab. In a panel this tall that meant the form WAS
-              the tab: open the channel you run and you see a blank post form,
-              with the feed pushed off-screen above it. A channel is its posts;
-              writing one is something you do on it.
-            */
-            <div className="shrink-0 border-t border-brand-divider bg-brand-bg px-4 py-3">
-              <div className="mx-auto max-w-2xl">
-                <button
-                  type="button"
-                  onClick={() => setShowComposer(true)}
-                  className="flex w-full items-center gap-3 rounded-full border border-brand-divider bg-brand-card px-4 py-2.5 text-left transition-colors hover:border-primary-outline"
-                >
-                  <span className="bg-primary-grad flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white">
-                    <Pencil className="h-3.5 w-3.5" strokeWidth={2.2} />
-                  </span>
-                  <span className="flex-1 truncate text-[14px] text-brand-text/45">
-                    Share an update with your subscribers
-                  </span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="shrink-0 border-t border-brand-divider bg-brand-bg px-4 py-3 text-center text-[13px] text-brand-text/50">
-              Only the channel owner posts here.
-            </p>
+            The collapsed composer ran the full width of the column and sat
+            under every post, so a channel with a long feed still ended in a
+            text field pretending to be one. It is one action — write a post —
+            and it does not need a row of its own.
+
+            Bottom right, over the feed: reachable without scrolling, out of
+            the way of the content, and in the corner people already look for
+            it. Only for someone who can publish; a subscriber sees nothing
+            rather than a disabled control.
+          */}
+          {canPublish && (
+            <button
+              type="button"
+              onClick={() => setShowComposer(true)}
+              aria-label="Share an update"
+              title="Share an update"
+              className="bg-primary-grad absolute bottom-5 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.4} />
+            </button>
           )}
         </>
       )}
