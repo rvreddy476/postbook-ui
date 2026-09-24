@@ -631,7 +631,7 @@ export default function PostbookMessenger() {
                       <span className="mt-0.5 block truncate text-xs leading-tight tracking-wide text-brand-text/60">
                         @{channel.handle}
                         <span className="px-1.5 text-brand-text/30">·</span>
-                        {channel.subscriber_count} subscribers
+                        {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
                       </span>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-brand-text/30" />

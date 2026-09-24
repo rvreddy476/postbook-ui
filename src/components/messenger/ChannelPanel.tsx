@@ -23,7 +23,7 @@ import AnalyticsTab from '@/components/channels/tabs/AnalyticsTab'
 import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Radio, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Pencil, Radio, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -47,6 +47,7 @@ interface ChannelPanelProps {
 export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   const [tab, setTab] = useState<'overview' | 'updates' | 'about' | 'analytics' | 'settings'>('updates')
   const [error, setError] = useState<string | null>(null)
+  const [showComposer, setShowComposer] = useState(false)
 
   const { data: channel, isLoading } = useBroadcastChannel(channelId)
   const { data: updates, isLoading: updatesLoading } = useChannelUpdates(channelId, 50)
@@ -88,6 +89,10 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     setError(null)
     try {
       await createUpdate.mutateAsync({ channelId, ...payload })
+      // Closed only on success. A failed publish must leave the form open
+      // with what was typed still in it — closing on the way out would throw
+      // the post away and show an error about a post that no longer exists.
+      setShowComposer(false)
     } catch {
       setError('Could not publish that update.')
     }
@@ -404,13 +409,30 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
           </div>
 
           {canPublish ? (
+            /*
+              A BAR, not the composer.
+
+              ChannelComposer is a whole form — six update types, a title, a
+              rich-text body, attachments — and it was rendered inline at the
+              bottom of this tab. In a panel this tall that meant the form WAS
+              the tab: open the channel you run and you see a blank post form,
+              with the feed pushed off-screen above it. A channel is its posts;
+              writing one is something you do on it.
+            */
             <div className="shrink-0 border-t border-brand-divider bg-brand-bg px-4 py-3">
               <div className="mx-auto max-w-2xl">
-                <ChannelComposer
-                  channel={channel}
-                  onPublish={handlePublish}
-                  isPublishing={createUpdate.isPending}
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowComposer(true)}
+                  className="flex w-full items-center gap-3 rounded-full border border-brand-divider bg-brand-card px-4 py-2.5 text-left transition-colors hover:border-primary-outline"
+                >
+                  <span className="bg-primary-grad flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white">
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  </span>
+                  <span className="flex-1 truncate text-[14px] text-brand-text/45">
+                    Share an update with your subscribers
+                  </span>
+                </button>
               </div>
             </div>
           ) : (
@@ -419,6 +441,32 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
             </p>
           )}
         </>
+      )}
+
+      {showComposer && canPublish && (
+        <div
+          className="fixed inset-0 z-9999 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-xs sm:p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowComposer(false) }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="New update"
+        >
+          <div className="relative my-auto w-full max-w-2xl">
+            <button
+              type="button"
+              onClick={() => setShowComposer(false)}
+              aria-label="Close"
+              className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-brand-card/80 text-brand-text/50 backdrop-blur-xs transition-colors hover:bg-brand-secondary hover:text-brand-text"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <ChannelComposer
+              channel={channel}
+              onPublish={handlePublish}
+              isPublishing={createUpdate.isPending}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
