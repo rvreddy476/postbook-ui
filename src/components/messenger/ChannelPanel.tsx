@@ -25,7 +25,7 @@ import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
 import SubscribersTab from '@/components/channels/tabs/SubscribersTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Pencil, Radio, Settings2, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Camera, Hash, Loader2, Lock, Pencil, Radio, Settings2, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -88,6 +88,11 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
 
   const avatarUrl = channel?.avatar_media_id
     ? `/v1/media/${channel.avatar_media_id}/serve`
+    : null
+
+  // The cover. Every channel record has carried one; nothing showed it.
+  const bannerUrl = channel?.banner_media_id
+    ? `/v1/media/${channel.banner_media_id}/serve`
     : null
 
   const handlePublish = async (payload: ComposerPayload) => {
@@ -175,95 +180,176 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-brand-secondary">
-      {/* Header — same shape as a DM's, so the column reads consistently */}
-      <header className="flex shrink-0 items-start gap-3 border-b border-brand-divider bg-brand-bg px-5 py-4">
-        {onBack && (
-          <button
-            onClick={onBack}
-            aria-label="Back to conversations"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text md:hidden"
-          >
-            <ArrowLeft className="h-[18px] w-[18px]" />
-          </button>
-        )}
+      {/*
+        The channel's own front page: its cover, with everything that
+        identifies it sitting on top, and the sections underneath.
 
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-brand-divider bg-brand-secondary text-brand-text/60">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <Hash className="h-5 w-5" strokeWidth={1.75} />
-          )}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h2 className="truncate text-[17px] font-semibold -tracking-[0.018em] text-brand-text">
-              {channel.name}
-            </h2>
-            {channel.is_verified && (
-              <BadgeCheck className="h-4 w-4 shrink-0 text-primary-ink" aria-label="Verified" />
+        It used to be a DM's header — a 48px avatar and a line of text on
+        a plain bar — which told you nothing about the channel and wasted
+        the banner every channel already has. A channel is a publication;
+        this gives it a masthead.
+      */}
+      <header className="shrink-0 bg-brand-bg">
+        <div className="relative">
+          {/* The cover. A gradient when there is none, never a grey void. */}
+          <div className="relative h-36 w-full overflow-hidden sm:h-44">
+            {bannerUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="bg-primary-grad h-full w-full" />
             )}
-            {/* What it is and that it is live, on the same line as the name:
-                both are already on the record and neither was shown. */}
-            <span className="shrink-0 rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] font-medium capitalize text-brand-text/60">
-              {channel.channel_type} channel
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              Active
-            </span>
+            {/* Enough scrim for white text to hold over any photograph. */}
+            <div className="absolute inset-0 bg-linear-to-r from-black/65 via-black/35 to-black/10" />
           </div>
-          <p className="truncate text-[12px] text-brand-text/55">
-            @{channel.handle}
-            <span className="px-1.5 text-brand-text/30">·</span>
-            {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
-          </p>
-          {channel.description && (
-            <p className="mt-1 line-clamp-1 text-[12px] text-brand-text/60">{channel.description}</p>
+
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back to conversations"
+              className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-xs transition-colors hover:bg-black/55 md:hidden"
+            >
+              <ArrowLeft className="h-[18px] w-[18px]" />
+            </button>
           )}
+
+          {/* Identity, over the cover. */}
+          <div className="absolute inset-x-0 bottom-0 flex items-end gap-4 px-5 pb-4 sm:px-6">
+            <div className="relative shrink-0">
+              <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-brand-card bg-brand-secondary text-brand-text/60 shadow-lg sm:h-24 sm:w-24">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <Hash className="h-8 w-8" strokeWidth={1.75} />
+                )}
+              </span>
+              {/* Goes to Settings rather than opening a picker here: the real
+                  uploader lives there, with Save beside it, and a photo that
+                  changed the moment you chose it would be the one edit on this
+                  screen that could not be cancelled. */}
+              {canPublish && (
+                <button
+                  onClick={() => setTab('settings')}
+                  aria-label="Change channel photo"
+                  className="absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-brand-card bg-brand-secondary text-brand-text/70 shadow-md transition-colors hover:bg-brand-card hover:text-brand-text"
+                >
+                  <Camera className="h-4 w-4" strokeWidth={1.9} />
+                </button>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 pb-1">
+              <div className="flex items-center gap-2">
+                <h2 className="truncate text-[22px] font-bold -tracking-[0.02em] text-white drop-shadow-sm">
+                  {channel.name}
+                </h2>
+                {channel.is_verified && (
+                  <BadgeCheck className="h-5 w-5 shrink-0 text-white" aria-label="Verified" />
+                )}
+                {canPublish && (
+                  <button
+                    onClick={() => setTab('settings')}
+                    aria-label="Edit channel name"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white"
+                  >
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+
+              <p className="mt-0.5 truncate text-[13px] text-white/80">
+                @{channel.handle}
+                <span className="px-1.5 text-white/40">·</span>
+                {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold capitalize text-white backdrop-blur-xs">
+                  {channel.channel_type === 'private' && <Lock className="h-3 w-3" strokeWidth={2.2} />}
+                  {channel.channel_type} channel
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Active
+                </span>
+              </div>
+
+              {channel.description && (
+                <p className="mt-2 line-clamp-1 max-w-xl text-[13px] text-white/75">
+                  {channel.description}
+                </p>
+              )}
+            </div>
+
+            <div className="hidden shrink-0 items-center gap-2 pb-1 sm:flex">
+              {canPublish ? (
+                <>
+                  <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-3.5 py-2 text-[13px] font-semibold text-white backdrop-blur-xs">
+                    <Radio className="h-3.5 w-3.5" strokeWidth={2} />
+                    You publish here
+                  </span>
+                  <button
+                    onClick={() => setTab('settings')}
+                    className="bg-primary-grad flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-md transition-all hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    Edit channel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={toggleSubscription}
+                  disabled={subscribe.isPending || unsubscribe.isPending}
+                  aria-pressed={isSubscribed}
+                  className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold shadow-md transition-all disabled:opacity-50 ${
+                    isSubscribed
+                      ? 'bg-white/15 text-white backdrop-blur-xs hover:bg-white/25'
+                      : 'bg-primary-grad text-white hover:shadow-lg'
+                  }`}
+                >
+                  {isSubscribed ? <BellOff className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Subscribing is the one action that belongs to a channel itself.
-            Owners and editors are members by definition, so they get the
-            bell state and no way to unsubscribe from their own channel. */}
-        {canPublish ? (
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden items-center gap-1.5 rounded-full bg-primary-tint px-3 py-1.5 text-[13px] font-semibold text-primary-ink sm:flex">
-              <Radio className="h-3.5 w-3.5" strokeWidth={2} />
-              You publish here
-            </span>
+        {/* On a narrow column the actions cannot fit over the cover. */}
+        <div className="flex items-center gap-2 px-5 pt-3 sm:hidden">
+          {canPublish ? (
             <button
               onClick={() => setTab('settings')}
-              className="bg-primary-grad flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+              className="bg-primary-grad flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-sm"
             >
               <Settings2 className="h-3.5 w-3.5" strokeWidth={2} />
               Edit channel
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={toggleSubscription}
-            disabled={subscribe.isPending || unsubscribe.isPending}
-            aria-pressed={isSubscribed}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors disabled:opacity-50 ${
-              isSubscribed
-                ? 'bg-brand-secondary text-brand-text/70 hover:text-brand-text'
-                : 'bg-primary-ink text-white hover:bg-primary-hover'
-            }`}
-          >
-            {isSubscribed ? <BellOff className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
-            {isSubscribed ? 'Subscribed' : 'Subscribe'}
-          </button>
-        )}
-
+          ) : (
+            <button
+              onClick={toggleSubscription}
+              disabled={subscribe.isPending || unsubscribe.isPending}
+              aria-pressed={isSubscribed}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors disabled:opacity-50 ${
+                isSubscribed ? 'bg-brand-secondary text-brand-text/70' : 'bg-primary-grad text-white'
+              }`}
+            >
+              {isSubscribed ? <BellOff className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
+              {isSubscribed ? 'Subscribed' : 'Subscribe'}
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Tabs. Analytics and Settings are here rather than on another page,
           so running a channel never means leaving the messenger. */}
+      {/* The sections, underlined rather than pilled: a row of filled pills
+          competes with the cover above it for the eye. */}
       <div
         role="tablist"
         aria-label="Channel sections"
-        className="flex shrink-0 items-center gap-1 border-b border-brand-divider bg-brand-bg px-4 pb-2"
+        className="scrollbar-none flex shrink-0 items-center gap-1 overflow-x-auto border-b border-brand-divider bg-brand-bg px-5"
       >
         {tabs.map((t) => {
           const active = tab === t.id
@@ -273,10 +359,10 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               role="tab"
               aria-selected={active}
               onClick={() => setTab(t.id)}
-              className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-[14px] transition-colors ${
                 active
-                  ? 'bg-primary-tint text-primary-ink'
-                  : 'text-brand-text/55 hover:bg-brand-secondary hover:text-brand-text'
+                  ? 'border-primary-ink font-semibold text-primary-ink'
+                  : 'border-transparent font-medium text-brand-text/50 hover:text-brand-text'
               }`}
             >
               {t.label}
