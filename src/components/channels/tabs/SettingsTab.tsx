@@ -1,6 +1,10 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
+import { uploadMedia } from '@/lib/mediaUpload'
+
+/** media-service's own ceiling for an image. */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 import {
   Camera,
   ChevronDown,
@@ -235,42 +239,119 @@ function ToggleRow({
   )
 }
 
-function MediaUploadPlaceholder({
+/*
+  Pick an image and upload it.
+
+  This was MediaUploadPlaceholder, and the name was accurate: a button with
+  no onClick, no file input and no upload. It rendered a camera icon and the
+  word "Upload" and did nothing at all when clicked, so the founder could
+  not set a channel avatar or banner from Settings — the same shape as the
+  dead rich-text toolbar removed earlier.
+
+  The upload itself is the platform's three-step flow (init, PUT to the
+  presigned URL, confirm), via the same helper ChannelEditModal already uses.
+  The subtypes matter and are not interchangeable: 'avatar' and 'cover' are
+  what media-service processes for these two slots.
+
+  The media id is handed UP rather than saved here, because an avatar and a
+  name are one edit — uploading must not commit a half-finished form, and
+  Cancel has to be able to drop it.
+*/
+function MediaUpload({
   label,
   current,
   aspect,
+  subtype,
+  onUploaded,
 }: {
   label: string
   current?: string
   aspect: 'square' | 'banner'
+  subtype: 'avatar' | 'cover'
+  onUploaded: (mediaId: string) => void
 }) {
-  const sizeClasses = aspect === 'square' ? 'w-20 h-20 rounded-xl' : 'w-full h-24 rounded-xl'
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
+
+  const sizeClasses = aspect === 'square' ? 'h-20 w-20 rounded-xl' : 'h-24 w-full rounded-xl'
+  const shown = preview || (current ? `/v1/media/${current}/serve` : null)
+
+  const choose = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    // Reset the input so choosing the SAME file again still fires onChange.
+    event.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setFailed('That is not an image.')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setFailed('That image is over 10 MB.')
+      return
+    }
+
+    setFailed(null)
+    setBusy(true)
+    // Shown immediately, from the local file: the upload takes seconds and a
+    // picker that looks unchanged until it finishes reads as broken.
+    const localPreview = URL.createObjectURL(file)
+    setPreview(localPreview)
+    try {
+      const mediaId = await uploadMedia(file, 'image', subtype)
+      onUploaded(mediaId)
+    } catch (err: unknown) {
+      // Back to whatever was there before, so the picker never shows an image
+      // that was not actually stored.
+      setPreview(null)
+      URL.revokeObjectURL(localPreview)
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setFailed(body?.message || 'Could not upload that image.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div>
       <FieldLabel>{label}</FieldLabel>
       <button
         type="button"
-        className={`${sizeClasses} bg-brand-bg border-2 border-dashed border-brand-divider flex items-center justify-center hover:border-brand-text/30 transition-colors overflow-hidden group relative`}
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        aria-label={`Change ${label.toLowerCase()}`}
+        className={`${sizeClasses} group relative flex items-center justify-center overflow-hidden border-2 border-dashed border-brand-divider bg-brand-secondary transition-colors hover:border-primary-outline disabled:opacity-60`}
       >
-        {current ? (
+        {shown ? (
           <>
-            <img
-              src={`/v1/media/${current}/serve`}
-              alt={label}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={shown} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+              <Camera className="h-5 w-5 text-white" />
             </div>
           </>
         ) : (
           <div className="text-center">
-            <Camera className="w-5 h-5 text-brand-text/25 mx-auto" />
-            <p className="text-[10px] text-brand-text/30 mt-1">Upload</p>
+            <Camera className="mx-auto h-5 w-5 text-brand-text/25" />
+            <p className="mt-1 text-[11px] text-brand-text/40">Upload</p>
+          </div>
+        )}
+        {busy && (
+          <div className="absolute inset-0 flex items-center justify-center bg-brand-card/70">
+            <Loader2 className="h-4 w-4 animate-spin text-primary-ink" />
           </div>
         )}
       </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={choose}
+      />
+      {failed && <p className="mt-1 text-[11px] text-danger">{failed}</p>}
     </div>
   )
 }
@@ -285,6 +366,14 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
      already in the URL, and two levels of query state for one screen is more
      bookkeeping than it is worth. */
   const [section, setSection] = useState<SettingsSection>('general')
+
+  /*
+    Uploaded but not yet saved. Held here rather than committed on upload,
+    because the avatar and the name are one edit: uploading must not write a
+    half-finished form, and Cancel has to be able to drop it.
+  */
+  const [avatarMediaId, setAvatarMediaId] = useState<string | undefined>()
+  const [bannerMediaId, setBannerMediaId] = useState<string | undefined>()
 
   const [name, setName] = useState(channel.name)
   const [handle, setHandle] = useState(channel.handle)
@@ -323,6 +412,8 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
     setChannelType(channel.channel_type || 'public')
     setDefaultReactions(channel.reaction_mode === 'enabled')
     setDefaultComments(channel.comment_mode === 'enabled' || channel.comment_mode === 'moderated')
+    setAvatarMediaId(undefined)
+    setBannerMediaId(undefined)
   }, [channel])
 
   /* ---- Danger Zone ---- */
@@ -361,6 +452,11 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
     // rewritten to 'public' just by opening this tab and saving.
     if (channelType !== (channel.channel_type || 'public')) changes.channel_type = channelType
 
+    // Only when a new one was actually uploaded. Sending undefined would read
+    // as "clear it"; sending the existing id back is pointless churn.
+    if (avatarMediaId) changes.avatar_media_id = avatarMediaId
+    if (bannerMediaId) changes.banner_media_id = bannerMediaId
+
     changes.require_approval = requireApproval
     changes.subscriber_list_visibility = subscriberListVisibility
     if (welcomeMessage) changes.welcome_message = welcomeMessage
@@ -378,7 +474,7 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
     requireApproval, subscriberListVisibility, welcomeMessage,
     defaultReactions, defaultComments, defaultVisibility,
     notifyOnUpdate, emailDigest,
-    channel,
+    channel, avatarMediaId, bannerMediaId,
   ])
 
   const handleSave = useCallback(async () => {
@@ -502,16 +598,20 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
         </div>
 
         <div className="flex items-start gap-6">
-          <MediaUploadPlaceholder
+          <MediaUpload
             label="Avatar"
-            current={channel.avatar_media_id}
+            current={avatarMediaId || channel.avatar_media_id}
             aspect="square"
+            subtype="avatar"
+            onUploaded={setAvatarMediaId}
           />
           <div className="flex-1">
-            <MediaUploadPlaceholder
+            <MediaUpload
               label="Banner"
-              current={channel.banner_media_id}
+              current={bannerMediaId || channel.banner_media_id}
               aspect="banner"
+              subtype="cover"
+              onUploaded={setBannerMediaId}
             />
           </div>
         </div>
