@@ -254,13 +254,12 @@ function ChannelDetailContent() {
   }, [viewMut])
 
   const handleSettingsUpdate = useCallback((data: any) => {
-    updateChannel.mutate({ channelId, ...data }, {
-      // The server's own words; see ChannelPanel for why a flat message here
-      // hid a deliberate refusal behind an apparently broken button.
-      onError: (err: unknown) => {
-        const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-        setMutError(body?.message || 'Failed to update channel settings.')
-      },
+    // Awaited and re-thrown so the settings screen can confirm or explain;
+    // see ChannelPanel for why returning immediately looked like a dead button.
+    return updateChannel.mutateAsync({ channelId, ...data }).catch((err: unknown) => {
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setMutError(body?.message || 'Failed to update channel settings.')
+      throw err
     })
   }, [channelId, updateChannel])
 

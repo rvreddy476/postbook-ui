@@ -109,20 +109,20 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     m.mutate(channelId, { onError: () => setError('Could not change your subscription.') })
   }
 
-  const handleSettingsUpdate = (data: Record<string, unknown>) => {
+  const handleSettingsUpdate = async (data: Record<string, unknown>) => {
     setError(null)
-    updateChannel.mutate(
-      { channelId, ...data },
-      {
-        // The server's own words. A flat message here hid a deliberate
-        // refusal — the invite-only pilot blocking Private -> Public — behind
-        // what looked like a broken button.
-        onError: (err: unknown) => {
-          const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          setError(body?.message || 'Could not save those settings. Please try again.')
-        },
-      }
-    )
+    try {
+      // Awaited and re-thrown, so the settings screen can say "Saved" or show
+      // the reason. Returning immediately is why a working save looked dead.
+      await updateChannel.mutateAsync({ channelId, ...data })
+    } catch (err: unknown) {
+      // The server's own words. A flat message here hid a deliberate refusal —
+      // the invite-only pilot blocking Private -> Public — behind what looked
+      // like a broken button.
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setError(body?.message || 'Could not save those settings. Please try again.')
+      throw err
+    }
   }
 
   /*

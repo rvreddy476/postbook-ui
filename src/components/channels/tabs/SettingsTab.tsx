@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { uploadMedia } from '@/lib/mediaUpload'
 
 /** media-service's own ceiling for an image. */
@@ -13,6 +13,7 @@ import {
   Trash2,
   ArrowRightLeft,
   Loader2,
+  Check,
 } from 'lucide-react'
 import type { BroadcastChannel } from '@/types/channels'
 
@@ -22,7 +23,12 @@ import type { BroadcastChannel } from '@/types/channels'
 
 interface SettingsTabProps {
   channel: BroadcastChannel
-  onUpdate: (data: Record<string, unknown>) => void
+  /**
+   * Applies the change. May return a promise; when it does, the button waits
+   * on it and reports what happened. A void return keeps working — it just
+   * cannot confirm, which is the state this screen was stuck in.
+   */
+  onUpdate: (data: Record<string, unknown>) => void | Promise<unknown>
   role: 'owner' | 'editor'
 }
 
@@ -101,6 +107,10 @@ const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 /*
   The settings sections.
 
+  NO "NOTIFICATIONS" SECTION either, for the same reason it is not here:
+  its two controls — notify-on-new-update and email digest — had no column,
+  no handler and no effect. They are gone rather than left looking operable.
+
   NO "RULES" SECTION, and that is not an oversight. channel-service has no
   rules column — not in broadcast_channels, not on the wire, not in any
   handler. A Rules tab would be a text box that forgets what you type the
@@ -110,7 +120,6 @@ const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/
 const SETTINGS_SECTIONS = [
   { id: 'general', label: 'General' },
   { id: 'permissions', label: 'Permissions' },
-  { id: 'notifications', label: 'Notifications' },
 ] as const
 
 type SettingsSection = (typeof SETTINGS_SECTIONS)[number]['id']
@@ -394,6 +403,8 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
      already in the URL, and two levels of query state for one screen is more
      bookkeeping than it is worth. */
   const [section, setSection] = useState<SettingsSection>('general')
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   /*
     Uploaded but not yet saved. Held here rather than committed on upload,
@@ -409,21 +420,24 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
   const [category, setCategory] = useState(channel.category || 'Other')
   const [channelType, setChannelType] = useState<string>(channel.channel_type || 'public')
 
-  /* ---- Subscriber Settings ---- */
-  const [requireApproval, setRequireApproval] = useState(false)
-  const [subscriberListVisibility, setSubscriberListVisibility] = useState<string>('Everyone')
-  const [welcomeMessage, setWelcomeMessage] = useState('')
+  /*
+    Real server fields only.
+
+    require_approval, subscriber_list_visibility and welcome_message were
+    invented by this form: no column, no handler, discarded on arrival. These
+    two exist on broadcast_channels and are honoured.
+  */
+  const [forwardAllowed, setForwardAllowed] = useState(channel.forward_allowed !== false)
+  const [subscriberCountVisible, setSubscriberCountVisible] = useState(true)
 
   /* ---- Update Defaults ---- */
   const [defaultReactions, setDefaultReactions] = useState(channel.reaction_mode === 'enabled')
   const [defaultComments, setDefaultComments] = useState(
     channel.comment_mode === 'enabled' || channel.comment_mode === 'moderated'
   )
-  const [defaultVisibility, setDefaultVisibility] = useState<string>('Public')
 
-  /* ---- Notification Settings ---- */
-  const [notifyOnUpdate, setNotifyOnUpdate] = useState<string>('Always')
-  const [emailDigest, setEmailDigest] = useState<string>('Weekly')
+
+
 
   /*
     Cancel puts every field back to what the server last said — the channel
@@ -485,35 +499,59 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
     if (avatarMediaId) changes.avatar_media_id = avatarMediaId
     if (bannerMediaId) changes.banner_media_id = bannerMediaId
 
-    changes.require_approval = requireApproval
-    changes.subscriber_list_visibility = subscriberListVisibility
-    if (welcomeMessage) changes.welcome_message = welcomeMessage
+    /*
+      THE NAMES THE SERVER ACTUALLY READS.
 
-    changes.default_reaction_mode = defaultReactions ? 'enabled' : 'disabled'
-    changes.default_comment_mode = defaultComments ? 'enabled' : 'disabled'
-    changes.default_visibility = defaultVisibility.toLowerCase().replace(/ /g, '_')
+      These two were sent as default_reaction_mode and default_comment_mode.
+      channel-service's update takes reaction_mode and comment_mode, ignores
+      anything it does not recognise, and answers 200 — so switching
+      reactions or comments off, pressing Save and getting a clean response
+      changed nothing at all, for ever. That is the "save changes is not
+      working" report: the save worked, the fields did not.
 
-    changes.notify_subscribers = notifyOnUpdate.toLowerCase().replace(/ /g, '_')
-    changes.email_digest = emailDigest.toLowerCase()
+      Seven other invented fields went the same way and are gone:
+      require_approval, subscriber_list_visibility, welcome_message,
+      default_visibility, notify_subscribers and email_digest have no column,
+      no handler and no meaning to the server. Their controls are removed
+      rather than left looking operable — a switch that flips and does
+      nothing is worse than no switch.
+    */
+    changes.reaction_mode = defaultReactions ? 'enabled' : 'disabled'
+    changes.comment_mode = defaultComments ? 'enabled' : 'disabled'
+    changes.forward_allowed = forwardAllowed
+    changes.subscriber_count_visible = subscriberCountVisible
 
     return changes
   }, [
     name, handle, description, category, channelType,
-    requireApproval, subscriberListVisibility, welcomeMessage,
-    defaultReactions, defaultComments, defaultVisibility,
-    notifyOnUpdate, emailDigest,
+    defaultReactions, defaultComments, forwardAllowed, subscriberCountVisible,
     channel, avatarMediaId, bannerMediaId,
   ])
 
   const handleSave = useCallback(async () => {
     if (hasErrors) return
     setSaving(true)
+    setSaveError(null)
+    setSaved(false)
     try {
-      onUpdate(collectChanges())
+      // Awaited, so "Saving…" is true while it is actually saving and the
+      // outcome is known before anything is reported.
+      await onUpdate(collectChanges())
+      setSaved(true)
+    } catch (err: unknown) {
+      const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      setSaveError(body?.message || 'Could not save. Please try again.')
     } finally {
       setSaving(false)
     }
   }, [hasErrors, collectChanges, onUpdate])
+
+  /* The confirmation is transient; the error stays until the next attempt. */
+  useEffect(() => {
+    if (!saved) return
+    const t = setTimeout(() => setSaved(false), 2500)
+    return () => clearTimeout(t)
+  }, [saved])
 
   return (
     <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card">
@@ -647,84 +685,57 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
       )}
 
       {/* ============================================================ */}
-      {/*  Subscriber Settings                                         */}
+      {/*  Permissions — REAL server fields only                        */}
       {/* ============================================================ */}
       {section === 'permissions' && (
-      <>
-      <SectionCard title="Subscriber Settings">
+      <SectionCard title="Posts and subscribers">
+        {/*
+          Everything here maps to a column on broadcast_channels that
+          channel-service's update actually reads.
+
+          What was here before did not. "Require approval to subscribe",
+          "Who can see subscriber list", "Welcome message", "Default
+          visibility", "Notify subscribers on new update" and "Email digest"
+          were invented by this form: no column, no handler, discarded on
+          arrival, and the save answered 200 regardless. Six switches and
+          selects that moved and meant nothing.
+
+          They are removed rather than disabled. A control that looks
+          operable and silently does nothing is the worst of the three
+          options, and it is what made saving look broken.
+        */}
         <ToggleRow
-          label="Require approval to subscribe"
-          description="New subscribers must be approved before they can see updates"
-          enabled={requireApproval}
-          onToggle={() => setRequireApproval((p) => !p)}
-        />
-
-        <div className="border-t border-brand-divider pt-4">
-          <FieldLabel>Who can see subscriber list</FieldLabel>
-          <Select
-            value={subscriberListVisibility}
-            onChange={setSubscriberListVisibility}
-            options={SUBSCRIBER_LIST_VISIBILITY}
-          />
-        </div>
-
-        <div className="border-t border-brand-divider pt-4">
-          <FieldLabel>Welcome message to new subscribers</FieldLabel>
-          <TextArea
-            value={welcomeMessage}
-            onChange={setWelcomeMessage}
-            maxLength={500}
-            placeholder="Thanks for subscribing! Here's what to expect..."
-            rows={3}
-          />
-        </div>
-      </SectionCard>
-
-      {/* ============================================================ */}
-      {/*  Update Defaults                                              */}
-      {/* ============================================================ */}
-      <SectionCard title="Update Defaults">
-        <ToggleRow
-          label="Default reactions"
-          description="Allow reactions on new updates by default"
+          label="Reactions"
+          description="Let subscribers react to posts"
           enabled={defaultReactions}
-          onToggle={() => setDefaultReactions((p) => !p)}
+          onToggle={() => setDefaultReactions((prev) => !prev)}
         />
 
         <div className="border-t border-brand-divider pt-4">
           <ToggleRow
-            label="Default comments"
-            description="Allow comments on new updates by default"
+            label="Comments"
+            description="Let subscribers comment on posts"
             enabled={defaultComments}
-            onToggle={() => setDefaultComments((p) => !p)}
+            onToggle={() => setDefaultComments((prev) => !prev)}
           />
         </div>
 
         <div className="border-t border-brand-divider pt-4">
-          <FieldLabel>Default visibility</FieldLabel>
-          <Select
-            value={defaultVisibility}
-            onChange={setDefaultVisibility}
-            options={DEFAULT_VISIBILITY}
+          <ToggleRow
+            label="Forwarding"
+            description="Let people share posts outside the channel"
+            enabled={forwardAllowed}
+            onToggle={() => setForwardAllowed((prev) => !prev)}
           />
-        </div>
-      </SectionCard>
-      </>
-      )}
-
-      {/* ============================================================ */}
-      {/*  Notification Settings                                        */}
-      {/* ============================================================ */}
-      {section === 'notifications' && (
-      <SectionCard title="Notification Settings">
-        <div>
-          <FieldLabel>Notify subscribers on new update</FieldLabel>
-          <Select value={notifyOnUpdate} onChange={setNotifyOnUpdate} options={NOTIFY_OPTIONS} />
         </div>
 
         <div className="border-t border-brand-divider pt-4">
-          <FieldLabel>Email digest</FieldLabel>
-          <Select value={emailDigest} onChange={setEmailDigest} options={EMAIL_DIGEST_OPTIONS} />
+          <ToggleRow
+            label="Show subscriber count"
+            description="Display how many people subscribe"
+            enabled={subscriberCountVisible}
+            onToggle={() => setSubscriberCountVisible((prev) => !prev)}
+          />
         </div>
       </SectionCard>
       )}
@@ -855,6 +866,17 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
       {/* Pinned, so Save is reachable from any section without scrolling to
           the bottom of the longest one. */}
       <div className="flex items-center justify-end gap-2 border-t border-brand-divider bg-brand-card px-5 py-3.5">
+        {/* Nothing here said anything at all before: no "Saving…", no
+            confirmation, no error. A save that worked looked exactly like a
+            button that did nothing. */}
+        {saveError ? (
+          <p role="alert" className="mr-auto text-[12px] font-medium text-danger">{saveError}</p>
+        ) : saved ? (
+          <p role="status" className="mr-auto flex items-center gap-1.5 text-[12px] font-medium text-success">
+            <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+            Saved
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={resetForm}
