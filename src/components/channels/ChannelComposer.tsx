@@ -39,13 +39,21 @@ export interface ComposerPayload {
 }
 
 /* ===== Constants ===== */
-const UPDATE_TYPES: { value: UpdateType; icon: React.ReactNode; label: string }[] = [
-  { value: 'announcement', icon: <Radio className="w-3.5 h-3.5" />, label: 'Announcement' },
-  { value: 'photo', icon: <ImageIcon className="w-3.5 h-3.5" />, label: 'Photo' },
-  { value: 'video', icon: <Video className="w-3.5 h-3.5" />, label: 'Video' },
-  { value: 'poll', icon: <BarChart3 className="w-3.5 h-3.5" />, label: 'Poll' },
-  { value: 'event', icon: <Calendar className="w-3.5 h-3.5" />, label: 'Event' },
-  { value: 'urgent', icon: <AlertTriangle className="w-3.5 h-3.5" />, label: 'Urgent' },
+/*
+  The update types, coloured the way the main post composer colours its tiles —
+  Photo green, Video red, Poll amber — so the same thing looks the same in both
+  places and you can find the one you want without reading every label.
+
+  fg is a THEME TOKEN, never a raw Tailwind colour. An unrecognised colour in
+  this setup compiles to nothing and the icon silently loses its tint.
+*/
+const UPDATE_TYPES: { value: UpdateType; icon: React.ReactNode; label: string; fg: string }[] = [
+  { value: 'announcement', icon: <Radio className="h-4 w-4" />, label: 'Announcement', fg: 'text-primary-ink' },
+  { value: 'photo', icon: <ImageIcon className="h-4 w-4" />, label: 'Photo', fg: 'text-tile-photo' },
+  { value: 'video', icon: <Video className="h-4 w-4" />, label: 'Video', fg: 'text-tile-video' },
+  { value: 'poll', icon: <BarChart3 className="h-4 w-4" />, label: 'Poll', fg: 'text-tile-poll' },
+  { value: 'event', icon: <Calendar className="h-4 w-4" />, label: 'Event', fg: 'text-tile-place' },
+  { value: 'urgent', icon: <AlertTriangle className="h-4 w-4" />, label: 'Urgent', fg: 'text-danger' },
 ]
 
 const POLL_DURATIONS = [
@@ -80,16 +88,24 @@ function genId() { return Math.random().toString(36).slice(2, 10) }
 function CharCount({ current, max }: { current: number; max: number }) {
   const pct = current / max
   return (
-    <span className={`text-[10px] font-mono ${pct >= 1 ? 'text-red-500 font-bold' : pct >= 0.9 ? 'text-amber-500' : 'text-brand-text/30'}`}>
+    <span className={`text-[10px] font-mono ${pct >= 1 ? 'text-danger font-bold' : pct >= 0.9 ? 'text-warning' : 'text-brand-text/30'}`}>
       {current}/{max}
     </span>
   )
 }
 
-function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+/*
+  A quiet heading over a field, not a form label.
+
+  This used to append a red asterisk, then the word "required", to anything
+  mandatory. Both shout at someone who has not done anything wrong yet — and
+  the composer already refuses to post without them, with a message naming
+  what is missing. That is the right moment to mention it.
+*/
+function FieldLabel({ children }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-[11px] font-bold text-brand-text/50 tracking-wider mb-1.5">
-      {children}{required && <span className="text-red-400 ml-0.5">*</span>}
+    <label className="mb-1.5 block text-[12px] font-semibold text-brand-text/55">
+      {children}
     </label>
   )
 }
@@ -103,9 +119,9 @@ function TextInput({ value, onChange, placeholder, maxLength, required, classNam
         type="text" value={value}
         onChange={e => { if (e.target.value.length <= maxLength) onChange(e.target.value) }}
         placeholder={placeholder}
-        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 ${className}`}
+        className={`w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card ${className}`}
       />
-      <div className="flex justify-end mt-1"><CharCount current={value.length} max={maxLength} /></div>
+      <div className="mt-1 flex justify-end"><CharCount current={value.length} max={maxLength} /></div>
     </div>
   )
 }
@@ -119,7 +135,7 @@ function TextArea({ value, onChange, placeholder, maxLength, rows = 4, className
         value={value}
         onChange={e => { if (e.target.value.length <= maxLength) onChange(e.target.value) }}
         placeholder={placeholder} rows={rows}
-        className={`w-full px-4 py-2.5 bg-brand-bg border border-brand-divider rounded-xl text-sm text-brand-text placeholder:text-brand-text/30 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10 resize-none ${className}`}
+        className={`w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card ${className}`}
       />
       <div className="flex justify-end mt-1"><CharCount current={value.length} max={maxLength} /></div>
     </div>
@@ -159,14 +175,14 @@ function FileUploadZone({ accept, maxFiles, files, onAdd, onRemove, label }: {
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-          dragOver ? 'border-brand-text/40 bg-brand-text/5' : 'border-brand-divider hover:border-brand-text/30'
-        } ${files.length >= maxFiles ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`flex cursor-pointer items-center gap-2.5 rounded-xl border border-dashed px-4 py-3 transition-colors ${
+          dragOver ? 'border-primary-ink bg-primary-tint' : 'border-brand-divider hover:border-primary-outline hover:bg-brand-secondary'
+        } ${files.length >= maxFiles ? 'cursor-not-allowed opacity-50' : ''}`}
       >
-        <Upload className="w-6 h-6 text-brand-text/30 mx-auto mb-2" />
-        <p className="text-xs text-brand-text/50">{label}</p>
-        <p className="text-[10px] text-brand-text/30 mt-1">
-          {files.length}/{maxFiles} files · Drag & drop or click to browse
+        <Upload className="h-4 w-4 shrink-0 text-brand-text/40" strokeWidth={1.9} />
+        <p className="text-[13px] font-medium text-brand-text/70">{label}</p>
+        <p className="ml-auto shrink-0 text-[11px] text-brand-text/35">
+          {files.length}/{maxFiles}
         </p>
       </div>
       <input ref={inputRef} type="file" accept={accept} multiple={maxFiles > 1} className="hidden"
@@ -186,7 +202,7 @@ function FileUploadZone({ accept, maxFiles, files, onAdd, onRemove, label }: {
               )}
               <button
                 type="button" onClick={() => onRemove(i)}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-danger text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -463,42 +479,55 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
   const avatarSrc = channel.avatar_media_id ? `/v1/media/${channel.avatar_media_id}/serve` : null
 
   return (
-    <div className="bg-brand-card border border-brand-divider rounded-2xl overflow-hidden">
+    /*
+      Same shell as the main post composer: a capped height with the body
+      scrolling inside it and the actions pinned below.
+
+      It used to be a plain div that grew to whatever the form needed. Inside
+      an overlay that meant the Post button sat below the fold on a laptop —
+      you could fill the form in and not find the way to send it.
+    */
+    <div className="flex max-h-[85vh] flex-col overflow-hidden rounded-[28px] border border-brand-divider bg-brand-card shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-brand-secondary">
-            {avatarSrc ? <img src={avatarSrc} alt="" className="w-full h-full object-cover" /> : (
-              <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs bg-linear-to-br from-stone-700 to-stone-900">
-                {channel.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-brand-text">{channel.name}</p>
-            <p className="text-[10px] text-brand-text/40">New update</p>
-          </div>
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-brand-divider px-5 py-4">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-brand-divider bg-brand-secondary">
+          {avatarSrc ? <img src={avatarSrc} alt="" className="h-full w-full object-cover" /> : (
+            <div className="bg-primary-grad flex h-full w-full items-center justify-center text-[13px] font-bold text-white">
+              {channel.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[14px] font-semibold -tracking-[0.01em] text-brand-text">{channel.name}</p>
+          <p className="text-[11px] text-brand-text/45">New update</p>
         </div>
       </div>
 
-      {/* Type pills */}
-      <div className="flex items-center gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-none">
-        {UPDATE_TYPES.map(t => (
-          <button
-            key={t.value} type="button" onClick={() => handleTypeSwitch(t.value)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors shrink-0 ${
-              updateType === t.value
-                ? 'bg-brand-text text-brand-bg'
-                : 'border border-brand-divider text-brand-text/60 hover:bg-brand-secondary/50'
-            }`}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* What kind of update. Coloured like the main composer's tiles, because
+          the colour is how you find the one you want without reading. */}
+      <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-5 pb-3 pt-4">
+        {UPDATE_TYPES.map(t => {
+          const on = updateType === t.value
+          return (
+            <button
+              key={t.value} type="button" onClick={() => handleTypeSwitch(t.value)}
+              aria-pressed={on}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                on
+                  ? 'bg-brand-text text-brand-bg'
+                  : 'border border-brand-divider text-brand-text/60 hover:bg-brand-secondary'
+              }`}
+            >
+              <span className={on ? '' : t.fg}>{t.icon}</span>
+              {t.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Form body */}
-      <div className="px-4 pb-4 space-y-3">
+      <div className="space-y-3.5 px-5 pb-5">
 
         {/* ── ANNOUNCEMENT ── */}
         {updateType === 'announcement' && (
@@ -506,7 +535,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             <div>
               <FieldLabel required>Title</FieldLabel>
               <TextInput value={title} onChange={setTitle} placeholder="Update title" maxLength={MAX.title} />
-              {errors.title && <p className="text-[10px] text-red-500 mt-0.5">{errors.title}</p>}
+              {errors.title && <p className="text-[11px] text-danger mt-0.5">{errors.title}</p>}
             </div>
             <div>
               <FieldLabel required>Content</FieldLabel>
@@ -520,7 +549,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 placeholder="Write your update…"
                 onChange={({ doc, text }) => { setRichDoc(doc); setBody(text) }}
               />
-              {errors.body && <p className="text-[10px] text-red-500 mt-0.5">{errors.body}</p>}
+              {errors.body && <p className="text-[11px] text-danger mt-0.5">{errors.body}</p>}
             </div>
             <FileUploadZone
               accept="image/*,.pdf,.doc,.docx,.zip" maxFiles={MAX.attachments} files={files}
@@ -544,7 +573,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 onAdd={f => setFiles([...files, ...f])} onRemove={i => setFiles(files.filter((_, idx) => idx !== i))}
                 label="Upload photos (JPG, PNG, WEBP, GIF — max 10MB each)"
               />
-              {errors.files && <p className="text-[10px] text-red-500 mt-0.5">{errors.files}</p>}
+              {errors.files && <p className="text-[11px] text-danger mt-0.5">{errors.files}</p>}
             </div>
           </>
         )}
@@ -555,7 +584,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             <div>
               <FieldLabel required>Title</FieldLabel>
               <TextInput value={title} onChange={setTitle} placeholder="Video title" maxLength={MAX.title} />
-              {errors.title && <p className="text-[10px] text-red-500 mt-0.5">{errors.title}</p>}
+              {errors.title && <p className="text-[11px] text-danger mt-0.5">{errors.title}</p>}
             </div>
             <div>
               <FieldLabel>Description</FieldLabel>
@@ -568,7 +597,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 onAdd={f => setFiles([...files, ...f])} onRemove={i => setFiles(files.filter((_, idx) => idx !== i))}
                 label="Upload video (MP4, MOV, WEBM — max 2GB, 60 min)"
               />
-              {errors.files && <p className="text-[10px] text-red-500 mt-0.5">{errors.files}</p>}
+              {errors.files && <p className="text-[11px] text-danger mt-0.5">{errors.files}</p>}
             </div>
           </>
         )}
@@ -579,7 +608,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             <div>
               <FieldLabel required>Question</FieldLabel>
               <TextInput value={pollQuestion} onChange={setPollQuestion} placeholder="What do you want to ask?" maxLength={MAX.pollQuestion} />
-              {errors.pollQuestion && <p className="text-[10px] text-red-500 mt-0.5">{errors.pollQuestion}</p>}
+              {errors.pollQuestion && <p className="text-[11px] text-danger mt-0.5">{errors.pollQuestion}</p>}
             </div>
             <div>
               <FieldLabel>Description / context</FieldLabel>
@@ -600,11 +629,11 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                     <CharCount current={opt.text.length} max={MAX.pollOption} />
                     {pollQuiz && (
                       <button type="button" onClick={() => setPollCorrectId(opt.id)}
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${pollCorrectId === opt.id ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-brand-divider text-transparent'}`}
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${pollCorrectId === opt.id ? 'border-success bg-success text-white' : 'border-brand-divider text-transparent'}`}
                       >✓</button>
                     )}
                     {pollOptions.length > 2 && (
-                      <button type="button" onClick={() => removePollOption(opt.id)} className="text-brand-text/30 hover:text-red-500">
+                      <button type="button" onClick={() => removePollOption(opt.id)} className="text-brand-text/30 hover:text-danger">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -616,7 +645,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                   <Plus className="w-3 h-3" /> Add option
                 </button>
               )}
-              {errors.pollOptions && <p className="text-[10px] text-red-500 mt-1">{errors.pollOptions}</p>}
+              {errors.pollOptions && <p className="text-[11px] text-danger mt-1">{errors.pollOptions}</p>}
             </div>
             {/* Poll settings */}
             <div className="grid grid-cols-2 gap-3">
@@ -651,12 +680,12 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
             <div>
               <FieldLabel required>Event title</FieldLabel>
               <TextInput value={eventTitle} onChange={setEventTitle} placeholder="What's the event?" maxLength={MAX.title} />
-              {errors.eventTitle && <p className="text-[10px] text-red-500 mt-0.5">{errors.eventTitle}</p>}
+              {errors.eventTitle && <p className="text-[11px] text-danger mt-0.5">{errors.eventTitle}</p>}
             </div>
             <div>
               <FieldLabel required>Description</FieldLabel>
               <TextArea value={eventDesc} onChange={setEventDesc} placeholder="Event details..." maxLength={MAX.eventDesc} rows={3} />
-              {errors.eventDesc && <p className="text-[10px] text-red-500 mt-0.5">{errors.eventDesc}</p>}
+              {errors.eventDesc && <p className="text-[11px] text-danger mt-0.5">{errors.eventDesc}</p>}
             </div>
             <FileUploadZone
               accept="image/*" maxFiles={1} files={files}
@@ -668,7 +697,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 <FieldLabel required>Start date</FieldLabel>
                 <input type="date" value={eventStartDate} onChange={e => setEventStartDate(e.target.value)}
                   className="w-full px-3 py-2 bg-brand-bg border border-brand-divider rounded-lg text-xs text-brand-text focus:outline-hidden" />
-                {errors.eventDate && <p className="text-[10px] text-red-500 mt-0.5">{errors.eventDate}</p>}
+                {errors.eventDate && <p className="text-[11px] text-danger mt-0.5">{errors.eventDate}</p>}
               </div>
               {!eventAllDay && (
                 <div>
@@ -732,7 +761,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                   <button key={sev} type="button" onClick={() => setUrgentSeverity(sev)}
                     className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-colors ${
                       urgentSeverity === sev
-                        ? sev === 'critical' ? 'bg-red-500 text-white' : sev === 'warning' ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white'
+                        ? sev === 'critical' ? 'bg-danger text-white' : sev === 'warning' ? 'bg-warning text-white' : 'bg-primary-ink text-white'
                         : 'border border-brand-divider text-brand-text/60'
                     }`}>
                     {sev.charAt(0).toUpperCase() + sev.slice(1)}
@@ -740,18 +769,18 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                 ))}
               </div>
               {urgentSeverity === 'critical' && (
-                <p className="text-[10px] text-red-500 mt-1">Push notification + email sent to all subscribers. Max 1 per 24h.</p>
+                <p className="text-[11px] text-danger mt-1">Push notification + email sent to all subscribers. Max 1 per 24h.</p>
               )}
             </div>
             <div>
               <FieldLabel required>Title</FieldLabel>
               <TextInput value={title} onChange={setTitle} placeholder="Urgent alert title" maxLength={MAX.title} />
-              {errors.title && <p className="text-[10px] text-red-500 mt-0.5">{errors.title}</p>}
+              {errors.title && <p className="text-[11px] text-danger mt-0.5">{errors.title}</p>}
             </div>
             <div>
               <FieldLabel required>Content</FieldLabel>
               <TextArea value={body} onChange={setBody} placeholder="Describe the situation..." maxLength={MAX.urgentBody} rows={4} />
-              {errors.body && <p className="text-[10px] text-red-500 mt-0.5">{errors.body}</p>}
+              {errors.body && <p className="text-[11px] text-danger mt-0.5">{errors.body}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -774,7 +803,14 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
         )}
 
         {/* ===== BOTTOM ACTION BAR ===== */}
-        <div className="flex items-center gap-2 pt-3 border-t border-brand-divider flex-wrap">
+      </div>
+      </div>
+
+      {/* Pinned: the actions stay reachable however long the form is. */}
+      <div className="shrink-0 border-t border-brand-divider bg-brand-card px-5 py-3">
+        {/* text-[12px] throughout: these were 10px, which is below the size
+            anything meant to be read should be. */}
+        <div className="flex flex-wrap items-center gap-2 [&_button]:text-[12px]">
           {/* Tags */}
           <div className="flex items-center gap-1">
             {tags.map(t => (
@@ -836,7 +872,7 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
                       className="px-2 py-1.5 bg-brand-bg border border-brand-divider rounded-lg text-[10px]" />
                   </div>
                 )}
-                {errors.schedule && <p className="text-[10px] text-red-500">{errors.schedule}</p>}
+                {errors.schedule && <p className="text-[11px] text-danger">{errors.schedule}</p>}
                 <button type="button" onClick={() => setShowSchedule(false)} className="text-[10px] font-semibold text-brand-text underline">Done</button>
               </div>
             )}
@@ -853,38 +889,37 @@ export default function ChannelComposer({ channel, onPublish, onSaveDraft, isPub
           <button
             type="button" onClick={handlePublish}
             disabled={isPublishing || !!uploadProgress}
-            className="ml-auto flex items-center gap-1.5 bg-primary-ink text-white text-xs font-bold px-5 py-2 rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="bg-primary-grad ml-auto flex shrink-0 items-center gap-2 rounded-full px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
           >
-            {(isPublishing || uploadProgress) && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {uploadProgress ? 'Uploading...' : isPublishing ? 'Publishing...' : schedule.type === 'scheduled' ? 'Schedule Update' : 'Post Update →'}
+            {(isPublishing || uploadProgress) && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
+            {uploadProgress ? 'Uploading…' : isPublishing ? 'Publishing…' : schedule.type === 'scheduled' ? 'Schedule' : 'Post'}
           </button>
         </div>
 
-        {/* Publish success */}
+        {/* On tokens, not raw emerald/red: an unrecognised colour compiles to
+            nothing at all in this Tailwind setup, silently. */}
         {publishSuccess && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mt-2 flex items-center gap-2">
-            <span className="text-emerald-600 text-[11px] font-bold">Update published successfully!</span>
+          <div className="mt-2 rounded-xl border border-success/30 bg-success/10 px-3 py-2.5 text-[12px] font-medium text-success">
+            Published.
           </div>
         )}
 
-        {/* Publish error with retry + save draft */}
         {publishError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
-            <p className="text-[11px] font-bold text-red-600 mb-2">{publishError}</p>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={handlePublish} className="text-[10px] font-bold text-red-600 underline">Retry</button>
+          <div className="mt-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5">
+            <p className="text-[12px] font-medium text-danger">{publishError}</p>
+            <div className="mt-1.5 flex items-center gap-3">
+              <button type="button" onClick={handlePublish} className="text-[11px] font-semibold text-danger underline">Retry</button>
               {onSaveDraft && (
-                <button type="button" onClick={handleSaveDraftManual} className="text-[10px] font-bold text-brand-text/60 underline">Save as draft</button>
+                <button type="button" onClick={handleSaveDraftManual} className="text-[11px] font-semibold text-brand-text/60 underline">Save as draft</button>
               )}
             </div>
           </div>
         )}
 
-        {/* Validation errors summary */}
         {Object.keys(errors).length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
-            <p className="text-[11px] font-bold text-red-600 mb-1">Please fix the following:</p>
-            {Object.values(errors).map((e, i) => <p key={i} className="text-[10px] text-red-500">• {e}</p>)}
+          <div className="mt-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5">
+            <p className="text-[12px] font-medium text-danger">Please fix the following:</p>
+            {Object.values(errors).map((e, i) => <p key={i} className="mt-0.5 text-[11px] text-danger/80">• {e}</p>)}
           </div>
         )}
       </div>
