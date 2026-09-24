@@ -19,7 +19,7 @@ import {
   NAME_MAX,
   type Candidate,
 } from './groupComposition'
-import { AlertCircle, Check, Loader2, Search, Users, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, Check, Loader2, Search, Users, X } from 'lucide-react'
 
 /**
  * Create a group: a name, the people in it, done.
@@ -52,6 +52,14 @@ interface CreateGroupPanelProps {
 }
 
 export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPanelProps) {
+  /*
+    Which half of the dialog is showing. People first, then the name: you
+    decide to make a group FOR a set of people, and what to call it is the
+    thought that comes after. Asking for a name first makes you invent one
+    before you know who it is for.
+  */
+  const [step, setStep] = useState<'people' | 'details'>('people')
+
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [query, setQuery] = useState('')
@@ -80,9 +88,11 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
   */
   const idempotency = useIdempotencyKey()
 
+  // Focus follows the step. This ran once on mount, when the name field was
+  // not rendered yet, so arriving at the second step left the cursor nowhere.
   useEffect(() => {
-    nameRef.current?.focus()
-  }, [])
+    if (step === 'details') nameRef.current?.focus()
+  }, [step])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -197,9 +207,11 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               New group
             </h2>
             <p className="text-[12px] text-brand-text/60">
-              {selected.length === 0
-                ? 'Add people now, or once it exists'
-                : `${selected.length} ${selected.length === 1 ? 'person' : 'people'} selected`}
+              {step === 'people'
+                ? selected.length === 0
+                  ? 'Who is in it? You can add people later too'
+                  : `${selected.length} ${selected.length === 1 ? 'person' : 'people'} selected`
+                : 'What is it called?'}
             </p>
           </div>
           <button
@@ -214,38 +226,19 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
         </div>
 
         <div className="space-y-4 px-5 py-5">
-          <div>
-            <label htmlFor="group-name" className="mb-1.5 block text-[13px] font-medium text-brand-text">
-              Group name
-            </label>
-            <input
-              id="group-name"
-              ref={nameRef}
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
-              placeholder="What is this group called?"
-              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
-            />
-          </div>
+          {/*
+            TWO STEPS: who is in it, then what it is called.
 
-          <div>
-            <label htmlFor="group-description" className="mb-1.5 block text-[13px] font-medium text-brand-text">
-              Description <span className="font-normal text-brand-text/45">· optional</span>
-            </label>
-            <textarea
-              id="group-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
-              placeholder="What is it for?"
-              rows={3}
-              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
-            />
-            <div className="mt-1 text-right text-[11px] text-brand-text/40">
-              {description.length} / {DESCRIPTION_MAX}
-            </div>
-          </div>
+            People first because that is the order the thought arrives in —
+            you decide to make a group for a set of people, and the name is
+            what you call the thing afterwards. Asking for a name first
+            makes you invent one before you know who it is for.
 
+            Neither step blocks on the other: the people step can be passed
+            with nobody selected (a new account has no connections yet), and
+            only the name is ever required.
+          */}
+          {step === 'people' ? (
           <div>
             <div className="mb-1.5 flex items-baseline justify-between gap-2">
               <label htmlFor="group-people" className="block text-[13px] font-medium text-brand-text">
@@ -322,7 +315,41 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               )}
             </div>
           </div>
+          ) : (
+            <>
+          <div>
+            <label htmlFor="group-name" className="mb-1.5 block text-[13px] font-medium text-brand-text">
+              Group name
+            </label>
+            <input
+              id="group-name"
+              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
+              onKeyDown={(e) => { if (e.key === 'Enter' && step === 'details') handleCreate() }}
+              placeholder="What is this group called?"
+              className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
+            />
+          </div>
 
+          <div>
+            <label htmlFor="group-description" className="mb-1.5 block text-[13px] font-medium text-brand-text">
+              Description <span className="font-normal text-brand-text/45">· optional</span>
+            </label>
+            <textarea
+              id="group-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
+              placeholder="What is it for?"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-brand-divider bg-brand-secondary px-3.5 py-2.5 text-[15px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/35 focus:border-brand-accent focus:bg-brand-card"
+            />
+            <div className="mt-1 text-right text-[11px] text-brand-text/40">
+              {description.length} / {DESCRIPTION_MAX}
+            </div>
+          </div>
+            </>
+          )}
           {error && (
             <div role="alert" className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
               <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
@@ -334,26 +361,37 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
         <div className="flex items-center justify-end gap-2 border-t border-brand-divider px-5 py-4">
           {/* A disabled button with no explanation is what people report as
               "the button does nothing". */}
-          {!block.ok && !creating && (
+          {step === 'details' && !block.ok && !creating && (
             <span className="mr-auto text-[12px] text-brand-text/50">{block.reason}</span>
           )}
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => (step === 'people' ? onClose() : setStep('people'))}
             disabled={creating}
             className="rounded-full px-4 py-2.5 text-[13px] font-semibold text-brand-text/60 transition-colors hover:text-brand-text disabled:opacity-40"
           >
-            Cancel
+            {step === 'people' ? 'Cancel' : 'Back'}
           </button>
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={!canCreate}
-            className="bg-primary-grad flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
-          >
-            {creating && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
-            {creating ? 'Creating…' : 'Create group'}
-          </button>
+          {step === 'people' ? (
+            <button
+              type="button"
+              onClick={() => setStep('details')}
+              className="bg-primary-grad flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+            >
+              Next
+              <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={!canCreate}
+              className="bg-primary-grad flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
+            >
+              {creating && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
+              {creating ? 'Creating…' : 'Create group'}
+            </button>
+          )}
         </div>
       </div>
     </div>,

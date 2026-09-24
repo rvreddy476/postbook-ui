@@ -25,7 +25,7 @@ import SettingsTab from '@/components/channels/tabs/SettingsTab'
 import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
 import SubscribersTab from '@/components/channels/tabs/SubscribersTab'
 import {
-  ArrowLeft, BadgeCheck, Bell, BellOff, Camera, Hash, Loader2, Lock, Pencil, Radio, Settings2, X,
+  ArrowLeft, BadgeCheck, Bell, BellOff, Camera, Hash, Loader2, Lock, Maximize2, Minimize2, Pencil, Radio, Settings2, Users, X,
 } from 'lucide-react'
 
 interface ChannelPanelProps {
@@ -50,6 +50,17 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   const [tab, setTab] = useState<'overview' | 'updates' | 'members' | 'about' | 'analytics' | 'settings'>('updates')
   const [error, setError] = useState<string | null>(null)
   const [showComposer, setShowComposer] = useState(false)
+
+  /*
+    Expanded hides the cover and gives the whole column to the content.
+
+    The masthead is worth its height when you arrive and worth nothing when
+    you are three screens into the posts, the member list or the settings
+    form — it is the same photograph every time and it costs ~180px of every
+    page. This collapses it to a single bar carrying the name and the way
+    back, and applies to every tab, not just Posts.
+  */
+  const [expanded, setExpanded] = useState(false)
 
   const { data: channel, isLoading } = useBroadcastChannel(channelId)
   const { data: updates, isLoading: updatesLoading } = useChannelUpdates(channelId, 50)
@@ -190,6 +201,37 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
         this gives it a masthead.
       */}
       <header className="shrink-0 bg-brand-bg">
+        {expanded ? (
+          <div className="flex items-center gap-2.5 border-b border-brand-divider px-5 py-2.5">
+            {onBack && (
+              <button
+                onClick={onBack}
+                aria-label="Back to conversations"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-text/60 transition-colors hover:bg-brand-secondary md:hidden"
+              >
+                <ArrowLeft className="h-[18px] w-[18px]" />
+              </button>
+            )}
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-secondary text-brand-text/60">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <Hash className="h-4 w-4" strokeWidth={1.75} />
+              )}
+            </span>
+            <p className="min-w-0 flex-1 truncate text-[14px] font-semibold text-brand-text">
+              {channel.name}
+            </p>
+            <button
+              onClick={() => setExpanded(false)}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold text-brand-text/55 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+            >
+              <Minimize2 className="h-3.5 w-3.5" strokeWidth={2} />
+              Show cover
+            </button>
+          </div>
+        ) : (
         <div className="relative">
           {/* The cover. A gradient when there is none, never a grey void. */}
           <div className="relative h-36 w-full overflow-hidden sm:h-44">
@@ -258,28 +300,16 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
                 )}
               </div>
 
-              <p className="mt-0.5 truncate text-[13px] text-white/80">
-                @{channel.handle}
-                <span className="px-1.5 text-white/40">·</span>
-                {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
-              </p>
-
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold capitalize text-white backdrop-blur-xs">
                   {channel.channel_type === 'private' && <Lock className="h-3 w-3" strokeWidth={2.2} />}
                   {channel.channel_type} channel
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                  Active
+                  <Users className="h-3 w-3" strokeWidth={2.2} />
+                  {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
                 </span>
               </div>
-
-              {channel.description && (
-                <p className="mt-2 line-clamp-1 max-w-xl text-[13px] text-white/75">
-                  {channel.description}
-                </p>
-              )}
             </div>
 
             <div className="hidden shrink-0 items-center gap-2 pb-1 sm:flex">
@@ -314,7 +344,18 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               )}
             </div>
           </div>
+          {/* Collapse, so the content gets the whole column. */}
+          <button
+            onClick={() => setExpanded(true)}
+            aria-label="Hide cover"
+            title="Hide cover"
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-xs transition-colors hover:bg-black/55"
+          >
+            <Maximize2 className="h-4 w-4" strokeWidth={2} />
+          </button>
         </div>
+        )}
+
 
         {/* On a narrow column the actions cannot fit over the cover. */}
         <div className="flex items-center gap-2 px-5 pt-3 sm:hidden">
