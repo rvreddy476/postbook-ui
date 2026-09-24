@@ -25,11 +25,13 @@ import { AlertCircle, Check, Loader2, Search, Users, X } from 'lucide-react'
  * Create a group: a name, the people in it, done.
  *
  * This was three steps once — details, then members, then review — and was cut
- * to one on the instruction to keep creation simple. That cut went one field
- * too far: it also removed the member step, and a group with nobody in it is
- * not a group, it is a note to self. So the people are back, inline, as part
- * of the one screen rather than a step of their own, and at least one is
- * required.
+ * to one on the instruction to keep creation simple.
+ *
+ * Picking people is back on that one screen, but it is OPTIONAL. Requiring
+ * somebody would lock out a new account, which has no connections yet and so
+ * would have to go and get a message request accepted before it could make a
+ * group at all. People can be added from inside the group, where there is
+ * something to add them to.
  *
  * What stays cut is everything that can be decided later with the group in
  * front of you: privacy, avatar, cover, category, rules. Those defaults are
@@ -113,13 +115,17 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
       })
 
       /*
-        The group exists now. If adding people fails from here the group must
-        NOT be lost — it is already created, and throwing the user back to an
-        empty dialog would leave them with an orphan group they cannot see and
-        a second press would make another. So this failure is reported against
-        the group that exists, and they land in it.
+        Only when somebody was picked. group-service refuses an empty batch,
+        and creating a group on your own is now an ordinary thing to do — it
+        must not end on an error about having invited nobody.
+
+        The group also EXISTS by this point. If adding people fails from here
+        the group must not be lost: throwing the user back to the dialog would
+        leave an orphan they cannot see, and a second press would make another.
+        So the failure is reported against the group that exists, and they land
+        in it.
       */
-      try {
+      if (selected.length > 0) try {
         const result = await addPeople.mutateAsync({ groupId: newGroup.id, userIds: selected })
         const summary = addPeopleSummary(result)
         if (summary) {
@@ -192,7 +198,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
             </h2>
             <p className="text-[12px] text-brand-text/60">
               {selected.length === 0
-                ? 'Name it and pick who is in it'
+                ? 'Add people now, or once it exists'
                 : `${selected.length} ${selected.length === 1 ? 'person' : 'people'} selected`}
             </p>
           </div>
@@ -243,10 +249,10 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
           <div>
             <div className="mb-1.5 flex items-baseline justify-between gap-2">
               <label htmlFor="group-people" className="block text-[13px] font-medium text-brand-text">
-                Add people
+                Add people <span className="font-normal text-brand-text/45">· optional</span>
               </label>
               <span className="text-[11px] text-brand-text/45">
-                {selected.length > 0 ? `${selected.length} of ${MAX_PEOPLE}` : 'at least one'}
+                {selected.length > 0 ? `${selected.length} of ${MAX_PEOPLE}` : 'add now or later'}
               </span>
             </div>
 
@@ -267,7 +273,7 @@ export default function CreateGroupPanel({ onClose, onCreated }: CreateGroupPane
               ) : visible.length === 0 ? (
                 <p className="px-3 py-6 text-center text-[13px] text-brand-text/45">
                   {candidates.length === 0
-                    ? 'You have no connections yet. A connection forms when someone accepts your message request.'
+                    ? 'No connections yet — create the group and add people to it later.'
                     : `Nobody matches "${query.trim()}".`}
                 </p>
               ) : (

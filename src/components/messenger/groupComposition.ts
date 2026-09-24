@@ -45,9 +45,16 @@ export function createBlock(name: string, selectedCount: number): CreateBlock {
     if (trimmed.length < NAME_MIN) {
         return { ok: false, reason: `The name needs at least ${NAME_MIN} characters` }
     }
-    // A group of one is a note to self. The founder's rule: at least one other
-    // person before it exists.
-    if (selectedCount === 0) return { ok: false, reason: 'Add at least one person' }
+    /*
+      NO MINIMUM. A group can be created empty.
+
+      Requiring one other person locked out the people most likely to want a
+      group: a new account has no connections, so the gate turned "create a
+      group" into "first go and get someone to accept a message request".
+      Adding people is offered here because it is convenient, not because the
+      group is invalid without them — they can be added from inside it, where
+      there is something to add them to.
+    */
     if (selectedCount > MAX_PEOPLE) {
         return { ok: false, reason: `You can add up to ${MAX_PEOPLE} people at once` }
     }

@@ -13,21 +13,24 @@ function person(over: Partial<Candidate> = {}): Candidate {
 }
 
 describe('createBlock', () => {
-    test('a group with nobody in it cannot be created', () => {
-        // The rule this whole module exists for: a group of one is a note to
-        // self. A name alone used to be enough.
-        expect(createBlock('Weekend Riders', 0)).toEqual({
-            ok: false,
-            reason: 'Add at least one person',
-        })
+    test('a group can be created with nobody in it', () => {
+        /*
+          There is no minimum, deliberately. A required member locked out the
+          accounts most likely to want a group: a new one has no connections,
+          so the gate turned "create a group" into "first get someone to accept
+          a message request". People are added from inside the group instead.
+        */
+        expect(createBlock('Weekend Riders', 0)).toEqual({ ok: true })
     })
 
-    test('one person is enough', () => {
+    test('picking people is still allowed, just not required', () => {
         expect(createBlock('Weekend Riders', 1)).toEqual({ ok: true })
+        expect(createBlock('Weekend Riders', 12)).toEqual({ ok: true })
     })
 
-    test('the name is checked before the people, so an empty dialog says the first thing to do', () => {
+    test('the name is the only thing actually required', () => {
         expect(createBlock('', 0)).toEqual({ ok: false, reason: 'Give the group a name' })
+        expect(createBlock('', 5)).toEqual({ ok: false, reason: 'Give the group a name' })
     })
 
     test('a too-short name is named as such, not reported as missing', () => {
@@ -48,7 +51,7 @@ describe('createBlock', () => {
     })
 
     test('every refusal carries a reason a person can act on', () => {
-        for (const [name, count] of [['', 0], ['ab', 1], ['ok name', 0]] as const) {
+        for (const [name, count] of [['', 0], ['ab', 1], ['fine', 51]] as const) {
             const r = createBlock(name, count)
             expect(r.ok).toBe(false)
             expect(r.ok === false && r.reason.length).toBeGreaterThan(0)
