@@ -19,6 +19,12 @@ export interface BroadcastChannel {
   is_verified: boolean
   status: string
   viewer_role?: string
+  /**
+   * Whether the signed-in viewer has muted this channel. Real server state
+   * (channel-service sets it from the member row), so the toggle survives a
+   * reload and agrees across tabs — it is not a local preference.
+   */
+  viewer_muted?: boolean
   created_at: string
   updated_at: string
 }

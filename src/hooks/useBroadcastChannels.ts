@@ -233,6 +233,28 @@ export function useUnreactToUpdate() {
   })
 }
 
+/**
+ * Mute or unmute a channel for the signed-in viewer.
+ *
+ * A subscriber's own setting, not the channel's: it changes their member row
+ * and nobody else's. Separate from unsubscribing on purpose — "stop pinging
+ * me" and "I am no longer part of this" are different intentions, and
+ * collapsing them makes the quiet option cost the membership.
+ */
+export function useSetChannelMuted() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ channelId, muted }: { channelId: string; muted: boolean }) => {
+      if (muted) await api.put(`/v1/broadcast-channels/${channelId}/subscribe/mute`, {})
+      else await api.delete(`/v1/broadcast-channels/${channelId}/subscribe/mute`)
+      return muted
+    },
+    onSuccess: (_, { channelId }) => {
+      qc.invalidateQueries({ queryKey: ["broadcast-channel", channelId] })
+    },
+  })
+}
+
 export function useSubscribeChannel() {
   const qc = useQueryClient()
   return useMutation({

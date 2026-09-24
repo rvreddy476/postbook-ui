@@ -13,11 +13,15 @@ import {
   useReactToUpdate,
   useUnreactToUpdate,
   useRecordView,
+  useChannelAdmins,
+  useSetChannelMuted,
 } from '@/hooks/useBroadcastChannels'
 import ChannelComposer, { type ComposerPayload } from '@/components/channels/ChannelComposer'
 import UpdateCard from '@/components/channels/UpdateCard'
+import OverviewTab from '@/components/channels/tabs/OverviewTab'
 import AnalyticsTab from '@/components/channels/tabs/AnalyticsTab'
 import SettingsTab from '@/components/channels/tabs/SettingsTab'
+import SubscriberSettingsTab from '@/components/channels/tabs/SubscriberSettingsTab'
 import {
   ArrowLeft, BadgeCheck, Bell, BellOff, Hash, Loader2, Radio, X,
 } from 'lucide-react'
@@ -41,7 +45,7 @@ interface ChannelPanelProps {
  * management are the only things still on the full channel page.
  */
 export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
-  const [tab, setTab] = useState<'updates' | 'about' | 'analytics' | 'settings'>('updates')
+  const [tab, setTab] = useState<'overview' | 'updates' | 'about' | 'analytics' | 'settings'>('updates')
   const [error, setError] = useState<string | null>(null)
 
   const { data: channel, isLoading } = useBroadcastChannel(channelId)
@@ -56,10 +60,16 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   const react = useReactToUpdate()
   const unreact = useUnreactToUpdate()
   const recordView = useRecordView()
+  const setMuted = useSetChannelMuted()
 
   const role = channel?.viewer_role ?? ''
   const canPublish = role === 'owner' || role === 'admin' || role === 'editor'
   const isSubscribed = canPublish || role === 'subscriber'
+
+  // Only the Overview shows who runs the channel, so only it pays for them.
+  const { data: channelAdmins } = useChannelAdmins(
+    canPublish && tab === 'overview' ? channelId : undefined
+  )
 
   // Pinned first, then newest. The API returns them in one list.
   const ordered = useMemo(() => {
@@ -97,18 +107,31 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     )
   }
 
-  // Analytics and Settings belong to whoever runs the channel; a subscriber
-  // is shown Updates and About only.
+  /*
+    Two different channels, depending on who is looking.
+
+    Someone who RUNS it gets the dashboard: how it is doing, what is in it,
+    and the controls over it. Someone who FOLLOWS it gets the thing itself —
+    the posts, what it is, and their own relationship to it. A subscriber has
+    no use for an engagement rate they cannot act on, and every control on the
+    owner's Settings is a write the server would refuse them.
+
+    Both Settings tabs are called Settings and are not the same screen:
+    SettingsTab edits the CHANNEL, SubscriberSettingsTab edits the VIEWER'S
+    membership — notifications and leaving.
+  */
   const tabs = canPublish
     ? ([
-        { id: 'updates', label: 'Updates' },
+        { id: 'overview', label: 'Overview' },
+        { id: 'updates', label: 'Posts' },
         { id: 'analytics', label: 'Analytics' },
         { id: 'settings', label: 'Settings' },
         { id: 'about', label: 'About' },
       ] as const)
     : ([
-        { id: 'updates', label: 'Updates' },
+        { id: 'updates', label: 'Posts' },
         { id: 'about', label: 'About' },
+        { id: 'settings', label: 'Settings' },
       ] as const)
 
   if (isLoading) {
@@ -165,7 +188,7 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
           <p className="truncate text-xs text-brand-text/60">
             @{channel.handle}
             <span className="px-1.5 text-brand-text/30">·</span>
-            {channel.subscriber_count} subscribers
+            {channel.subscriber_count} {channel.subscriber_count === 1 ? 'subscriber' : 'subscribers'}
           </p>
         </div>
 
@@ -233,7 +256,39 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
 
       {/* Both tabs render a bare `space-y-4` with no padding of their own,
           so the panel supplies the gutter and the scroll container. */}
-      {tab === 'analytics' ? (
+      {tab === 'overview' && canPublish ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="mx-auto max-w-3xl">
+            <OverviewTab
+              channel={channel}
+              updates={updates}
+              admins={channelAdmins}
+              onViewPosts={() => setTab('updates')}
+            />
+          </div>
+        </div>
+      ) : tab === 'settings' && !canPublish ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="mx-auto max-w-2xl">
+            <SubscriberSettingsTab
+              channel={channel}
+              isSaving={setMuted.isPending}
+              isLeaving={unsubscribe.isPending}
+              onSetMuted={(muted) =>
+                setMuted.mutate(
+                  { channelId, muted },
+                  { onError: () => setError('Could not change that. Please try again.') },
+                )
+              }
+              onLeave={() =>
+                unsubscribe.mutate(channelId, {
+                  onError: () => setError('Could not leave the channel. Please try again.'),
+                })
+              }
+            />
+          </div>
+        </div>
+      ) : tab === 'analytics' ? (
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="mx-auto max-w-2xl">
             <AnalyticsTab channel={channel} updates={updates} />
