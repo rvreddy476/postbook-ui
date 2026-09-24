@@ -113,7 +113,15 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
     setError(null)
     updateChannel.mutate(
       { channelId, ...data },
-      { onError: () => setError('Could not save those settings.') }
+      {
+        // The server's own words. A flat message here hid a deliberate
+        // refusal — the invite-only pilot blocking Private -> Public — behind
+        // what looked like a broken button.
+        onError: (err: unknown) => {
+          const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          setError(body?.message || 'Could not save those settings. Please try again.')
+        },
+      }
     )
   }
 

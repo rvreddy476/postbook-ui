@@ -50,13 +50,41 @@ const CATEGORIES = [
  * can usefully answer here, so this offers those two and leaves an
  * existing flavour value alone unless the owner actually changes it.
  */
-const CHANNEL_TYPE_LABELS = ['Public', 'Private'] as const
-const CHANNEL_TYPE_BY_LABEL: Record<string, string> = {
+/*
+  A channel's type is not a two-way switch.
+
+  channel_type carries seven values — public, private, creator, brand,
+  education, official, topic, paid — and this offered two. channelTypeLabel
+  collapsed everything that was not 'private' into "Public", so a creator or
+  brand channel displayed as Public and the first touch of the select
+  rewrote it to plain 'public', throwing its kind away silently.
+
+  So the labels are built from what the channel ACTUALLY is: the two general
+  choices when it is one of them, and its own kind listed first when it is
+  not, so switching is still possible but never accidental.
+*/
+export const CHANNEL_TYPE_BY_LABEL: Record<string, string> = {
   Public: 'public',
   Private: 'private',
+  Creator: 'creator',
+  Brand: 'brand',
+  Education: 'education',
+  Official: 'official',
+  Topic: 'topic',
+  Paid: 'paid',
 }
-function channelTypeLabel(value: string): string {
-  return value === 'private' ? 'Private' : 'Public'
+
+export function channelTypeLabel(value: string): string {
+  const found = Object.entries(CHANNEL_TYPE_BY_LABEL).find(([, v]) => v === value)
+  return found ? found[0] : 'Public'
+}
+
+export function channelTypeOptions(current: string): string[] {
+  const label = channelTypeLabel(current)
+  if (label === 'Public' || label === 'Private') return ['Public', 'Private']
+  // A flavoured channel keeps its own kind as the selected option; the two
+  // general ones remain available, and nothing changes unless it is chosen.
+  return [label, 'Public', 'Private']
 }
 
 const SUBSCRIBER_LIST_VISIBILITY = ['Everyone', 'Subscribers Only', 'Only Me'] as const
@@ -587,8 +615,8 @@ export default function SettingsTab({ channel, onUpdate, role }: SettingsTabProp
           <FieldLabel>Who can find this channel</FieldLabel>
           <Select
             value={channelTypeLabel(channelType)}
-            onChange={(label) => setChannelType(CHANNEL_TYPE_BY_LABEL[label] ?? 'public')}
-            options={CHANNEL_TYPE_LABELS}
+            onChange={(label) => setChannelType(CHANNEL_TYPE_BY_LABEL[label] ?? channelType)}
+            options={channelTypeOptions(channel.channel_type || 'public')}
           />
           <p className="mt-1.5 text-[11px] text-brand-text/45">
             {channelType === 'private'

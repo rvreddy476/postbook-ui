@@ -255,7 +255,12 @@ function ChannelDetailContent() {
 
   const handleSettingsUpdate = useCallback((data: any) => {
     updateChannel.mutate({ channelId, ...data }, {
-      onError: () => setMutError('Failed to update channel settings.'),
+      // The server's own words; see ChannelPanel for why a flat message here
+      // hid a deliberate refusal behind an apparently broken button.
+      onError: (err: unknown) => {
+        const body = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+        setMutError(body?.message || 'Failed to update channel settings.')
+      },
     })
   }, [channelId, updateChannel])
 
