@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import CreatePortal from '@/components/CreatePortal'
 import {
   useGroupFeedV2,
@@ -18,6 +19,7 @@ import { useAuthUser } from '@/store/auth'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, MessageCircle } from 'lucide-react'
 import GroupPostCard from '@/components/groups/GroupPostCard'
+import { engageGroupPost } from '@/components/groups/patchGroupFeed'
 
 interface GroupFeedTabProps {
   groupId: string
@@ -30,6 +32,7 @@ interface GroupFeedTabProps {
 
 export default function GroupFeedTab({ groupId, isMember, viewerRole, hideComposer = false }: GroupFeedTabProps) {
   const [showCreate, setShowCreate] = useState(false)
+  const qc = useQueryClient()
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
   const authUser = useAuthUser()
 
@@ -68,19 +71,35 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
   const pinnedPosts = useMemo(() => posts.filter(p => p.is_pinned), [posts])
   const regularPosts = useMemo(() => posts.filter(p => !p.is_pinned), [posts])
 
-  // Engagement callbacks
-  const handleSpark = (gId: string, postId: string) => sparkMut.mutate({ groupId: gId, postId })
-  const handleUnspark = (gId: string, postId: string) => unsparkMut.mutate({ groupId: gId, postId })
-  const handleStash = (gId: string, postId: string) => stashMut.mutate({ groupId: gId, postId })
-  const handleUnstash = (gId: string, postId: string) => unstashMut.mutate({ groupId: gId, postId })
+  /*
+    Engagement callbacks. Every one of them patches the cached feed page —
+    count and viewer flag together — before firing the request, and rolls that
+    patch back on failure. The card holds no reaction state of its own, so the
+    cache is the single source the filled heart and the number both read.
+  */
+  const engage = (
+    gId: string,
+    postId: string,
+    kind: 'spark' | 'echo' | 'stash',
+    engaged: boolean,
+    mutation: Parameters<typeof engageGroupPost>[0]['mutation'],
+    echoType?: string,
+  ) => engageGroupPost({ qc, groupId: gId, postId, kind, engaged, mutation, echoType })
+
+  const handleSpark = (gId: string, postId: string) => engage(gId, postId, 'spark', true, sparkMut)
+  const handleUnspark = (gId: string, postId: string) => engage(gId, postId, 'spark', false, unsparkMut)
+  const handleStash = (gId: string, postId: string) => engage(gId, postId, 'stash', true, stashMut)
+  const handleUnstash = (gId: string, postId: string) => engage(gId, postId, 'stash', false, unstashMut)
+  const handleRepost = (gId: string, postId: string, echoType: string) =>
+    engage(gId, postId, 'echo', true, echoMut, echoType)
+  const handleUnrepost = (gId: string, postId: string) => engage(gId, postId, 'echo', false, unechoMut)
+
   const handleView = (gId: string, postId: string) => viewMut.mutate({ groupId: gId, postId })
   const handleDelete = (postId: string) => {
     if (confirm('Delete this post?')) {
       deleteMut.mutate({ groupId, postId })
     }
   }
-  const handleRepost = (gId: string, postId: string, echoType: string) => echoMut.mutate({ groupId: gId, postId, echoType })
-  const handleUnrepost = (gId: string, postId: string) => unechoMut.mutate({ groupId: gId, postId })
 
   const renderPost = (post: typeof posts[0]) => (
     <GroupPostCard
@@ -95,6 +114,8 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
       onUnstash={handleUnstash}
       onView={handleView}
       onDelete={handleDelete}
+      onRepost={handleRepost}
+      onUnrepost={handleUnrepost}
     />
   )
 

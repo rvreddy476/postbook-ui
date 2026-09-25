@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Pin, Megaphone, Heart, MessageCircle, Bookmark, Eye,
-  MoreHorizontal, Trash2, Pencil, Copy, Flag, BellOff,
+  MoreHorizontal, Trash2, Copy, Flag,
   ChevronLeft, ChevronRight, X, Play, Repeat2, ExternalLink,
 } from 'lucide-react'
 import type { GroupPostV2 } from '@/types/groups'
+import { viewerEngaged } from './patchGroupFeed'
 
 /* ===== Props ===== */
 interface GroupPostCardProps {
@@ -20,7 +21,6 @@ interface GroupPostCardProps {
   onUnstash?: (groupId: string, postId: string) => void
   onView?: (groupId: string, postId: string) => void
   onDelete?: (postId: string) => void
-  onPin?: (postId: string, pinned: boolean) => void
   onRepost?: (groupId: string, postId: string, echoType: string) => void
   onUnrepost?: (groupId: string, postId: string) => void
 }
@@ -144,19 +144,12 @@ function VideoPreview({ mediaId }: { mediaId: string }) {
 /* ===== MAIN CARD ===== */
 const GroupPostCard: React.FC<GroupPostCardProps> = ({
   post, groupId, isAdmin, isAuthor,
-  onSpark, onUnspark, onStash, onUnstash, onView, onDelete, onPin, onRepost, onUnrepost,
+  onSpark, onUnspark, onStash, onUnstash, onView, onDelete, onRepost, onUnrepost,
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
-  const [sparked, setSparked] = useState(false)
-  const [stashed, setStashed] = useState(false)
   const [showComments, setShowComments] = useState(false)
-  const [sparkCount, setSparkCount] = useState(post.spark_count)
-  const prevSparkCount = useRef(post.spark_count)
   const [showEchoMenu, setShowEchoMenu] = useState(false)
-  const [echoed, setEchoed] = useState(false)
-  const [echoCount, setEchoCount] = useState(post.echo_count)
-  const prevEchoCount = useRef(post.echo_count)
   const echoRef = useRef<HTMLDivElement>(null)
   const overflowRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -168,21 +161,23 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
   const authorInitial = authorName[0]?.toUpperCase() ?? '?'
   const gradient = pickColor(post.author_id)
 
-  // Sync sparkCount when server data changes
-  useEffect(() => {
-    if (post.spark_count !== prevSparkCount.current) {
-      setSparkCount(post.spark_count)
-      prevSparkCount.current = post.spark_count
-    }
-  }, [post.spark_count])
+  /*
+    Engagement state is read from the post, never mirrored into component
+    state. The feed carries the viewer's own flags, so a reaction survives a
+    reload and is right in a second tab; the optimistic flip is written into
+    the cached feed page by patchGroupFeed, which is what the caller's
+    handlers do. Local `useState(false)` here is what used to make your own
+    spark vanish the moment the feed refetched.
 
-  // Sync echoCount when server data changes
-  useEffect(() => {
-    if (post.echo_count !== prevEchoCount.current) {
-      setEchoCount(post.echo_count)
-      prevEchoCount.current = post.echo_count
-    }
-  }, [post.echo_count])
+    viewerEngaged reads `=== true`, never `?? true`: Go marshals an unreacted
+    post as `false` and omits the field entirely for an anonymous viewer, and
+    both have to read as false.
+  */
+  const sparked = viewerEngaged(post, 'spark')
+  const echoed = viewerEngaged(post, 'echo')
+  const stashed = viewerEngaged(post, 'stash')
+  const sparkCount = post.spark_count
+  const echoCount = post.echo_count
 
   // Detect body clamping
   useEffect(() => {
@@ -223,47 +218,35 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
   }, [viewed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLike = () => {
-    if (sparked) {
-      setSparked(false)
-      setSparkCount(c => Math.max(0, c - 1))
-      onUnspark?.(groupId, post.id)
-    } else {
-      setSparked(true)
-      setSparkCount(c => c + 1)
-      onSpark?.(groupId, post.id)
-    }
+    if (sparked) onUnspark?.(groupId, post.id)
+    else onSpark?.(groupId, post.id)
   }
 
   const handleStash = () => {
-    if (stashed) {
-      setStashed(false)
-      onUnstash?.(groupId, post.id)
-    } else {
-      setStashed(true)
-      onStash?.(groupId, post.id)
-    }
+    if (stashed) onUnstash?.(groupId, post.id)
+    else onStash?.(groupId, post.id)
   }
+
+  /*
+    There is no per-post route yet — /groups/{g}/posts/{p} 404s — so a shared
+    link points at the group. Handing out a URL that does not resolve is worse
+    than handing out a coarser one that does.
+  */
+  const shareUrl = () => `${window.location.origin}/groups/${groupId}`
 
   const handleRepost = (action: 'feed' | 'copy' | 'external') => {
     setShowEchoMenu(false)
     switch (action) {
       case 'feed':
-        if (echoed) {
-          setEchoed(false)
-          setEchoCount(c => Math.max(0, c - 1))
-          onUnrepost?.(groupId, post.id)
-        } else {
-          setEchoed(true)
-          setEchoCount(c => c + 1)
-          onRepost?.(groupId, post.id, 'feed')
-        }
+        if (echoed) onUnrepost?.(groupId, post.id)
+        else onRepost?.(groupId, post.id, 'feed')
         break
       case 'copy':
-        navigator.clipboard.writeText(`${window.location.origin}/groups/${groupId}/posts/${post.id}`)
+        navigator.clipboard.writeText(shareUrl())
         break
       case 'external':
-        if (navigator.share) navigator.share({ url: `${window.location.origin}/groups/${groupId}/posts/${post.id}` })
-        else navigator.clipboard.writeText(`${window.location.origin}/groups/${groupId}/posts/${post.id}`)
+        if (navigator.share) navigator.share({ url: shareUrl() })
+        else navigator.clipboard.writeText(shareUrl())
         break
     }
   }
@@ -285,7 +268,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
       <div className="p-4">
         {/* Announcement badge */}
         {post.is_announcement && (
-          <div className="flex items-center gap-1 text-amber-600 text-[10px] font-bold tracking-wider mb-2">
+          <div className="flex items-center gap-1 text-warning text-[10px] font-bold tracking-wider mb-2">
             <Megaphone className="w-3 h-3" /> Announcement
           </div>
         )}
@@ -314,12 +297,13 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
             </button>
             {overflowOpen && (
               <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
-                {(isAdmin || isAuthor) && onPin && (
-                  <button onClick={() => { onPin(post.id, !post.is_pinned); setOverflowOpen(false) }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
-                    <Pin className="w-3.5 h-3.5" /> {post.is_pinned ? 'Unpin' : 'Pin to top'}
-                  </button>
-                )}
+                {/*
+                  No pin control. The server route writes post-service's
+                  `posts` table while this feed reads `group_posts.is_pinned`,
+                  so pinning returns 200 and changes nothing visible. A menu
+                  item that looks operable and silently does nothing is worse
+                  than no menu item; it comes back once the route is fixed.
+                */}
                 {(isAdmin || isAuthor) && onDelete && (
                   <>
                     <div className="border-t border-brand-divider my-1" />
@@ -329,7 +313,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
                     </button>
                   </>
                 )}
-                <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/groups/${groupId}`); setOverflowOpen(false) }}
+                <button onClick={() => { navigator.clipboard.writeText(shareUrl()); setOverflowOpen(false) }}
                   className="flex items-center gap-2 px-3 py-2 text-xs text-brand-text hover:bg-brand-secondary/50 w-full text-left">
                   <Copy className="w-3.5 h-3.5" /> Copy link
                 </button>
@@ -376,8 +360,8 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
 
         {/* Pending approval banner */}
         {post.status === 'pending_approval' && isAdmin && (
-          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700">Pending approval</span>
+          <div className="mt-3 bg-warning/10 border border-warning/30 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-xs font-semibold text-warning">Pending approval</span>
           </div>
         )}
 

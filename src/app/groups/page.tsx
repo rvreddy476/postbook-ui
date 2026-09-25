@@ -366,7 +366,7 @@ function GroupsPageInner() {
               className="text-[24px] font-extrabold tracking-tight text-brand-text"
               style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
             >
-              MySpace
+              Groups
             </h1>
             <Link
               href="/groups/create"

@@ -136,4 +136,91 @@ export interface GroupRule {
   created_at: string
 }
 
-export type GroupTab = 'feed' | 'members' | 'about' | 'media' | 'rules' | 'events'
+/**
+ * What the event composer is allowed to send.
+ *
+ * `group_events.location_type` is `VARCHAR(20) DEFAULT 'online'` with no CHECK
+ * constraint and the create handler binds the column straight from the body,
+ * so the server would store any string at all. This union is the client's own
+ * discipline, not the column's — which is why `GroupEvent.location_type` below
+ * is typed as the `string` the wire can really carry.
+ */
+export type GroupEventLocationType = 'physical' | 'online'
+
+/**
+ * The three values `RSVPGroupEvent` accepts; anything else is rejected before
+ * it reaches the store. Note that `not_going` adjusts NO counter server-side —
+ * it only records the row — so there is no "not going" count to display.
+ */
+export type GroupEventRSVPStatus = 'going' | 'maybe' | 'not_going'
+
+/**
+ * A group event as `store.GroupEvent` marshals it. Field names are verbatim
+ * from the Go struct's json tags.
+ *
+ * Three things this shape does NOT carry, each of which shapes the UI:
+ *
+ * 1. There is no `viewer_rsvp`. The list query never joins
+ *    `group_event_rsvps` and no route reads your own RSVP back, so after a
+ *    reload the app genuinely cannot say which option you picked. The counts
+ *    are the only durable truth.
+ * 2. There is no update route — no PUT, no PATCH. An event cannot be edited;
+ *    delete (a soft cancel: `status = 'cancelled'`) and recreate is the only
+ *    path, so no Edit affordance may be offered.
+ * 3. `max_attendees` is stored but never enforced: nothing compares it to
+ *    `going_count` before recording an RSVP. Show it as stated capacity, never
+ *    as a closed door.
+ */
+export interface GroupEvent {
+  id: string
+  group_id: string
+  /** Set when the event was announced as a group post. Nothing creates one today. */
+  post_id?: string
+  creator_id: string
+  title: string
+  description?: string
+  cover_media_id?: string
+  /** RFC3339. Served as an instant; render it in `timezone`, not the reader's offset. */
+  start_at: string
+  end_at?: string
+  /** IANA zone name. Defaults to 'UTC' in the store when the client omits it. */
+  timezone: string
+  is_all_day: boolean
+  /** See GroupEventLocationType: the column is an unconstrained VARCHAR(20). */
+  location_type: string
+  address?: string
+  online_link?: string
+  rsvp_enabled: boolean
+  /** 0 means no stated limit. Never enforced server-side. */
+  max_attendees: number
+  going_count: number
+  maybe_count: number
+  /** 'upcoming' by default; 'cancelled' rows are filtered out of every read. */
+  status: string
+  created_at: string
+}
+
+/**
+ * The body `POST /v1/groups/:groupId/events` accepts.
+ *
+ * The handler binds into `store.GroupEvent` directly and that struct carries no
+ * `binding:` tags, so an empty body is a 201 for an event titled `""` starting
+ * `0001-01-01`. Every field below is validated on this side or not at all —
+ * see validateEventDraft in EventComposer.
+ */
+export interface GroupEventCreateInput {
+  title: string
+  description?: string
+  cover_media_id?: string
+  start_at: string
+  end_at?: string
+  timezone: string
+  is_all_day: boolean
+  location_type: GroupEventLocationType
+  address?: string
+  online_link?: string
+  rsvp_enabled: boolean
+  max_attendees: number
+}
+
+export type GroupTab = 'about' | 'discussion' | 'members' | 'events' | 'media'
