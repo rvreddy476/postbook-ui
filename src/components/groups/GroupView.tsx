@@ -227,7 +227,14 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
                 </div>
 
                 {searchOpen && canReadPosts && (
-                    <div className="mx-auto max-w-5xl px-5 pb-3">
+                    <div className="mx-auto max-w-2xl px-5 pb-3">
+                        {/*
+                          max-w-2xl matches the RESULTS column, not the tab
+                          row: measured at a 1009px viewport the box ran 969px
+                          wide above a 672px column, their left edges 148px
+                          apart. A full-width input above an indented list
+                          reads as two unrelated things.
+                        */}
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
                             <input
