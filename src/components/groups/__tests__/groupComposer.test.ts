@@ -83,7 +83,7 @@ describe('buildGroupTypePayload', () => {
     expect(buildGroupTypePayload({ hashtags: many })?.hashtags).toHaveLength(MAX_HASHTAGS)
   })
 
-  test('values are trimmed, so a stray space is not stored as part of a place', () => {
+  test('values are trimmed, so a stray group is not stored as part of a place', () => {
     expect(buildGroupTypePayload({ location: '  Hyderabad  ' })?.location).toBe('Hyderabad')
   })
 })
@@ -115,7 +115,7 @@ describe('readGroupPostMeta', () => {
   test('a shape written by another client cannot blank out the feed', () => {
     // type_payload is an opaque column: a poll row, an older build and a
     // different client all live in it.
-    const meta = readGroupPostMeta({ question: 'tabs or spaces', options: ['tabs'], feeling: 7 })
+    const meta = readGroupPostMeta({ question: 'tabs or groups', options: ['tabs'], feeling: 7 })
     expect(meta.feeling).toBeNull()
     expect(hasGroupPostMeta(meta)).toBe(false)
   })
@@ -141,7 +141,7 @@ describe('normalizeCrossPostTargets', () => {
     /*
       group-service builds `targets := []uuid.UUID{primaryGroupID}` and then
       appends also_post_to, refusing when the list exceeds MaxCrossPostTargets.
-      Five EXTRA spaces is six targets and a 400 before anything is written —
+      Five EXTRA groups is six targets and a 400 before anything is written —
       which is exactly the "told 5 max by an error" this guard prevents.
     */
     expect(MAX_CROSS_POST_TARGETS).toBe(5)
@@ -176,7 +176,7 @@ describe('normalizeCrossPostTargets', () => {
   })
 
   test('the cap is explained in terms of the limit the user would hit', () => {
-    expect(crossPostCapReason()).toContain('5 spaces')
+    expect(crossPostCapReason()).toContain('5 groups')
     expect(crossPostCapReason()).toContain('4 more')
   })
 })
@@ -199,7 +199,7 @@ describe('crossPostOutcomeMessage', () => {
     }
   })
 
-  test('unavailable stays vague, so cross-posting cannot probe for private spaces', () => {
+  test('unavailable stays vague, so cross-posting cannot probe for private groups', () => {
     /*
       The server collapses missing / deleted / archived / private-and-not-a-
       member into one answer on purpose. Any wording that distinguishes them
@@ -239,18 +239,18 @@ const NAMES: Record<string, string> = { g0: 'Weekend Riders', g1: 'Book Club', g
 const nameOf = (id: string) => NAMES[id]
 
 describe('summariseCrossPost', () => {
-  test('a partial success is visible, and names the space that refused', () => {
-    // "Posted to 2 of 3 spaces" — the thing a success toast used to hide.
+  test('a partial success is visible, and names the group that refused', () => {
+    // "Posted to 2 of 3 groups" — the thing a success toast used to hide.
     const s = summariseCrossPost(batch(['published', 'published', 'not_a_member']), nameOf)
-    expect(s.title).toBe('Posted to 2 of 3 spaces')
+    expect(s.title).toBe('Posted to 2 of 3 groups')
     expect(s.description).toContain('Design Chat')
     expect(s.description).toContain('you are not a member')
     expect(s.ok).toBe(false)
   })
 
-  test('a space held for approval counts as landed but is still reported', () => {
+  test('a group held for approval counts as landed but is still reported', () => {
     const s = summariseCrossPost(batch(['published', 'pending_approval']), nameOf)
-    expect(s.title).toBe('Posted to 2 spaces')
+    expect(s.title).toBe('Posted to 2 groups')
     expect(s.description).toContain('Book Club')
     expect(s.description).toContain('approve')
     expect(s.ok).toBe(false)
@@ -258,29 +258,29 @@ describe('summariseCrossPost', () => {
 
   test('total failure is never reported as a success', () => {
     const s = summariseCrossPost(batch(['banned', 'unavailable']), nameOf)
-    expect(s.title).toBe('Could not post to any of the 2 spaces')
+    expect(s.title).toBe('Could not post to any of the 2 groups')
     expect(s.ok).toBe(false)
     expect(s.description.split('\n')).toHaveLength(2)
   })
 
   test('a clean run says so and has nothing to add', () => {
     const s = summariseCrossPost(batch(['published', 'published']), nameOf)
-    expect(s.title).toBe('Posted to 2 spaces')
+    expect(s.title).toBe('Posted to 2 groups')
     expect(s.description).toBe('')
     expect(s.ok).toBe(true)
   })
 
-  test('one refused space names itself rather than counting to one', () => {
+  test('one refused group names itself rather than counting to one', () => {
     const s = summariseCrossPost(batch(['blocked_content']), nameOf)
     expect(s.title).toBe('Could not post')
     expect(s.description).toContain('Weekend Riders')
   })
 
-  test('a space the client cannot name is still listed', () => {
+  test('a group the client cannot name is still listed', () => {
     // Losing a refusal is worse than printing a placeholder.
     const s = summariseCrossPost(batch(['published', 'banned']), () => undefined)
-    expect(s.title).toBe('Posted to 1 of 2 spaces')
-    expect(s.description).toContain('Another space')
+    expect(s.title).toBe('Posted to 1 of 2 groups')
+    expect(s.description).toContain('Another group')
   })
 
   test('an unreadable answer is not reported as a silent success', () => {
@@ -345,7 +345,7 @@ describe('anonymity', () => {
   test('the promise is pseudonymity against other members, and nothing more', () => {
     /*
       A product decision already taken. "Nobody can tell it was you" is a
-      promise the product cannot keep: in a three-person space, timing and
+      promise the product cannot keep: in a three-person group, timing and
       content still correlate.
     */
     expect(ANONYMOUS_EXPLAINER).toContain('hidden from other members')
@@ -368,7 +368,7 @@ describe('anonymity', () => {
     expect(effectiveIsAnonymous(false, true)).toBe(false)
   })
 
-  test('an anonymous cross-post warns that spaces may be skipped', () => {
+  test('an anonymous cross-post warns that groups may be skipped', () => {
     const warning = anonymousCrossPostWarning(true, 2)
     expect(warning).toContain('skipped')
     // Never a hint that the name might be shown instead — the server has an

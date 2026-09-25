@@ -127,7 +127,7 @@ export default function GroupsPage() {
   const navItems: { key: View; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'feed', label: 'My Feed', icon: <Newspaper className="w-[18px] h-[18px]" /> },
     { key: 'discover', label: 'Discover', icon: <Compass className="w-[18px] h-[18px]" /> },
-    { key: 'your-groups', label: 'My Spaces', icon: <Users className="w-[18px] h-[18px]" /> },
+    { key: 'your-groups', label: 'My Groups', icon: <Users className="w-[18px] h-[18px]" /> },
     { key: 'invites', label: 'Invites', icon: <Mail className="w-[18px] h-[18px]" />, badge: inviteCount },
   ]
 
@@ -142,15 +142,15 @@ export default function GroupsPage() {
     const isAdmin = role === 'owner' || role === 'admin' || role === 'moderator'
     return (
       <div key={post.id} className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
-        {/* Space header — the outer card identifies the space, the
+        {/* Group header — the outer card identifies the group, the
             user's post card sits inset below it. */}
         <Link
           href={`/groups/${post.group_id}`}
           className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-brand-text/5"
         >
-          <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Space'} size="w-8 h-8" />
+          <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Group'} size="w-8 h-8" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold text-brand-text">{group?.name ?? 'View space'}</p>
+            <p className="truncate text-[13px] font-bold text-brand-text">{group?.name ?? 'View group'}</p>
             {group && (
               <p className="text-[11px] text-brand-text/40">
                 {group.member_count} member{group.member_count === 1 ? '' : 's'}
@@ -293,14 +293,14 @@ export default function GroupsPage() {
             <div className="w-9 h-9 rounded-full bg-brand-text/8 flex items-center justify-center group-hover:bg-brand-text/12 transition-all">
               <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
             </div>
-            <span className="group-hover:text-brand-text transition-colors">Write something to your space...</span>
+            <span className="group-hover:text-brand-text transition-colors">Write something to your group...</span>
           </button>
         )}
 
         {!myGroups || myGroups.length === 0 ? (
-          emptyState('Your feed is empty', 'Join spaces to see their latest posts here')
+          emptyState('Your feed is empty', 'Join groups to see their latest posts here')
         ) : enrichedPosts.length === 0 ? (
-          emptyState('No recent activity', 'Posts from your spaces will show up here')
+          emptyState('No recent activity', 'Posts from your groups will show up here')
         ) : (
           <>
             {enrichedPosts.map(renderFeedPost)}
@@ -326,15 +326,15 @@ export default function GroupsPage() {
     : view === 'feed'
       ? 'Recent activity'
       : view === 'discover'
-        ? 'Discover spaces'
+        ? 'Discover groups'
         : view === 'invites'
           ? 'Invites'
-          : 'My Spaces'
+          : 'My Groups'
 
   return (
     <AppShell hideSidebar>
       <div className="flex w-full items-start">
-        {/* ── Left rail: search + views + joined spaces — flush left ── */}
+        {/* ── Left rail: search + views + joined groups — flush left ── */}
         <aside className="sticky top-0 hidden h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-4 md:flex xl:w-[348px]">
           <div className="mb-4 flex items-center justify-between">
             <h1
@@ -345,7 +345,7 @@ export default function GroupsPage() {
             </h1>
             <Link
               href="/groups/create"
-              aria-label="Create new space"
+              aria-label="Create new group"
               className="rounded-xl bg-brand-text/8 p-2 text-brand-text/60 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
             >
               <Plus className="h-4 w-4" />
@@ -357,7 +357,7 @@ export default function GroupsPage() {
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
             <input
               type="text"
-              placeholder="Search spaces"
+              placeholder="Search groups"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-full border border-brand-divider bg-brand-secondary py-2.5 pl-10 pr-4 text-sm text-brand-text placeholder:text-brand-text/30 transition-all focus:border-brand-text/20 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
@@ -393,19 +393,19 @@ export default function GroupsPage() {
             ))}
           </nav>
 
-          {/* Create new space */}
+          {/* Create new group */}
           <Link
             href="/groups/create"
             className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[11px] font-black tracking-widest text-white transition-all hover:bg-primary-hover"
           >
             <Plus className="h-4 w-4" />
-            Create new space
+            Create new group
           </Link>
 
-          {/* Joined spaces */}
+          {/* Joined groups */}
           <div className="border-t border-brand-divider pt-4">
             <div className="mb-2 flex items-center justify-between px-1">
-              <p className="text-[13px] font-bold text-brand-text/70">Spaces you&apos;ve joined</p>
+              <p className="text-[13px] font-bold text-brand-text/70">Groups you&apos;ve joined</p>
               <button
                 onClick={() => switchView('your-groups')}
                 className="text-xs font-bold text-brand-highlight transition-colors hover:text-brand-text"
@@ -443,13 +443,13 @@ export default function GroupsPage() {
               </div>
             ) : (
               <p className="px-1 py-3 text-xs text-brand-text/40">
-                You haven&apos;t joined any spaces yet.
+                You haven&apos;t joined any groups yet.
               </p>
             )}
           </div>
         </aside>
 
-        {/* ── Middle: selected space / feed / discover / my spaces / invites ── */}
+        {/* ── Middle: selected group / feed / discover / my groups / invites ── */}
         <main className="min-w-0 flex-1 px-4 pt-5 pb-16 lg:px-6">
           <div className="mx-auto max-w-[680px]">
             <h2 className="mb-4 px-1 text-[17px] font-extrabold tracking-tight text-brand-text">{middleTitle}</h2>
@@ -473,7 +473,7 @@ export default function GroupsPage() {
             </div>
 
             {searching ? (
-              renderGroupList(searchResults, false, false, 'No spaces found', 'Try a different search term')
+              renderGroupList(searchResults, false, false, 'No groups found', 'Try a different search term')
             ) : view === 'feed' ? (
               renderFeed()
             ) : view === 'discover' ? (
@@ -482,7 +482,7 @@ export default function GroupsPage() {
                 false,
                 loadingDiscover,
                 'Nothing to discover',
-                'No spaces to discover right now. Check back later!',
+                'No groups to discover right now. Check back later!',
               )
             ) : view === 'invites' ? (
               renderInvites()
@@ -491,8 +491,8 @@ export default function GroupsPage() {
                 myGroups,
                 true,
                 loadingMy,
-                'No spaces yet',
-                'Join spaces to connect with people who share your interests',
+                'No groups yet',
+                'Join groups to connect with people who share your interests',
               )
             )}
           </div>
@@ -507,20 +507,20 @@ export default function GroupsPage() {
             </div>
             <p className="text-sm font-bold text-brand-text">Your ad could be here</p>
             <p className="mt-1 text-xs text-brand-text/50">
-              Reach people in the spaces they care about. Ad placements are coming soon.
+              Reach people in the groups they care about. Ad placements are coming soon.
             </p>
           </div>
           <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
             <p className="text-sm font-bold text-brand-text">Grow your community</p>
             <p className="mt-1 text-xs text-brand-text/50">
-              Create a space for your brand, club, or circle and bring your people together.
+              Create a group for your brand, club, or circle and bring your people together.
             </p>
             <Link
               href="/groups/create"
               className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-3.5 py-2 text-[10px] font-black tracking-widest text-brand-text/70 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create a space
+              Create a group
             </Link>
           </div>
         </aside>
@@ -537,7 +537,7 @@ export default function GroupsPage() {
             onClick={(e) => e.target === e.currentTarget && setPickerOpen(false)}
           >
             <div className="w-[400px] max-w-[calc(100vw-2rem)] rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-2xl">
-              <h3 className="mb-3 text-sm font-black text-brand-text">Post to a space</h3>
+              <h3 className="mb-3 text-sm font-black text-brand-text">Post to a group</h3>
               <div className="max-h-[320px] space-y-0.5 overflow-y-auto">
                 {(myGroups ?? []).map((group) => (
                   <button

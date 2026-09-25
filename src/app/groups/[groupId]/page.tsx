@@ -7,7 +7,7 @@ import GroupView from '@/components/groups/GroupView'
 /**
  * A group's own page.
  *
- * This was a 22-line redirect into `/groups?space=<id>`, which rendered the
+ * This was a 22-line redirect into `/groups?group=<id>`, which rendered the
  * group inside the directory's middle column. The group is the destination,
  * so it gets the route.
  *

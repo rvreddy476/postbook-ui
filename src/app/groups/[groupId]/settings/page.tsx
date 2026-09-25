@@ -59,7 +59,7 @@ function loadPreview(file: File, onLoad: (value: string) => void) {
 }
 
 /**
- * The space admin console — FB-style: settings menu on the left
+ * The group admin console — FB-style: settings menu on the left
  * (details, member requests, pending posts, banned members, rules),
  * the selected section's editor on the right.
  */
@@ -128,7 +128,7 @@ export default function SpaceSettingsPage() {
       <AppShell hideSidebar>
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <h2 className="text-xl font-bold text-brand-text">Access Denied</h2>
-          <p className="mt-2 text-sm text-brand-text/60">Only space owners and admins can access settings.</p>
+          <p className="mt-2 text-sm text-brand-text/60">Only group owners and admins can access settings.</p>
           <button onClick={() => router.push('/groups')} className="mt-4 text-sm font-bold text-brand-text hover:underline">
             Go Back
           </button>
@@ -142,7 +142,7 @@ export default function SpaceSettingsPage() {
   const banned: BanEntry[] = bans ?? []
 
   const menu: { key: Section; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { key: 'details', label: 'Space details', icon: <SettingsIcon className="h-4 w-4" /> },
+    { key: 'details', label: 'Group details', icon: <SettingsIcon className="h-4 w-4" /> },
     { key: 'requests', label: 'Member requests', icon: <UserPlus className="h-4 w-4" />, badge: requestCount },
     { key: 'pending', label: 'Pending posts', icon: <FileClock className="h-4 w-4" />, badge: posts.length },
     { key: 'banned', label: 'Banned members', icon: <ShieldOff className="h-4 w-4" /> },
@@ -184,7 +184,7 @@ export default function SpaceSettingsPage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      setError('Failed to save space settings. Please try again.')
+      setError('Failed to save group settings. Please try again.')
     }
   }
 
@@ -206,10 +206,10 @@ export default function SpaceSettingsPage() {
             className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-text/50 transition-colors hover:text-brand-text"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to space
+            Back to group
           </button>
 
-          {/* Space identity */}
+          {/* Group identity */}
           <div className="mb-4 flex items-center gap-3 border-b border-brand-divider pb-4">
             <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-brand-text/10">
               {avatarPreview ? (
@@ -275,7 +275,7 @@ export default function SpaceSettingsPage() {
                       >
                         {coverPreview ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={coverPreview} alt="Space cover" className="h-full w-full object-cover" />
+                          <img src={coverPreview} alt="Group cover" className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand-text/10 via-brand-text/5 to-brand-text/15 text-6xl font-black text-brand-text/15">
                             {fallbackInitial}
@@ -297,7 +297,7 @@ export default function SpaceSettingsPage() {
                       >
                         {avatarPreview ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={avatarPreview} alt="Space avatar" className="h-full w-full object-cover" />
+                          <img src={avatarPreview} alt="Group avatar" className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-brand-text/10 text-3xl font-black text-brand-text/60">
                             {fallbackInitial}
@@ -309,7 +309,7 @@ export default function SpaceSettingsPage() {
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm font-bold text-brand-text">Avatar</p>
-                        <p className="text-xs leading-relaxed text-brand-text/60">Update the square icon shown in space cards and headers.</p>
+                        <p className="text-xs leading-relaxed text-brand-text/60">Update the square icon shown in group cards and headers.</p>
                         <button
                           type="button"
                           onClick={() => avatarInputRef.current?.click()}
@@ -322,7 +322,7 @@ export default function SpaceSettingsPage() {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Space Name</label>
+                      <label className="mb-2 block text-xs font-bold tracking-wider text-brand-highlight">Group Name</label>
                       <input
                         type="text"
                         value={name}
@@ -389,14 +389,14 @@ export default function SpaceSettingsPage() {
 
                 <div className="mt-8 rounded-2xl border border-rose-200 bg-brand-card p-6">
                   <h3 className="mb-2 text-sm font-black tracking-wider text-rose-600">Danger Zone</h3>
-                  <p className="mb-4 text-xs text-brand-text/60">Deleting this space is permanent and cannot be undone. All posts, members, and data will be lost.</p>
+                  <p className="mb-4 text-xs text-brand-text/60">Deleting this group is permanent and cannot be undone. All posts, members, and data will be lost.</p>
                   <button
                     onClick={handleDelete}
                     disabled={deleteGroup.isPending}
                     className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-600 transition-all hover:bg-rose-100 disabled:opacity-50"
                   >
                     {deleteGroup.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    {deleteGroup.isPending ? 'Deleting...' : 'Delete Space'}
+                    {deleteGroup.isPending ? 'Deleting...' : 'Delete Group'}
                   </button>
                 </div>
               </>
@@ -453,7 +453,7 @@ export default function SpaceSettingsPage() {
             {section === 'banned' && (
               <div className="rounded-2xl border border-brand-divider bg-brand-card p-5">
                 {banned.length === 0 ? (
-                  <p className="text-sm text-brand-text/40">No one is banned from this space.</p>
+                  <p className="text-sm text-brand-text/40">No one is banned from this group.</p>
                 ) : (
                   <div className="space-y-2">
                     {banned.map((b) => (

@@ -174,7 +174,7 @@ export default function GroupFeedTab({
           <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-secondary to-brand-secondary flex items-center justify-center group-hover:from-brand-text/10 group-hover:to-brand-text/5 transition-all">
             <Plus className="w-4 h-4 text-brand-text/60 group-hover:text-brand-text transition-colors" />
           </div>
-          <span className="group-hover:text-brand-highlight transition-colors">Write something to your space...</span>
+          <span className="group-hover:text-brand-highlight transition-colors">Write something to your group...</span>
         </button>
       )}
 
@@ -223,7 +223,7 @@ export default function GroupFeedTab({
 
             For a member it is what it looks like: nobody has posted. For
             everyone else the feed is empty because the server did not send
-            them the posts — a private space may be busy — so claiming "no
+            them the posts — a private group may be busy — so claiming "no
             posts yet" states as fact something the server never said, and
             "be the first to share" invites an action a non-member has no
             composer for.
@@ -232,7 +232,7 @@ export default function GroupFeedTab({
             <>
               <p className="text-sm font-semibold text-brand-text/60">No posts match that</p>
               <p className="text-xs text-brand-text/30 mt-1">
-                Nothing in this space mentions &ldquo;{trimmedQuery}&rdquo;.
+                Nothing in this group mentions &ldquo;{trimmedQuery}&rdquo;.
               </p>
             </>
           ) : isMember ? (
@@ -243,7 +243,7 @@ export default function GroupFeedTab({
           ) : (
             <>
               <p className="text-sm font-semibold text-brand-text/60">Posts are for members</p>
-              <p className="text-xs text-brand-text/30 mt-1">Join this space to see what people are sharing.</p>
+              <p className="text-xs text-brand-text/30 mt-1">Join this group to see what people are sharing.</p>
             </>
           )}
         </div>

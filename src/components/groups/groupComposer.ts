@@ -15,7 +15,7 @@
  *      bare shape and is not being changed.
  *
  *   3. group-service's cap of five counts the group you are looking at. Five
- *      extra spaces is six targets and a 400 — see MAX_ADDITIONAL_GROUPS.
+ *      extra groups is six targets and a 400 — see MAX_ADDITIONAL_GROUPS.
  */
 
 import type { GroupPostV2 } from '@/types/groups'
@@ -201,7 +201,7 @@ export function moodLine(meta: GroupPostMetaFields): string | null {
  *
  * CrossPost builds `targets := []uuid.UUID{primaryGroupID}` and then appends
  * `also_post_to`, and refuses when that list exceeds five. So five extra
- * spaces is six targets and a 400 before anything is written.
+ * groups is six targets and a 400 before anything is written.
  */
 export const MAX_CROSS_POST_TARGETS = 5
 
@@ -232,18 +232,18 @@ export function normalizeCrossPostTargets(
   return out
 }
 
-/** Whether another space can be picked, so the UI disables rather than 400s. */
+/** Whether another group can be picked, so the UI disables rather than 400s. */
 export function canAddAnotherGroup(selectedCount: number): boolean {
   return selectedCount < MAX_ADDITIONAL_GROUPS
 }
 
 /**
- * Why no more can be picked, in the user's words. Says the number of spaces the
+ * Why no more can be picked, in the user's words. Says the number of groups the
  * post reaches — five, counting this one — because that is the limit they will
  * hit, and "4 more" on its own reads like an arbitrary number.
  */
 export function crossPostCapReason(): string {
-  return `A post can go to ${MAX_CROSS_POST_TARGETS} spaces at once, so you can add ${MAX_ADDITIONAL_GROUPS} more.`
+  return `A post can go to ${MAX_CROSS_POST_TARGETS} groups at once, so you can add ${MAX_ADDITIONAL_GROUPS} more.`
 }
 
 /** The outcome vocabulary, verbatim from internal/service/cross_post.go. */
@@ -275,7 +275,7 @@ export interface CrossPostResult {
   targets: CrossPostTarget[]
 }
 
-/** Whether this outcome means the post exists in that space. */
+/** Whether this outcome means the post exists in that group. */
 export function outcomeLanded(outcome: string): boolean {
   return outcome === 'published' || outcome === 'pending_approval'
 }
@@ -318,23 +318,23 @@ export function crossPostOutcomeMessage(outcome: string): string {
 /** What the summary says, and whether it is good news. */
 export interface CrossPostSummary {
   title: string
-  /** One line per space that did not simply publish. '' when all did. */
+  /** One line per group that did not simply publish. '' when all did. */
   description: string
-  /** True when every space took the post outright. */
+  /** True when every group took the post outright. */
   ok: boolean
 }
 
 /**
- * Report the batch honestly, naming the spaces.
+ * Report the batch honestly, naming the groups.
  *
  * Naming them is right here and wrong for the invite batch: an invite refusal
- * identifies a PERSON who blocked you, while these are spaces the author
+ * identifies a PERSON who blocked you, while these are groups the author
  * picked themselves. Saying only "posted" over two refusals is the failure
  * this whole stream exists to stop.
  *
- * `nameOf` resolves a group id to a name; a space the client cannot name is
+ * `nameOf` resolves a group id to a name; a group the client cannot name is
  * still counted and still listed, because losing a refusal is worse than
- * printing "Another space".
+ * printing "Another group".
  */
 export function summariseCrossPost(
   result: CrossPostResult,
@@ -343,12 +343,12 @@ export function summariseCrossPost(
   const targets = Array.isArray(result?.targets) ? result.targets : []
   const total = targets.length
   const landed = targets.filter((t) => outcomeLanded(t.outcome)).length
-  const spaces = (n: number) => `${n} ${n === 1 ? 'space' : 'spaces'}`
+  const groups = (n: number) => `${n} ${n === 1 ? 'group' : 'groups'}`
 
   const lines = targets
     .filter((t) => t.outcome !== 'published')
     .map((t) => {
-      const name = nameOf(t.group_id)?.trim() || 'Another space'
+      const name = nameOf(t.group_id)?.trim() || 'Another group'
       return `${name} — ${crossPostOutcomeMessage(t.outcome)}`
     })
 
@@ -360,11 +360,11 @@ export function summariseCrossPost(
 
   let title: string
   if (landed === 0) {
-    title = total === 1 ? 'Could not post' : `Could not post to any of the ${spaces(total)}`
+    title = total === 1 ? 'Could not post' : `Could not post to any of the ${groups(total)}`
   } else if (landed === total) {
-    title = total === 1 ? 'Posted' : `Posted to ${spaces(total)}`
+    title = total === 1 ? 'Posted' : `Posted to ${groups(total)}`
   } else {
-    title = `Posted to ${landed} of ${total} spaces`
+    title = `Posted to ${landed} of ${total} groups`
   }
 
   return { title, description: lines.join('\n'), ok: lines.length === 0 }
@@ -424,13 +424,13 @@ export const ANONYMOUS_LABEL = 'Post anonymously'
  * The wording is a product decision, not a phrasing choice.
  *
  * This is pseudonymity AGAINST OTHER MEMBERS. It is not untraceability: in a
- * three-person space, timing and content still correlate, so any promise that
+ * three-person group, timing and content still correlate, so any promise that
  * "nobody can tell it was you" would be a promise the product cannot keep.
  * Admins cannot unmask — that is enforced server-side, where the alias
  * replaces the author id before the row is ever marshalled.
  */
 export const ANONYMOUS_EXPLAINER =
-  'Your name is hidden from other members. In a small space, what you write and when you write it can still point to you.'
+  'Your name is hidden from other members. In a small group, what you write and when you write it can still point to you.'
 
 /**
  * Whether `is_anonymous` may actually be sent.
@@ -441,7 +441,7 @@ export const ANONYMOUS_EXPLAINER =
  * author reads as having lost their post.
  *
  * It is re-evaluated at submit rather than only when the switch is drawn,
- * because the group detail query refetches: a space can withdraw anonymous
+ * because the group detail query refetches: a group can withdraw anonymous
  * posting while the composer is open, leaving the toggle on.
  */
 export function effectiveIsAnonymous(
@@ -452,7 +452,7 @@ export function effectiveIsAnonymous(
 }
 
 /**
- * Warn before an anonymous cross-post loses spaces.
+ * Warn before an anonymous cross-post loses groups.
  *
  * A target that disallows anonymity is SKIPPED, never downgraded to a named
  * post — the server has an explicit test that there is no code path which
@@ -464,5 +464,5 @@ export function anonymousCrossPostWarning(
   additionalCount: number,
 ): string | null {
   if (!isAnonymous || additionalCount <= 0) return null
-  return 'Spaces that do not allow anonymous posts will be skipped — your name is never shown instead.'
+  return 'Groups that do not allow anonymous posts will be skipped — your name is never shown instead.'
 }

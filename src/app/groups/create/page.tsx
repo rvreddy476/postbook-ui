@@ -26,10 +26,10 @@ function slugify(val: string): string {
 }
 
 /**
- * One-screen space creation (FB-style): name + privacy + visibility on
- * the left, a live preview of the space on the right. Cover photo,
+ * One-screen group creation (FB-style): name + privacy + visibility on
+ * the left, a live preview of the group on the right. Cover photo,
  * icon, description, rules, posting permissions etc. are all editable
- * after creation via Edit Space / Space Settings — keeping this form
+ * after creation via Edit Group / Group Settings — keeping this form
  * deliberately minimal.
  */
 export default function CreateSpacePage() {
@@ -42,7 +42,7 @@ export default function CreateSpacePage() {
   const [error, setError] = useState<string | null>(null)
 
   // Was `create-${Date.now()}`, which is a different key on every click of
-  // Create — so a retry after a lost response created a second space. One key
+  // Create — so a retry after a lost response created a second group. One key
   // per visit to this page instead.
   const idempotency = useIdempotencyKey()
 
@@ -79,7 +79,7 @@ export default function CreateSpacePage() {
         is_mature: isMature,
         idempotency_key: idempotency.current(),
       })
-      // Land back on Groups with the new space selected in the rail
+      // Land back on Groups with the new group selected in the rail
       // and opened in the middle column.
       router.push(`/groups/${group.id}`)
     } catch (err: unknown) {
@@ -92,13 +92,13 @@ export default function CreateSpacePage() {
       setError(
         body?.message ||
           (err instanceof Error && err.message) ||
-          'Could not create the space. Please try again.',
+          'Could not create the group. Please try again.',
       )
     }
   }
 
   const coverGrad = COVER_GRADIENTS[(name.charCodeAt(0) || 0) % COVER_GRADIENTS.length]
-  const previewName = name.trim() || 'Your space name'
+  const previewName = name.trim() || 'Your group name'
   const privacyLabel = kind === 'public' ? 'Public' : kind === 'restricted' ? 'Restricted' : 'Private'
   const PrivacyIcon = kind === 'public' ? Globe : kind === 'restricted' ? Shield : Lock
 
@@ -119,7 +119,7 @@ export default function CreateSpacePage() {
             className="text-[26px] font-extrabold tracking-tight text-brand-text"
             style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
           >
-            Create space
+            Create group
           </h1>
           <p className="mt-1 text-sm text-brand-text/50">
             Name it, pick who can see it — done. You can add a cover, description, and rules anytime after.
@@ -134,7 +134,7 @@ export default function CreateSpacePage() {
           {/* Name */}
           <div className="mt-6">
             <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-text/50" htmlFor="spaceName">
-              Space name
+              Group name
             </label>
             <input
               id="spaceName"
@@ -154,15 +154,15 @@ export default function CreateSpacePage() {
             )}
           </div>
 
-          {/* What kind of space is this? */}
+          {/* What kind of group is this? */}
           <div className="mt-5">
             <label className="mb-1.5 block text-xs font-bold tracking-wider text-brand-text/50">
-              What kind of space is this?
+              What kind of group is this?
             </label>
             <div className="space-y-2">
               {(
                 [
-                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can view, post, and comment in this space.' },
+                  { value: 'public' as const, icon: Globe, label: 'Public', desc: 'Anyone can view, post, and comment in this group.' },
                   { value: 'restricted' as const, icon: Shield, label: 'Restricted', desc: 'Anyone can view, but only approved members can contribute.' },
                   { value: 'private' as const, icon: Lock, label: 'Private', desc: 'Only approved members can view and contribute.' },
                 ]
@@ -251,7 +251,7 @@ export default function CreateSpacePage() {
                 </h2>
                 <p className="mt-1 flex items-center gap-1.5 text-sm text-brand-text/50">
                   <PrivacyIcon className="h-3.5 w-3.5" />
-                  {privacyLabel} space
+                  {privacyLabel} group
                   <span className="text-brand-text/25">·</span>
                   1 member
                   {isMature && (
@@ -303,7 +303,7 @@ export default function CreateSpacePage() {
                   <p className="mt-2 flex items-start gap-2 text-xs leading-snug text-brand-text/50">
                     <PrivacyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     {kind === 'public'
-                      ? 'Anyone can view, post, and comment in this space.'
+                      ? 'Anyone can view, post, and comment in this group.'
                       : kind === 'restricted'
                         ? 'Anyone can view, but only approved members can contribute.'
                         : 'Only approved members can view and contribute.'}

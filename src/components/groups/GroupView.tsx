@@ -20,7 +20,7 @@ import { MIN_GROUP_SEARCH_LENGTH } from './patchGroupFeed'
 /**
  * A group, as a page.
  *
- * `/groups/[groupId]` used to be a 22-line redirect into `/groups?space=…`,
+ * `/groups/[groupId]` used to be a 22-line redirect into `/groups?group=…`,
  * which put a group inside the directory's middle column. A group is a place
  * of its own, so it gets a route of its own and the directory goes back to
  * being a directory.
@@ -248,8 +248,8 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
                                         setSearchOpen(false)
                                     }
                                 }}
-                                placeholder="Search posts in this space"
-                                aria-label="Search posts in this space"
+                                placeholder="Search posts in this group"
+                                aria-label="Search posts in this group"
                                 className="w-full rounded-full border border-brand-divider bg-brand-secondary py-2.5 pl-10 pr-4 text-[14px] text-brand-text outline-hidden placeholder:text-brand-text/30 focus:border-brand-text/20"
                             />
                         </div>

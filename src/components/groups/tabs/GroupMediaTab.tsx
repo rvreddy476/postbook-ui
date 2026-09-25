@@ -11,7 +11,7 @@ interface GroupMediaTabProps {
 type MediaFilter = 'photos' | 'videos'
 
 /**
- * Media grid for a space — flattens every attachment from published
+ * Media grid for a group — flattens every attachment from published
  * posts into tiles, with Photos / Videos sub-tabs. Tiles open the raw
  * media in a new tab.
  */
@@ -57,7 +57,7 @@ export default function GroupMediaTab({ groupId }: GroupMediaTabProps) {
           <ImageIcon className="h-8 w-8 text-brand-text/20" />
         </div>
         <p className="text-sm font-semibold text-brand-text/60">No media yet</p>
-        <p className="mt-1 text-xs text-brand-text/30">Photos and videos shared in this space will appear here.</p>
+        <p className="mt-1 text-xs text-brand-text/30">Photos and videos shared in this group will appear here.</p>
       </div>
     )
   }
@@ -86,7 +86,7 @@ export default function GroupMediaTab({ groupId }: GroupMediaTabProps) {
 
       {visible.length === 0 ? (
         <p className="py-10 text-center text-sm text-brand-text/40">
-          No {filter} shared in this space yet.
+          No {filter} shared in this group yet.
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">

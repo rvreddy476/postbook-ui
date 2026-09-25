@@ -10,7 +10,7 @@ import {
   crossPostCapReason,
 } from './groupComposer'
 
-/** A space the post will also go to. The name is carried so the summary that
+/** A group the post will also go to. The name is carried so the summary that
  *  reports refusals can name it without a second lookup. */
 export interface CrossPostChoice {
   id: string
@@ -27,7 +27,7 @@ interface CrossPostPickerProps {
 }
 
 /**
- * "+ Add groups" — the same body to a handful of other spaces.
+ * "+ Add groups" — the same body to a handful of other groups.
  *
  * Its own component, mounted only in group mode, because `useMyGroups` has no
  * `enabled` switch: calling it from the composer itself would fetch
@@ -56,8 +56,8 @@ const CrossPostPicker: React.FC<CrossPostPickerProps> = ({
 
   // `||`, never `??`: Go marshals an unset name as "", so a nullish fallback
   // would put a nameless chip in the composer and a nameless line in the
-  // summary that reports which spaces refused the post.
-  const label = (name: string | undefined) => name?.trim() || 'Untitled space'
+  // summary that reports which groups refused the post.
+  const label = (name: string | undefined) => name?.trim() || 'Untitled group'
 
   const toggle = (id: string, name: string) => {
     if (isSelected(id)) {
@@ -117,11 +117,11 @@ const CrossPostPicker: React.FC<CrossPostPickerProps> = ({
           <div className="mt-3 max-h-48 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center gap-2 py-3 text-[12px] text-brand-text/50">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading your spaces…
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading your groups…
               </div>
             ) : options.length === 0 ? (
               <p className="py-3 text-[12px] text-brand-text/50">
-                You are not in any other space yet.
+                You are not in any other group yet.
               </p>
             ) : (
               <ul className="space-y-0.5">
@@ -151,7 +151,7 @@ const CrossPostPicker: React.FC<CrossPostPickerProps> = ({
                         </span>
                         <span className="min-w-0 flex-1 truncate font-medium">{label(g.name)}</span>
                         {/*
-                          A private space is named as such, because whether the
+                          A private group is named as such, because whether the
                           post lands there depends on a membership the author
                           may have lost — and the server answers that with a
                           deliberately vague "not available".
