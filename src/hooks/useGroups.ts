@@ -4,6 +4,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tansta
 import api from "@/lib/api"
 import type { AddPeopleResult } from "@/components/messenger/groupComposition"
 import { interpretCreateGroupPostResponse, type CreateGroupPostOutcome, type GroupTypePayload } from "@/components/groups/groupComposer"
+import { groupPostSearchKey, MIN_GROUP_SEARCH_LENGTH } from "@/components/groups/patchGroupFeed"
 import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
 interface GroupsResponse { data: Group[] }
@@ -81,6 +82,36 @@ export function useGroupFeedV2(groupId: string | undefined) {
     enabled: !!groupId,
     refetchInterval: 15_000,
     refetchOnWindowFocus: true,
+  })
+}
+
+/**
+ * Search posts inside one group.
+ *
+ * Page-shaped like useGroupFeedV2 on purpose: the cards, the optimistic
+ * engagement patch and the pagination are then the same code for both,
+ * rather than a second rendering path that drifts from the feed.
+ *
+ * Gated on MIN_GROUP_SEARCH_LENGTH because the server answers a blank q
+ * with a 400 — one request per keystroke would be spent being told off.
+ */
+export function useGroupPostSearch(groupId: string | undefined, query: string) {
+  const trimmed = query.trim()
+  return useInfiniteQuery({
+    queryKey: groupPostSearchKey(groupId ?? "", trimmed),
+    queryFn: async ({ pageParam = 0 }) => {
+      const res = await api.get<GroupPostsV2Response>(
+        `/v1/groups/${groupId}/posts/v2/search`,
+        { params: { q: trimmed, limit: 20, offset: pageParam } },
+      )
+      return { data: res.data.data ?? [], offset: pageParam as number }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.length < 20) return undefined
+      return (lastPage.offset as number) + 20
+    },
+    enabled: !!groupId && trimmed.length >= MIN_GROUP_SEARCH_LENGTH,
   })
 }
 
@@ -345,6 +376,10 @@ export function useBanMember() {
     onSuccess: (_, { groupId }) => {
       qc.invalidateQueries({ queryKey: ["group", groupId] })
       qc.invalidateQueries({ queryKey: ["group-members", groupId] })
+      // The settings page's banned list reads this. Without it, banning
+      // someone from the Members tab left that list showing the state from
+      // before the ban until a reload.
+      qc.invalidateQueries({ queryKey: ["group-bans", groupId] })
     },
   })
 }

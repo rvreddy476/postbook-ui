@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import CreatePortal from '@/components/CreatePortal'
 import {
   useGroupFeedV2,
+  useGroupPostSearch,
   useSparkGroupPostV2,
   useUnsparkGroupPostV2,
   useStashGroupPostV2,
@@ -19,7 +20,11 @@ import { useAuthUser } from '@/store/auth'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, MessageCircle } from 'lucide-react'
 import GroupPostCard from '@/components/groups/GroupPostCard'
-import { engageGroupPost } from '@/components/groups/patchGroupFeed'
+import {
+  engageGroupPost,
+  groupPostSearchKey,
+  MIN_GROUP_SEARCH_LENGTH,
+} from '@/components/groups/patchGroupFeed'
 
 interface GroupFeedTabProps {
   groupId: string
@@ -28,13 +33,38 @@ interface GroupFeedTabProps {
   /** Hide the inline compose box — for surfaces where a New Post
    *  button in the header already covers it. */
   hideComposer?: boolean
+  /**
+   * When set and long enough, the tab shows search results instead of the
+   * feed — same cards, same handlers, same page shape. Rendering results
+   * through a second component would be a second place for engagement,
+   * deletion and comments to drift out of step with the feed.
+   */
+  searchQuery?: string
 }
 
-export default function GroupFeedTab({ groupId, isMember, viewerRole, hideComposer = false }: GroupFeedTabProps) {
+export default function GroupFeedTab({
+  groupId,
+  isMember,
+  viewerRole,
+  hideComposer = false,
+  searchQuery = '',
+}: GroupFeedTabProps) {
   const [showCreate, setShowCreate] = useState(false)
   const qc = useQueryClient()
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
   const authUser = useAuthUser()
+
+  /*
+    Both queries are declared unconditionally — hooks must be — but the
+    search one only fetches once the query is long enough, and the results
+    replace the feed rather than sitting beside it.
+  */
+  const trimmedQuery = searchQuery.trim()
+  const searching = trimmedQuery.length >= MIN_GROUP_SEARCH_LENGTH
+  const feedQuery = useGroupFeedV2(groupId)
+  const searchResults = useGroupPostSearch(groupId, trimmedQuery)
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = searching
+    ? searchResults
+    : feedQuery
 
   const isAdmin = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'moderator'
 
@@ -84,7 +114,21 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
     engaged: boolean,
     mutation: Parameters<typeof engageGroupPost>[0]['mutation'],
     echoType?: string,
-  ) => engageGroupPost({ qc, groupId: gId, postId, kind, engaged, mutation, echoType })
+  ) =>
+    engageGroupPost({
+      qc,
+      groupId: gId,
+      postId,
+      kind,
+      engaged,
+      mutation,
+      echoType,
+      /*
+        While searching, the same post is cached twice. Patch both or the
+        heart fills in one list and not the other.
+      */
+      extraKeys: searching ? [groupPostSearchKey(gId, trimmedQuery)] : [],
+    })
 
   const handleSpark = (gId: string, postId: string) => engage(gId, postId, 'spark', true, sparkMut)
   const handleUnspark = (gId: string, postId: string) => engage(gId, postId, 'spark', false, unsparkMut)
@@ -122,7 +166,7 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
   return (
     <div className="space-y-4">
       {/* Compose Box */}
-      {isMember && !hideComposer && (
+      {isMember && !hideComposer && !searching && (
         <button
           onClick={() => setShowCreate(true)}
           className="w-full flex items-center gap-3 px-5 py-4 bg-brand-card border border-brand-divider rounded-xl text-sm text-brand-text/60 hover:border-brand-text/20 hover:shadow-xs transition-all group"
@@ -184,7 +228,14 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
             "be the first to share" invites an action a non-member has no
             composer for.
           */}
-          {isMember ? (
+          {searching ? (
+            <>
+              <p className="text-sm font-semibold text-brand-text/60">No posts match that</p>
+              <p className="text-xs text-brand-text/30 mt-1">
+                Nothing in this space mentions &ldquo;{trimmedQuery}&rdquo;.
+              </p>
+            </>
+          ) : isMember ? (
             <>
               <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
               <p className="text-xs text-brand-text/30 mt-1">Be the first to share something with the group!</p>
@@ -198,8 +249,19 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
         </div>
       ) : (
         <div className="space-y-3">
-          {pinnedPosts.map(renderPost)}
-          {regularPosts.map(renderPost)}
+          {/*
+            Results keep the server's order, which is by relevance. Floating
+            pinned posts to the top of a search would put a pinned post above
+            a better match for no reason the reader can see.
+          */}
+          {searching ? (
+            posts.map(renderPost)
+          ) : (
+            <>
+              {pinnedPosts.map(renderPost)}
+              {regularPosts.map(renderPost)}
+            </>
+          )}
         </div>
       )}
 

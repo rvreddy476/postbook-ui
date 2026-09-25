@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Search, X } from 'lucide-react'
 import { useGroupByHandle, useGroupDetails } from '@/hooks/useGroups'
 import type { GroupTab } from '@/types/groups'
 import GroupCoverHeader from './GroupCoverHeader'
@@ -15,6 +15,7 @@ import GroupMembersTab from './tabs/GroupMembersTab'
 import GroupMediaTab from './tabs/GroupMediaTab'
 import GroupEventsTab from './tabs/GroupEventsTab'
 import CreatePortal from '@/components/CreatePortal'
+import { MIN_GROUP_SEARCH_LENGTH } from './patchGroupFeed'
 
 /**
  * A group, as a page.
@@ -41,6 +42,11 @@ const TABS: { id: GroupTab; label: string }[] = [
 ]
 
 const TAB_IDS = TABS.map((t) => t.id)
+
+/** The four roles that carry an active member row. */
+function viewerRoleIsMember(role: string | undefined): boolean {
+    return role === 'owner' || role === 'admin' || role === 'moderator' || role === 'member'
+}
 
 function isTab(v: string | null): v is GroupTab {
     return !!v && (TAB_IDS as string[]).includes(v)
@@ -72,6 +78,8 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
     const [showComposer, setShowComposer] = useState(false)
     const [showInvite, setShowInvite] = useState(false)
     const [showShare, setShowShare] = useState(false)
+    const [searchOpen, setSearchOpen] = useState(false)
+    const [search, setSearch] = useState('')
 
     // Follow the URL when it changes underneath us (back button, a pasted
     // link), without making every tab click a navigation.
@@ -87,6 +95,20 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
         else url.searchParams.set('tab', next)
         window.history.replaceState({}, '', url.toString())
     }, [])
+
+    const searching = search.trim().length >= MIN_GROUP_SEARCH_LENGTH
+
+    /*
+      Mirror of group-service's checkGroupAccess: a private group is readable
+      only by a member. The server remains the authority — this only avoids
+      offering a search box whose every query would come back as "group
+      unavailable", which is also the answer for a group that does not exist.
+    */
+    const isPrivate =
+        group?.privacy_level === 'private' || group?.visibility === 'private'
+    const canReadPosts = isPrivate
+        ? viewerRoleIsMember(group?.viewer_role)
+        : true
 
     const viewerRole = group?.viewer_role ?? 'outsider'
     const isAdmin = viewerRole === 'owner' || viewerRole === 'admin'
@@ -171,14 +193,78 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
                             </button>
                         )
                     })}
+
+                    {/*
+                      Search lives at the end of the tab row rather than above
+                      the feed: it searches the group, not the tab you happen
+                      to be on, and opening it switches to the results.
+                    */}
+                    {canReadPosts && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const next = !searchOpen
+                                setSearchOpen(next)
+                                if (!next) setSearch('')
+                                else setTab('discussion')
+                            }}
+                            aria-label={searchOpen ? 'Close search' : 'Search posts in this group'}
+                            aria-expanded={searchOpen}
+                            title="Search posts"
+                            className={`ml-auto shrink-0 rounded-full p-2 transition-colors ${
+                                searchOpen
+                                    ? 'bg-brand-secondary text-brand-text'
+                                    : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'
+                            }`}
+                        >
+                            {searchOpen ? (
+                                <X className="h-[18px] w-[18px]" strokeWidth={2} />
+                            ) : (
+                                <Search className="h-[18px] w-[18px]" strokeWidth={2} />
+                            )}
+                        </button>
+                    )}
                 </div>
+
+                {searchOpen && canReadPosts && (
+                    <div className="mx-auto max-w-5xl px-5 pb-3">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
+                            <input
+                                autoFocus
+                                type="search"
+                                value={search}
+                                onChange={(ev) => setSearch(ev.target.value)}
+                                onKeyDown={(ev) => {
+                                    if (ev.key === 'Escape') {
+                                        setSearch('')
+                                        setSearchOpen(false)
+                                    }
+                                }}
+                                placeholder="Search posts in this space"
+                                aria-label="Search posts in this space"
+                                className="w-full rounded-full border border-brand-divider bg-brand-secondary py-2.5 pl-10 pr-4 text-[14px] text-brand-text outline-hidden placeholder:text-brand-text/30 focus:border-brand-text/20"
+                            />
+                        </div>
+                        {/*
+                          Said plainly rather than left to guess: below the
+                          minimum, nothing has been searched yet. An empty
+                          result list here would read as "no matches".
+                        */}
+                        {search.trim().length > 0 && !searching && (
+                            <p className="mt-1.5 px-1 text-[12px] text-brand-text/40">
+                                Keep typing — {MIN_GROUP_SEARCH_LENGTH} characters at least.
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <main className="mx-auto max-w-5xl px-5 py-5">
                 {tab === 'discussion' ? (
                     <div
                         className={
-                            showRail
+                            showRail && !searching
                                 ? 'grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]'
                                 : 'mx-auto max-w-2xl'
                         }
@@ -189,9 +275,12 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
                                 isMember={isMember}
                                 viewerRole={viewerRole}
                                 hideComposer
+                                searchQuery={search}
                             />
                         </div>
-                        {showRail && (
+                        {/* Recent media is not a search result, so it goes
+                            while results are showing. */}
+                        {showRail && !searching && (
                             <aside className="hidden lg:block">
                                 <RecentMediaCard groupId={group.id} onSeeAll={() => setTab('media')} />
                             </aside>
@@ -223,7 +312,7 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
               the Events tab has its own create button, and one floating
               action per screen is the rule.
             */}
-            {canPost && tab === 'discussion' && (
+            {canPost && tab === 'discussion' && !searching && (
                 <button
                     type="button"
                     onClick={() => setShowComposer(true)}

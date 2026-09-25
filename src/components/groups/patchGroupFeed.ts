@@ -28,6 +28,22 @@ export function groupFeedKey(groupId: string): readonly unknown[] {
 }
 
 /**
+ * The cache for one in-group search.
+ *
+ * Keyed on the query as well as the group, and stored page-shaped exactly
+ * like the feed — so patchGroupFeed works on it unchanged and a spark on a
+ * search result fills its heart the same way it does in the feed. Without
+ * this the optimistic patch would land on the feed cache only, and a
+ * result's heart would sit empty until the request round-tripped.
+ */
+export function groupPostSearchKey(groupId: string, query: string): readonly unknown[] {
+  return ['group-post-search', groupId, query.trim()]
+}
+
+/** Shortest query worth sending. The server refuses a blank q with a 400. */
+export const MIN_GROUP_SEARCH_LENGTH = 2
+
+/**
  * Whether the signed-in viewer has already engaged with this post.
  *
  * `=== true`, never `?? true`: Go marshals an unreacted post's flag as
@@ -110,10 +126,18 @@ export function applyGroupFeedPatch(
   kind: EngagementKind,
   delta: number,
   viewerFlag: boolean,
+  /*
+    Other page-shaped caches holding the same post — in practice the active
+    search. Patching every one keeps a post that is on screen twice from
+    disagreeing with itself.
+  */
+  extraKeys: readonly (readonly unknown[])[] = [],
 ): void {
-  qc.setQueryData<GroupFeedCache>(groupFeedKey(groupId), prev =>
-    patchGroupFeed(prev, postId, kind, delta, viewerFlag),
-  )
+  for (const key of [groupFeedKey(groupId), ...extraKeys]) {
+    qc.setQueryData<GroupFeedCache>(key, prev =>
+      patchGroupFeed(prev, postId, kind, delta, viewerFlag),
+    )
+  }
 }
 
 /** Just enough of a react-query mutation for {@link engageGroupPost}. */
@@ -141,14 +165,18 @@ export function engageGroupPost(args: {
   engaged: boolean
   mutation: EngagementMutation
   echoType?: string
+  extraKeys?: readonly (readonly unknown[])[]
 }): void {
-  const { qc, groupId, postId, kind, engaged, mutation, echoType } = args
+  const { qc, groupId, postId, kind, engaged, mutation, echoType, extraKeys = [] } = args
   const delta = kind === 'stash' ? 0 : engaged ? 1 : -1
 
-  applyGroupFeedPatch(qc, groupId, postId, kind, delta, engaged)
+  applyGroupFeedPatch(qc, groupId, postId, kind, delta, engaged, extraKeys)
 
   mutation.mutate(
     { groupId, postId, ...(echoType ? { echoType } : {}) },
-    { onError: () => applyGroupFeedPatch(qc, groupId, postId, kind, -delta, !engaged) },
+    {
+      onError: () =>
+        applyGroupFeedPatch(qc, groupId, postId, kind, -delta, !engaged, extraKeys),
+    },
   )
 }
