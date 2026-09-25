@@ -477,7 +477,17 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
   }
 
   const share = async () => {
-    const url = `${window.location.origin}/channels/${channelId}?update=${update.id}`
+    /*
+      Shared links pointed at /channels/<id>?update=<id>, a page the web no
+      longer has — every link ever copied from here would now 404. This points
+      at the messenger's channel panel, the web's only channel surface.
+
+      `update` is carried across but NOT yet consumed: the panel opens the
+      channel, it does not scroll to the shared post. That is a smaller broken
+      promise than a 404, and the param is in the URL ready for whoever wires
+      the scroll-to-update.
+    */
+    const url = `${window.location.origin}/messenger?lane=channels&channel=${encodeURIComponent(channelId)}&update=${encodeURIComponent(update.id)}`
     try {
       if (navigator.share) {
         await navigator.share({ title: channel?.name ?? 'Update', url })

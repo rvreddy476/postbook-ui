@@ -23,10 +23,12 @@ const SpaceCard: React.FC<SpaceCardProps> = ({ space, isAdmin, onRemove, onEdit 
   const isChannel = space.space_type === 'channel'
   const typeBadge = isGroup ? 'GROUP' : isChannel ? 'CHANNEL' : space.space_type.toUpperCase()
 
+  // A channel space opens in the messenger's channel panel: the web dropped
+  // the standalone /channels/<id> page, so linking there would 404.
   const href = space.linked_group_id
     ? `/groups/${space.linked_group_id}`
     : space.linked_channel_id
-      ? `/channels/${space.linked_channel_id}`
+      ? `/messenger?lane=channels&channel=${encodeURIComponent(space.linked_channel_id)}`
       : '#'
 
   return (

@@ -14,9 +14,10 @@ interface NewChannelSheetProps {
 /**
  * Create a channel without leaving the messenger.
  *
- * The Channels list had no way to start one: /channels/create exists as a
- * full page, but reaching it meant leaving this screen, which is exactly
- * the thing the founder objected to.
+ * The Channels list had no way to start one: creating a channel meant a trip
+ * to /channels/create, leaving this screen, which is exactly the thing the
+ * founder objected to. That page has since been removed from the web
+ * altogether, so this is now the only way to create a channel here.
  *
  * It asks for a name and, optionally, a description. Nothing else.
  *

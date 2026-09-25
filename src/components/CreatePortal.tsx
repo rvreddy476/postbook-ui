@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Smile,
   Type,
+  UserRoundX,
   Users,
   Video as VideoIcon,
   X,
@@ -62,9 +63,20 @@ const FlowerPaletteIcon: React.FC<{ size?: number; className?: string }> = ({ si
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import { useCreatePost } from '@/hooks/useFeedPosts';
-import { useCreateGroupPost } from '@/hooks/useGroups';
+import { useCreateGroupPost, useGroupDetails } from '@/hooks/useGroups';
+import { useIdempotencyKey } from '@/lib/idempotency';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { POST_CONTENT_TYPES } from '@/types/profile';
+import CrossPostPicker, { type CrossPostChoice } from '@/components/groups/CrossPostPicker';
+import {
+  ANONYMOUS_EXPLAINER,
+  ANONYMOUS_LABEL,
+  anonymousCrossPostWarning,
+  buildGroupTypePayload,
+  effectiveIsAnonymous,
+  normalizeCrossPostTargets,
+  summariseCrossPost,
+} from '@/components/groups/groupComposer';
 
 import PollEditor, { type PollState } from '@/components/studio/PollEditor';
 import RichTextEditor from '@/components/studio/RichTextEditor';
@@ -138,6 +150,18 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [showJournal, setShowJournal] = useState(false);
   const [journalTitle, setJournalTitle] = useState("");
 
+  /*
+    Group mode.
+
+    A group post ignores the audience selector entirely — group-service decides
+    who sees it from the group's own privacy — so the dropdown is replaced by a
+    chip that names the space. The rest is what a group post can do and an
+    ordinary post cannot: go to a few other spaces at once, and carry no name.
+  */
+  const isGroupMode = Boolean(groupId);
+  const [crossPostTo, setCrossPostTo] = useState<CrossPostChoice[]>([]);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,23 +185,28 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const createPost = useCreatePost();
   const toast = useGlobalToast();
   const createGroupPost = useCreateGroupPost();
+  // Enabled only when there is a groupId, so the ordinary composer fetches
+  // nothing extra. It is what says whether this space allows anonymity.
+  const { data: group } = useGroupDetails(groupId);
+  const allowAnonymous = group?.allow_anonymous_posts === true;
 
   /**
    * One durable key per composer session.
    *
    * post-service requires a UUID Idempotency-Key on create and refuses the
    * request without one — the web sent none, so nothing could be posted at
-   * all. It lives in a ref rather than being minted at each attempt because a
-   * failed POST may in fact have committed before the response was lost: a
-   * second attempt with the SAME key returns the post already created, while
-   * a fresh key would publish it twice. Cleared after a successful post, so
-   * reopening the composer is a new intent.
+   * all. It is minted once per intent rather than per attempt because a failed
+   * POST may in fact have committed before the response was lost: a second
+   * attempt with the SAME key returns the post already created, while a fresh
+   * key would publish it twice.
+   *
+   * Cross-posting makes this load-bearing rather than merely careful, which is
+   * why group-service refuses a multi-group post without a body key: the axios
+   * interceptor stamps a FRESH header uuid per attempt, so a retry carrying
+   * only the header looks like a new intent and posts again to every group that
+   * already succeeded. Reset after success, so reopening is a new intent.
    */
-  const createKeyRef = useRef<string>('');
-  const nextCreateKey = () => {
-    if (!createKeyRef.current) createKeyRef.current = crypto.randomUUID();
-    return createKeyRef.current;
-  };
+  const createKey = useIdempotencyKey();
 
   const avatarSrc = profile?.avatar_media_id
     ? `/v1/media/${profile.avatar_media_id}/serve`
@@ -226,6 +255,16 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     setPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
+
+  /*
+    A space can withdraw anonymous posting while the composer is open — the
+    group query refetches — and a toggle left on would then submit a flag the
+    server refuses. Turning it off here keeps the visible state honest; the
+    submit path re-checks anyway, because this effect runs a render late.
+  */
+  useEffect(() => {
+    if (!allowAnonymous && isAnonymous) setIsAnonymous(false);
+  }, [allowAnonymous, isAnonymous]);
 
   // Drop background when media or poll is added — colored backgrounds are
   // text-only by design.
@@ -425,20 +464,100 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         return out.slice(0, 30);
       })();
 
-      // Backend extracts hashtags from the post body via regex, so we
-      // append the chip-entered tags to the wire text. The user's typing
-      // surface stays free of stray "#" characters; only the persisted
-      // body (and the rendered post) carries them.
-      const tagSuffix = finalHashtags.length > 0
+      /*
+        post-service extracts hashtags from the post body via regex, so the
+        chip-entered tags are appended to the wire text for a feed post. The
+        user's typing surface stays free of stray "#" characters; only the
+        persisted body carries them.
+
+        NOT for a group post. group-service has no hashtag extraction at all —
+        there is no such code in the service — so the suffix would be dead text
+        that duplicates the chips the card draws from type_payload. The tags go
+        in type_payload for a group post, and nowhere else.
+      */
+      const tagSuffix = finalHashtags.length > 0 && !isGroupMode
         ? ' ' + finalHashtags.map((t) => `#${t}`).join(' ')
         : '';
-      // A journal title becomes the first line of the body. There is no
-      // journal content_type on the wire, so this is presentation, not a new
-      // object — see the note beside the showJournal state.
-      const titlePrefix = showJournal && journalTitle.trim()
+      /*
+        A journal title becomes the first line of the body for a FEED post:
+        post-service has no title column for a post, so this is presentation,
+        not a new object — see the note beside the showJournal state.
+
+        A group post has a real `title` field, which both group cards render as
+        a heading, so in group mode the title is sent as a title. Prefixing it
+        as well would print the heading twice.
+      */
+      const titlePrefix = showJournal && journalTitle.trim() && !isGroupMode
         ? journalTitle.trim() + '\n\n'
         : '';
       const wireText = (titlePrefix + text.trim() + tagSuffix).trim();
+
+      if (groupId) {
+        /*
+          THE DEFECT THIS BRANCH CLOSES.
+
+          The group path used to forward body / title / content_type /
+          attachments and nothing else, so a place, a feeling, an activity and
+          hashtags were collected by this dialog, dropped by the mutation, and
+          confirmed with a success toast. group-service takes an opaque
+          `type_payload`, so they survive with no backend change — and the card
+          draws them back, which is the only way this fix is visible rather than
+          merely present.
+        */
+        const typePayload = buildGroupTypePayload({
+          feeling,
+          activity,
+          activityDetail,
+          location: location.trim(),
+          hashtags: finalHashtags,
+        });
+
+        // Deduped, minus this group, capped — computed the way the server
+        // computes it, so the cap is never learned from a 400.
+        const alsoPostTo = normalizeCrossPostTargets(
+          crossPostTo.map((c) => c.id),
+          groupId,
+        );
+
+        const outcome = await createGroupPost.mutateAsync({
+          groupId,
+          body: wireText,
+          content_type: contentType,
+          title: showJournal && journalTitle.trim() ? journalTitle.trim() : undefined,
+          type_payload: typePayload,
+          attachments: mediaIds,
+          is_anonymous: effectiveIsAnonymous(isAnonymous, group?.allow_anonymous_posts),
+          also_post_to: alsoPostTo,
+          // Always sent, not only when cross-posting: it costs nothing and it
+          // is REQUIRED the moment alsoPostTo is non-empty.
+          idempotency_key: createKey.current(),
+        });
+
+        createKey.reset();
+
+        if (outcome.kind === 'batch') {
+          /*
+            A partial success must be visible, and the spaces that refused are
+            named. That is right here and wrong for the invite batch: an invite
+            refusal identifies a PERSON who blocked you, while these are spaces
+            the author picked themselves.
+          */
+          const byId = new Map<string, string>([
+            [groupId, group?.name || 'This space'],
+            ...crossPostTo.map((c) => [c.id, c.name] as const),
+          ]);
+          const summary = summariseCrossPost(outcome.result, (id) => byId.get(id));
+          toast({
+            type: summary.ok ? 'success' : 'warning',
+            title: summary.title,
+            description: summary.description || undefined,
+          });
+        } else {
+          toast({ type: 'success', title: 'Posted' });
+        }
+        onClose();
+        return;
+      }
 
       const payload = {
         text: wireText,
@@ -452,17 +571,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         poll: pollPayload,
         rich_text: richText,
         hashtags: finalHashtags.length > 0 ? finalHashtags : undefined,
-        idempotencyKey: nextCreateKey(),
+        idempotencyKey: createKey.current(),
         media: mediaWithKinds,
       };
 
-      if (groupId) {
-        await createGroupPost.mutateAsync({ groupId, ...payload });
-      } else {
-        await createPost.mutateAsync(payload);
-      }
+      await createPost.mutateAsync(payload);
       // The intent is done; the next composer session gets its own key.
-      createKeyRef.current = '';
+      createKey.reset();
       // Says the write landed even when the reader has scrolled away from the
       // top of the feed, where the new card is.
       toast({ type: 'success', title: 'Posted' });
@@ -477,7 +592,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [background, canPost, createGroupPost, createPost, files, groupId, hashtagDraft, hashtags, hasColorBg, isSubmitting, location, mood, onClose, onDark, poll, showPoll, text, visibility]);
+  }, [background, canPost, createGroupPost, createKey, createPost, crossPostTo, files, group, groupId, hashtagDraft, hashtags, hasColorBg, isAnonymous, isGroupMode, isSubmitting, journalTitle, location, mood, onClose, onDark, poll, showJournal, showPoll, text, toast, visibility]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -585,7 +700,21 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       active: showMore || Boolean(mood) || Boolean(background), disabled: false,
       onClick: () => setShowMore((v) => !v),
     },
-  ];
+  ].filter((tile) => {
+    /*
+      NO POLL IN A GROUP.
+
+      `type_payload` is opaque, so the server would happily store a poll — and
+      then nothing would ever tally it: there is no vote route for a group post
+      and no group card reads options. The tile would produce a dead poll that
+      looks live. It comes back when group-service can count a vote.
+
+      "Tag people" is absent for the same class of reason: there is no mentions
+      field on the wire, and `@username` as plain body text links nowhere.
+    */
+    if (isGroupMode && tile.key === 'poll') return false;
+    return true;
+  });
 
   return (
     <motion.div
@@ -625,6 +754,25 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+          {isGroupMode ? (
+            /*
+              A chip, not a menu. A group post ignores the audience selector
+              entirely — group-service decides who can see it from the group's
+              own privacy and membership — so offering public / followers /
+              trusted / only-me here would be a control that changes nothing,
+              which is a lie about how the post will be seen.
+            */
+            <span
+              className="flex max-w-[220px] items-center gap-1.5 rounded-full border border-brand-divider bg-brand-secondary px-3.5 py-2 text-[11px] font-medium tracking-wider text-brand-text shadow-xs"
+              title={group?.name ? `Posting in ${group.name}` : 'Posting in this space'}
+            >
+              <Users className="h-3.5 w-3.5 shrink-0 text-primary-ink" />
+              {/* `||`, not `??`: Go marshals an unset string as "", and a
+                  nullish fallback would leave the chip blank rather than
+                  naming the space. */}
+              <span className="truncate">{group?.name || 'This space'}</span>
+            </span>
+          ) : (
           <div className="relative">
             <button
               type="button"
@@ -665,6 +813,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               )}
             </AnimatePresence>
           </div>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -934,6 +1083,58 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                       </span>
                     ))}
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Group mode: the other spaces this post can reach. */}
+          {isGroupMode && groupId && (
+            <CrossPostPicker
+              groupId={groupId}
+              selected={crossPostTo}
+              onChange={setCrossPostTo}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {/*
+            Anonymous posting, offered ONLY where the group opted in.
+
+            The server refuses `is_anonymous` for a group that has not, so a
+            switch shown anyway is a switch that returns an error.
+          */}
+          {isGroupMode && allowAnonymous && (
+            <div className="px-6 pt-3">
+              <div className="rounded-[18px] border border-brand-divider bg-brand-secondary px-4 py-3">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isAnonymous}
+                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[rgb(var(--brand-ink))]"
+                  />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold text-brand-text">
+                      <UserRoundX className="h-3.5 w-3.5 text-primary-ink" strokeWidth={1.75} />
+                      {ANONYMOUS_LABEL}
+                    </span>
+                    {/*
+                      Pseudonymity against other members — the wording is a
+                      product decision, not a phrasing choice. Admins cannot
+                      unmask; that is enforced server-side, where a per-post
+                      alias replaces the author id before the row is marshalled.
+                    */}
+                    <span className="mt-1 block text-[11px] leading-snug text-brand-text/60">
+                      {ANONYMOUS_EXPLAINER}
+                    </span>
+                  </span>
+                </label>
+                {anonymousCrossPostWarning(isAnonymous, crossPostTo.length) && (
+                  <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-warning">
+                    <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                    {anonymousCrossPostWarning(isAnonymous, crossPostTo.length)}
+                  </p>
                 )}
               </div>
             </div>

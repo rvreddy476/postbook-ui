@@ -173,8 +173,28 @@ export default function GroupFeedTab({ groupId, isMember, viewerRole, hideCompos
           <div className="w-14 h-14 rounded-2xl bg-brand-secondary mx-auto mb-4 flex items-center justify-center">
             <MessageCircle className="w-7 h-7 text-brand-text/20" />
           </div>
-          <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
-          <p className="text-xs text-brand-text/30 mt-1">Be the first to share something with the group!</p>
+          {/*
+            An empty feed means two different things, and saying the wrong one
+            is worse than saying nothing.
+
+            For a member it is what it looks like: nobody has posted. For
+            everyone else the feed is empty because the server did not send
+            them the posts — a private space may be busy — so claiming "no
+            posts yet" states as fact something the server never said, and
+            "be the first to share" invites an action a non-member has no
+            composer for.
+          */}
+          {isMember ? (
+            <>
+              <p className="text-sm font-semibold text-brand-text/60">No posts yet</p>
+              <p className="text-xs text-brand-text/30 mt-1">Be the first to share something with the group!</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-brand-text/60">Posts are for members</p>
+              <p className="text-xs text-brand-text/30 mt-1">Join this space to see what people are sharing.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

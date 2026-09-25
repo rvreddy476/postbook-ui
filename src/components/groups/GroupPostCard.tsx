@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import type { GroupPostV2 } from '@/types/groups'
 import { viewerEngaged } from './patchGroupFeed'
+import GroupPostMeta from './GroupPostMeta'
 
 /* ===== Props ===== */
 interface GroupPostCardProps {
@@ -335,11 +336,28 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
         {/* Body with expand */}
         {post.body && (
           <>
+            {/*
+              Text, not HTML.
+
+              This was dangerouslySetInnerHTML={{ __html: post.body }}, and
+              group-service has no sanitizer anywhere — no bluemonday, no
+              escaping on the write path — so whatever a member typed was
+              stored raw and injected into every other member's page. One
+              <img src=x onerror=…> in a group post ran for the whole group.
+
+              It was not even rendering the rich-text field: body_html is a
+              separate column the create path never populates. body is plain
+              text, so rendering it as text loses nothing and closes it.
+              The prose child selectors went with it — they only styled
+              injected HTML, and leaving them would imply this still renders
+              markup.
+            */}
             <div
               ref={bodyRef}
-              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden wrap-break-word ${expanded ? '' : 'line-clamp-4'} [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-divider [&_blockquote]:pl-4 [&_code]:bg-brand-text/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_pre]:bg-brand-text/5 [&_pre]:p-3 [&_pre]:rounded-xl [&_a]:text-primary-ink [&_a]:underline`}
-              dangerouslySetInnerHTML={{ __html: post.body }}
-            />
+              className={`text-sm text-brand-text/80 leading-relaxed overflow-hidden wrap-break-word whitespace-pre-wrap ${expanded ? '' : 'line-clamp-4'}`}
+            >
+              {post.body}
+            </div>
             {isClamped && !expanded && (
               <button onClick={() => setExpanded(true)} className="text-xs font-semibold text-brand-text mt-1 hover:underline">
                 ...Show more
@@ -347,6 +365,15 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
             )}
           </>
         )}
+
+        {/*
+          Place, mood, activity and tags, read back off type_payload.
+          The composer collected these and the hook dropped them on submit,
+          under a success toast; rendering them here is what makes the fix
+          visible rather than merely present. Renders null when a post
+          carries none, so every existing post is unaffected.
+        */}
+        <GroupPostMeta post={post} />
 
         {/* Media: photos (content_type "post" is the default for text+photo posts) */}
         {contentType !== 'video' && mediaIds.length > 0 && (

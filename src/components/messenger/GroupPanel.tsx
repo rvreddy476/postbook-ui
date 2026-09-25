@@ -30,6 +30,7 @@ import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useCha
 import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
 import type { GroupMember, GroupPostV2 } from '@/types/groups'
 import type { Message } from '@/services/messageService'
+import GroupPostMeta from '@/components/groups/GroupPostMeta'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -817,6 +818,14 @@ function PostCard({
       >
         {bodyText || 'No text'}
       </p>
+
+      {/*
+        The place, the mood and the tags the composer collected.
+        Until C2 these were dropped between the composer and the wire; they now
+        ride in the post's `type_payload`, and this is where they are read back.
+        Renders nothing when the post carries none.
+      */}
+      <GroupPostMeta post={post} />
 
       {/* Attachments (media ids from the post itself) */}
       {attachments.length > 0 && (

@@ -764,8 +764,12 @@ function EntityResultRow({ entity, item, position, onClick }: EntityResultRowPro
         case "channels": {
             const ch = item as ChannelHit
             return (
+                // The web has no /channels/<id> page — the messenger's channel
+                // panel is the only channel surface here — so a hit opens the
+                // channel there. The panel fetches by id, so this works for a
+                // channel you searched for and do not subscribe to.
                 <Link
-                    href={`/channels/${ch.channel_id}`}
+                    href={`/messenger?lane=channels&channel=${encodeURIComponent(ch.channel_id)}`}
                     onClick={() => onClick("channels", ch.channel_id, position)}
                     className="flex items-center gap-4 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all"
                 >

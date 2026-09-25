@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import Link from 'next/link'
 import {
     BarChart3,
     CalendarDays,
@@ -249,17 +248,15 @@ export default function OverviewTab({
                         {channel.category && (
                             <Row icon={Tag} label="Category" value={<span className="capitalize">{channel.category}</span>} />
                         )}
+                        {/* The handle, not a link. It used to point at
+                            /channels/<id>, which no longer exists on the web —
+                            and even when it did, this Overview is rendered
+                            inside that very channel, so it was a link to the
+                            page you were already on. */}
                         <Row
                             icon={Link2}
                             label="Link"
-                            value={
-                                <Link
-                                    href={`/channels/${channel.id}`}
-                                    className="truncate text-primary-ink hover:underline"
-                                >
-                                    @{channel.handle}
-                                </Link>
-                            }
+                            value={<span className="truncate">@{channel.handle}</span>}
                         />
                     </dl>
                 </Panel>

@@ -286,7 +286,7 @@ function ToggleRow({
   dead rich-text toolbar removed earlier.
 
   The upload itself is the platform's three-step flow (init, PUT to the
-  presigned URL, confirm), via the same helper ChannelEditModal already uses.
+  presigned URL, confirm), via the shared lib/mediaUpload helper.
   The subtypes matter and are not interchangeable: 'avatar' and 'cover' are
   what media-service processes for these two slots.
 

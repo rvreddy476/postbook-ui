@@ -8,7 +8,7 @@ import type { GroupTab } from '@/types/groups'
 import GroupCoverHeader from './GroupCoverHeader'
 import GroupShareDialog from './GroupShareDialog'
 import GroupInviteModal from './GroupInviteModal'
-import RecentMediaCard from './RecentMediaCard'
+import RecentMediaCard, { useRecentMediaTiles } from './RecentMediaCard'
 import GroupFeedTab from './tabs/GroupFeedTab'
 import GroupAboutTab from './tabs/GroupAboutTab'
 import GroupMembersTab from './tabs/GroupMembersTab'
@@ -56,6 +56,15 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
     const byHandle = useGroupByHandle(!isUUID ? groupIdOrHandle : undefined)
     const group = byId.data ?? byHandle.data
     const isLoading = isUUID ? byId.isLoading : byHandle.isLoading
+
+    /*
+      Whether the right rail has anything to say, asked before the early
+      returns because hooks cannot be conditional. An empty rail must not
+      reserve a column: a group with no photos otherwise showed the feed
+      squeezed to 60% of the page beside a blank third.
+    */
+    const media = useRecentMediaTiles(byId.data?.id ?? byHandle.data?.id)
+    const showRail = media.isLoading || media.tiles.length > 0
 
     const urlTab = searchParams.get('tab')
     const [tab, setTabLocal] = useState<GroupTab>(isTab(urlTab) ? urlTab : 'discussion')
@@ -167,7 +176,13 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
 
             <main className="mx-auto max-w-5xl px-5 py-5">
                 {tab === 'discussion' ? (
-                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+                    <div
+                        className={
+                            showRail
+                                ? 'grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]'
+                                : 'mx-auto max-w-2xl'
+                        }
+                    >
                         <div className="min-w-0">
                             <GroupFeedTab
                                 groupId={group.id}
@@ -176,9 +191,11 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
                                 hideComposer
                             />
                         </div>
-                        <aside className="hidden lg:block">
-                            <RecentMediaCard groupId={group.id} onSeeAll={() => setTab('media')} />
-                        </aside>
+                        {showRail && (
+                            <aside className="hidden lg:block">
+                                <RecentMediaCard groupId={group.id} onSeeAll={() => setTab('media')} />
+                            </aside>
+                        )}
                     </div>
                 ) : tab === 'about' ? (
                     <div className="mx-auto max-w-2xl">

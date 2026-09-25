@@ -42,9 +42,12 @@ interface ChannelPanelProps {
  * the same channel in the middle column beside the conversation list, the
  * way a direct chat or a group does, so the messenger stays one screen.
  *
- * Owners and editors get Analytics and Settings here too, so running a
- * channel never means leaving the messenger. Drafts and subscriber
- * management are the only things still on the full channel page.
+ * Those standalone /channels pages are gone from the web now: channels are a
+ * mobile product, and this panel is the web's whole channel surface. So this
+ * is not a summary of a fuller page elsewhere — Overview, Posts, Members,
+ * Analytics and Settings all live here, and nothing links out.
+ *
+ * Reachable directly at /messenger?lane=channels&channel=<id>.
  */
 export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
   const [tab, setTab] = useState<'overview' | 'updates' | 'members' | 'about' | 'analytics' | 'settings'>('updates')
@@ -528,17 +531,14 @@ export default function ChannelPanel({ channelId, onBack }: ChannelPanelProps) {
               </div>
             </dl>
 
-            {/* Analytics and Settings are tabs here now. Drafts and
-                subscriber management are the only screens still elsewhere,
-                and this says which rather than pretending. */}
-            {canPublish && (
-              <a
-                href={`/channels/${channelId}`}
-                className="flex items-center justify-center gap-2 rounded-xl border border-brand-divider bg-brand-bg px-4 py-3 text-[13px] font-semibold text-brand-text transition-colors hover:border-primary-outline hover:text-primary-ink"
-              >
-                Open full channel for drafts and subscribers
-              </a>
-            )}
+            {/* There used to be an "Open full channel for drafts and
+                subscribers" link to /channels/<id> here. That page is gone —
+                channels are a mobile product on the web now — and the link
+                was overselling itself anyway: subscriber management is the
+                Members tab right here, and the standalone page's Drafts tab
+                never fetched anything (no drafts endpoint is wired on the
+                web), so it always rendered empty. Nothing was lost by
+                dropping it, and a link to a 404 would have been. */}
           </div>
         </div>
       ) : (

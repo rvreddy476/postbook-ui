@@ -12,13 +12,14 @@ import { useGroupMedia } from '@/hooks/useGroups'
  * the same description beside the feed made it the third place the same
  * sentence appeared on one screen.
  */
-export default function RecentMediaCard({
-    groupId,
-    onSeeAll,
-}: {
-    groupId: string
-    onSeeAll: () => void
-}) {
+/**
+ * The tiles, and whether we are still finding out.
+ *
+ * Exported because GroupView needs the same answer to decide whether to
+ * reserve a rail column at all. Both callers share one `useGroupMedia`
+ * cache entry, so asking twice costs nothing.
+ */
+export function useRecentMediaTiles(groupId: string | undefined) {
     const { data, isLoading } = useGroupMedia(groupId)
 
     /*
@@ -49,6 +50,18 @@ export default function RecentMediaCard({
         }
         return out
     }, [data])
+
+    return { tiles, isLoading }
+}
+
+export default function RecentMediaCard({
+    groupId,
+    onSeeAll,
+}: {
+    groupId: string
+    onSeeAll: () => void
+}) {
+    const { tiles, isLoading } = useRecentMediaTiles(groupId)
 
     // Nothing to show is not worth a card. An empty grid with a heading is
     // more noise beside a feed than no card at all.

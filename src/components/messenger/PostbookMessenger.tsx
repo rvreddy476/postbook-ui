@@ -375,6 +375,28 @@ export default function PostbookMessenger() {
     else if (lane === 'groups' || lane === 'channels') setContactTab(lane)
   }, [])
 
+  /**
+   * Open a channel named in the address: /messenger?lane=channels&channel=<id>.
+   *
+   * The web has no /channels/<id> page any more — this panel is the only
+   * channel surface here — so search results, community spaces and channel
+   * notifications all point at this instead. ChannelPanel fetches the channel
+   * by id itself, so this also opens a channel that is not in the list yet:
+   * one found in search and not subscribed to.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const wanted = new URLSearchParams(window.location.search).get('channel')
+    if (!wanted) return
+    // Also select the lane, so a bare ?channel=<id> works without the caller
+    // having to remember &lane=channels: going back from the panel on mobile
+    // should land on the channel list, not on Direct.
+    setContactTab('channels')
+    setActiveChannelId(wanted)
+    setActiveDm(null)
+    setActiveGroupId(null)
+  }, [])
+
   const openedFromUrlRef = useRef<string | null>(null)
   useEffect(() => {
     if (typeof window === 'undefined') return

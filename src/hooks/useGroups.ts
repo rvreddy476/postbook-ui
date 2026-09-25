@@ -3,6 +3,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { AddPeopleResult } from "@/components/messenger/groupComposition"
+import { interpretCreateGroupPostResponse, type CreateGroupPostOutcome, type GroupTypePayload } from "@/components/groups/groupComposer"
 import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
 
 interface GroupsResponse { data: Group[] }
@@ -348,22 +349,84 @@ export function useBanMember() {
   })
 }
 
+/**
+ * What POST /v1/groups/:groupId/posts/v2 accepts, as group-service binds it.
+ *
+ * Named fields rather than `[key: string]: unknown`: the old signature took
+ * anything and forwarded four things, so the composer's place, feeling,
+ * activity and hashtags were accepted here and dropped on the way out — with a
+ * success toast over the top. A typed body is what makes that impossible to
+ * repeat silently.
+ */
+export interface CreateGroupPostInput {
+  groupId: string
+  body: string
+  title?: string
+  content_type?: string
+  channel_id?: string
+  /** Opaque to the server; built by buildGroupTypePayload. Omitted when empty. */
+  type_payload?: GroupTypePayload
+  /** Media ids. Stored as raw JSON and served back as a string array. */
+  attachments?: string[]
+  is_announcement?: boolean
+  /** Refused unless the group set allow_anonymous_posts. */
+  is_anonymous?: boolean
+  /** Extra groups. NON-EMPTY CHANGES THE RESPONSE SHAPE — see below. */
+  also_post_to?: string[]
+  /**
+   * Stable across retries of the SAME composer action, and REQUIRED once
+   * also_post_to is non-empty (400 IDEMPOTENCY_KEY_REQUIRED otherwise).
+   *
+   * The axios interceptor stamps a fresh uuid HEADER per attempt, so a retry
+   * carrying only the header looks like a new intent and would post again to
+   * every group that already succeeded. This body field is the client's promise
+   * that it is the same press of the button.
+   */
+  idempotency_key?: string
+}
+
 export function useCreateGroupPost() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ groupId, ...postData }: { groupId: string; [key: string]: unknown }) => {
-      const res = await api.post(`/v1/groups/${groupId}/posts/v2`, {
-        body: postData.body ?? postData.content ?? postData.text ?? '',
-        content_type: postData.content_type ?? 'text',
-        title: postData.title,
-        attachments: postData.media_ids ?? postData.attachments,
-      })
-      return res.data
+    mutationFn: async ({
+      groupId,
+      also_post_to,
+      ...post
+    }: CreateGroupPostInput): Promise<CreateGroupPostOutcome> => {
+      /*
+        THE COMPATIBILITY HINGE.
+
+        With also_post_to absent or empty the server answers with the bare post,
+        exactly as it always has — the shape the mobile app reads. Only a
+        request that names extra groups gets the batch result. So the key is
+        sent, and the answer is read, according to what was SENT: the count goes
+        to interpretCreateGroupPostResponse rather than the response being
+        sniffed for a `targets` field.
+      */
+      const targets = also_post_to ?? []
+      const body: Record<string, unknown> = { ...post }
+      if (targets.length > 0) {
+        body.also_post_to = targets
+      } else {
+        // Not even an empty array: an empty also_post_to is what keeps the
+        // single-post response shape, and omitting the key says it plainly.
+        delete body.also_post_to
+      }
+      const res = await api.post(`/v1/groups/${groupId}/posts/v2`, body)
+      return interpretCreateGroupPostResponse(targets.length, res.data?.data ?? res.data)
     },
-    onSuccess: (_, { groupId }) => {
-      qc.invalidateQueries({ queryKey: ["group-feed", groupId as string] })
-      qc.invalidateQueries({ queryKey: ["group-feed-v2", groupId as string] })
-      qc.invalidateQueries({ queryKey: ["group", groupId as string] })
+    onSuccess: (outcome, { groupId, also_post_to }) => {
+      qc.invalidateQueries({ queryKey: ["group-feed", groupId] })
+      qc.invalidateQueries({ queryKey: ["group-feed-v2", groupId] })
+      qc.invalidateQueries({ queryKey: ["group", groupId] })
+      // A cross-post wrote rows in other groups' feeds too, and the aggregated
+      // MySpace feed spans all of them.
+      qc.invalidateQueries({ queryKey: ["myspace-feed"] })
+      for (const target of also_post_to ?? []) {
+        qc.invalidateQueries({ queryKey: ["group-feed-v2", target] })
+        qc.invalidateQueries({ queryKey: ["group", target] })
+      }
+      void outcome
     },
   })
 }

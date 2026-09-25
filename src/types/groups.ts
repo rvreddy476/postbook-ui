@@ -25,6 +25,16 @@ export interface Group {
   pending_request_count?: number
   viewer_role?: 'owner' | 'admin' | 'moderator' | 'member' | 'pending' | 'outsider' | 'banned'
   is_mature?: boolean
+  /**
+   * Whether this group has opted in to anonymous posting.
+   *
+   * The composer offers its anonymous toggle ONLY when this is true: the
+   * server refuses `is_anonymous` for a group that has not opted in, so
+   * offering the switch anyway is offering a switch that returns an error.
+   * Read it as `=== true` — Go marshals the unset case as `false` and an older
+   * server build omits it entirely, and both mean "do not offer it".
+   */
+  allow_anonymous_posts?: boolean
   // Discover personalization (GET /v1/groups/discover)
   friends_in_group?: number
   reasons?: string[]
@@ -99,6 +109,17 @@ export interface GroupPostV2 {
   viewer_sparked?: boolean
   viewer_echoed?: boolean
   viewer_stashed?: boolean
+  /**
+   * Posted without the author's name shown to other members.
+   *
+   * `author_id` on an anonymous post is NOT the author: the server substitutes
+   * a per-post alias uuid while marshalling, so it is shape-compatible, points
+   * at nobody, and links to no other post by the same person. So a card must
+   * not try to resolve a name for it — say "Anonymous member" instead.
+   */
+  is_anonymous?: boolean
+  /** Set when this post was one target of a cross-post. */
+  cross_post_group_id?: string
   // Enriched by frontend
   author_name?: string
   author_avatar_url?: string

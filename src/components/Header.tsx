@@ -91,6 +91,20 @@ function notificationHref(deepLink: string | undefined, actorId: string, actorUs
       // where a call is placed from.
       return `/messenger?user=${encodeURIComponent(actorId)}`
     }
+    if (deepLink.startsWith('/channels/')) {
+      // channel-service still emits /channels/<id>, and it must keep doing so
+      // — the mobile app routes on it. The web dropped that page, so the link
+      // is translated to the messenger's channel panel, which is the only
+      // channel surface on the web. Anything after the id (a ?update= query,
+      // say) is carried across so a "new update" notification still lands on
+      // the right channel.
+      const rest = deepLink.slice('/channels/'.length)
+      const [id, query] = [rest.split(/[?#]/)[0], rest.slice(rest.split(/[?#]/)[0].length)]
+      if (id) {
+        return `/messenger?lane=channels&channel=${encodeURIComponent(id)}${query.startsWith('?') ? `&${query.slice(1)}` : ''}`
+      }
+      return '/messenger?lane=channels'
+    }
     return deepLink
   }
   return `/u/${actorUsername || actorId}`
