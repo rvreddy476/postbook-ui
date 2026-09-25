@@ -66,7 +66,7 @@ import { useCreatePost } from '@/hooks/useFeedPosts';
 import { useCreateGroupPost, useGroupDetails } from '@/hooks/useGroups';
 import { useIdempotencyKey } from '@/lib/idempotency';
 import { uploadMedia } from '@/lib/mediaUpload';
-import { POST_CONTENT_TYPES } from '@/types/profile';
+import { chooseContentType } from '@/components/feed/chooseContentType';
 import CrossPostPicker, { type CrossPostChoice } from '@/components/groups/CrossPostPicker';
 import {
   ANONYMOUS_EXPLAINER,
@@ -389,12 +389,17 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         mediaIds = uploaded.map((m) => m.media_id);
       }
 
-      let contentType: string = POST_CONTENT_TYPES.POST;
-      if (showPoll) {
-        contentType = POST_CONTENT_TYPES.POLL;
-      } else if (files.length > 0 && files.some((f) => f.type.startsWith('video'))) {
-        contentType = POST_CONTENT_TYPES.VIDEO;
-      }
+      /*
+        A feed post with a video attached is still a post. This used to send
+        "video" whenever a file was a video, and post-service folds "video"
+        into an EXPLICIT long_video — so an ordinary feed post was stamped as a
+        deliberate Tube upload and entered the monetization pipeline without
+        the author ever choosing that. Only Reels and Tube choose their kinds,
+        and they do it explicitly in their own flows; the feed composer sends
+        "post" or "poll" and nothing else (Android's feed composer already
+        sends "post").
+      */
+      const contentType: string = chooseContentType({ showPoll, files });
 
       let feeling: string | null = null;
       let activity: string | null = null;

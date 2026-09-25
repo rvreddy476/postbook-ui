@@ -8,7 +8,9 @@ import type { PostDetail } from '@/types/profile';
 import { useToggleLike, useToggleReaction } from '@/hooks/usePostReaction';
 import ReactionPicker from '@/components/ReactionPicker';
 import Link from 'next/link';
-import { useToggleBookmark, useTogglePin } from '@/hooks/usePostActions';
+import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost } from '@/hooks/usePostActions';
+import { useGlobalToast } from '@/contexts/ToastContext';
+import HiddenPostToast from '@/components/feed/HiddenPostToast';
 import { useMuteUser } from '@/hooks/useMuting';
 import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
@@ -36,11 +38,14 @@ import {
   Check,
   Repeat2,
   Flag,
-  EyeOff,
   Heart,
   UserMinus,
   UserX,
   Code,
+  PlusCircle,
+  MinusCircle,
+  Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface PostCardProps {
@@ -72,6 +77,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // The "…" menu has two pages, like Facebook's: the main list, and the
+  // "More options" list behind a Back row. Closing always resets to main.
+  const [menuPage, setMenuPage] = useState<'main' | 'more'>('main');
   const [showComments, setShowComments] = useState(false);
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -85,6 +93,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const muteMutation = useMuteUser();
   const blockMutation = useBlockUser();
   const castVoteMutation = useCastVote();
+  const hidePost = useHidePost();
+  const deleteMutation = useDeletePost();
+  const toast = useGlobalToast();
 
   const { data: authorProfile } = useUserProfile(post.author_id);
   const { data: reposterProfile } = useUserProfile(post.is_repost ? post.reposted_by : undefined);
@@ -110,69 +121,105 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     bookmarkMutation.mutate(post.id, {
       onError: () => setBookmarked(wasBookmarked),
     });
-    setIsMoreOpen(false);
+    closeMenu();
   };
 
   const handlePin = () => {
     togglePinMutation.mutate({ postId: post.id, pinned: !post.is_pinned });
-    setIsMoreOpen(false);
+    closeMenu();
   };
 
   const handleShare = () => {
     setShowShareDialog(true);
   };
 
-  const handleReport = () => {
+  const closeMenu = () => {
     setIsMoreOpen(false);
+    setMenuPage('main');
+  };
+
+  const handleReport = () => {
+    closeMenu();
     const reason = prompt('Why are you reporting this post? (spam, abuse, hate, other)');
     if (!reason) return;
     void api
       .post(`/v1/posts/${post.id}/report`, { reason })
-      .then(() => alert('Thanks — our team will review this post.'))
-      .catch(() => alert('Sorry — we could not submit your report. Try again later.'));
+      .then(() => toast({ type: 'success', title: 'Report sent', description: 'Thanks — our team will review this post.' }))
+      .catch(() => toast({ type: 'error', title: "Couldn't send your report", description: 'Try again in a moment.' }));
+  };
+
+  /*
+    Feed feedback is one endpoint with two signals and "latest wins", so
+    Interested is both a positive signal on its own and the undo of Not
+    interested. See usePostFeedback for the 404 this replaces.
+  */
+  const handleInterested = () => {
+    closeMenu();
+    hidePost
+      .interested(post.id)
+      .then(() => toast({ type: 'success', title: 'Got it — more like this.' }))
+      .catch(() => toast({ type: 'error', title: "Couldn't save that preference", description: 'Try again in a moment.' }));
   };
 
   const handleNotInterested = () => {
-    setIsMoreOpen(false);
-    void api
-      .post(`/v1/feed/not-interested`, { post_id: post.id })
-      .then(() => alert("Got it — we'll show you less like this."))
-      .catch(() => alert("We couldn't apply that preference right now."));
+    closeMenu();
+    hidePost
+      .hide(post.id)
+      .then((snapshot) => {
+        toast({
+          type: 'info',
+          title: 'Hidden',
+          customContent: (
+            <HiddenPostToast onUndo={() => hidePost.undo(post.id, snapshot)} />
+          ),
+        });
+      })
+      .catch(() => toast({ type: 'error', title: "Couldn't hide that post", description: 'It is back where it was. Try again in a moment.' }));
   };
 
   const handleMuteAuthor = () => {
-    setIsMoreOpen(false);
+    closeMenu();
     if (!confirm(`Hide all posts from ${name}?`)) return;
     muteMutation.mutate(
       { muted_id: post.author_id },
       {
-        onSuccess: () =>
-          alert(`Muted. You won't see posts from ${name} anymore.`),
+        onSuccess: () => toast({ type: 'success', title: `Hiding posts from ${name}`, description: "You won't see their posts anymore." }),
+        onError: () => toast({ type: 'error', title: `Couldn't hide ${name}`, description: 'Try again in a moment.' }),
       },
     );
   };
 
   const handleBlockAuthor = () => {
-    setIsMoreOpen(false);
+    closeMenu();
     const username = authorProfile?.username;
     if (!username) {
-      alert("Can't block — author info is still loading. Try again.");
+      toast({ type: 'warning', title: "Can't block yet", description: 'Author info is still loading. Try again.' });
       return;
     }
     if (!confirm(`Block @${username}? You won't see each other's content.`))
       return;
     blockMutation.mutate(username, {
-      onSuccess: () => alert(`Blocked @${username}.`),
+      onSuccess: () => toast({ type: 'success', title: `Blocked @${username}` }),
+      onError: () => toast({ type: 'error', title: `Couldn't block @${username}`, description: 'Try again in a moment.' }),
     });
   };
 
   const handleEmbed = () => {
-    setIsMoreOpen(false);
+    closeMenu();
     const iframe = `<iframe src="${window.location.origin}/post/${post.id}/embed" width="550" height="420" frameborder="0" allowfullscreen></iframe>`;
     navigator.clipboard
       .writeText(iframe)
-      .then(() => alert("Embed code copied to clipboard."))
-      .catch(() => alert("Could not copy embed code."));
+      .then(() => toast({ type: 'success', title: 'Embed code copied' }))
+      .catch(() => toast({ type: 'error', title: "Couldn't copy the embed code" }));
+  };
+
+  const handleDelete = () => {
+    closeMenu();
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    deleteMutation.mutate(post.id, {
+      onSuccess: () => toast({ type: 'success', title: 'Post deleted' }),
+      onError: () => toast({ type: 'error', title: "Couldn't delete the post", description: 'Try again in a moment.' }),
+    });
   };
 
   const handleVote = (optionId: string) => {
@@ -184,12 +231,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setIsMoreOpen(false);
+        setMenuPage('main');
+      }
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMoreOpen(false);
+        setMenuPage('main');
       }
     };
     if (isMoreOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKey);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [isMoreOpen]);
 
   const resolvedProfile = isOwnPost ? profile : authorProfile;
@@ -288,7 +346,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         <div className="relative" ref={moreMenuRef}>
           <button
-            onClick={() => setIsMoreOpen(!isMoreOpen)}
+            onClick={() => (isMoreOpen ? closeMenu() : setIsMoreOpen(true))}
+            aria-label="More options"
+            aria-haspopup="menu"
+            aria-expanded={isMoreOpen}
             className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/40 hover:bg-brand-divider hover:text-brand-text/80'}`}
           >
             <MoreHorizontal className="w-5 h-5" />
@@ -302,18 +363,68 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="absolute right-0 mt-1 w-64 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1.5 z-100"
+                role="menu"
               >
-                {!isOwnPost && (
+                {/*
+                  Not your post, main page — Facebook's order: signal, then
+                  keep, then flag, then the rest behind "More options".
+                */}
+                {!isOwnPost && menuPage === 'main' && (
                   <>
-                    <button onClick={handleNotInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <EyeOff className="w-4 h-4 text-brand-text/60 mt-0.5" />
+                    <button role="menuitem" onClick={handleInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <PlusCircle className="w-4 h-4 text-brand-text/60 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-brand-text font-medium">Interested</div>
+                        <div className="text-[11px] text-brand-text/50">More of these posts.</div>
+                      </div>
+                    </button>
+
+                    <button role="menuitem" onClick={handleNotInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <MinusCircle className="w-4 h-4 text-brand-text/60 mt-0.5" />
                       <div className="flex-1">
                         <div className="text-[13px] text-brand-text font-medium">Not interested</div>
                         <div className="text-[11px] text-brand-text/50">Less of these posts.</div>
                       </div>
                     </button>
 
-                    <button onClick={handleMuteAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
+                    <button role="menuitem" onClick={handleBookmark} aria-pressed={bookmarked} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <Bookmark className={`w-4 h-4 mt-0.5 ${bookmarked ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/60'}`} />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-brand-text font-medium">{bookmarked ? 'Saved' : 'Save post'}</div>
+                        <div className="text-[11px] text-brand-text/50">{bookmarked ? 'In your saved posts.' : 'Add to your saved posts.'}</div>
+                      </div>
+                    </button>
+
+                    <button role="menuitem" onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left">
+                      <Flag className="w-4 h-4 text-danger mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-[13px] text-danger font-medium">Report post</div>
+                        <div className="text-[11px] text-danger/60">We won't tell {name}.</div>
+                      </div>
+                    </button>
+
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
+                    <button role="menuitem" aria-haspopup="menu" onClick={() => setMenuPage('more')} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <div className="flex-1 text-[13px] text-brand-text font-medium">More options</div>
+                      <ChevronRight className="w-4 h-4 text-brand-text/40" />
+                    </button>
+                  </>
+                )}
+
+                {/* Not your post, second page — the same panel, with a Back row. */}
+                {!isOwnPost && menuPage === 'more' && (
+                  <>
+                    <button type="button" onClick={() => setMenuPage('main')} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <ArrowLeft className="w-4 h-4 text-brand-text/60" />
+                      <span className="text-[13px] text-brand-text font-semibold">Back</span>
+                    </button>
+
+                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
+                    <button role="menuitem" onClick={handleMuteAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
                       <UserMinus className="w-4 h-4 text-brand-text/60 mt-0.5" />
                       <div className="flex-1">
                         <div className="text-[13px] text-brand-text font-medium">Hide all from {name}</div>
@@ -321,9 +432,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       </div>
                     </button>
 
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button onClick={handleEmbed} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                    <button role="menuitem" onClick={handleEmbed} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
                       <Code className="w-4 h-4 text-brand-text/60 mt-0.5" />
                       <div className="flex-1">
                         <div className="text-[13px] text-brand-text font-medium">Embed</div>
@@ -333,15 +442,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
                     <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
 
-                    <button onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/5 transition-colors text-left">
-                      <Flag className="w-4 h-4 text-danger mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-danger font-medium">Report</div>
-                        <div className="text-[11px] text-danger/60">We won't tell {name}.</div>
-                      </div>
-                    </button>
-
-                    <button onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/5 transition-colors text-left">
+                    <button role="menuitem" onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left">
                       <UserX className="w-4 h-4 text-danger mt-0.5" />
                       <div className="flex-1">
                         <div className="text-[13px] text-danger font-medium">Block {name}</div>
@@ -352,25 +453,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 )}
 
                 {isOwnPost && (
-                  <button onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                    <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/40'}`} />
-                    <span className="text-[13px] text-brand-text font-medium">
-                      {post.is_pinned ? 'Unpin' : 'Pin'}
-                    </span>
-                  </button>
-                )}
-
-                {isOwnPost && (
                   <>
+                    <button role="menuitem" onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
+                      <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/40'}`} />
+                      <span className="text-[13px] text-brand-text font-medium">
+                        {post.is_pinned ? 'Unpin' : 'Pin'}
+                      </span>
+                    </button>
+
                     <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
+
                     <button
-                      onClick={() => {
-                        setIsMoreOpen(false);
-                        alert('Delete is not available yet.');
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-red-50 transition-colors text-left text-red-500"
+                      role="menuitem"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left text-danger disabled:opacity-50"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      <Trash2 className="w-4 h-4" />
                       <span className="text-[13px] font-medium">Delete</span>
                     </button>
                   </>
@@ -548,7 +647,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <h5 className="text-sm font-semibold text-brand-text">{pollData.question}</h5>
           )}
           {pollEnded && (
-            <p className="text-xs text-red-500 font-medium">Poll ended</p>
+            <p className="text-xs text-danger font-medium">Poll ended</p>
           )}
           <div className="space-y-2">
             {pollData.options.map((option) => {
