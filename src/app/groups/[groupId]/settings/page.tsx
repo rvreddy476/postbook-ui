@@ -192,7 +192,7 @@ export default function SpaceSettingsPage() {
         {/* ── Left: settings menu ───────────────────────────────────── */}
         <aside className="sticky top-0 flex h-[calc(100vh-5rem)] w-[300px] shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-4 xl:w-[330px]">
           <button
-            onClick={() => router.push(`/groups?space=${groupId}`)}
+            onClick={() => router.push(`/groups/${groupId}`)}
             className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-text/50 transition-colors hover:text-brand-text"
           >
             <ArrowLeft className="h-4 w-4" />

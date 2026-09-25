@@ -1,7 +1,6 @@
 'use client'
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import React, { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import AppShell from '@/components/AppShell'
@@ -25,7 +24,6 @@ import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
-import SpaceView from '@/components/groups/SpaceView'
 import type { Group, GroupPostV2 } from '@/types/groups'
 import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -62,33 +60,13 @@ function GroupAvatar({ avatarMediaId, name, size = 'w-10 h-10' }: { avatarMediaI
   )
 }
 
-// useSearchParams needs a Suspense boundary for static prerendering.
 export default function GroupsPage() {
-  return (
-    <Suspense>
-      <GroupsPageInner />
-    </Suspense>
-  )
-}
-
-function GroupsPageInner() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const qc = useQueryClient()
   const authUser = useAuthUser()
   const [view, setView] = useState<View>('feed')
   const [searchQuery, setSearchQuery] = useState('')
   const [composeGroup, setComposeGroup] = useState<Group | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
-  // A space picked from the rail opens in the middle column while the
-  // rail stays put; cleared whenever the user switches views.
-  // ?space=<id> (e.g. right after creating a space) preselects it.
-  const spaceParam = searchParams.get('space')
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(spaceParam)
-  useEffect(() => {
-    if (spaceParam) setSelectedSpaceId(spaceParam)
-  }, [spaceParam])
-
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
   const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
   const { data: searchResults } = useGroupSearch(searchQuery)
@@ -156,9 +134,6 @@ function GroupsPageInner() {
   const switchView = (v: View) => {
     setView(v)
     setSearchQuery('')
-    setSelectedSpaceId(null)
-    // Drop a lingering ?space= param so a refresh stays on this view.
-    if (spaceParam) router.replace('/groups', { scroll: false })
   }
 
   const renderFeedPost = (post: GroupPostV2 & { author_name?: string; author_avatar_url?: string }) => {
@@ -169,8 +144,8 @@ function GroupsPageInner() {
       <div key={post.id} className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
         {/* Space header — the outer card identifies the space, the
             user's post card sits inset below it. */}
-        <button
-          onClick={() => setSelectedSpaceId(post.group_id)}
+        <Link
+          href={`/groups/${post.group_id}`}
           className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-brand-text/5"
         >
           <GroupAvatar avatarMediaId={group?.avatar_media_id} name={group?.name ?? 'Space'} size="w-8 h-8" />
@@ -183,7 +158,7 @@ function GroupsPageInner() {
             )}
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-brand-text/30" />
-        </button>
+        </Link>
         <div className="border-t border-brand-divider bg-brand-secondary/40 p-3">
         <GroupPostCard
           post={post}
@@ -396,14 +371,14 @@ function GroupsPageInner() {
                 key={item.key}
                 onClick={() => switchView(item.key)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
-                  view === item.key && !searching && !selectedSpaceId
+                  view === item.key && !searching
                     ? 'bg-brand-text/8 text-brand-text'
                     : 'text-brand-text/60 hover:bg-brand-text/5 hover:text-brand-text'
                 }`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    view === item.key && !searching && !selectedSpaceId ? 'bg-brand-text text-brand-bg' : 'bg-brand-text/8 text-brand-text/60'
+                    view === item.key && !searching ? 'bg-brand-text text-brand-bg' : 'bg-brand-text/8 text-brand-text/60'
                   }`}
                 >
                   {item.icon}
@@ -453,27 +428,17 @@ function GroupsPageInner() {
             ) : myGroups && myGroups.length > 0 ? (
               <div className="space-y-0.5">
                 {myGroups.map((group) => (
-                  <button
+                  <Link
                     key={group.id}
-                    onClick={() => {
-                      setSelectedSpaceId(group.id)
-                      setSearchQuery('')
-                    }}
-                    className={`flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors ${
-                      selectedSpaceId === group.id
-                        ? 'bg-emerald-500/10 ring-1 ring-emerald-500/40'
-                        : 'hover:bg-brand-text/5'
-                    }`}
+                    href={`/groups/${group.handle || group.id}`}
+                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-brand-text/5"
                   >
                     <GroupAvatar avatarMediaId={group.avatar_media_id} name={group.name} />
                     <div className="min-w-0 flex-1">
-                      <p className={`truncate text-[13px] font-bold ${selectedSpaceId === group.id ? 'text-brand-text' : 'text-brand-text'}`}>{group.name}</p>
+                      <p className="truncate text-[13px] font-bold text-brand-text">{group.name}</p>
                       <p className="truncate text-[11px] text-brand-text/40">{lastActive(group.updated_at)}</p>
                     </div>
-                    {selectedSpaceId === group.id && (
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                    )}
-                  </button>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -486,11 +451,6 @@ function GroupsPageInner() {
 
         {/* ── Middle: selected space / feed / discover / my spaces / invites ── */}
         <main className="min-w-0 flex-1 px-4 pt-5 pb-16 lg:px-6">
-          {selectedSpaceId ? (
-            <div className="mx-auto max-w-[960px]">
-              <SpaceView key={selectedSpaceId} groupId={selectedSpaceId} />
-            </div>
-          ) : (
           <div className="mx-auto max-w-[680px]">
             <h2 className="mb-4 px-1 text-[17px] font-extrabold tracking-tight text-brand-text">{middleTitle}</h2>
 
@@ -501,7 +461,7 @@ function GroupsPageInner() {
                   key={item.key}
                   onClick={() => switchView(item.key)}
                   className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
-                    view === item.key && !searching && !selectedSpaceId
+                    view === item.key && !searching
                       ? 'bg-brand-text text-brand-bg'
                       : 'bg-brand-text/8 text-brand-text/60'
                   }`}
@@ -536,12 +496,10 @@ function GroupsPageInner() {
               )
             )}
           </div>
-          )}
         </main>
 
-        {/* ── Right rail: ads / sponsored — hidden while a space is open
-               so the space content uses the full width ──────────────── */}
-        <aside className={`sticky top-0 h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 ${selectedSpaceId ? 'hidden' : 'hidden lg:flex'}`}>
+        {/* ── Right rail: ads / sponsored ─────────────────────────── */}
+        <aside className="sticky top-0 hidden h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 lg:flex">
           <p className="px-1 text-[11px] font-black tracking-widest text-brand-text/40">Sponsored</p>
           <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
             <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-brand-text/5">

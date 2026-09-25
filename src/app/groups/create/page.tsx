@@ -81,7 +81,7 @@ export default function CreateSpacePage() {
       })
       // Land back on Groups with the new space selected in the rail
       // and opened in the middle column.
-      router.push(`/groups?space=${group.id}`)
+      router.push(`/groups/${group.id}`)
     } catch (err: unknown) {
       /*
         "Try a different name" was a guess, and a wrong one: it hid the real

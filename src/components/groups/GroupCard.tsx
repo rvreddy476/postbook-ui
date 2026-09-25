@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Globe, Lock, Shield, Users, Check, Clock, Plus, LogOut, BellOff, MessageSquare, X } from 'lucide-react'
+import { Globe, Lock, Shield, Users, Check, Clock, Plus, LogOut, MessageSquare, X } from 'lucide-react'
 import { useJoinGroup, useLeaveGroup } from '@/hooks/useGroups'
 import type { Group } from '@/types/groups'
 
@@ -153,17 +153,16 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
             </button>
             {showDropdown && (
               <div className="absolute right-0 top-full z-50 mt-1 min-w-32 overflow-hidden rounded-lg border border-brand-divider bg-brand-card py-0.5 shadow-lg">
+                {/*
+                  No Mute. group-service has no mute route and no column to
+                  hold one; this item's onClick only closed the menu it sat
+                  in. Per-group notification control needs a backend first.
+                */}
                 <button
                   onClick={handleLeave}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-danger hover:bg-danger/10"
                 >
                   <LogOut className="w-3 h-3" /> Leave
-                </button>
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDropdown(false) }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-brand-text hover:bg-brand-text/5"
-                >
-                  <BellOff className="w-3 h-3" /> Mute
                 </button>
               </div>
             )}
@@ -172,7 +171,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, isMyGroup }) => {
           <button
             disabled
             onClick={(e) => e.preventDefault()}
-            className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold cursor-default"
+            className="flex items-center gap-1 px-3 py-1.5 bg-warning/10 text-warning rounded-lg text-[10px] font-bold cursor-default"
           >
             <Clock className="w-3 h-3" />
             Pending
