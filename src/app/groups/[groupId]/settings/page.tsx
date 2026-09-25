@@ -10,13 +10,18 @@ import {
 
 import AppShell from '@/components/AppShell'
 import api from '@/lib/api'
-import { useDeleteGroup, useGroupDetails, useGroupMembers, useUpdateGroup } from '@/hooks/useGroups'
+import {
+  useDeleteGroup,
+  useGroupDetails,
+  useGroupMembers,
+  useJoinRequests,
+  useUpdateGroup,
+} from '@/hooks/useGroups'
 import {
   usePendingGroupPosts,
   useApproveGroupPost,
   useRejectGroupPost,
   useGroupBans,
-  useGroupJoinRequests,
 } from '@/hooks/useGroupAdmin'
 import GroupJoinRequestsPanel from '@/components/groups/GroupJoinRequestsPanel'
 import GroupRulesTab from '@/components/groups/tabs/GroupRulesTab'
@@ -35,7 +40,12 @@ interface PendingPost {
 
 interface BanEntry {
   user_id: string
-  reason?: string
+  /*
+    The server sends store.GroupMember, whose field is removal_reason.
+    This read "reason", so even with the list fixed the reason would have
+    stayed invisible — a drop hiding inside a drop.
+  */
+  removal_reason?: string
 }
 
 function resolveVisibility(value?: string): 'public' | 'private' {
@@ -65,7 +75,7 @@ export default function SpaceSettingsPage() {
   const updateGroup = useUpdateGroup()
   const deleteGroup = useDeleteGroup()
 
-  const { data: joinRequests } = useGroupJoinRequests(groupId)
+  const { data: joinRequests } = useJoinRequests(groupId)
   const { data: pendingPosts } = usePendingGroupPosts(groupId)
   const approvePost = useApproveGroupPost(groupId)
   const rejectPost = useRejectGroupPost(groupId)
@@ -450,7 +460,7 @@ export default function SpaceSettingsPage() {
                       <div key={b.user_id} className="flex items-center gap-3 rounded-xl border border-brand-divider p-3">
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-bold text-brand-text">{b.user_id}</p>
-                          {b.reason && <p className="truncate text-[11px] text-brand-text/45">{b.reason}</p>}
+                          {b.removal_reason && <p className="truncate text-[11px] text-brand-text/45">{b.removal_reason}</p>}
                         </div>
                         <button
                           onClick={() => unban.mutate(b.user_id)}
