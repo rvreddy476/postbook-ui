@@ -62,9 +62,13 @@ const primaryItems: Item[] = [
   { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
   { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
   { id: 'Circle', label: 'Connections', icon: UserRoundPlus, href: '/connections', color: 'text-current' },
-  { id: 'Groups', label: 'MySpace', icon: Users, href: '/groups', color: 'text-current' },
-  { id: 'Channels', label: 'Channels', icon: Radio, href: '/channels', color: 'text-current' },
-  // Communities feature disabled — consolidated into Groups ("MySpace").
+  { id: 'Groups', label: 'Groups', icon: Users, href: '/groups', color: 'text-current' },
+  /*
+    No Channels entry. Channels are a MOBILE product now: the API and the
+    messenger's channel panel both stay, but the web has no /channels pages,
+    so a nav item pointing at them would be a link to nothing.
+  */
+  // Communities feature disabled — consolidated into Groups.
   // Service + pages kept; only the entry points are hidden.
   // { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-current' },
 ];

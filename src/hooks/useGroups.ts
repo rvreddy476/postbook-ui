@@ -63,24 +63,6 @@ export function useGroupMembers(groupId: string | undefined, limit = 20) {
   })
 }
 
-export function useGroupFeed(groupId: string | undefined) {
-  return useInfiniteQuery({
-    queryKey: ["group-feed", groupId],
-    queryFn: async ({ pageParam = 0 }) => {
-      const res = await api.get<GroupPostsResponse>(`/v1/groups/${groupId}/feed`, {
-        params: { limit: 20, offset: pageParam },
-      })
-      return { data: res.data.data, offset: pageParam as number }
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.data.length < 20) return undefined
-      return (lastPage.offset as number) + 20
-    },
-    enabled: !!groupId,
-  })
-}
-
 export function useGroupFeedV2(groupId: string | undefined) {
   return useInfiniteQuery({
     queryKey: ["group-feed-v2", groupId],
@@ -119,17 +101,6 @@ export function useGroupSearch(query: string) {
       return res.data.data
     },
     enabled: query.length >= 2,
-  })
-}
-
-export function useGroupInvites(groupId: string | undefined) {
-  return useQuery({
-    queryKey: ["group-invites", groupId],
-    queryFn: async () => {
-      const res = await api.get<InvitesResponse>(`/v1/groups/${groupId}/invites`)
-      return res.data.data
-    },
-    enabled: !!groupId,
   })
 }
 
@@ -220,19 +191,6 @@ export function useDeleteGroup() {
   return useMutation({
     mutationFn: async (groupId: string) => {
       await api.delete(`/v1/groups/${groupId}`)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["my-groups"] })
-      qc.invalidateQueries({ queryKey: ["discover-groups"] })
-    },
-  })
-}
-
-export function useArchiveGroup() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (groupId: string) => {
-      await api.post(`/v1/groups/${groupId}/archive`)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-groups"] })
@@ -410,19 +368,6 @@ export function useCreateGroupPost() {
   })
 }
 
-export function useCreateJoinRequest() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (groupId: string) => {
-      const res = await api.post<JoinRequestResponse>(`/v1/groups/${groupId}/join-requests`)
-      return res.data.data
-    },
-    onSuccess: (_, groupId) => {
-      qc.invalidateQueries({ queryKey: ["group-join-requests", groupId] })
-    },
-  })
-}
-
 export function useApproveJoinRequest() {
   const qc = useQueryClient()
   return useMutation({
@@ -487,43 +432,6 @@ export function useGroupMedia(groupId: string | undefined) {
   })
 }
 
-export function useDeleteGroupPost() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ groupId, postId }: { groupId: string; postId: string }) => {
-      await api.delete(`/v1/groups/${groupId}/posts/${postId}`)
-    },
-    onSuccess: (_, { groupId }) => {
-      qc.invalidateQueries({ queryKey: ["group-feed", groupId] })
-      qc.invalidateQueries({ queryKey: ["group", groupId] })
-    },
-  })
-}
-
-export function usePinPost() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ groupId, postId }: { groupId: string; postId: string }) => {
-      await api.put(`/v1/groups/${groupId}/posts/${postId}/pin`)
-    },
-    onSuccess: (_, { groupId }) => {
-      qc.invalidateQueries({ queryKey: ["group-feed", groupId] })
-    },
-  })
-}
-
-export function useUnpinPost() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ groupId, postId }: { groupId: string; postId: string }) => {
-      await api.delete(`/v1/groups/${groupId}/posts/${postId}/pin`)
-    },
-    onSuccess: (_, { groupId }) => {
-      qc.invalidateQueries({ queryKey: ["group-feed", groupId] })
-    },
-  })
-}
-
 export function useUnbanMember() {
   const qc = useQueryClient()
   return useMutation({
@@ -534,17 +442,6 @@ export function useUnbanMember() {
       qc.invalidateQueries({ queryKey: ["group", groupId] })
       qc.invalidateQueries({ queryKey: ["group-members", groupId] })
     },
-  })
-}
-
-export function useBannedMembers(groupId: string | undefined) {
-  return useQuery({
-    queryKey: ["group-banned", groupId],
-    queryFn: async () => {
-      const res = await api.get<MembersResponse>(`/v1/groups/${groupId}/members/banned`)
-      return res.data.data
-    },
-    enabled: !!groupId,
   })
 }
 

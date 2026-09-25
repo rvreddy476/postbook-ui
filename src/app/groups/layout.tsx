@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'MySpace | VChat',
+    title: 'Groups | VChat',
 }
 
 export default function GroupsLayout({

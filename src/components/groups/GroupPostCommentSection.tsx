@@ -8,8 +8,6 @@ import {
   MoreHorizontal,
   Pin,
   Trash2,
-  Pencil,
-  Sparkles,
   X,
   ChevronDown,
   AlertCircle,
@@ -184,7 +182,7 @@ const ActionMenu: React.FC<{
             onClose()
           }}
           className={`flex w-full items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium transition hover:bg-brand-secondary ${
-            item.danger ? 'text-red-600' : 'text-brand-text'
+            item.danger ? 'text-danger' : 'text-brand-text'
           }`}
         >
           {item.icon}
@@ -299,7 +297,7 @@ const InlineReplyInput: React.FC<{
       </div>
       {text.length > 0 && (
         <div className="flex justify-end mt-0.5 mr-1">
-          <span className={`text-[10px] ${overLimit ? 'text-red-500 font-semibold' : 'text-brand-text/30'}`}>
+          <span className={`text-[10px] ${overLimit ? 'text-danger font-semibold' : 'text-brand-text/30'}`}>
             {text.length}/{MAX_CHARS}
           </span>
         </div>
@@ -322,36 +320,18 @@ const CommentRow: React.FC<{
   onSubmitReply: (body: string, parentId: string) => void
   onCancelReply: () => void
   onDelete: (commentId: string) => void
-  onEdit: (commentId: string, newBody: string) => void
-  onPin: (commentId: string) => void
-  onSpark: (commentId: string) => void
-  sparkedIds: Set<string>
 }> = ({
   comment, isAdmin, currentUserId, currentUserName, currentUserAvatar,
   isReply, replyOpen, onToggleReply, onSubmitReply, onCancelReply,
-  onDelete, onEdit, onPin, onSpark, sparkedIds,
+  onDelete,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
-  const [editText, setEditText] = useState(comment.body)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const isOwnComment = comment.user_id === currentUserId
-  const sparked = sparkedIds.has(comment.id)
-  const displaySparkCount = comment.spark_count + (sparked ? 1 : 0)
 
   const menuItems: { label: string; icon: React.ReactNode; onClick: () => void; danger?: boolean }[] = []
 
-  if (isOwnComment) {
-    menuItems.push({
-      label: 'Edit',
-      icon: <Pencil className="w-3.5 h-3.5" />,
-      onClick: () => {
-        setEditing(true)
-        setEditText(comment.body)
-      },
-    })
-  }
   if (isOwnComment || isAdmin) {
     menuItems.push({
       label: 'Delete',
@@ -360,25 +340,8 @@ const CommentRow: React.FC<{
       danger: true,
     })
   }
-  if (isAdmin) {
-    menuItems.push({
-      label: comment.is_pinned ? 'Unpin' : 'Pin',
-      icon: <Pin className="w-3.5 h-3.5" />,
-      onClick: () => onPin(comment.id),
-    })
-  }
 
   const hasMenu = menuItems.length > 0
-
-  const handleSaveEdit = () => {
-    const trimmed = editText.trim()
-    if (!trimmed || trimmed === comment.body) {
-      setEditing(false)
-      return
-    }
-    onEdit(comment.id, trimmed)
-    setEditing(false)
-  }
 
   return (
     <div className={`${isReply ? 'ml-10 border-l-2 border-brand-divider pl-3' : ''} py-3 border-b border-brand-divider`}>
@@ -416,67 +379,23 @@ const CommentRow: React.FC<{
             )}
           </div>
 
-          {/* Body or edit form */}
-          {editing ? (
-            <div className="mt-1.5 space-y-2">
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-divider focus:ring-brand-text/40 transition resize-none"
-                rows={2}
-                maxLength={MAX_CHARS}
-                autoFocus
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-brand-text/30">{editText.length}/{MAX_CHARS}</span>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="text-[12px] font-medium text-brand-text/60 px-3 py-1 rounded-full hover:bg-brand-secondary transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveEdit}
-                    disabled={!editText.trim()}
-                    className="text-[12px] font-semibold px-3 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40 transition hover:bg-primary-ink/90"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-[13px] text-brand-text/80 leading-relaxed mt-0.5">{comment.body}</p>
-          )}
+          {/* Body */}
+          <p className="text-[13px] text-brand-text/80 leading-relaxed mt-0.5">{comment.body}</p>
 
-          {/* Actions: Spark + Reply */}
-          {!editing && (
+          {/* Actions: Reply */}
+          {!isReply && !comment.parent_id && (
             <div className="flex items-center gap-3.5 mt-1.5">
               <button
-                onClick={() => onSpark(comment.id)}
+                onClick={() => onToggleReply(comment.id, comment.user_name || 'User')}
                 className={`flex items-center gap-1 text-[12px] transition ${
-                  sparked
-                    ? 'text-amber-500 font-semibold'
-                    : 'text-brand-text/40 hover:text-amber-500'
+                  replyOpen
+                    ? 'text-brand-text font-semibold'
+                    : 'text-brand-text/40 hover:text-brand-text'
                 }`}
               >
-                <Sparkles className={`w-3.5 h-3.5 ${sparked ? 'fill-amber-500' : ''}`} />
-                {displaySparkCount > 0 && <span>{displaySparkCount}</span>}
+                <MessageCircle className="w-3.5 h-3.5" />
+                Reply
               </button>
-              {!isReply && !comment.parent_id && (
-                <button
-                  onClick={() => onToggleReply(comment.id, comment.user_name || 'User')}
-                  className={`flex items-center gap-1 text-[12px] transition ${
-                    replyOpen
-                      ? 'text-brand-text font-semibold'
-                      : 'text-brand-text/40 hover:text-brand-text'
-                  }`}
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Reply
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -496,9 +415,9 @@ const CommentRow: React.FC<{
 
       {/* Delete confirmation */}
       {confirmDelete && (
-        <div className="mt-2 ml-10 flex items-center gap-2 p-2.5 rounded-xl bg-red-50 border border-red-200">
-          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-          <span className="text-[12px] text-red-700 flex-1">Delete this comment?</span>
+        <div className="mt-2 ml-10 flex items-center gap-2 p-2.5 rounded-xl bg-danger/10 border border-danger/30">
+          <AlertCircle className="w-4 h-4 text-danger shrink-0" />
+          <span className="text-[12px] text-danger flex-1">Delete this comment?</span>
           <button
             onClick={() => setConfirmDelete(false)}
             className="text-[12px] font-medium text-brand-text/60 px-2.5 py-1 rounded-full hover:bg-brand-secondary transition"
@@ -510,7 +429,7 @@ const CommentRow: React.FC<{
               onDelete(comment.id)
               setConfirmDelete(false)
             }}
-            className="text-[12px] font-semibold text-white bg-red-600 px-2.5 py-1 rounded-full hover:bg-red-700 transition"
+            className="text-[12px] font-semibold text-white bg-danger px-2.5 py-1 rounded-full hover:bg-danger/90 transition"
           >
             Delete
           </button>
@@ -557,7 +476,6 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [inputText, setInputText] = useState('')
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null)
-  const [sparkedIds, setSparkedIds] = useState<Set<string>>(new Set())
   const [optimisticError, setOptimisticError] = useState<string | null>(null)
 
   const [showMainEmoji, setShowMainEmoji] = useState(false)
@@ -839,36 +757,6 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
     }
   }, [groupId, postId, comments, qc])
 
-  const handleEdit = useCallback((commentId: string, newBody: string) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, body: newBody, updated_at: new Date().toISOString() } : c,
-      ),
-    )
-  }, [])
-
-  const handlePin = useCallback((commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === commentId) return { ...c, is_pinned: !c.is_pinned }
-        if (c.is_pinned) return { ...c, is_pinned: false }
-        return c
-      }),
-    )
-  }, [])
-
-  const handleSpark = useCallback((commentId: string) => {
-    setSparkedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(commentId)) {
-        next.delete(commentId)
-      } else {
-        next.add(commentId)
-      }
-      return next
-    })
-  }, [])
-
   const handleToggleReply = useCallback((commentId: string) => {
     setActiveReplyId(prev => prev === commentId ? null : commentId)
   }, [])
@@ -977,7 +865,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
         {/* Character counter */}
         {inputText.length > 0 && (
           <div className="flex items-center justify-end mt-1 mr-1">
-            <span className={`text-[10px] ${overLimit ? 'text-red-500 font-semibold' : 'text-brand-text/30'}`}>
+            <span className={`text-[10px] ${overLimit ? 'text-danger font-semibold' : 'text-brand-text/30'}`}>
               {inputText.length}/{MAX_CHARS}
             </span>
           </div>
@@ -999,7 +887,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
         )}
         {/* Optimistic error */}
         {optimisticError && (
-          <div className="mt-1.5 ml-10 flex items-center gap-1.5 text-[12px] text-red-500">
+          <div className="mt-1.5 ml-10 flex items-center gap-1.5 text-[12px] text-danger">
             <AlertCircle className="w-3.5 h-3.5" />
             {optimisticError}
           </div>
@@ -1055,10 +943,6 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                 onSubmitReply={handleReplySubmit}
                 onCancelReply={handleCancelReply}
                 onDelete={handleDelete}
-                onEdit={handleEdit}
-                onPin={handlePin}
-                onSpark={handleSpark}
-                sparkedIds={sparkedIds}
               />
               {/* Threaded replies */}
               {repliesByParent[comment.id]?.map((reply) => (
@@ -1079,10 +963,6 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                   onSubmitReply={handleReplySubmit}
                   onCancelReply={handleCancelReply}
                   onDelete={handleDelete}
-                  onEdit={handleEdit}
-                  onPin={handlePin}
-                  onSpark={handleSpark}
-                  sparkedIds={sparkedIds}
                 />
               ))}
             </React.Fragment>

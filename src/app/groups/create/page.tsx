@@ -79,7 +79,7 @@ export default function CreateSpacePage() {
         is_mature: isMature,
         idempotency_key: idempotency.current(),
       })
-      // Land back on MySpace with the new space selected in the rail
+      // Land back on Groups with the new space selected in the rail
       // and opened in the middle column.
       router.push(`/groups?space=${group.id}`)
     } catch (err: unknown) {
@@ -112,7 +112,7 @@ export default function CreateSpacePage() {
             className="mb-4 flex w-fit items-center gap-1.5 text-sm font-semibold text-brand-text/50 transition-colors hover:text-brand-text"
           >
             <ArrowLeft className="h-4 w-4" />
-            MySpace
+            Groups
           </button>
 
           <h1

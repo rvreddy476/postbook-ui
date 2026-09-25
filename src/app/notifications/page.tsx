@@ -23,7 +23,7 @@ const TABS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'activity', label: 'Activity' },
   { key: 'mentions', label: 'Mentions' },
-  { key: 'groups', label: 'MySpace' },
+  { key: 'groups', label: 'Groups' },
   { key: 'channels', label: 'Channels' },
   // Communities feature disabled — tab hidden, category handling kept.
   // { key: 'communities', label: 'Communities' },
