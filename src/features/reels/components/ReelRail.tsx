@@ -26,25 +26,29 @@ interface ReelRailProps {
   onComments: () => void;
   onShare: () => void;
   onSave: () => void;
-  onMore: () => void;
-  /** The more-menu popover is rendered by the parent inside this slot. */
+  /** Phone only: the rail carries More there. The desktop rail has none — More is on the frame. */
+  onMore?: () => void;
+  /** The more-menu popover is rendered by the parent inside this slot (phone). */
   moreMenu?: ReactNode;
   /**
-   * "desktop" (default) sits beside the stage: the author avatar on top,
-   * then 48px circles on the page background with counts under them.
-   * "phone" floats over the video, white on the picture, as before.
+   * "desktop" (default) stands beside the stage, bottom-aligned to the
+   * frame: the avatar with the plus badge, then Like, Comments, Save, Share
+   * as 48px circles with counts under them (78px per item). "phone" floats
+   * over the video and keeps its More button.
    */
   variant?: "desktop" | "phone";
 }
 
+/** Top to bottom; the rail reads Share, Save, Comments, Like, Avatar from the bottom, as TikTok's. */
+export const RAIL_ORDER = ["avatar", "like", "comments", "save", "share"] as const;
+
 /*
   The action rail. The author's avatar on top (a link to the profile) with
-  the Follow badge attached to its bottom edge, where TikTok puts its "+";
-  it follows — or subscribes, for a reel posted through a channel — and
-  disappears once the viewer follows, as TikTok's does. Then Like,
-  Comments, Save, Share, More; counts under the icons. Liked is the danger
-  colour, saved the accent. Colour only through the theme tokens so it
-  reads the same in light and dark.
+  the Follow badge — a 24px accent circle with a white plus — centred on
+  its bottom edge, where TikTok puts its "+"; it follows, or subscribes for
+  a reel posted through a channel, and disappears once the viewer follows.
+  Then Like, Comments, Save, Share; counts under the icons. Liked is the
+  danger colour, saved the accent. Colour only through the theme tokens.
 */
 export function ReelRail({
   reel,
@@ -71,17 +75,18 @@ export function ReelRail({
       : action === "follow" && following === false
         ? { label: `Follow ${reel.authorName}`, pending: followPending, onClick: onToggleFollow }
         : null;
-  const iconSize = variant === "desktop" ? 22 : 18;
+  const desktop = variant === "desktop";
+  const iconSize = desktop ? 24 : 18;
 
   return (
     <div className={`reel-action-rail is-${variant}`} onClick={(e) => e.stopPropagation()}>
       <div className="reel-rail-avatar-wrap">
         <Link href={profileHref} className="reel-rail-avatar" aria-label={`${reel.authorName}'s profile`}>
-          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={variant === "desktop" ? "lg" : "md"} />
+          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={desktop ? "lg" : "md"} />
         </Link>
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <Plus className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
+            <Plus size={14} strokeWidth={3} aria-hidden="true" />
           </button>
         ) : null}
       </div>
@@ -106,10 +111,12 @@ export function ReelRail({
       {!reel.shareHidden ? (
         <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<Send size={iconSize} />} />
       ) : null}
-      <div className="relative">
-        <RailButton label="More" onClick={onMore} icon={<MoreHorizontal size={iconSize} />} />
-        {moreMenu}
-      </div>
+      {!desktop && onMore ? (
+        <div className="relative">
+          <RailButton label="More" onClick={onMore} icon={<MoreHorizontal size={iconSize} />} />
+          {moreMenu}
+        </div>
+      ) : null}
     </div>
   );
 }

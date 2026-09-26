@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize2, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -43,17 +43,23 @@ import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
-import { COMMENTS_COLUMN_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
+import { COMMENTS_TRACK_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
 import { useBatchRelationships } from "@/hooks/useConnections";
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile";
 import { useGlobalToast } from "@/contexts/ToastContext";
 
 /*
-  The reels stage — one reel at a time on a canvas, the video framed at its
-  own aspect ratio; the action rail beside it; comments in a column to the
-  right; prev/next by keyboard, wheel, swipe or the arrows at the right
-  edge. Only short-form ever reaches here: the model drops long video and
-  feed posts before they are rendered.
+  The reels stage — TikTok's desktop page, to the pixel (stage.ts holds
+  the numbers): one reel at a time, the video framed at its own aspect
+  ratio, 16px from the top and 100dvh − 32 tall; the action rail 15px to
+  its right, bottom-aligned to the frame; a 117px empty zone after the
+  rail; and that whole cluster centred in the stage area. The More and
+  Cinema circles sit inside the frame's top-right; the arrows stand at
+  the area's right edge. Comments open as a 352px card to the right and
+  the cluster re-centres in what is left, the frame keeping its height.
+  Prev/next by keyboard, wheel, swipe or the arrows. Only short-form ever
+  reaches here: the model drops long video and feed posts before they are
+  rendered.
 
   The page sits inside the shared video shell under its "sidebar" chrome:
   no header, search at the top of the collapsible left menu, Create /
@@ -61,7 +67,7 @@ import { useGlobalToast } from "@/contexts/ToastContext";
   Nothing competes with the video: the author name and the rail avatar are
   plain links to the profile, and following is the badge on that avatar.
 
-  Theater (`f`, the expand button): a fixed black layer over the workspace
+  Theater (`f`, the Cinema circle): a fixed black layer over the workspace
   — the video with stacked arrows beside it, a right panel with the author,
   caption, counts and the thread, and a full-width control bar along the
   bottom. The browser's fullscreen is requested as well; if it refuses,
@@ -501,8 +507,10 @@ export function ReelsScreen() {
   const errored = (feed.isError || pinned.isError) && reels.length === 0;
   const empty = !loading && !errored && reels.length === 0;
 
-  const moreMenu = active ? (
+  // One menu, one open state; where it is drawn depends on which trigger holds it.
+  const moreMenuFor = (anchor: "beside" | "below") => active ? (
     <ReelMoreMenu
+      anchor={anchor}
       open={moreOpen}
       onClose={() => setMoreOpen(false)}
       reel={active}
@@ -542,10 +550,12 @@ export function ReelsScreen() {
     subscribePending: subscription.pending,
     onToggleSubscribe: () => void toggleSubscribe(),
   };
+  // The author card (comments column and theater panel): the same relationship plus the live toggles.
+  const authorCard = { ...railFollow, onLike, onSave, onShare };
 
   return (
     <VideoShell app="reels" chrome="sidebar" immersive>
-      <div ref={workspaceRef} className="reels-workspace" style={{ "--reel-comments-w": `${COMMENTS_COLUMN_WIDTH}px` } as CSSProperties}>
+      <div ref={workspaceRef} className="reels-workspace" style={{ "--reel-comments-w": `${COMMENTS_TRACK_WIDTH}px` } as CSSProperties}>
         <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
             <StateLayout stageRef={stageRef}>
@@ -602,7 +612,7 @@ export function ReelsScreen() {
               data-clear-screen={clear.on ? "" : undefined}
               data-theater={theater ? "" : undefined}
             >
-              {/* stage area: the video on the centre line, arrows at the right edge */}
+              {/* stage area: the [frame | rail | reserved] cluster centred, arrows at the right edge */}
               <motion.div layout transition={layoutTransition} className="reel-stage-area">
                 {theater ? (
                   <button type="button" aria-label="Exit theater" onClick={() => void exitTheater()} className="reel-theater-close">
@@ -619,8 +629,6 @@ export function ReelsScreen() {
                     dispatchClear({ type: "tap" });
                   }}
                 >
-                  {/* mirrors the rail's width so the video itself sits on the exact centre line */}
-                  <div className="reel-rail-spacer" aria-hidden="true" />
                   <StageFrame stageRef={stageRef} aspect={measuredAspect[active.id] ?? stageAspect(active.media.width, active.media.height)} layoutTransition={layoutTransition}>
                     <AnimatePresence initial={false} custom={direction} mode="popLayout">
                       <motion.div
@@ -685,24 +693,25 @@ export function ReelsScreen() {
                               onShare={onShare}
                               onSave={onSave}
                               onMore={() => setMoreOpen((v) => !v)}
-                              moreMenu={moreMenu}
+                              moreMenu={desktop ? undefined : moreMenuFor("beside")}
                             />
                           </div>
                         )}
                       </motion.div>
                     </AnimatePresence>
+                    {/* frame top-right: More (desktop; the phone rail has its own) and Cinema */}
                     {theater ? null : (
-                      <button
-                        type="button"
-                        aria-label="Theater mode"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void enterTheater();
-                        }}
-                        className="reel-expand-button"
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                      </button>
+                      <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
+                        <div className="reel-frame-action-wrap is-more">
+                          <button type="button" aria-label="More" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="reel-frame-action">
+                            <MoreHorizontal size={24} aria-hidden />
+                          </button>
+                          {desktop ? moreMenuFor("below") : null}
+                        </div>
+                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
+                          <Maximize size={24} aria-hidden />
+                        </button>
+                      </div>
                     )}
                     <AnimatePresence>
                       {clear.hint ? (
@@ -725,11 +734,11 @@ export function ReelsScreen() {
                         onComments={() => setCommentsOpen((v) => !v)}
                         onShare={onShare}
                         onSave={onSave}
-                        onMore={() => setMoreOpen((v) => !v)}
-                        moreMenu={moreMenu}
                       />
                     </div>
                   )}
+                  {/* TikTok's empty zone right of the rail; part of what gets centred */}
+                  <div className="reel-stage-reserve" aria-hidden="true" />
                 </div>
 
                 {theater ? null : arrows("is-edge")}
@@ -737,23 +746,10 @@ export function ReelsScreen() {
 
               {/* right column: the theater panel, the comments column, or the phone sheet */}
               {theater ? (
-                <ReelTheaterPanel
-                  reel={active}
-                  isOwn={isOwn}
-                  following={following}
-                  followPending={followPending}
-                  onToggleFollow={() => void toggleFollow()}
-                  subscribed={subscription.subscribed}
-                  subscribePending={subscription.pending}
-                  onToggleSubscribe={() => void toggleSubscribe()}
-                  onLike={onLike}
-                  onSave={onSave}
-                  onShare={onShare}
-                  focusCommentId={focusCommentId}
-                />
+                <ReelTheaterPanel reel={active} {...authorCard} focusCommentId={focusCommentId} />
               ) : desktop ? (
                 <div className="reel-comments-column" data-reel-side-panel>
-                  <ReelCommentsDrawer variant="column" open={showComments} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
+                  <ReelCommentsDrawer variant="column" open={showComments} reel={active} author={authorCard} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
                 </div>
               ) : (
                 <div className="reel-comments-sheet">
@@ -773,7 +769,7 @@ export function ReelsScreen() {
                   onVolumeChange={onVolumeChange}
                   onToggleSound={onToggleSound}
                   onMore={() => setMoreOpen((v) => !v)}
-                  moreMenu={moreMenu}
+                  moreMenu={moreMenuFor("beside")}
                 />
               ) : null}
             </div>
@@ -859,10 +855,10 @@ function StageFrame({
       transition={layoutTransition}
       // The frame takes the media's own ratio (--reel-ar): tall for a
       // portrait reel, wide for a landscape one. Its width is the smaller of
-      // what the stage height allows (height × ratio) and what the cluster
-      // leaves beside the rail and its mirror; the CSS in reels-screen.css
-      // does the arithmetic. --reel-height is what the viewport leaves after
-      // the stage padding (there is no header under the sidebar chrome).
+      // what the stage height allows (height × ratio) and what the area
+      // leaves beside the rail and the reserved zone; the CSS in
+      // reels-screen.css does the arithmetic. --reel-height is what the
+      // viewport leaves after the 16px stage padding (no header here).
       className="reel-stage"
       style={{ "--reel-ar": aspect } as CSSProperties}
     >
@@ -877,11 +873,11 @@ function StateLayout({ stageRef, children }: { stageRef: React.RefObject<HTMLDiv
     <div className="reels-content" data-single-column="">
       <div className="reel-stage-area">
         <div className="reel-stage-cluster">
-          <div className="reel-rail-spacer" aria-hidden="true" />
           <StageFrame stageRef={stageRef} aspect={STAGE_DEFAULT_ASPECT}>
             {children}
           </StageFrame>
           <div className="reel-desktop-rail" aria-hidden="true" />
+          <div className="reel-stage-reserve" aria-hidden="true" />
         </div>
       </div>
     </div>

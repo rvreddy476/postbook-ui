@@ -36,11 +36,11 @@ import {
   with the app roots on top. Reels has its own list, shaped like TikTok's:
   For You / Explore / Following / Friends / LIVE / Messages / Activity /
   Upload / Profile. Under the "sidebar" chrome (search in the menu, no
-  header) the list ends with "More", which opens an in-menu panel holding
-  the way back to Home, PostTube and Liked reels, the theme switch and
-  log out — under the "header" chrome those live in a divider group
-  instead. Keeping it pure — no hooks, no pathname — is what lets the tests
-  pin the lists down.
+  header) the list ends with "More", which opens a panel beside the icon
+  rail holding the way back to Home, PostTube and Liked reels, the theme
+  switch and log out — under the "header" chrome those live in a divider
+  group instead. Keeping it pure — no hooks, no pathname — is what lets
+  the tests pin the lists down.
 */
 
 export type VideoApp = "reels" | "tube";
@@ -125,13 +125,45 @@ export const REELS_NAV_APPS: readonly VideoNavItem[] = [
 /** The last entry of the sidebar-chrome reels menu: opens the More panel. */
 export const REELS_NAV_MORE: VideoNavItem = { key: "more", label: "More", icon: Ellipsis, action: "more" };
 
-/** The footer under the sidebar chrome: the legal links, then "© VChat". */
+/**
+ * The footer under the sidebar chrome, as TikTok's reads: two rows of
+ * links in a two-column grid ("About  Help" / "Terms & Policies  Privacy"),
+ * then the copyright line. Every link is a real route.
+ */
 export const REELS_SIDEBAR_FOOTER: readonly VideoNavItem[] = [
   { key: "about", label: "About", icon: Info, href: "/about" },
-  { key: "terms", label: "Terms", icon: FileText, href: "/terms" },
-  { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
   { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
+  { key: "terms", label: "Terms & Policies", icon: FileText, href: "/terms" },
+  { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
+export const REELS_SIDEBAR_COPYRIGHT = "© 2026 VChat";
+
+/**
+ * TikTok's left-menu geometry, measured live and used as px in
+ * video-shell.css; the tests pin these against the CSS. The expanded column
+ * is 240 wide; the rail 72 (icons only); the More panel opens as a 320px
+ * panel beside the rail (392 in all). Nav rows are 40px tall with a 4px gap
+ * (44 pitch), starting 24px under the 40px search pill at y 64, which puts
+ * every row within 5px of TikTok's. More-panel rows are 48px; its Dark
+ * mode row is 60px with three 32×25 segments.
+ */
+export const REELS_SIDEBAR_METRICS = {
+  expandedWidth: 240,
+  railWidth: 72,
+  morePanelWidth: 320,
+  logoTop: 20,
+  logoHeight: 28,
+  searchTop: 64,
+  searchHeight: 40,
+  listTop: 128,
+  rowHeight: 40,
+  rowGap: 4,
+  moreRowHeight: 48,
+  themeRowHeight: 60,
+  segmentWidth: 32,
+  segmentHeight: 25,
+  footerPadding: 24,
+} as const;
 
 /** The whole menu for one app under one chrome. Pure. */
 export function videoNav(app: VideoApp, chrome: VideoChrome = "header"): VideoNavSection[] {

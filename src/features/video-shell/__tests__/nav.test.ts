@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import {
   isNavItemCurrent,
@@ -7,7 +9,9 @@ import {
   REELS_NAV_APPS,
   REELS_NAV_MORE,
   REELS_NAV_TOP,
+  REELS_SIDEBAR_COPYRIGHT,
   REELS_SIDEBAR_FOOTER,
+  REELS_SIDEBAR_METRICS,
   VIDEO_NAV_FOOTER,
   VIDEO_NAV_TOP,
   VIDEO_NAV_YOU,
@@ -137,12 +141,70 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "explore"]);
   });
 
-  test("the footer is About, Terms, Privacy, Help and stays out of the rail", () => {
+  test("the footer reads About · Help / Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
     const footer = sections[1];
     expect(footer.rail).toBe(false);
     expect(footer.items.map((i) => [i.label, i.href])).toEqual([
-      ["About", "/about"], ["Terms", "/terms"], ["Privacy", "/privacy"], ["Help", "/help"],
+      ["About", "/about"], ["Help", "/help"], ["Terms & Policies", "/terms"], ["Privacy", "/privacy"],
     ]);
+    expect(REELS_SIDEBAR_COPYRIGHT).toBe("© 2026 VChat");
+  });
+
+  test("TikTok's menu geometry, and the CSS that draws it", () => {
+    expect(REELS_SIDEBAR_METRICS).toEqual({
+      expandedWidth: 240,
+      railWidth: 72,
+      morePanelWidth: 320,
+      logoTop: 20,
+      logoHeight: 28,
+      searchTop: 64,
+      searchHeight: 40,
+      listTop: 128,
+      rowHeight: 40,
+      rowGap: 4,
+      moreRowHeight: 48,
+      themeRowHeight: 60,
+      segmentWidth: 32,
+      segmentHeight: 25,
+      footerPadding: 24,
+    });
+    const m = REELS_SIDEBAR_METRICS;
+    // The pill sits 16px under the 28px logo row that starts at 20; the list 24px under the pill.
+    expect(m.logoTop + m.logoHeight + 16).toBe(m.searchTop);
+    expect(m.searchTop + m.searchHeight + 24).toBe(m.listTop);
+    // Ten rows (For You … Profile, More) on a 44px pitch from 128: TikTok's rows are not on one pitch
+    // (133, 177, 216, 265, 292, 336, 380, 443, 485, 512), so this is the agreed approximation — the
+    // first row is within 5px of For You and the last within 12px of More.
+    const rowTop = (i: number) => m.listTop + i * (m.rowHeight + m.rowGap);
+    expect(rowTop(0)).toBe(128);
+    expect(rowTop(1) - rowTop(0)).toBe(44);
+    expect(Math.abs(rowTop(0) - 133)).toBeLessThanOrEqual(5);
+    expect(rowTop(9)).toBe(524);
+    expect(Math.abs(rowTop(9) - 512)).toBeLessThanOrEqual(12);
+    expect(m.railWidth + m.morePanelWidth).toBe(392);
+
+    const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
+    expect(css).toContain(".video-shell__sidebar { flex: 0 0 240px; width: 240px;");
+    expect(css).toContain('.video-shell[data-sidebar="rail"] .video-shell__sidebar { flex-basis: 72px; width: 72px; }');
+    expect(css).toContain(".video-shell__sidebar:has(> .video-nav.is-more) { flex-basis: 392px; width: 392px; }");
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__top { padding: 20px 16px 0 24px;');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__brand { height: 28px;');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__search { margin: 16px 16px 0; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__search input { height: 40px; padding: 0 16px 0 44px; font-size: 16px; font-weight: 400; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__scroll { padding: 24px 8px 8px; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__list { gap: 4px; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__item { height: 40px; padding: 0 16px; gap: 12px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgb(var(--brand-text)); }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__item.is-current { background: transparent; color: rgb(var(--brand-accent)); font-weight: 700; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"].is-rail .video-nav__label { display: none; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__footer { padding: 0 24px 24px; border-top: 0; }');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__footer-links a { font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .5); }');
+    expect(css).toContain(".video-nav__column { display: flex; flex: 0 0 72px; width: 72px;");
+    expect(css).toContain(".video-nav.is-more .video-more { flex: 0 0 320px; width: 320px;");
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__item { height: 48px; padding: 0 16px; gap: 12px; border-radius: 0; font-size: 15px; font-weight: 500;');
+    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__heading { margin: 0; padding: 8px 16px 4px; font-size: 14px; font-weight: 400;');
+    expect(css).toContain("height: 60px; padding: 0 16px; }");
+    expect(css).toContain("grid-template-columns: repeat(3, 32px)");
+    expect(css).toContain("width: 32px; height: 25px;");
   });
 });
 

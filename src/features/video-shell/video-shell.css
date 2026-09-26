@@ -5,7 +5,10 @@
   menu and a floating cluster over the main area's top-right, as on
   TikTok. Colour only through the theme tokens (src/ui/theme.css via
   globals.css), so light and dark are the same rules. Widths: sidebar 240
-  expanded / 72 rail, aside 340, header 64 (4rem, owned by app-bar.css).
+  expanded / 72 rail (392 while the More panel stands beside the rail),
+  aside 340, header 64 (4rem, owned by app-bar.css). Under the sidebar
+  chrome the menu's geometry is TikTok's, measured in px (nav.ts
+  REELS_SIDEBAR_METRICS); the rules for it are grouped below.
 */
 
 /* ---- frame ------------------------------------------------------------ */
@@ -36,6 +39,8 @@
 .video-shell[data-chrome="sidebar"] .video-shell__main[data-immersive] { height: 100dvh; }
 .video-shell[data-chrome="sidebar"] .video-shell__scrim { inset: 0; }
 .video-shell[data-chrome="sidebar"] .video-shell__drawer { top: 0; }
+/* The More panel opens beside the 72px icon rail: the column grows to 392 (REELS_SIDEBAR_METRICS). */
+.video-shell__sidebar:has(> .video-nav.is-more) { flex-basis: 392px; width: 392px; }
 
 /* Top row: the product badge and the collapse toggle. */
 .video-nav__top { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 12px 4px 16px; }
@@ -53,6 +58,53 @@
 .video-nav__search input:focus { border-color: rgb(var(--brand-accent)); box-shadow: 0 0 0 3px rgb(var(--brand-accent) / .14); }
 .video-nav__search-button { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 6px auto 4px; border: 0; border-radius: 50%; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .85); cursor: pointer; transition: background-color 120ms ease; }
 .video-nav__search-button:hover { background: rgb(var(--brand-divider)); color: rgb(var(--brand-text)); }
+
+/* ---- TikTok's menu, to the pixel (sidebar chrome only; PostTube's menu is untouched) ----
+   Logo row at y 20, 28 tall; search pill x 16, y 64, 208×40; the list from y 128 in 40px
+   rows with a 4px gap; footer at the bottom behind 24px of padding. The rail is 72 wide,
+   icons only. The More panel is 320 wide beside the rail: 48px rows, 15/500, 16px in;
+   section labels 14/400 muted; the Dark mode row 60 tall with three 32×25 segments. */
+.video-nav[data-chrome="sidebar"] .video-nav__top { padding: 20px 16px 0 24px; gap: 8px; }
+.video-nav[data-chrome="sidebar"] .video-nav__brand { height: 28px; font-size: 20px; }
+.video-nav[data-chrome="sidebar"] .video-nav__toggle { width: 28px; height: 28px; border-radius: 6px; }
+.video-nav[data-chrome="sidebar"].is-rail .video-nav__top { flex-direction: column; align-items: center; gap: 8px; padding: 20px 0 0; }
+.video-nav[data-chrome="sidebar"] .video-nav__search { margin: 16px 16px 0; }
+.video-nav[data-chrome="sidebar"] .video-nav__search-icon { left: 12px; }
+.video-nav[data-chrome="sidebar"] .video-nav__search input { height: 40px; padding: 0 16px 0 44px; font-size: 16px; font-weight: 400; }
+.video-nav[data-chrome="sidebar"] .video-nav__search-button { width: 40px; height: 40px; margin: 16px auto 0; }
+.video-nav[data-chrome="sidebar"] .video-nav__scroll { padding: 24px 8px 8px; }
+.video-nav[data-chrome="sidebar"] .video-nav__list { gap: 4px; }
+.video-nav[data-chrome="sidebar"] .video-nav__item { height: 40px; padding: 0 16px; gap: 12px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-nav__item:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-nav__item.is-current { background: transparent; color: rgb(var(--brand-accent)); font-weight: 700; }
+.video-nav[data-chrome="sidebar"] .video-nav__item.is-current:hover { background: rgb(var(--brand-secondary)); }
+.video-nav[data-chrome="sidebar"] .video-nav__item.is-current::before { display: none; }
+/* the 72px rail: 40px rows, the 24px icon alone */
+.video-nav[data-chrome="sidebar"].is-rail .video-nav__scroll { padding: 24px 8px 8px; }
+.video-nav[data-chrome="sidebar"].is-rail .video-nav__item { flex-direction: row; justify-content: center; height: 40px; padding: 0; gap: 0; }
+.video-nav[data-chrome="sidebar"].is-rail .video-nav__label { display: none; }
+.video-nav[data-chrome="sidebar"].is-rail .video-nav__item.is-current::before { display: none; }
+/* footer: two rows of links in two columns, then the copyright */
+.video-nav[data-chrome="sidebar"] .video-nav__footer { padding: 0 24px 24px; border-top: 0; }
+.video-nav[data-chrome="sidebar"] .video-nav__footer-links { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 4px 12px; }
+.video-nav[data-chrome="sidebar"] .video-nav__footer-links a { font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .5); }
+.video-nav[data-chrome="sidebar"] .video-nav__footer-links a:hover { color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-nav__copyright { margin: 4px 0 0; font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .5); }
+/* More beside the rail: [72 column | 320 panel] */
+.video-nav.is-more { flex-direction: row; }
+.video-nav__column { display: flex; flex: 0 0 72px; width: 72px; flex-direction: column; min-height: 0; }
+.video-nav.is-more .video-more { flex: 0 0 320px; width: 320px; min-width: 0; border-left: 1px solid var(--brand-divider); }
+.video-nav[data-chrome="sidebar"] .video-more__head { padding: 20px 8px 8px 16px; }
+.video-nav[data-chrome="sidebar"] .video-more__scroll { padding: 0 0 16px; }
+.video-nav[data-chrome="sidebar"] .video-more .video-nav__section + .video-nav__section { margin-top: 4px; padding-top: 8px; }
+.video-nav[data-chrome="sidebar"] .video-more .video-nav__heading { margin: 0; padding: 8px 16px 4px; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; color: rgb(var(--brand-text) / .6); }
+.video-nav[data-chrome="sidebar"] .video-more .video-nav__list { gap: 0; }
+.video-nav[data-chrome="sidebar"] .video-more .video-nav__item { height: 48px; padding: 0 16px; gap: 12px; border-radius: 0; font-size: 15px; font-weight: 500; color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-more .video-nav__item.is-current { color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-more__theme { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 16px; }
+.video-nav[data-chrome="sidebar"] .video-more__theme-label { gap: 12px; font-size: 15px; font-weight: 500; color: rgb(var(--brand-text)); }
+.video-nav[data-chrome="sidebar"] .video-more__segmented { grid-template-columns: repeat(3, 32px); gap: 0; padding: 0; height: 25px; border-radius: 6px; overflow: hidden; }
+.video-nav[data-chrome="sidebar"] .video-more__segment { width: 32px; height: 25px; border-radius: 6px; font-size: 10px; }
 
 /* The floating cluster over the main area's top-right: Create, notifications, account. */
 .video-shell__top-cluster { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 6px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); box-shadow: 0 8px 24px -12px rgb(var(--brand-text) / .3); }

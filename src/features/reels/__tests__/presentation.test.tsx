@@ -4,9 +4,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient } from '@tanstack/react-query';
 import { toReelItem } from '../model';
 import { ReelOverlay } from '../components/ReelOverlay';
-import { ReelRail } from '../components/ReelRail';
+import { RAIL_ORDER, ReelRail } from '../components/ReelRail';
+import { ReelAuthorCard } from '../components/ReelAuthorCard';
 import { ReelExpandedDetails } from '../components/ReelExpandedDetails';
-import { COMMENTS_COLUMN_WIDTH } from '../stage';
+import { COMMENTS_COLUMN_WIDTH, COMMENTS_TRACK_WIDTH } from '../stage';
 import { ReelSettingsMenu } from '../components/ReelSettingsMenu';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -21,8 +22,10 @@ test('settings anchor below the control bar, not off the left of the portrait fr
   expect(html).not.toContain('md:right-full');
   for(const label of ['Quality','Playback speed','Captions','Auto-advance']) expect(html).toContain(label);
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
-  expect(css).toContain('width: min(280px,100%)');
+  expect(css).toContain('width: 280px');
   expect(css).toContain('top: calc(100% + 8px)');
+  // The gear now sits beside the sound control at the top-left, so its card hangs from the left edge.
+  expect(css).toContain('.reel-settings-slot .reel-settings-popover[role="menu"] { left: 0; right: auto; }');
 });
 
 test('expanded details carry creator and title but never public view counts', () => {
@@ -48,6 +51,35 @@ test('overlay always carries the author name (a plain link), title, caption and 
   expect(html).toContain('class="reel-author-row__name" href="/u/a"');
   expect(html).not.toContain('reel-follow-pill');
   expect(html).not.toContain('aria-haspopup="dialog"');
+  // TikTok's bottom-left block: 12px in, 16px up, 381px wide at most; the sound control 8px in, 40px square.
+  expect(html).toContain('class="reel-overlay-text"');
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  expect(css).toContain('.reel-overlay-text { max-width: 381px;');
+  expect(css).toContain('.reel-overlay-details { pointer-events: none; position: absolute; inset: auto 0 0 0; z-index: 10; padding: 64px 80px 16px 12px;');
+  expect(css).toContain('.reel-author-row__name { min-width: 0; font-size: 18px; font-weight: 700;');
+  expect(css).toContain('.reel-hashtags { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 14px; font-weight: 700;');
+  expect(css).toContain('.reel-view-count { margin: 6px 0 0; font-size: 12px; font-weight: 600; color: rgb(var(--reel-on-stage) / .7);');
+  expect(css).toContain('.reel-playback-controls { position: absolute; left: 8px; top: 8px;');
+  expect(css).toContain('.reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;');
+});
+
+test('frame top-right is More then Cinema, 48px circles 8px in; the old bottom-right expand button is gone', () => {
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  const screen=readFileSync(resolve(import.meta.dir,'../components/ReelsScreen.tsx'),'utf8');
+  expect(css).toContain('.reel-frame-actions { position: absolute; top: 8px; right: 8px; z-index: 30; display: flex; align-items: center; gap: 8px; }');
+  expect(css).toContain('.reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage));');
+  expect(css).not.toContain('reel-expand-button');
+  expect(screen).not.toContain('reel-expand-button');
+  expect(screen).not.toContain('reel-rail-spacer');
+  expect(screen).not.toContain('Maximize2');
+  // More first (right 56), then Cinema at the far right; More opens the existing menu below its circle.
+  const more=screen.indexOf('aria-label="More"');
+  const cinema=screen.indexOf('aria-label="Theater mode"');
+  expect(more).toBeGreaterThan(-1);
+  expect(cinema).toBeGreaterThan(more);
+  expect(screen).toContain('moreMenuFor("below")');
+  // The desktop rail no longer carries More; the phone rail keeps its own.
+  expect(css).toContain('.reel-frame-action-wrap.is-more { display: none; }');
 });
 
 const other=toReelItem({id:'r3',author_id:'b',content_type:'reel',author:{id:'b',username:'bee',display_name:'Bee'},media:[{media_id:'m',kind:'video'}]})!;
@@ -76,17 +108,68 @@ test('rail badge subscribes instead when the reel came through a channel, and st
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={undefined}/>)).not.toContain('reel-rail-follow');
 });
 
-test('the phone rail carries the same avatar and badge', () => {
+test('the phone rail carries the same avatar and badge, and keeps its More', () => {
   const html=renderToStaticMarkup(<ReelRail {...railBase} variant="phone" following={false}/>);
   expect(html).toContain('reel-action-rail is-phone');
   expect(html).toContain('reel-rail-avatar-wrap');
   expect(html).toContain('lucide-plus');
+  expect(html).toContain('aria-label="More"');
+  expect(renderToStaticMarkup(<ReelRail {...railBase} variant="phone" following={false} onMore={undefined}/>)).not.toContain('aria-label="More"');
 });
 
-test('comments column is a fixed 380px panel driven by the constant; the hover card is gone', () => {
+test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom — no More — as 48px circles with counts 6px under', () => {
+  expect([...RAIL_ORDER].reverse()).toEqual(['share','save','comments','like','avatar']);
+  const html=renderToStaticMarkup(<ReelRail {...railBase} following={false}/>);
+  const order=['reel-rail-avatar','aria-label="Like"','aria-label="Comments"','aria-label="Save"','aria-label="Share"'].map((m)=>html.indexOf(m));
+  for(const at of order) expect(at).toBeGreaterThan(-1);
+  expect([...order].sort((a,b)=>a-b)).toEqual(order);
+  expect(html).not.toContain('aria-label="More"');
+  expect(html).not.toContain('lucide-ellipsis');
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
-  expect(COMMENTS_COLUMN_WIDTH).toBe(380);
-  expect(css).toContain('grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 380px)');
+  expect(css).toContain('.reel-action-rail.is-desktop { gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent; width: var(--reel-rail-w); }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button { gap: 6px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 8px;');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-secondary));');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
+  // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
+  expect(css).toContain('width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--brand-accent));');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 20px; }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 8px; }');
+});
+
+test('the author card: avatar, name link, handle, Follow pill (Following outlined, Subscribe for a channel, nothing when own), counts row', () => {
+  const base={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},onLike:()=>{},onSave:()=>{},onShare:()=>{}};
+  const notFollowing=renderToStaticMarkup(<ReelAuthorCard {...base} following={false}/>);
+  expect(notFollowing).toContain('class="reel-author-card__name" href="/u/bee"');
+  expect(notFollowing).toContain('@bee');
+  expect(notFollowing).toContain('class="reel-panel-follow "');
+  expect(notFollowing).toContain('>Follow<');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={true}/>)).toContain('class="reel-panel-follow is-on"');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={undefined}/>)).not.toContain('reel-panel-follow');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} isOwn following={false}/>)).not.toContain('reel-panel-follow');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} reel={{...other,channelHandle:'bees'}} following={false} subscribed={false} onToggleSubscribe={()=>{}}/>)).toContain('>Subscribe<');
+  for(const label of ['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"']) expect(notFollowing).toContain(label);
+  const counts=['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"'].map((m)=>notFollowing.indexOf(m));
+  expect([...counts].sort((a,b)=>a-b)).toEqual(counts);
+  // Both the theater panel and the comments column draw it rather than their own copy.
+  expect(readFileSync(resolve(import.meta.dir,'../components/ReelTheaterPanel.tsx'),'utf8')).toContain('<ReelAuthorCard');
+  const drawer=readFileSync(resolve(import.meta.dir,'../components/ReelCommentsDrawer.tsx'),'utf8');
+  expect(drawer).toContain('<ReelAuthorCard');
+  expect(drawer.indexOf('reel-comments-panel__author')).toBeLessThan(drawer.indexOf('reel-comments-head'));
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  expect(css).toContain('.reel-author-card__name { display: block; font-size: 18px; font-weight: 700;');
+  expect(css).toContain('.reel-author-card__handle { margin: 2px 0 0; font-size: 14px; font-weight: 500;');
+  expect(css).toContain('.reel-panel-follow { flex: 0 0 auto; height: 36px; padding: 0 16px; border-radius: 999px;');
+  expect(css).toContain('.reel-author-card__counts { display: flex; flex-wrap: wrap; gap: 8px 20px;');
+  expect(css).toContain('.reel-panel-count { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;');
+});
+
+test('comments column is TikTok\'s 352px card in a 368px track driven by the constants; the hover card is gone', () => {
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  expect(COMMENTS_COLUMN_WIDTH).toBe(352);
+  expect(COMMENTS_TRACK_WIDTH).toBe(368);
+  expect(css).toContain('grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px)');
   expect(css).not.toContain('34vw');
   expect(css).not.toContain('reel-creator-popover');
   expect(css).not.toContain('reel-follow-pill');

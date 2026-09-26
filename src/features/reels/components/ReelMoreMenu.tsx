@@ -38,6 +38,12 @@ interface ReelMoreMenuProps {
   onNotInterested: () => void;
   onDontRecommend: () => void;
   onReport: () => void;
+  /**
+   * "beside" (default): the card opens to the left of its trigger, growing
+   * upward — the theater bar. "below": right-aligned under the trigger —
+   * the More circle at the frame's top-right.
+   */
+  anchor?: "beside" | "below";
 }
 
 const ICON = "h-[18px] w-[18px]";
@@ -68,6 +74,7 @@ export function ReelMoreMenu({
   onNotInterested,
   onDontRecommend,
   onReport,
+  anchor = "beside",
 }: ReelMoreMenuProps) {
   const run = (fn: () => void) => () => {
     onClose();
@@ -126,7 +133,7 @@ export function ReelMoreMenu({
     .filter((g) => g.length > 0);
 
   return (
-    <Popover open={open} onClose={onClose} align="right" label="More options">
+    <Popover open={open} onClose={onClose} align="right" label="More options" placement={anchor === "below" ? "down" : "up"} belowTrigger={anchor === "below"}>
       <div className="py-1">
         {groups.map((group, gi) => (
           <div key={group[0]}>

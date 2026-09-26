@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 import CommentSection from "@/components/CommentSection";
+import { ReelAuthorCard, type ReelAuthorCardProps } from "@/features/reels/components/ReelAuthorCard";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 
 interface ReelCommentsDrawerProps {
@@ -12,20 +13,26 @@ interface ReelCommentsDrawerProps {
   focusCommentId?: string;
   onClose: () => void;
   /**
-   * "column" (≥1024px): TikTok's panel — a fixed-width (COMMENTS_COLUMN_WIDTH,
-   * stage.ts), full-height column beside the stage with a left divider, no
-   * scrim. "sheet" (below): a bottom sheet over the stage behind a scrim.
+   * "column" (≥1024px): TikTok's card — COMMENTS_COLUMN_WIDTH wide with a
+   * 16px margin (stage.ts), rounded, beside the stage, no scrim. "sheet"
+   * (below): a bottom sheet over the stage behind a scrim.
    */
   variant?: "column" | "sheet";
+  /**
+   * The author card above the thread (column only): avatar, name, Follow,
+   * the description and the counts row. Omitted on the phone sheet, which
+   * is the thread alone.
+   */
+  author?: Omit<ReelAuthorCardProps, "reel">;
 }
 
 /*
-  Comments. The thread scrolls inside; CommentSection brings the composer
-  and keeps it pinned at the bottom (its own flex column). The reel keeps
-  playing. CommentSection brings its own loading, posting, replies, likes
-  and edits.
+  Comments. In the column the author card sits on top, then a divider,
+  then "Comments N" with ✕, then the thread. The thread scrolls inside;
+  CommentSection brings the composer and keeps it pinned at the bottom
+  (its own flex column). The reel keeps playing.
 */
-export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, variant = "sheet" }: ReelCommentsDrawerProps) {
+export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, variant = "sheet", author }: ReelCommentsDrawerProps) {
   const column = variant === "column";
   return (
     <AnimatePresence>
@@ -42,6 +49,11 @@ export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, varian
             aria-label="Reel comments"
             className={`reel-comments-panel is-${variant}`}
           >
+            {column && author ? (
+              <div className="reel-comments-panel__author">
+                <ReelAuthorCard reel={reel} {...author} />
+              </div>
+            ) : null}
             <div className="reel-comments-head">
               <h3 className="reel-comments-head__title">
                 Comments
