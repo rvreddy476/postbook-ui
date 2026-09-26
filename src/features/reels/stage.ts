@@ -6,6 +6,13 @@
   are shot in.
 */
 
+/**
+ * The comments column beside the stage, in px — TikTok's panel is a fixed
+ * width, not a share of the viewport. The screen sets it as --reel-comments-w
+ * on .reels-content and reels-screen.css reads it for the grid track.
+ */
+export const COMMENTS_COLUMN_WIDTH = 380;
+
 export const STAGE_MIN_ASPECT = 9 / 16;
 export const STAGE_MAX_ASPECT = 16 / 9;
 export const STAGE_DEFAULT_ASPECT = 9 / 16;

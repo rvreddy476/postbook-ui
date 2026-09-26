@@ -4,7 +4,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient } from '@tanstack/react-query';
 import { toReelItem } from '../model';
 import { ReelOverlay } from '../components/ReelOverlay';
+import { ReelRail } from '../components/ReelRail';
 import { ReelExpandedDetails } from '../components/ReelExpandedDetails';
+import { COMMENTS_COLUMN_WIDTH } from '../stage';
 import { ReelSettingsMenu } from '../components/ReelSettingsMenu';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -37,31 +39,66 @@ test('reel title is separate from its description, never synthesized from descri
   expect(reel.caption).toBe('Description belongs in details');
   expect(toReelItem({id:'r2',author_id:'a',text:'Not a title',content_type:'reel',media:[{media_id:'m',kind:'video'}]})!.title).toBe('');
 });
-test('overlay always carries the author name, title, caption and view count; own reel has no Follow pill', () => {
-  const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+test('overlay always carries the author name (a plain link), title, caption and view count; never a Follow pill or a hover anchor', () => {
+  const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
   expect(html).toContain('Actual title');
   expect(html).toContain('Description belongs in details');
   expect(html).toContain('reel-view-count');
   expect(html).toContain('0 views');
-  expect(html).toContain('reel-author-row__name');
+  expect(html).toContain('class="reel-author-row__name" href="/u/a"');
   expect(html).not.toContain('reel-follow-pill');
+  expect(html).not.toContain('aria-haspopup="dialog"');
 });
 
-test('Follow pill: filled when not following, outlined when following, hidden while the relationship is unknown', () => {
-  const other=toReelItem({id:'r3',author_id:'b',content_type:'reel',author:{id:'b',username:'bee',display_name:'Bee'},media:[{media_id:'m',kind:'video'}]})!;
-  const base={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},sound:false,volume:1,onVolumeChange:()=>{},onToggleSound:()=>{},onOpenSettings:()=>{}};
-  expect(renderToStaticMarkup(<ReelOverlay {...base} following={undefined}/>)).not.toContain('reel-follow-pill');
-  const notFollowing=renderToStaticMarkup(<ReelOverlay {...base} following={false}/>);
-  expect(notFollowing).toContain('class="reel-follow-pill "');
-  expect(notFollowing).toContain('>Follow<');
-  const following=renderToStaticMarkup(<ReelOverlay {...base} following={true}/>);
-  expect(following).toContain('reel-follow-pill is-on');
-  expect(following).toContain('>Following<');
+const other=toReelItem({id:'r3',author_id:'b',content_type:'reel',author:{id:'b',username:'bee',display_name:'Bee'},media:[{media_id:'m',kind:'video'}]})!;
+const railBase={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},onLike:()=>{},onComments:()=>{},onShare:()=>{},onSave:()=>{},onMore:()=>{}};
+
+test('rail avatar: a plain profile link with the Follow badge attached; the badge goes once followed, on an own reel, or while unknown', () => {
+  const notFollowing=renderToStaticMarkup(<ReelRail {...railBase} following={false}/>);
+  expect(notFollowing).toContain('reel-rail-avatar-wrap');
+  expect(notFollowing).toContain('class="reel-rail-avatar" aria-label="Bee&#x27;s profile" href="/u/bee"');
+  expect(notFollowing).toContain('class="reel-rail-follow"');
+  expect(notFollowing).toContain('>Follow</button>');
+  expect(notFollowing).toContain('aria-label="Follow Bee"');
+  expect(notFollowing).not.toContain('aria-haspopup="dialog"');
+  expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
+  expect(renderToStaticMarkup(<ReelRail {...railBase} following={undefined}/>)).not.toContain('reel-rail-follow');
+  expect(renderToStaticMarkup(<ReelRail {...railBase} isOwn following={false}/>)).not.toContain('reel-rail-follow');
+});
+
+test('rail badge subscribes instead when the reel came through a channel, and still reads Follow', () => {
+  const channelReel={...other,channelHandle:'bees'};
+  const base={...railBase,reel:channelReel,following:false as const,onToggleSubscribe:()=>{}};
+  const unsubscribed=renderToStaticMarkup(<ReelRail {...base} subscribed={false}/>);
+  expect(unsubscribed).toContain('>Follow</button>');
+  expect(unsubscribed).toContain('aria-label="Subscribe to Bee&#x27;s channel"');
+  expect(renderToStaticMarkup(<ReelRail {...base} subscribed={true}/>)).not.toContain('reel-rail-follow');
+  expect(renderToStaticMarkup(<ReelRail {...base} subscribed={undefined}/>)).not.toContain('reel-rail-follow');
+});
+
+test('the phone rail carries the same avatar and badge', () => {
+  const html=renderToStaticMarkup(<ReelRail {...railBase} variant="phone" following={false}/>);
+  expect(html).toContain('reel-action-rail is-phone');
+  expect(html).toContain('reel-rail-avatar-wrap');
+  expect(html).toContain('>Follow</button>');
+});
+
+test('comments column is a fixed 380px panel driven by the constant; the hover card is gone', () => {
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  expect(COMMENTS_COLUMN_WIDTH).toBe(380);
+  expect(css).toContain('grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 380px)');
+  expect(css).not.toContain('34vw');
+  expect(css).not.toContain('reel-creator-popover');
+  expect(css).not.toContain('reel-follow-pill');
+  expect(css).toContain('.reel-comments-head__title');
+  expect(css).toContain('.reel-rail-follow');
+  // No header under the sidebar chrome: the stage height is the viewport's.
+  expect(css).not.toContain('100dvh - 4rem');
 });
 
 test('volume slider exposes the real level and reports zero while muted', () => {
   for (const [sound,volume,expected] of [[true,.37,37],[true,1,100],[false,.8,0]] as const) {
-    const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={sound} volume={volume} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+    const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={sound} volume={volume} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
     expect(html).toContain('aria-label="Volume"');
     expect(html).toContain(`aria-valuetext="${expected}%"`);
     expect(html).toContain('min="0" max="100" step="1"');

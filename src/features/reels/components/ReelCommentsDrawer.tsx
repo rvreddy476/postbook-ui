@@ -12,9 +12,9 @@ interface ReelCommentsDrawerProps {
   focusCommentId?: string;
   onClose: () => void;
   /**
-   * "column" (≥1024px): a full-height column beside the stage with a left
-   * divider, no scrim. "sheet" (below): a bottom sheet over the stage
-   * behind a scrim.
+   * "column" (≥1024px): TikTok's panel — a fixed-width (COMMENTS_COLUMN_WIDTH,
+   * stage.ts), full-height column beside the stage with a left divider, no
+   * scrim. "sheet" (below): a bottom sheet over the stage behind a scrim.
    */
   variant?: "column" | "sheet";
 }
@@ -43,7 +43,12 @@ export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, varian
             className={`reel-comments-panel is-${variant}`}
           >
             <div className="reel-comments-head">
-              <h3 className="text-[14px] font-bold">Comments · {formatCount(reel.commentCount)}</h3>
+              <h3 className="reel-comments-head__title">
+                Comments
+                <span className="reel-comments-head__count" aria-label={`${formatCount(reel.commentCount)} comments`}>
+                  {formatCount(reel.commentCount)}
+                </span>
+              </h3>
               <button type="button" onClick={onClose} aria-label="Close comments" className="reel-comments-close">
                 <X className="h-4 w-4" />
               </button>

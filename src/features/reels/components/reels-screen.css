@@ -1,18 +1,21 @@
 /*
-  The reels stage inside the shared video shell. The shell owns the header
-  and the left menu; this file owns the immersive main. From 1024px up it is
+  The reels stage inside the shared video shell under its "sidebar" chrome.
+  The shell owns the left menu (with search) and the floating top-right
+  cluster; this file owns the immersive main. From 1024px up it is
   [stage area 1fr | comments column] — the comments column is 0 wide until
-  it opens (min(420px, 34vw)), and the stage re-centres in what is left.
-  Inside the stage area the cluster is [spacer | stage | rail]: the spacer
-  mirrors the rail so the video itself sits on the exact centre line. The
-  arrows stand at the right edge of the area. Below 1024px it is one
-  column, the rail floats over the video and comments are a bottom sheet.
-  Colour only through the theme tokens, so the light theme is TikTok's
-  white mode (white canvas, dark frame) and dark follows on its own.
+  it opens, then TikTok's fixed panel width (--reel-comments-w, set by the
+  screen from COMMENTS_COLUMN_WIDTH in stage.ts), and the stage re-centres
+  in what is left. Inside the stage area the cluster is [spacer | stage |
+  rail]: the spacer mirrors the rail so the video itself sits on the exact
+  centre line. The arrows stand at the right edge of the area. Below
+  1024px it is one column, the rail floats over the video and comments are
+  a bottom sheet. Colour only through the theme tokens, so the light theme
+  is TikTok's white mode (white canvas, dark frame) and dark follows on
+  its own.
 
-  Heights: the shell's immersive main is calc(100dvh - 4rem). The frame is
-  sized from the viewport height (--reel-height = main minus the stage
-  padding), never from a percentage height.
+  Heights: there is no header, so the shell's immersive main is 100dvh.
+  The frame is sized from the viewport height (--reel-height = main minus
+  the stage padding), never from a percentage height.
 
   The frame's shape is the media's: --reel-ar (width / height, clamped in
   stage.ts) is set inline by the screen. width = min(height × ratio, what
@@ -22,7 +25,7 @@
   here resolves a percentage inside an auto-sized track.
 */
 .reels-workspace { height: 100%; min-height: 0; background: rgb(var(--canvas)); color: rgb(var(--brand-text)); }
-.reels-main { --reel-viewport: calc(100dvh - 4rem - 32px); --reel-side-w: 52px; --reel-side-gap: 10px; height: 100%; min-width: 0; position: relative; display: flex; overflow: hidden; background: rgb(var(--canvas)); }
+.reels-main { --reel-viewport: calc(100dvh - 32px); --reel-side-w: 52px; --reel-side-gap: 10px; height: 100%; min-width: 0; position: relative; display: flex; overflow: hidden; background: rgb(var(--canvas)); }
 .reels-content { display: grid; grid-template-columns: minmax(0,1fr); align-items: stretch; min-height: 0; min-width: 0; width: 100%; height: 100%; }
 
 /* ---- stage area and the frame ---------------------------------------- */
@@ -37,31 +40,6 @@
 .reel-state-card { display: flex; height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 32px; text-align: center; color: rgb(var(--reel-on-stage)); }
 .reel-state-action { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 650; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
 .reel-state-action:hover { opacity: .92; }
-
-/* ---- creator hover card ------------------------------------------------ */
-.reel-creator-popover { position: fixed; z-index: 70; width: 280px; }
-.reel-creator-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--brand-divider); border-radius: 16px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 18px 48px rgb(var(--brand-text) / .18); }
-.reel-creator-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.reel-creator-who { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 2px; }
-.reel-creator-name { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 14px; font-weight: 700; line-height: 1.2; color: inherit; text-decoration: none; }
-.reel-creator-name:hover { text-decoration: underline; }
-.reel-creator-name svg { color: rgb(var(--brand-accent)); }
-.reel-creator-handle { font-size: 12px; color: rgb(var(--brand-text) / .6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reel-creator-bio { margin: 0; font-size: 12px; line-height: 1.45; color: rgb(var(--brand-text) / .75); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.reel-social-counts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); margin: 0; padding: 8px 4px; gap: 0; border-radius: 12px; background: rgb(var(--brand-secondary)); text-align: center; }
-.reel-social-counts > div + div { border-left: 1px solid var(--brand-divider); }
-.reel-social-counts__value { margin: 0; font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1.2; }
-.reel-social-counts__label { margin: 2px 0 0; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: rgb(var(--brand-text) / .55); }
-.reel-creator-graph { display: flex; flex-wrap: wrap; gap: 6px; }
-.reel-creator-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .85); }
-.reel-creator-actions { display: flex; gap: 8px; }
-.reel-creator-follow { flex: 1 1 auto; height: 34px; border-radius: 999px; font-size: 13px; font-weight: 700; background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); transition: opacity 120ms ease, background-color 120ms ease; }
-.reel-creator-follow:hover { background: rgb(var(--brand-ink-hover)); }
-.reel-creator-follow:disabled { opacity: .6; }
-.reel-creator-follow.is-on { background: transparent; color: rgb(var(--brand-text)); border: 1px solid var(--brand-divider); }
-.reel-creator-follow.is-on:hover { background: rgb(var(--brand-secondary)); }
-.reel-creator-message { display: inline-flex; flex: 1 1 auto; align-items: center; justify-content: center; gap: 6px; height: 34px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 1px solid var(--brand-divider); color: rgb(var(--brand-text)); text-decoration: none; }
-.reel-creator-message:hover { background: rgb(var(--brand-secondary)); }
 
 .reels-workspace :is(button,a):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
 
@@ -78,11 +56,6 @@
 .reel-author-row { display: flex; align-items: center; gap: 10px; min-width: 0; color: rgb(var(--reel-on-stage)); }
 .reel-author-row__name { min-width: 0; font-size: 16px; font-weight: 700; line-height: 1.2; color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reel-author-row__name:hover { text-decoration: underline; }
-.reel-follow-pill { flex: 0 0 auto; height: 28px; padding: 0 14px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); border: 1px solid transparent; transition: opacity 120ms ease, background-color 120ms ease; }
-.reel-follow-pill:hover { opacity: .9; }
-.reel-follow-pill:disabled { opacity: .6; }
-.reel-follow-pill.is-on { background: transparent; border-color: rgb(var(--reel-on-stage) / .7); color: rgb(var(--reel-on-stage)); }
-.reel-follow-pill.is-on:hover { background: rgb(var(--reel-on-stage) / .12); opacity: 1; }
 .reel-title { margin: 8px 0 0; color: rgb(var(--reel-on-stage)); font-size: 15px; line-height: 1.4; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .reel-caption-row { margin-top: 4px; color: rgb(var(--reel-on-stage) / .92); }
 .reel-caption { margin: 0; font-size: 14px; line-height: 1.4; white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -103,7 +76,17 @@
 .reel-action-button.is-saved { color: rgb(var(--brand-accent)); }
 /* desktop: beside the stage on the page background, 48px circles with counts under them */
 .reel-action-rail.is-desktop { gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+/* The avatar with the Follow badge attached to its bottom edge, where TikTok's "+" sits.
+   Badge text is the stage white in both themes (accent under it in both). */
+.reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; padding-bottom: 9px; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
+.reel-rail-avatar > * { width: 100%; height: 100%; }
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .01em; white-space: nowrap; background: rgb(var(--brand-accent)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 1px rgb(var(--brand-card)); cursor: pointer; transition: opacity 120ms ease; }
+.reel-rail-follow:hover { opacity: .9; }
+.reel-rail-follow:disabled { opacity: .6; cursor: default; }
+.reel-action-rail.is-phone .reel-rail-avatar { width: 40px; height: 40px; }
+.reel-action-rail.is-phone .reel-rail-avatar-wrap { margin-top: 2px; }
+.reel-action-rail.is-phone .reel-rail-follow { box-shadow: 0 0 0 1px rgb(var(--brand-card)); }
 .reel-action-rail.is-desktop .reel-action-button { gap: 4px; min-width: var(--reel-side-w); min-height: 0; border-radius: 0; color: rgb(var(--brand-text)); }
 .reel-action-rail.is-desktop .reel-action-button:hover { background: transparent; }
 .reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }
@@ -143,6 +126,8 @@
 .reel-comments-panel.is-column { border-left: 1px solid var(--brand-divider); }
 .reel-comments-panel.is-sheet { position: fixed; z-index: 40; inset: auto 0 0; height: min(72dvh,640px); border: 1px solid var(--brand-divider); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
 .reel-comments-head { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--brand-divider); }
+.reel-comments-head__title { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 18px; font-weight: 700; line-height: 1.2; }
+.reel-comments-head__count { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; color: rgb(var(--brand-text) / .6); }
 .reel-comments-close { display: flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 50%; color: rgb(var(--brand-text) / .6); transition: background-color 120ms ease, color 120ms ease; }
 .reel-comments-close:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
 .reel-comments-panel form { min-width: 0; }
@@ -209,7 +194,7 @@ button.reel-panel-count:hover .reel-panel-count__icon { background: rgb(var(--br
 /* Desktop: [stage area | comments column]; the rail beside the stage, arrows at the edge. */
 @media (min-width: 1024px) {
   .reels-content { grid-template-columns: minmax(0,1fr) 0; }
-  .reels-content[data-comments-open="true"]:not([data-theater]) { grid-template-columns: minmax(0,1fr) min(420px,34vw); }
+  .reels-content[data-comments-open="true"]:not([data-theater]) { grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 380px); }
   .reels-content[data-single-column] { grid-template-columns: minmax(0,1fr); }
   .reel-stage-area { padding: 16px 72px; }
   .reel-rail-spacer,.reel-desktop-rail { display: block; }
@@ -226,7 +211,7 @@ button.reel-panel-count:hover .reel-panel-count__icon { background: rgb(var(--br
   .reel-theater-panel { display: none; }
 }
 @media (max-width: 767px) {
-  .reels-main { --reel-viewport: calc(100dvh - 4rem - 12px); }
+  .reels-main { --reel-viewport: calc(100dvh - 12px); }
   .reel-stage-area { padding: 6px 8px; }
   .reel-theater-bar { gap: 8px; padding: 0 8px; }
   .reel-theater-bar__switch span:first-child, .reel-theater-bar__volume input { display: none; }
@@ -243,9 +228,12 @@ button.reel-panel-count:hover .reel-panel-count__icon { background: rgb(var(--br
   .reel-action-button { min-width: 44px; min-height: 44px; }
   .reel-playback-button { width: 40px; height: 40px; }
 }
-@media (prefers-reduced-motion: reduce) { .reels-workspace * { scroll-behavior: auto !important; } .reel-follow-pill,.reel-nav-button,.reel-theater-switch,.reel-theater-switch__knob { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .reels-workspace * { scroll-behavior: auto !important; } .reel-rail-follow,.reel-nav-button,.reel-theater-switch,.reel-theater-switch__knob { transition: none; } }
 
 /* ---- liked reels page -------------------------------------------------- */
+/* Under the immersive sidebar chrome the main does not scroll; this wrapper does,
+   with room at the top for the floating cluster. */
+.liked-reels__scroll { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 72px 24px 24px; }
 .liked-reels { display: flex; flex-direction: column; gap: 16px; max-width: 1180px; }
 .liked-reels__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .liked-reels__title { margin: 0; font-size: 22px; font-weight: 750; letter-spacing: -.01em; }
@@ -265,5 +253,5 @@ button.reel-panel-count:hover .reel-panel-count__icon { background: rgb(var(--br
 .liked-reels__cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; height: 38px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 650; background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); text-decoration: none; }
 .liked-reels__cta:hover { background: rgb(var(--brand-ink-hover)); }
 @keyframes liked-reels-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-@media (max-width: 767px) { .liked-reels__grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; } .liked-reels__tile { border-radius: 10px; } }
+@media (max-width: 767px) { .liked-reels__scroll { padding: 64px 12px 12px; } .liked-reels__grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; } .liked-reels__tile { border-radius: 10px; } }
 @media (prefers-reduced-motion: reduce) { .liked-reels__tile img { transition: none; } .liked-reels__tile.is-skeleton { animation: none; } }

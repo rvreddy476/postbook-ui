@@ -1,8 +1,11 @@
 /*
-  Video shell: header + [sidebar | main | aside] for Reels and PostTube.
-  Colour only through the theme tokens (src/ui/theme.css via globals.css),
-  so light and dark are the same rules. Widths: sidebar 240 expanded / 72
-  rail, aside 340, header 64 (4rem, owned by app-bar.css).
+  Video shell: [sidebar | main | aside] for Reels and PostTube, with the
+  header on top under the "header" chrome (PostTube) and, under the
+  "sidebar" chrome (Reels), no header at all — search at the top of the
+  menu and a floating cluster over the main area's top-right, as on
+  TikTok. Colour only through the theme tokens (src/ui/theme.css via
+  globals.css), so light and dark are the same rules. Widths: sidebar 240
+  expanded / 72 rail, aside 340, header 64 (4rem, owned by app-bar.css).
 */
 
 /* ---- frame ------------------------------------------------------------ */
@@ -28,6 +31,57 @@
   .video-shell__main { padding: 12px; }
   .video-shell__sidebar { display: none; }
 }
+
+/* ---- sidebar chrome: no header, the menu is the frame's top edge ------- */
+.video-shell[data-chrome="sidebar"] .video-shell__main[data-immersive] { height: 100dvh; }
+.video-shell[data-chrome="sidebar"] .video-shell__scrim { inset: 0; }
+.video-shell[data-chrome="sidebar"] .video-shell__drawer { top: 0; }
+
+/* Top row: the product badge and the collapse toggle. */
+.video-nav__top { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 12px 4px 16px; }
+.video-nav__brand { display: inline-flex; align-items: center; height: 36px; font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: rgb(var(--brand-ink)); text-decoration: none; }
+.video-nav__toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: rgb(var(--brand-text) / .75); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.video-nav__toggle:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.video-nav.is-rail .video-nav__top { flex-direction: column; gap: 4px; padding: 10px 6px 4px; }
+
+/* Search pill under the top row; a lone icon in the rail. */
+.video-nav__search { position: relative; flex: 0 0 auto; margin: 8px 12px 6px; }
+.video-nav__search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgb(var(--text-muted)); pointer-events: none; }
+.video-nav__search input { width: 100%; height: 40px; padding: 0 14px 0 40px; border: 1px solid transparent; border-radius: 999px; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); font-size: 14px; outline: none; transition: border-color 120ms ease, box-shadow 120ms ease; }
+.video-nav__search input::placeholder { color: rgb(var(--text-muted)); }
+.video-nav__search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.video-nav__search input:focus { border-color: rgb(var(--brand-accent)); box-shadow: 0 0 0 3px rgb(var(--brand-accent) / .14); }
+.video-nav__search-button { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 6px auto 4px; border: 0; border-radius: 50%; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .85); cursor: pointer; transition: background-color 120ms ease; }
+.video-nav__search-button:hover { background: rgb(var(--brand-divider)); color: rgb(var(--brand-text)); }
+
+/* The floating cluster over the main area's top-right: Create, notifications, account. */
+.video-shell__top-cluster { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 6px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); box-shadow: 0 8px 24px -12px rgb(var(--brand-text) / .3); }
+.video-shell__top-cluster .context-app-bar__create { margin-right: 2px; }
+.video-shell__top-action { position: relative; display: flex; width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 50%; color: rgb(var(--brand-text) / .75); transition: background-color 120ms ease, color 120ms ease; }
+.video-shell__top-action:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.video-shell__top-dot { position: absolute; top: 9px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: rgb(var(--brand-accent)); box-shadow: 0 0 0 2px rgb(var(--brand-card)); }
+/* A phone has no header to hold the hamburger: it floats at the top-left instead. */
+.video-shell__drawer-toggle { position: absolute; top: 12px; left: 12px; z-index: 30; display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--brand-divider); border-radius: 50%; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); cursor: pointer; }
+@media (max-width: 767px) {
+  .video-shell__top-cluster { top: 8px; right: 8px; }
+  .video-shell__drawer-toggle { top: 8px; left: 8px; }
+}
+
+/* ---- More panel: replaces the list in the same column ------------------ */
+.video-more { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.video-more__head { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px 6px 20px; }
+.video-more__title { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -.01em; }
+.video-more__close { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: rgb(var(--brand-text) / .75); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.video-more__close:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.video-more__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 4px 12px 16px; }
+.video-more__logout { color: rgb(var(--danger)); }
+.video-more__logout:hover { color: rgb(var(--danger)); }
+.video-more__theme { display: flex; flex-direction: column; gap: 8px; padding: 6px 12px 8px; }
+.video-more__theme-label { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 500; color: rgb(var(--brand-text) / .82); }
+.video-more__segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 999px; background: rgb(var(--brand-secondary)); }
+.video-more__segment { height: 28px; border: 0; border-radius: 999px; background: transparent; font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .65); cursor: pointer; transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease; }
+.video-more__segment:hover { color: rgb(var(--brand-text)); }
+.video-more__segment[aria-checked="true"] { background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 1px 3px rgb(var(--brand-text) / .16); }
 
 /* ---- sidebar ---------------------------------------------------------- */
 .video-nav { display: flex; flex-direction: column; height: 100%; min-height: 0; color: rgb(var(--brand-text)); }
@@ -121,6 +175,6 @@
 
 /* ---- motion ----------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-  .video-shell__sidebar, .video-nav__item, .explore-launcher__tile, .trending-card__link { transition: none; }
+  .video-shell__sidebar, .video-nav__item, .video-nav__toggle, .video-nav__search-button, .video-shell__top-action, .video-more__close, .video-more__segment, .explore-launcher__tile, .trending-card__link { transition: none; }
   .trending-card__row.is-skeleton * { animation: none; }
 }

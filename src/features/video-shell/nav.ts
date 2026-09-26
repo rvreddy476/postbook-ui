@@ -5,13 +5,17 @@ import {
   CircleUserRound,
   Clapperboard,
   Compass,
+  Ellipsis,
   FileText,
   History,
   HelpCircle,
   Home,
+  Info,
   LayoutGrid,
   ListVideo,
+  LogOut,
   MessageSquare,
+  Moon,
   Radio,
   Settings,
   ShieldCheck,
@@ -30,13 +34,23 @@ import {
 
   PostTube keeps the library menu (channel, history, playlists, uploads)
   with the app roots on top. Reels has its own list, shaped like TikTok's:
-  For You / Following / Explore / Friends / LIVE / Messages / Activity /
-  Upload / Profile, then a divider group with the way back to Home,
-  PostTube and Liked reels. Keeping it pure — no hooks, no pathname — is
-  what lets the tests pin the lists down.
+  For You / Explore / Following / Friends / LIVE / Messages / Activity /
+  Upload / Profile. Under the "sidebar" chrome (search in the menu, no
+  header) the list ends with "More", which opens an in-menu panel holding
+  the way back to Home, PostTube and Liked reels, the theme switch and
+  log out — under the "header" chrome those live in a divider group
+  instead. Keeping it pure — no hooks, no pathname — is what lets the tests
+  pin the lists down.
 */
 
 export type VideoApp = "reels" | "tube";
+
+/**
+ * Which frame the shell draws. "header": the app header on top and the
+ * menu below it. "sidebar": no header — search sits at the top of the menu
+ * and a small cluster floats over the top-right of the main area.
+ */
+export type VideoChrome = "header" | "sidebar";
 
 export interface VideoNavItem {
   /** Stable key; unique within the whole nav. */
@@ -45,8 +59,8 @@ export interface VideoNavItem {
   icon: LucideIcon;
   /** A link. Exactly one of href / action is set. May carry a query (`/reels?feed=following`). */
   href?: string;
-  /** A button the shell handles (today: the Explore launcher). */
-  action?: "explore";
+  /** A button the shell handles: the Explore launcher or the More panel. */
+  action?: "explore" | "more";
   /** Highlighted regardless of the pathname: the app the viewer is inside. */
   active?: boolean;
   /** Current only on this exact path — not on pages under it. */
@@ -88,11 +102,11 @@ export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
 
-/** The reels menu: the nine the rail shows as icons. */
+/** The reels menu: the nine the rail shows as icons, in TikTok's order. */
 export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "for-you", label: "For You", icon: Home, href: "/reels", exact: true, absentParams: ["feed"] },
-  { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
   { key: "explore", label: "Explore", icon: Compass, action: "explore" },
+  { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
   { key: "friends", label: "Friends", icon: Users, href: "/connections" },
   { key: "live", label: "LIVE", icon: Radio, href: "/live" },
   { key: "messages", label: "Messages", icon: MessageSquare, href: "/messenger" },
@@ -101,16 +115,33 @@ export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "profile", label: "Profile", icon: CircleUserRound, href: "/profile" },
 ];
 
-/** Below a divider: the way out of the reels app. */
+/** Below a divider (header chrome only): the way out of the reels app. */
 export const REELS_NAV_APPS: readonly VideoNavItem[] = [
   { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
   { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
   { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
 ];
 
-/** The whole menu for one app. Pure. */
-export function videoNav(app: VideoApp): VideoNavSection[] {
+/** The last entry of the sidebar-chrome reels menu: opens the More panel. */
+export const REELS_NAV_MORE: VideoNavItem = { key: "more", label: "More", icon: Ellipsis, action: "more" };
+
+/** The footer under the sidebar chrome: the legal links, then "© VChat". */
+export const REELS_SIDEBAR_FOOTER: readonly VideoNavItem[] = [
+  { key: "about", label: "About", icon: Info, href: "/about" },
+  { key: "terms", label: "Terms", icon: FileText, href: "/terms" },
+  { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
+  { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
+];
+
+/** The whole menu for one app under one chrome. Pure. */
+export function videoNav(app: VideoApp, chrome: VideoChrome = "header"): VideoNavSection[] {
   if (app === "reels") {
+    if (chrome === "sidebar") {
+      return [
+        { key: "top", rail: true, items: [...REELS_NAV_TOP.map((item) => ({ ...item })), { ...REELS_NAV_MORE }] },
+        { key: "footer", rail: false, items: [...REELS_SIDEBAR_FOOTER] },
+      ];
+    }
     return [
       { key: "top", rail: true, items: REELS_NAV_TOP.map((item) => ({ ...item })) },
       { key: "apps", rail: false, items: REELS_NAV_APPS.map((item) => ({ ...item })) },
@@ -127,6 +158,68 @@ export function videoNav(app: VideoApp): VideoNavSection[] {
     { key: "footer", rail: false, items: [...VIDEO_NAV_FOOTER] },
   ];
 }
+
+/* ---- the More panel --------------------------------------------------- */
+
+/**
+ * What a More-panel row does when it is not a link: open the Explore
+ * launcher, show the theme switch (a row with its own control, no click),
+ * or log out.
+ */
+export type MorePanelAction = "explore" | "theme" | "logout";
+
+export interface MorePanelItem {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  href?: string;
+  action?: MorePanelAction;
+}
+
+export interface MorePanelSection {
+  key: "settings" | "tools" | "apps" | "other";
+  title: string;
+  items: MorePanelItem[];
+}
+
+/** The More panel, section by section, as TikTok's reads. Pure data. */
+export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
+  {
+    key: "settings",
+    title: "Settings",
+    items: [
+      { key: "general", label: "General", icon: Settings, href: "/settings" },
+      { key: "theme", label: "Dark mode", icon: Moon, action: "theme" },
+    ],
+  },
+  {
+    key: "tools",
+    title: "Tools",
+    items: [
+      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
+      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
+      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
+    ],
+  },
+  {
+    key: "apps",
+    title: "Apps",
+    items: [
+      { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
+      { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
+      { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
+      { key: "explore", label: "Explore", icon: Compass, action: "explore" },
+    ],
+  },
+  {
+    key: "other",
+    title: "Other",
+    items: [
+      { key: "help-center", label: "Help Center", icon: HelpCircle, href: "/help" },
+      { key: "logout", label: "Log out", icon: LogOut, action: "logout" },
+    ],
+  },
+];
 
 /**
  * Whether a link is the current page. Exact match, or the pathname sits

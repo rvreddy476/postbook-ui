@@ -2,6 +2,9 @@
 
 import { createContext, useContext } from "react";
 
+import type { VideoChrome } from "./nav";
+import type { SidebarPanel } from "./sidebarPanel";
+
 export interface VideoShellContextValue {
   /** Expanded column on a wide screen; the drawer visible on a narrow one. */
   sidebarOpen: boolean;
@@ -9,6 +12,13 @@ export interface VideoShellContextValue {
   openExplore(): void;
   /** True only under a <VideoShell>. The header uses it to show the hamburger. */
   inShell: boolean;
+  /** Which frame the shell draws; "header" outside a shell. */
+  chrome: VideoChrome;
+  /** What the expanded sidebar shows: the nav list or the More panel. */
+  panel: SidebarPanel;
+  /** Show the More panel (expanding the column first when it is a rail). */
+  openMore(): void;
+  closeMore(): void;
 }
 
 const NOOP = () => {};
@@ -19,6 +29,10 @@ export const VIDEO_SHELL_DEFAULT: VideoShellContextValue = {
   toggleSidebar: NOOP,
   openExplore: NOOP,
   inShell: false,
+  chrome: "header",
+  panel: "nav",
+  openMore: NOOP,
+  closeMore: NOOP,
 };
 
 export const VideoShellContext = createContext<VideoShellContextValue>(VIDEO_SHELL_DEFAULT);

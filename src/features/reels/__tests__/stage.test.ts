@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { STAGE_DEFAULT_ASPECT, STAGE_MAX_ASPECT, STAGE_MIN_ASPECT, stageAspect } from "../stage";
+import { COMMENTS_COLUMN_WIDTH, STAGE_DEFAULT_ASPECT, STAGE_MAX_ASPECT, STAGE_MIN_ASPECT, stageAspect } from "../stage";
 import { feedFromSearch } from "../feed";
+
+describe("COMMENTS_COLUMN_WIDTH", () => {
+  test("the comments column is TikTok's fixed 380px panel", () => {
+    expect(COMMENTS_COLUMN_WIDTH).toBe(380);
+  });
+});
 
 describe("stageAspect", () => {
   test("portrait and landscape media keep their own ratio", () => {

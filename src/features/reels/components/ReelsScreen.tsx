@@ -37,14 +37,13 @@ import {
   useSaveReel,
   useShareReel,
 } from "@/features/reels/hooks/useReelEngagement";
-import { useCreatorHoverCard } from "@/features/reels/hooks/useCreatorHoverCard";
 import { DESKTOP_QUERY, useMediaQuery } from "@/features/reels/hooks/useMediaQuery";
 import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription";
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
-import { STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
+import { COMMENTS_COLUMN_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
 import { useBatchRelationships } from "@/hooks/useConnections";
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile";
 import { useGlobalToast } from "@/contexts/ToastContext";
@@ -56,9 +55,11 @@ import { useGlobalToast } from "@/contexts/ToastContext";
   edge. Only short-form ever reaches here: the model drops long video and
   feed posts before they are rendered.
 
-  The page sits inside the shared video shell (header, collapsible left
-  menu). Nothing competes with the video: the creator's social graph is a
-  hover card on the author name and the rail avatar, not a column.
+  The page sits inside the shared video shell under its "sidebar" chrome:
+  no header, search at the top of the collapsible left menu, Create /
+  notifications / account floating over the top-right — TikTok's frame.
+  Nothing competes with the video: the author name and the rail avatar are
+  plain links to the profile, and following is the badge on that avatar.
 
   Theater (`f`, the expand button): a fixed black layer over the workspace
   — the video with stacked arrows beside it, a right panel with the author,
@@ -78,7 +79,7 @@ const SWIPE_THRESHOLD = 48;
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
   const tag = t.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"], [data-reel-side-panel], [data-creator-card]'));
+  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"], [data-reel-side-panel]'));
 }
 
 export function ReelsScreen() {
@@ -209,12 +210,6 @@ export function ReelsScreen() {
       toast({ type: "error", title: subscription.subscribed ? "Could not unsubscribe" : "Could not subscribe" });
     }
   };
-
-  const creatorHover = useCreatorHoverCard(
-    active
-      ? { reel: active, viewerId, isOwn, relationship, followPending, onToggleFollow: () => void toggleFollow() }
-      : null,
-  );
 
   /* ── engagement ────────────────────────────────────────── */
   const like = useLikeReel();
@@ -535,9 +530,20 @@ export function ReelsScreen() {
 
   const layoutTransition = { duration: reduceMotion ? 0 : 0.28, ease: "easeOut" as const };
 
+  // The rail's Follow badge follows, or subscribes for a reel posted through a channel.
+  const railFollow = {
+    isOwn,
+    following,
+    followPending,
+    onToggleFollow: () => void toggleFollow(),
+    subscribed: subscription.subscribed,
+    subscribePending: subscription.pending,
+    onToggleSubscribe: () => void toggleSubscribe(),
+  };
+
   return (
-    <VideoShell app="reels" immersive>
-      <div ref={workspaceRef} className="reels-workspace">
+    <VideoShell app="reels" chrome="sidebar" immersive>
+      <div ref={workspaceRef} className="reels-workspace" style={{ "--reel-comments-w": `${COMMENTS_COLUMN_WIDTH}px` } as CSSProperties}>
         <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
             <StateLayout stageRef={stageRef}>
@@ -643,14 +649,6 @@ export function ReelsScreen() {
                         {theater ? null : (
                           <ReelOverlay
                             reel={active}
-                            isOwn={isOwn}
-                            following={following}
-                            followPending={followPending}
-                            onToggleFollow={() => void toggleFollow()}
-                            subscribed={subscription.subscribed}
-                            subscribePending={subscription.pending}
-                            onToggleSubscribe={() => void toggleSubscribe()}
-                            authorAnchor={creatorHover.anchorProps("overlay")}
                             sound={prefs.sound}
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
@@ -674,6 +672,7 @@ export function ReelsScreen() {
                             <ReelRail
                               variant="phone"
                               reel={active}
+                              {...railFollow}
                               onLike={onLike}
                               onComments={() => setCommentsOpen(true)}
                               onShare={onShare}
@@ -714,13 +713,13 @@ export function ReelsScreen() {
                     <div className="reel-desktop-rail">
                       <ReelRail
                         reel={active}
+                        {...railFollow}
                         onLike={onLike}
                         onComments={() => setCommentsOpen((v) => !v)}
                         onShare={onShare}
                         onSave={onSave}
                         onMore={() => setMoreOpen((v) => !v)}
                         moreMenu={moreMenu}
-                        avatarAnchor={creatorHover.anchorProps("rail")}
                       />
                     </div>
                   )}
@@ -773,8 +772,6 @@ export function ReelsScreen() {
             </div>
           ) : null}
         </main>
-
-        {creatorHover.card}
 
         {active ? (
           <>
@@ -858,7 +855,7 @@ function StageFrame({
       // what the stage height allows (height × ratio) and what the cluster
       // leaves beside the rail and its mirror; the CSS in reels-screen.css
       // does the arithmetic. --reel-height is what the viewport leaves after
-      // the header and the stage padding.
+      // the stage padding (there is no header under the sidebar chrome).
       className="reel-stage"
       style={{ "--reel-ar": aspect } as CSSProperties}
     >

@@ -1,16 +1,19 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronRight, PanelLeft, Search } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
-import { isNavItemCurrent, videoNav, type VideoApp, type VideoNavItem } from "./nav";
+import { isNavItemCurrent, videoNav, type VideoApp, type VideoChrome, type VideoNavItem } from "./nav";
 import { useChannelSubscriptionsList } from "./useChannelSubscriptionsList";
 import { useVideoShell } from "./useVideoShell";
+import { VideoMorePanel } from "./VideoMorePanel";
 
 interface VideoSidebarProps {
   app: VideoApp;
+  /** Which frame the shell draws; decides what sits above the list (see VideoShell). */
+  chrome?: VideoChrome;
   /** Expanded (labels, sections, subscriptions, footer) or the icon rail. */
   expanded: boolean;
   /** The drawer variant: the same expanded menu, laid over the page. */
@@ -24,6 +27,12 @@ interface VideoSidebarProps {
   section headings, the rail is icon + 10px label for the rail groups only —
   what a viewer reaches for most, in the width a video page can spare.
   Subscriptions and the footer exist only when there is room to read them.
+
+  Under the "sidebar" chrome the menu is the whole frame's top edge, as on
+  TikTok: a row with the product badge and the collapse toggle, then a
+  search pill (a lone Search icon in the rail, which expands the menu),
+  then the list, then the footer. The last entry, More, swaps the list for
+  the More panel in the same column.
 
   The query string decides between For You and Following on the reels
   menu. useSearchParams needs a Suspense boundary for static rendering, so
@@ -43,12 +52,14 @@ function SearchAwareSidebar(props: VideoSidebarProps) {
   return <SidebarBody {...props} search={params?.toString() ?? null} />;
 }
 
-function SidebarBody({ app, expanded, drawer = false, id, onNavigate, search }: VideoSidebarProps & { search: string | null }) {
+function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onNavigate, search }: VideoSidebarProps & { search: string | null }) {
   const pathname = usePathname();
-  const { openExplore } = useVideoShell();
-  const sections = videoNav(app);
+  const { openExplore, openMore, closeMore, panel } = useVideoShell();
+  const sections = videoNav(app, chrome);
   const subscriptions = useChannelSubscriptionsList(12);
-  const subs = subscriptions.data?.items ?? [];
+  // Subscriptions are PostTube's; the reels menu under the sidebar chrome stays TikTok's list.
+  const subs = chrome === "sidebar" ? [] : (subscriptions.data?.items ?? []);
+  const showMore = chrome === "sidebar" && expanded && panel === "more";
 
   const renderItem = (item: VideoNavItem) => {
     const Icon = item.icon;
@@ -64,6 +75,15 @@ function SidebarBody({ app, expanded, drawer = false, id, onNavigate, search }: 
       return (
         <li key={item.key}>
           <button type="button" className={cls} onClick={() => { onNavigate?.(); openExplore(); }} aria-haspopup="dialog">
+            {inner}
+          </button>
+        </li>
+      );
+    }
+    if (item.action === "more") {
+      return (
+        <li key={item.key}>
+          <button type="button" className={cls} onClick={openMore} aria-expanded={panel === "more"}>
             {inner}
           </button>
         </li>
@@ -85,58 +105,149 @@ function SidebarBody({ app, expanded, drawer = false, id, onNavigate, search }: 
       aria-label={app === "reels" ? "Reels navigation" : "PostTube navigation"}
       data-video-app={app}
     >
-      <div className="video-nav__scroll">
-        {sections
-          .filter((section) => expanded || section.rail)
-          .map((section) => {
-            if (section.key === "footer") return null;
-            return (
-              <section key={section.key} className="video-nav__section" aria-label={section.title ?? (section.key === "apps" ? "More apps" : "Apps")}>
-                {section.title && expanded ? <h3 className="video-nav__heading">{section.title}</h3> : null}
-                <ul className="video-nav__list">{section.items.map(renderItem)}</ul>
-              </section>
-            );
-          })}
+      {chrome === "sidebar" ? <SidebarTop /> : null}
 
-        {expanded && subs.length > 0 ? (
-          <section className="video-nav__section" aria-label="Subscriptions">
-            <h3 className="video-nav__heading">Subscriptions</h3>
-            <ul className="video-nav__list">
-              {subs.map(({ channel }) => {
-                const href = `/posttube/channel/${encodeURIComponent(channel.handle)}`;
-                const current = isNavItemCurrent({ href }, pathname);
+      {showMore ? (
+        <VideoMorePanel onClose={closeMore} onNavigate={onNavigate} />
+      ) : (
+        <>
+          {chrome === "sidebar" ? <SidebarSearch expanded={expanded} onNavigate={onNavigate} /> : null}
+
+          <div className="video-nav__scroll">
+            {sections
+              .filter((section) => expanded || section.rail)
+              .map((section) => {
+                if (section.key === "footer") return null;
                 return (
-                  <li key={channel.user_id || channel.handle}>
-                    <Link href={href} className={`video-nav__item video-nav__channel${current ? " is-current" : ""}`} aria-current={current ? "page" : undefined} onClick={onNavigate}>
-                      <Avatar src={channel.avatar_url || undefined} name={channel.name || channel.handle} className="video-nav__avatar" />
-                      <span className="video-nav__label">{channel.name || `@${channel.handle}`}</span>
-                    </Link>
-                  </li>
+                  <section key={section.key} className="video-nav__section" aria-label={section.title ?? (section.key === "apps" ? "More apps" : "Apps")}>
+                    {section.title && expanded ? <h3 className="video-nav__heading">{section.title}</h3> : null}
+                    <ul className="video-nav__list">{section.items.map(renderItem)}</ul>
+                  </section>
                 );
               })}
-              <li>
-                <Link href="/posttube/subscriptions" className="video-nav__item video-nav__more" onClick={onNavigate}>
-                  <ChevronRight className="video-nav__icon" size={20} strokeWidth={1.75} aria-hidden />
-                  <span className="video-nav__label">Show more</span>
-                </Link>
-              </li>
-            </ul>
-          </section>
-        ) : null}
-      </div>
 
-      {expanded ? (
-        <footer className="video-nav__footer">
-          <ul className="video-nav__footer-links">
-            {sections.find((s) => s.key === "footer")?.items.map((item) => (
-              <li key={item.key}>
-                <Link href={item.href ?? "/"} onClick={onNavigate}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
-          <p className="video-nav__copyright">© VChat</p>
-        </footer>
-      ) : null}
+            {expanded && subs.length > 0 ? (
+              <section className="video-nav__section" aria-label="Subscriptions">
+                <h3 className="video-nav__heading">Subscriptions</h3>
+                <ul className="video-nav__list">
+                  {subs.map(({ channel }) => {
+                    const href = `/posttube/channel/${encodeURIComponent(channel.handle)}`;
+                    const current = isNavItemCurrent({ href }, pathname);
+                    return (
+                      <li key={channel.user_id || channel.handle}>
+                        <Link href={href} className={`video-nav__item video-nav__channel${current ? " is-current" : ""}`} aria-current={current ? "page" : undefined} onClick={onNavigate}>
+                          <Avatar src={channel.avatar_url || undefined} name={channel.name || channel.handle} className="video-nav__avatar" />
+                          <span className="video-nav__label">{channel.name || `@${channel.handle}`}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  <li>
+                    <Link href="/posttube/subscriptions" className="video-nav__item video-nav__more" onClick={onNavigate}>
+                      <ChevronRight className="video-nav__icon" size={20} strokeWidth={1.75} aria-hidden />
+                      <span className="video-nav__label">Show more</span>
+                    </Link>
+                  </li>
+                </ul>
+              </section>
+            ) : null}
+          </div>
+
+          {expanded ? (
+            <footer className="video-nav__footer">
+              <ul className="video-nav__footer-links">
+                {sections.find((s) => s.key === "footer")?.items.map((item) => (
+                  <li key={item.key}>
+                    <Link href={item.href ?? "/"} onClick={onNavigate}>{item.label}</Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="video-nav__copyright">© VChat</p>
+            </footer>
+          ) : null}
+        </>
+      )}
     </nav>
+  );
+}
+
+/** The top row of the sidebar chrome: the product badge (home) and the collapse toggle. */
+function SidebarTop() {
+  const { toggleSidebar, sidebarOpen } = useVideoShell();
+  return (
+    <div className="video-nav__top">
+      <Link href="/" aria-label="VChat home" className="video-nav__brand">
+        VC
+      </Link>
+      <button
+        type="button"
+        className="video-nav__toggle"
+        onClick={toggleSidebar}
+        aria-label={sidebarOpen ? "Collapse menu" : "Expand menu"}
+        aria-expanded={sidebarOpen}
+        aria-controls="video-shell-sidebar"
+      >
+        <PanelLeft size={22} strokeWidth={1.75} aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+/*
+  Search at the top of the menu. Submit goes to /search?q= (or /search
+  alone when empty), the same as the header's field. In the rail it is a
+  lone Search icon: pressing it expands the menu and puts the caret in the
+  field once it exists.
+*/
+function SidebarSearch({ expanded, onNavigate }: { expanded: boolean; onNavigate?: () => void }) {
+  const router = useRouter();
+  const { toggleSidebar } = useVideoShell();
+  const [value, setValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const focusOnExpand = useRef(false);
+
+  useEffect(() => {
+    if (!expanded || !focusOnExpand.current) return;
+    focusOnExpand.current = false;
+    inputRef.current?.focus();
+  }, [expanded]);
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        className="video-nav__search-button"
+        aria-label="Search"
+        onClick={() => {
+          focusOnExpand.current = true;
+          toggleSidebar();
+        }}
+      >
+        <Search size={22} strokeWidth={1.75} aria-hidden />
+      </button>
+    );
+  }
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = value.trim();
+    onNavigate?.();
+    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
+    else router.push("/search");
+  };
+
+  return (
+    <form role="search" className="video-nav__search" onSubmit={onSubmit}>
+      <Search className="video-nav__search-icon" size={18} strokeWidth={1.75} aria-hidden />
+      <input
+        ref={inputRef}
+        type="search"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Search"
+        aria-label="Search"
+        autoComplete="off"
+      />
+    </form>
   );
 }

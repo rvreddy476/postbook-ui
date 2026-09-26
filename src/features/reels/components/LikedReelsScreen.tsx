@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bookmark, Clapperboard, Heart, LogIn, RefreshCw } from "lucide-react";
 
-import { TrendingCard, VideoShell } from "@/features/video-shell";
+import { VideoShell } from "@/features/video-shell";
 import { useLikedReels } from "@/features/reels/hooks/useLikedReels";
 import { formatCount } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
@@ -16,7 +16,8 @@ const LIMIT = 60;
   /reels/liked — the reels the viewer liked, newest first, as a 3:5 poster
   grid. Ids come from GET /v1/reels/liked (no cursor; post-service returns
   up to `limit`), rows from POST /v1/posts/batch. Each tile opens the stage
-  pinned on that reel.
+  pinned on that reel. Same frame as the stage (the sidebar chrome, no
+  header, no aside); the grid scrolls inside its own wrapper.
 */
 export function LikedReelsScreen() {
   // Signed-in state is read on the client; the server render is neutral.
@@ -29,7 +30,8 @@ export function LikedReelsScreen() {
   const items = liked.data ?? [];
 
   return (
-    <VideoShell app="reels" aside={<TrendingCard kind="flick" />}>
+    <VideoShell app="reels" chrome="sidebar" immersive>
+      <div className="liked-reels__scroll">
       <section className="liked-reels" aria-labelledby="liked-reels-title">
         <header className="liked-reels__head">
           <div>
@@ -95,6 +97,7 @@ export function LikedReelsScreen() {
           </ul>
         )}
       </section>
+      </div>
     </VideoShell>
   );
 }

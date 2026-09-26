@@ -4,26 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Settings2, Volume2, VolumeX } from "lucide-react";
 
-import type { HoverAnchorProps } from "@/features/reels/hooks/useCreatorHoverCard";
-import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 
 interface ReelOverlayProps {
   reel: ReelItem;
-  isOwn: boolean;
-  /** undefined = relationship unknown (no button yet) */
-  following: boolean | undefined;
-  followPending: boolean;
-  onToggleFollow: () => void;
-  /**
-   * Channel subscription for a reel posted through a Tube channel;
-   * undefined = unknown (no button yet). Only read when channelHandle is set.
-   */
-  subscribed?: boolean | undefined;
-  subscribePending?: boolean;
-  onToggleSubscribe?: () => void;
-  /** Hover-card wiring for the author name (undefined on coarse pointers: plain link). */
-  authorAnchor?: HoverAnchorProps;
   sound: boolean;
   volume: number;
   onVolumeChange: (volume: number) => void;
@@ -34,30 +18,13 @@ interface ReelOverlayProps {
 
 /*
   What sits on top of the video: sound and settings at the top right, and
-  at the bottom left over a soft gradient — always — the author's name with
-  the Follow pill beside it, the title, the caption (two lines and "more"),
-  the hashtags and the view count. Clicks on any of it stop before reaching
-  the stage.
+  at the bottom left over a soft gradient — always — the author's name (a
+  plain link), the title, the caption (two lines and "more"), the hashtags
+  and the view count. No Follow here: as on TikTok, following is the badge
+  on the rail avatar. Clicks on any of it stop before reaching the stage.
 */
-export function ReelOverlay({
-  reel,
-  isOwn,
-  following,
-  followPending,
-  onToggleFollow,
-  subscribed,
-  subscribePending,
-  onToggleSubscribe,
-  authorAnchor,
-  sound,
-  volume,
-  onVolumeChange,
-  onToggleSound,
-  onOpenSettings,
-  settingsMenu,
-}: ReelOverlayProps) {
+export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound, onOpenSettings, settingsMenu }: ReelOverlayProps) {
   const [expanded, setExpanded] = useState(false);
-  const action = authorAction(reel, isOwn);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
   const caption = reel.caption.trim();
   const longCaption = caption.length > 120 || caption.split("\n").length > 2;
@@ -89,36 +56,9 @@ export function ReelOverlay({
 
       <div className="reel-overlay-details pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-6 pt-16 pr-20 lg:pr-4" onClick={(e) => e.stopPropagation()}>
         <div className="reel-author-row pointer-events-auto" data-author-row>
-          <Link href={profileHref} className="reel-author-row__name" onClick={(e) => e.stopPropagation()} {...(authorAnchor ?? {})}>
+          <Link href={profileHref} className="reel-author-row__name" onClick={(e) => e.stopPropagation()}>
             {reel.authorName}
           </Link>
-          {action === "subscribe" && subscribed !== undefined ? (
-            <button
-              type="button"
-              disabled={subscribePending}
-              aria-pressed={subscribed}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSubscribe?.();
-              }}
-              className={`reel-follow-pill ${subscribed ? "is-on" : ""}`}
-            >
-              {subscribed ? "Subscribed" : "Subscribe"}
-            </button>
-          ) : action === "follow" && following !== undefined ? (
-            <button
-              type="button"
-              disabled={followPending}
-              aria-pressed={following}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFollow();
-              }}
-              className={`reel-follow-pill ${following ? "is-on" : ""}`}
-            >
-              {following ? "Following" : "Follow"}
-            </button>
-          ) : null}
         </div>
 
         {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}

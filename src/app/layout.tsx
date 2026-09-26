@@ -66,7 +66,8 @@ export default function RootLayout({
               (function() {
                 try {
                   const stored = localStorage.getItem('postbook_theme');
-                  const theme = stored === 'dark' ? 'dark' : 'light';
+                  // No stored choice means Auto: follow the OS (the More panel's third option).
+                  const theme = stored === 'dark' ? 'dark' : stored === 'light' ? 'light' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   document.documentElement.className = theme;
                   document.documentElement.style.colorScheme = theme;
                 } catch (e) {}
