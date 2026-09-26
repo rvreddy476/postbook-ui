@@ -29,7 +29,7 @@
   item in a minmax(0,1fr) track, so every percentage here is definite.
 */
 .reels-workspace { height: 100%; min-height: 0; background: rgb(var(--canvas)); color: rgb(var(--brand-text)); }
-.reels-main { --reel-viewport: calc(100dvh - 32px); --reel-rail-w: 48px; --reel-rail-gap: 15px; --reel-reserve-w: 117px; --reel-cluster-extra: calc(var(--reel-rail-gap) + var(--reel-rail-w) + var(--reel-reserve-w)); height: 100%; min-width: 0; position: relative; display: flex; overflow: hidden; background: rgb(var(--canvas)); }
+.reels-main { --reel-viewport: calc(100dvh - 32px); --reel-rail-w: 44px; --reel-rail-gap: 15px; --reel-reserve-w: 121px; --reel-cluster-extra: calc(var(--reel-rail-gap) + var(--reel-rail-w) + var(--reel-reserve-w)); height: 100%; min-width: 0; position: relative; display: flex; overflow: hidden; background: rgb(var(--canvas)); }
 .reels-content { display: grid; grid-template-columns: minmax(0,1fr); align-items: stretch; min-height: 0; min-width: 0; width: 100%; height: 100%; }
 
 /* ---- stage area, the cluster and the frame ---------------------------- */
@@ -110,15 +110,17 @@
 .reel-action-rail.is-desktop { gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent; width: var(--reel-rail-w); }
 /* The sound disc: 44px avatar in a 52px slot (8px above it), turning while the reel plays. */
 .reel-rail-disc { display: none; }
-.reel-action-rail.is-desktop .reel-rail-disc { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 8px auto 0; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px rgb(var(--brand-text) / .08); }
+.reel-action-rail.is-desktop .reel-rail-disc { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: 6px auto 0; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px rgb(var(--brand-text) / .08); }
 .reel-action-rail.is-desktop .reel-rail-disc > * { width: 100%; height: 100%; }
 .reel-action-rail.is-desktop .reel-rail-disc[data-playing] { animation: reel-disc-spin 6s linear infinite; }
 @keyframes reel-disc-spin { to { transform: rotate(360deg); } }
-.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 20px; }
-.reel-action-rail.is-desktop .reel-rail-follow { bottom: 8px; }
-.reel-action-rail.is-desktop .reel-action-button { gap: 6px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 8px; border-radius: 0; color: rgb(var(--brand-text)); }
+.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 16px; }
+.reel-action-rail.is-desktop .reel-rail-avatar { width: 44px; height: 44px; }
+.reel-action-rail.is-desktop .reel-rail-follow { width: 22px; height: 22px; border-radius: 22px; }
+.reel-action-rail.is-desktop .reel-rail-follow { bottom: 5px; }
+.reel-action-rail.is-desktop .reel-action-button { gap: 4px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 4px; border-radius: 0; color: rgb(var(--brand-text)); }
 .reel-action-rail.is-desktop .reel-action-button:hover { background: transparent; }
-.reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }
+.reel-action-rail.is-desktop .reel-action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }
 .reel-action-rail.is-desktop .reel-action-button:hover .reel-action-icon { background: rgb(var(--brand-divider)); }
 .reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }
 .reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }
