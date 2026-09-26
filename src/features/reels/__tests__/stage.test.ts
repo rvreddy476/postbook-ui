@@ -36,8 +36,8 @@ describe("comments column", () => {
 describe("the placement rule", () => {
   test("the cluster is frame + 15 (gap) + 48 (rail) + 117 (reserved)", () => {
     expect(RAIL_GAP).toBe(15);
-    expect(RAIL_WIDTH).toBe(40);
-    expect(RESERVED_RIGHT).toBe(125);
+    expect(RAIL_WIDTH).toBe(36);
+    expect(RESERVED_RIGHT).toBe(129);
     expect(CLUSTER_EXTRA).toBe(180);
     expect(clusterWidth(455)).toBe(635);
     expect(clusterWidth(0)).toBe(180);
@@ -71,7 +71,7 @@ describe("the placement rule", () => {
 
   test("the CSS implements it: full-width cluster, centred content, rail margin, fixed reserve, frame capped by the extra", () => {
     expect(css).toContain(".reel-stage-cluster { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 100%; min-width: 0; }");
-    expect(css).toContain("--reel-rail-w: 40px; --reel-rail-gap: 15px; --reel-reserve-w: 125px;");
+    expect(css).toContain("--reel-rail-w: 36px; --reel-rail-gap: 15px; --reel-reserve-w: 129px;");
     expect(css).toContain(".reel-desktop-rail { display: none; flex: 0 0 var(--reel-rail-w); width: var(--reel-rail-w); margin-left: var(--reel-rail-gap); }");
     expect(css).toContain(".reel-stage-reserve { display: none; flex: 0 0 var(--reel-reserve-w); width: var(--reel-reserve-w); }");
     expect(css).toContain("calc(100% - var(--reel-cluster-extra))");

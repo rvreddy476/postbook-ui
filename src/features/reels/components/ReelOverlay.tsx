@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Settings2, Volume2, VolumeX } from "lucide-react";
 
-import { formatCount, type ReelItem } from "@/features/reels/model";
+import type { ReelItem } from "@/features/reels/model";
 
 interface ReelOverlayProps {
   reel: ReelItem;
@@ -99,7 +99,6 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
             </p>
           ) : null}
 
-          <p className="reel-view-count">{formatCount(reel.viewCount)} views</p>
         </div>
       </div>
     </>

@@ -46,8 +46,7 @@ test('overlay always carries the author name (a plain link), title, caption and 
   const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
   expect(html).toContain('Actual title');
   expect(html).toContain('Description belongs in details');
-  expect(html).toContain('reel-view-count');
-  expect(html).toContain('0 views');
+  expect(html).not.toContain('views');
   expect(html).toContain('class="reel-author-row__name" href="/u/a"');
   expect(html).not.toContain('reel-follow-pill');
   expect(html).not.toContain('aria-haspopup="dialog"');
@@ -58,7 +57,6 @@ test('overlay always carries the author name (a plain link), title, caption and 
   expect(css).toContain('.reel-overlay-details { pointer-events: none; position: absolute; inset: auto 0 0 0; z-index: 10; padding: 64px 80px 16px 12px;');
   expect(css).toContain('.reel-author-row__name { min-width: 0; font-size: 18px; font-weight: 700;');
   expect(css).toContain('.reel-hashtags { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 14px; font-weight: 700;');
-  expect(css).toContain('.reel-view-count { margin: 6px 0 0; font-size: 12px; font-weight: 600; color: rgb(var(--reel-on-stage) / .7);');
   expect(css).toContain('.reel-playback-controls { position: absolute; left: 8px; top: 8px;');
   expect(css).toContain('.reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;');
 });
@@ -127,15 +125,15 @@ test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom —
   expect(html).not.toContain('lucide-ellipsis');
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).toContain('.reel-action-rail.is-desktop { gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent; width: var(--reel-rail-w); }');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button { gap: 3px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 3px;');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 40px; height: 40px; border-radius: 50%; background: rgb(var(--brand-text) / .06);');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button { gap: 2px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 2px;');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 36px; height: 36px; border-radius: 50%; background: rgb(var(--brand-text) / .06);');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
   expect(css).toContain('width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--danger));');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 14px; }');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 4px; }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 12px; }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 3px; }');
 });
 
 test('the author card: avatar, name link, handle, Follow pill (Following outlined, Subscribe for a channel, nothing when own), counts row', () => {

@@ -91,7 +91,7 @@ export function ReelRail({
         </Link>
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <RailPlus size={desktop ? 12 : 12} />
+            <RailPlus size={desktop ? 11 : 12} />
           </button>
         ) : null}
       </div>
@@ -100,22 +100,22 @@ export function ReelRail({
         count={reel.likeCount}
         active={reel.viewerLiked}
         onClick={onLike}
-        icon={<RailHeart size={desktop ? 17 : 18} />}
+        icon={<RailHeart size={desktop ? 16 : 18} />}
         activeClass="is-liked"
       />
       {!reel.commentsDisabled ? (
-        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<RailBubble size={desktop ? 20 : 20} />} />
+        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<RailBubble size={desktop ? 18 : 20} />} />
       ) : null}
       <RailButton
         label={reel.viewerSaved ? "Unsave" : "Save"}
         active={reel.viewerSaved}
         onClick={onSave}
-        icon={<RailBookmark size={desktop ? 17 : 18} />}
+        icon={<RailBookmark size={desktop ? 16 : 18} />}
         activeClass="is-saved"
         count={desktop ? (reel.saveCount ?? 0) : undefined}
       />
       {!reel.shareHidden ? (
-        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<RailShare size={desktop ? 20 : 20} />} />
+        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<RailShare size={desktop ? 18 : 20} />} />
       ) : null}
       {!desktop && onMore ? (
         <div className="relative">
