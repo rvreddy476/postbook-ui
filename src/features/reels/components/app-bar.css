@@ -1,6 +1,8 @@
 .context-app-bar { position: relative; z-index: 50; height: 64px; flex: 0 0 64px; border-bottom: 1px solid var(--brand-divider); background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
 .context-app-bar__inner { height: 100%; display: grid; grid-template-columns: minmax(175px,1fr) minmax(220px,2fr) minmax(180px,1fr); align-items: center; gap: 24px; padding: 0 24px; }
 .context-app-bar__brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.context-app-bar__menu { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 40px; margin-left: -8px; border: 0; border-radius: 12px; background: transparent; color: rgb(var(--brand-text) / .8); cursor: pointer; }
+.context-app-bar__menu:hover { color: rgb(var(--brand-text)); background: rgb(var(--brand-secondary)); }
 .context-app-bar__search { min-width: 0; }
 .context-app-bar__input { width: 100%; height: 42px; padding: 0 18px 0 44px; font-size: 13px; color: rgb(var(--brand-text)); border-radius: 24px; background: rgb(var(--brand-secondary)); border: 1px solid var(--brand-divider); outline: none; }
 .context-app-bar__input:focus { border-color: rgb(var(--brand-accent)); box-shadow: 0 0 0 3px rgb(var(--brand-accent) / .12); }
@@ -8,13 +10,27 @@
 .context-app-bar__actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .context-app-bar__action,.context-app-bar__mobile-search { position: relative; display: flex; width: 38px; height: 38px; align-items: center; justify-content: center; border-radius: 12px; color: rgb(var(--text-muted)); }
 .context-app-bar__action:hover { color: rgb(var(--brand-ink)); background: rgb(var(--brand-tint)); }
+/*
+  Create: the one filled control in the bar. --brand-ink, not --brand-accent,
+  carries the fill because it has a label on it (see the note in theme.css:
+  the accent is 4.06:1 on white, under the 4.5:1 text needs).
+*/
+.context-app-bar__create { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px 0 12px; margin-right: 4px; border: 0; border-radius: 999px; background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); font-size: 13px; font-weight: 650; letter-spacing: .01em; cursor: pointer; box-shadow: 0 6px 16px -8px rgb(var(--brand-ink) / .7); transition: background-color 120ms ease, box-shadow 120ms ease; }
+.context-app-bar__create:hover { background: rgb(var(--brand-ink-hover)); box-shadow: 0 8px 20px -8px rgb(var(--brand-ink) / .8); }
+.context-app-bar__create-label { white-space: nowrap; }
 .context-app-bar :is(a,button):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
 .context-app-bar__mobile-search { display: none; }
 @media(max-width: 767px) {
   .context-app-bar__inner { display: flex; justify-content: space-between; gap: 8px; padding: 0 12px; }
   .context-app-bar__brand { gap: 8px; }
+  .context-app-bar__menu { margin-left: -4px; }
   .context-app-bar__search { display: none; }
   .context-app-bar__actions { gap: 2px; }
   .context-app-bar__mobile-search { display: flex; }
-  .context-app-bar__brand > a:first-child,.context-app-bar__brand > div { display: none; }
+  .context-app-bar__home,.context-app-bar__brand > div { display: none; }
 }
+@media(max-width: 639px) {
+  .context-app-bar__create { width: 38px; padding: 0; justify-content: center; margin-right: 0; }
+  .context-app-bar__create-label { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .context-app-bar__create { transition: none; } }

@@ -86,12 +86,12 @@ export function ProductTagComposer({
         >
             <div className="flex h-full max-h-[640px] w-full max-w-[920px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
                 {/* Header */}
-                <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+                <header className="flex items-center justify-between border-b border-border px-5 py-3.5">
                     <div>
-                        <h2 className="text-base font-semibold text-slate-900">
+                        <h2 className="text-base font-semibold text-brand-text">
                             Tag products in this video
                         </h2>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                             Viewers can tap your tag to buy — you earn the
                             commission on the linked product.
                         </p>
@@ -99,7 +99,7 @@ export function ProductTagComposer({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        className="rounded-md p-1 text-muted-foreground hover:bg-brand-secondary hover:text-brand-text"
                         aria-label="Close"
                     >
                         ✕
@@ -109,18 +109,18 @@ export function ProductTagComposer({
                 {/* Body — two columns */}
                 <div className="grid flex-1 grid-cols-2 gap-0 overflow-hidden">
                     {/* Left — pick an affiliate link */}
-                    <section className="flex flex-col overflow-hidden border-r border-slate-100">
-                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-slate-500">
+                    <section className="flex flex-col overflow-hidden border-r border-border">
+                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-muted-foreground">
                             Your affiliate links
                         </h3>
                         <div className="flex-1 overflow-y-auto px-3">
                             {linksPending && (
-                                <p className="px-2 py-4 text-sm text-slate-500">
+                                <p className="px-2 py-4 text-sm text-muted-foreground">
                                     Loading…
                                 </p>
                             )}
                             {!linksPending && links.length === 0 && (
-                                <p className="px-2 py-4 text-sm text-slate-500">
+                                <p className="px-2 py-4 text-sm text-muted-foreground">
                                     No affiliate links yet. Create one in
                                     <strong> Monetization → Affiliate</strong>{" "}
                                     first.
@@ -138,7 +138,7 @@ export function ProductTagComposer({
                                         className={[
                                             "mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition",
                                             isTagged && "cursor-not-allowed opacity-50",
-                                            !isTagged && !isPicked && "hover:bg-slate-50",
+                                            !isTagged && !isPicked && "hover:bg-brand-secondary",
                                             isPicked && "bg-brand-secondary ring-1 ring-brand-text/20",
                                         ]
                                             .filter(Boolean)
@@ -171,12 +171,12 @@ export function ProductTagComposer({
 
                     {/* Right — existing tags */}
                     <section className="flex flex-col overflow-hidden">
-                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-slate-500">
+                        <h3 className="px-5 py-2.5 text-xs font-semibold tracking-wider text-muted-foreground">
                             Tags on this video ({tags.length})
                         </h3>
                         <div className="flex-1 overflow-y-auto px-3">
                             {tags.length === 0 && (
-                                <p className="px-2 py-4 text-sm text-slate-500">
+                                <p className="px-2 py-4 text-sm text-muted-foreground">
                                     No tags placed yet.
                                 </p>
                             )}
@@ -206,12 +206,12 @@ function LinkRow({
     const { data: preview } = useProductPreview(link.listing_id)
     return (
         <>
-            <div className="h-10 w-10 shrink-0 rounded-md bg-slate-100" />
+            <div className="h-10 w-10 shrink-0 rounded-md bg-brand-secondary" />
             <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-slate-900">
+                <div className="truncate text-sm font-medium text-brand-text">
                     {preview?.title ?? "Loading product…"}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                     {link.commission_pct}% · {link.click_count} clicks
                     {isTagged && " · already tagged"}
                 </div>
@@ -234,8 +234,8 @@ function TagRow({
             ? "Whole video"
             : `${fmtMs(tag.time_start_ms)} → ${fmtMs(tag.time_end_ms)}`
     return (
-        <div className="mb-1 flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-2">
-            <div className="h-10 w-10 shrink-0 rounded-md bg-slate-100">
+        <div className="mb-1 flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+            <div className="h-10 w-10 shrink-0 rounded-md bg-brand-secondary">
                 {tag.image_url && (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
@@ -246,10 +246,10 @@ function TagRow({
                 )}
             </div>
             <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-slate-900">
+                <div className="truncate text-sm font-medium text-brand-text">
                     {tag.label || "Untitled tag"}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-muted-foreground">
                     {window} · {tag.impression_count} views ·{" "}
                     {tag.click_count} taps
                 </div>
@@ -258,7 +258,7 @@ function TagRow({
                 type="button"
                 onClick={onDelete}
                 disabled={deleting}
-                className="rounded-md px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
+                className="rounded-md px-2 py-1 text-xs font-semibold text-danger hover:bg-danger/10 disabled:opacity-40"
             >
                 Remove
             </button>
@@ -294,13 +294,13 @@ function PlacementForm({
     error: string | null
 }) {
     return (
-        <div className="border-t border-slate-100 bg-slate-50/50 p-4">
-            <h4 className="mb-2 text-xs font-semibold tracking-wider text-slate-500">
+        <div className="border-t border-border bg-brand-secondary/50 p-4">
+            <h4 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground">
                 Placement
             </h4>
 
             <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs text-slate-700">
+                <label className="text-xs text-brand-text">
                     X (0–100%)
                     <input
                         type="number"
@@ -308,10 +308,10 @@ function PlacementForm({
                         max={100}
                         value={posX}
                         onChange={(e) => onPosX(Number(e.target.value))}
-                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm"
+                        className="mt-1 w-full rounded-md border border-border px-2 py-1 text-sm"
                     />
                 </label>
-                <label className="text-xs text-slate-700">
+                <label className="text-xs text-brand-text">
                     Y (0–100%)
                     <input
                         type="number"
@@ -319,10 +319,10 @@ function PlacementForm({
                         max={100}
                         value={posY}
                         onChange={(e) => onPosY(Number(e.target.value))}
-                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm"
+                        className="mt-1 w-full rounded-md border border-border px-2 py-1 text-sm"
                     />
                 </label>
-                <label className="text-xs text-slate-700">
+                <label className="text-xs text-brand-text">
                     Start (ms, blank = beginning)
                     <input
                         type="number"
@@ -335,10 +335,10 @@ function PlacementForm({
                                     : Number(e.target.value),
                             )
                         }
-                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm"
+                        className="mt-1 w-full rounded-md border border-border px-2 py-1 text-sm"
                     />
                 </label>
-                <label className="text-xs text-slate-700">
+                <label className="text-xs text-brand-text">
                     End (ms, blank = until end)
                     <input
                         type="number"
@@ -351,13 +351,13 @@ function PlacementForm({
                                     : Number(e.target.value),
                             )
                         }
-                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm"
+                        className="mt-1 w-full rounded-md border border-border px-2 py-1 text-sm"
                     />
                 </label>
             </div>
 
             {error && (
-                <p className="mt-2 text-xs text-red-600" role="alert">
+                <p className="mt-2 text-xs text-danger" role="alert">
                     {error}
                 </p>
             )}
@@ -366,7 +366,7 @@ function PlacementForm({
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+                    className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-brand-secondary"
                 >
                     Cancel
                 </button>

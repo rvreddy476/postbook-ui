@@ -75,3 +75,61 @@ export function removeReelEverywhere(qc: QueryClient, reelId: string) {
     removeReel(old, reelId),
   );
 }
+
+/** Every reel by one author leaves every page (block). */
+export function removeReelsByAuthor(
+  data: InfiniteData<ReelPage> | undefined,
+  authorId: string,
+): InfiniteData<ReelPage> | undefined {
+  if (!data) return data;
+  return {
+    ...data,
+    pages: data.pages.map((page) => ({
+      ...page,
+      items: page.items.filter((item) => item.authorId !== authorId),
+    })),
+  };
+}
+
+export function removeAuthorEverywhere(qc: QueryClient, authorId: string) {
+  qc.setQueriesData<InfiniteData<ReelPage>>({ queryKey: REEL_FEED_KEY }, (old) =>
+    removeReelsByAuthor(old, authorId),
+  );
+}
+
+/**
+ * Puts a reel back at a position (undo after delete). `at` counts across
+ * pages in display order; past the end appends to the last page.
+ */
+export function insertReel(
+  data: InfiniteData<ReelPage> | undefined,
+  reel: ReelItem,
+  at: number,
+): InfiniteData<ReelPage> | undefined {
+  if (!data) return data;
+  if (data.pages.some((p) => p.items.some((i) => i.id === reel.id))) return data;
+  let offset = 0;
+  let placed = false;
+  const pages = data.pages.map((page, pi) => {
+    const start = offset;
+    offset += page.items.length;
+    const last = pi === data.pages.length - 1;
+    if (placed) return page;
+    if (at <= offset || last) {
+      placed = true;
+      const idx = Math.max(0, Math.min(page.items.length, at - start));
+      const items = page.items.slice();
+      items.splice(idx, 0, reel);
+      return { ...page, items };
+    }
+    return page;
+  });
+  if (!placed) return { ...data, pages: [...pages, { items: [reel], nextCursor: undefined }] };
+  return { ...data, pages };
+}
+
+export function insertReelEverywhere(qc: QueryClient, reel: ReelItem, at: number) {
+  qc.setQueriesData<InfiniteData<ReelPage>>({ queryKey: REEL_FEED_KEY }, (old) =>
+    insertReel(old, reel, at),
+  );
+}

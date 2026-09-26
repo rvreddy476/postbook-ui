@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Plus, Film, Clapperboard, Radio, Mic, PenSquare, Zap } from "lucide-react";
+import "./app-bar.css";
 
 const CREATE_OPTIONS = [
   {
@@ -48,7 +49,16 @@ const CREATE_OPTIONS = [
   },
 ] as const;
 
-export function CreateButton() {
+export interface CreateButtonProps {
+  /**
+   * "pill": Plus icon + "Create" label (label hidden under 640px), the
+   * prominent header control. "icon" (default, what older callers get): the
+   * original square sparkle button.
+   */
+  variant?: "pill" | "icon";
+}
+
+export function CreateButton({ variant = "icon" }: CreateButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,27 +76,53 @@ export function CreateButton() {
     }
   }, [open, handleClickOutside]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <div className="relative" ref={containerRef}>
       {/* Trigger */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
-        aria-label="Create"
-      >
-        <Sparkles className="h-[17px] w-[17px]" />
-        <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning ring-2 ring-white">
-          <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
-        </div>
-      </motion.button>
+      {variant === "pill" ? (
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="context-app-bar__create"
+          aria-label="Create"
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden />
+          <span className="context-app-bar__create-label">Create</span>
+        </motion.button>
+      ) : (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
+          aria-label="Create"
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <Sparkles className="h-[17px] w-[17px]" />
+          <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning ring-2 ring-white">
+            <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+          </div>
+        </motion.button>
+      )}
 
       {/* Dropdown */}
       <AnimatePresence>
         {open ? (
           <motion.div
+            role="menu"
+            aria-label="Create new"
             initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
@@ -104,6 +140,7 @@ export function CreateButton() {
               <button
                 key={option.href}
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   setOpen(false);
                   router.push(option.href);

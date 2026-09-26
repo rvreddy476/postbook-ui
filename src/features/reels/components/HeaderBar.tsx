@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Bell, MessageCircle } from "lucide-react";
+import { Search, Bell, MessageCircle, Menu } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
 import { resolveAppBrand } from "@/lib/appBrand";
 import { useUnreadCount } from '@/hooks/useActivityNotifications';
+import { useVideoShell } from "@/features/video-shell/useVideoShell";
 import './app-bar.css';
 
 interface HeaderBarProps {
@@ -39,6 +40,8 @@ export function HeaderBar({
   const BrandIcon = brand.icon;
   const [internalSearch, setInternalSearch] = useState("");
   const unread = useUnreadCount();
+  // Outside a VideoShell these are no-ops and inShell is false: no hamburger.
+  const shell = useVideoShell();
 
   const searchValue = externalSearch ?? internalSearch;
   const onSearchValueChange = externalOnChange ?? setInternalSearch;
@@ -57,7 +60,19 @@ export function HeaderBar({
       <div className="context-app-bar__inner">
         {/* Left: product badge → home, then the app wordmark */}
         <div className="context-app-bar__brand">
-          <Link href="/" aria-label="VChat home" className="group flex shrink-0 items-center">
+          {shell.inShell ? (
+            <button
+              type="button"
+              className="context-app-bar__menu"
+              onClick={shell.toggleSidebar}
+              aria-label="Menu"
+              aria-expanded={shell.sidebarOpen}
+              aria-controls="video-shell-sidebar"
+            >
+              <Menu size={22} strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+          <Link href="/" aria-label="VChat home" className="context-app-bar__home group flex shrink-0 items-center">
             <div className="text-xl font-extrabold tracking-tight text-primary-ink">
               <span>VC</span>
             </div>
@@ -87,7 +102,7 @@ export function HeaderBar({
 
         {/* Right: Create + Notifications + Profile */}
         <div className="context-app-bar__actions">
-          <CreateButton />
+          <CreateButton variant="pill" />
           <Link href="/search" className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link>
           <Link href="/messenger" className="context-app-bar__action" aria-label="Messenger"><MessageCircle size={20}/></Link>
           <Link href="/notifications" className="context-app-bar__action" aria-label="Notifications">

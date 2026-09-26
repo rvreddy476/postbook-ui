@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
 
+import { PosttubeFrame } from "@/features/posttube/components/PosttubeFrame";
+
 export const metadata: Metadata = {
-  title: "Posttube | VChat",
-  description: "Watch long-form video content on Posttube.",
+  title: "PostTube",
+  description: "Watch long-form video on PostTube.",
 };
 
+/**
+ * Every /posttube route renders inside the shared VideoShell (see
+ * PosttubeFrame). The shell follows the app theme: no forced background,
+ * no locked dark mode.
+ */
 export default function PostTubeLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      {/* Override root layout's purple background — PostTube uses pure white */}
-      <style>{`
-        body { background: #ffffff !important; }
-        body > div:first-child > .pointer-events-none.fixed { display: none !important; }
-      `}</style>
-      {children}
-    </>
-  );
+  return <PosttubeFrame>{children}</PosttubeFrame>;
 }

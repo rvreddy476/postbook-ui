@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { PostTubeVideo } from "../types";
 import { VideoCard } from "./VideoCard";
@@ -11,11 +12,11 @@ interface VideoRowProps {
   videos: PostTubeVideo[];
   variant?: "default" | "wide";
   badge?: string;
-  badgeColor?: string;
-  showSeeAll?: boolean;
+  /** Link for a "See all" affordance on the right of the heading. */
+  seeAllHref?: string;
 }
 
-export function VideoRow({ title, icon, videos, variant = "default", badge, badgeColor, showSeeAll = false }: VideoRowProps) {
+export function VideoRow({ title, icon, videos, variant = "default", badge, seeAllHref }: VideoRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -38,46 +39,34 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
 
   return (
     <section className="relative">
-      {/* Header */}
       <div className="mb-3 flex items-center gap-2.5 px-1">
         {icon}
         <h2 className="text-[16px] font-bold text-brand-text">{title}</h2>
-        {badge && (
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${badgeColor || "bg-brand-secondary text-brand-highlight"}`}
-          >
-            {badge}
-          </span>
-        )}
-        {showSeeAll && (
-          <button
-            type="button"
-            className="ml-auto text-[12px] font-semibold text-brand-text/60 hover:text-brand-highlight transition-colors"
-          >
+        {badge && <span className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[10px] font-bold text-brand-text">{badge}</span>}
+        {seeAllHref && (
+          <Link href={seeAllHref} className="ml-auto text-[12px] font-semibold text-primary-ink hover:underline">
             See all
-          </button>
+          </Link>
         )}
       </div>
 
-      {/* Scrollable row */}
       <div className="group/row relative">
-        {/* Left arrow */}
         {canScrollLeft && (
           <button
             type="button"
             onClick={() => scroll("left")}
-            className="absolute -left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-brand-card shadow-lg border border-brand-divider text-brand-highlight opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-brand-secondary"
+            aria-label="Scroll left"
+            className="absolute -left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-brand-card text-brand-text opacity-0 shadow-lg transition-opacity hover:bg-brand-secondary group-hover/row:opacity-100"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
         )}
-
-        {/* Right arrow */}
         {canScrollRight && (
           <button
             type="button"
             onClick={() => scroll("right")}
-            className="absolute -right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-brand-card shadow-lg border border-brand-divider text-brand-highlight opacity-0 transition-opacity group-hover/row:opacity-100 hover:bg-brand-secondary"
+            aria-label="Scroll right"
+            className="absolute -right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-brand-card text-brand-text opacity-0 shadow-lg transition-opacity hover:bg-brand-secondary group-hover/row:opacity-100"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -86,18 +75,11 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, badg
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto scroll-smooth scrollbar-hide"
+          className="flex gap-4 overflow-x-auto scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {videos.map((v) => (
-            <div
-              key={v.id}
-              className={
-                variant === "wide"
-                  ? "w-[320px] shrink-0"
-                  : "w-[280px] shrink-0"
-              }
-            >
+            <div key={v.id} className={variant === "wide" ? "w-[360px] shrink-0" : "w-[280px] shrink-0"}>
               <VideoCard video={v} variant={variant} />
             </div>
           ))}
@@ -115,7 +97,7 @@ export function VideoRowSkeleton({ count = 4 }: { count?: number }) {
       <div className="mb-3 flex items-center gap-2.5 px-1">
         <div className="h-5 w-32 animate-pulse rounded-sm bg-brand-secondary" />
       </div>
-      <div className="flex gap-4">
+      <div className="flex gap-4 overflow-hidden">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="w-[280px] shrink-0">
             <div className="aspect-video animate-pulse rounded-xl bg-brand-secondary" />

@@ -82,6 +82,66 @@ export async function sendAuthorFeedback(authorId: string, signal: FeedbackSigna
   await api.post("/v1/feed/feedback", { author_id: authorId, signal });
 }
 
+/** POST /v1/graph/block { user_id } — the author's reels leave the feed on success. */
+export async function blockUser(userId: string): Promise<void> {
+  await api.post("/v1/graph/block", { user_id: userId });
+}
+
+/** DELETE /v1/posts/:id — soft delete; POST /v1/posts/:id/restore brings it back. */
+export async function deletePost(postId: string): Promise<void> {
+  await api.delete(`/v1/posts/${postId}`);
+}
+
+export async function restorePost(postId: string): Promise<void> {
+  await api.post(`/v1/posts/${postId}/restore`, {});
+}
+
+/** GET /v1/reels/liked?limit= → { data: [id, …] } in liked order; no cursor. */
+export async function fetchLikedReelIds(limit = 60, signal?: AbortSignal): Promise<string[]> {
+  const res = await api.get<Envelope<string[] | null>>("/v1/reels/liked", { params: { limit: String(limit) }, signal });
+  return (res.data.data ?? []).filter((id): id is string => typeof id === "string" && id.length > 0);
+}
+
+/**
+ * POST /v1/posts/batch { ids } → { data: { [id]: PostDetail } }. post-service
+ * answers with a map keyed by id (an array is tolerated by the mapper). Max
+ * 100 ids per call.
+ */
+export async function fetchPostsBatch(
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<Record<string, FeedReelPost | null> | FeedReelPost[] | null> {
+  if (ids.length === 0) return {};
+  const res = await api.post<Envelope<Record<string, FeedReelPost | null> | FeedReelPost[] | null>>(
+    "/v1/posts/batch",
+    { ids: ids.slice(0, 100) },
+    { signal },
+  );
+  return res.data.data ?? {};
+}
+
+/* ── channel subscription (reels posted through a Tube channel) ─── */
+
+/** GET /v1/channels/:handle/subscription → { subscribed }. 404 = not subscribed. */
+export async function fetchChannelSubscribed(handle: string, signal?: AbortSignal): Promise<boolean> {
+  try {
+    const res = await api.get<Envelope<{ subscribed?: boolean; is_subscribed?: boolean } | null>>(
+      `/v1/channels/${encodeURIComponent(handle)}/subscription`,
+      { signal },
+    );
+    return res.data.data?.subscribed === true || res.data.data?.is_subscribed === true;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) return false;
+    throw error;
+  }
+}
+
+/** POST / DELETE /v1/channels/:handle/subscribe. */
+export async function setChannelSubscribed(handle: string, subscribed: boolean): Promise<void> {
+  if (subscribed) await api.post(`/v1/channels/${encodeURIComponent(handle)}/subscribe`, {});
+  else await api.delete(`/v1/channels/${encodeURIComponent(handle)}/subscribe`);
+}
+
 export interface SubtitleTrack {
   language: string;
   format: string;

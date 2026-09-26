@@ -49,12 +49,18 @@ interface ReelVideoProps {
   onDoubleTap: () => void;
   onQualityLevels?: (heights: number[]) => void;
   onProgress?: (currentMs: number, durationMs: number) => void;
+  /**
+   * Whether media-service holds a caption track for this reel. Fires once
+   * the subtitle lookup answers (captions must be on for it to run); the
+   * settings menu turns it into "None for this reel".
+   */
+  onCaptionsAvailable?: (available: boolean) => void;
 }
 
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -74,6 +80,12 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   const [scrubbing, setScrubbing] = useState(false);
 
   const captions = useSubtitleTrack(reel.media.mediaId, prefs.captions && active);
+  const onCaptionsAvailableRef = useRef(onCaptionsAvailable);
+  onCaptionsAvailableRef.current = onCaptionsAvailable;
+  useEffect(() => {
+    if (captions.status === "ready") onCaptionsAvailableRef.current?.(true);
+    else if (captions.status === "none") onCaptionsAvailableRef.current?.(false);
+  }, [captions.status, reel.media.mediaId]);
 
   useWatchTelemetry({
     videoRef,

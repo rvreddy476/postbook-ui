@@ -3,13 +3,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
+  blockUser,
+  deletePost,
   recordShare,
+  restorePost,
   sendAuthorFeedback,
   sendPostFeedback,
   setLike,
   setSaved,
 } from "@/features/reels/data/reelFeedApi";
-import { patchReelEverywhere, removeReelEverywhere } from "@/features/reels/hooks/useReelFeed";
+import {
+  insertReelEverywhere,
+  patchReelEverywhere,
+  removeAuthorEverywhere,
+  removeReelEverywhere,
+} from "@/features/reels/hooks/useReelFeed";
 import type { ReelItem } from "@/features/reels/model";
 
 /*
@@ -78,6 +86,68 @@ export function useNotInterested() {
     },
     onMutate: (reel) => {
       removeReelEverywhere(qc, reel.id);
+    },
+  });
+}
+
+/** "Interested": a positive signal on a suggested reel; nothing moves. */
+export function useInterested() {
+  return useMutation({
+    mutationFn: async (reel: ReelItem) => {
+      await sendPostFeedback(reel.id, "interested");
+    },
+  });
+}
+
+/** Block: waits for graph-service, then every reel by that author leaves the feed. */
+export function useBlockAuthor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (reel: ReelItem) => {
+      await blockUser(reel.authorId);
+      return reel.authorId;
+    },
+    onSuccess: (authorId) => {
+      removeAuthorEverywhere(qc, authorId);
+      qc.invalidateQueries({ queryKey: ["relationships", "batch"] });
+      qc.invalidateQueries({ queryKey: ["relationship"] });
+    },
+  });
+}
+
+/**
+ * Delete (own reel): leaves the feed at once, the server call follows; on
+ * failure the reel is put back where it was. `at` is the display index so
+ * an undo can restore the same spot.
+ */
+export function useDeleteReel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ reel }: { reel: ReelItem; at: number }) => {
+      await deletePost(reel.id);
+    },
+    onMutate: ({ reel }) => {
+      removeReelEverywhere(qc, reel.id);
+    },
+    onError: (_err, { reel, at }) => {
+      insertReelEverywhere(qc, reel, at);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" });
+    },
+  });
+}
+
+/** Undo a delete: POST /v1/posts/:id/restore, then the reel is re-inserted. */
+export function useRestoreReel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ reel }: { reel: ReelItem; at: number }) => {
+      await restorePost(reel.id);
+    },
+    onSuccess: (_data, { reel, at }) => {
+      insertReelEverywhere(qc, reel, at);
+      qc.invalidateQueries({ queryKey: ["profile-posts"], refetchType: "none" });
     },
   });
 }

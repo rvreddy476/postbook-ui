@@ -1,68 +1,73 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  addPlaylistItem,
+  clearWatchHistory,
+  createPlaylist,
+  deletePlaylist,
+  deleteVideoWatchProgress,
+  getContinueWatching,
+  getCreatorPlaylists,
+  getMySubscriptions,
+  getPlaylist,
+  getPlaylistItems,
+  getScheduledPosts,
+  getSeries,
+  getWatchHistory,
+  getWatchProgress,
+  removePlaylistItem,
+  saveVideoWatchProgress,
+  updatePlaylist,
+  updateSchedule,
+  type MySubscriptionRow,
+  type Playlist,
+  type PlaylistItem,
+} from '@/features/posttube/data/posttubeApi'
+import type { WatchProgress } from '@/features/posttube/model'
 
-// ── Types ─────────────────────────────────────────────────────────────
+export type { Playlist, PlaylistItem, WatchProgress, MySubscriptionRow }
 
-export type Playlist = {
-  id: string
-  creator_id: string
-  title: string
-  description?: string | null
-  is_public: boolean
-  item_count: number
-  created_at: string
-  updated_at: string
-}
+/*
+  PostTube's "extras": playlists, watch progress / history, my subscriptions,
+  scheduled posts. The wire calls live in features/posttube/data/posttubeApi;
+  this file is only the React Query binding and the cache keys.
+*/
 
-export type PlaylistItem = {
-  playlist_id: string
-  post_id: string
-  position: number
-  added_at: string
-  post?: {
-    id: string
-    title?: string
-    thumbnail_url?: string
-    duration_sec?: number
-  }
-}
-
-export type ContinueWatchingEntry = {
-  post_id: string
-  watched_sec: number
-  duration_sec: number
-  last_watched_at: string
-  post?: {
-    id: string
-    title?: string
-    thumbnail_url?: string
-  }
+export const POSTTUBE_KEYS = {
+  playlists: (creatorId?: string) => ['posttube', 'playlists', creatorId] as const,
+  playlist: (id?: string) => ['posttube', 'playlist', id] as const,
+  playlistItems: (id?: string) => ['posttube', 'playlist-items', id] as const,
+  continueWatching: ['posttube', 'continue-watching'] as const,
+  history: ['posttube', 'history'] as const,
+  progress: (videoId?: string) => ['posttube', 'watch-progress', videoId] as const,
+  series: (videoId?: string) => ['posttube', 'series', videoId] as const,
+  subscriptions: ['posttube', 'my-subscriptions'] as const,
+  scheduled: ['posttube', 'scheduled'] as const,
 }
 
 // ── Playlists ─────────────────────────────────────────────────────────
 
 export function useCreatorPlaylists(creatorId: string | undefined) {
   return useQuery<Playlist[]>({
-    queryKey: ['posttube', 'playlists', creatorId],
-    queryFn: async () => (await api.get(`/v1/creators/${creatorId}/playlists`)).data.data ?? [],
+    queryKey: POSTTUBE_KEYS.playlists(creatorId),
+    queryFn: () => getCreatorPlaylists(creatorId!),
     enabled: !!creatorId,
   })
 }
 
 export function usePlaylist(playlistId: string | undefined) {
-  return useQuery<Playlist>({
-    queryKey: ['posttube', 'playlist', playlistId],
-    queryFn: async () => (await api.get(`/v1/playlists/${playlistId}`)).data.data,
+  return useQuery<Playlist | null>({
+    queryKey: POSTTUBE_KEYS.playlist(playlistId),
+    queryFn: () => getPlaylist(playlistId!),
     enabled: !!playlistId,
   })
 }
 
 export function usePlaylistItems(playlistId: string | undefined) {
   return useQuery<PlaylistItem[]>({
-    queryKey: ['posttube', 'playlist-items', playlistId],
-    queryFn: async () => (await api.get(`/v1/playlists/${playlistId}/items`)).data.data ?? [],
+    queryKey: POSTTUBE_KEYS.playlistItems(playlistId),
+    queryFn: () => getPlaylistItems(playlistId!),
     enabled: !!playlistId,
   })
 }
@@ -70,28 +75,41 @@ export function usePlaylistItems(playlistId: string | undefined) {
 export function useCreatePlaylist() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { title: string; description?: string; is_public?: boolean }) =>
-      (await api.post('/v1/playlists', input)).data.data as Playlist,
+    mutationFn: (input: { title: string; description?: string; visibility: 'public' | 'private' | 'unlisted' }) =>
+      createPlaylist(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['posttube', 'playlists'] }),
+  })
+}
+
+export function useUpdatePlaylist(playlistId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (patch: Partial<Pick<Playlist, 'title' | 'description' | 'visibility'>>) => updatePlaylist(playlistId, patch),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['posttube', 'playlists'] })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.playlist(playlistId) })
+    },
   })
 }
 
 export function useDeletePlaylist() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (playlistId: string) => api.delete(`/v1/playlists/${playlistId}`),
+    mutationFn: (playlistId: string) => deletePlaylist(playlistId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['posttube', 'playlists'] }),
   })
 }
 
-export function useAddPlaylistItem(playlistId: string) {
+export function useAddPlaylistItem(playlistId?: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (postId: string) =>
-      (await api.post(`/v1/playlists/${playlistId}/items`, { post_id: postId })).data,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['posttube', 'playlist-items', playlistId] })
-      qc.invalidateQueries({ queryKey: ['posttube', 'playlist', playlistId] })
+    mutationFn: ({ postId, playlistId: explicitId, position }: { postId: string; playlistId?: string; position?: number }) =>
+      addPlaylistItem(explicitId ?? playlistId!, postId, position),
+    onSuccess: (_d, vars) => {
+      const id = vars.playlistId ?? playlistId
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.playlistItems(id) })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.playlist(id) })
+      qc.invalidateQueries({ queryKey: ['posttube', 'playlists'] })
     },
   })
 }
@@ -99,66 +117,130 @@ export function useAddPlaylistItem(playlistId: string) {
 export function useRemovePlaylistItem(playlistId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (postId: string) =>
-      api.delete(`/v1/playlists/${playlistId}/items/${postId}`),
+    mutationFn: (postId: string) => removePlaylistItem(playlistId, postId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['posttube', 'playlist-items', playlistId] })
-      qc.invalidateQueries({ queryKey: ['posttube', 'playlist', playlistId] })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.playlistItems(playlistId) })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.playlist(playlistId) })
+      qc.invalidateQueries({ queryKey: ['posttube', 'playlists'] })
     },
   })
 }
 
-// ── Watch history / Continue watching ─────────────────────────────────
+// ── Watch progress / history ──────────────────────────────────────────
 
-export function useContinueWatching() {
-  return useQuery<ContinueWatchingEntry[]>({
-    queryKey: ['posttube', 'continue-watching'],
-    queryFn: async () => (await api.get('/v1/videos/continue-watching')).data.data ?? [],
+/** `GET /v1/videos/continue-watching` → normalised rows (ms wire, percent, completed ≥ 90%). */
+export function useContinueWatching(limit = 12) {
+  return useQuery<WatchProgress[]>({
+    queryKey: [...POSTTUBE_KEYS.continueWatching, limit],
+    queryFn: () => getContinueWatching(limit),
+    staleTime: 30_000,
+  })
+}
+
+/** `GET /v1/videos/history?limit&cursor` — every row, including completed ones. */
+export function useWatchHistory(limit = 30) {
+  return useInfiniteQuery({
+    queryKey: [...POSTTUBE_KEYS.history, limit],
+    queryFn: ({ pageParam }) => getWatchHistory({ cursor: pageParam || undefined, limit }),
+    initialPageParam: '' as string,
+    getNextPageParam: (last) => last.next_cursor || undefined,
+    staleTime: 30_000,
+  })
+}
+
+export function useWatchProgress(videoId: string | undefined) {
+  return useQuery<WatchProgress | null>({
+    queryKey: POSTTUBE_KEYS.progress(videoId),
+    queryFn: () => getWatchProgress(videoId!),
+    enabled: !!videoId,
+    staleTime: 30_000,
   })
 }
 
 export function useDeleteWatchProgress() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (videoId: string) => api.delete(`/v1/videos/${videoId}/progress`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['posttube', 'continue-watching'] }),
+    mutationFn: (videoId: string) => deleteVideoWatchProgress(videoId),
+    onSuccess: (_d, videoId) => {
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.continueWatching })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.history })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.progress(videoId) })
+      qc.invalidateQueries({ queryKey: ['feed', 'continueWatching'] })
+    },
+  })
+}
+
+export function useClearWatchHistory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => clearWatchHistory(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.continueWatching })
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.history })
+      qc.invalidateQueries({ queryKey: ['posttube', 'watch-progress'] })
+      qc.invalidateQueries({ queryKey: ['feed', 'continueWatching'] })
+    },
   })
 }
 
 export function useSaveWatchProgress() {
   return useMutation({
-    mutationFn: async ({ videoId, watchedSec, durationSec }: {
+    mutationFn: ({
+      videoId,
+      positionMs,
+      durationMs,
+      completed,
+    }: {
       videoId: string
-      watchedSec: number
-      durationSec: number
-    }) =>
-      api.post(`/v1/videos/${videoId}/progress`, {
-        watched_sec: watchedSec,
-        duration_sec: durationSec,
-      }),
+      positionMs: number
+      durationMs: number
+      completed?: boolean
+    }) => saveVideoWatchProgress(videoId, { positionMs, durationMs, completed }),
+  })
+}
+
+// ── Series ────────────────────────────────────────────────────────────
+
+export function useSeries(videoId: string | undefined) {
+  return useQuery({
+    queryKey: POSTTUBE_KEYS.series(videoId),
+    queryFn: () => getSeries(videoId!),
+    enabled: !!videoId,
+    staleTime: 60_000,
+    retry: false,
   })
 }
 
 // ── Subscriptions ─────────────────────────────────────────────────────
 
-export type ChannelSubscription = {
-  id: string
-  user_id: string
-  channel_id: string
-  created_at: string
-  channel?: {
-    id: string
-    handle?: string
-    name: string
-    avatar_media_id?: string
-    subscriber_count?: number
-  }
+/** `GET /v1/channels/subscriptions` — replaces the 410'd `/v1/users/:id/subscriptions`. */
+export function useMyChannelSubscriptions(limit = 30) {
+  return useInfiniteQuery({
+    queryKey: [...POSTTUBE_KEYS.subscriptions, limit],
+    queryFn: ({ pageParam }) => getMySubscriptions({ cursor: pageParam || undefined, limit }),
+    initialPageParam: '' as string,
+    getNextPageParam: (last) => last.next_cursor || undefined,
+    staleTime: 60_000,
+  })
 }
 
-export function useMyChannelSubscriptions(userId: string | undefined) {
-  return useQuery<ChannelSubscription[]>({
-    queryKey: ['posttube', 'subscriptions', userId],
-    queryFn: async () => (await api.get(`/v1/users/${userId}/subscriptions`)).data.data ?? [],
-    enabled: !!userId,
+// ── Scheduled ─────────────────────────────────────────────────────────
+
+export function useScheduledPosts(limit = 50) {
+  return useQuery({
+    queryKey: [...POSTTUBE_KEYS.scheduled, limit],
+    queryFn: () => getScheduledPosts(limit),
+    staleTime: 30_000,
+  })
+}
+
+export function useUpdateSchedule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ postId, publishAt }: { postId: string; publishAt?: string }) => updateSchedule(postId, publishAt),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTTUBE_KEYS.scheduled })
+      qc.invalidateQueries({ queryKey: ['my-uploads'] })
+    },
   })
 }

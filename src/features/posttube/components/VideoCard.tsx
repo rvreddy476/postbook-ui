@@ -2,61 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Play, Eye, Zap, MessageCircle, Bookmark, Share2 } from "lucide-react";
+import { Play, Eye, MessageCircle, ThumbsUp } from "lucide-react";
 import type { PostTubeVideo } from "../types";
+import { formatCount, formatDuration, timeAgo } from "../model";
 import { useDataSaver } from "@/hooks/useDataSaver";
 import { resolveImageUrl } from "@/lib/imageUrl";
-
-/* ── Helpers ──────────────────────────────────────────── */
-
-function fmtDuration(sec: number) {
-  if (sec <= 0) return "";
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.round(sec % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function fmtViews(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M views`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K views`;
-  return `${n} views`;
-}
-
-function fmtSparks(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
 
 function clampPercent(value: number) {
   return Math.max(0, Math.min(100, value));
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  return `${months}mo ago`;
-}
-
 /* ── 3-tier thumbnail ─────────────────────────────────── */
 
-function VideoThumbnail({
-  thumbnailUrl,
-  videoUrl,
-  className,
-}: {
-  thumbnailUrl: string;
-  videoUrl: string;
-  className?: string;
-}) {
+function VideoThumbnail({ thumbnailUrl, videoUrl, className }: { thumbnailUrl: string; videoUrl: string; className?: string }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const { effective: dataSaver } = useDataSaver();
@@ -64,17 +22,14 @@ function VideoThumbnail({
   const hasThumbnail = thumbnailUrl && !imgFailed;
   // Data-saver: skip the autoplay-on-no-thumbnail video fallback —
   // it would still emit a metadata range request to the CDN.
-  const hasVideoFallback =
-    !dataSaver && videoUrl && !videoFailed && !hasThumbnail;
-  const resolvedThumb = hasThumbnail
-    ? resolveImageUrl(thumbnailUrl, { dataSaver, size: "medium" })
-    : "";
+  const hasVideoFallback = !dataSaver && videoUrl && !videoFailed && !hasThumbnail;
+  const resolvedThumb = hasThumbnail ? resolveImageUrl(thumbnailUrl, { dataSaver, size: "medium" }) : "";
 
   return (
     <>
-      <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-[#2D2640] via-[#3D3560] to-[#1A1430]">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card/8 backdrop-blur-xs">
-          <Play className="h-7 w-7 text-white/30 ml-0.5" />
+      <div className="absolute inset-0 flex items-center justify-center bg-primary-ink">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
+          <Play className="ml-0.5 h-7 w-7 text-white/40" />
         </div>
       </div>
       {hasVideoFallback && (
@@ -99,19 +54,11 @@ function VideoThumbnail({
   );
 }
 
-/* ── Spotlight Preview (hover video) ──────────────────── */
+/* ── Hover preview ────────────────────────────────────── */
 
 const HOVER_DELAY_MS = 200;
 
-function SpotlightPreview({
-  videoUrl,
-  previewUrl,
-  isActive,
-}: {
-  videoUrl: string;
-  previewUrl?: string;
-  isActive: boolean;
-}) {
+function SpotlightPreview({ videoUrl, previewUrl, isActive }: { videoUrl: string; previewUrl?: string; isActive: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,13 +90,9 @@ function SpotlightPreview({
     if (!playing) return;
     const vid = videoRef.current;
     if (!vid) return;
-
     const tick = () => {
       const bar = barRef.current;
-      if (bar && vid.duration) {
-        const pct = (vid.currentTime / vid.duration) * 100;
-        bar.style.width = `${pct}%`;
-      }
+      if (bar && vid.duration) bar.style.width = `${(vid.currentTime / vid.duration) * 100}%`;
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -172,51 +115,12 @@ function SpotlightPreview({
         muted
         playsInline
         preload="none"
-        className={`absolute inset-0 z-5 h-full w-full object-cover transition-opacity duration-300 ${
-          playing ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`absolute inset-0 z-5 h-full w-full object-cover transition-opacity duration-300 ${playing ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
-      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-brand-card/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
-        <div
-          ref={barRef}
-          className="h-full bg-primary-ink"
-          style={{ width: "0%" }}
-        />
+      <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-white/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
+        <div ref={barRef} className="h-full bg-brand-accent" style={{ width: "0%" }} />
       </div>
     </>
-  );
-}
-
-/* ── Quick Actions Overlay (Spark, Stash, Echo) ───────── */
-
-function QuickActions({ visible }: { visible: boolean }) {
-  return (
-    <div className={`absolute bottom-3 right-3 z-20 flex items-center gap-1.5 transition-all duration-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
-        title="Spark"
-      >
-        <Zap className="h-3.5 w-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
-        title="Stash"
-      >
-        <Bookmark className="h-3.5 w-3.5" />
-      </button>
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-ink/70 text-brand-bg backdrop-blur-md transition-all hover:bg-primary-ink hover:scale-110"
-        title="Echo"
-      >
-        <Share2 className="h-3.5 w-3.5" />
-      </button>
-    </div>
   );
 }
 
@@ -228,160 +132,120 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video, variant = "default" }: VideoCardProps) {
-  const duration = fmtDuration(video.duration_seconds);
+  const duration = formatDuration(video.duration_seconds);
   const { effective: dataSaver } = useDataSaver();
-  // Data-saver: never run the hover-spotlight preview — it would
-  // otherwise lazily fetch a few seconds of video on every hover.
+  // Data-saver: never run the hover preview — it would lazily fetch a few
+  // seconds of video on every hover.
   const [spotlightActive, setSpotlightActiveState] = useState(false);
-  const setSpotlightActive = (value: boolean) => {
-    if (dataSaver) {
-      setSpotlightActiveState(false);
-      return;
-    }
-    setSpotlightActiveState(value);
-  };
-  const resumePosition = typeof video.resume_position_ms === "number"
-    ? Math.max(0, Math.floor(video.resume_position_ms / 1000))
-    : 0;
-  const resumePercent = typeof video.resume_percent_watched === "number"
-    ? clampPercent(video.resume_percent_watched)
-    : 0;
+  const setSpotlightActive = (value: boolean) => setSpotlightActiveState(dataSaver ? false : value);
+
+  const resumePosition = typeof video.resume_position_ms === "number" ? Math.max(0, Math.floor(video.resume_position_ms / 1000)) : 0;
+  const resumePercent = typeof video.resume_percent_watched === "number" ? clampPercent(video.resume_percent_watched) : 0;
   const hasResumeState = resumePosition > 0 && resumePercent > 0;
+  const href = `/posttube/watch/${video.id}`;
 
   if (variant === "wide") {
     return (
       <Link
-        href={`/posttube/watch/${video.id}`}
-        className="spotlight-card group flex gap-3.5 rounded-2xl p-2.5 bg-brand-card transition-all duration-300 hover:shadow-md"
+        href={href}
+        className="group flex gap-3.5 rounded-2xl bg-brand-card p-2.5 transition-shadow duration-300 hover:shadow-md"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
-        <div className="relative w-[220px] shrink-0 overflow-hidden rounded-xl bg-brand-secondary aspect-video">
+        <div className="relative aspect-video w-[220px] shrink-0 overflow-hidden rounded-xl bg-brand-secondary">
           <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
           <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
           {duration && (
-            <span className="absolute bottom-2 right-2 z-10 rounded-lg bg-primary-ink/80 px-2 py-0.5 text-[10px] font-bold text-brand-bg tracking-wide backdrop-blur-xs transition-opacity duration-300">
+            <span className="absolute bottom-2 right-2 z-10 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
               {duration}
             </span>
           )}
-        </div>
-        <div className="min-w-0 flex-1 py-1">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-primary-ink transition-colors">
-            {video.title}
-          </h3>
-          <p className="mt-1.5 text-[11px] text-brand-text/60">{video.channel_name}</p>
           {hasResumeState && (
-            <div className="mt-3">
-              <div className="flex items-center justify-between gap-3 text-[10px] font-semibold tracking-[0.12em] text-brand-text/75">
-                <span>Resume at {fmtDuration(resumePosition)}</span>
-                <span>{Math.round(resumePercent)}%</span>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-brand-secondary">
-                <div
-                  className="h-full rounded-full bg-primary-ink"
-                  style={{ width: `${Math.max(8, resumePercent)}%` }}
-                />
-              </div>
-              {video.last_watched_at && (
-                <p className="mt-1.5 text-[10px] text-brand-text/50">
-                  Watched {timeAgo(video.last_watched_at)}
-                </p>
-              )}
+            <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/30">
+              <div className="h-full bg-brand-accent" style={{ width: `${Math.max(4, resumePercent)}%` }} />
             </div>
           )}
-          <p className="text-[11px] text-brand-text/50">{fmtViews(video.view_count)} · {timeAgo(video.published_at)}</p>
+        </div>
+        <div className="min-w-0 flex-1 py-1">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text transition-colors group-hover:text-primary-ink">{video.title}</h3>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">{video.channel_name}</p>
+          {hasResumeState && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Resume at {formatDuration(resumePosition)} · {Math.round(resumePercent)}%
+              {video.last_watched_at ? ` · ${timeAgo(video.last_watched_at)}` : ""}
+            </p>
+          )}
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
+          </p>
         </div>
       </Link>
     );
   }
 
-  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
-
   return (
     <Link
-      href={`/posttube/watch/${video.id}`}
-      className="spotlight-card group flex flex-col rounded-2xl bg-brand-card p-3 transition-all duration-300"
+      href={href}
+      className={`group flex flex-col rounded-2xl bg-brand-card p-3 transition-all duration-300 ${spotlightActive ? "z-10 -translate-y-1 shadow-lg ring-1 ring-border" : "shadow-xs"}`}
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
-      style={{
-        transform: spotlightActive ? "scale(1.03) translateY(-4px)" : "scale(1) translateY(0)",
-        boxShadow: spotlightActive
-          ? isDark
-            ? "0 20px 60px -12px rgba(255, 255, 255, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.15)"
-            : "0 20px 60px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)"
-          : isDark
-            ? "0 1px 3px -1px rgba(0, 0, 0, 0.3)"
-            : "0 1px 3px -1px rgba(0, 0, 0, 0.04)",
-        zIndex: spotlightActive ? 10 : 1,
-      }}
     >
-      {/* Thumbnail */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand-secondary" style={{ aspectRatio: "16/9" }}>
-        <VideoThumbnail
-          thumbnailUrl={video.thumbnail_url}
-          videoUrl={video.video_url}
-          className="transition-transform duration-500 ease-out"
-        />
-
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-brand-secondary">
+        <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} className="transition-transform duration-500 ease-out" />
         <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
-        <QuickActions visible={spotlightActive} />
 
         {duration && (
-          <span className="absolute bottom-3 right-3 z-10 rounded-xl bg-primary-ink/80 px-2.5 py-1 text-[11px] font-bold text-brand-bg tracking-wider backdrop-blur-md transition-opacity duration-300">
+          <span className="absolute bottom-3 right-3 z-10 rounded-lg bg-black/80 px-2 py-0.5 text-[11px] font-bold tracking-wider text-white">
             {duration}
           </span>
         )}
 
-        <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100"}`}>
-          <div className="absolute inset-0 bg-primary-ink/10" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card shadow-md backdrop-blur-xl">
+        {hasResumeState && (
+          <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/30">
+            <div className="h-full bg-brand-accent" style={{ width: `${Math.max(4, resumePercent)}%` }} />
+          </div>
+        )}
+
+        <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"}`}>
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card shadow-md">
             <Play className="ml-0.5 h-6 w-6 fill-brand-accent text-primary-ink" />
           </div>
         </div>
 
         {video.view_count >= 100 && (
-          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 rounded-xl bg-primary-ink/80 px-2 py-1 backdrop-blur-md">
-            <Eye className="h-3 w-3 text-brand-bg" />
-            <span className="text-[10px] font-bold text-brand-bg">{fmtViews(video.view_count).replace(" views", "")}</span>
+          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1">
+            <Eye className="h-3 w-3 text-white" />
+            <span className="text-[10px] font-bold text-white">{formatCount(video.view_count)}</span>
           </div>
         )}
       </div>
 
-      {/* Meta row */}
       <div className="mt-3.5 flex gap-3">
-        <div className="relative mt-0.5">
-          <img
-            src={video.channel_avatar_url}
-            alt=""
-            className="h-10 w-10 shrink-0 rounded-xl bg-brand-secondary object-cover ring-2 ring-brand-divider shadow-xs"
-            loading="lazy"
-          />
-          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-primary-ink text-brand-bg ring-2 ring-brand-bg flex items-center justify-center">
-            <Zap className="h-2 w-2 text-brand-bg" />
-          </div>
-        </div>
+        <img
+          src={video.channel_avatar_url}
+          alt=""
+          className="mt-0.5 h-10 w-10 shrink-0 rounded-full bg-brand-secondary object-cover ring-1 ring-border"
+          loading="lazy"
+        />
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text group-hover:text-primary-ink transition-colors">
-            {video.title}
-          </h3>
-          <p className="mt-1 text-[12px] text-brand-text/60 group-hover:text-primary-ink/85 transition-colors">
-            {video.channel_name}
-          </p>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-brand-text/50">
+          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text transition-colors group-hover:text-primary-ink">{video.title}</h3>
+          <p className="mt-1 text-[12px] text-muted-foreground">{video.channel_name}</p>
+          <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
             {video.like_count > 0 && (
-              <span className="flex items-center gap-0.5 text-brand-text/70">
-                <Zap className="h-3 w-3" />
-                <span className="font-semibold">{fmtSparks(video.like_count)}</span>
+              <span className="flex items-center gap-0.5">
+                <ThumbsUp className="h-3 w-3" />
+                <span className="font-semibold">{formatCount(video.like_count)}</span>
               </span>
             )}
             {video.comment_count > 0 && (
               <span className="flex items-center gap-0.5">
                 <MessageCircle className="h-3 w-3" />
-                <span>{fmtSparks(video.comment_count)}</span>
+                <span>{formatCount(video.comment_count)}</span>
               </span>
             )}
-            <span>{fmtViews(video.view_count)}</span>
-            <span className="text-brand-divider">·</span>
+            <span>{formatCount(video.view_count)} views</span>
+            <span aria-hidden>·</span>
             <span>{timeAgo(video.published_at)}</span>
           </div>
         </div>

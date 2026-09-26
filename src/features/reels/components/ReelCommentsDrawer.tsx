@@ -15,9 +15,9 @@ interface ReelCommentsDrawerProps {
 }
 
 /*
-  Comments. On phones a bottom sheet over the stage. From md up the panel
-  takes the creator column's slot to the LEFT of the stage, so opening it
-  opens where the creator card was without shifting the centered reel.
+  Comments. Below 1024px a bottom sheet over the stage. From 1024px up the
+  panel takes the creator column's slot to the LEFT of the stage, so opening
+  it opens where the creator card was without shifting the centered reel.
   The reel keeps playing. CommentSection brings its own loading,
   posting, replies, likes and edits.
 */
@@ -30,7 +30,7 @@ export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose }: Reel
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            className="reel-comments-scrim"
             onClick={onClose}
           />
           <motion.aside

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { InfiniteData } from "@tanstack/react-query";
 
 import type { ReelPage } from "@/features/reels/data/reelFeedApi";
-import { applyReelPatch, removeReel } from "@/features/reels/hooks/useReelFeed";
+import { applyReelPatch, insertReel, removeReel, removeReelsByAuthor } from "@/features/reels/hooks/useReelFeed";
 import type { ReelItem } from "@/features/reels/model";
 
 function item(id: string, extra: Partial<ReelItem> = {}): ReelItem {
@@ -58,5 +58,35 @@ describe("removeReel", () => {
     const out = removeReel(data, "a")!;
     expect(out.pages[0].items.map((i) => i.id)).toEqual(["b"]);
     expect(out.pages[1].items.map((i) => i.id)).toEqual(["c"]);
+  });
+});
+
+describe("removeReelsByAuthor (block)", () => {
+  test("every reel by the author leaves every page; others stay", () => {
+    const mixed: InfiniteData<ReelPage> = {
+      pageParams: [undefined, "c1"],
+      pages: [
+        { items: [item("a"), item("b", { authorId: "z" })], nextCursor: "c1" },
+        { items: [item("c"), item("d", { authorId: "z" })], nextCursor: undefined },
+      ],
+    };
+    const out = removeReelsByAuthor(mixed, "a")!;
+    expect(out.pages.flatMap((p) => p.items.map((i) => i.id))).toEqual(["b", "d"]);
+    expect(removeReelsByAuthor(undefined, "a")).toBeUndefined();
+  });
+});
+
+describe("insertReel (undo delete)", () => {
+  test("puts the reel back at its display index across pages", () => {
+    const out = insertReel(data, item("x"), 2)!;
+    expect(out.pages.flatMap((p) => p.items.map((i) => i.id))).toEqual(["a", "b", "x", "c"]);
+    const front = insertReel(data, item("y"), 0)!;
+    expect(front.pages[0].items.map((i) => i.id)).toEqual(["y", "a", "b"]);
+  });
+  test("past the end appends to the last page; an id already present is a no-op", () => {
+    const out = insertReel(data, item("x"), 99)!;
+    expect(out.pages[1].items.map((i) => i.id)).toEqual(["c", "x"]);
+    expect(insertReel(data, item("a"), 0)).toBe(data);
+    expect(insertReel(undefined, item("a"), 0)).toBeUndefined();
   });
 });

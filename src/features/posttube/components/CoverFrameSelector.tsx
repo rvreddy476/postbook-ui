@@ -66,7 +66,7 @@ export function CoverFrameSelector({
   return (
     <div className="rounded-xl border border-brand-divider bg-brand-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Image className="h-4 w-4 text-brand-highlight" />
+        <Image className="h-4 w-4 text-brand-text" />
         <h3 className="text-[14px] font-semibold text-brand-text">Cover Frame</h3>
       </div>
 
@@ -79,8 +79,8 @@ export function CoverFrameSelector({
             onClick={() => setMode(m)}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
               mode === m
-                ? "bg-slate-900 text-white"
-                : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
+                ? "bg-primary-ink text-white"
+                : "bg-brand-secondary text-brand-text hover:bg-brand-secondary"
             }`}
           >
             {m === "auto" && "Auto"}
@@ -107,7 +107,7 @@ export function CoverFrameSelector({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-200 to-slate-100">
+          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand-secondary to-brand-card">
             <Image className="h-8 w-8 text-brand-text/30" />
           </div>
         )}
@@ -116,7 +116,7 @@ export function CoverFrameSelector({
       {/* Mode-specific controls */}
       {mode === "scrub" && (
         <div className="space-y-2">
-          <label className="text-[12px] text-brand-highlight">
+          <label className="text-[12px] text-brand-text">
             Position: {(scrubMs / 1000).toFixed(1)}s
           </label>
           <input
@@ -141,7 +141,7 @@ export function CoverFrameSelector({
 
       {mode === "upload" && (
         <div>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-divider py-4 text-[13px] text-brand-highlight transition-colors hover:border-brand-text/30 hover:text-brand-highlight">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-divider py-4 text-[13px] text-brand-text transition-colors hover:border-brand-text/30 hover:text-brand-text">
             <Upload className="h-4 w-4" />
             Choose an image
             <input

@@ -1,33 +1,30 @@
 "use client";
 
 import { useEffect } from "react";
-import { HeaderBar } from "@/features/reels/components/HeaderBar";
-import { ReelIconSideNav } from "@/features/reels/components/ReelIconSideNav";
+import { usePathname } from "next/navigation";
+
+import { VideoShell } from "@/features/video-shell";
 import { connectToHub } from "@/services/messageService";
 
 interface AppShellProps {
+  /** Kept for callers; the header names the app from the route now. */
   sectionLabel?: string;
   children: React.ReactNode;
 }
 
-/**
- * Shared app shell with HeaderBar (logo + search + create + profile)
- * and left icon sidebar. Used by all content pages.
- */
-export function AppShell({ sectionLabel, children }: AppShellProps) {
+/*
+  The shell for the video-adjacent pages that are not the reels stage or a
+  PostTube route: the upload studio, live start, channel settings. It is
+  the same VideoShell those apps use (header with Create, the collapsible
+  left menu, the trending column), so every video surface reads as one
+  place. The app is the one the route belongs to; anything that is not
+  /reels is treated as PostTube.
+*/
+export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
   useEffect(() => {
     void connectToHub(() => {});
   }, []);
-
-  return (
-    <div className="flex h-screen flex-col overflow-hidden bg-brand-card">
-      <HeaderBar sectionLabel={sectionLabel} />
-      <div className="flex flex-1 min-h-0">
-        <ReelIconSideNav />
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  const app = pathname?.startsWith("/reels") ? "reels" : "tube";
+  return <VideoShell app={app}>{children}</VideoShell>;
 }

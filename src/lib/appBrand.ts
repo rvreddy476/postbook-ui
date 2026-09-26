@@ -13,6 +13,7 @@ import {
   UserRoundPlus,
   Users,
   Home, Compass, SquarePlus, Bookmark, History, ListVideo,
+  Bell, BookOpen, Flame, Bike, UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
 
@@ -104,4 +105,61 @@ export function resolveAppNavigation(pathname: string | null | undefined): AppNa
   if (brand.key !== 'messenger') items.push({ label: 'Messenger', href: '/messenger', icon: MessageSquare });
   items.push({ label: 'All apps', href: '/', icon: Home });
   return items;
+}
+
+/*
+  The launcher: every service the product offers, in one grid, so a viewer
+  inside Reels or PostTube can jump to any other app without going home
+  first. APP_BRANDS answers "which app is this route"; this answers "what
+  apps are there". They overlap on purpose and stay separate: a brand needs
+  a search hint and route prefixes, a tile needs a description and may not
+  be shippable yet (`soon`), which no brand can be.
+
+  A `soon` tile has no page behind it. The launcher renders it disabled with
+  a chip rather than linking to a 404, and the test guards that every LIVE
+  tile does link somewhere.
+*/
+export interface AppLauncherTile {
+  /** Stable key; unique across the registry. */
+  key: string;
+  name: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  /** Not shipped yet: rendered disabled, never a dead link. */
+  soon?: boolean;
+  badge?: "new";
+}
+
+export const APP_LAUNCHER: readonly AppLauncherTile[] = [
+  { key: "home", name: "Home feed", description: "Posts from people and pages you follow", href: "/", icon: Home },
+  { key: "reels", name: "Reels", description: "Short vertical video", href: "/reels", icon: Clapperboard },
+  { key: "tube", name: "PostTube", description: "Long video, channels and playlists", href: "/posttube", icon: Tv },
+  { key: "groups", name: "Groups", description: "Private and public groups", href: "/groups", icon: Users },
+  { key: "communities", name: "Communities", description: "Broadcast channels around a topic", href: "/communities", icon: Globe2 },
+  { key: "connections", name: "Connections", description: "People you know and may know", href: "/connections", icon: UserRoundPlus },
+  { key: "messenger", name: "Messenger", description: "Chats, calls and channels", href: "/messenger", icon: MessageSquare },
+  { key: "live", name: "Live", description: "Watch and go live", href: "/live", icon: Radio },
+  { key: "ask", name: "Ask", description: "Questions and answers", href: "/qa", icon: HelpCircle },
+  { key: "pages", name: "Pages", description: "Brands, creators and businesses", href: "/pages", icon: Briefcase },
+  { key: "shop", name: "Shop", description: "MStore: products and sellers", href: "/commerce", icon: ShoppingBag },
+  { key: "match", name: "PostMatch", description: "Meet people near you", href: "/postmatch", icon: Heart },
+  { key: "trending", name: "Trending", description: "What is popular right now", href: "/trending", icon: Flame },
+  { key: "memories", name: "Memories", description: "On this day, years ago", href: "/memories", icon: BookOpen },
+  { key: "saved", name: "Saved", description: "Everything you bookmarked", href: "/saved", icon: Bookmark },
+  { key: "notifications", name: "Notifications", description: "Activity on your posts and profile", href: "/notifications", icon: Bell },
+  { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed, soon: true },
+  { key: "ride", name: "Ride", description: "Mopedu: rides across town", href: "/ride", icon: Bike, soon: true },
+];
+
+/**
+ * Tiles whose name or description contains the query, case-insensitively.
+ * An empty query returns the whole registry in its declared order.
+ */
+export function filterAppLauncher(query: string, tiles: readonly AppLauncherTile[] = APP_LAUNCHER): AppLauncherTile[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [...tiles];
+  return tiles.filter((t) =>
+    t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.key.toLowerCase().includes(q),
+  );
 }

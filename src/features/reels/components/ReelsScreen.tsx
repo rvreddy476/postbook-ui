@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw, Undo2 } from "lucide-react";
 import Link from "next/link";
 
-import { HeaderBar } from "@/features/reels/components/HeaderBar";
-import Sidebar from "@/components/Sidebar";
+import { TrendingCard, VideoShell } from "@/features/video-shell";
 import { connectToHub } from "@/services/messageService";
 import { useReelLive } from "../hooks/useReelLive";
 import "./reels-screen.css";
@@ -20,19 +19,27 @@ import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
 import { ReelSettingsMenu } from "@/features/reels/components/ReelSettingsMenu";
 import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
+import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
 import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
-import { ReelDiscoveryPanel } from './ReelDiscoveryPanel';
+import { ReelDiscoveryPanel } from "./ReelDiscoveryPanel";
+import { ReelFeedTabs, type ReelFeedTab } from "@/features/reels/components/ReelFeedTabs";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
+  useBlockAuthor,
+  useDeleteReel,
   useDontRecommendAuthor,
+  useInterested,
   useLikeReel,
   useNotInterested,
+  useRestoreReel,
   useSaveReel,
   useShareReel,
 } from "@/features/reels/hooks/useReelEngagement";
+import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription";
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
+import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
 import { useBatchRelationships } from "@/hooks/useConnections";
@@ -44,6 +51,12 @@ import { useGlobalToast } from "@/contexts/ToastContext";
   action rail beside it; comments in a drawer; prev/next by keyboard, wheel,
   swipe or the arrow buttons. Only short-form ever reaches here: the model
   drops long video and feed posts before they are rendered.
+
+  The page sits inside the shared video shell (header, collapsible left
+  menu, 340px right column). What the stage owns is the middle: a creator
+  column on the left (or the comment thread when open) and the stage
+  cluster with its rail. The right column carries the trending card and
+  the "More creators" panel.
 
   Deep links: /reels/{id} → ?reelId= pins that reel above the feed, as the
   Android screen does, so a shared link opens on the reel and swiping down
@@ -69,6 +82,7 @@ export function ReelsScreen() {
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
   const focusCommentId = searchParams.get("focusCommentId") || undefined;
 
+  const [tab, setTabState] = useState<ReelFeedTab>("for-you");
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [commentsOpen, setCommentsOpen] = useState(Boolean(focusCommentId));
@@ -77,9 +91,13 @@ export function ReelsScreen() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [qualityHeights, setQualityHeights] = useState<number[]>([]);
+  const [captionsAvailable, setCaptionsAvailable] = useState<"unknown" | "yes" | "no">("unknown");
   const [fullscreen, setFullscreen] = useState(false);
   const [viewerId, setViewerId] = useState("");
+  const [clear, dispatchClear] = useReducer(clearScreenReducer, CLEAR_SCREEN_INITIAL);
 
   const { prefs, update: updatePrefs } = usePlayerPrefs();
   const playerRef = useRef<ReelVideoHandle>(null);
@@ -91,12 +109,12 @@ export function ReelsScreen() {
 
   useEffect(() => {
     setViewerId(readSessionUserId());
-    // AppShell previously bootstrapped the shared socket. Keep it when using the app-named header.
+    // The shared socket used to be bootstrapped by AppShell; the stage keeps it alive.
     void connectToHub(() => {});
   }, []);
 
   /* ── data ──────────────────────────────────────────────── */
-  const feed = useReelFeed(false);
+  const feed = useReelFeed(tab === "following");
   const pinned = useQuery({
     queryKey: ["reels", "pinned", deepLinkId],
     queryFn: () => fetchReel(deepLinkId!),
@@ -106,17 +124,28 @@ export function ReelsScreen() {
 
   const reels = useMemo<ReelItem[]>(() => {
     const fromFeed = feed.data?.pages.flatMap((p) => p.items) ?? [];
-    const pin = pinned.data;
+    // A deep link pins on "For you"; "Following" is the viewer's own list.
+    const pin = tab === "for-you" ? pinned.data : null;
     if (!pin) return fromFeed;
     const rest = fromFeed.filter((r) => r.id !== pin.id);
     // The feed copy wins once it arrives: it carries viewer flags and counts.
     const feedCopy = fromFeed.find((r) => r.id === pin.id);
     return [feedCopy ?? pin, ...rest];
-  }, [feed.data, pinned.data]);
+  }, [feed.data, pinned.data, tab]);
 
   const active = reels[index];
   useReelLive(active?.id, commentsOpen);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
+
+  const setTab = (next: ReelFeedTab) => {
+    if (next === tab) return;
+    setTabState(next);
+    setIndex(0);
+    setDirection(1);
+    setCommentsOpen(false);
+    setMoreOpen(false);
+    setSettingsOpen(false);
+  };
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -125,7 +154,7 @@ export function ReelsScreen() {
     }
   }, [index, reels.length, feed]);
 
-  // Keep the index valid when items disappear (not-interested).
+  // Keep the index valid when items disappear (not-interested, block, delete).
   useEffect(() => {
     if (reels.length > 0 && index > reels.length - 1) setIndex(reels.length - 1);
   }, [reels.length, index]);
@@ -140,13 +169,19 @@ export function ReelsScreen() {
     window.history.replaceState(window.history.state, "", url.toString());
   }, [active?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── relationship / follow ─────────────────────────────── */
+  // Captions availability is per reel; the player reports it once asked.
+  useEffect(() => {
+    setCaptionsAvailable("unknown");
+  }, [active?.id]);
+
+  /* ── relationship / follow / subscribe ─────────────────── */
   const authorIds = useMemo(() => Array.from(new Set(reels.map((r) => r.authorId))), [reels]);
   const relationships = useBatchRelationships(viewerId, authorIds);
   const followMut = useFollowUser();
   const unfollowMut = useUnfollowUser();
   const relationship = active ? relationships.data?.get(active.authorId) : undefined;
   const following = relationship?.following;
+  const followPending = followMut.isPending || unfollowMut.isPending;
   const toggleFollow = async () => {
     if (!active?.authorUsername) return;
     try {
@@ -155,6 +190,14 @@ export function ReelsScreen() {
       qc.invalidateQueries({ queryKey: ["relationships", "batch"] });
     } catch {
       toast({ type: "error", title: following ? "Could not unfollow" : "Could not follow" });
+    }
+  };
+  const subscription = useReelSubscription(active?.channelHandle, Boolean(active?.channelHandle) && !isOwn);
+  const toggleSubscribe = async () => {
+    try {
+      await subscription.toggle();
+    } catch {
+      toast({ type: "error", title: subscription.subscribed ? "Could not unsubscribe" : "Could not subscribe" });
     }
   };
 
@@ -171,6 +214,10 @@ export function ReelsScreen() {
   const share = useShareReel();
   const notInterested = useNotInterested();
   const dontRecommend = useDontRecommendAuthor();
+  const interested = useInterested();
+  const block = useBlockAuthor();
+  const remove = useDeleteReel();
+  const restore = useRestoreReel();
 
   const onLike = () => active && !like.isPending && like.mutate({ reel: active, liked: !active.viewerLiked });
   const onDoubleTapLike = () => active && !like.isPending && !active.viewerLiked && like.mutate({ reel: active, liked: true });
@@ -208,6 +255,72 @@ export function ReelsScreen() {
       onError: () => toast({ type: "error", title: "Could not save that preference" }),
     });
   };
+  const onInterested = () => {
+    if (!active) return;
+    interested.mutate(active, {
+      onSuccess: () => toast({ type: "success", title: "We'll show more like this" }),
+      onError: () => toast({ type: "error", title: "Could not save that preference" }),
+    });
+  };
+
+  /** Blocked: every reel by the author leaves the cache; the next one takes the slot. */
+  const confirmBlock = async () => {
+    if (!active) return;
+    const target = active;
+    try {
+      await block.mutateAsync(target);
+      if (pinned.data?.authorId === target.authorId) qc.setQueryData(["reels", "pinned", deepLinkId], null);
+      setBlockOpen(false);
+      setDirection(1);
+      toast({ type: "success", title: `${target.authorUsername ? `@${target.authorUsername}` : target.authorName} blocked` });
+    } catch {
+      toast({ type: "error", title: "Could not block", description: "Please try again." });
+    }
+  };
+
+  /** Deleted: gone at once, with an Undo that restores it to the same spot. */
+  const confirmDelete = () => {
+    if (!active || !isOwn) return;
+    const target = active;
+    const at = index;
+    setDeleteOpen(false);
+    setDirection(1);
+    if (pinned.data?.id === target.id) qc.setQueryData(["reels", "pinned", deepLinkId], null);
+    remove.mutate(
+      { reel: target, at },
+      {
+        onSuccess: () => {
+          toast({
+            type: "info",
+            title: "Reel deleted",
+            customContent: (
+              <ReelUndoToast
+                onUndo={async () => {
+                  await restore.mutateAsync({ reel: target, at });
+                  setIndex(at);
+                }}
+                onFailed={() => toast({ type: "error", title: "Could not restore the reel" })}
+              />
+            ),
+          });
+        },
+        onError: () => toast({ type: "error", title: "Could not delete the reel" }),
+      },
+    );
+  };
+
+  /* ── clear screen ─────────────────────────────────────── */
+  useEffect(() => {
+    if (!clear.hint) return;
+    const t = setTimeout(() => dispatchClear({ type: "hint-expired" }), CLEAR_SCREEN_HINT_MS);
+    return () => clearTimeout(t);
+  }, [clear.hint]);
+
+  const enterClearScreen = () => {
+    setMoreOpen(false);
+    setSettingsOpen(false);
+    dispatchClear({ type: "enter" });
+  };
 
   /* ── navigation ────────────────────────────────────────── */
   const go = useCallback(
@@ -229,7 +342,15 @@ export function ReelsScreen() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target) || (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="toolbar"], [role="slider"]'))) return;
+      if (isTypingTarget(e.target)) return;
+      if (blockOpen || deleteOpen) return;
+      // Clear screen: any key brings the controls back and is consumed.
+      if (clear.on) {
+        e.preventDefault();
+        dispatchClear({ type: "key" });
+        return;
+      }
+      if (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="alertdialog"], [role="toolbar"], [role="slider"]')) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.key) {
         case "ArrowDown":
@@ -266,6 +387,9 @@ export function ReelsScreen() {
         case "f":
           void toggleFullscreen();
           break;
+        case "h":
+          enterClearScreen();
+          break;
         case "Escape":
           setCommentsOpen(false);
           setMoreOpen(false);
@@ -276,7 +400,7 @@ export function ReelsScreen() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [go, prefs.sound, active?.id, active?.viewerLiked]);
+  }, [go, prefs.sound, active?.id, active?.viewerLiked, clear.on, blockOpen, deleteOpen]);
 
   const onWheel = (e: React.WheelEvent) => {
     if (isTypingTarget(e.target)) return;
@@ -319,21 +443,57 @@ export function ReelsScreen() {
   }, [prefs.onEnd, go]);
 
   const onProgress = useCallback(() => {}, []);
+  const onCaptionsAvailable = useCallback((available: boolean) => setCaptionsAvailable(available ? "yes" : "no"), []);
 
   /* ── states ────────────────────────────────────────────── */
   const loading = (feed.isLoading || (Boolean(deepLinkId) && pinned.isLoading)) && reels.length === 0;
   const errored = (feed.isError || pinned.isError) && reels.length === 0;
   const empty = !loading && !errored && reels.length === 0;
 
-  return (
-    <div className="flex h-dvh flex-col bg-canvas text-brand-text">
-      <HeaderBar />
-      <div className="reels-app-body flex min-h-0 flex-1">
-        <div className="hidden md:block">
-          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
-        </div>
-      <div ref={workspaceRef} className="reels-workspace min-w-0 flex-1">
+  const moreMenu = active ? (
+    <ReelMoreMenu
+      open={moreOpen}
+      onClose={() => setMoreOpen(false)}
+      reel={active}
+      isOwn={isOwn}
+      following={following}
+      followPending={followPending}
+      onCopyLink={onCopyLink}
+      onDescription={() => setDescriptionOpen(true)}
+      onInterested={onInterested}
+      onToggleFollow={() => void toggleFollow()}
+      onBlock={() => setBlockOpen(true)}
+      onDelete={() => setDeleteOpen(true)}
+      onClearScreen={enterClearScreen}
+      onNotInterested={onNotInterested}
+      onDontRecommend={onDontRecommend}
+      onReport={() => setReportOpen(true)}
+    />
+  ) : null;
 
+  const tabs = <ReelFeedTabs value={tab} onChange={setTab} />;
+
+  const aside = (
+    <>
+      <TrendingCard kind="flick" />
+      {active ? (
+        <ReelDiscoveryPanel
+          reels={reels}
+          active={active}
+          viewerId={viewerId}
+          relationships={relationships.data}
+          onOpenReel={openReel}
+          canLoadMore={!!feed.hasNextPage}
+          loadingMore={feed.isFetchingNextPage}
+          onLoadMore={() => void feed.fetchNextPage()}
+        />
+      ) : null}
+    </>
+  );
+
+  return (
+    <VideoShell app="reels" immersive aside={aside}>
+      <div ref={workspaceRef} className="reels-workspace">
         <main
           className="reels-main"
           onWheel={onWheel}
@@ -341,35 +501,51 @@ export function ReelsScreen() {
           onTouchEnd={onTouchEnd}
         >
           {loading ? (
-            <StageFrame stageRef={stageRef}>
-              <div className="flex h-full items-center justify-center text-white/70">Loading reels…</div>
-            </StageFrame>
+            <StateLayout tabs={tabs} stageRef={stageRef}>
+              <div className="flex h-full items-center justify-center text-[13px] text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
+            </StateLayout>
           ) : errored ? (
-            <StageFrame stageRef={stageRef}>
+            <StateLayout tabs={tabs} stageRef={stageRef}>
               <StateCard
                 title="Couldn't load reels"
                 hint={(feed.error as { message?: string })?.message || "Check your connection and try again."}
                 action={
-                  <button type="button" onClick={() => { void feed.refetch(); if(deepLinkId) void pinned.refetch(); }} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black">
+                  <button type="button" onClick={() => { void feed.refetch(); if (deepLinkId) void pinned.refetch(); }} className="reel-state-action">
                     <RefreshCw className="h-4 w-4" /> Retry
                   </button>
                 }
               />
-            </StageFrame>
+            </StateLayout>
           ) : empty ? (
-            <StageFrame stageRef={stageRef}>
-              <StateCard
-                title="No reels yet"
-                hint="Be the first — reels are short videos up to 5 minutes."
-                action={
-                  <Link href="/reels/create" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black">
-                    <Clapperboard className="h-4 w-4" /> Create a reel
-                  </Link>
-                }
-              />
-            </StageFrame>
+            <StateLayout tabs={tabs} stageRef={stageRef}>
+              {tab === "following" ? (
+                <StateCard
+                  title="Nothing from people you follow yet"
+                  hint="Follow creators and their reels will show up here."
+                  action={
+                    <button type="button" onClick={() => setTab("for-you")} className="reel-state-action">
+                      Browse For you
+                    </button>
+                  }
+                />
+              ) : (
+                <StateCard
+                  title="No reels yet"
+                  hint="Be the first — reels are short videos up to 5 minutes."
+                  action={
+                    <Link href="/reels/create" className="reel-state-action">
+                      <Clapperboard className="h-4 w-4" /> Create a reel
+                    </Link>
+                  }
+                />
+              )}
+            </StateLayout>
           ) : active ? (
-            <div className="reels-content" data-comments-open={commentsOpen && !active.commentsDisabled}>
+            <div
+              className="reels-content"
+              data-comments-open={commentsOpen && !active.commentsDisabled}
+              data-clear-screen={clear.on ? "" : undefined}
+            >
               {/* left column: the creator, or the thread when comments are open */}
               <div className="reel-left-column" data-reel-side-panel>
                 {commentsOpen && !active.commentsDisabled ? (
@@ -380,7 +556,7 @@ export function ReelsScreen() {
                     viewerId={viewerId}
                     isOwn={isOwn}
                     relationship={relationship}
-                    followPending={followMut.isPending || unfollowMut.isPending}
+                    followPending={followPending}
                     onToggleFollow={toggleFollow}
                     onOpenReel={openReel}
                   />
@@ -388,8 +564,17 @@ export function ReelsScreen() {
               </div>
 
               <motion.div layout transition={{ duration: reduceMotion ? 0 : 0.28, ease: "easeOut" }} className="reel-center-column">
-              <Link className="reel-mobile-creator" href={`/u/${active.authorUsername || active.authorId}`}>{active.authorName}</Link>
-              <div className="reel-stage-cluster">
+              {tabs}
+              <div
+                className="reel-stage-cluster"
+                onClickCapture={(e) => {
+                  // A tap anywhere on the stage brings the controls back and does nothing else.
+                  if (!clear.on) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dispatchClear({ type: "tap" });
+                }}
+              >
               <StageFrame stageRef={stageRef}>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
@@ -412,24 +597,29 @@ export function ReelsScreen() {
                       onDoubleTap={onDoubleTapLike}
                       onQualityLevels={setQualityHeights}
                       onProgress={onProgress}
+                      onCaptionsAvailable={onCaptionsAvailable}
                     />
                     <ReelOverlay
                       reel={active}
                       isOwn={isOwn}
                       following={following}
-                      followPending={followMut.isPending || unfollowMut.isPending}
-                      onToggleFollow={toggleFollow}
+                      followPending={followPending}
+                      onToggleFollow={() => void toggleFollow()}
+                      subscribed={subscription.subscribed}
+                      subscribePending={subscription.pending}
+                      onToggleSubscribe={() => void toggleSubscribe()}
+                      showAuthor
                       sound={prefs.sound}
                       volume={prefs.volume}
                       onVolumeChange={(volume) => {
                         playerRef.current?.setVolume(volume);
-                        updatePrefs({volume, sound: volume > 0});
+                        updatePrefs({ volume, sound: volume > 0 });
                       }}
                       onToggleSound={() => {
                         const sound = !prefs.sound;
                         const volume = prefs.volume || 1;
                         playerRef.current?.setVolume(sound ? volume : 0);
-                        updatePrefs({sound, volume});
+                        updatePrefs({ sound, volume });
                       }}
                       onOpenSettings={() => setSettingsOpen((v) => !v)}
                       settingsMenu={
@@ -439,7 +629,7 @@ export function ReelsScreen() {
                           prefs={prefs}
                           onChange={updatePrefs}
                           qualityHeights={qualityHeights}
-                          captionsAvailable="unknown"
+                          captionsAvailable={captionsAvailable}
                         />
                       }
                     />
@@ -452,7 +642,7 @@ export function ReelsScreen() {
                         onShare={onShare}
                         onSave={onSave}
                         onMore={() => setMoreOpen((v) => !v)}
-                        moreMenu={<MoreMenu />}
+                        moreMenu={moreMenu}
                       />
                     </div>
                   </motion.div>
@@ -469,6 +659,20 @@ export function ReelsScreen() {
                 >
                   {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
+                <AnimatePresence>
+                  {clear.hint ? (
+                    <motion.div
+                      key="clear-hint"
+                      role="status"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="reel-clear-hint"
+                    >
+                      Tap to show controls
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               </StageFrame>
 
               {/* desktop rail */}
@@ -480,19 +684,14 @@ export function ReelsScreen() {
                   onShare={onShare}
                   onSave={onSave}
                   onMore={() => setMoreOpen((v) => !v)}
-                  moreMenu={<MoreMenu />}
+                  moreMenu={moreMenu}
                 />
               </div>
               </div>
               </motion.div>
 
-              <div className="reel-right-column" data-reel-side-panel>
-                <ReelDiscoveryPanel reels={reels} active={active} viewerId={viewerId} relationships={relationships.data}
-                  onOpenReel={openReel} canLoadMore={!!feed.hasNextPage} loadingMore={feed.isFetchingNextPage} onLoadMore={() => void feed.fetchNextPage()}/>
-              </div>
-
-              {/* phone: comments as a bottom sheet */}
-              <div className="md:hidden">
+              {/* narrow screens: comments as a bottom sheet */}
+              <div className="reel-comments-sheet">
                 <ReelCommentsDrawer open={commentsOpen && !active.commentsDisabled} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
               </div>
             </div>
@@ -500,70 +699,76 @@ export function ReelsScreen() {
 
           {/* prev / next */}
           {reels.length > 1 ? (
-            <div className="reels-navigation">
+            <div className="reels-navigation" data-clear-screen={clear.on ? "" : undefined}>
               <NavButton label="Previous reel" disabled={index === 0} onClick={() => go(-1)} icon={<ChevronUp className="h-5 w-5" />} />
               <NavButton label="Next reel" disabled={index >= reels.length - 1 && !feed.hasNextPage} onClick={() => go(1)} icon={<ChevronDown className="h-5 w-5" />} />
             </div>
           ) : null}
         </main>
-      {active ? (
-        <>
-          <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
-          <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
-          <AnimatePresence>
-            {descriptionOpen ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center md:p-4"
-                onClick={() => setDescriptionOpen(false)}
-              >
-                <motion.div
-                  initial={{ y: 24 }}
-                  animate={{ y: 0 }}
-                  exit={{ y: 24 }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-md rounded-t-2xl border border-border bg-brand-card p-5 text-brand-text md:rounded-2xl"
-                >
-                  <h2 className="mb-2 text-[14px] font-bold">Description</h2>
-                  <p className="whitespace-pre-wrap text-[13px] leading-relaxed">{active.caption || "No description."}</p>
-                  {active.hashtags.length ? (
-                    <p className="mt-2 flex flex-wrap gap-x-2 text-[12px] font-semibold text-brand-accent">
-                      {active.hashtags.map((t) => (
-                        <Link key={t} href={`/hashtag/${encodeURIComponent(t)}`}>
-                          #{t}
-                        </Link>
-                      ))}
-                    </p>
-                  ) : null}
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </>
-      ) : null}
-      </div>
-      </div>
-    </div>
-  );
 
-  function MoreMenu() {
-    if (!active) return null;
-    return (
-      <ReelMoreMenu
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        reel={active}
-        isOwn={isOwn}
-        onCopyLink={onCopyLink}
-        onDescription={() => setDescriptionOpen(true)}
-        onNotInterested={onNotInterested}
-        onDontRecommend={onDontRecommend}
-        onReport={() => setReportOpen(true)}
-      />
-    );
-  }
+        {active ? (
+          <>
+            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
+            <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
+            <ReelConfirmDialog
+              open={blockOpen}
+              title={`Block ${active.authorUsername ? `@${active.authorUsername}` : active.authorName}?`}
+              description="They won't be able to see your posts, follow you or message you, and their reels will stop appearing here. They are not told."
+              confirmLabel="Block"
+              danger
+              pending={block.isPending}
+              onConfirm={() => void confirmBlock()}
+              onCancel={() => setBlockOpen(false)}
+            />
+            <ReelConfirmDialog
+              open={deleteOpen}
+              title="Delete this reel?"
+              description="It goes to Recently deleted. You can undo right away."
+              confirmLabel="Delete"
+              danger
+              pending={remove.isPending}
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteOpen(false)}
+            />
+            <AnimatePresence>
+              {descriptionOpen ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="reel-confirm-scrim"
+                  onClick={() => setDescriptionOpen(false)}
+                >
+                  <motion.div
+                    role="dialog"
+                    aria-modal
+                    aria-label="Description"
+                    initial={{ y: 24 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: 24 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="reel-confirm-card"
+                  >
+                    <h2 className="mb-2 text-[14px] font-bold">Description</h2>
+                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed">{active.caption || "No description."}</p>
+                    {active.hashtags.length ? (
+                      <p className="mt-2 flex flex-wrap gap-x-2 text-[12px] font-semibold text-brand-accent">
+                        {active.hashtags.map((t) => (
+                          <Link key={t} href={`/hashtag/${encodeURIComponent(t)}`}>
+                            #{t}
+                          </Link>
+                        ))}
+                      </p>
+                    ) : null}
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </>
+        ) : null}
+      </div>
+    </VideoShell>
+  );
 }
 
 /* ── layout pieces ─────────────────────────────────────────── */
@@ -574,7 +779,8 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
       ref={stageRef}
       // Width from the viewport height, not from h-full: a row flex item's
       // width is resolved before its stretched height, so aspect-ratio on a
-      // percentage height collapses to 0. 6rem = header + stage padding.
+      // percentage height collapses to 0. --reel-height is what the viewport
+      // leaves after the header, the stage padding and the feed tabs.
       //
       // The frame is 3:5, a touch wider than the 9:16 the videos are shot
       // in: the founder wanted more width without the stage leaving the
@@ -588,12 +794,26 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
   );
 }
 
+/** Loading / error / empty: the tabs stay put above a stage-sized frame. */
+function StateLayout({ tabs, stageRef, children }: { tabs: React.ReactNode; stageRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
+  return (
+    <div className="reels-content" data-single-column="">
+      <div className="reel-center-column">
+        {tabs}
+        <div className="reel-stage-cluster">
+          <StageFrame stageRef={stageRef}>{children}</StageFrame>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StateCard({ title, hint, action }: { title: string; hint: string; action?: React.ReactNode }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center text-white">
-      <Clapperboard className="h-10 w-10 text-white/60" />
+    <div className="reel-state-card">
+      <Clapperboard className="h-10 w-10 opacity-60" />
       <h2 className="text-[16px] font-bold">{title}</h2>
-      <p className="max-w-xs text-[13px] text-white/70">{hint}</p>
+      <p className="max-w-xs text-[13px] opacity-70">{hint}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
@@ -610,6 +830,35 @@ function NavButton({ label, disabled, onClick, icon }: { label: string; disabled
     >
       {icon}
     </button>
+  );
+}
+
+/** The body of the "Reel deleted" toast: the title and an Undo that restores it. */
+function ReelUndoToast({ onUndo, onFailed }: { onUndo: () => Promise<void>; onFailed: () => void }) {
+  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
+  return (
+    <div className="flex items-center gap-3 py-3 pl-4 pr-9">
+      <p className="min-w-0 flex-1 text-sm font-semibold text-brand-text">{state === "done" ? "Reel restored" : "Reel deleted"}</p>
+      {state !== "done" ? (
+        <button
+          type="button"
+          disabled={state === "busy"}
+          onClick={async () => {
+            setState("busy");
+            try {
+              await onUndo();
+              setState("done");
+            } catch {
+              setState("idle");
+              onFailed();
+            }
+          }}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-[12px] font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
+        >
+          <Undo2 className="h-3.5 w-3.5" /> {state === "busy" ? "Restoring…" : "Undo"}
+        </button>
+      ) : null}
+    </div>
   );
 }
 

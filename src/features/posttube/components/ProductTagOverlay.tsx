@@ -119,7 +119,7 @@ function ProductCard({
             )}
             <div className="flex flex-col items-start text-left">
                 {tag.label && (
-                    <span className="text-xs font-semibold leading-tight text-slate-900">
+                    <span className="text-xs font-semibold leading-tight text-brand-text">
                         {tag.label}
                     </span>
                 )}

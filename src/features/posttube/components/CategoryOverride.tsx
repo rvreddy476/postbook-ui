@@ -57,7 +57,7 @@ export function CategoryOverride({
   return (
     <div className="rounded-xl border border-brand-divider bg-brand-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Tag className="h-4 w-4 text-brand-highlight" />
+        <Tag className="h-4 w-4 text-brand-text" />
         <h3 className="text-[14px] font-semibold text-brand-text">Category</h3>
         <span className="text-[11px] text-brand-text/60 ml-auto">
           Auto: {computedCategory === "flick" ? "Reel" : "Video"}
@@ -71,9 +71,9 @@ export function CategoryOverride({
           disabled={!canBeFlick || saving}
           className={`flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition-colors ${
             selected === "flick"
-              ? "bg-amber-500 text-white"
+              ? "bg-warning text-white"
               : canBeFlick
-                ? "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
+                ? "bg-brand-secondary text-brand-text hover:bg-brand-secondary"
                 : "bg-brand-secondary text-brand-text/30 cursor-not-allowed"
           }`}
         >
@@ -86,7 +86,7 @@ export function CategoryOverride({
           className={`flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition-colors ${
             selected === "long_video"
               ? "bg-brand-text text-brand-bg"
-              : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
+              : "bg-brand-secondary text-brand-text hover:bg-brand-secondary"
           }`}
         >
           Video
@@ -100,7 +100,7 @@ export function CategoryOverride({
       )}
 
       {error && (
-        <p className="mt-2 text-[11px] text-red-500">{error}</p>
+        <p className="mt-2 text-[11px] text-danger">{error}</p>
       )}
 
       {saving && (

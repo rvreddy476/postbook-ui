@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   The stage draws its own black canvas; the page around it follows the app
   theme (light or dark) like every other route. The old override that forced
   a white body here is gone — it defeated dark mode on this one page.
+
+  The one rule left hides the root layout's fixed decorative overlay, which
+  the shared video shell does not do itself (it only frames header, menu,
+  main and aside), so it stays here.
 */
 export default function ReelsLayout({ children }: { children: React.ReactNode }) {
   return (
