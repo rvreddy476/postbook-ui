@@ -1,17 +1,11 @@
 import api from "@/lib/api";
 
-import type { PostDetail, CommentItem } from "@/types/profile";
+import type { PostDetail } from "@/types/profile";
 import type {
   Reel,
-  ReelComment,
   ReelDraft,
-  AudioTrack,
-  Topic,
   CoverFrameResult,
   ProcessingStatusResult,
-  ViewEvent,
-  CursorPage,
-  CommentsAroundResponse,
   ReelVisibility,
   LicenseType,
   CommentModeration,
@@ -57,16 +51,6 @@ export function postDetailToReel(post: PostDetail): Reel {
   };
 }
 
-export function commentItemToReelComment(item: CommentItem): ReelComment {
-  return {
-    comment_id: item.id,
-    author_id: item.author_id,
-    author_name: item.author_id,
-    text: item.body || item.text || "",
-    created_at: item.created_at,
-  };
-}
-
 /* ── API response types (backend envelope) ───────────────── */
 
 interface ApiResponse<T> {
@@ -78,128 +62,15 @@ interface ApiResponse<T> {
    REELS FEED
    ═══════════════════════════════════════════════════════════ */
 
-export async function getReelsPage(params?: {
-  cursor?: string;
-  limit?: number;
-}): Promise<CursorPage<Reel>> {
-  const queryParams: Record<string, string> = {
-    limit: String(params?.limit ?? 8),
-  };
-  if (params?.cursor) {
-    queryParams.cursor = params.cursor;
-  }
-
-  const res = await api.get<ApiResponse<PostDetail[]>>("/v1/feed/reels", {
-    params: queryParams,
-  });
-
-  const posts = res.data.data ?? [];
-  return {
-    items: posts.map(postDetailToReel),
-    next_cursor: res.data.meta?.next_cursor || undefined,
-  };
-}
-
 /* ── Single reel ─────────────────────────────────────────── */
-
-export async function getReelById(reelId: string): Promise<Reel | null> {
-  try {
-    const res = await api.get<ApiResponse<PostDetail>>(`/v1/posts/${reelId}`);
-    return postDetailToReel(res.data.data);
-  } catch {
-    return null;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════
    COMMENTS
    ═══════════════════════════════════════════════════════════ */
 
-export async function getCommentsPage(params: {
-  reelId: string;
-  cursor?: string;
-  limit?: number;
-}): Promise<CursorPage<ReelComment>> {
-  const queryParams: Record<string, string> = {
-    limit: String(params.limit ?? 40),
-  };
-  if (params.cursor) {
-    queryParams.cursor = params.cursor;
-  }
-
-  const res = await api.get<ApiResponse<CommentItem[]>>(
-    `/v1/posts/${params.reelId}/comments`,
-    { params: queryParams }
-  );
-
-  const items = Array.isArray(res.data.data) ? res.data.data : [];
-  return {
-    items: items.map(commentItemToReelComment),
-    next_cursor: res.data.meta?.next_cursor || undefined,
-  };
-}
-
-export async function getCommentsAroundByCommentId(params: {
-  comment_id: string;
-  reel_id: string;
-}): Promise<CommentsAroundResponse> {
-  const res = await api.get<ApiResponse<CommentItem[]>>(
-    `/v1/posts/${params.reel_id}/comments/around/${params.comment_id}`,
-    { params: { limit: "40" } }
-  );
-
-  const items = Array.isArray(res.data.data) ? res.data.data : [];
-  const comments = items.map(commentItemToReelComment);
-  const focusIndex = comments.findIndex((c) => c.comment_id === params.comment_id);
-
-  return {
-    reel_id: params.reel_id,
-    focus_comment_id: params.comment_id,
-    comments,
-    focus_index: Math.max(0, focusIndex),
-  };
-}
-
-export async function createComment(params: {
-  reelId: string;
-  text: string;
-}): Promise<ReelComment> {
-  const res = await api.post<ApiResponse<CommentItem>>(
-    `/v1/posts/${params.reelId}/comments`,
-    { text: params.text },
-    { headers: { "Idempotency-Key": crypto.randomUUID() } }
-  );
-  return commentItemToReelComment(res.data.data);
-}
-
 /* ═══════════════════════════════════════════════════════════
    ENGAGEMENT ACTIONS
    ═══════════════════════════════════════════════════════════ */
-
-export async function toggleLike(postId: string): Promise<{ liked: boolean; count: number }> {
-  const res = await api.post<ApiResponse<{ liked: boolean; count: number }>>(
-    `/v1/posts/${postId}/like`
-  );
-  return res.data.data;
-}
-
-export async function toggleBookmark(postId: string): Promise<{ bookmarked: boolean }> {
-  const res = await api.post<ApiResponse<{ bookmarked: boolean }>>(
-    `/v1/posts/${postId}/bookmark`
-  );
-  return res.data.data;
-}
-
-export async function sharePost(
-  postId: string,
-  shareType: "repost" | "quote" | "external" = "external"
-): Promise<{ shared: boolean; count: number }> {
-  const res = await api.post<ApiResponse<{ shared: boolean; count: number }>>(
-    `/v1/posts/${postId}/share`,
-    { share_type: shareType, quote_text: "" }
-  );
-  return res.data.data;
-}
 
 /* ═══════════════════════════════════════════════════════════
    VIEW TRACKING
@@ -228,46 +99,6 @@ function analyticsSession(): string {
     analyticsSessionId = crypto.randomUUID();
     return analyticsSessionId;
   }
-}
-
-/**
- * Records a finished reel view. Posts a `play_end` event to the generic
- * analytics ingest endpoint (`POST /v1/analytics/events`), which batches
- * it to Kafka where the VideoViewConsumer applies the display-view rules
- * and increments the Redis view counter.
- *
- * `viewer_id` is intentionally left blank — the server attributes the
- * view to the authenticated X-User-Id the gateway stamps on the event.
- */
-export async function trackView(event: ViewEvent): Promise<void> {
-  const percentViewed =
-    event.duration_ms > 0
-      ? Math.min(100, (event.watched_ms / event.duration_ms) * 100)
-      : 0;
-  const payload = {
-    content_id: event.reel_id,
-    creator_id: event.creator_id,
-    viewer_id: "",
-    session_id: analyticsSession(),
-    content_type: event.content_type ?? "reel",
-    content_duration_ms: event.duration_ms,
-    watched_ms_total: event.watched_ms,
-    max_continuous_watch_ms: event.watched_ms,
-    percent_viewed: percentViewed,
-    loop_count: 0,
-    end_reason: event.completed ? "ended" : "swipe_next",
-    surface: event.source,
-    country: "",
-    device_id_hash: "",
-    is_autoplay: true,
-  };
-  await api
-    .post("/v1/analytics/events", {
-      events: [
-        { type: "play_end", payload, timestamp: new Date().toISOString() },
-      ],
-    })
-    .catch(() => {});
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -449,63 +280,9 @@ export async function extractCoverFrame(params: {
    AUDIO / MUSIC
    ═══════════════════════════════════════════════════════════ */
 
-export async function getTrendingAudio(params?: {
-  limit?: number;
-  cursor?: string;
-}): Promise<CursorPage<AudioTrack>> {
-  const res = await api.get<ApiResponse<AudioTrack[]>>("/v1/audio/trending", {
-    params: { limit: String(params?.limit ?? 20), cursor: params?.cursor ?? "" },
-  });
-  return {
-    items: res.data.data ?? [],
-    next_cursor: res.data.meta?.next_cursor,
-  };
-}
-
-export async function searchAudio(params: {
-  query: string;
-  limit?: number;
-  cursor?: string;
-}): Promise<CursorPage<AudioTrack>> {
-  const res = await api.post<ApiResponse<AudioTrack[]>>("/v1/audio/search", {
-    query: params.query,
-    limit: params.limit ?? 20,
-    cursor: params.cursor,
-  });
-  return {
-    items: res.data.data ?? [],
-    next_cursor: res.data.meta?.next_cursor,
-  };
-}
-
-export async function extractAudio(mediaId: string): Promise<AudioTrack> {
-  const res = await api.post<ApiResponse<AudioTrack>>("/v1/audio/extract", {
-    media_id: mediaId,
-  });
-  return res.data.data;
-}
-
-export async function getReelsByAudio(
-  audioId: string,
-  params?: { limit?: number; cursor?: string }
-): Promise<CursorPage<Reel>> {
-  const res = await api.get<ApiResponse<PostDetail[]>>(`/v1/audio/${audioId}/reels`, {
-    params: { limit: String(params?.limit ?? 20), cursor: params?.cursor ?? "" },
-  });
-  return {
-    items: (res.data.data ?? []).map(postDetailToReel),
-    next_cursor: res.data.meta?.next_cursor,
-  };
-}
-
 /* ═══════════════════════════════════════════════════════════
    TOPICS
    ═══════════════════════════════════════════════════════════ */
-
-export async function getTopics(): Promise<Topic[]> {
-  const res = await api.get<ApiResponse<Topic[]>>("/v1/reels/topics");
-  return res.data.data ?? [];
-}
 
 /* ═══════════════════════════════════════════════════════════
    DRAFT CRUD
@@ -562,28 +339,6 @@ export async function updateDraft(
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);
   return res.data.data;
-}
-
-export async function getDraft(draftId: string): Promise<ReelDraft> {
-  const res = await api.get<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`);
-  return res.data.data;
-}
-
-export async function listDrafts(params?: {
-  limit?: number;
-  cursor?: string;
-}): Promise<CursorPage<ReelDraft>> {
-  const res = await api.get<ApiResponse<ReelDraft[]>>("/v1/reels/drafts", {
-    params: { limit: String(params?.limit ?? 20), cursor: params?.cursor ?? "" },
-  });
-  return {
-    items: res.data.data ?? [],
-    next_cursor: res.data.meta?.next_cursor,
-  };
-}
-
-export async function deleteDraft(draftId: string): Promise<void> {
-  await api.delete(`/v1/reels/drafts/${draftId}`);
 }
 
 /* ═══════════════════════════════════════════════════════════
