@@ -72,7 +72,7 @@
 .video-nav[data-chrome="sidebar"] .video-nav__search-icon { left: 12px; }
 .video-nav[data-chrome="sidebar"] .video-nav__search input { height: 40px; padding: 0 16px 0 44px; font-size: 16px; font-weight: 400; }
 .video-nav[data-chrome="sidebar"] .video-nav__search-button { width: 40px; height: 40px; margin: 16px auto 0; }
-.video-nav[data-chrome="sidebar"] .video-nav__scroll { padding: 24px 8px 8px; }
+.video-nav[data-chrome="sidebar"] .video-nav__scroll { padding: 24px 16px 8px; }
 .video-nav[data-chrome="sidebar"] .video-nav__list { gap: 4px; }
 .video-nav[data-chrome="sidebar"] .video-nav__item { height: 40px; padding: 0 16px; gap: 12px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgb(var(--brand-text)); }
 .video-nav[data-chrome="sidebar"] .video-nav__item:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }

@@ -25,6 +25,8 @@ interface ReelRailProps {
   onLike: () => void;
   onComments: () => void;
   onShare: () => void;
+  /** Spins the sound disc at the bottom of the desktop rail. */
+  playing?: boolean;
   onSave: () => void;
   /** Phone only: the rail carries More there. The desktop rail has none — More is on the frame. */
   onMore?: () => void;
@@ -63,6 +65,7 @@ export function ReelRail({
   onComments,
   onShare,
   onSave,
+  playing = false,
   onMore,
   moreMenu,
   variant = "desktop",
@@ -107,6 +110,7 @@ export function ReelRail({
         onClick={onSave}
         icon={<Bookmark size={iconSize} className={reel.viewerSaved ? "fill-current" : ""} />}
         activeClass="is-saved"
+        count={desktop ? (reel.saveCount ?? 0) : undefined}
       />
       {!reel.shareHidden ? (
         <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<Send size={iconSize} />} />
@@ -116,6 +120,12 @@ export function ReelRail({
           <RailButton label="More" onClick={onMore} icon={<MoreHorizontal size={iconSize} />} />
           {moreMenu}
         </div>
+      ) : null}
+      {desktop ? (
+        // TikTok's sound disc: 44px in a 52px slot at the very bottom, turning while the reel plays.
+        <Link href={profileHref} className="reel-rail-disc" aria-label={`More from ${reel.authorName}`} data-playing={playing ? "" : undefined}>
+          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
+        </Link>
       ) : null}
     </div>
   );

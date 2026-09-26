@@ -48,7 +48,7 @@ export interface FeedReelPost {
   created_at?: string;
   cover_media_id?: string | null;
   media?: FeedMedia[] | null;
-  counts?: { likes?: number; comments?: number; shares?: number } | null;
+  counts?: { likes?: number; comments?: number; shares?: number; saves?: number; bookmarks?: number } | null;
   view_count?: number;
   has_reacted?: boolean;
   viewer_reaction?: string | null;
@@ -78,6 +78,8 @@ export interface ReelItem {
   likeCount: number;
   commentCount: number;
   shareCount: number;
+  /** Bookmarks, when the row carries them; the rail shows 0 otherwise, as TikTok does. */
+  saveCount?: number;
   viewCount: number;
   viewerLiked: boolean;
   viewerSaved: boolean;
@@ -162,6 +164,7 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     likeCount: post.counts?.likes ?? 0,
     commentCount: post.counts?.comments ?? 0,
     shareCount: post.counts?.shares ?? 0,
+    saveCount: post.counts?.saves ?? post.counts?.bookmarks,
     viewCount: post.view_count ?? 0,
     viewerLiked: post.has_reacted === true || !!post.viewer_reaction,
     viewerSaved: post.is_bookmarked === true,

@@ -128,7 +128,7 @@ test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom —
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).toContain('.reel-action-rail.is-desktop { gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent; width: var(--reel-rail-w); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button { gap: 6px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 8px;');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-secondary));');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-text) / .06);');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');

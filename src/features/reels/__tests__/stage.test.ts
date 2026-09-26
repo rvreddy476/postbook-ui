@@ -79,7 +79,7 @@ describe("the placement rule", () => {
     expect(css).not.toContain("reel-side-w");
     // Frame: 16px from the top, 100dvh − 32 tall, radius 8 on desktop, no border or shadow.
     expect(css).toContain("--reel-viewport: calc(100dvh - 32px)");
-    expect(css).toContain(".reel-stage-area { padding: 16px 0; }");
+    expect(css).toContain(".reel-stage-area { padding: 16px 56px 16px 0; }");
     expect(css).toContain(".reel-stage { border-radius: 8px;");
     // Arrows: 40px circles, 16px from the edge, 16px apart, centred on the viewport.
     expect(css).toContain(".reels-navigation { display: none; flex-direction: column; gap: 16px; }");
