@@ -17,7 +17,7 @@ export function useCommentsAround(postId: string | undefined, commentId: string 
                 { params: { limit: String(limit) } }
             )
             const data = res.data.data
-            return Array.isArray(data) ? data : (data as any).items ?? []
+            return Array.isArray(data) ? data : (data as any)?.items ?? []
         },
         enabled: !!postId && !!commentId,
     })

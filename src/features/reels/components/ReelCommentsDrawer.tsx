@@ -39,7 +39,8 @@ export function ReelCommentsDrawer({ open, reelId, reelAuthorId, commentCount, f
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed inset-x-0 bottom-0 z-40 flex h-[72vh] flex-col rounded-t-2xl border border-border bg-brand-card text-brand-text shadow-2xl md:static md:h-full md:w-[380px] md:shrink-0 md:rounded-2xl"
+            className="reel-comments-panel"
+            aria-label="Reel comments"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h3 className="text-[13px] font-bold">Comments · {formatCount(commentCount)}</h3>
@@ -47,8 +48,8 @@ export function ReelCommentsDrawer({ open, reelId, reelAuthorId, commentCount, f
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <CommentSection postId={reelId} postAuthorId={reelAuthorId} commentsCount={commentCount} alwaysExpanded focusCommentId={focusCommentId} />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <CommentSection key={reelId} postId={reelId} postAuthorId={reelAuthorId} commentsCount={commentCount} alwaysExpanded focusCommentId={focusCommentId} />
             </div>
           </motion.aside>
         </>

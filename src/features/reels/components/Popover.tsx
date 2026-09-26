@@ -33,6 +33,8 @@ interface PopoverProps {
   /** Which way the card grows from the trigger on desktop. */
   placement?: "up" | "down";
   label: string;
+  /** Settings sit below their full-width control bar, inside the portrait frame. */
+  belowTrigger?: boolean;
 }
 
 /*
@@ -40,7 +42,7 @@ interface PopoverProps {
   on desktop; a bottom sheet on phones. Escape and outside clicks close it,
   and clicks inside never reach the stage (which would toggle playback).
 */
-export function Popover({ open, onClose, align = "right", children, sheetOnMobile = true, placement = "up", label }: PopoverProps) {
+export function Popover({ open, onClose, align = "right", children, sheetOnMobile = true, placement = "up", label, belowTrigger = false }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const phone = useIsPhone();
 
@@ -88,7 +90,7 @@ export function Popover({ open, onClose, align = "right", children, sheetOnMobil
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className={`z-50 overflow-hidden rounded-2xl border border-border bg-brand-card text-brand-text shadow-xl ${
+            className={`${belowTrigger ? "reel-settings-popover" : ""} z-50 overflow-hidden rounded-2xl border border-border bg-brand-card text-brand-text shadow-xl ${
               sheetOnMobile
                 ? `fixed inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-b-none pb-[env(safe-area-inset-bottom)] md:absolute md:inset-x-auto md:max-h-none md:rounded-2xl md:pb-0 ${
                     placement === "down" ? "md:bottom-auto md:top-0" : "md:bottom-0"
@@ -96,7 +98,10 @@ export function Popover({ open, onClose, align = "right", children, sheetOnMobil
                 : placement === "down"
                   ? "absolute top-0"
                   : "absolute bottom-0"
-            } ${align === "right" ? "md:right-full md:mr-3" : "md:left-full md:ml-3"} md:w-64`}
+            } ${belowTrigger ? "" : `${align === "right" ? "md:right-full md:mr-3" : "md:left-full md:ml-3"} md:w-64`}`}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             {children}
           </motion.div>
@@ -106,7 +111,7 @@ export function Popover({ open, onClose, align = "right", children, sheetOnMobil
   );
 
   if (phone && sheetOnMobile && typeof document !== "undefined") {
-    return createPortal(tree, document.body);
+    return createPortal(tree, document.fullscreenElement || document.body);
   }
   return tree;
 }

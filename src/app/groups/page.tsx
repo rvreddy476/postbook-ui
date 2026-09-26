@@ -24,6 +24,7 @@ import GroupDiscovery from '@/components/groups/GroupDiscovery'
 import { Sparkles, HeartHandshake } from 'lucide-react'
 import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
+import { publicPostAuthorIds } from '@/components/groups/anonymousIdentity'
 import type { Group, GroupPostV2 } from '@/types/groups'
 import { Search, Plus, Users, Compass, Newspaper, MessageCircle, Mail, Check, X, Megaphone, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -104,11 +105,12 @@ export default function GroupsPage() {
   )
 
   // Enrich feed posts with author name/avatar
-  const authorIds = useMemo(() => [...new Set(feedPosts.map((p) => p.author_id))], [feedPosts])
+  const authorIds = useMemo(() => publicPostAuthorIds(feedPosts), [feedPosts])
   const { data: profileMap } = useBatchProfiles(authorIds)
   const enrichedPosts = useMemo(
     () =>
       feedPosts.map((post) => {
+        if (post.is_anonymous) return post
         const profile = profileMap?.get(post.author_id)
         if (!profile) return post
         return {
@@ -165,6 +167,7 @@ export default function GroupsPage() {
           post={post}
           groupId={post.group_id}
           isAdmin={isAdmin}
+          viewerRole={role}
           isAuthor={authUser?.id === post.author_id}
           onStash={(gId, postId) => stashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
           onUnstash={(gId, postId) => unstashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}

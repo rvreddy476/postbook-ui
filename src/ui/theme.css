@@ -186,3 +186,7 @@
   To add a real third theme, add a block here AND teach the bootstrap script
   and the Header toggle to set its class. Nothing else needs to change.
 */
+:root {
+  --reel-stage: 8 12 18;
+  --reel-on-stage: 255 255 255;
+}

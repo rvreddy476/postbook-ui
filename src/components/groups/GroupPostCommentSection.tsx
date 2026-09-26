@@ -12,6 +12,7 @@ import {
   ChevronDown,
   AlertCircle,
   RefreshCw,
+  UserRound,
 } from 'lucide-react'
 import { LetterAvatar } from '@/components/LetterAvatar'
 import api from '@/lib/api'
@@ -27,12 +28,14 @@ import {
   type GroupTypingEvent,
 } from '@/services/messageService'
 import emojiData from '@emoji-mart/data'
+import { publicCommentAuthorIds } from './anonymousIdentity'
 
 const EmojiPicker = lazy(() => import('@emoji-mart/react'))
 
 /* ── Types ──────────────────────────────────────────────────── */
 
 interface Comment {
+  is_anonymous?: boolean
   id: string
   post_id: string
   user_id: string
@@ -47,6 +50,7 @@ interface Comment {
 }
 
 interface GroupPostCommentSectionProps {
+  anonymousAuthorAlias?: string
   postId: string
   groupId: string
   isAdmin?: boolean
@@ -81,13 +85,14 @@ function timeAgo(dateStr: string): string {
 
 /* ── Fetch comments from API ─────────────────────────────────── */
 
-function normalizeComment(raw: any): Comment {
+export function normalizeComment(raw: any): Comment {
   return {
     id: raw.id,
     post_id: raw.post_id,
-    user_id: raw.author_id || raw.user_id || '',
-    user_name: raw.user_name,
-    user_avatar: raw.user_avatar,
+    user_id: raw.user_id || raw.author_id || '',
+    is_anonymous: raw.is_anonymous === true,
+    user_name: raw.is_anonymous === true ? 'Anonymous member (author)' : raw.user_name,
+    user_avatar: raw.is_anonymous === true ? undefined : raw.user_avatar,
     body: raw.body,
     parent_id: raw.parent_id || undefined,
     is_pinned: raw.is_pinned || false,
@@ -135,12 +140,14 @@ async function deleteCommentApi(groupId: string, postId: string, commentId: stri
 
 /* ── Avatar component ───────────────────────────────────────── */
 
-const CommentAvatar: React.FC<{ name?: string; avatar?: string; size?: 'sm' | 'md' }> = ({
+const CommentAvatar: React.FC<{ name?: string; avatar?: string; size?: 'sm' | 'md'; anonymous?: boolean }> = ({
   name,
   avatar,
   size = 'md',
+  anonymous = false,
 }) => {
   const dim = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8'
+  if (anonymous) return <span className={`${dim} rounded-full bg-brand-secondary text-brand-highlight flex items-center justify-center shrink-0`}><UserRound size={18} aria-hidden="true" /></span>
   if (avatar) {
     return <img src={avatar} alt={name ?? ''} className={`${dim} rounded-full object-cover shrink-0`} />
   }
@@ -308,7 +315,7 @@ const InlineReplyInput: React.FC<{
 
 /* ── Single comment row ─────────────────────────────────────── */
 
-const CommentRow: React.FC<{
+export const CommentRow: React.FC<{
   comment: Comment
   isAdmin: boolean
   currentUserId: string
@@ -353,13 +360,13 @@ const CommentRow: React.FC<{
       )}
 
       <div className="flex gap-2.5">
-        <CommentAvatar name={comment.user_name} avatar={comment.user_avatar} size={isReply ? 'sm' : 'md'} />
+        <CommentAvatar anonymous={comment.is_anonymous} name={comment.user_name} avatar={comment.user_avatar} size={isReply ? 'sm' : 'md'} />
 
         <div className="flex-1 min-w-0">
           {/* Name + time + menu */}
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-semibold text-brand-text truncate">
-              {comment.user_name || 'User'}
+              {comment.is_anonymous ? 'Anonymous member (author)' : comment.user_name || 'User'}
             </span>
             <span className="text-[11px] text-brand-text/40 shrink-0">{timeAgo(comment.created_at)}</span>
             {comment.updated_at && (
@@ -461,7 +468,7 @@ const CommentSkeleton: React.FC = () => (
 
 /* ── Main GroupPostCommentSection ────────────────────────────── */
 
-export default function GroupPostCommentSection({ postId, groupId, isAdmin = false }: GroupPostCommentSectionProps) {
+export default function GroupPostCommentSection({ postId, groupId, isAdmin = false, anonymousAuthorAlias }: GroupPostCommentSectionProps) {
   // Auth user
   const authUser = useAuthUser()
   const currentUserId = authUser?.id ?? ''
@@ -486,8 +493,8 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
 
   // Resolve author profiles via batch profiles + group members as fallback
   const authorIds = useMemo(
-    () => [...new Set(comments.map(c => c.user_id).filter(id => id && id !== currentUserId))],
-    [comments, currentUserId]
+    () => publicCommentAuthorIds(comments, anonymousAuthorAlias).filter(id => id !== currentUserId),
+    [comments, currentUserId, anonymousAuthorAlias]
   )
   const { data: profileMap } = useBatchProfiles(authorIds)
   const { data: members } = useGroupMembers(groupId)
@@ -595,6 +602,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
           id: event.comment_id,
           post_id: event.post_id,
           user_id: event.author_id || '',
+          is_anonymous: event.is_anonymous === true || Boolean(anonymousAuthorAlias && event.author_id === anonymousAuthorAlias),
           body: event.body || '',
           parent_id: event.parent_id || undefined,
           spark_count: 0,
@@ -605,10 +613,10 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
     } else if (event.update_type === 'comment_deleted') {
       setComments(prev => prev.filter(c => c.id !== event.comment_id && c.parent_id !== event.comment_id))
     }
-  }, [])
+  }, [anonymousAuthorAlias])
 
-  // Subscribe to realtime comment updates via WebSocket
-  useGroupPostCommentRoom(postId, groupId, handleRealtimeEvent)
+  // Group comment rooms remain gated. Keep HTTP refresh; typing has a separate identity-free relay.
+  useGroupPostCommentRoom(undefined, groupId, handleRealtimeEvent)
 
   // ── Typing indicators ──────────────────────────────────────
   const [typingUsers, setTypingUsers] = useState<Map<string, number>>(new Map())
@@ -628,13 +636,13 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
   // Listen for remote typing events and auto-expire after 5s
   useEffect(() => {
     if (!postId) return
+    setTypingUsers(new Map())
 
     const unsub = subscribeToGroupTyping((evt: GroupTypingEvent) => {
       if (evt.post_id !== postId) return
-      if (evt.user_id === currentUserId) return
       setTypingUsers(prev => {
         const next = new Map(prev)
-        next.set(evt.user_id, Date.now())
+        next.set('anonymous-activity', Date.now())
         return next
       })
     })
@@ -659,7 +667,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
       unsub()
       clearInterval(expiry)
     }
-  }, [postId, currentUserId])
+  }, [postId])
 
   const typingCount = typingUsers.size
 
@@ -710,7 +718,9 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
       spark_count: 0,
       created_at: new Date().toISOString(),
     }
-    setComments((prev) => [...prev, newComment])
+    // Wait for the server's masked identity on anonymous posts; guessing whether
+    // this viewer is the anonymous author would briefly display their real name.
+    if (!anonymousAuthorAlias) setComments((prev) => [...prev, newComment])
     if (!body) {
       setInputText('')
       setShowMainEmoji(false)
@@ -724,7 +734,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
     if (!mountedRef.current) return
     if (result) {
       // Replace optimistic comment with server response
-      setComments(prev => prev.map(c => c.id === tempId ? result : c))
+      setComments(prev => anonymousAuthorAlias ? [...prev.filter(c => c.id !== result.id), result] : prev.map(c => c.id === tempId ? result : c))
       // Invalidate feed cache so comment_count in engagement rail syncs
       qc.invalidateQueries({ queryKey: ['group-feed-v2', groupId] })
     } else {
@@ -732,7 +742,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
       setComments(prev => prev.filter(c => c.id !== tempId))
       setOptimisticError('Failed to post comment. Please try again.')
     }
-  }, [inputText, postId, groupId, currentUserId, currentUserName, currentUserAvatar, qc])
+  }, [inputText, postId, groupId, currentUserId, currentUserName, currentUserAvatar, qc, anonymousAuthorAlias])
 
   const handleTopLevelSubmit = useCallback(() => {
     handleAddComment()
@@ -879,9 +889,7 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
               <span className="w-1 h-1 rounded-full bg-brand-text/40 animate-bounce" style={{ animationDelay: '300ms' }} />
             </span>
             <span>
-              {typingCount === 1
-                ? `${resolveAuthorName([...typingUsers.keys()][0])} is typing...`
-                : 'Multiple members are typing...'}
+              Someone is typing...
             </span>
           </div>
         )}
@@ -931,8 +939,9 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
               <CommentRow
                 comment={{
                   ...comment,
-                  user_name: resolveAuthorName(comment.user_id),
-                  user_avatar: resolveAuthorAvatar(comment.user_id),
+                  is_anonymous: comment.is_anonymous || Boolean(anonymousAuthorAlias && comment.user_id === anonymousAuthorAlias),
+                  user_name: comment.is_anonymous || comment.user_id === anonymousAuthorAlias ? 'Anonymous member (author)' : resolveAuthorName(comment.user_id),
+                  user_avatar: comment.is_anonymous || comment.user_id === anonymousAuthorAlias ? undefined : resolveAuthorAvatar(comment.user_id),
                 }}
                 isAdmin={isAdmin}
                 currentUserId={currentUserId}
@@ -950,8 +959,9 @@ export default function GroupPostCommentSection({ postId, groupId, isAdmin = fal
                   key={reply.id}
                   comment={{
                     ...reply,
-                    user_name: resolveAuthorName(reply.user_id),
-                    user_avatar: resolveAuthorAvatar(reply.user_id),
+                    is_anonymous: reply.is_anonymous || Boolean(anonymousAuthorAlias && reply.user_id === anonymousAuthorAlias),
+                    user_name: reply.is_anonymous || reply.user_id === anonymousAuthorAlias ? 'Anonymous member (author)' : resolveAuthorName(reply.user_id),
+                    user_avatar: reply.is_anonymous || reply.user_id === anonymousAuthorAlias ? undefined : resolveAuthorAvatar(reply.user_id),
                   }}
                   isAdmin={isAdmin}
                   currentUserId={currentUserId}

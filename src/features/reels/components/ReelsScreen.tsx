@@ -3,16 +3,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-import { HeaderBar } from "@/features/reels/components/HeaderBar";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
+import { useReelLive } from "../hooks/useReelLive";
+import "./reels-screen.css";
+
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { ReelVideo, type ReelVideoHandle } from "@/features/reels/components/ReelVideo";
 import { ReelRail } from "@/features/reels/components/ReelRail";
 import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
+import { ReelExpandedDetails } from "@/features/reels/components/ReelExpandedDetails";
 import { ReelSettingsMenu } from "@/features/reels/components/ReelSettingsMenu";
 import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
@@ -44,8 +47,6 @@ import { useGlobalToast } from "@/contexts/ToastContext";
   continues into the feed.
 */
 
-type Tab = "foryou" | "following";
-
 const NAV_COOLDOWN_MS = 320;
 const WHEEL_THRESHOLD = 24;
 const SWIPE_THRESHOLD = 48;
@@ -58,12 +59,12 @@ function isTypingTarget(t: EventTarget | null): boolean {
 
 export function ReelsScreen() {
   const searchParams = useSearchParams();
+  const reduceMotion = useReducedMotion();
   const qc = useQueryClient();
   const toast = useGlobalToast();
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
   const focusCommentId = searchParams.get("focusCommentId") || undefined;
 
-  const [tab, setTab] = useState<Tab>("foryou");
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [commentsOpen, setCommentsOpen] = useState(Boolean(focusCommentId));
@@ -79,6 +80,7 @@ export function ReelsScreen() {
   const { prefs, update: updatePrefs } = usePlayerPrefs();
   const playerRef = useRef<ReelVideoHandle>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const navAtRef = useRef(0);
   const wheelAccRef = useRef(0);
   const touchStartRef = useRef<number | null>(null);
@@ -88,7 +90,7 @@ export function ReelsScreen() {
   }, []);
 
   /* ── data ──────────────────────────────────────────────── */
-  const feed = useReelFeed(tab === "following");
+  const feed = useReelFeed(false);
   const pinned = useQuery({
     queryKey: ["reels", "pinned", deepLinkId],
     queryFn: () => fetchReel(deepLinkId!),
@@ -107,6 +109,7 @@ export function ReelsScreen() {
   }, [feed.data, pinned.data]);
 
   const active = reels[index];
+  useReelLive(active?.id, commentsOpen);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
 
   // Load ahead so the last swipe never lands on a spinner.
@@ -155,8 +158,8 @@ export function ReelsScreen() {
   const notInterested = useNotInterested();
   const dontRecommend = useDontRecommendAuthor();
 
-  const onLike = () => active && like.mutate({ reel: active, liked: !active.viewerLiked });
-  const onDoubleTapLike = () => active && !active.viewerLiked && like.mutate({ reel: active, liked: true });
+  const onLike = () => active && !like.isPending && like.mutate({ reel: active, liked: !active.viewerLiked });
+  const onDoubleTapLike = () => active && !like.isPending && !active.viewerLiked && like.mutate({ reel: active, liked: true });
   const onSave = () => {
     if (!active) return;
     save.mutate({ reel: active, saved: !active.viewerSaved });
@@ -212,7 +215,7 @@ export function ReelsScreen() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
+      if (isTypingTarget(e.target) || (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="toolbar"], [role="slider"]'))) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.key) {
         case "ArrowDown":
@@ -270,6 +273,7 @@ export function ReelsScreen() {
     }
   };
   const onTouchStart = (e: React.TouchEvent) => {
+    if (isTypingTarget(e.target) || (e.target instanceof HTMLElement && e.target.closest('button, a, [role="slider"]'))) { touchStartRef.current = null; return; }
     touchStartRef.current = e.touches[0]?.clientY ?? null;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -281,17 +285,17 @@ export function ReelsScreen() {
   };
 
   const toggleFullscreen = async () => {
-    const el = stageRef.current;
+    const el = workspaceRef.current;
     if (!el) return;
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await el.requestFullscreen();
     } catch {
-      /* unsupported */
+      toast({ type: "error", title: "Full screen is unavailable in this browser" });
     }
   };
   useEffect(() => {
-    const onChange = () => setFullscreen(Boolean(document.fullscreenElement));
+    const onChange = () => setFullscreen(document.fullscreenElement === workspaceRef.current);
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
@@ -304,42 +308,19 @@ export function ReelsScreen() {
 
   /* ── states ────────────────────────────────────────────── */
   const loading = (feed.isLoading || (Boolean(deepLinkId) && pinned.isLoading)) && reels.length === 0;
-  const errored = feed.isError && reels.length === 0;
+  const errored = (feed.isError || pinned.isError) && reels.length === 0;
   const empty = !loading && !errored && reels.length === 0;
 
   return (
-    <div className="flex h-dvh flex-col bg-canvas text-brand-text">
-      <HeaderBar sectionLabel="Reels" />
-      <div className="flex min-h-0 flex-1">
-        <div className="hidden md:block">
-          <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
-        </div>
+    <AppShell activeTab="Reels">
+      <div ref={workspaceRef} className="reels-workspace">
 
         <main
-          className="relative flex min-h-0 min-w-0 flex-1 items-stretch justify-center overflow-hidden md:px-6 md:py-4"
+          className="reels-main"
           onWheel={onWheel}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {/* tabs */}
-          <div className="pointer-events-auto absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/45 p-1 text-[12px] font-semibold text-white backdrop-blur md:left-6 md:top-6 md:translate-x-0 md:bg-brand-card md:text-brand-text md:shadow md:backdrop-blur-none">
-            {(["foryou", "following"] as Tab[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setTab(t);
-                  setIndex(0);
-                }}
-                className={`rounded-full px-3.5 py-1.5 transition ${
-                  tab === t ? "bg-white text-black md:bg-brand-accent md:text-on-primary" : "hover:bg-white/10 md:hover:bg-brand-secondary"
-                }`}
-              >
-                {t === "foryou" ? "For you" : "Following"}
-              </button>
-            ))}
-          </div>
-
           {loading ? (
             <StageFrame stageRef={stageRef}>
               <div className="flex h-full items-center justify-center text-white/70">Loading reels…</div>
@@ -350,7 +331,7 @@ export function ReelsScreen() {
                 title="Couldn't load reels"
                 hint={(feed.error as { message?: string })?.message || "Check your connection and try again."}
                 action={
-                  <button type="button" onClick={() => feed.refetch()} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black">
+                  <button type="button" onClick={() => { void feed.refetch(); if(deepLinkId) void pinned.refetch(); }} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black">
                     <RefreshCw className="h-4 w-4" /> Retry
                   </button>
                 }
@@ -359,8 +340,8 @@ export function ReelsScreen() {
           ) : empty ? (
             <StageFrame stageRef={stageRef}>
               <StateCard
-                title={tab === "following" ? "Nothing from people you follow yet" : "No reels yet"}
-                hint={tab === "following" ? "Reels from creators you follow will show up here." : "Be the first — reels are short videos up to 5 minutes."}
+                title="No reels yet"
+                hint="Be the first — reels are short videos up to 5 minutes."
                 action={
                   <Link href="/reels/create" className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black">
                     <Clapperboard className="h-4 w-4" /> Create a reel
@@ -369,17 +350,18 @@ export function ReelsScreen() {
               />
             </StageFrame>
           ) : active ? (
-            <div className="flex h-full w-full min-w-0 items-center gap-4 md:w-auto">
+            <div className="reels-content" data-comments-open={commentsOpen}>
+              <ReelExpandedDetails reel={active} />
               <StageFrame stageRef={stageRef}>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
                     key={active.id}
                     custom={direction}
-                    initial={{ y: direction * 60, opacity: 0 }}
+                    initial={{ y: reduceMotion ? 0 : direction * 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: direction * -60, opacity: 0 }}
+                    exit={{ y: reduceMotion ? 0 : direction * -30, opacity: 0 }}
                     transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="absolute inset-0"
+                    className="reel-portrait-content"
                   >
                     <ReelVideo
                       ref={playerRef}
@@ -414,7 +396,7 @@ export function ReelsScreen() {
                       }
                     />
                     {/* phone rail: floats over the stage */}
-                    <div className="absolute bottom-24 right-2 z-20 md:hidden">
+                    <div className="reel-mobile-rail">
                       <ReelRail
                         reel={active}
                         onLike={onLike}
@@ -435,14 +417,14 @@ export function ReelsScreen() {
                     e.stopPropagation();
                     void toggleFullscreen();
                   }}
-                  className="absolute bottom-8 right-3 z-20 hidden h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur transition hover:bg-black/60 md:flex"
+                  className="reel-expand-button"
                 >
                   {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
               </StageFrame>
 
               {/* desktop rail */}
-              <div className="hidden self-end pb-2 md:block">
+              <div className="reel-desktop-rail">
                 <ReelRail
                   reel={active}
                   onLike={onLike}
@@ -455,7 +437,7 @@ export function ReelsScreen() {
               </div>
 
               <ReelCommentsDrawer
-                open={commentsOpen}
+                open={commentsOpen && !active.commentsDisabled}
                 reelId={active.id}
                 reelAuthorId={active.authorId}
                 commentCount={active.commentCount}
@@ -467,17 +449,15 @@ export function ReelsScreen() {
 
           {/* prev / next */}
           {reels.length > 1 ? (
-            <div className="absolute right-4 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-3 md:flex">
+            <div className="reels-navigation">
               <NavButton label="Previous reel" disabled={index === 0} onClick={() => go(-1)} icon={<ChevronUp className="h-5 w-5" />} />
               <NavButton label="Next reel" disabled={index >= reels.length - 1 && !feed.hasNextPage} onClick={() => go(1)} icon={<ChevronDown className="h-5 w-5" />} />
             </div>
           ) : null}
         </main>
-      </div>
-
       {active ? (
         <>
-          <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.caption || `Reel by ${active.authorName}`} />
+          <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
           <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
           <AnimatePresence>
             {descriptionOpen ? (
@@ -512,7 +492,8 @@ export function ReelsScreen() {
           </AnimatePresence>
         </>
       ) : null}
-    </div>
+      </div>
+    </AppShell>
   );
 
   function MoreMenu() {
@@ -542,7 +523,7 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
       // Width from the viewport height, not from h-full: a row flex item's
       // width is resolved before its stretched height, so aspect-ratio on a
       // percentage height collapses to 0. 7.5rem = header + stage padding.
-      className="relative h-full w-full overflow-hidden bg-black md:h-auto md:w-[calc((100dvh-7.5rem)*9/16)] md:max-w-full md:aspect-[9/16] md:rounded-2xl md:shadow-2xl [&:fullscreen]:h-full [&:fullscreen]:w-full [&:fullscreen]:rounded-none"
+      className="reel-stage"
     >
       {children}
     </div>

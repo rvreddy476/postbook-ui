@@ -4,6 +4,7 @@ import ReactionControl from '@/components/reactions/ReactionControl';
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useComments, useAddComment, useCreateReply, useDeleteComment, useEditComment, useToggleCommentLike, useToggleCommentDislike } from '@/hooks/usePostComments';
 import { useCommentsAround } from '@/hooks/useCommentsAround';
+import { usePostRoom } from '@/hooks/usePostRoom';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
 import { ThumbsUp, ThumbsDown, Smile, Trash2, Pencil, Send, MessageCircle, Flag, X, Check } from 'lucide-react';
@@ -190,6 +191,7 @@ const ReplyItem: React.FC<{
   const dislikeMutation = useToggleCommentDislike();
   const author = useCommentAuthor(reply.author_id, myId, myName, myAvatar);
 
+  useEffect(() => { setLocalLikes(reply.like_count ?? 0); setLocalDislikes(reply.dislike_count ?? 0); }, [reply.like_count, reply.dislike_count]);
   const isOwn = myId === reply.author_id;
   const replyBody = reply.body || reply.text || '';
   const [localLikes, setLocalLikes] = useState(reply.like_count ?? 0);
@@ -245,7 +247,7 @@ const ReplyItem: React.FC<{
 
       {/* Actions */}
       {!editing && (
-        <div className="flex items-center gap-3 mt-1 ml-7">
+        <div data-comment-actions className="flex flex-wrap items-center gap-3 mt-1 ml-7">
           <ReactionControl allowed={['like']} current={localLiked ? 'like' : null} count={localLikes} onChange={handleLike} disabled={likeMutation.isPending || dislikeMutation.isPending} />
           <button onClick={handleDislike} disabled={likeMutation.isPending || dislikeMutation.isPending} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
             <ThumbsDown className={`w-3 h-3 ${localDisliked ? 'fill-slate-800 text-brand-text' : ''}`} />
@@ -300,8 +302,11 @@ const SingleComment: React.FC<{
   const [localLiked, setLocalLiked] = useState(false);
   const [localDisliked, setLocalDisliked] = useState(false);
 
+  useEffect(() => { setLocalLikes(comment.like_count ?? 0); setLocalDislikes(comment.dislike_count ?? 0); }, [comment.like_count, comment.dislike_count]);
   const isOwn = myId === comment.author_id;
   const isPostOwner = myId === postAuthorId;
+  // The server reply is authoritative after refetch, including deletion.
+  useEffect(() => { if (comment.reply || comment.reply_count === 0) setLocalReply(null); }, [comment]);
   const visibleReply = comment.reply || localReply;
   const canReply = isPostOwner && !comment.is_reply && !visibleReply && comment.reply_count === 0;
   const commentBody = comment.body || comment.text || '';
@@ -475,7 +480,9 @@ const SingleComment: React.FC<{
 
 const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = '', commentsCount, alwaysExpanded = false, focusCommentId }) => {
   const [isExpanded, setIsExpanded] = useState(alwaysExpanded || !!focusCommentId);
+  usePostRoom(isExpanded ? postId : undefined, 15000);
   const [commentText, setCommentText] = useState('');
+  const [submitError, setSubmitError] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [highlightId, setHighlightId] = useState<string | undefined>(focusCommentId);
   const scrolledRef = useRef(false);
@@ -484,17 +491,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
 
   const { data: profile } = useMyProfile();
 
-  const { data: aroundComments, isLoading: aroundLoading } = useCommentsAround(
+  const { data: aroundComments, isLoading: aroundLoading, isError: aroundError, refetch: retryAround } = useCommentsAround(
     focusCommentId ? postId : undefined,
     focusCommentId,
   );
-  const { data: normalComments, isLoading: normalLoading } = useComments(
+  const { data: normalComments, isLoading: normalLoading, isError: normalError, refetch: retryNormal } = useComments(
     postId,
     isExpanded && !focusCommentId,
   );
 
   const comments = focusCommentId ? aroundComments : normalComments;
   const isLoading = focusCommentId ? aroundLoading : normalLoading;
+  const loadError = focusCommentId ? aroundError : normalError;
 
   const addComment = useAddComment();
 
@@ -528,9 +536,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || addComment.isPending) return;
-    await addComment.mutateAsync({ postId, text: commentText.trim() });
-    setCommentText('');
-    setShowEmojiPicker(false);
+    setSubmitError(false);
+    const submitted = commentText.trim();
+    try {
+      await addComment.mutateAsync({ postId, text: submitted });
+      setCommentText(current => current.trim() === submitted ? '' : current);
+      setShowEmojiPicker(false);
+    } catch { setSubmitError(true); }
   };
 
   const handleEmojiSelect = (emoji: { native: string }) => {
@@ -556,7 +568,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   return (
     <div className="flex flex-col h-full bg-brand-card">
       {/* Comments list — scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-brand-secondary">
+      <div data-comments-list className="flex-1 min-h-0 overflow-y-auto divide-y divide-brand-secondary">
+        {loadError && <div role="alert" className="p-4 text-sm">Comments could not refresh. <button type="button" className="underline" onClick={() => { if(focusCommentId) void retryAround(); else void retryNormal(); }}>Try again</button></div>}
         {isLoading && (
           <div className="flex justify-center py-8">
             <div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" />
@@ -588,6 +601,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       </div>
 
       {/* Sticky bottom input */}
+      {submitError && <p role="alert" className="px-4 py-2 text-sm text-danger">Comment was not confirmed. Your draft is still here.</p>}
       <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
         <div className="flex items-center gap-2.5">
           <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
@@ -607,11 +621,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
             </div>
             <input
               ref={inputRef}
+              aria-label="Write a comment"
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
+              className="min-w-0 flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
             />
             <button
               type="submit"

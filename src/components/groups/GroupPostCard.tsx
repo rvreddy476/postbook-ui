@@ -11,12 +11,16 @@ import { viewerEngaged } from './patchGroupFeed'
 import GroupPostMeta from './GroupPostMeta'
 import GroupReactionControl, { GroupReactionSummary } from './GroupReactionControl'
 import './group-post-card.css'
+import { useAuthUser } from '@/store/auth'
+import { canRevealGroupAuthor } from './anonymousIdentity'
+import { useAuthorReveal } from './useAuthorReveal'
 
 /* ===== Props ===== */
 interface GroupPostCardProps {
   post: GroupPostV2
   groupId: string
   isAdmin?: boolean
+  viewerRole?: string
   isAuthor?: boolean
   onStash?: (groupId: string, postId: string) => void
   onUnstash?: (groupId: string, postId: string) => void
@@ -144,7 +148,7 @@ function VideoPreview({ mediaId }: { mediaId: string }) {
 
 /* ===== MAIN CARD ===== */
 const GroupPostCard: React.FC<GroupPostCardProps> = ({
-  post, groupId, isAdmin, isAuthor,
+  post, groupId, isAdmin, isAuthor, viewerRole,
   onStash, onUnstash, onView, onDelete, onRepost, onUnrepost,
 }) => {
   const [expanded, setExpanded] = useState(false)
@@ -159,6 +163,9 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
   const [viewed, setViewed] = useState(false)
 
   const anonymous = post.is_anonymous === true
+  const viewer = useAuthUser()
+  const mayReveal = canRevealGroupAuthor(anonymous, viewerRole)
+  const reveal = useAuthorReveal(groupId, post.id, viewer?.id, mayReveal)
   const authorName = anonymous ? 'Anonymous member' : post.author_name || 'Member'
   const authorInitial = authorName[0]?.toUpperCase() ?? '?'
   const gradient = pickColor(post.author_id)
@@ -294,7 +301,14 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {overflowOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-1 w-64 max-w-[80vw] bg-brand-card border border-brand-divider rounded-xl shadow-lg z-50 py-1">
+                {mayReveal && viewer?.id && (
+                  <button type="button" disabled={reveal.busy} onClick={() => { setOverflowOpen(false); void reveal.reveal() }}
+                    className="flex items-start gap-2 px-3 py-3 text-xs text-brand-text hover:bg-brand-secondary w-full text-left disabled:opacity-50">
+                    <Eye className="w-4 h-4 shrink-0" />
+                    <span><span className="block font-semibold">Reveal author</span><span className="block mt-1 text-brand-highlight">Only admins can see this. Every reveal is recorded.</span></span>
+                  </button>
+                )}
                 {/*
                   No pin control. The server route writes post-service's
                   `posts` table while this feed reads `group_posts.is_pinned`,
@@ -324,6 +338,18 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
             )}
           </div>
         </div>
+
+        {mayReveal && (reveal.busy || reveal.error || reveal.profile) && (
+          <div className="my-3 rounded-xl border border-brand-divider bg-brand-secondary p-3 text-sm" aria-live="polite">
+            {reveal.busy ? <p>Revealing author…</p> : reveal.error ? <p role="alert">{reveal.error}</p> : reveal.profile ? (
+              <div className="flex items-center gap-3">
+                {reveal.profile.avatar ? <img src={reveal.profile.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /> : <UserRound className="h-9 w-9 rounded-full bg-brand-card p-2" />}
+                <div className="min-w-0 flex-1"><p className="text-xs text-brand-highlight">Revealed to you · recorded</p><p className="font-semibold break-words">{reveal.profile.name}</p></div>
+                <button type="button" onClick={reveal.hide} aria-label="Hide revealed author" className="p-2"><X size={16}/></button>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         {/* Title */}
         {post.title && (
@@ -448,7 +474,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
         {/* Comment section (lazy loaded) */}
         {showComments && (
           <div className="mt-3 pt-3 border-t border-brand-divider">
-            <GroupCommentSectionLazy postId={post.id} groupId={groupId} isAdmin={isAdmin} />
+            <GroupCommentSectionLazy key={`${viewer?.id}:${post.id}`} postId={post.id} groupId={groupId} isAdmin={isAdmin} anonymousAuthorAlias={anonymous ? post.author_id : undefined} />
           </div>
         )}
       </div>
@@ -457,13 +483,13 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
 }
 
 /* Lazy comment section */
-function GroupCommentSectionLazy({ postId, groupId, isAdmin }: { postId: string; groupId: string; isAdmin?: boolean }) {
+function GroupCommentSectionLazy({ postId, groupId, isAdmin, anonymousAuthorAlias }: { postId: string; groupId: string; isAdmin?: boolean; anonymousAuthorAlias?: string }) {
   const [Comp, setComp] = useState<React.ComponentType<any> | null>(null)
   useEffect(() => {
     import('./GroupPostCommentSection').then(m => setComp(() => m.default)).catch(() => {})
   }, [])
   if (!Comp) return <div className="py-4 text-center text-xs text-brand-text/30">Loading comments...</div>
-  return <Comp postId={postId} groupId={groupId} isAdmin={isAdmin} />
+  return <Comp postId={postId} groupId={groupId} isAdmin={isAdmin} anonymousAuthorAlias={anonymousAuthorAlias} />
 }
 
 export default GroupPostCard

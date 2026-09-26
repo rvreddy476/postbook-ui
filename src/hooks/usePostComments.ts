@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
+import { refreshCommentSurfaces } from '@/lib/commentCache'
 import type { CommentItem } from "@/types/profile"
 
 interface CommentsResponse {
@@ -18,7 +19,7 @@ export function useComments(postId: string | undefined, enabled = false) {
             })
             // Backend now returns data as array directly (PG-backed)
             const data = res.data.data
-            return Array.isArray(data) ? data : (data as any).items ?? []
+            return Array.isArray(data) ? data : (data as any)?.items ?? []
         },
         enabled: !!postId && enabled,
     })
@@ -34,7 +35,7 @@ export function useAddComment() {
             return res.data.data
         },
         onSuccess: (_data, variables) => {
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
             qc.invalidateQueries({ queryKey: ["home-feed"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
         },
@@ -52,7 +53,7 @@ export function useCreateReply() {
         },
         onSettled: (_data, _error, variables) => {
             // Refetch comments in background to sync with server
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
         },
     })
 }
@@ -65,7 +66,7 @@ export function useDeleteComment() {
             return { postId }
         },
         onSuccess: (_data, variables) => {
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
             qc.invalidateQueries({ queryKey: ["home-feed"] })
         },
     })
@@ -79,7 +80,7 @@ export function useEditComment() {
             return { postId }
         },
         onSuccess: (_data, variables) => {
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
         },
     })
 }
@@ -96,7 +97,7 @@ export function useToggleCommentLike() {
             return { ...res.data.data, postId }
         },
         onSuccess: (_data, variables) => {
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
         },
     })
 }
@@ -113,7 +114,7 @@ export function useToggleCommentDislike() {
             return { ...res.data.data, postId }
         },
         onSuccess: (_data, variables) => {
-            qc.invalidateQueries({ queryKey: ["comments", variables.postId] })
+            refreshCommentSurfaces(qc, variables.postId)
         },
     })
 }

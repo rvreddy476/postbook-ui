@@ -138,6 +138,7 @@ export interface GroupPostV2 {
 }
 
 export interface GroupPostComment {
+  is_anonymous?: boolean
   id: string
   post_id: string
   user_id: string

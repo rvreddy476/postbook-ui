@@ -42,6 +42,7 @@ export interface FeedReelPost {
   id: string;
   author_id: string;
   text?: string;
+  title?: string;
   content_type?: string;
   feed_content_type?: string;
   created_at?: string;
@@ -71,6 +72,7 @@ export interface ReelItem {
   authorAvatarUrl: string | null;
   channelHandle: string | null;
   caption: string;
+  title?: string;
   hashtags: string[];
   createdAt: string;
   likeCount: number;
@@ -147,12 +149,14 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
   return {
     id: post.id,
-    authorId: post.author_id,
+    authorId: author?.id || post.author_id,
     authorName: author?.display_name || author?.username || "Someone",
     authorUsername: author?.username || "",
-    authorAvatarUrl: author?.avatar_url ? mediaHref(author.avatar_url) : null,
+    authorAvatarUrl: author?.avatar_url ? mediaHref(author.avatar_url)
+      : author?.avatar_media_id ? mediaHref(`/v1/media/${author.avatar_media_id}/serve`) : null,
     channelHandle: post.channel?.handle || null,
     caption: post.text || "",
+    title: post.title?.trim() || "",
     hashtags: post.hashtags ?? [],
     createdAt: post.created_at || "",
     likeCount: post.counts?.likes ?? 0,

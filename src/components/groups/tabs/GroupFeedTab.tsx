@@ -17,6 +17,7 @@ import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
 import { Plus, MessageCircle } from 'lucide-react'
 import GroupPostCard from '@/components/groups/GroupPostCard'
+import { publicPostAuthorIds } from '@/components/groups/anonymousIdentity'
 import {
   engageGroupPost,
   groupPostSearchKey,
@@ -76,11 +77,12 @@ export default function GroupFeedTab({
   const rawPosts = data?.pages.flatMap((page) => page.data) ?? []
 
   // Batch-fetch author profiles
-  const authorIds = useMemo(() => [...new Set(rawPosts.map(p => p.author_id))], [rawPosts])
+  const authorIds = useMemo(() => publicPostAuthorIds(rawPosts), [rawPosts])
   const { data: profileMap } = useBatchProfiles(authorIds)
 
   // Enrich posts with author name/avatar
   const posts = useMemo(() => rawPosts.map(post => {
+    if (post.is_anonymous) return post
     const profile = profileMap?.get(post.author_id)
     if (!profile) return post
     return {
@@ -143,6 +145,7 @@ export default function GroupFeedTab({
       post={post}
       groupId={groupId}
       isAdmin={isAdmin}
+      viewerRole={viewerRole}
       isAuthor={authUser?.id === post.author_id}
       onStash={handleStash}
       onUnstash={handleUnstash}

@@ -1,4 +1,5 @@
 import { ensureAccessToken } from '@/lib/accessToken';
+import { CommentChangeGate, PostRoomSubscriptions, groupTypingSignal, type CommentChange } from '@/lib/postThreadLive';
 import { User } from '@/types';
 import {
   isLiveRealtimeEventType,
@@ -142,6 +143,12 @@ const readReceiptListeners = new Set<(e: ReadReceiptEvent) => void>();
 const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
+const commentChangeListeners = new Set<(u: CommentChange) => void>();
+const hubConnectedListeners = new Set<() => void>();
+const commentChangeGate = new CommentChangeGate();
+const postRooms = new PostRoomSubscriptions(frame => {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
+});
 const commentUpdateListeners = new Set<(u: ChannelCommentUpdate) => void>();
 const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
@@ -312,6 +319,7 @@ export interface ChannelCommentUpdate {
 }
 
 export interface GroupCommentUpdate {
+  is_anonymous?: boolean;
   event_id: string;
   group_id: string;
   post_id: string;
@@ -326,7 +334,6 @@ export interface GroupCommentUpdate {
 
 export interface GroupTypingEvent {
   post_id: string;
-  user_id: string;
 }
 
 const canUseBrowserApis = () => typeof window !== 'undefined';
@@ -356,6 +363,8 @@ const closeChatSocket = (reason?: string) => {
   }
 
   wsRetryCount = 0;
+  postRooms.onClose();
+  commentChangeGate.clear();
 
   if (socket) {
     socket.onclose = null;
@@ -550,6 +559,10 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           msg_id: data.payload.msg_id,
         };
         messageDeletedListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'comment_change') {
+        if (commentChangeGate.accept(data.payload)) {
+          commentChangeListeners.forEach(cb => cb(data.payload));
+        }
       } else if (data.type === 'post_update') {
         const update: PostInteractionUpdate = data.payload;
         postUpdateListeners.forEach(cb => cb(update));
@@ -560,11 +573,8 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         const update: GroupCommentUpdate = data.payload;
         groupCommentUpdateListeners.forEach(cb => cb(update));
       } else if (data.type === 'group_post_typing') {
-        const evt: GroupTypingEvent = {
-          post_id: data.post_id,
-          user_id: data.user_id,
-        };
-        groupTypingListeners.forEach(cb => cb(evt));
+        const evt = groupTypingSignal(data);
+        if (evt) groupTypingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'pin_update') {
         const evt: PinUpdateEvent = {
           conversation_id: data.payload.conversation_id,
@@ -586,6 +596,8 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
 
     socket.onopen = () => {
       wsRetryCount = 0; // reset on successful connection
+      postRooms.onOpen();
+      hubConnectedListeners.forEach(cb => cb());
       // Flush any signals that were queued while socket was connecting
       while (pendingSignals.length > 0) {
         const msg = pendingSignals.shift();
@@ -602,6 +614,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
     };
 
     socket.onclose = () => {
+      postRooms.onClose();
       socket = null;
 
       if (!getSessionUser()) {
@@ -887,6 +900,16 @@ export const subscribeToPostUpdates = (cb: (u: PostInteractionUpdate) => void) =
   return () => { postUpdateListeners.delete(cb); };
 };
 
+export const subscribeToCommentChanges = (cb: (event: CommentChange) => void) => {
+  commentChangeListeners.add(cb);
+  return () => { commentChangeListeners.delete(cb); };
+};
+export const subscribeToHubConnected = (cb: () => void) => {
+  hubConnectedListeners.add(cb);
+  return () => { hubConnectedListeners.delete(cb); };
+};
+export const refreshPostRooms = () => postRooms.refresh();
+
 export const subscribeToPresenceUpdates = (cb: (e: { user_id: string; online: boolean }) => void) => {
   presenceListeners.add(cb);
   return () => { presenceListeners.delete(cb); };
@@ -935,15 +958,11 @@ export const getPinnedMessage = async (conversationId: string): Promise<PinnedMe
 
 // Post room subscription â€” subscribe to per-post real-time updates via WS gateway
 export const subscribeToPostRoom = (postId: string) => {
-  const msg = { type: 'subscribe_post', post_id: postId };
-  activeRoomSubscriptions.add(JSON.stringify(msg));
-  sendSignaling(msg);
+  postRooms.subscribe(postId);
 };
 
 export const unsubscribeFromPostRoom = (postId: string) => {
-  const subMsg = JSON.stringify({ type: 'subscribe_post', post_id: postId });
-  activeRoomSubscriptions.delete(subMsg);
-  sendSignaling({ type: 'unsubscribe_post', post_id: postId });
+  postRooms.unsubscribe(postId);
 };
 
 // Call room subscription â€” subscribe to per-call real-time updates via WS gateway

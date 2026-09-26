@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { isAxiosError } from 'axios';
 
 import { toReelItem, toReelItems, type FeedReelPost, type ReelItem } from "@/features/reels/model";
 
@@ -36,12 +37,13 @@ export async function fetchReelsPage(params: {
 }
 
 /** One reel by id, for deep links. null when it is missing or not a reel. */
-export async function fetchReel(id: string): Promise<ReelItem | null> {
+export async function fetchReel(id: string, signal?: AbortSignal): Promise<ReelItem | null> {
   try {
-    const res = await api.get<Envelope<FeedReelPost>>(`/v1/posts/${id}`);
+    const res = await api.get<Envelope<FeedReelPost>>(`/v1/posts/${id}`, {signal});
     return toReelItem(res.data.data);
-  } catch {
-    return null;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) return null;
+    throw error;
   }
 }
 

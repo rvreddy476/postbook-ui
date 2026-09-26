@@ -69,6 +69,7 @@ import { uploadMedia } from '@/lib/mediaUpload';
 import { chooseContentType } from '@/components/feed/chooseContentType';
 import CrossPostPicker, { type CrossPostChoice } from '@/components/groups/CrossPostPicker';
 import AnonymousPostControl from '@/components/groups/AnonymousPostControl';
+import { anonymousAttachmentRefusal } from '@/components/groups/anonymousIdentity';
 import {
   anonymousCrossPostWarning,
   buildGroupTypePayload,
@@ -584,6 +585,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       toast({ type: 'success', title: 'Posted' });
       onClose();
     } catch (err: unknown) {
+      if (isGroupMode && anonymousAttachmentRefusal(err)) {
+        const message = 'Your attachments could not be made anonymous. Your draft is kept. Try again.';
+        setError(message);
+        toast({ type: 'error', title: 'Try again', description: message });
+        return;
+      }
       let message = 'Failed to create post. Try again.';
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };

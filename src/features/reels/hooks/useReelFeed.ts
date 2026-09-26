@@ -65,6 +65,9 @@ export function patchReelEverywhere(qc: QueryClient, reelId: string, patch: Reel
   qc.setQueriesData<InfiniteData<ReelPage>>({ queryKey: REEL_FEED_KEY }, (old) =>
     applyReelPatch(old, reelId, patch),
   );
+  qc.setQueryData<ReelItem | null>(["reels", "pinned", reelId], old =>
+    old ? { ...old, ...(typeof patch === "function" ? patch(old) : patch) } : old,
+  );
 }
 
 export function removeReelEverywhere(qc: QueryClient, reelId: string) {

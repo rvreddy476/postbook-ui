@@ -33,7 +33,7 @@ export function ReelSettingsMenu({ open, onClose, prefs, onChange, qualityHeight
   const qualityLabel = prefs.quality === "auto" ? "Auto" : prefs.quality;
 
   return (
-    <Popover open={open} onClose={close} align="right" placement="down" label="Playback settings">
+    <Popover open={open} onClose={close} align="right" placement="down" label="Playback settings" belowTrigger>
       {pane === "root" ? (
         <div className="py-1">
           <Row label="Quality" value={qualityLabel} onClick={() => setPane("quality")} />
