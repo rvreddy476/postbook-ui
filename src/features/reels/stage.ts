@@ -1,9 +1,12 @@
 /*
   The stage frame takes the shape of the media it shows, so a landscape reel
   gets a wide frame and a portrait reel a tall one, and object-fit: contain
-  never leaves bars. The ratio is clamped so an extreme file (a 1×20 strip)
-  still gives a usable frame; unknown dimensions mean 9:16, the shape reels
-  are shot in.
+  never leaves bars. The server's stored dimensions are the first guess; the
+  player reports the element's real videoWidth/videoHeight once metadata
+  loads and that wins, because stored dimensions are sometimes missing or
+  pre-rotation. The clamp admits a phone-tall 9:19.5 file and an ultrawide
+  one and only refuses absurd strips; unknown dimensions mean 9:16, the
+  shape reels are shot in.
 */
 
 /**
@@ -13,8 +16,8 @@
  */
 export const COMMENTS_COLUMN_WIDTH = 380;
 
-export const STAGE_MIN_ASPECT = 9 / 16;
-export const STAGE_MAX_ASPECT = 16 / 9;
+export const STAGE_MIN_ASPECT = 0.4;
+export const STAGE_MAX_ASPECT = 2.4;
 export const STAGE_DEFAULT_ASPECT = 9 / 16;
 
 export function stageAspect(width?: number, height?: number): number {

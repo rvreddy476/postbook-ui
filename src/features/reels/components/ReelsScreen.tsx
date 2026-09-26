@@ -103,6 +103,8 @@ export function ReelsScreen() {
   const [blockOpen, setBlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [qualityHeights, setQualityHeights] = useState<number[]>([]);
+  // The element's measured ratio per reel; wins over the stored dimensions.
+  const [measuredAspect, setMeasuredAspect] = useState<Record<string, number>>({});
   const [captionsAvailable, setCaptionsAvailable] = useState<"unknown" | "yes" | "no">("unknown");
   const [theater, setTheater] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -619,7 +621,7 @@ export function ReelsScreen() {
                 >
                   {/* mirrors the rail's width so the video itself sits on the exact centre line */}
                   <div className="reel-rail-spacer" aria-hidden="true" />
-                  <StageFrame stageRef={stageRef} aspect={stageAspect(active.media.width, active.media.height)} layoutTransition={layoutTransition}>
+                  <StageFrame stageRef={stageRef} aspect={measuredAspect[active.id] ?? stageAspect(active.media.width, active.media.height)} layoutTransition={layoutTransition}>
                     <AnimatePresence initial={false} custom={direction} mode="popLayout">
                       <motion.div
                         key={active.id}
@@ -644,6 +646,11 @@ export function ReelsScreen() {
                           onCaptionsAvailable={onCaptionsAvailable}
                           onTime={onTime}
                           onPlayState={setPaused}
+                          onDimensions={(w, h) => {
+                            const id = active.id;
+                            const ar = stageAspect(w, h);
+                            setMeasuredAspect((m) => (m[id] === ar ? m : { ...m, [id]: ar }));
+                          }}
                           chromeless={theater}
                         />
                         {theater ? null : (

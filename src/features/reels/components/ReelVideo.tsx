@@ -59,6 +59,8 @@ interface ReelVideoProps {
   onTime?: (currentMs: number, durationMs: number, bufferedMs: number) => void;
   /** Paused / playing, as the element reports it — for the theater bar's play button. */
   onPlayState?: (paused: boolean) => void;
+  /** The element's real pixel size once metadata loads; the frame takes this shape. */
+  onDimensions?: (width: number, height: number) => void;
   /** No in-frame scrubber (the theater bar carries its own, driving this same element). */
   chromeless?: boolean;
 }
@@ -66,7 +68,7 @@ interface ReelVideoProps {
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, chromeless = false },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -249,6 +251,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   onTimeRef.current = onTime;
   const onPlayStateRef = useRef(onPlayState);
   onPlayStateRef.current = onPlayState;
+  const onDimensionsRef = useRef(onDimensions);
+  onDimensionsRef.current = onDimensions;
   useEffect(() => {
     onPlayStateRef.current?.(paused);
   }, [paused]);
@@ -281,6 +285,12 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     const onError = () => {
       if (!hlsRef.current) setFailed(true);
     };
+    const onMeta = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) onDimensionsRef.current?.(video.videoWidth, video.videoHeight);
+    };
+    video.addEventListener("loadedmetadata", onMeta);
+    video.addEventListener("resize", onMeta);
+    if (video.readyState >= 1) onMeta();
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("durationchange", onTime);
     video.addEventListener("progress", onTime);
@@ -291,6 +301,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     video.addEventListener("ended", onEndedEvt);
     video.addEventListener("error", onError);
     return () => {
+      video.removeEventListener("loadedmetadata", onMeta);
+      video.removeEventListener("resize", onMeta);
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("durationchange", onTime);
       video.removeEventListener("progress", onTime);

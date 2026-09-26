@@ -17,7 +17,9 @@ describe("stageAspect", () => {
     expect(stageAspect(1000, 1000)).toBe(1);
   });
 
-  test("extremes clamp to [9:16, 16:9]", () => {
+  test("phone-tall and ultrawide files keep their own shape; only absurd strips clamp", () => {
+    expect(stageAspect(1080, 2340)).toBeCloseTo(1080 / 2340, 6);
+    expect(stageAspect(2560, 1080)).toBeCloseTo(2560 / 1080, 6);
     expect(stageAspect(100, 2000)).toBe(STAGE_MIN_ASPECT);
     expect(stageAspect(4000, 100)).toBe(STAGE_MAX_ASPECT);
   });
