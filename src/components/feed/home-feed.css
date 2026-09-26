@@ -1,0 +1,216 @@
+.home-feed {
+  width: 100%;
+  /* Compact reading size chosen from the real signed-in page, not the
+     physical-pixel dimensions of a screenshot. Keep the reference's ratio. */
+  max-width: 452px;
+  container-type: inline-size;
+  margin-inline: auto;
+  min-width: 0;
+  padding-bottom: 32px;
+}
+.home-feed-stream {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.home-feed-stream > * {
+  min-width: 0;
+}
+.home-feed-stream .group\/card {
+  border-radius: 14px;
+  box-shadow: 0 3px 15px -10px rgb(var(--brand-text) / 0.15);
+}
+.home-feed-stream .group\/card:has(.post-card-media) {
+  display: flex;
+  flex-direction: column;
+  /* Preserve the reference's proportions at the compact reading width.
+     This is a minimum, not a clipping height: long captions and opened
+     comments remain readable and can extend the card naturally. */
+  min-height: calc(100cqw * 715 / 679);
+}
+.home-feed .post-card-content-actions {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.home-feed .post-card-header {
+  padding: 10px 12px 8px;
+  gap: 8px;
+}
+.home-feed .post-card-author {
+  gap: 10px;
+}
+.home-feed .post-card-avatar {
+  width: 40px;
+  height: 40px;
+}
+.home-feed .post-card-media {
+  width: 100%;
+  height: auto;
+  /* The media takes the reference card's remaining space after its real
+     header, caption and actions, instead of imposing another aspect ratio. */
+  min-height: 180px;
+  max-height: none;
+  aspect-ratio: auto;
+  flex: 1;
+}
+.home-feed .post-card-media-content {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}
+.home-feed .post-card-media-content > img,
+.home-feed .post-card-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.home-feed .post-card-actions {
+  flex-shrink: 0;
+  padding: 4px;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.home-feed .post-card-actions > button {
+  min-height: 44px;
+  padding-inline: 8px;
+}
+@media (max-width: 479px) {
+  .home-feed .post-card-actions > button {
+    padding-inline: 5px;
+    gap: 4px;
+  }
+  .home-feed .post-card-actions > button > span {
+    font-size: 11px;
+  }
+}
+.home-feed-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  background: rgb(var(--brand-tint));
+  border: 1px solid rgb(var(--brand-outline));
+  border-radius: 16px;
+  color: rgb(var(--brand-ink));
+  font-size: 13px;
+}
+.home-feed-notice > p {
+  flex: 1;
+  min-width: 0;
+}
+.home-feed-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 12px;
+  color: rgb(var(--on-primary));
+  background: rgb(var(--brand-ink));
+  cursor: pointer;
+}
+.home-feed-action:hover {
+  background: rgb(var(--brand-ink-hover));
+}
+.home-feed-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.home-feed-secondary {
+  background: rgb(var(--brand-card));
+  color: rgb(var(--brand-text));
+  border: 1px solid var(--brand-divider);
+}
+.home-feed-secondary:hover {
+  background: rgb(var(--brand-secondary));
+}
+.home-feed-state {
+  border: 1px solid var(--brand-divider);
+  border-radius: 20px;
+  background: rgb(var(--brand-card));
+  text-align: center;
+  padding: 52px 24px;
+}
+.home-feed-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgb(var(--brand-tint));
+  color: rgb(var(--brand-ink));
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+}
+.home-feed-state h2 {
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.home-feed-state p {
+  max-width: 330px;
+  margin: 10px auto 24px;
+  line-height: 1.7;
+  font-size: 14px;
+  color: rgb(var(--text-muted));
+}
+.home-feed-error {
+  border: 1px solid rgb(var(--danger) / 0.25);
+  background: rgb(var(--danger) / 0.06);
+  color: rgb(var(--danger));
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.home-feed-error p {
+  flex: 1;
+}
+.home-feed-skeleton {
+  border: 1px solid var(--brand-divider);
+  background: rgb(var(--brand-card));
+  border-radius: 20px;
+  padding: 22px;
+}
+.home-feed-skeleton-line {
+  background: rgb(var(--brand-secondary));
+  border-radius: 6px;
+  height: 12px;
+}
+.home-feed-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 28px 0 0;
+  color: rgb(var(--text-muted));
+  font-size: 12px;
+}
+.home-feed :is(button, a):focus-visible {
+  outline: 2px solid rgb(var(--brand-ink));
+  outline-offset: 4px;
+}
+@media (max-width: 479px) {
+  .home-feed-notice {
+    flex-wrap: wrap;
+  }
+  .home-feed-stream {
+    gap: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-feed *,
+  .home-feed *::before,
+  .home-feed *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -177,7 +177,7 @@ export default function GroupCoverHeader({
                             </div>
                         </div>
 
-                        <div className="hidden shrink-0 items-center gap-2 pb-1 sm:flex">
+                        <div className="group-cover__actions-wide hidden shrink-0 items-center gap-2 pb-1 sm:flex">
                             <GroupActions
                                 group={group}
                                 isMember={isMember}
@@ -195,7 +195,7 @@ export default function GroupCoverHeader({
 
             {/* Below sm the actions cannot sit over the cover without wrapping
                 into the badges, so they move under it. */}
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-5 pt-3 sm:hidden">
+            <div className="group-cover__actions-narrow mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-5 pt-3 sm:hidden">
                 <GroupActions
                     group={group}
                     isMember={isMember}
@@ -245,7 +245,7 @@ function GroupActions({
                         className="bg-primary-grad flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-md transition-all hover:shadow-lg active:scale-[0.98]"
                     >
                         <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
-                        Invite
+                        Add members
                     </button>
                 )}
                 <button

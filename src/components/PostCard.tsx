@@ -5,12 +5,14 @@ import JournalBody from '@/components/JournalBody';
 import { scrimFor } from '@/components/studio/postStyle';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
-import { useToggleLike, useToggleReaction } from '@/hooks/usePostReaction';
-import ReactionPicker from '@/components/ReactionPicker';
+import { useFeedReaction } from '@/hooks/useFeedReaction';
+import { normalizeReaction } from '@/lib/reactions';
+import FeedReactionControl from '@/components/reactions/FeedReactionControl';
 import Link from 'next/link';
 import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost } from '@/hooks/usePostActions';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import HiddenPostToast from '@/components/feed/HiddenPostToast';
+import PostControls from '@/components/feed/PostControls';
 import { useMuteUser } from '@/hooks/useMuting';
 import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
@@ -24,10 +26,10 @@ import { useDataSaver } from '@/hooks/useDataSaver';
 import api from '@/lib/api';
 import { resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageCircle,
-  MoreHorizontal,
+  SlidersHorizontal,
   Smile,
   Music,
   MapPin,
@@ -37,15 +39,7 @@ import {
   Pin,
   Check,
   Repeat2,
-  Flag,
   Heart,
-  UserMinus,
-  UserX,
-  Code,
-  PlusCircle,
-  MinusCircle,
-  Trash2,
-  ArrowLeft,
 } from 'lucide-react';
 
 interface PostCardProps {
@@ -69,7 +63,6 @@ function timeAgo(dateStr: string): string {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const liked = !!post.viewer_reaction;
-  const reduceMotion = useReducedMotion();
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
@@ -77,17 +70,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
-  // The "…" menu has two pages, like Facebook's: the main list, and the
-  // "More options" list behind a Back row. Closing always resets to main.
-  const [menuPage, setMenuPage] = useState<'main' | 'more'>('main');
   const [showComments, setShowComments] = useState(false);
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useMyProfile();
-  const likeMutation = useToggleLike();
-  const reactionMutation = useToggleReaction();
+  const likeMutation = useFeedReaction(post.id);
   const bookmarkMutation = useToggleBookmark();
   const togglePinMutation = useTogglePin();
   const muteMutation = useMuteUser();
@@ -107,13 +96,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isOwnPost = profile?.id === post.author_id;
 
   const toggleLike = () => {
-    // The optimistic UI is now handled centrally by useToggleLike's onMutate
-    likeMutation.mutate(post.id);
+    if (likeMutation.busy) return;
+    likeMutation.mutate({ next: liked ? null : 'like', current: normalizeReaction(post.viewer_reaction) });
   };
 
-  const handleReaction = (reactionType: string) => {
-    reactionMutation.mutate({ postId: post.id, reactionType });
-  };
 
   const handleBookmark = () => {
     const wasBookmarked = bookmarked;
@@ -135,7 +121,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const closeMenu = () => {
     setIsMoreOpen(false);
-    setMenuPage('main');
   };
 
   const handleReport = () => {
@@ -231,13 +216,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setIsMoreOpen(false);
-        setMenuPage('main');
       }
     };
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsMoreOpen(false);
-        setMenuPage('main');
       }
     };
     if (isMoreOpen) {
@@ -295,10 +278,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       )}
 
       {/* Header */}
-      <div className="px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="post-card-header px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
+        <div className="post-card-author flex min-w-0 items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
+            <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
               {avatar ? (
                 <img
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
@@ -312,16 +295,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               )}
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2">
+              <h4 className="truncate text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
                 <span className="text-xs text-brand-text/60">
                   — feeling {post.feeling} <Smile className="w-3 h-3 inline text-warning" />
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
               <span>{timeAgo(post.created_at)}</span>
               {post.location && (
                 <>
@@ -347,12 +330,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="relative" ref={moreMenuRef}>
           <button
             onClick={() => (isMoreOpen ? closeMenu() : setIsMoreOpen(true))}
-            aria-label="More options"
+            aria-label="Post controls"
             aria-haspopup="menu"
             aria-expanded={isMoreOpen}
             className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/40 hover:bg-brand-divider hover:text-brand-text/80'}`}
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <SlidersHorizontal className="w-5 h-5" />
           </button>
 
           <AnimatePresence>
@@ -362,118 +345,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                 transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="absolute right-0 mt-1 w-64 bg-brand-card rounded-xl shadow-xl border border-brand-divider py-1.5 z-100"
-                role="menu"
+                className="absolute right-0 mt-2 z-100"
               >
-                {/*
-                  Not your post, main page — Facebook's order: signal, then
-                  keep, then flag, then the rest behind "More options".
-                */}
-                {!isOwnPost && menuPage === 'main' && (
-                  <>
-                    <button role="menuitem" onClick={handleInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <PlusCircle className="w-4 h-4 text-brand-text/60 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-brand-text font-medium">Interested</div>
-                        <div className="text-[11px] text-brand-text/50">More of these posts.</div>
-                      </div>
-                    </button>
-
-                    <button role="menuitem" onClick={handleNotInterested} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <MinusCircle className="w-4 h-4 text-brand-text/60 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-brand-text font-medium">Not interested</div>
-                        <div className="text-[11px] text-brand-text/50">Less of these posts.</div>
-                      </div>
-                    </button>
-
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button role="menuitem" onClick={handleBookmark} aria-pressed={bookmarked} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <Bookmark className={`w-4 h-4 mt-0.5 ${bookmarked ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/60'}`} />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-brand-text font-medium">{bookmarked ? 'Saved' : 'Save post'}</div>
-                        <div className="text-[11px] text-brand-text/50">{bookmarked ? 'In your saved posts.' : 'Add to your saved posts.'}</div>
-                      </div>
-                    </button>
-
-                    <button role="menuitem" onClick={handleReport} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left">
-                      <Flag className="w-4 h-4 text-danger mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-danger font-medium">Report post</div>
-                        <div className="text-[11px] text-danger/60">We won't tell {name}.</div>
-                      </div>
-                    </button>
-
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button role="menuitem" aria-haspopup="menu" onClick={() => setMenuPage('more')} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <div className="flex-1 text-[13px] text-brand-text font-medium">More options</div>
-                      <ChevronRight className="w-4 h-4 text-brand-text/40" />
-                    </button>
-                  </>
-                )}
-
-                {/* Not your post, second page — the same panel, with a Back row. */}
-                {!isOwnPost && menuPage === 'more' && (
-                  <>
-                    <button type="button" onClick={() => setMenuPage('main')} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <ArrowLeft className="w-4 h-4 text-brand-text/60" />
-                      <span className="text-[13px] text-brand-text font-semibold">Back</span>
-                    </button>
-
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button role="menuitem" onClick={handleMuteAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <UserMinus className="w-4 h-4 text-brand-text/60 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-brand-text font-medium">Hide all from {name}</div>
-                        <div className="text-[11px] text-brand-text/50">Stop seeing their posts.</div>
-                      </div>
-                    </button>
-
-                    <button role="menuitem" onClick={handleEmbed} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <Code className="w-4 h-4 text-brand-text/60 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-brand-text font-medium">Embed</div>
-                        <div className="text-[11px] text-brand-text/50">Copy iframe code.</div>
-                      </div>
-                    </button>
-
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button role="menuitem" onClick={handleBlockAuthor} className="w-full flex items-start gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left">
-                      <UserX className="w-4 h-4 text-danger mt-0.5" />
-                      <div className="flex-1">
-                        <div className="text-[13px] text-danger font-medium">Block {name}</div>
-                        <div className="text-[11px] text-danger/60">No more contact, either way.</div>
-                      </div>
-                    </button>
-                  </>
-                )}
-
-                {isOwnPost && (
-                  <>
-                    <button role="menuitem" onClick={handlePin} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-secondary transition-colors text-left">
-                      <Pin className={`w-4 h-4 ${post.is_pinned ? 'fill-primary-ink text-primary-ink' : 'text-brand-text/40'}`} />
-                      <span className="text-[13px] text-brand-text font-medium">
-                        {post.is_pinned ? 'Unpin' : 'Pin'}
-                      </span>
-                    </button>
-
-                    <div className="h-px bg-brand-divider my-0.5 mx-2.5" />
-
-                    <button
-                      role="menuitem"
-                      onClick={handleDelete}
-                      disabled={deleteMutation.isPending}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-danger/10 transition-colors text-left text-danger disabled:opacity-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="text-[13px] font-medium">Delete</span>
-                    </button>
-                  </>
-                )}
+                <PostControls anchorRef={moreMenuRef} own={isOwnPost} pinned={!!post.is_pinned} deleting={deleteMutation.isPending}
+                  onRecommend={handleInterested} onHide={handleNotInterested} onMute={handleMuteAuthor}
+                  onEmbed={handleEmbed} onReport={handleReport} onBlock={handleBlockAuthor}
+                  onPin={handlePin} onDelete={handleDelete}
+                  onClose={(restoreFocus) => {
+                    closeMenu();
+                    if (restoreFocus) moreMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+                  }} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -626,7 +507,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         }
 
         return (
-          <div className={`px-3 sm:px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
+          <div className={`post-card-copy px-3 sm:px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
             {textContent}
           </div>
         );
@@ -700,15 +581,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       )}
 
       {/* Content & Actions Layout */}
-      <div className="relative">
+      <div className="post-card-content-actions relative">
         {/* Media Display */}
         {hasMedia && (
-          // For carousels we lock the box to the first image's height so the
-          // card doesn't shrink/grow on "next" clicks (object-contain made it
-          // resize when images had different aspect ratios). Single-image
-          // posts keep the original natural sizing.
-          <div className={`relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-9/16 max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
-            <div className="h-full w-full flex items-center justify-center">
+          // The home feed sizes this stage inside the reference-size card.
+          // Other post surfaces retain their existing media layout.
+          <div className={`post-card-media relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-9/16 max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
+            <div className="post-card-media-content h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
                   {isReel ? (
@@ -805,25 +684,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="absolute bottom-4 right-2 sm:right-3 flex flex-col gap-3 z-10">
             {/* Spark (was Heart) */}
             {!post.no_likes && (
-              <button
-                onClick={toggleLike}
-                aria-label="Spark"
-                className="flex flex-col items-center gap-1 group"
-              >
-                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg ${liked
-                  ? 'bg-danger text-white shadow-danger/30'
-                  : 'bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5'
-                  }`}>
-                  <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-5 h-5">
-                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
-                  </svg>
-                </div>
-                {likesCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${liked ? 'text-danger' : 'text-brand-text/80'}`}>
-                    {likesCount}
-                  </span>
-                )}
-              </button>
+              <div className="rounded-xl bg-brand-card/95"><FeedReactionControl post={post} align="end" /></div>
             )}
 
             {/* Comment */}
@@ -878,24 +739,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className="px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
+          <div className="post-card-actions px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
             {/* Like / Love */}
             {!post.no_likes && (
-              <button onClick={toggleLike} aria-label={liked ? 'Unlike' : 'Like'} aria-pressed={liked}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${liked ? 'text-danger bg-danger/10' : 'text-brand-text/60 hover:text-danger hover:bg-danger/5'}`}>
-                {/* The pop: the heart swells and settles only when it BECOMES
-                    liked. initial={false} stops it firing for posts that load
-                    already liked, and it is skipped under reduced motion. */}
-                <motion.span
-                  className="inline-flex"
-                  initial={false}
-                  animate={liked && !reduceMotion ? { scale: [1, 1.35, 0.92, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.38, times: [0, 0.35, 0.7, 1], ease: 'easeOut' }}
-                >
-                  <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} />
-                </motion.span>
-                <span className="text-[12px] font-semibold tabular-nums">{likesCount > 0 ? likesCount : 'Like'}</span>
-              </button>
+              <FeedReactionControl post={post} />
             )}
 
             {/* Comment */}

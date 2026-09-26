@@ -24,6 +24,8 @@ function routeForTab(tab: NavItem, currentUser: User | null): string | null {
       return currentUser ? `/u/${currentUser.id}` : '/profile';
     case 'Home':
       return '/';
+    case 'Feed':
+      return '/feed';
     case 'TV':
       return '/live';
     case 'Reels':

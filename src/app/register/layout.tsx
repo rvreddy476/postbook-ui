@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Join VChat',
+    title: 'Create an account',
 }
 
 export default function RegisterLayout({

@@ -25,6 +25,8 @@ import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConne
 import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { playNotificationSound } from '@/hooks/useNotificationSound';
 import { useGlobalToast } from '@/contexts/ToastContext';
+import './header.css';
+import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
 
 /**
  * The sentence shown beside the actor's name.
@@ -125,6 +127,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, onCreateClick, onLogout, onToggleContactList, navExpanded = false, fullWidth = false }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { headerRef, alignment } = useFeedSearchAlignment((pathname === '/' || pathname === '/feed') && (activeTab === 'Home' || activeTab === 'Feed'));
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -403,13 +406,12 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     // Translucent chrome: content scrolls UNDER the bar, which is what tells
     // you the page is behind it. Falls back to the solid token where
     // backdrop-filter is unsupported.
-    // Three columns, not a flex row with space-between: the outer columns are
-    // both 1fr, so the middle one is centred on the BAR regardless of how wide
-    // the logo or the action rail happen to be. With space-between the search
-    // only ever sat next to the logo and drifted whenever either side changed.
-    <header className={`fixed top-0 z-100 h-16 bg-brand-bg/80 supports-[backdrop-filter]:bg-brand-bg/70 backdrop-blur-xl backdrop-saturate-150 text-brand-text border-b border-brand-divider px-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
+    // Search flexes in the remaining space; actions always keep their own track.
+    // Breakpoints use the actual header width, including an expanded sidebar.
+    <header ref={headerRef} data-feed-alignment={alignment ? (alignment.width ? 'field' : 'toggle') : undefined} className={`app-header fixed top-0 z-100 h-16 text-brand-text border-b border-brand-divider transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Column 1 — brand mark, constant on every route */}
-      <div className="flex items-center gap-2 justify-self-start">
+      <div className="app-header__identity">
+        {(pathname === '/' || fullWidth) && <Link href="/" aria-label="VChat home" className={fullWidth ? `app-header__brand ${pathname === '/' ? '' : 'hidden md:block'}` : 'app-header__brand md:hidden'}>VChat</Link>}
         {/* Back, on phones only. A phone's browser has no app back button
             in reach and the sidebar is collapsed, so a page like a profile
             or a conversation had no visible way out except the address bar.
@@ -439,20 +441,22 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         */}
       </div>
 
-      {/* Column 2 — search, centred on the bar */}
-      <div className="hidden md:flex items-center justify-self-center" ref={searchRef}>
-        <div className="relative w-72 group">
+      {/* Search owns a flexible track, never an overlay on the actions. */}
+      <div className="app-header__search" ref={searchRef} style={alignment?.width ? { left: alignment.left, width: alignment.width } : undefined}>
+        <div className="app-header__search-field relative group">
           <input
             type="text"
-            placeholder="Search network..."
+            placeholder="Search people"
+            aria-label="Search people"
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
             onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
-            className="w-full bg-brand-secondary border border-brand-divider text-brand-text placeholder-brand-text/40 focus:ring-brand-accent focus:bg-brand-secondary dark:bg-brand-secondary dark:border-brand-divider dark:text-brand-text dark:placeholder-brand-text/30 dark:focus:ring-brand-accent rounded-full py-2 pl-10 pr-4 text-sm outline-hidden transition-all"
+            className="app-header__search-input"
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/40 group-focus-within:text-brand-text/70 dark:text-brand-text/40 dark:group-focus-within:text-primary-ink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {searchQuery && (
             <button
+              aria-label="Clear search"
               onClick={() => { setSearchQuery(''); setSearchResults([]); setShowResults(false); }}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-brand-secondary text-brand-text/70 hover:bg-brand-secondary dark:bg-brand-secondary dark:text-brand-highlight dark:hover:bg-brand-secondary/80 transition-colors"
             >
@@ -470,20 +474,23 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           segmented control, so they read as ONE group of peers rather than
           six loose glyphs floating on the bar. The account avatar stays
           outside it — it is not a peer of these actions, it is who you are. */}
-      <div className="flex items-center gap-2 justify-self-end">
+      <div className="app-header__actions">
         {/* Mobile Search Toggle */}
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-brand-text/60 hover:text-brand-text transition-colors"
+          aria-label="Open search"
+          aria-expanded={isSearchOpen}
+          className="app-header__search-toggle w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-brand-text/60 hover:text-brand-text transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </button>
 
-        <div className="flex items-center gap-1 rounded-full bg-brand-secondary px-2 py-1.5">
+        <div className="app-header__rail" role="group" aria-label="Quick actions">
 
         {/* 1. Post/Manifest */}
         <button
           onClick={onCreateClick}
+          aria-label="Create post"
           className="group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Create Post"
         >
@@ -498,6 +505,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 2. Chat/Messenger */}
         <button
           onClick={onToggleContactList}
+          aria-label="Messages"
           className="group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Messenger"
         >
@@ -517,7 +525,8 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 3. Reels */}
         <button
           onClick={() => setActiveTab('Reels')}
-          className={`group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
+          aria-label="Reels"
+          className={`app-header__secondary group relative items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95 ${activeTab === 'Reels' ? 'text-primary-ink' : ''}`}
           title="Reels"
         >
           <div className={`w-5 h-5 transition-colors ${activeTab === 'Reels' ? 'text-primary-ink' : 'text-brand-text/70 group-hover:text-primary-ink'}`}>
@@ -533,7 +542,8 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
           href="/posttube"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          aria-label="PostTube (opens in a new tab)"
+          className="app-header__secondary group relative items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="TV"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -546,7 +556,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
 
         {/* 5. Events */}
         <button
-          className="group relative hidden sm:flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
+          className="app-header__secondary group relative items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 hover:bg-brand-bg active:scale-95"
           title="Events"
         >
           <div className="w-5 h-5 text-brand-text/70 group-hover:text-primary-ink transition-colors">
@@ -769,17 +779,15 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
         {/* 7. Profile — outside the rail on purpose. */}
         <div className="relative" ref={dropdownRef}>
           <div className="flex items-center gap-2">
-            <Link href="/profile">
-              <button
-                className="p-0.5 bg-primary-ink rounded-full transition-transform duration-200 ease-out active:scale-95"
-              >
+            <Link href="/profile" aria-label="Your profile" className="app-header__avatar">
                 <div className="w-9 h-9 rounded-full overflow-hidden bg-brand-bg">
                   <img src={avatarSrc} alt={currentUser.name} className="w-full h-full object-cover" />
                 </div>
-              </button>
             </Link>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
+              aria-label="Account menu"
+              aria-expanded={isProfileOpen}
               className="w-6 h-10 flex items-center justify-center text-brand-text/60 hover:text-brand-text dark:text-brand-text/60 dark:hover:text-primary-ink transition-colors"
             >
               <svg className={`w-4 h-4 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -898,17 +906,18 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
             initial={{ opacity: 0, y: -80 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -80 }}
-            className="fixed top-20 left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-90 md:hidden shadow-lg"
+            className="app-header__search-panel absolute top-full left-0 w-full px-4 py-3 bg-brand-card border-b border-brand-divider z-90 shadow-lg"
             ref={mobileSearchRef}
           >
             <div className="relative">
               <input
                 autoFocus
                 type="text"
-                placeholder="Search..."
+                placeholder="Search people"
+                aria-label="Search people"
                 value={searchQuery}
                 onChange={e => handleSearchChange(e.target.value)}
-                className="w-full bg-brand-secondary border border-brand-divider rounded-2xl py-3 px-12 text-xs font-black tracking-widest outline-hidden focus:ring-4 focus:ring-brand-text/10 transition-all"
+                className="app-header__search-input"
               />
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               {searchQuery && (

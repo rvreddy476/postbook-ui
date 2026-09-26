@@ -14,7 +14,7 @@ import GroupAboutTab from './tabs/GroupAboutTab'
 import GroupMembersTab from './tabs/GroupMembersTab'
 import GroupMediaTab from './tabs/GroupMediaTab'
 import GroupEventsTab from './tabs/GroupEventsTab'
-import CreatePortal from '@/components/CreatePortal'
+import GroupPostDialog from './GroupPostDialog'
 import { MIN_GROUP_SEARCH_LENGTH } from './patchGroupFeed'
 
 /**
@@ -172,7 +172,7 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
             <div
                 role="tablist"
                 aria-label="Group sections"
-                className="scrollbar-none sticky top-0 z-20 overflow-x-auto border-b border-brand-divider bg-brand-bg"
+                className="scrollbar-none relative overflow-x-auto border-b border-brand-divider bg-brand-card"
             >
                 <div className="mx-auto flex max-w-5xl items-center gap-1 px-5">
                     {TABS.map((t) => {
@@ -332,7 +332,7 @@ export default function GroupView({ groupIdOrHandle }: { groupIdOrHandle: string
             )}
 
             {showComposer && (
-                <CreatePortal groupId={group.id} onClose={() => setShowComposer(false)} />
+                <GroupPostDialog groupId={group.id} onClose={() => setShowComposer(false)} />
             )}
             {showInvite && (
                 <GroupInviteModal groupId={group.id} onClose={() => setShowInvite(false)} />

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Hash, MapPin, Smile, UserRoundX } from 'lucide-react'
+import { Hash, MapPin, Smile } from 'lucide-react'
 
 import type { GroupPostV2 } from '@/types/groups'
 import { hasGroupPostMeta, moodLine, readGroupPostMeta } from './groupComposer'
@@ -20,23 +20,10 @@ import { hasGroupPostMeta, moodLine, readGroupPostMeta } from './groupComposer'
 const GroupPostMeta: React.FC<{ post: GroupPostV2; className?: string }> = ({ post, className }) => {
   const meta = readGroupPostMeta(post.type_payload)
   const mood = moodLine(meta)
-  const anonymous = post.is_anonymous === true
-
-  if (!hasGroupPostMeta(meta) && !anonymous) return null
+  if (!hasGroupPostMeta(meta)) return null
 
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className ?? 'mt-3'}`}>
-      {anonymous && (
-        /*
-          Said on the post, not inferred from a missing name. `author_id` on an
-          anonymous post is a per-post alias that resolves to nobody, so a card
-          that does not say this just shows an unexplained blank author.
-        */
-        <span className="inline-flex items-center gap-1 rounded-full border border-brand-divider bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-text/70">
-          <UserRoundX className="h-3 w-3" strokeWidth={1.75} />
-          Anonymous member
-        </span>
-      )}
       {mood && (
         <span className="inline-flex items-center gap-1 rounded-full border border-brand-divider bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-warning">
           <Smile className="h-3 w-3" strokeWidth={1.75} />

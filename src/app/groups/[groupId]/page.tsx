@@ -3,6 +3,7 @@
 import { Suspense } from 'react'
 import { useParams } from 'next/navigation'
 import GroupView from '@/components/groups/GroupView'
+import GroupsWorkspace from '@/components/groups/GroupsWorkspace'
 
 /**
  * A group's own page.
@@ -20,7 +21,7 @@ export default function GroupPage() {
   const groupIdOrHandle = params.groupId as string
 
   return (
-    <Suspense
+    <GroupsWorkspace activeGroup={groupIdOrHandle}><Suspense
       fallback={
         <div className="mx-auto max-w-5xl space-y-4 p-5">
           <div className="h-52 animate-pulse rounded-2xl bg-brand-secondary" />
@@ -28,7 +29,7 @@ export default function GroupPage() {
         </div>
       }
     >
-      <GroupView groupIdOrHandle={groupIdOrHandle} />
-    </Suspense>
+      <GroupView key={groupIdOrHandle} groupIdOrHandle={groupIdOrHandle} />
+    </Suspense></GroupsWorkspace>
   )
 }

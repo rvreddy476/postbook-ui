@@ -68,9 +68,8 @@ import { useIdempotencyKey } from '@/lib/idempotency';
 import { uploadMedia } from '@/lib/mediaUpload';
 import { chooseContentType } from '@/components/feed/chooseContentType';
 import CrossPostPicker, { type CrossPostChoice } from '@/components/groups/CrossPostPicker';
+import AnonymousPostControl from '@/components/groups/AnonymousPostControl';
 import {
-  ANONYMOUS_EXPLAINER,
-  ANONYMOUS_LABEL,
   anonymousCrossPostWarning,
   buildGroupTypePayload,
   effectiveIsAnonymous,
@@ -245,7 +244,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   }, []);
 
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented) onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
@@ -256,15 +255,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
 
-  /*
-    A space can withdraw anonymous posting while the composer is open — the
-    group query refetches — and a toggle left on would then submit a flag the
-    server refuses. Turning it off here keeps the visible state honest; the
-    submit path re-checks anyway, because this effect runs a render late.
-  */
-  useEffect(() => {
-    if (!allowAnonymous && isAnonymous) setIsAnonymous(false);
-  }, [allowAnonymous, isAnonymous]);
+  // Preserve anonymous intent if permission changes. Submission must refuse;
+  // only the author may deliberately switch back to a named post.
 
   // Drop background when media or poll is added — colored backgrounds are
   // text-only by design.
@@ -323,6 +315,10 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const handleSubmit = useCallback(async () => {
     if (!canPost || isSubmitting) return;
+    if (isGroupMode && isAnonymous && group?.allow_anonymous_posts !== true) {
+      setError('Anonymous posting is unavailable in this group. Turn it off only if you want to post with your profile.');
+      return;
+    }
 
     // Frontend poll validation — never let an invalid poll hit the backend.
     if (showPoll) {
@@ -721,16 +717,105 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return true;
   });
 
+  const moreControls = (
+    <AnimatePresence>
+          {showMore && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.16 }}
+              className="shrink-0 overflow-hidden px-6"
+            >
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-2xl bg-brand-secondary p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showMood && moodTab === 'feeling') { setShowMood(false); return; }
+                    setMoodTab('feeling');
+                    setShowMood(true);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <Smile className="h-4 w-4" strokeWidth={1.75} />
+                  Feeling
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (showMood && moodTab === 'activity') { setShowMood(false); return; }
+                    setMoodTab('activity');
+                    setShowMood(true);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
+                  Activity
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBackgroundPicker((v) => !v)}
+                  disabled={!isTextOnly}
+                  title={isTextOnly ? 'Colour the card behind your words' : 'Backgrounds work only on text-only posts'}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-35 ${(showBackgroundPicker || background) ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
+                >
+                  <FlowerPaletteIcon size={16} />
+                  Background
+                </button>
+                {background && (
+                  <button
+                    type="button"
+                    onClick={() => setBackground(null)}
+                    className="rounded-full px-3 py-1.5 text-xs font-medium text-brand-text/60 hover:text-brand-text"
+                  >
+                    Clear background
+                  </button>
+                )}
+              </div>
+              {showBackgroundPicker && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-brand-secondary p-3">
+                  {BACKGROUNDS.map((swatch) => (
+                    <button
+                      key={swatch.label}
+                      type="button"
+                      aria-label={swatch.label}
+                      title={swatch.label}
+                      onClick={() => setBackground(swatch.value)}
+                      className="h-7 w-7 rounded-full border border-brand-divider transition-transform hover:scale-110"
+                      style={{
+                        background:
+                          swatch.value ??
+                          'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
+                        outline: swatch.value === background ? '2px solid rgb(var(--brand-ink))' : 'none',
+                        outlineOffset: '2px',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+  );
+  const errorNotice = error ? (
+    <div className="px-6 pt-3">
+      <div role="alert" className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
+        <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
+        <span className="font-medium">{error}</span>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 12 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96, y: 12 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-3 w-full max-w-[720px]"
+      className="post-composer mx-3 w-full max-w-[720px]"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
+      <div className="post-composer__panel relative flex max-h-[90vh] flex-col overflow-hidden rounded-[28px] bg-brand-card border border-brand-divider shadow-2xl">
         {/*
           One header instead of two rows. The title sat alone above a separate
           identity row, so the dialog opened with two competing headers and the
@@ -738,22 +823,22 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           read as one line, with the two controls that act on the whole post -
           audience and close - grouped on the right.
         */}
-        <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-5">
+        <div className="post-composer__header flex shrink-0 items-center justify-between gap-3 px-6 pt-5">
           <div className="flex min-w-0 items-center gap-3">
-            <img
+            {isGroupMode && isAnonymous ? <span className="composer-anonymous-avatar"><UserRoundX size={24} /></span> : <img
               src={avatarSrc}
               alt=""
               className="h-12 w-12 shrink-0 rounded-full border border-brand-divider object-cover"
-            />
+            />}
             <div className="min-w-0 leading-tight">
               <div className="text-[19px] font-semibold -tracking-[0.018em] text-brand-text">
-                Create post
+                {isGroupMode ? (isAnonymous ? 'Anonymous group post' : 'New group post') : 'Create post'}
               </div>
               {/* The reference says "Share your story" here. Naming the
                   account is worth more: it is the one fact you cannot get
                   back if you post from the wrong one. */}
               <div className="mt-0.5 truncate text-[12px] text-brand-text/60">
-                Posting as {displayName} · {handle}
+                {isGroupMode && isAnonymous ? 'Your profile is hidden from members' : <>Posting as {displayName} · {handle}</>}
               </div>
             </div>
           </div>
@@ -831,7 +916,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         </div>
 
         {/* Scrollable middle */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="post-composer__body min-h-0 flex-1 overflow-y-auto">
           {/* Mood / Location chips */}
           {(mood || location) && (
             <div className="flex flex-wrap gap-1.5 px-6 pt-3">
@@ -1093,75 +1178,27 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             </div>
           )}
 
-          {/* Group mode: the other spaces this post can reach. */}
           {isGroupMode && groupId && (
-            <CrossPostPicker
-              groupId={groupId}
-              selected={crossPostTo}
-              onChange={setCrossPostTo}
-              disabled={isSubmitting}
-            />
-          )}
-
-          {/*
-            Anonymous posting, offered ONLY where the group opted in.
-
-            The server refuses `is_anonymous` for a group that has not, so a
-            switch shown anyway is a switch that returns an error.
-          */}
-          {isGroupMode && allowAnonymous && (
-            <div className="px-6 pt-3">
-              <div className="rounded-[18px] border border-brand-divider bg-brand-secondary px-4 py-3">
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isAnonymous}
-                    onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-[rgb(var(--brand-ink))]"
-                  />
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 text-[12px] font-semibold text-brand-text">
-                      <UserRoundX className="h-3.5 w-3.5 text-primary-ink" strokeWidth={1.75} />
-                      {ANONYMOUS_LABEL}
-                    </span>
-                    {/*
-                      Pseudonymity against other members — the wording is a
-                      product decision, not a phrasing choice. Admins cannot
-                      unmask; that is enforced server-side, where a per-post
-                      alias replaces the author id before the row is marshalled.
-                    */}
-                    <span className="mt-1 block text-[11px] leading-snug text-brand-text/60">
-                      {ANONYMOUS_EXPLAINER}
-                    </span>
-                  </span>
-                </label>
-                {anonymousCrossPostWarning(isAnonymous, crossPostTo.length) && (
-                  <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-warning">
-                    <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-                    {anonymousCrossPostWarning(isAnonymous, crossPostTo.length)}
-                  </p>
-                )}
+            <>
+              <div className="composer-group-options">
+                <CrossPostPicker groupId={groupId} selected={crossPostTo} onChange={setCrossPostTo} disabled={isSubmitting} anonymous={isAnonymous} />
+                <AnonymousPostControl allowed={allowAnonymous} checked={isAnonymous} disabled={isSubmitting} onChange={setIsAnonymous} />
               </div>
-            </div>
+              {anonymousCrossPostWarning(isAnonymous, crossPostTo.length) && (
+                <p className="composer-anonymous-warning">{anonymousCrossPostWarning(isAnonymous, crossPostTo.length)}</p>
+              )}
+            </>
           )}
 
+          {isGroupMode && moreControls}
+          {isGroupMode && errorNotice}
         </div>
 
         {/*
           The error sits down here rather than up in the body: it explains why
           the button below it did nothing, so it belongs beside that button.
         */}
-        <div className="shrink-0 px-6 pt-3">
-          {error && (
-            <div
-              role="alert"
-              className="mt-2.5 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5 text-[12px] text-danger"
-            >
-              <AlertCircle className="mt-px h-4 w-4 shrink-0" strokeWidth={1.75} />
-              <span className="font-medium">{error}</span>
-            </div>
-          )}
-        </div>
+        {!isGroupMode && errorNotice}
 
         {/*
           What you can add, as small plain icons.
@@ -1173,7 +1210,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           state shown by a tint rather than by a hue of its own — and each
           still names itself on hover and to a screen reader.
         */}
-        <div className="flex shrink-0 flex-wrap items-center gap-0.5 px-5 pt-3">
+        <div className="post-composer__tools flex shrink-0 flex-wrap items-center gap-0.5 px-5 pt-3">
           {tiles.map((tile) => (
             <button
               key={tile.key}
@@ -1190,89 +1227,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               {/* Each action keeps its own colour; the tint behind it is what
                   shows state, so colour never has to mean two things. */}
               <tile.Icon className={`h-[18px] w-[18px] ${tile.fg}`} strokeWidth={1.75} />
+              {isGroupMode && <span className="post-composer__tool-label">{tile.label}</span>}
             </button>
           ))}
         </div>
 
-        {/* More: feeling, activity and background. */}
-        <AnimatePresence>
-          {showMore && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.16 }}
-              className="shrink-0 overflow-hidden px-6"
-            >
-              <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-2xl bg-brand-secondary p-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showMood && moodTab === 'feeling') { setShowMood(false); return; }
-                    setMoodTab('feeling');
-                    setShowMood(true);
-                  }}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'feeling') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
-                >
-                  <Smile className="h-4 w-4" strokeWidth={1.75} />
-                  Feeling
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showMood && moodTab === 'activity') { setShowMood(false); return; }
-                    setMoodTab('activity');
-                    setShowMood(true);
-                  }}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${(showMood && moodTab === 'activity') ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
-                >
-                  <ActivityIcon className="h-4 w-4" strokeWidth={1.75} />
-                  Activity
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowBackgroundPicker((v) => !v)}
-                  disabled={!isTextOnly}
-                  title={isTextOnly ? 'Colour the card behind your words' : 'Backgrounds work only on text-only posts'}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-35 ${(showBackgroundPicker || background) ? 'bg-brand-card text-primary-ink' : 'text-brand-text/70 hover:bg-brand-card'}`}
-                >
-                  <FlowerPaletteIcon size={16} />
-                  Background
-                </button>
-                {background && (
-                  <button
-                    type="button"
-                    onClick={() => setBackground(null)}
-                    className="rounded-full px-3 py-1.5 text-xs font-medium text-brand-text/60 hover:text-brand-text"
-                  >
-                    Clear background
-                  </button>
-                )}
-              </div>
-              {showBackgroundPicker && (
-                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-brand-secondary p-3">
-                  {BACKGROUNDS.map((swatch) => (
-                    <button
-                      key={swatch.label}
-                      type="button"
-                      aria-label={swatch.label}
-                      title={swatch.label}
-                      onClick={() => setBackground(swatch.value)}
-                      className="h-7 w-7 rounded-full border border-brand-divider transition-transform hover:scale-110"
-                      style={{
-                        background:
-                          swatch.value ??
-                          'repeating-conic-gradient(var(--brand-divider) 0% 25%, transparent 0% 50%) 50% / 8px 8px',
-                        outline: swatch.value === background ? '2px solid rgb(var(--brand-ink))' : 'none',
-                        outlineOffset: '2px',
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!isGroupMode && moreControls}
 
         {/*
           The summary line ("Text post on a background · seen by Everyone")
@@ -1280,7 +1240,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
           in the header control that sets it, and the tiles above show what is
           attached — saying it a third time in prose was noise.
         */}
-        <div className="mt-3 flex shrink-0 items-center justify-end gap-3 border-t border-brand-divider px-6 py-3.5">
+        <div className="post-composer__footer mt-3 flex shrink-0 items-center justify-end gap-3 border-t border-brand-divider px-6 py-3.5">
 
           <button
             type="button"

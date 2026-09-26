@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Sign in | VChat',
+    title: 'Sign in',
 }
 
 export default function LoginLayout({

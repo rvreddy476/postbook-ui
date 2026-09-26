@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Home,
   LayoutGrid,
+  PanelsTopLeft,
   Menu,
   MessageSquare,
   Radio,
@@ -60,6 +61,7 @@ type Item = {
 // Primary rail — always visible. Sized so the rail never scrolls.
 const primaryItems: Item[] = [
   { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
+  { id: 'Feed', label: 'Feed', icon: PanelsTopLeft, href: '/feed', color: 'text-current' },
   { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
   { id: 'Circle', label: 'Connections', icon: UserRoundPlus, href: '/connections', color: 'text-current' },
   { id: 'Groups', label: 'Groups', icon: Users, href: '/groups', color: 'text-current' },
@@ -121,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       expanded ? 'w-full gap-4 px-4 py-3' : 'justify-center p-3'
     } ${isActive ? 'bg-primary-ink/10 text-primary-ink' : 'text-brand-text/70 hover:bg-primary-ink/5 hover:text-brand-text'}`;
     return (
-      <Link key={item.id} href={item.href ?? '#'} className={cls}>
+      <Link key={item.id} href={item.href ?? '#'} aria-label={item.label} aria-current={isActive ? 'page' : undefined} className={cls}>
         <Icon
           size={20}
           strokeWidth={isActive ? 2.25 : 1.75}

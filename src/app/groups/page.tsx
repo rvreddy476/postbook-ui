@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import AppShell from '@/components/AppShell'
-import CreatePortal from '@/components/CreatePortal'
+import GroupsWorkspace from '@/components/groups/GroupsWorkspace'
+import GroupPostDialog from '@/components/groups/GroupPostDialog'
 import {
   useMyGroups,
   useDiscoverGroups,
@@ -13,8 +13,6 @@ import {
   useMyInvites,
   useAcceptInvite,
   useRejectInvite,
-  useSparkGroupPostV2,
-  useUnsparkGroupPostV2,
   useStashGroupPostV2,
   useUnstashGroupPostV2,
   useRecordGroupPostView,
@@ -22,6 +20,8 @@ import {
 } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
+import GroupDiscovery from '@/components/groups/GroupDiscovery'
+import { Sparkles, HeartHandshake } from 'lucide-react'
 import GroupCard from '@/components/groups/GroupCard'
 import GroupPostCard from '@/components/groups/GroupPostCard'
 import type { Group, GroupPostV2 } from '@/types/groups'
@@ -63,13 +63,16 @@ function GroupAvatar({ avatarMediaId, name, size = 'w-10 h-10' }: { avatarMediaI
 export default function GroupsPage() {
   const qc = useQueryClient()
   const authUser = useAuthUser()
-  const [view, setView] = useState<View>('feed')
+  const [view, setView] = useState<View>('discover')
+  useEffect(()=>{ if(new URLSearchParams(window.location.search).get('view')==='feed') setView('feed') },[])
   const [searchQuery, setSearchQuery] = useState('')
   const [composeGroup, setComposeGroup] = useState<Group | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const { data: myGroups, isLoading: loadingMy } = useMyGroups()
-  const { data: discoverGroups, isLoading: loadingDiscover } = useDiscoverGroups()
-  const { data: searchResults } = useGroupSearch(searchQuery)
+  const discovery = useDiscoverGroups()
+  const { data: discoverGroups, isLoading: loadingDiscover } = discovery
+  const search = useGroupSearch(searchQuery.trim())
+  const { data: searchResults } = search
   const { data: invites } = useMyInvites()
   const {
     data: feedData,
@@ -83,8 +86,6 @@ export default function GroupsPage() {
   const rejectInvite = useRejectInvite()
 
   // Engagement mutations — same set GroupFeedTab uses, parameterized per group.
-  const sparkMut = useSparkGroupPostV2()
-  const unsparkMut = useUnsparkGroupPostV2()
   const stashMut = useStashGroupPostV2()
   const unstashMut = useUnstashGroupPostV2()
   const viewMut = useRecordGroupPostView()
@@ -165,8 +166,6 @@ export default function GroupsPage() {
           groupId={post.group_id}
           isAdmin={isAdmin}
           isAuthor={authUser?.id === post.author_id}
-          onSpark={(gId, postId) => sparkMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
-          onUnspark={(gId, postId) => unsparkMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
           onStash={(gId, postId) => stashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
           onUnstash={(gId, postId) => unstashMut.mutate({ groupId: gId, postId }, { onSuccess: refreshFeed })}
           onView={(gId, postId) => viewMut.mutate({ groupId: gId, postId })}
@@ -332,199 +331,21 @@ export default function GroupsPage() {
           : 'My Groups'
 
   return (
-    <AppShell hideSidebar>
-      <div className="flex w-full items-start">
-        {/* ── Left rail: search + views + joined groups — flush left ── */}
-        <aside className="sticky top-0 hidden h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col overflow-y-auto scrollbar-hide border-r border-brand-divider bg-brand-card p-4 md:flex xl:w-[348px]">
-          <div className="mb-4 flex items-center justify-between">
-            <h1
-              className="text-[24px] font-extrabold tracking-tight text-brand-text"
-              style={{ fontFamily: 'var(--font-outfit, Outfit, sans-serif)' }}
-            >
-              Groups
-            </h1>
-            <Link
-              href="/groups/create"
-              aria-label="Create new group"
-              className="rounded-xl bg-brand-text/8 p-2 text-brand-text/60 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
-            >
-              <Plus className="h-4 w-4" />
-            </Link>
+    <GroupsWorkspace discovery onFeedClick={() => switchView('feed')}>
+      <main className="groups-directory">
+        <header className="groups-directory__hero">
+          <div>
+            <p className="groups-directory__eyebrow">PEOPLE · IDEAS · TOGETHER</p>
+            <h1>{view==='feed'&&!searching?'Your group feed':view==='your-groups'&&!searching?'Your communities':view==='invites'&&!searching?'Your invitations':'Discover groups'}</h1>
+            <p className="groups-directory__description">Find your community, share your passions, and connect with people on VChat.</p>
+            <label className="groups-directory__search"><Search size={20}/><input aria-label="Search all groups" type="search" placeholder="Search groups by name, topic, or interest…" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></label>
           </div>
-
-          {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
-            <input
-              type="text"
-              placeholder="Search groups"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-brand-divider bg-brand-secondary py-2.5 pl-10 pr-4 text-sm text-brand-text placeholder:text-brand-text/30 transition-all focus:border-brand-text/20 focus:outline-hidden focus:ring-2 focus:ring-brand-text/10"
-            />
-          </div>
-
-          {/* View switcher */}
-          <nav className="mb-3 space-y-1">
-            {navItems.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => switchView(item.key)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
-                  view === item.key && !searching
-                    ? 'bg-brand-text/8 text-brand-text'
-                    : 'text-brand-text/60 hover:bg-brand-text/5 hover:text-brand-text'
-                }`}
-              >
-                <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    view === item.key && !searching ? 'bg-brand-text text-brand-bg' : 'bg-brand-text/8 text-brand-text/60'
-                  }`}
-                >
-                  {item.icon}
-                </span>
-                {item.label}
-                {!!item.badge && (
-                  <span className="ml-auto rounded-full bg-brand-highlight/15 px-2 py-0.5 text-[11px] font-black text-brand-highlight">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* Create new group */}
-          <Link
-            href="/groups/create"
-            className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 py-2.5 text-[11px] font-black tracking-widest text-white transition-all hover:bg-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            Create new group
-          </Link>
-
-          {/* Joined groups */}
-          <div className="border-t border-brand-divider pt-4">
-            <div className="mb-2 flex items-center justify-between px-1">
-              <p className="text-[13px] font-bold text-brand-text/70">Groups you&apos;ve joined</p>
-              <button
-                onClick={() => switchView('your-groups')}
-                className="text-xs font-bold text-brand-highlight transition-colors hover:text-brand-text"
-              >
-                See all
-              </button>
-            </div>
-            {loadingMy ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-xl p-2 animate-pulse">
-                    <div className="h-10 w-10 shrink-0 rounded-xl bg-brand-text/5" />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 w-28 rounded-sm bg-brand-text/5" />
-                      <div className="h-2.5 w-20 rounded-sm bg-brand-text/5" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : myGroups && myGroups.length > 0 ? (
-              <div className="space-y-0.5">
-                {myGroups.map((group) => (
-                  <Link
-                    key={group.id}
-                    href={`/groups/${group.handle || group.id}`}
-                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-brand-text/5"
-                  >
-                    <GroupAvatar avatarMediaId={group.avatar_media_id} name={group.name} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-bold text-brand-text">{group.name}</p>
-                      <p className="truncate text-[11px] text-brand-text/40">{lastActive(group.updated_at)}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="px-1 py-3 text-xs text-brand-text/40">
-                You haven&apos;t joined any groups yet.
-              </p>
-            )}
-          </div>
-        </aside>
-
-        {/* ── Middle: selected group / feed / discover / my groups / invites ── */}
-        <main className="min-w-0 flex-1 px-4 pt-5 pb-16 lg:px-6">
-          <div className="mx-auto max-w-[680px]">
-            <h2 className="mb-4 px-1 text-[17px] font-extrabold tracking-tight text-brand-text">{middleTitle}</h2>
-
-            {/* Mobile-only view switcher (left rail hidden below md) */}
-            <div className="mb-4 flex items-center gap-2 overflow-x-auto scrollbar-hide md:hidden">
-              {navItems.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => switchView(item.key)}
-                  className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
-                    view === item.key && !searching
-                      ? 'bg-brand-text text-brand-bg'
-                      : 'bg-brand-text/8 text-brand-text/60'
-                  }`}
-                >
-                  {item.label}
-                  {!!item.badge && ` (${item.badge})`}
-                </button>
-              ))}
-            </div>
-
-            {searching ? (
-              renderGroupList(searchResults, false, false, 'No groups found', 'Try a different search term')
-            ) : view === 'feed' ? (
-              renderFeed()
-            ) : view === 'discover' ? (
-              renderGroupList(
-                discoverGroups,
-                false,
-                loadingDiscover,
-                'Nothing to discover',
-                'No groups to discover right now. Check back later!',
-              )
-            ) : view === 'invites' ? (
-              renderInvites()
-            ) : (
-              renderGroupList(
-                myGroups,
-                true,
-                loadingMy,
-                'No groups yet',
-                'Join groups to connect with people who share your interests',
-              )
-            )}
-          </div>
-        </main>
-
-        {/* ── Right rail: ads / sponsored ─────────────────────────── */}
-        <aside className="sticky top-0 hidden h-[calc(100vh-5rem)] w-[320px] shrink-0 flex-col gap-3 overflow-y-auto scrollbar-hide p-4 pr-5 lg:flex">
-          <p className="px-1 text-[11px] font-black tracking-widest text-brand-text/40">Sponsored</p>
-          <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
-            <div className="mb-3 flex h-32 items-center justify-center rounded-xl bg-brand-text/5">
-              <Megaphone className="h-8 w-8 text-brand-text/20" />
-            </div>
-            <p className="text-sm font-bold text-brand-text">Your ad could be here</p>
-            <p className="mt-1 text-xs text-brand-text/50">
-              Reach people in the groups they care about. Ad placements are coming soon.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
-            <p className="text-sm font-bold text-brand-text">Grow your community</p>
-            <p className="mt-1 text-xs text-brand-text/50">
-              Create a group for your brand, club, or circle and bring your people together.
-            </p>
-            <Link
-              href="/groups/create"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-text/8 px-3.5 py-2 text-[10px] font-black tracking-widest text-brand-text/70 transition-colors hover:bg-brand-text/12 hover:text-brand-text"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create a group
-            </Link>
-          </div>
-        </aside>
-      </div>
+          <div className="groups-directory__art" aria-hidden="true"><Users size={36}/><strong>Better conversations.<br/>Brighter communities.</strong><span><Sparkles size={21}/></span><span><HeartHandshake size={22}/></span></div>
+        </header>
+        <nav className="groups-directory__tabs" aria-label="Groups views">{navItems.map(item=><button key={item.key} aria-pressed={view===item.key&&!searching} onClick={()=>switchView(item.key)}>{item.label}{!!item.badge&&` (${item.badge})`}</button>)}</nav>
+        {searching||view==='discover'?<GroupDiscovery groups={(searching?searchResults:discoverGroups)??[]} myGroups={myGroups??[]} loading={searching?search.isLoading:loadingDiscover} error={searching?search.isError:discovery.isError} onRetry={()=>{if(searching) void search.refetch();else void discovery.refetch()}} searching={searching}/>
+        :<div className={view==='feed'?'groups-directory__feed':''}>{view==='feed'?renderFeed():view==='invites'?renderInvites():renderGroupList(myGroups,true,loadingMy,'No groups yet','Join groups to connect with people who share your interests')}</div>}
+      </main>
 
       {/* Group picker — choose where the post goes */}
       <AnimatePresence>
@@ -564,25 +385,15 @@ export default function GroupsPage() {
       </AnimatePresence>
 
       {/* Composer portal for the chosen group */}
-      <AnimatePresence>
         {composeGroup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
-            onClick={(e) => e.target === e.currentTarget && setComposeGroup(null)}
-          >
-            <CreatePortal
+            <GroupPostDialog
               onClose={() => {
                 setComposeGroup(null)
                 refreshFeed()
               }}
               groupId={composeGroup.id}
             />
-          </motion.div>
         )}
-      </AnimatePresence>
-    </AppShell>
+    </GroupsWorkspace>
   )
 }

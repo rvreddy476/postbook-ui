@@ -1,4 +1,5 @@
 'use client';
+import ReactionControl from '@/components/reactions/ReactionControl';
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useComments, useAddComment, useCreateReply, useDeleteComment, useEditComment, useToggleCommentLike, useToggleCommentDislike } from '@/hooks/usePostComments';
@@ -196,15 +197,14 @@ const ReplyItem: React.FC<{
   const [localLiked, setLocalLiked] = useState(false);
   const [localDisliked, setLocalDisliked] = useState(false);
 
-  const handleLike = () => {
-    if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
-    else {
-      if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
-      setLocalLiked(true); setLocalLikes(c => c + 1);
-    }
-    likeMutation.mutate({ commentId: reply.id, postId });
+  const handleLike = async () => {
+    if (likeMutation.isPending || dislikeMutation.isPending) return;
+    const result = await likeMutation.mutateAsync({ commentId: reply.id, postId });
+    setLocalLiked(result.liked);
+    setLocalLikes(result.count);
+    setLocalDislikes(result.dislike_count);
+    if (result.liked) setLocalDisliked(false);
   };
-
   const handleDislike = () => {
     if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
     else {
@@ -246,11 +246,8 @@ const ReplyItem: React.FC<{
       {/* Actions */}
       {!editing && (
         <div className="flex items-center gap-3 mt-1 ml-7">
-          <button onClick={handleLike} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
-            <ThumbsUp className={`w-3 h-3 ${localLiked ? 'fill-slate-800 text-brand-text' : ''}`} />
-            {localLikes > 0 && <span className="text-[11px]">{localLikes}</span>}
-          </button>
-          <button onClick={handleDislike} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
+          <ReactionControl allowed={['like']} current={localLiked ? 'like' : null} count={localLikes} onChange={handleLike} disabled={likeMutation.isPending || dislikeMutation.isPending} />
+          <button onClick={handleDislike} disabled={likeMutation.isPending || dislikeMutation.isPending} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
             <ThumbsDown className={`w-3 h-3 ${localDisliked ? 'fill-slate-800 text-brand-text' : ''}`} />
             {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
           </button>
@@ -317,15 +314,14 @@ const SingleComment: React.FC<{
     return () => document.removeEventListener('mousedown', handler);
   }, [showEmojiPicker]);
 
-  const handleLike = () => {
-    if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
-    else {
-      if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
-      setLocalLiked(true); setLocalLikes(c => c + 1);
-    }
-    likeMutation.mutate({ commentId: comment.id, postId });
+  const handleLike = async () => {
+    if (likeMutation.isPending || dislikeMutation.isPending) return;
+    const result = await likeMutation.mutateAsync({ commentId: comment.id, postId });
+    setLocalLiked(result.liked);
+    setLocalLikes(result.count);
+    setLocalDislikes(result.dislike_count);
+    if (result.liked) setLocalDisliked(false);
   };
-
   const handleDislike = () => {
     if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
     else {
@@ -394,12 +390,9 @@ const SingleComment: React.FC<{
         {/* Action bar: Like  Dislike  Reply  Report  |  Edit  Delete */}
         {!editing && (
           <div className="flex items-center gap-3.5 mt-2">
-            <button onClick={handleLike} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
-              <ThumbsUp className={`w-3.5 h-3.5 ${localLiked ? 'fill-slate-800 text-brand-text' : ''}`} />
-              {localLikes > 0 && <span className="text-[11px]">{localLikes}</span>}
-            </button>
+            <ReactionControl allowed={['like']} current={localLiked ? 'like' : null} count={localLikes} onChange={handleLike} disabled={likeMutation.isPending || dislikeMutation.isPending} />
 
-            <button onClick={handleDislike} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
+            <button onClick={handleDislike} disabled={likeMutation.isPending || dislikeMutation.isPending} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
               <ThumbsDown className={`w-3.5 h-3.5 ${localDisliked ? 'fill-slate-800 text-brand-text' : ''}`} />
               {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
             </button>

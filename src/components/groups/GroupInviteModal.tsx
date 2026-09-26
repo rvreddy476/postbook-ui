@@ -1,170 +1,99 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useInviteToGroup, useGroupMembers } from '@/hooks/useGroups'
-import { fetchUsers } from '@/services/userService'
-import { getSession } from '@/services/authService'
-import { X, Search, UserPlus, Loader2, Check } from 'lucide-react'
-import { motion } from 'framer-motion'
-import type { User } from '@/types'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useQuery } from '@tanstack/react-query'
+import { Search, UserPlus, X } from 'lucide-react'
+import { useAddPeopleToGroup, useGroupMembers } from '@/hooks/useGroups'
+import { useFriends, useFriendSuggestions } from '@/hooks/useConnections'
+import { useAuthUser } from '@/store/auth'
+import api from '@/lib/api'
+import { addPeopleSummary, MAX_PEOPLE } from '@/components/messenger/groupComposition'
+import { availableGroupPeople, parsePeopleSearch, personReason, type GroupPerson } from './groupPeople'
+import './group-people.css'
 
-interface GroupInviteModalProps {
-  groupId: string
-  onClose: () => void
-}
-
-export default function GroupInviteModal({ groupId, onClose }: GroupInviteModalProps) {
+export default function GroupInviteModal({ groupId, onClose }: { groupId: string; onClose: () => void }) {
+  const self = useAuthUser()
   const [search, setSearch] = useState('')
-  const [users, setUsers] = useState<User[]>([])
-  const [loadingUsers, setLoadingUsers] = useState(true)
-  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set())
-  const inviteToGroup = useInviteToGroup()
-  const { data: members } = useGroupMembers(groupId)
-
-  const me = getSession()
-  const memberIds = new Set(members?.map(m => m.user_id) ?? [])
-
+  const [debounced, setDebounced] = useState('')
+  const [source, setSource] = useState<'connections' | 'suggested'>('connections')
+  const [selected, setSelected] = useState<string[]>([])
+  const [submitted, setSubmitted] = useState<string[]>([])
+  const [summary, setSummary] = useState('')
+  const [error, setError] = useState('')
+  const dialog = useRef<HTMLDialogElement>(null)
+  const sending = useRef(false)
+  const add = useAddPeopleToGroup()
+  const connections = useFriends(self?.id, 100)
+  const suggestions = useFriendSuggestions(self?.id, 30)
+  const members = useGroupMembers(groupId)
   useEffect(() => {
-    const load = async () => {
-      setLoadingUsers(true)
-      try {
-        const fetched = await fetchUsers(50, 0)
-        setUsers(fetched)
-      } catch (err) {
-        console.error('Failed to load users:', err)
-      } finally {
-        setLoadingUsers(false)
-      }
-    }
-    load()
+    const timeout = setTimeout(() => setDebounced(search.trim()), 300)
+    return () => clearTimeout(timeout)
+  }, [search])
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null
+    const element = dialog.current
+    element?.showModal()
+    element?.querySelector<HTMLInputElement>('input[type="search"]')?.focus()
+    return () => { element?.close(); previous?.focus() }
   }, [])
-
-  const filteredUsers = users.filter(u => {
-    if (u.id === me?.id) return false
-    if (memberIds.has(u.id)) return false
-    if (!search.trim()) return true
-    return u.name.toLowerCase().includes(search.toLowerCase())
+  const searchResults = useQuery({
+    queryKey: ['group-people-search', self?.id, debounced],
+    enabled: !!self?.id && debounced.length >= 2,
+    queryFn: async ({ signal }) => {
+      const response = await api.get('/v1/search/users', { params: { q: debounced, limit: 30 }, signal })
+      return parsePeopleSearch(response.data)
+    },
   })
-
-  const handleInvite = async (userId: string) => {
+  const searching = search.trim().length > 0
+  const waiting = searching && (search.trim().length < 2 || search.trim() !== debounced)
+  const activeQuery = searching ? searchResults : source === 'connections' ? connections : suggestions
+  const raw: GroupPerson[] = searching ? searchResults.data ?? [] : source === 'connections' ? connections.data?.items ?? [] : (suggestions.data ?? []).map(person => ({ ...person, username: person.username ?? '' }))
+  const people = waiting ? [] : availableGroupPeople(raw, self?.id, members.data?.map(member => member.user_id) ?? [])
+  const send = async () => {
+    if (sending.current || !selected.length) return
+    sending.current = true
+    setError('')
+    setSummary('')
+    const batch = [...selected]
     try {
-      await inviteToGroup.mutateAsync({ groupId, userId })
-      setInvitedIds(prev => new Set(prev).add(userId))
+      const result = await add.mutateAsync({ groupId, userIds: batch })
+      setSummary(addPeopleSummary(result) ?? 'Members updated.')
+      // Counts are deliberately not attributed to individuals.
+      setSubmitted(previous => [...previous, ...batch])
+      setSelected([])
     } catch {
-      // Error handled by React Query
-    }
+      setError('We could not confirm the result. Check the member list before trying again.')
+    } finally { sending.current = false }
   }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-md mx-4 bg-brand-card rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider shrink-0">
-          <h2 className="text-lg font-black text-brand-text">Add Members</h2>
-          <button onClick={onClose} className="p-1 text-brand-text/60 hover:text-brand-highlight transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <dialog ref={dialog} className="group-people" aria-labelledby="group-people-title" aria-describedby="group-people-description" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+      <div className="group-people__body">
+        <header><div><h2 id="group-people-title">Add members</h2><p id="group-people-description">People are added or invited according to their privacy settings.</p></div><button aria-label="Close add members" onClick={onClose}><X size={20} /></button></header>
+        <label className="group-people__search"><Search size={18} /><input autoFocus type="search" aria-label="Search people to add" placeholder="Search by name or username" maxLength={100} value={search} onChange={event => setSearch(event.target.value)} /></label>
+        <div className="group-people__sources" aria-label="People sources">
+          <button aria-pressed={!searching && source === 'connections'} onClick={() => { setSource('connections'); setSearch('') }}>Connections</button>
+          <button aria-pressed={!searching && source === 'suggested'} onClick={() => { setSource('suggested'); setSearch('') }}>Suggested for you</button>
         </div>
-
-        {/* Search */}
-        <div className="px-6 pt-4 pb-2 shrink-0">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text/60" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-brand-secondary border border-brand-divider rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-text/30 focus:border-brand-text/50"
-            />
-          </div>
+        <div className="group-people__list" aria-busy={!waiting && activeQuery.isFetching}>
+          {waiting ? <p role="status">{search.trim().length < 2 ? 'Type at least two characters to search.' : 'Searching…'}</p> : activeQuery.isError ? <div role="alert"><p>People could not load.</p><button onClick={() => activeQuery.refetch()}>Try again</button></div> : activeQuery.isLoading ? <p role="status">Finding people…</p> : people.length === 0 ? <p>{searching ? 'No matching people. Try another name or username.' : source === 'connections' ? 'No connections to show. Search for someone or try suggestions.' : 'No suggestions available right now. You can still search.'}</p> : people.map(person => {
+            const processed = submitted.includes(person.user_id)
+            const checked = selected.includes(person.user_id)
+            return <label key={person.user_id} className="group-people__person">
+              <span className="group-people__avatar">{person.avatar_media_id ? <img src={`/v1/media/${person.avatar_media_id}/serve`} alt="" /> : (person.display_name || person.username || '?').slice(0, 1).toUpperCase()}</span>
+              <span className="group-people__identity"><strong>{person.display_name || person.username || 'User'}</strong><small>{processed ? 'Request processed — see summary' : searching ? (person.username ? `@${person.username}` : 'Search result') : source === 'connections' ? 'Your connection' : personReason(person)}</small></span>
+              <input type="checkbox" aria-label={`Select ${person.display_name || person.username || 'user'}`} checked={checked} disabled={processed || add.isPending || (!checked && selected.length >= MAX_PEOPLE)} onChange={() => setSelected(previous => previous.includes(person.user_id) ? previous.filter(id => id !== person.user_id) : [...previous, person.user_id])} />
+            </label>
+          })}
         </div>
-
-        {/* User List */}
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          {loadingUsers ? (
-            <div className="space-y-3 py-2">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="flex items-center gap-3 px-2 py-2">
-                  <div className="w-10 h-10 rounded-full bg-brand-secondary animate-pulse" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="w-28 h-3 rounded-sm bg-brand-secondary animate-pulse" />
-                    <div className="w-16 h-2 rounded-sm bg-brand-secondary animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm text-brand-text/60 font-medium">
-                {search.trim() ? 'No users found' : 'All users are already members'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {filteredUsers.map(user => {
-                const isInvited = invitedIds.has(user.id)
-                return (
-                  <div
-                    key={user.id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-secondary transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-brand-divider shrink-0">
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-brand-text truncate">{user.name}</p>
-                      <p className="text-xs text-brand-text/60">{user.isOnline ? 'Online' : 'Offline'}</p>
-                    </div>
-                    <button
-                      onClick={() => handleInvite(user.id)}
-                      disabled={isInvited || inviteToGroup.isPending}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                        isInvited
-                          ? 'bg-emerald-50 text-emerald-600 cursor-default'
-                          : 'bg-brand-text/5 text-brand-text hover:bg-brand-text/10'
-                      }`}
-                    >
-                      {isInvited ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          Invited
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-3.5 h-3.5" />
-                          Invite
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-brand-divider shrink-0">
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 text-sm font-bold text-brand-highlight bg-brand-secondary rounded-xl hover:bg-brand-secondary transition-all"
-          >
-            Done
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
+        {!searching && source === 'connections' && connections.data?.meta.has_next && <p className="group-people__note">Showing your first 100 connections. Search by name to find more.</p>}
+        {summary && <p className="group-people__status" role="status">{summary}</p>}
+        {error && <p className="group-people__status" role="alert">{error}</p>}
+        <footer><span>{selected.length} selected · up to {MAX_PEOPLE}</span><button onClick={send} disabled={!selected.length || add.isPending}><UserPlus size={17} />{add.isPending ? 'Submitting…' : 'Add / invite'}</button></footer>
+      </div>
+    </dialog>,
+    document.body,
   )
 }

@@ -1,0 +1,9 @@
+# Backend request for Claude — group post emoji reactions
+
+Workspace: C:/workspace/modernsmapp. Keep work limited to the social group API; preserve existing changes and do not edit the web client, other workspaces, mobile or Flutter.
+
+The web founder requested a heart-hover/tap palette with distinct Like, Love, Smile and other reactions on group posts. Current group-service routes support POST/DELETE /v1/groups/:groupId/posts/v2/:postId/spark with is_supernova only; GroupPostV2 exposes spark_count and viewer_sparked, not an emoji choice. Do not map every emoji to this boolean and claim it persists distinctly.
+
+Inspect the channel reaction implementation first and reuse the established engagement contract where applicable, without weakening group visibility, membership, block, moderation or anonymous-author protections. Provide a capped backend implementation for one current reaction per viewer per group post; changing a choice replaces it atomically, retrying the same choice is idempotent, and removal is safe to retry. Support an explicit documented allowlist covering Like, Love and Smile. Keep old spark clients compatible and document how legacy hearts and counts map; do not silently double-count.
+
+Expose per-emoji counts and the viewer's selected reaction consistently on every group-post read/feed/search surface. Return authoritative state after writes or document the required read-back. Rejected requests must not mutate counts. Test replacement, removal, concurrent retries, unauthorized/private-group access, and reload persistence. Capture the exact request/response bodies through the real dev gateway and provide routes, error codes, allowlist and compatibility behavior in docs/handoffs before requesting web wiring. No unrelated feature expansion or changes to the five-group cross-post cap.

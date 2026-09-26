@@ -7,6 +7,7 @@ interface DobPickerProps {
     onChange: (value: string) => void
     error?: string               // validation message from parent
     selectClassName?: string     // overrides per-select styling
+    className?: string
     required?: boolean
 }
 
@@ -54,7 +55,7 @@ export function validateDob(value: string, minAge = 13): string | null {
     return null
 }
 
-export function DobPicker({ value, onChange, error, selectClassName, required }: DobPickerProps) {
+export function DobPicker({ value, onChange, error, selectClassName, className = '', required }: DobPickerProps) {
     const [year,  setYear]  = useState(() => parse(value).year)
     const [month, setMonth] = useState(() => parse(value).month)
     const [day,   setDay]   = useState(() => parse(value).day)
@@ -101,11 +102,11 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
     const base = selectClassName ??
         "rounded-xl border bg-brand-card px-3 py-2 text-sm font-medium text-brand-text outline-hidden cursor-pointer transition-all focus:ring-2 appearance-none"
     const borderCls = hasError
-        ? "border-rose-400 focus:ring-rose-400/20 focus:border-rose-500"
+        ? "border-danger focus:ring-danger/20 focus:border-danger"
         : "border-brand-divider focus:ring-brand-accent/20 focus:border-brand-accent"
 
     return (
-        <div className="space-y-1.5">
+        <div className={`space-y-1.5 ${className}`}>
             <div className="flex gap-2">
                 <select
                     value={month || ""}
@@ -113,7 +114,7 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
                     aria-label="Month"
                     aria-invalid={hasError}
                     required={required}
-                    className={`${base} ${borderCls} flex-1`}
+                    className={`${base} ${borderCls} min-w-0 flex-1`}
                 >
                     <option value="">Month</option>
                     {MONTHS.map((name, i) => (
@@ -127,7 +128,7 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
                     aria-label="Day"
                     aria-invalid={hasError}
                     required={required}
-                    className={`${base} ${borderCls} w-[70px]`}
+                    className={`${base} ${borderCls} w-[70px] shrink-0`}
                 >
                     <option value="">Day</option>
                     {days.map((d) => (
@@ -141,7 +142,7 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
                     aria-label="Year"
                     aria-invalid={hasError}
                     required={required}
-                    className={`${base} ${borderCls} w-[95px]`}
+                    className={`${base} ${borderCls} w-[95px] shrink-0`}
                 >
                     <option value="">Year</option>
                     {years.map((y) => (
@@ -151,7 +152,7 @@ export function DobPicker({ value, onChange, error, selectClassName, required }:
             </div>
 
             {displayError && (
-                <p className="text-[11px] font-semibold text-rose-500">{displayError}</p>
+                <p role="alert" className="text-xs font-medium text-danger">{displayError}</p>
             )}
         </div>
     )

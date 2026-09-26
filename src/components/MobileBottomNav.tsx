@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { NavItem } from '@/types';
+import { PanelsTopLeft } from 'lucide-react';
+import Link from 'next/link';
 
 interface MobileBottomNavProps {
   activeTab: NavItem;
@@ -11,8 +13,8 @@ interface MobileBottomNavProps {
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, unreadMessages = 0 }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-120 border-t border-brand-divider bg-brand-card/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
-      <ul className="grid grid-cols-5 gap-1">
+    <nav aria-label="Primary mobile navigation" className="fixed bottom-0 left-0 right-0 z-120 border-t border-brand-divider bg-brand-card/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+      <ul className="grid grid-cols-6 gap-1">
         {/* Home */}
         <li>
           <button
@@ -28,6 +30,13 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, 
           </button>
         </li>
 
+        <li>
+          <Link href="/feed" aria-label="Feed" aria-current={activeTab === 'Feed' ? 'page' : undefined}
+            className={`flex w-full flex-col items-center justify-center gap-1 px-1 py-2 ${activeTab === 'Feed' ? 'text-brand-text' : 'text-brand-text/40'}`}>
+            <PanelsTopLeft className="h-5 w-5" />
+            <span className="truncate text-[9px] font-black tracking-wide">Feed</span>
+          </Link>
+        </li>
         {/* Reels */}
         <li>
           <button
@@ -49,7 +58,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onChange, 
           <button
             type="button"
             onClick={() => onChange('Create')}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-ink text-white shadow-lg transition-transform active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-ink text-white shadow-lg transition-transform active:scale-95"
             aria-label="Create"
           >
             <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

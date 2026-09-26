@@ -78,6 +78,15 @@ export interface GroupPost {
   created_at: string
 }
 
+export type GroupReaction = 'like' | 'love' | 'smile' | 'wow' | 'sad' | 'angry'
+export interface GroupReactionState {
+  post_id: string
+  reaction: GroupReaction | null
+  spark_count: number
+  reaction_counts: Partial<Record<GroupReaction, number>>
+  viewer_sparked: boolean
+}
+
 export interface GroupPostV2 {
   id: string
   group_id: string
@@ -107,6 +116,8 @@ export interface GroupPostV2 {
    * missing field is `undefined`. Both must read as "not reacted".
    */
   viewer_sparked?: boolean
+  viewer_reaction?: GroupReaction | null
+  reaction_counts?: Partial<Record<GroupReaction, number>>
   viewer_echoed?: boolean
   viewer_stashed?: boolean
   /**

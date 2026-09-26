@@ -11,8 +11,6 @@ import {
   useGroupDetails,
   useGroupMembers,
   useGroupFeedV2,
-  useSparkGroupPostV2,
-  useUnsparkGroupPostV2,
   useEchoGroupPostV2,
   useUnechoGroupPostV2,
   useGroupPostComments,
@@ -27,8 +25,9 @@ import { getSession } from '@/services/authService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
-import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, Heart, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
+import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
 import type { GroupMember, GroupPostV2 } from '@/types/groups'
+import GroupReactionControl, { GroupReactionSummary } from '@/components/groups/GroupReactionControl'
 import type { Message } from '@/services/messageService'
 import GroupPostMeta from '@/components/groups/GroupPostMeta'
 
@@ -692,9 +691,7 @@ function PostCard({
   groupColor,
   myId,
   resolveAuthor,
-  sparked,
   echoed,
-  onToggleSpark,
   onToggleEcho,
   onDelete,
 }: {
@@ -703,9 +700,7 @@ function PostCard({
   groupColor: string
   myId: string
   resolveAuthor: (userId: string) => AuthorInfo
-  sparked: boolean
   echoed: boolean
-  onToggleSpark: (post: GroupPostV2) => void
   onToggleEcho: (post: GroupPostV2) => void
   onDelete: (post: GroupPostV2) => void
 }) {
@@ -745,7 +740,7 @@ function PostCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, post.id])
 
-  const author = resolveAuthor(post.author_id)
+  const author = post.is_anonymous ? { name: 'Anonymous member', avatar: 'A' } : resolveAuthor(post.author_id)
   const isMine = !!myId && post.author_id === myId
   const attachments = (post.attachments ?? []).filter(a => typeof a === 'string' && a.length > 0)
   const bodyText = post.body?.trim() || post.title?.trim() || ''
@@ -841,16 +836,10 @@ function PostCard({
         </div>
       )}
 
+      <GroupReactionSummary post={post} />
       {/* Engagement bar */}
       <div className="mt-4 flex items-center gap-1 border-t border-brand-divider pt-3">
-        <button
-          onClick={() => onToggleSpark(post)}
-          aria-pressed={sparked}
-          className={`${pillBase} ${sparked ? 'bg-brand-secondary text-danger' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
-        >
-          <Heart className={`h-4 w-4 ${sparked ? 'fill-current' : ''}`} strokeWidth={1.75} />
-          <span className="tabular-nums">{formatCount(post.spark_count)}</span>
-        </button>
+        <GroupReactionControl post={post} groupId={groupId} />
 
         <button
           onClick={() => setShowComments(v => !v)}
@@ -970,8 +959,6 @@ function PostsView({
   const myId = me?.id ?? ''
   const qc = useQueryClient()
   const { data: feedData, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGroupFeedV2(groupId)
-  const sparkMut = useSparkGroupPostV2()
-  const unsparkMut = useUnsparkGroupPostV2()
   const echoMut = useEchoGroupPostV2()
   const unechoMut = useUnechoGroupPostV2()
   const deletePostMut = useDeleteGroupPostV2()
@@ -1008,7 +995,7 @@ function PostsView({
    */
   const patchEngagement = (
     postId: string,
-    kind: 'spark' | 'echo',
+    kind: 'echo',
     delta: number,
     viewerFlag: boolean,
   ) => {
@@ -1020,27 +1007,11 @@ function PostsView({
           ...page,
           data: page.data.map(p => {
             if (p.id !== postId) return p
-            return kind === 'spark'
-              ? { ...p, spark_count: Math.max(0, (p.spark_count ?? 0) + delta), viewer_sparked: viewerFlag }
-              : { ...p, echo_count: Math.max(0, (p.echo_count ?? 0) + delta), viewer_echoed: viewerFlag }
+            return { ...p, echo_count: Math.max(0, (p.echo_count ?? 0) + delta), viewer_echoed: viewerFlag }
           }),
         })),
       }
     })
-  }
-
-  const handleToggleSpark = (post: GroupPostV2) => {
-    // `=== true` rather than `?? true`: Go sends `false` for a viewer who
-    // has not reacted and omits the field entirely for an anonymous one,
-    // and both have to read as "not reacted".
-    const was = post.viewer_sparked === true
-    const delta = was ? -1 : 1
-    patchEngagement(post.id, 'spark', delta, !was)
-    const mut = was ? unsparkMut : sparkMut
-    mut.mutate(
-      { groupId, postId: post.id },
-      { onError: () => patchEngagement(post.id, 'spark', -delta, was) },
-    )
   }
 
   const handleToggleEcho = (post: GroupPostV2) => {
@@ -1118,9 +1089,7 @@ function PostsView({
                 groupColor={groupColor}
                 myId={myId}
                 resolveAuthor={resolveAuthor}
-                sparked={post.viewer_sparked === true}
                 echoed={post.viewer_echoed === true}
-                onToggleSpark={handleToggleSpark}
                 onToggleEcho={handleToggleEcho}
                 onDelete={handleDeletePost}
               />

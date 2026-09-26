@@ -2,12 +2,10 @@
 
 import React, { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import CreatePortal from '@/components/CreatePortal'
+import GroupPostDialog from '@/components/groups/GroupPostDialog'
 import {
   useGroupFeedV2,
   useGroupPostSearch,
-  useSparkGroupPostV2,
-  useUnsparkGroupPostV2,
   useStashGroupPostV2,
   useUnstashGroupPostV2,
   useRecordGroupPostView,
@@ -17,7 +15,6 @@ import {
 } from '@/hooks/useGroups'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useAuthUser } from '@/store/auth'
-import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, MessageCircle } from 'lucide-react'
 import GroupPostCard from '@/components/groups/GroupPostCard'
 import {
@@ -69,8 +66,6 @@ export default function GroupFeedTab({
   const isAdmin = viewerRole === 'owner' || viewerRole === 'admin' || viewerRole === 'moderator'
 
   // Engagement mutations
-  const sparkMut = useSparkGroupPostV2()
-  const unsparkMut = useUnsparkGroupPostV2()
   const stashMut = useStashGroupPostV2()
   const unstashMut = useUnstashGroupPostV2()
   const viewMut = useRecordGroupPostView()
@@ -102,15 +97,14 @@ export default function GroupFeedTab({
   const regularPosts = useMemo(() => posts.filter(p => !p.is_pinned), [posts])
 
   /*
-    Engagement callbacks. Every one of them patches the cached feed page —
-    count and viewer flag together — before firing the request, and rolls that
-    patch back on failure. The card holds no reaction state of its own, so the
-    cache is the single source the filled heart and the number both read.
+    Echo/stash callbacks keep their existing optimistic behavior. Reactions
+    are owned by GroupReactionControl and update caches only from the server's
+    successful response, never by incrementing a local count.
   */
   const engage = (
     gId: string,
     postId: string,
-    kind: 'spark' | 'echo' | 'stash',
+    kind: 'echo' | 'stash',
     engaged: boolean,
     mutation: Parameters<typeof engageGroupPost>[0]['mutation'],
     echoType?: string,
@@ -130,8 +124,6 @@ export default function GroupFeedTab({
       extraKeys: searching ? [groupPostSearchKey(gId, trimmedQuery)] : [],
     })
 
-  const handleSpark = (gId: string, postId: string) => engage(gId, postId, 'spark', true, sparkMut)
-  const handleUnspark = (gId: string, postId: string) => engage(gId, postId, 'spark', false, unsparkMut)
   const handleStash = (gId: string, postId: string) => engage(gId, postId, 'stash', true, stashMut)
   const handleUnstash = (gId: string, postId: string) => engage(gId, postId, 'stash', false, unstashMut)
   const handleRepost = (gId: string, postId: string, echoType: string) =>
@@ -152,8 +144,6 @@ export default function GroupFeedTab({
       groupId={groupId}
       isAdmin={isAdmin}
       isAuthor={authUser?.id === post.author_id}
-      onSpark={handleSpark}
-      onUnspark={handleUnspark}
       onStash={handleStash}
       onUnstash={handleUnstash}
       onView={handleView}
@@ -179,19 +169,7 @@ export default function GroupFeedTab({
       )}
 
       {/* Create Post Modal */}
-      <AnimatePresence>
-        {showCreate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs"
-            onClick={(e) => e.target === e.currentTarget && setShowCreate(false)}
-          >
-            <CreatePortal onClose={() => setShowCreate(false)} groupId={groupId} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showCreate && <GroupPostDialog onClose={() => setShowCreate(false)} groupId={groupId} />}
 
       {/* Posts */}
       {isLoading ? (

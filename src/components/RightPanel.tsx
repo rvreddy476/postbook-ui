@@ -40,7 +40,7 @@ function formatViews(n: number): string {
  *   ("will show up here", "on its way"). With Trending also empty on a quiet
  *   network, a third of the screen said the app had nothing in it. Those two
  *   are gone, and every remaining card renders only when it has content.
- * - People you may know leads, with faces and an Add friend button, because
+ * - People suggestions lead, with faces and a message action, because
  *   people are what make a social feed feel inhabited. The same suggestions
  *   also appear inline in the feed, but only below this breakpoint, so no one
  *   sees the same faces twice.
@@ -108,15 +108,15 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       key: 'people',
       show: suggestionsLoading || people.length > 0,
       node: (
-        <div className="rounded-3xl border border-brand-divider bg-brand-card p-5 shadow-xs">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-text/50" />
-              <h5 className="text-sm font-semibold text-brand-text">People you may know</h5>
+        <div className="rounded-2xl border border-brand-divider bg-brand-card p-4">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-2">
+              <Users aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/50" />
+              <h2 className="text-sm font-semibold leading-5 text-brand-text">People you might be interested in</h2>
             </div>
             <button
               onClick={() => router.push('/connections')}
-              className="text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
+              className="shrink-0 py-1 text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
             >
               See all
             </button>

@@ -9,24 +9,9 @@ import {
   useFriendSuggestions,
   useHideSuggestion,
   useBatchRelationships,
-  type SuggestionUser,
 } from '@/hooks/useConnections';
 import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
 import { useSentRequests } from '@/hooks/useSentRequests';
-
-const AVATAR_GRADIENTS = [
-  'from-rose-400 to-orange-400',
-  'from-blue-400 to-cyan-400',
-  'from-emerald-400 to-teal-400',
-  'from-purple-400 to-pink-400',
-  'from-amber-400 to-red-400',
-  'from-indigo-400 to-blue-400',
-];
-
-function gradientFor(id: string): string {
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
-}
 
 interface PeopleYouMayKnowStripProps {
   /** Which slice of the suggestion list this strip instance shows —
@@ -35,8 +20,7 @@ interface PeopleYouMayKnowStripProps {
 }
 
 /**
- * Horizontal "People you may know" card strip rendered inline in the
- * main feed (FB-style), replacing the old right-panel widget.
+ * Responsive suggestions grid with no nested horizontal scroll region.
  */
 const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 0 }) => {
   const router = useRouter();
@@ -62,37 +46,37 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
     if (!rel) return true;
     return rel.connection_status !== 'pending_sent' && !rel.is_connection;
   });
-  const visible = eligible.slice(offset, offset + 10);
+  const visible = eligible.slice(offset, offset + 4);
   if (visible.length === 0) return null;
 
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-brand-text/60" />
-          <h5 className="text-[13px] font-bold text-brand-text">People you may know</h5>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <Users aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/60" />
+          <h2 className="text-sm font-semibold leading-5 text-brand-text">People you might be interested in</h2>
         </div>
         <button
           onClick={() => router.push('/connections')}
-          className="text-xs font-bold text-brand-highlight transition-colors hover:text-brand-text"
+          className="shrink-0 py-1 text-xs font-medium text-brand-highlight transition-colors hover:text-brand-text"
         >
           See all
         </button>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="grid grid-cols-2 gap-3 min-[600px]:grid-cols-4">
         {visible.map((user) => {
           const name = user.display_name || user.username || 'Someone';
           return (
             <div
               key={user.user_id}
-              className="relative w-[150px] shrink-0 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xs"
+              className="relative min-w-0 overflow-hidden rounded-xl border border-brand-divider bg-brand-card"
             >
               {/* Dismiss */}
               <button
-                aria-label="Remove suggestion"
+                aria-label={`Remove suggestion for ${name}`}
                 onClick={() => hideSuggestion.mutate({ candidateUserId: user.user_id })}
-                className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60"
+                className="absolute right-1 top-1 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-brand-divider bg-brand-card text-brand-text transition-colors hover:bg-brand-secondary"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -100,7 +84,8 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
               {/* Portrait */}
               <button
                 onClick={() => router.push(`/u/${user.username || user.user_id}`)}
-                className="block h-[150px] w-full"
+                aria-label={`View ${name}'s profile`}
+                className="block aspect-square w-full"
               >
                 {user.avatar_media_id ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -111,7 +96,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                   />
                 ) : (
                   <div
-                    className={`flex h-full w-full items-center justify-center bg-linear-to-br ${gradientFor(user.user_id)} text-4xl font-black text-white`}
+                    className="flex h-full w-full items-center justify-center bg-brand-secondary text-3xl font-semibold text-brand-text"
                   >
                     {name.charAt(0).toUpperCase()}
                   </div>
@@ -127,7 +112,7 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
                     : `@${user.username ?? ''}`}
                 </p>
                 <FriendRequestButton
-                allowSend={false}
+                  allowSend={false}
                   targetUserId={user.user_id}
                   targetUsername={user.username}
                   relationship={relMap?.get(user.user_id)}

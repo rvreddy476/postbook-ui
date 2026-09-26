@@ -8,7 +8,7 @@ import PostBoekApp from '@/features/postboek/PostBoekApp';
 export default function HomePage() {
   return (
     <Suspense fallback={null}>
-      <PostBoekApp />
+      <PostBoekApp key="home" initialSurface="Home" />
     </Suspense>
   );
 }

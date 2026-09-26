@@ -1,8 +1,10 @@
 import type { InfiniteData, QueryClient } from '@tanstack/react-query'
-import type { GroupPostV2 } from '@/types/groups'
+import type { GroupPostV2, GroupReactionState } from '@/types/groups'
 
 /**
- * Optimistic engagement patching for the group feed cache.
+ * Shared engagement patching for group-post caches. Reactions replace state
+ * only from a successful server acknowledgement; legacy echo/stash callers
+ * retain their existing optimistic path.
  *
  * Lifted out of GroupPanel so the group feed tab and the messenger panel
  * agree on one mechanism: the count AND the viewer's own flag move together,
@@ -123,9 +125,9 @@ export function applyGroupFeedPatch(
   qc: QueryClient,
   groupId: string,
   postId: string,
-  kind: EngagementKind,
-  delta: number,
-  viewerFlag: boolean,
+  kind: EngagementKind | GroupReactionState,
+  delta: number = 0,
+  viewerFlag: boolean = false,
   /*
     Other page-shaped caches holding the same post — in practice the active
     search. Patching every one keeps a post that is on screen twice from
@@ -133,11 +135,34 @@ export function applyGroupFeedPatch(
   */
   extraKeys: readonly (readonly unknown[])[] = [],
 ): void {
+  if (typeof kind === 'object') {
+    if (kind.post_id !== postId) return
+    const replace = (post: GroupPostV2): GroupPostV2 => post.id === postId && post.group_id === groupId ? {
+      ...post, viewer_reaction: kind.reaction, viewer_sparked: kind.viewer_sparked,
+      spark_count: kind.spark_count, reaction_counts: { ...kind.reaction_counts },
+    } : post
+    // All cached searches, not just the currently visible search. Preserve
+    // page metadata, cross-group enrichment and unrelated engagement fields.
+    for (const [key] of qc.getQueriesData({ predicate: query => isGroupPostCacheKey(query.queryKey, groupId) })) {
+      qc.setQueryData<GroupFeedCache | GroupPostV2>(key, previous => {
+        if (!previous) return previous
+        if ('pages' in previous) return { ...previous, pages: previous.pages.map(page => ({ ...page, data: page.data.map(replace) })) }
+        return replace(previous)
+      })
+    }
+    return
+  }
   for (const key of [groupFeedKey(groupId), ...extraKeys]) {
     qc.setQueryData<GroupFeedCache>(key, prev =>
       patchGroupFeed(prev, postId, kind, delta, viewerFlag),
     )
   }
+}
+
+/** Single-post readers use ['group-post-v2', groupId, postId]. */
+export function isGroupPostCacheKey(key: readonly unknown[], groupId: string): boolean {
+  return key[0] === 'myspace-feed' ||
+    (['group-feed-v2', 'group-post-search', 'group-post-v2'].includes(String(key[0])) && key[1] === groupId)
 }
 
 /** Just enough of a react-query mutation for {@link engageGroupPost}. */

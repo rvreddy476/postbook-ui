@@ -1,0 +1,21 @@
+.group-reaction-control { position: relative; min-width: 0; color: rgb(var(--text-muted)); }
+.group-reaction-trigger { display: flex; align-items: center; justify-content: center; min-height: 40px; }
+.group-reaction-trigger button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 6px; border-radius: 9px; font-size: 12px; }
+.group-reaction-trigger button:hover { background: rgb(var(--brand-secondary)); }
+.group-reaction-trigger button[aria-pressed='true'] { color: rgb(var(--brand-ink)); }
+.group-reaction-trigger .group-reaction-expand { padding: 4px; }
+.group-reaction-emoji { font-size: 18px; line-height: 1; }
+.group-reaction-picker { position: absolute; bottom: 100%; left: 0; z-index: 40; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: min(300px, calc(100vw - 64px)); padding: 7px; border: 1px solid var(--brand-divider); border-radius: 16px; background: rgb(var(--brand-card)); box-shadow: 0 8px 28px rgb(var(--brand-text) / .14); }
+.group-reaction-picker button { display: grid; justify-items: center; align-content: center; min-height: 48px; gap: 4px; border-radius: 10px; }
+.group-reaction-picker button > span { font-size: 24px; line-height: 1.2; }
+.group-reaction-picker small { font-size: 9px; color: rgb(var(--text-muted)); }
+.group-reaction-picker button:hover, .group-reaction-picker button[aria-pressed='true'] { background: rgb(var(--brand-tint)); }
+.group-reaction-control button:focus-visible { outline: 2px solid rgb(var(--brand-ink)); outline-offset: 1px; }
+.group-reaction-control button:disabled { opacity: .6; cursor: wait; }
+.group-reaction-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; color: rgb(var(--text-muted)); font-size: 11px; }
+.group-reaction-summary > span { display: flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 20px; background: rgb(var(--brand-secondary)); }
+.group-reaction-error { position: absolute; left: 0; top: 100%; z-index: 41; width: min(250px, calc(100vw - 64px)); padding: 10px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); font-size: 12px; box-shadow: 0 8px 20px rgb(var(--brand-text) / .12); }
+.group-reaction-error button { text-decoration: underline; padding: 4px; color: rgb(var(--brand-ink)); }
+.group-reaction-loading { animation: group-reaction-spin 1s linear infinite; }
+@keyframes group-reaction-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .group-reaction-loading { animation: none; } }

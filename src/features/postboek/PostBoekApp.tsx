@@ -8,6 +8,7 @@ import ChatWindow from '@/components/ChatWindow';
 import ContactList from '@/components/ContactList';
 import CreatePortal from '@/components/CreatePortal';
 import Feed from '@/components/Feed';
+import CreativeHome from '@/components/home/CreativeHome';
 import Header from '@/components/Header';
 import LandingPage from '@/components/LandingPage';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -23,13 +24,14 @@ import { NavItem, User } from '@/types';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PostBoekApp: React.FC = () => {
+const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSurface = 'Home' }) => {
   const router = useRouter();
   // Landing-page Direct Message card links to "/?tab=Chat"; respect that
   // so the user lands on the chat surface instead of the default Home
   // feed. Falls back to 'Home' when the param is missing or invalid.
   const searchParams = useSearchParams();
   const initialTab = (() => {
+    if (initialSurface === 'Feed') return 'Feed';
     const raw = searchParams?.get('tab');
     const allowed: NavItem[] = ['Home', 'Chat', 'Reels', 'Friends', 'Profile', 'Messenger', 'Shop', 'Ask', 'Pages'];
     return raw && (allowed as string[]).includes(raw) ? (raw as NavItem) : 'Home';
@@ -57,6 +59,14 @@ const PostBoekApp: React.FC = () => {
   // Intercept Profile/Friends tabs — navigate to dedicated routes instead of rendering inline
   const handleNavChange = useCallback((tab: NavItem) => {
     setActiveGroupId(null);
+    if (tab === 'Home' || tab === 'Feed') {
+      router.push(tab === 'Feed' ? '/feed' : '/');
+      return;
+    }
+    if (tab === 'Create') {
+      setIsCreateOpen(true);
+      return;
+    }
     if (tab === 'Profile' && currentUser) {
       router.push(`/u/${currentUser.id}`);
       return;
@@ -181,6 +191,8 @@ const PostBoekApp: React.FC = () => {
           {(() => {
             switch (activeTab) {
               case 'Home':
+                return <CreativeHome onCreateClick={() => setIsCreateOpen(true)} />;
+              case 'Feed':
                 return <Feed onCreateClick={() => setIsCreateOpen(true)} />;
               case 'Reels':
                 return <ShortsGallery />;
@@ -206,10 +218,13 @@ const PostBoekApp: React.FC = () => {
 
   const isReelsMode = activeTab === 'Reels';
   const isGroupMode = !!activeGroupId;
+  const isFeedMode = activeTab === 'Home' && !isGroupMode;
+  const isClassicFeed = activeTab === 'Feed' && !isGroupMode;
+  const isReadingMode = isFeedMode || isClassicFeed;
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
-      <div className="h-screen min-h-screen overflow-hidden font-sans selection:bg-primary-ink selection:text-brand-bg">
+      <div className="h-dvh overflow-hidden bg-canvas font-sans selection:bg-primary-ink/20 selection:text-brand-text">
         <Header
           currentUser={currentUser}
           activeTab={activeTab}
@@ -241,7 +256,7 @@ const PostBoekApp: React.FC = () => {
           setExpanded={setNavExpanded}
         />
 
-        <div className={`relative flex h-full flex-1 overflow-hidden pt-16 transition-all duration-500 ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
+        <div className={`relative flex h-full flex-1 pt-16 transition-all duration-500 ${isReadingMode ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'} ${navExpanded ? 'md:pl-64' : 'md:pl-16'}`}>
 
           {isContactListOpen && (
             <aside
@@ -252,11 +267,11 @@ const PostBoekApp: React.FC = () => {
           )}
 
           <main
-            className={`relative flex-1 overflow-y-auto ${isReelsMode
+            className={`relative min-w-0 flex-1 ${isReadingMode ? '' : 'overflow-y-auto overscroll-y-contain no-scrollbar'} ${isReelsMode
               ? 'snap-y snap-mandatory scroll-smooth p-0'
               : isGroupMode
                 ? 'p-0 overflow-hidden'
-                : 'scrollbar-hide px-2 pb-28 pt-4 sm:px-3 md:pb-8 lg:px-4 lg:pt-6'
+                : 'px-3 pb-28 pt-4 sm:px-6 md:pb-8 lg:px-8'
               }`}
           >
             {/*
@@ -270,14 +285,15 @@ const PostBoekApp: React.FC = () => {
             */}
             <div className={`mx-auto ${isReelsMode || isGroupMode
               ? 'h-full max-w-none w-full'
-              : 'w-full max-w-[680px]'
+              : isFeedMode ? 'w-full max-w-[960px]'
+              : 'w-full max-w-[700px]'
               }`}>
               {renderContent()}
             </div>
           </main>
 
-          {!isReelsMode && !isGroupMode && (
-            <aside className="hidden w-[360px] flex-col overflow-y-auto border-l border-brand-divider p-4 lg:flex">
+          {!isReelsMode && !isGroupMode && !isFeedMode && (
+            <aside aria-label="Discover and connect" className={`hidden w-[304px] shrink-0 flex-col pt-4 pb-8 pr-5 xl:flex 2xl:w-[340px] 2xl:pr-8 ${isClassicFeed ? 'self-start' : 'overflow-y-auto no-scrollbar'}`}>
               <RightPanel onContactClick={handleContactClick} />
             </aside>
           )}

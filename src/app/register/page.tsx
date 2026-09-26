@@ -1,551 +1,459 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
-  ArrowLeft,
+  ArrowRight,
   CheckCircle,
   Eye,
   EyeOff,
-  Lock,
-  Mail,
-  Phone,
-  User,
   Loader2,
-} from 'lucide-react';
-import { getSession, loginUser, registerUser } from '@/services/authService';
-import { DobPicker, validateDob } from '@/components/ui/dob-picker';
-import { useVerifyEmail, useResendVerification } from '@/hooks/useSecurity';
-
-type Screen = 'register' | 'verify-email';
-
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 300 : -300,
-    opacity: 0,
-  }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({
-    x: direction < 0 ? 300 : -300,
-    opacity: 0,
-  }),
-};
+  Mail,
+} from "lucide-react";
+import { getSession, loginUser, registerUser } from "@/services/authService";
+import { DobPicker, validateDob } from "@/components/ui/dob-picker";
+import { useVerifyEmail, useResendVerification } from "@/hooks/useSecurity";
+import { AuthAlert, AuthShell } from "@/components/auth/AuthShell";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [screen, setScreen] = useState<Screen>('register');
-  const [direction, setDirection] = useState(0);
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female' | 'Others'>('Male');
-  const [dob, setDob] = useState('');
+  const [screen, setScreen] = useState<"register" | "verify-email">("register");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [gender, setGender] = useState<"Male" | "Female" | "Others">("Male");
+  const [dob, setDob] = useState("");
   const [dobError, setDobError] = useState<string | null>(null);
-  const [loginId, setLoginId] = useState('');
-  const [password, setPassword] = useState('');
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // Unticked by default and required. The server refuses a registration
-  // that does not explicitly accept — see RegisterCommand.acceptedTerms.
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Issued by registration and required by BOTH verify-email and resend.
-  // Held in state only: it is a credential, so it never goes to storage.
-  const [verificationToken, setVerificationToken] = useState('');
-  const [verifyCode, setVerifyCode] = useState('');
+  // This is a credential: keep it in memory, never URLs or persistent storage.
+  const [verificationToken, setVerificationToken] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendNotice, setResendNotice] = useState("");
   const codeInputRef = useRef<HTMLInputElement>(null);
-
+  const requestInFlight = useRef(false);
   const verifyEmail = useVerifyEmail();
   const resendVerification = useResendVerification();
 
   useEffect(() => {
-    if (getSession()) router.replace('/');
+    if (getSession()) router.replace("/");
   }, [router]);
-
   useEffect(() => {
-    if (screen === 'verify-email' && codeInputRef.current) {
-      codeInputRef.current.focus();
-    }
+    if (screen === "verify-email") codeInputRef.current?.focus();
   }, [screen]);
-
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    const timer = setTimeout(
+      () => setResendCooldown((value) => value - 1),
+      1000,
+    );
     return () => clearTimeout(timer);
   }, [resendCooldown]);
 
-  const isEmailId = /.+@.+\..+/.test(loginId.trim());
+  // A successful challenge is not a session. Only navigate to the feed after
+  // login has completed; MFA / step-up must still go through the login screen.
+  const signInAfterRegistration = async () => {
+    const result = await loginUser(loginId, password);
+    router.replace(
+      result.success && !result.requires2FA && !result.requiresStepUp
+        ? "/"
+        : "/login",
+    );
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (requestInFlight.current) return;
     setError(null);
-
-    const dobErr = validateDob(dob);
-    setDobError(dobErr);
-    if (dobErr) return;
-
+    const invalidDob = validateDob(dob);
+    setDobError(invalidDob);
+    if (invalidDob) return;
+    requestInFlight.current = true;
     setIsLoading(true);
-
-    const result = await registerUser({
-      firstName, lastName, gender, dob, loginId, password, acceptedTerms,
-    });
-
-    if (result.success) {
-      if (isEmailId) {
+    try {
+      const result = await registerUser({
+        firstName,
+        lastName,
+        gender,
+        dob,
+        loginId,
+        password,
+        acceptedTerms,
+      });
+      if (!result.success) {
+        setError(
+          result.error || "Unable to create your account. Please try again.",
+        );
+        return;
+      }
+      if (/.+@.+\..+/.test(loginId.trim())) {
         if (!result.verificationToken) {
-          // Without it the verify screen cannot succeed, so say so here
-          // rather than showing a code box that will always fail.
-          setError('Account created, but the verification step could not start. Please sign in and request a new code.');
-          setIsLoading(false);
+          setError(
+            "Account created, but verification could not start. Please sign in to request a new code.",
+          );
           return;
         }
         setVerificationToken(result.verificationToken);
-        setDirection(1);
-        setScreen('verify-email');
-        setIsLoading(false);
+        setScreen("verify-email");
+        setResendCooldown(60);
       } else {
-        // A phone signup: registration issues no session, so pushing to
-        // the feed here produced the same "looks signed in, bounces on
-        // the first gated click" state. Sign in properly instead.
-        const signIn = await loginUser(loginId, password);
-        router.push(signIn.success ? '/' : '/login');
+        await signInAfterRegistration();
       }
-      return;
+    } catch {
+      setError(
+        "We couldn’t connect. Please try again, or sign in if your account was created.",
+      );
+    } finally {
+      requestInFlight.current = false;
+      setIsLoading(false);
     }
-
-    setError(result.error || 'Registration failed.');
-    setIsLoading(false);
   };
 
-  const handleVerifyEmail = () => {
-    if (verifyCode.length !== 6) {
-      setVerifyError('Please enter the 6-digit verification code.');
-      return;
-    }
+  const handleVerifyEmail = async (event: FormEvent) => {
+    event.preventDefault();
+    if (requestInFlight.current || verifyCode.length !== 6) return;
+    requestInFlight.current = true;
     setVerifyError(null);
-
-    verifyEmail.mutate({ verificationToken, code: verifyCode }, {
-      onSuccess: async () => {
-        setVerifySuccess(true);
-
-        /**
-         * Registration issues NO session, and verify-email returns only a
-         * message — neither sets the pb_auth cookie the middleware gates
-         * on. Landing on the feed here left the app LOOKING signed in,
-         * because the local session store had a user, while every gated
-         * route (profile, settings, messenger) bounced to /login.
-         *
-         * So sign in properly with the credentials just entered. Only
-         * now can it succeed: the account was unverified until a moment
-         * ago, and login refuses an unverified account.
-         */
-        const signIn = await loginUser(loginId, password);
-        if (signIn.success) {
-          setTimeout(() => router.push('/'), 1200);
-          return;
-        }
-        // Verified but not signed in: send them to a real login rather
-        // than a feed that will bounce on the first click.
-        setTimeout(() => router.push('/login'), 1200);
-      },
-      onError: (err) => {
-        const message =
-          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          'Invalid verification code. Please try again.';
-        setVerifyError(message);
-      },
-    });
+    let verified = false;
+    try {
+      await verifyEmail.mutateAsync({ verificationToken, code: verifyCode });
+      verified = true;
+      setVerifySuccess(true);
+      await signInAfterRegistration();
+    } catch {
+      if (verified) router.replace("/login");
+      else {
+        setVerifyError(
+          "We couldn’t verify that code. Check it and try again, or request a new one.",
+        );
+        codeInputRef.current?.focus();
+      }
+    } finally {
+      requestInFlight.current = false;
+    }
   };
 
-  const handleResendCode = () => {
-    if (resendCooldown > 0) return;
-    resendVerification.mutate({ type: 'email', verificationToken }, {
-      onSuccess: () => setResendCooldown(60),
-      onError: (err) => {
-        const message =
-          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          'Failed to resend verification code.';
-        setVerifyError(message);
-      },
-    });
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || requestInFlight.current) return;
+    requestInFlight.current = true;
+    setVerifyError(null);
+    setResendNotice("");
+    try {
+      await resendVerification.mutateAsync({
+        type: "email",
+        verificationToken,
+      });
+      setResendCooldown(60);
+      setResendNotice("A new code has been sent. Check your inbox.");
+    } catch {
+      setVerifyError("We couldn’t resend the code. Please try again.");
+    } finally {
+      requestInFlight.current = false;
+    }
   };
-
-  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 6);
-    setVerifyCode(digitsOnly);
-    if (verifyError) setVerifyError(null);
-  };
-
-  const inputBase =
-    'w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-3 text-sm font-medium text-brand-text outline-hidden transition-all placeholder:text-brand-text/30 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10';
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-brand-bg selection:bg-primary-ink/20 selection:text-brand-text">
-      {/* Ambient monochrome glows */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[480px] w-[480px] rounded-full bg-brand-text/6 blur-[140px]" />
-      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[520px] w-[520px] rounded-full bg-brand-text/5 blur-[160px]" />
-
-      {/* The brand sits in the page header, top left, where a product puts
-          it — not floating above the card in the middle of the screen. */}
-      <header className="relative z-10 flex h-16 shrink-0 items-center px-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="VChat home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-ink">
-            <span className="text-xs font-bold -tracking-[0.02em] text-white">VC</span>
-          </span>
-          <span className="text-[15px] font-semibold -tracking-[0.014em] text-brand-text">VChat</span>
-        </Link>
-      </header>
-
-      <div className="relative flex flex-1 items-center justify-center px-4 pb-10 pt-2">
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className={`relative w-full transition-all duration-300 ${screen === 'register' ? 'max-w-xl' : 'max-w-md'}`}
-      >
-        <div className="relative overflow-hidden rounded-[1.75rem] border border-brand-divider bg-brand-card/85 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-          <AnimatePresence initial={false} custom={direction} mode="wait">
-            {screen === 'register' && (
-              <motion.div
-                key="register"
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              >
-                {/* Header */}
-                <div className="mb-6">
-                  <h2 className="text-xl font-black tracking-tight text-brand-text">Create account</h2>
-                  <p className="mt-1 text-sm text-brand-text/50">Join VChat and connect with your community.</p>
-                </div>
-
-                {/* Error banner */}
-                <AnimatePresence>
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, height: 0 }}
-                      animate={{ opacity: 1, y: 0, height: 'auto' }}
-                      exit={{ opacity: 0, y: -10, height: 0 }}
-                      className="mb-4"
-                    >
-                      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-                        {error}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  {/* Name row */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-brand-text/60" htmlFor="firstName">
-                        First Name
-                      </label>
-                      <div className="relative">
-                        <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
-                        <input
-                          id="firstName"
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="Ada"
-                          className={`${inputBase} pl-10`}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-brand-text/60" htmlFor="lastName">
-                        Last Name
-                      </label>
-                      <input
-                        id="lastName"
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Lovelace"
-                        className={inputBase}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gender selection and DOB row */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {/* Gender */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-brand-text/60">
-                        Gender
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(['Male', 'Female', 'Others'] as const).map((g) => (
-                          <label
-                            key={g}
-                            className={`relative flex cursor-pointer items-center justify-center rounded-xl border py-3 text-xs font-bold transition-all ${
-                              gender === g
-                                ? 'border-brand-accent bg-primary-ink text-brand-bg shadow-xs'
-                                : 'border-brand-divider bg-brand-secondary text-brand-text/50 hover:border-brand-accent/40 hover:text-brand-text/70'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="gender"
-                              value={g}
-                              checked={gender === g}
-                              onChange={() => setGender(g)}
-                              className="sr-only"
-                            />
-                            {g}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Date of Birth */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-brand-text/60">
-                        Date of Birth
-                      </label>
-                      <DobPicker
-                        value={dob}
-                        onChange={(v) => { setDob(v); setDobError(null); }}
-                        error={dobError ?? undefined}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email / Phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-brand-text/60" htmlFor="loginId">
-                      Email or phone number
-                    </label>
-                    <div className="relative">
-                      {isEmailId ? (
-                        <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
-                      ) : (
-                        <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
-                      )}
-                      <input
-                        id="loginId"
-                        type="text"
-                        value={loginId}
-                        onChange={(e) => setLoginId(e.target.value)}
-                        placeholder="you@example.com or 9876543210"
-                        className={`${inputBase} pl-10`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-brand-text/60" htmlFor="password">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
-                      <input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Min. 8 characters"
-                        className={`${inputBase} pl-10 pr-11`}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text/40 transition-colors hover:text-brand-text"
-                        tabIndex={-1}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Consent. Required, unticked, and the links go to real
-                      pages: the server records WHICH version was accepted,
-                      so the person has to be able to read it first. This
-                      used to be two spans that looked clickable and did
-                      nothing, and nothing was sent — registration could
-                      not succeed at all. */}
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-brand-divider bg-brand-secondary/60 p-3.5 transition-colors hover:border-primary-outline">
-                    <input
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={(e) => setAcceptedTerms(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary-ink"
-                      aria-describedby="consent-text"
-                    />
-                    <span id="consent-text" className="text-[13px] leading-relaxed text-brand-text/70">
-                      I agree to the{' '}
-                      <Link
-                        href="/terms"
-                        target="_blank"
-                        className="font-semibold text-primary-ink underline underline-offset-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Terms of Service
-                      </Link>{' '}
-                      and{' '}
-                      <Link
-                        href="/privacy"
-                        target="_blank"
-                        className="font-semibold text-primary-ink underline underline-offset-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Privacy Policy
-                      </Link>
-                      .
-                    </span>
+    <AuthShell mode="register">
+      {screen === "register" ? (
+        <>
+          <div className="auth-form-heading">
+            <span className="auth-step-label">
+              Your next chapter starts here
+            </span>
+            <h1 className="auth-title">Make yourself at home.</h1>
+            <p className="auth-description">
+              Create your account and find your kind of connection.
+            </p>
+          </div>
+          {error && <AuthAlert id="registration-error">{error}</AuthAlert>}
+          <form
+            id="registration-form"
+            className="auth-form"
+            onSubmit={handleSubmit}
+            aria-busy={isLoading}
+            aria-describedby={error ? "registration-error" : undefined}
+          >
+            <fieldset disabled={isLoading} className="auth-form min-w-0">
+              <legend className="sr-only">Your account details</legend>
+              <div className="auth-name-row">
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="firstName">
+                    First name
                   </label>
-
-                  {/* Submit */}
-                  <button
-                    type="submit"
-                    disabled={isLoading || !acceptedTerms}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:hover:scale-100"
-                  >
-                    {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {isLoading ? 'Creating account...' : 'Create Account'}
-                  </button>
-                </form>
-
-                {/* Footer */}
-                <div className="mt-6 border-t border-brand-divider pt-5 text-center text-sm text-brand-text/60">
-                  <span>Already have an account? </span>
-                  <Link
-                    href="/login"
-                    className="font-bold text-primary-ink hover:underline"
-                  >
-                    Sign in
-                  </Link>
+                  <input
+                    id="firstName"
+                    name="given-name"
+                    autoComplete="given-name"
+                    className="auth-input"
+                    placeholder="First name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
                 </div>
-              </motion.div>
-            )}
-
-            {screen === 'verify-email' && (
-              <motion.div
-                key="verify-email"
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              >
-                {verifySuccess ? (
-                  <div className="py-8 text-center animate-fade-in">
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 ring-8 ring-emerald-500/5">
-                      <CheckCircle className="h-10 w-10 text-emerald-500" />
-                    </div>
-                    <h2 className="text-xl font-black text-brand-text">Email Verified</h2>
-                    <p className="mt-2 text-sm text-brand-text/50">
-                      Your account is ready. Redirecting you now…
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => { setDirection(-1); setScreen('register'); }}
-                      className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 transition-colors hover:text-primary-ink"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Back to registration
-                    </button>
-
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-secondary">
-                      <Mail className="h-6 w-6 text-primary-ink" />
-                    </div>
-
-                    <h2 className="text-2xl font-black tracking-tight text-brand-text">
-                      Check your email
-                    </h2>
-                    <p className="mt-2 text-sm text-brand-text/60 leading-relaxed">
-                      We sent a 6-digit verification code to{' '}
-                      <strong className="font-semibold text-brand-text">{loginId}</strong>.
-                      Enter the code below to verify your account.
-                    </p>
-
-                    {verifyError && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700"
-                      >
-                        {verifyError}
-                      </motion.div>
-                    )}
-
-                    <div className="mt-6 space-y-4">
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="lastName">
+                    Last name
+                  </label>
+                  <input
+                    id="lastName"
+                    name="family-name"
+                    autoComplete="family-name"
+                    className="auth-input"
+                    placeholder="Last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="loginId">
+                  Email or phone number
+                </label>
+                <input
+                  id="loginId"
+                  name="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  className="auth-input"
+                  placeholder="you@example.com or phone number"
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="password">
+                  Password
+                </label>
+                <div className="auth-password">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="auth-input"
+                    placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+              <fieldset className="auth-field min-w-0">
+                <legend className="auth-label mb-2">Date of birth</legend>
+                <DobPicker
+                  value={dob}
+                  onChange={(value) => {
+                    setDob(value);
+                    setDobError(null);
+                  }}
+                  error={dobError ?? undefined}
+                  selectClassName="auth-input"
+                  className="auth-birthday"
+                  required
+                />
+              </fieldset>
+              <fieldset className="auth-field">
+                <legend className="auth-label mb-2">Gender</legend>
+                <div className="auth-gender">
+                  {(["Male", "Female", "Others"] as const).map((value) => (
+                    <label key={value}>
                       <input
-                        ref={codeInputRef}
-                        id="verifyCode"
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        value={verifyCode}
-                        onChange={handleCodeChange}
-                        placeholder="000000"
-                        maxLength={6}
-                        className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-4 py-4 text-center text-2xl font-black tracking-[0.5em] text-brand-text outline-hidden transition-all placeholder:tracking-[0.5em] placeholder:text-brand-text/20 focus:border-brand-accent focus:bg-brand-card focus:ring-4 focus:ring-brand-accent/10"
-                        required
+                        type="radio"
+                        name="gender"
+                        value={value}
+                        checked={gender === value}
+                        onChange={() => setGender(value)}
                       />
-
-                      <button
-                        type="button"
-                        onClick={handleVerifyEmail}
-                        disabled={verifyEmail.isPending || verifyCode.length < 6}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-ink py-3.5 text-sm font-bold text-brand-bg shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
-                      >
-                        {verifyEmail.isPending && (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        )}
-                        {verifyEmail.isPending ? 'Verifying…' : 'Verify Email'}
-                      </button>
-                    </div>
-
-                    {/* "Skip for now" is gone. It led to the feed with an
-                        unverified account, and the next sign-in refuses
-                        one — so the only thing skipping bought you was a
-                        locked account and no code in hand. Resend is the
-                        real way out, and it is the one control here. */}
-                    <div className="mt-6 flex items-center justify-center border-t border-brand-divider pt-5">
-                      <button
-                        type="button"
-                        onClick={handleResendCode}
-                        disabled={resendCooldown > 0 || resendVerification.isPending}
-                        className="text-xs font-bold tracking-wider text-primary-ink transition-colors hover:text-brand-text disabled:opacity-50"
-                      >
-                        {resendCooldown > 0
-                          ? `Resend in ${resendCooldown}s`
-                          : resendVerification.isPending
-                            ? 'Sending…'
-                            : 'Resend code'}
-                      </button>
-                    </div>
-                  </>
+                      {value === "Others" ? "Other" : value}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="auth-consent">
+                <input
+                  type="checkbox"
+                  name="acceptedTerms"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  required
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link
+                    className="auth-link"
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    className="auth-link"
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+              <button
+                type="submit"
+                className="auth-primary"
+                disabled={isLoading || !acceptedTerms}
+              >
+                {isLoading && (
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {isLoading ? "Creating your account…" : "Create account"}
+                {!isLoading && <ArrowRight size={17} aria-hidden="true" />}
+              </button>
+            </fieldset>
+          </form>
+          <p className="auth-switch">
+            Already part of VChat?{" "}
+            <Link className="auth-link" href="/login">
+              Sign in
+            </Link>
+          </p>
+        </>
+      ) : verifySuccess ? (
+        <div className="auth-success" role="status">
+          <CheckCircle size={48} aria-hidden="true" />
+          <h1 className="auth-title">You’re all set.</h1>
+          <p className="auth-description">
+            Email verified. Finishing your sign-in…
+          </p>
+          <Link href="/login" className="auth-link mt-5 inline-block">
+            Continue to sign in
+          </Link>
         </div>
-
-      </motion.div>
-      </div>
-    </div>
+      ) : (
+        <>
+          <div className="auth-verification-icon">
+            <Mail size={25} aria-hidden="true" />
+          </div>
+          <div className="auth-form-heading">
+            <span className="auth-step-label">Verify your email</span>
+            <h1 className="auth-title">Check your inbox.</h1>
+            <p className="auth-description">
+              Enter the 6-digit code sent to{" "}
+              <strong className="text-brand-text">{loginId}</strong>.
+            </p>
+          </div>
+          {verifyError && (
+            <AuthAlert id="verify-error">{verifyError}</AuthAlert>
+          )}
+          <form
+            className="auth-form"
+            onSubmit={handleVerifyEmail}
+            aria-busy={verifyEmail.isPending}
+          >
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="verifyCode">
+                Verification code
+              </label>
+              <input
+                ref={codeInputRef}
+                id="verifyCode"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className="auth-input auth-code"
+                placeholder="000000"
+                maxLength={6}
+                value={verifyCode}
+                onChange={(e) => {
+                  setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  setVerifyError(null);
+                }}
+                aria-invalid={!!verifyError}
+                aria-describedby={verifyError ? "verify-error" : undefined}
+                required
+                disabled={verifyEmail.isPending}
+              />
+            </div>
+            <button
+              type="submit"
+              className="auth-primary"
+              disabled={
+                verifyEmail.isPending ||
+                resendVerification.isPending ||
+                verifyCode.length !== 6
+              }
+            >
+              {verifyEmail.isPending && (
+                <Loader2
+                  size={18}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+              )}
+              {verifyEmail.isPending ? "Verifying…" : "Verify email"}
+            </button>
+          </form>
+          <p role="status" className="auth-hint mt-4">
+            {resendNotice}
+          </p>
+          <div className="auth-switch">
+            <p className="mb-2">
+              Didn’t receive a code? Check your spam folder.
+            </p>
+            <button
+              type="button"
+              className="auth-link min-h-11 disabled:opacity-60"
+              disabled={
+                resendCooldown > 0 ||
+                resendVerification.isPending ||
+                verifyEmail.isPending
+              }
+              onClick={handleResendCode}
+            >
+              {resendCooldown > 0
+                ? "Resend in " + resendCooldown + "s"
+                : resendVerification.isPending
+                  ? "Sending…"
+                  : "Resend code"}
+            </button>
+            <p className="auth-hint mt-3">
+              Returning later?{" "}
+              <Link className="auth-link" href="/login">
+                Sign in to continue verification
+              </Link>
+              .
+            </p>
+          </div>
+        </>
+      )}
+    </AuthShell>
   );
 }

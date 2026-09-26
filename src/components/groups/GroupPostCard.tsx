@@ -2,13 +2,15 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  Pin, Megaphone, Heart, MessageCircle, Bookmark, Eye,
+  Pin, Megaphone, MessageCircle, Bookmark, Eye,
   MoreHorizontal, Trash2, Copy, Flag,
-  ChevronLeft, ChevronRight, X, Play, Repeat2, ExternalLink,
+  ChevronLeft, ChevronRight, X, Play, Repeat2, ExternalLink, UserRound,
 } from 'lucide-react'
 import type { GroupPostV2 } from '@/types/groups'
 import { viewerEngaged } from './patchGroupFeed'
 import GroupPostMeta from './GroupPostMeta'
+import GroupReactionControl, { GroupReactionSummary } from './GroupReactionControl'
+import './group-post-card.css'
 
 /* ===== Props ===== */
 interface GroupPostCardProps {
@@ -16,8 +18,6 @@ interface GroupPostCardProps {
   groupId: string
   isAdmin?: boolean
   isAuthor?: boolean
-  onSpark?: (groupId: string, postId: string) => void
-  onUnspark?: (groupId: string, postId: string) => void
   onStash?: (groupId: string, postId: string) => void
   onUnstash?: (groupId: string, postId: string) => void
   onView?: (groupId: string, postId: string) => void
@@ -145,7 +145,7 @@ function VideoPreview({ mediaId }: { mediaId: string }) {
 /* ===== MAIN CARD ===== */
 const GroupPostCard: React.FC<GroupPostCardProps> = ({
   post, groupId, isAdmin, isAuthor,
-  onSpark, onUnspark, onStash, onUnstash, onView, onDelete, onRepost, onUnrepost,
+  onStash, onUnstash, onView, onDelete, onRepost, onUnrepost,
 }) => {
   const [expanded, setExpanded] = useState(false)
   const [overflowOpen, setOverflowOpen] = useState(false)
@@ -158,7 +158,8 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
   const [isClamped, setIsClamped] = useState(false)
   const [viewed, setViewed] = useState(false)
 
-  const authorName = post.author_name ?? 'Member'
+  const anonymous = post.is_anonymous === true
+  const authorName = anonymous ? 'Anonymous member' : post.author_name || 'Member'
   const authorInitial = authorName[0]?.toUpperCase() ?? '?'
   const gradient = pickColor(post.author_id)
 
@@ -174,10 +175,8 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
     post as `false` and omits the field entirely for an anonymous viewer, and
     both have to read as false.
   */
-  const sparked = viewerEngaged(post, 'spark')
   const echoed = viewerEngaged(post, 'echo')
   const stashed = viewerEngaged(post, 'stash')
-  const sparkCount = post.spark_count
   const echoCount = post.echo_count
 
   // Detect body clamping
@@ -217,11 +216,6 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
       obs.disconnect()
     }
   }, [viewed]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleLike = () => {
-    if (sparked) onUnspark?.(groupId, post.id)
-    else onSpark?.(groupId, post.id)
-  }
 
   const handleStash = () => {
     if (stashed) onUnstash?.(groupId, post.id)
@@ -277,7 +271,9 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
         {/* Author header */}
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
-            {post.author_avatar_url ? (
+            {anonymous ? (
+              <div className="group-post-anonymous-avatar"><UserRound size={20} aria-hidden="true" /></div>
+            ) : post.author_avatar_url ? (
               <img src={post.author_avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className={`w-full h-full bg-linear-to-br ${gradient} flex items-center justify-center text-sm font-bold text-white`}>
@@ -293,6 +289,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           {/* Overflow menu */}
           <div className="relative" ref={overflowRef}>
             <button onClick={() => setOverflowOpen(!overflowOpen)}
+              aria-label="Post options" aria-expanded={overflowOpen}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-brand-text/40 hover:bg-brand-secondary/50 transition-colors">
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -392,20 +389,14 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           </div>
         )}
 
+        <GroupReactionSummary post={post} />
         {/* Engagement bar */}
-        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-brand-divider flex-wrap">
-          {/* Spark */}
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors select-none ${
-              sparked ? 'text-danger bg-danger/10' : 'text-brand-text/45 hover:text-danger hover:bg-danger/10'
-            }`}>
-            <Heart className={`w-3.5 h-3.5 ${sparked ? 'fill-current' : ''}`} />
-            <span className="font-mono text-[11px] font-semibold">{formatCount(sparkCount)}</span>
-          </button>
+        <div className="group-post-actions mt-3 pt-3 border-t border-brand-divider">
+          <GroupReactionControl post={post} groupId={groupId} />
 
           {/* Comments toggle */}
           <button onClick={() => setShowComments(!showComments)}
+            aria-label="Comments" aria-expanded={showComments}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               showComments ? 'text-brand-text bg-brand-text/5' : 'text-brand-text/45 hover:text-brand-text hover:bg-brand-secondary/50'
             }`}>
@@ -416,6 +407,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           {/* Echo dropdown */}
           <div className="relative" ref={echoRef}>
             <button onClick={() => setShowEchoMenu(!showEchoMenu)}
+              aria-label="Share post" aria-expanded={showEchoMenu}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
                 echoed ? 'text-success bg-success/10' : 'text-brand-text/45 hover:text-success hover:bg-success/10'
               }`}>
@@ -439,6 +431,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
 
           {/* Bookmark/Stash */}
           <button onClick={handleStash}
+            aria-label={stashed ? 'Remove from saved posts' : 'Save post'} aria-pressed={stashed}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors ${
               stashed ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/45 hover:text-primary-ink hover:bg-primary-tint/60'
             }`}>
@@ -446,7 +439,7 @@ const GroupPostCard: React.FC<GroupPostCardProps> = ({
           </button>
 
           {/* View count */}
-          <span className="ml-auto flex items-center gap-1 text-[11px] text-brand-text/30 font-mono">
+          <span aria-label={`${post.view_count} views`} className="flex items-center gap-1 text-[11px] text-brand-text/50 font-mono">
             <Eye className="w-3 h-3" />
             {formatCount(post.view_count)}
           </span>

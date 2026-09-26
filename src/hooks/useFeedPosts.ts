@@ -73,7 +73,7 @@ export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { ex
     const enabled = options?.enabled ?? true
     return useInfiniteQuery({
         queryKey: ["home-feed", feedMode, excludeSelf, circleOnly],
-        queryFn: async ({ pageParam }) => {
+        queryFn: async ({ pageParam, signal }) => {
             const params: Record<string, string> = { limit: "20", feed_mode: feedMode, platform: "postbook" }
             if (excludeSelf) {
                 params.exclude_self = "true"
@@ -84,12 +84,14 @@ export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { ex
             if (pageParam) {
                 params.cursor = pageParam as string
             }
-            const res = await api.get<PostsResponse>(`/v1/feed/home`, { params })
+            const res = await api.get<PostsResponse>(`/v1/feed/home`, { params, signal })
             return res.data
         },
         initialPageParam: "" as string,
         getNextPageParam: (lastPage) => lastPage.meta?.next_cursor || undefined,
         enabled,
+        // Feed owns the one-minute return policy; avoid duplicate focus fetches.
+        refetchOnWindowFocus: false,
     })
 }
 

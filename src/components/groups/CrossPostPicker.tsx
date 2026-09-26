@@ -1,180 +1,58 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
-import { Check, Loader2, Plus, X } from 'lucide-react'
-
+import React, { useState } from 'react'
+import { Globe, LockKeyhole, Plus, Search, Users, X } from 'lucide-react'
 import { useMyGroups } from '@/hooks/useGroups'
-import {
-  MAX_ADDITIONAL_GROUPS,
-  canAddAnotherGroup,
-  crossPostCapReason,
-} from './groupComposer'
+import ComposerPopup from './ComposerPopup'
+import { groupSelectionUnavailable } from './composerGroups'
+import { MAX_ADDITIONAL_GROUPS, crossPostCapReason } from './groupComposer'
 
-/** A group the post will also go to. The name is carried so the summary that
- *  reports refusals can name it without a second lookup. */
-export interface CrossPostChoice {
-  id: string
-  name: string
-}
+export interface CrossPostChoice { id: string; name: string }
 
 interface CrossPostPickerProps {
-  /** The group being posted to. Never offered as a target — the server treats
-   *  it as one target either way, so picking it would silently spend a slot. */
   groupId: string
   selected: CrossPostChoice[]
   onChange: (next: CrossPostChoice[]) => void
   disabled?: boolean
+  anonymous?: boolean
 }
 
-/**
- * "+ Add groups" — the same body to a handful of other groups.
- *
- * Its own component, mounted only in group mode, because `useMyGroups` has no
- * `enabled` switch: calling it from the composer itself would fetch
- * /v1/groups/my every time anyone opened the ordinary post composer.
- *
- * The cap is enforced here rather than being learned from a 400. Note it is
- * FOUR: group-service counts the group you are already in as one of its five
- * targets (see MAX_ADDITIONAL_GROUPS).
- */
-const CrossPostPicker: React.FC<CrossPostPickerProps> = ({
-  groupId,
-  selected,
-  onChange,
-  disabled,
-}) => {
+export default function CrossPostPicker({ groupId, selected, onChange, disabled, anonymous = false }: CrossPostPickerProps) {
   const [open, setOpen] = useState(false)
-  const { data: myGroups, isLoading } = useMyGroups()
+  const [search, setSearch] = useState('')
+  const [draft, setDraft] = useState<CrossPostChoice[]>([])
+  const groups = useMyGroups(open)
+  const launch = () => { setDraft([...selected]); setSearch(''); setOpen(true) }
+  const visible = (groups.data ?? []).filter(group => group.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
+  const toggle = (id: string, name: string) => setDraft(previous => previous.some(g => g.id === id)
+    ? previous.filter(g => g.id !== id)
+    : previous.length < MAX_ADDITIONAL_GROUPS ? [...previous, { id, name }] : previous)
 
-  const options = useMemo(
-    () => (myGroups ?? []).filter((g) => g.id !== groupId && g.status !== 'archived' && !g.is_archived),
-    [myGroups, groupId],
-  )
-
-  const isSelected = (id: string) => selected.some((s) => s.id === id)
-  const atCap = !canAddAnotherGroup(selected.length)
-
-  // `||`, never `??`: Go marshals an unset name as "", so a nullish fallback
-  // would put a nameless chip in the composer and a nameless line in the
-  // summary that reports which groups refused the post.
-  const label = (name: string | undefined) => name?.trim() || 'Untitled group'
-
-  const toggle = (id: string, name: string) => {
-    if (isSelected(id)) {
-      onChange(selected.filter((s) => s.id !== id))
-      return
-    }
-    if (atCap) return
-    onChange([...selected, { id, name }])
-  }
-
-  return (
-    <div className="px-6 pt-3">
-      <div className="rounded-[18px] border border-brand-divider bg-brand-secondary px-4 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            disabled={disabled}
-            aria-expanded={open}
-            className="flex items-center gap-1.5 text-[12px] font-semibold text-primary-ink transition-colors hover:text-primary-hover disabled:opacity-40"
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
-            Add groups
-          </button>
-          {selected.length > 0 && (
-            <span className="text-[11px] tabular-nums text-brand-text/50">
-              {selected.length} of {MAX_ADDITIONAL_GROUPS}
-            </span>
-          )}
-        </div>
-
-        {/* What is already picked stays visible with the picker closed: a
-            cross-post that the author has forgotten about is the thing they
-            would least like to discover afterwards. */}
-        {selected.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {selected.map((s) => (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-1 rounded-full border border-brand-divider bg-brand-card px-2.5 py-1 text-[11px] font-medium text-brand-text"
-              >
-                {s.name}
-                <button
-                  type="button"
-                  onClick={() => toggle(s.id, s.name)}
-                  aria-label={`Remove ${s.name}`}
-                  className="text-brand-text/40 hover:text-brand-text"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {open && (
-          <div className="mt-3 max-h-48 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex items-center gap-2 py-3 text-[12px] text-brand-text/50">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading your groups…
-              </div>
-            ) : options.length === 0 ? (
-              <p className="py-3 text-[12px] text-brand-text/50">
-                You are not in any other group yet.
-              </p>
-            ) : (
-              <ul className="space-y-0.5">
-                {options.map((g) => {
-                  const picked = isSelected(g.id)
-                  const blocked = !picked && atCap
-                  return (
-                    <li key={g.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(g.id, label(g.name))}
-                        disabled={blocked || disabled}
-                        aria-pressed={picked}
-                        title={blocked ? crossPostCapReason() : undefined}
-                        className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[12px] transition-colors disabled:opacity-35 ${
-                          picked
-                            ? 'bg-primary-ink/10 text-primary-ink'
-                            : 'text-brand-text hover:bg-brand-card'
-                        }`}
-                      >
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
-                            picked ? 'border-primary-ink bg-primary-ink/20' : 'border-brand-divider'
-                          }`}
-                        >
-                          {picked && <Check className="h-3 w-3" strokeWidth={3} />}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate font-medium">{label(g.name)}</span>
-                        {/*
-                          A private group is named as such, because whether the
-                          post lands there depends on a membership the author
-                          may have lost — and the server answers that with a
-                          deliberately vague "not available".
-                        */}
-                        {g.privacy_level === 'private' && (
-                          <span className="shrink-0 text-[10px] uppercase tracking-wider text-brand-text/40">
-                            Private
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            {atCap && (
-              <p className="mt-2 text-[11px] text-brand-text/50">{crossPostCapReason()}</p>
-            )}
-          </div>
-        )}
+  return <div className="composer-crosspost">
+    <button className="composer-crosspost__trigger" type="button" onClick={launch} disabled={disabled} aria-haspopup="dialog" aria-expanded={open}>
+      <Users size={19} aria-hidden="true" />
+      <span className="composer-option-copy"><strong>Add groups</strong><small>{selected.length ? `${selected.length} additional selected` : 'Choose more destinations'}</small></span>
+      <Plus size={17} aria-hidden="true" />
+    </button>
+    {selected.length > 0 && <div className="composer-crosspost__selected">{selected.map(group => <span key={group.id}>{group.name}<button type="button" disabled={disabled} aria-label={`Remove ${group.name}`} onClick={() => onChange(selected.filter(g => g.id !== group.id))}><X size={12} /></button></span>)}</div>}
+    {open && <ComposerPopup title="Add groups" back onClose={() => setOpen(false)}>
+      <label className="composer-group-search"><Search size={17} /><input autoFocus type="search" aria-label="Search your groups" placeholder="Search your groups" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <div className="composer-popup__intro"><strong>Select groups</strong><p>Share with up to {MAX_ADDITIONAL_GROUPS + 1} groups you belong to. Your current group is included.</p></div>
+      <div className="composer-popup__content composer-group-list" role="region" aria-label="Available groups" tabIndex={0} aria-busy={groups.isFetching}>
+        {groups.isPending ? <p role="status">Loading your groups…</p> : groups.isError ? <div role="alert"><p>Your other groups could not load. You can still post to this group.</p><button type="button" onClick={() => groups.refetch()}>Try again</button></div> : visible.length === 0 ? <p>{search ? 'No groups match your search.' : 'No groups available.'}</p> : visible.map(group => {
+          const current = group.id === groupId
+          const chosen = draft.some(g => g.id === group.id)
+          const unavailable = groupSelectionUnavailable(group, groupId, anonymous)
+          const atCap = !chosen && draft.length >= MAX_ADDITIONAL_GROUPS
+          const reason = unavailable || (atCap ? crossPostCapReason() : null)
+          return <label key={group.id} className="composer-group-row" data-disabled={!!reason && !chosen}>
+            <span className="composer-group-avatar">{group.avatar_media_id ? <img alt="" src={`/v1/media/${group.avatar_media_id}/serve`} /> : <Users size={21} />}</span>
+            <span><strong>{group.name || 'Untitled group'}</strong><small>{(group.privacy_level || group.visibility) === 'public' ? <Globe size={13} aria-hidden="true" /> : <LockKeyhole size={13} aria-hidden="true" />}{reason || ((group.privacy_level || group.visibility) === 'public' ? 'Public group' : 'Private group')}</small></span>
+            <input type="checkbox" aria-label={`Include ${group.name || 'group'}`} checked={current || chosen} disabled={current || !!disabled || (!chosen && !!reason)} onChange={() => toggle(group.id, group.name || 'Untitled group')} />
+          </label>
+        })}
       </div>
-    </div>
-  )
+      <footer><span>{draft.length} of {MAX_ADDITIONAL_GROUPS} additional</span><div><button type="button" onClick={() => setOpen(false)}>Cancel</button><button type="button" className="composer-popup__primary" disabled={disabled || groups.isPending || groups.isError} onClick={() => { onChange(draft); setOpen(false) }}>Done</button></div></footer>
+    </ComposerPopup>}
+  </div>
 }
-
-export default CrossPostPicker

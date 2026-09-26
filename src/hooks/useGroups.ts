@@ -2,7 +2,10 @@
 
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
+import { loadMyGroups } from "@/lib/groupMemberships"
+import { useAuthUser } from "@/store/auth"
 import type { AddPeopleResult } from "@/components/messenger/groupComposition"
+import { parseAddPeopleResult } from "@/components/groups/groupPeople"
 import { interpretCreateGroupPostResponse, type CreateGroupPostOutcome, type GroupTypePayload } from "@/components/groups/groupComposer"
 import { groupPostSearchKey, MIN_GROUP_SEARCH_LENGTH } from "@/components/groups/patchGroupFeed"
 import type { Group, GroupMember, GroupInvite, GroupInviteDetail, GroupPost, GroupPostV2, GroupPostComment, GroupJoinRequest, GroupRule } from "@/types/groups"
@@ -20,13 +23,15 @@ interface HandleCheckResponse { data: { handle: string; available: boolean } }
 
 // === QUERIES ===
 
-export function useMyGroups() {
+export function useMyGroups(enabled = true) {
+  const user = useAuthUser()
   return useQuery({
-    queryKey: ["my-groups"],
-    queryFn: async () => {
-      const res = await api.get<GroupsResponse>("/v1/groups/my")
-      return res.data.data
-    },
+    queryKey: ["my-groups", user?.id],
+    enabled: enabled && !!user?.id,
+    queryFn: ({ signal }) => loadMyGroups(async (offset, limit) => {
+      const res = await api.get<GroupsResponse>("/v1/groups/my", { params: { offset, limit }, signal })
+      return res.data
+    }),
   })
 }
 
@@ -189,7 +194,7 @@ export function useCreateGroup() {
       who_can_invite?: string
       location?: string
       language?: string
-      idempotency_key?: string
+      idempotency_key: string
       is_mature?: boolean
     }) => {
       const res = await api.post<GroupResponse>("/v1/groups", payload)
@@ -265,8 +270,8 @@ export function useLeaveGroup() {
  * Put several people in a group at once.
  *
  * Each person gets their own answer, decided by THEIR privacy setting, not the
- * group's: someone who allows it is added straight in, someone who does not is
- * sent an invitation, and someone who has blocked the caller is skipped. So
+ * group's: a permitted connection is added, an approval-eligible person is
+ * invited, and a denied target is skipped (not automatically invited). So
  * the reply is three counts rather than a success flag — the caller cannot
  * assume the number of people it picked is the number that went in.
  *
@@ -281,21 +286,14 @@ export function useAddPeopleToGroup() {
   return useMutation({
     mutationFn: async ({ groupId, userIds }: { groupId: string; userIds: string[] }): Promise<AddPeopleResult> => {
       const res = await api.post<{ data: AddPeopleResult }>(`/v1/groups/${groupId}/invite`, { user_ids: userIds })
-      const d = res.data?.data
-      // Go sends 0 for an unset int rather than omitting it, so || is right
-      // here and ?? would be too: both give 0. What matters is that a server
-      // build older than this field yields 0 rather than undefined reaching
-      // the summary as "NaN people added".
-      return {
-        added: d?.added || 0,
-        invited: d?.invited || 0,
-        skipped: d?.skipped || 0,
-      }
+      return parseAddPeopleResult(res.data, userIds.length)
     },
     onSuccess: (_, { groupId }) => {
       qc.invalidateQueries({ queryKey: ["group-invites", groupId] })
       qc.invalidateQueries({ queryKey: ["group-members", groupId] })
       qc.invalidateQueries({ queryKey: ["group", groupId] })
+      qc.invalidateQueries({ queryKey: ["group-by-handle"] })
+      qc.invalidateQueries({ queryKey: ["my-groups"] })
     },
   })
 }
