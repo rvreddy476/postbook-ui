@@ -23,7 +23,6 @@ import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
 import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
 import { ReelDiscoveryPanel } from "./ReelDiscoveryPanel";
-import { ReelFeedTabs, type ReelFeedTab } from "@/features/reels/components/ReelFeedTabs";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -82,7 +81,6 @@ export function ReelsScreen() {
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
   const focusCommentId = searchParams.get("focusCommentId") || undefined;
 
-  const [tab, setTabState] = useState<ReelFeedTab>("for-you");
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [commentsOpen, setCommentsOpen] = useState(Boolean(focusCommentId));
@@ -114,7 +112,7 @@ export function ReelsScreen() {
   }, []);
 
   /* ── data ──────────────────────────────────────────────── */
-  const feed = useReelFeed(tab === "following");
+  const feed = useReelFeed(false);
   const pinned = useQuery({
     queryKey: ["reels", "pinned", deepLinkId],
     queryFn: () => fetchReel(deepLinkId!),
@@ -124,28 +122,17 @@ export function ReelsScreen() {
 
   const reels = useMemo<ReelItem[]>(() => {
     const fromFeed = feed.data?.pages.flatMap((p) => p.items) ?? [];
-    // A deep link pins on "For you"; "Following" is the viewer's own list.
-    const pin = tab === "for-you" ? pinned.data : null;
+    const pin = pinned.data;
     if (!pin) return fromFeed;
     const rest = fromFeed.filter((r) => r.id !== pin.id);
     // The feed copy wins once it arrives: it carries viewer flags and counts.
     const feedCopy = fromFeed.find((r) => r.id === pin.id);
     return [feedCopy ?? pin, ...rest];
-  }, [feed.data, pinned.data, tab]);
+  }, [feed.data, pinned.data]);
 
   const active = reels[index];
   useReelLive(active?.id, commentsOpen);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
-
-  const setTab = (next: ReelFeedTab) => {
-    if (next === tab) return;
-    setTabState(next);
-    setIndex(0);
-    setDirection(1);
-    setCommentsOpen(false);
-    setMoreOpen(false);
-    setSettingsOpen(false);
-  };
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -471,8 +458,6 @@ export function ReelsScreen() {
     />
   ) : null;
 
-  const tabs = <ReelFeedTabs value={tab} onChange={setTab} />;
-
   const aside = (
     <>
       <TrendingCard kind="flick" />
@@ -501,11 +486,11 @@ export function ReelsScreen() {
           onTouchEnd={onTouchEnd}
         >
           {loading ? (
-            <StateLayout tabs={tabs} stageRef={stageRef}>
+            <StateLayout stageRef={stageRef}>
               <div className="flex h-full items-center justify-center text-[13px] text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
             </StateLayout>
           ) : errored ? (
-            <StateLayout tabs={tabs} stageRef={stageRef}>
+            <StateLayout stageRef={stageRef}>
               <StateCard
                 title="Couldn't load reels"
                 hint={(feed.error as { message?: string })?.message || "Check your connection and try again."}
@@ -517,28 +502,16 @@ export function ReelsScreen() {
               />
             </StateLayout>
           ) : empty ? (
-            <StateLayout tabs={tabs} stageRef={stageRef}>
-              {tab === "following" ? (
-                <StateCard
-                  title="Nothing from people you follow yet"
-                  hint="Follow creators and their reels will show up here."
-                  action={
-                    <button type="button" onClick={() => setTab("for-you")} className="reel-state-action">
-                      Browse For you
-                    </button>
-                  }
-                />
-              ) : (
-                <StateCard
-                  title="No reels yet"
-                  hint="Be the first — reels are short videos up to 5 minutes."
-                  action={
-                    <Link href="/reels/create" className="reel-state-action">
-                      <Clapperboard className="h-4 w-4" /> Create a reel
-                    </Link>
-                  }
-                />
-              )}
+            <StateLayout stageRef={stageRef}>
+              <StateCard
+                title="No reels yet"
+                hint="Be the first — reels are short videos up to 5 minutes."
+                action={
+                  <Link href="/reels/create" className="reel-state-action">
+                    <Clapperboard className="h-4 w-4" /> Create a reel
+                  </Link>
+                }
+              />
             </StateLayout>
           ) : active ? (
             <div
@@ -564,7 +537,6 @@ export function ReelsScreen() {
               </div>
 
               <motion.div layout transition={{ duration: reduceMotion ? 0 : 0.28, ease: "easeOut" }} className="reel-center-column">
-              {tabs}
               <div
                 className="reel-stage-cluster"
                 onClickCapture={(e) => {
@@ -780,7 +752,7 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
       // Width from the viewport height, not from h-full: a row flex item's
       // width is resolved before its stretched height, so aspect-ratio on a
       // percentage height collapses to 0. --reel-height is what the viewport
-      // leaves after the header, the stage padding and the feed tabs.
+      // leaves after the header and the stage padding.
       //
       // The frame is 3:5, a touch wider than the 9:16 the videos are shot
       // in: the founder wanted more width without the stage leaving the
@@ -794,12 +766,11 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
   );
 }
 
-/** Loading / error / empty: the tabs stay put above a stage-sized frame. */
-function StateLayout({ tabs, stageRef, children }: { tabs: React.ReactNode; stageRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
+/** Loading / error / empty: a stage-sized frame in the stage's place. */
+function StateLayout({ stageRef, children }: { stageRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
   return (
     <div className="reels-content" data-single-column="">
       <div className="reel-center-column">
-        {tabs}
         <div className="reel-stage-cluster">
           <StageFrame stageRef={stageRef}>{children}</StageFrame>
         </div>
