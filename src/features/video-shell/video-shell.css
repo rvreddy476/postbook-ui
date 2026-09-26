@@ -12,7 +12,7 @@
 */
 
 /* ---- frame ------------------------------------------------------------ */
-.video-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; background: rgb(var(--canvas)); color: rgb(var(--brand-text)); }
+.video-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 0; overflow: hidden; background: rgb(var(--canvas)); color: rgb(var(--brand-text));  overflow: clip; }
 .video-shell > .context-app-bar { position: sticky; top: 0; }
 .video-shell__body { position: relative; display: flex; flex: 1 1 auto; min-height: 0; }
 

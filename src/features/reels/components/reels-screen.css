@@ -99,7 +99,7 @@
 .reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--brand-accent)); color: rgb(var(--reel-on-stage)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
 .reel-rail-follow:hover { transform: translateX(-50%) scale(1.08); opacity: .9; }
 .reel-rail-follow:disabled { opacity: .6; cursor: default; }
 .reel-action-rail.is-phone .reel-rail-avatar { width: 40px; height: 40px; }
@@ -150,7 +150,9 @@
 }
 
 /* ---- comments: TikTok's 352px card with a 16px margin, the author card on top -- */
-.reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 60px 16px 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
+.reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 0; }
+/* Padding only while open: a closed 0-width track with padding was 16px of overflow that a focus could scroll into view. */
+.reels-content[data-comments-open="true"] .reel-comments-column { padding: 60px 16px 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
 .reel-comments-panel { display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0; overflow: hidden; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
 .reel-comments-panel.is-column { border: 1px solid var(--brand-divider); border-radius: 12px; }
 .reel-comments-panel.is-sheet { position: fixed; z-index: 40; inset: auto 0 0; height: min(72dvh,640px); border: 1px solid var(--brand-divider); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
