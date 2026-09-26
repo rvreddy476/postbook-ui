@@ -13,7 +13,6 @@ import Header from '@/components/Header';
 import LandingPage from '@/components/LandingPage';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import RightPanel from '@/components/RightPanel';
-import ShortsGallery from '@/components/ShortsGallery';
 import Sidebar from '@/components/Sidebar';
 import TVGallery from '@/components/TVGallery';
 import GroupPanel from '@/components/messenger/GroupPanel';
@@ -37,6 +36,11 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
     return raw && (allowed as string[]).includes(raw) ? (raw as NavItem) : 'Home';
   })();
   const [activeTab, setActiveTab] = useState<NavItem>(initialTab);
+  // Reels is its own route with its own stage (/reels). A ?tab=Reels link
+  // from before that page existed lands there instead of an inline gallery.
+  useEffect(() => {
+    if (activeTab === 'Reels') router.replace('/reels');
+  }, [activeTab, router]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -194,8 +198,6 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
                 return <CreativeHome onCreateClick={() => setIsCreateOpen(true)} />;
               case 'Feed':
                 return <Feed onCreateClick={() => setIsCreateOpen(true)} />;
-              case 'Reels':
-                return <ShortsGallery />;
               case 'TV':
                 return <TVGallery />;
 
@@ -216,7 +218,6 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
     return <LandingPage />;
   }
 
-  const isReelsMode = activeTab === 'Reels';
   const isGroupMode = !!activeGroupId;
   const isFeedMode = activeTab === 'Home' && !isGroupMode;
   const isClassicFeed = activeTab === 'Feed' && !isGroupMode;
@@ -260,16 +261,14 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
 
           {isContactListOpen && (
             <aside
-              className={`${isReelsMode ? 'hidden 2xl:flex' : 'hidden lg:flex'} z-90 w-[240px] flex-col border-r border-brand-divider relative transition-all duration-300`}
+              className={`hidden lg:flex z-90 w-[240px] flex-col border-r border-brand-divider relative transition-all duration-300`}
             >
               <ContactList onContactClick={handleContactClick} activeChatIds={activeChats.map((chat) => chat.id)} onGroupClick={handleGroupClick} activeGroupId={activeGroupId} onClearGroup={handleClearGroup} onCreateGroup={handleCreateGroupFromChat} onClose={() => setIsContactListOpen(false)} />
             </aside>
           )}
 
           <main
-            className={`relative min-w-0 flex-1 ${isReadingMode ? '' : 'overflow-y-auto overscroll-y-contain no-scrollbar'} ${isReelsMode
-              ? 'snap-y snap-mandatory scroll-smooth p-0'
-              : isGroupMode
+            className={`relative min-w-0 flex-1 ${isReadingMode ? '' : 'overflow-y-auto overscroll-y-contain no-scrollbar'} ${isGroupMode
                 ? 'p-0 overflow-hidden'
                 : 'px-3 pb-28 pt-4 sm:px-6 md:pb-8 lg:px-8'
               }`}
@@ -283,7 +282,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
               the measure readable and matches the reference: one centred
               column with the rails either side of it.
             */}
-            <div className={`mx-auto ${isReelsMode || isGroupMode
+            <div className={`mx-auto ${isGroupMode
               ? 'h-full max-w-none w-full'
               : isFeedMode ? 'w-full max-w-[960px]'
               : 'w-full max-w-[700px]'
@@ -292,7 +291,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
             </div>
           </main>
 
-          {!isReelsMode && !isGroupMode && !isFeedMode && (
+          {!isGroupMode && !isFeedMode && (
             <aside aria-label="Discover and connect" className={`hidden w-[304px] shrink-0 flex-col pt-4 pb-8 pr-5 xl:flex 2xl:w-[340px] 2xl:pr-8 ${isClassicFeed ? 'self-start' : 'overflow-y-auto no-scrollbar'}`}>
               <RightPanel onContactClick={handleContactClick} />
             </aside>
