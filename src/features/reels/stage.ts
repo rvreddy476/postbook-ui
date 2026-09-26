@@ -25,9 +25,9 @@ export const COMMENTS_COLUMN_MARGIN = 16;
 /** The grid track that holds the comments column: the card plus its margin. */
 export const COMMENTS_TRACK_WIDTH = COMMENTS_COLUMN_WIDTH + COMMENTS_COLUMN_MARGIN;
 
-export const RAIL_WIDTH = 44;
+export const RAIL_WIDTH = 40;
 export const RAIL_GAP = 15;
-export const RESERVED_RIGHT = 121; // 180 − 15 − 44: the frame stays where TikTok puts it with the slimmer rail
+export const RESERVED_RIGHT = 125; // 180 − 15 − 40: the frame stays where TikTok puts it with the slimmer rail
 /** Everything the cluster adds to the right of the frame. */
 export const CLUSTER_EXTRA = RAIL_GAP + RAIL_WIDTH + RESERVED_RIGHT;
 
