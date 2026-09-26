@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import Link from "next/link";
@@ -17,6 +17,7 @@ import { ReelSettingsMenu } from "@/features/reels/components/ReelSettingsMenu";
 import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
+import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -58,6 +59,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 
 export function ReelsScreen() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const qc = useQueryClient();
   const toast = useGlobalToast();
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
@@ -136,7 +138,8 @@ export function ReelsScreen() {
   const relationships = useBatchRelationships(viewerId, authorIds);
   const followMut = useFollowUser();
   const unfollowMut = useUnfollowUser();
-  const following = active ? relationships.data?.get(active.authorId)?.following : undefined;
+  const relationship = active ? relationships.data?.get(active.authorId) : undefined;
+  const following = relationship?.following;
   const toggleFollow = async () => {
     if (!active?.authorUsername) return;
     try {
@@ -146,6 +149,12 @@ export function ReelsScreen() {
     } catch {
       toast({ type: "error", title: following ? "Could not unfollow" : "Could not follow" });
     }
+  };
+
+  const openReel = (id: string) => {
+    if (id === active?.id) return;
+    setCommentsOpen(false);
+    router.push(`/reels?reelId=${encodeURIComponent(id)}`);
   };
 
   /* ── engagement ────────────────────────────────────────── */
@@ -316,7 +325,7 @@ export function ReelsScreen() {
         </div>
 
         <main
-          className="relative flex min-h-0 min-w-0 flex-1 items-stretch justify-center overflow-hidden md:px-6 md:py-4"
+          className="relative flex min-h-0 min-w-0 flex-1 items-stretch justify-center overflow-hidden md:px-6 md:py-3"
           onWheel={onWheel}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
@@ -370,6 +379,24 @@ export function ReelsScreen() {
             </StageFrame>
           ) : active ? (
             <div className="flex h-full w-full min-w-0 items-center gap-4 md:w-auto">
+              {/* left column: the creator, or the thread when comments are open */}
+              <div className="hidden h-full md:block">
+                {commentsOpen ? (
+                  <ReelCommentsDrawer open reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
+                ) : (
+                  <ReelCreatorPanel
+                    reel={active}
+                    viewerId={viewerId}
+                    isOwn={isOwn}
+                    relationship={relationship}
+                    followPending={followMut.isPending || unfollowMut.isPending}
+                    onToggleFollow={toggleFollow}
+                    onOpenReel={openReel}
+                  />
+                )}
+              </div>
+
+              <motion.div layout transition={{ duration: 0.28, ease: "easeOut" }} className="flex h-full min-w-0 items-center gap-4">
               <StageFrame stageRef={stageRef}>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
@@ -453,15 +480,12 @@ export function ReelsScreen() {
                   moreMenu={<MoreMenu />}
                 />
               </div>
+              </motion.div>
 
-              <ReelCommentsDrawer
-                open={commentsOpen}
-                reelId={active.id}
-                reelAuthorId={active.authorId}
-                commentCount={active.commentCount}
-                focusCommentId={focusCommentId}
-                onClose={() => setCommentsOpen(false)}
-              />
+              {/* phone: comments as a bottom sheet */}
+              <div className="md:hidden">
+                <ReelCommentsDrawer open={commentsOpen} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
+              </div>
             </div>
           ) : null}
 
@@ -541,8 +565,14 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
       ref={stageRef}
       // Width from the viewport height, not from h-full: a row flex item's
       // width is resolved before its stretched height, so aspect-ratio on a
-      // percentage height collapses to 0. 7.5rem = header + stage padding.
-      className="relative h-full w-full overflow-hidden bg-black md:h-auto md:w-[calc((100dvh-7.5rem)*9/16)] md:max-w-full md:aspect-[9/16] md:rounded-2xl md:shadow-2xl [&:fullscreen]:h-full [&:fullscreen]:w-full [&:fullscreen]:rounded-none"
+      // percentage height collapses to 0. 6rem = header + stage padding.
+      //
+      // The frame is 3:5, a touch wider than the 9:16 the videos are shot
+      // in: the founder wanted more width without the stage leaving the
+      // viewport, and the height is what the viewport limits. A portrait
+      // video covers the frame (ReelVideo uses object-cover for portrait),
+      // losing ~6% at the top and bottom edges.
+      className="relative h-full w-full overflow-hidden bg-black md:h-auto md:w-[calc((100dvh-6rem)*3/5)] md:max-w-[560px] md:aspect-[3/5] md:rounded-2xl md:shadow-2xl [&:fullscreen]:h-full [&:fullscreen]:w-full [&:fullscreen]:rounded-none"
     >
       {children}
     </div>
