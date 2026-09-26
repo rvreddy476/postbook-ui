@@ -150,7 +150,7 @@
 }
 
 /* ---- comments: TikTok's 352px card with a 16px margin, the author card on top -- */
-.reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 16px 16px 16px 0; }
+.reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 60px 16px 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
 .reel-comments-panel { display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0; overflow: hidden; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
 .reel-comments-panel.is-column { border: 1px solid var(--brand-divider); border-radius: 12px; }
 .reel-comments-panel.is-sheet { position: fixed; z-index: 40; inset: auto 0 0; height: min(72dvh,640px); border: 1px solid var(--brand-divider); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
