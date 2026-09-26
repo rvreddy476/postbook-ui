@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw, Undo2 } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +22,6 @@ import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
 import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
-import { ReelDiscoveryPanel } from "./ReelDiscoveryPanel";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -75,7 +74,6 @@ function isTypingTarget(t: EventTarget | null): boolean {
 export function ReelsScreen() {
   const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
-  const router = useRouter();
   const qc = useQueryClient();
   const toast = useGlobalToast();
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
@@ -186,13 +184,6 @@ export function ReelsScreen() {
     } catch {
       toast({ type: "error", title: subscription.subscribed ? "Could not unsubscribe" : "Could not subscribe" });
     }
-  };
-
-  const openReel = (id: string) => {
-    if (id === active?.id) return;
-    setIndex(0);
-    setCommentsOpen(false);
-    router.push(`/reels?reelId=${encodeURIComponent(id)}`);
   };
 
   /* ── engagement ────────────────────────────────────────── */
@@ -458,26 +449,8 @@ export function ReelsScreen() {
     />
   ) : null;
 
-  const aside = (
-    <>
-      <TrendingCard kind="flick" />
-      {active ? (
-        <ReelDiscoveryPanel
-          reels={reels}
-          active={active}
-          viewerId={viewerId}
-          relationships={relationships.data}
-          onOpenReel={openReel}
-          canLoadMore={!!feed.hasNextPage}
-          loadingMore={feed.isFetchingNextPage}
-          onLoadMore={() => void feed.fetchNextPage()}
-        />
-      ) : null}
-    </>
-  );
-
   return (
-    <VideoShell app="reels" immersive aside={aside}>
+    <VideoShell app="reels" immersive>
       <div ref={workspaceRef} className="reels-workspace">
         <main
           className="reels-main"
@@ -531,7 +504,6 @@ export function ReelsScreen() {
                     relationship={relationship}
                     followPending={followPending}
                     onToggleFollow={toggleFollow}
-                    onOpenReel={openReel}
                   />
                 )}
               </div>
@@ -547,6 +519,8 @@ export function ReelsScreen() {
                   dispatchClear({ type: "tap" });
                 }}
               >
+              {/* mirrors the rail's width so the stage sits on the exact centre line */}
+              <div className="reel-rail-spacer" aria-hidden="true" />
               <StageFrame stageRef={stageRef}>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
@@ -661,6 +635,11 @@ export function ReelsScreen() {
               </div>
               </div>
               </motion.div>
+
+              {/* right column: trending, the one thing worth a glance away from the video */}
+              <div className="reel-right-column" data-reel-side-panel>
+                <TrendingCard kind="flick" limit={6} />
+              </div>
 
               {/* narrow screens: comments as a bottom sheet */}
               <div className="reel-comments-sheet">
