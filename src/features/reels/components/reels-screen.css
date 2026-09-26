@@ -1,7 +1,6 @@
-.reels-workspace { height: calc(100dvh - 5rem); min-height: 0; background: rgb(var(--canvas)); color: rgb(var(--brand-text)); }
-.reels-main { --reel-height: calc(100dvh - 5rem - 12px); height: 100%; min-width: 0; position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 52px; overflow: hidden; }
+.reels-workspace { height: calc(100dvh - 4rem); min-height: 0; background: rgb(var(--canvas)); color: rgb(var(--brand-text)); }
+.reels-main { --reel-height: calc(100dvh - 6rem); height: 100%; min-width: 0; position: relative; display: flex; align-items: stretch; justify-content: center; padding: 12px 24px; overflow: hidden; }
 .reels-content { display: flex; align-items: center; justify-content: center; gap: 16px; min-height: 0; min-width: 0; width: 100%; flex: 1; }
-.reel-stage { flex: 0 1 auto; height: min(100%,var(--reel-height)); width: auto; aspect-ratio: 9 / 16; max-width: 100%; position: relative; overflow: hidden; border-radius: 20px; background: rgb(var(--reel-stage)); box-shadow: 0 14px 42px rgb(var(--brand-text) / .12); }
 .reel-portrait-content { position: absolute; inset: 0; }
 .reel-settings-popover { pointer-events: auto; }
 @media (min-width: 768px) {
@@ -15,7 +14,6 @@
 @media (min-width: 1101px) {
   .reels-workspace:fullscreen .reel-expanded-details { display: block; position: absolute; left: 28px; bottom: 32px; width: max(180px,calc((100vw - 56.25dvh) / 2 - 100px)); max-width: 320px; max-height: 50%; overflow-y: auto; }
   .reels-workspace:fullscreen .reel-overlay-details { display: none; }
-  .reels-workspace:fullscreen .reel-comments-panel { position: absolute; right: 16px; top: 16px; bottom: 16px; height: auto; z-index: 40; box-shadow: 0 12px 36px rgb(var(--brand-text) / .18); }
 }
 .reel-view-count { position: absolute; z-index: 20; left: 12px; top: 14px; display: flex; align-items: center; gap: 6px; border-radius: 100px; padding: 7px 9px; background: rgb(var(--reel-stage) / .7); color: rgb(var(--reel-on-stage)); font-size: 11px; font-weight: 600; pointer-events: none; }
 .reel-title { margin-top: 10px; color: rgb(var(--reel-on-stage)); font-size: 15px; line-height: 1.4; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -23,19 +21,14 @@
 .reel-desktop-rail { align-self: center; flex: 0 0 48px; }
 .reel-mobile-rail { display: none; position: absolute; right: 8px; bottom: 100px; z-index: 20; }
 .reels-navigation { position: absolute; right: 8px; top: 50%; display: flex; flex-direction: column; gap: 12px; }
-.reel-comments-panel { min-height: 0; height: 100%; width: clamp(280px,30vw,380px); flex: 0 0 auto; overflow: hidden; display: flex; flex-direction: column; border-radius: 20px; border: 1px solid var(--brand-divider); background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
+.reel-comments-panel { min-height: 0; overflow: hidden; }
 .reel-comments-panel form { min-width: 0; }
 .reel-comments-panel input { min-width: 0; }
 .reel-comments-panel [data-comments-list] { overscroll-behavior: contain; scrollbar-width: thin; }
 .reel-comments-panel [data-comment-actions] { flex-wrap: wrap; row-gap: 8px; }
-@media (max-width: 1100px) {
-  .reel-comments-panel { position: absolute; right: 10px; top: 10px; bottom: 10px; height: auto; z-index: 40; width: min(380px,calc(100% - 20px)); box-shadow: 0 12px 36px rgb(var(--brand-text) / .18); }
-}
 @media (max-width: 767px) {
-  .reels-main { padding: 6px 8px; gap: 8px; --reel-height: calc(100dvh - 5rem - 12px); }
+  .reels-main { padding: 6px 8px; gap: 8px; --reel-height: calc(100dvh - 4rem - 12px); }
   .reels-content { gap: 0; }
-  .reel-stage { border-radius: 16px; }
-  .reels-workspace:fullscreen .reel-stage { height: min(var(--reel-height),calc((100vw - 16px) * 16 / 9)); }
   .reel-mobile-rail { display: block; }
   .reel-desktop-rail,.reels-navigation { display: none; }
   .reel-comments-panel { position: fixed; inset: auto 0 0; width: 100%; height: min(72dvh,640px); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
