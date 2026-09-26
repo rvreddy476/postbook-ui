@@ -10,14 +10,21 @@ interface ReelScrubberProps {
   bufferedMs: number;
   onSeek: (ms: number) => void;
   onScrubbing?: (scrubbing: boolean) => void;
+  /**
+   * "frame" (default): pinned to the bottom edge of the video frame, 3px
+   * line that grows to 6px on hover. "bar": an inline flex item for the
+   * theater's control bar, 2px that grows to 4px.
+   */
+  variant?: "frame" | "bar";
 }
 
 /*
   A thin progress line that becomes a seek bar on hover or touch. Dragging
   shows the target time; the seek is committed continuously so the frame
-  under the thumb is what the viewer sees, as on YouTube Shorts.
+  under the thumb is what the viewer sees, as on YouTube Shorts. The fill
+  is the accent colour, the track a translucent white on the picture.
 */
-export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScrubbing }: ReelScrubberProps) {
+export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScrubbing, variant = "frame" }: ReelScrubberProps) {
   const barRef = useRef<HTMLDivElement>(null);
   const [dragMs, setDragMs] = useState<number | null>(null);
 
@@ -54,6 +61,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
   const shown = dragMs ?? currentMs;
   const pct = durationMs > 0 ? Math.min(100, (shown / durationMs) * 100) : 0;
   const bufPct = durationMs > 0 ? Math.min(100, (bufferedMs / durationMs) * 100) : 0;
+  const bar = variant === "bar";
 
   return (
     <div
@@ -63,7 +71,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
       aria-valuemin={0}
       aria-valuemax={Math.round(durationMs / 1000)}
       aria-valuenow={Math.round(shown / 1000)}
-      className="group/scrub absolute inset-x-0 bottom-0 z-20 h-6 cursor-pointer touch-none"
+      className={`group/scrub cursor-pointer touch-none ${bar ? "relative h-6 min-w-0 flex-1" : "absolute inset-x-0 bottom-0 z-20 h-6"}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -71,20 +79,19 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
       onClick={(e) => e.stopPropagation()}
     >
       {dragMs !== null ? (
-        <div
-          className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white"
-          style={{ left: `${pct}%` }}
-        >
+        <div className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white" style={{ left: `${pct}%` }}>
           {formatClock(shown)} / {formatClock(durationMs)}
         </div>
       ) : null}
       <div
-        className={`absolute inset-x-0 bottom-0 bg-white/25 transition-[height] duration-150 ${
-          dragMs !== null ? "h-1.5" : "h-[3px] group-hover/scrub:h-1.5"
+        className={`absolute inset-x-0 bg-white/25 transition-[height] duration-150 ${
+          bar
+            ? `top-1/2 -translate-y-1/2 ${dragMs !== null ? "h-1" : "h-0.5 group-hover/scrub:h-1"}`
+            : `bottom-0 ${dragMs !== null ? "h-1.5" : "h-[3px] group-hover/scrub:h-1.5"}`
         }`}
       >
         <div className="absolute inset-y-0 left-0 bg-white/40" style={{ width: `${bufPct}%` }} />
-        <div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 left-0 bg-brand-accent" style={{ width: `${pct}%` }} />
         <div
           className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow transition-opacity ${
             dragMs !== null ? "opacity-100" : "opacity-0 group-hover/scrub:opacity-100"

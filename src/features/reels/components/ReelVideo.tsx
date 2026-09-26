@@ -55,12 +55,18 @@ interface ReelVideoProps {
    * settings menu turns it into "None for this reel".
    */
   onCaptionsAvailable?: (available: boolean) => void;
+  /** The clock, on every timeupdate — what the theater bar draws. */
+  onTime?: (currentMs: number, durationMs: number, bufferedMs: number) => void;
+  /** Paused / playing, as the element reports it — for the theater bar's play button. */
+  onPlayState?: (paused: boolean) => void;
+  /** No in-frame scrubber (the theater bar carries its own, driving this same element). */
+  chromeless?: boolean;
 }
 
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, chromeless = false },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -239,6 +245,13 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   }, [active, tryPlay]);
 
   /* ── element events ────────────────────────────────────── */
+  const onTimeRef = useRef(onTime);
+  onTimeRef.current = onTime;
+  const onPlayStateRef = useRef(onPlayState);
+  onPlayStateRef.current = onPlayState;
+  useEffect(() => {
+    onPlayStateRef.current?.(paused);
+  }, [paused]);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -254,6 +267,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       const currentMs = video.currentTime * 1000;
       setClock({ currentMs, durationMs, bufferedMs });
       onProgress?.(currentMs, durationMs);
+      onTimeRef.current?.(currentMs, durationMs, bufferedMs);
     };
     const onWaiting = () => setBuffering(true);
     const onPlaying = () => {
@@ -354,8 +368,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     onPrefsChange({ sound: true });
   };
 
-  const portrait = reel.media.height >= reel.media.width;
-
+  // The frame already has the media's aspect ratio (stage.ts), so contain
+  // shows the whole picture with no bars in either orientation.
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-black" onClick={onTap}>
       {reel.media.posterUrl && posterOk ? (
@@ -365,7 +379,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
           alt=""
           aria-hidden
           onError={() => setPosterOk(false)}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
             buffering && clock.currentMs < 200 ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -377,7 +391,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         preload={active ? "auto" : "metadata"}
         crossOrigin="use-credentials"
         poster={undefined}
-        className={`absolute inset-0 h-full w-full ${portrait ? "object-cover" : "object-contain"}`}
+        className="absolute inset-0 h-full w-full object-contain"
       >
         {captions.source ? (
           <track kind="subtitles" src={captions.source.src} srcLang={captions.source.lang} default />
@@ -446,16 +460,18 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         </div>
       ) : null}
 
-      <ReelScrubber
-        currentMs={clock.currentMs}
-        durationMs={clock.durationMs}
-        bufferedMs={clock.bufferedMs}
-        onSeek={(ms) => {
-          const video = videoRef.current;
-          if (video) video.currentTime = ms / 1000;
-        }}
-        onScrubbing={setScrubbing}
-      />
+      {!chromeless ? (
+        <ReelScrubber
+          currentMs={clock.currentMs}
+          durationMs={clock.durationMs}
+          bufferedMs={clock.bufferedMs}
+          onSeek={(ms) => {
+            const video = videoRef.current;
+            if (video) video.currentTime = ms / 1000;
+          }}
+          onScrubbing={setScrubbing}
+        />
+      ) : null}
       {scrubbing ? <div className="pointer-events-none absolute inset-0 bg-black/20" /> : null}
     </div>
   );

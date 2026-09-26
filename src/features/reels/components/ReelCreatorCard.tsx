@@ -9,7 +9,7 @@ import { useGraphCounts, useProfile } from "@/hooks/useProfile";
 import { useMutualConnectionCounts } from "@/hooks/useConnections";
 import type { Relationship } from "@/types/profile";
 
-interface ReelCreatorPanelProps {
+export interface ReelCreatorCardProps {
   reel: ReelItem;
   viewerId: string;
   isOwn: boolean;
@@ -19,13 +19,14 @@ interface ReelCreatorPanelProps {
 }
 
 /*
-  The creator card beside the stage: who this is, where the viewer stands
-  with them, and their reach — nothing else. The video is the page; this
-  card answers "who is that?" at a glance and then gets out of the way. The
-  name links to the profile, so there is no button for it. Everything reads
-  from routes the profile page already uses.
+  The creator card: who this is, where the viewer stands with them, and
+  their reach — compact (280px) because it is a hover card now, not a
+  column. It mounts only while the card is open, so the profile, graph
+  counts and mutuals are fetched on demand. The name links to the profile,
+  so there is no button for it. Everything reads from routes the profile
+  page already uses.
 */
-export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPending, onToggleFollow }: ReelCreatorPanelProps) {
+export function ReelCreatorCard({ reel, viewerId, isOwn, relationship, followPending, onToggleFollow }: ReelCreatorCardProps) {
   const profile = useProfile(reel.authorUsername);
   const counts = useGraphCounts(reel.authorId);
   const mutuals = useMutualConnectionCounts(isOwn ? undefined : viewerId || undefined, [reel.authorId]);
@@ -41,11 +42,11 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
   if (!isOwn && relationship?.is_connection) chips.push({ key: "connected", icon: <Link2 className="h-3 w-3" />, label: "Connected" });
   if (!isOwn && relationship?.followed_by) chips.push({ key: "follows-you", icon: <UserCheck className="h-3 w-3" />, label: "Follows you" });
   if (!isOwn && typeof mutualCount === "number" && mutualCount > 0) {
-    chips.push({ key: "mutual", icon: <Users className="h-3 w-3" />, label: `${mutualCount} mutual ${mutualCount === 1 ? "connection" : "connections"}` });
+    chips.push({ key: "mutual", icon: <Users className="h-3 w-3" />, label: `${mutualCount} mutual` });
   }
 
   return (
-    <aside data-creator-panel="true" className="reel-creator-card" aria-label="About the creator" onClick={(e) => e.stopPropagation()}>
+    <div data-creator-card="true" className="reel-creator-card" onClick={(e) => e.stopPropagation()}>
       <div className="reel-creator-head">
         <Link href={profileHref} className="shrink-0" aria-label={`${reel.authorName}'s profile`}>
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="lg" />
@@ -57,17 +58,6 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
           </Link>
           {reel.authorUsername ? <span className="reel-creator-handle">@{reel.authorUsername}</span> : null}
         </div>
-        {!isOwn && following !== undefined ? (
-          <button
-            type="button"
-            disabled={followPending}
-            onClick={onToggleFollow}
-            aria-pressed={following}
-            className={`reel-creator-follow ${following ? "is-on" : ""}`}
-          >
-            {following ? "Following" : "Follow"}
-          </button>
-        ) : null}
       </div>
 
       {p?.bio ? <p className="reel-creator-bio">{p.bio}</p> : null}
@@ -78,7 +68,7 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
         <Stat label="Circle" value={friends} />
       </dl>
 
-      {chips.length > 0 || (!isOwn && relationship?.can_dm) ? (
+      {chips.length > 0 ? (
         <div className="reel-creator-graph">
           {chips.map((c) => (
             <span key={c.key} className="reel-creator-chip">
@@ -86,14 +76,30 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
               {c.label}
             </span>
           ))}
-          {!isOwn && relationship?.can_dm ? (
-            <Link href={`/messenger?user=${encodeURIComponent(reel.authorId)}`} className="reel-creator-chip is-action">
-              <MessageCircle className="h-3 w-3" /> Message
+        </div>
+      ) : null}
+
+      {!isOwn ? (
+        <div className="reel-creator-actions">
+          {following !== undefined ? (
+            <button
+              type="button"
+              disabled={followPending}
+              onClick={onToggleFollow}
+              aria-pressed={following}
+              className={`reel-creator-follow ${following ? "is-on" : ""}`}
+            >
+              {following ? "Following" : "Follow"}
+            </button>
+          ) : null}
+          {relationship?.can_dm ? (
+            <Link href={`/messenger?user=${encodeURIComponent(reel.authorId)}`} className="reel-creator-message">
+              <MessageCircle className="h-3.5 w-3.5" /> Message
             </Link>
           ) : null}
         </div>
       ) : null}
-    </aside>
+    </div>
   );
 }
 

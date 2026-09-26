@@ -37,11 +37,26 @@ test('reel title is separate from its description, never synthesized from descri
   expect(reel.caption).toBe('Description belongs in details');
   expect(toReelItem({id:'r2',author_id:'a',text:'Not a title',content_type:'reel',media:[{media_id:'m',kind:'video'}]})!.title).toBe('');
 });
-test('overlay renders title without exposing views even to the author', () => {
+test('overlay always carries the author name, title, caption and view count; own reel has no Follow pill', () => {
   const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
   expect(html).toContain('Actual title');
-  expect(html).not.toContain('Description belongs in details');
-  expect(html).not.toContain('reel-view-count');
+  expect(html).toContain('Description belongs in details');
+  expect(html).toContain('reel-view-count');
+  expect(html).toContain('0 views');
+  expect(html).toContain('reel-author-row__name');
+  expect(html).not.toContain('reel-follow-pill');
+});
+
+test('Follow pill: filled when not following, outlined when following, hidden while the relationship is unknown', () => {
+  const other=toReelItem({id:'r3',author_id:'b',content_type:'reel',author:{id:'b',username:'bee',display_name:'Bee'},media:[{media_id:'m',kind:'video'}]})!;
+  const base={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},sound:false,volume:1,onVolumeChange:()=>{},onToggleSound:()=>{},onOpenSettings:()=>{}};
+  expect(renderToStaticMarkup(<ReelOverlay {...base} following={undefined}/>)).not.toContain('reel-follow-pill');
+  const notFollowing=renderToStaticMarkup(<ReelOverlay {...base} following={false}/>);
+  expect(notFollowing).toContain('class="reel-follow-pill "');
+  expect(notFollowing).toContain('>Follow<');
+  const following=renderToStaticMarkup(<ReelOverlay {...base} following={true}/>);
+  expect(following).toContain('reel-follow-pill is-on');
+  expect(following).toContain('>Following<');
 });
 
 test('volume slider exposes the real level and reports zero while muted', () => {

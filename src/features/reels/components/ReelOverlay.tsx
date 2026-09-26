@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Settings2, Volume2, VolumeX } from "lucide-react";
 
-import { Avatar } from "@/components/LetterAvatar";
+import type { HoverAnchorProps } from "@/features/reels/hooks/useCreatorHoverCard";
 import { authorAction } from "@/features/reels/menu";
-import { type ReelItem } from "@/features/reels/model";
+import { formatCount, type ReelItem } from "@/features/reels/model";
 
 interface ReelOverlayProps {
   reel: ReelItem;
@@ -21,12 +22,8 @@ interface ReelOverlayProps {
   subscribed?: boolean | undefined;
   subscribePending?: boolean;
   onToggleSubscribe?: () => void;
-  /**
-   * Draw the author row (avatar, @handle, Follow/Subscribe) over the video.
-   * The stage turns this on; CSS hides the row again wherever the creator
-   * column is visible, so identity is never shown twice on wide screens.
-   */
-  showAuthor?: boolean;
+  /** Hover-card wiring for the author name (undefined on coarse pointers: plain link). */
+  authorAnchor?: HoverAnchorProps;
   sound: boolean;
   volume: number;
   onVolumeChange: (volume: number) => void;
@@ -36,11 +33,11 @@ interface ReelOverlayProps {
 }
 
 /*
-  What sits on top of the video: sound and settings at the top right, the
-  title and hashtags at the bottom left over a gradient, and — when asked
-  for — the author row above the title, which is what tablets and phones
-  see when the creator column is hidden. Clicks on any of it stop before
-  reaching the stage.
+  What sits on top of the video: sound and settings at the top right, and
+  at the bottom left over a soft gradient — always — the author's name with
+  the Follow pill beside it, the title, the caption (two lines and "more"),
+  the hashtags and the view count. Clicks on any of it stop before reaching
+  the stage.
 */
 export function ReelOverlay({
   reel,
@@ -51,7 +48,7 @@ export function ReelOverlay({
   subscribed,
   subscribePending,
   onToggleSubscribe,
-  showAuthor = false,
+  authorAnchor,
   sound,
   volume,
   onVolumeChange,
@@ -59,89 +56,94 @@ export function ReelOverlay({
   onOpenSettings,
   settingsMenu,
 }: ReelOverlayProps) {
+  const [expanded, setExpanded] = useState(false);
   const action = authorAction(reel, isOwn);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
-  const hasText = Boolean(reel.title) || reel.hashtags.length > 0;
-  const showDetails = showAuthor || hasText;
+  const caption = reel.caption.trim();
+  const longCaption = caption.length > 120 || caption.split("\n").length > 2;
 
   return (
     <>
       {/* top-right controls */}
       <div className="reel-playback-controls absolute left-3 right-3 top-3 z-30 flex items-center justify-end gap-2 pointer-events-none" onClick={(e) => e.stopPropagation()}>
         <div className="reel-volume-control">
-        <button
-          type="button"
-          aria-label={sound ? "Mute" : "Unmute"}
-          aria-pressed={!sound}
-          onClick={onToggleSound}
-          className="reel-playback-button"
-        >
-          {sound && volume > 0 ? <Volume2 size={15} /> : <VolumeX size={15} />}
-        </button>
-        <input type="range" aria-label="Volume" min={0} max={100} step={1}
-          value={sound ? Math.round(volume * 100) : 0}
-          aria-valuetext={`${sound ? Math.round(volume * 100) : 0}%`}
-          onChange={event => onVolumeChange(Number(event.target.value) / 100)}/>
-        </div>
-        <>
-          <button
-            type="button"
-            aria-label="Playback settings"
-            onClick={onOpenSettings}
-            className="reel-playback-button"
-          >
-            <Settings2 size={15} />
+          <button type="button" aria-label={sound ? "Mute" : "Unmute"} aria-pressed={!sound} onClick={onToggleSound} className="reel-playback-button">
+            {sound && volume > 0 ? <Volume2 size={15} /> : <VolumeX size={15} />}
           </button>
-          {settingsMenu}
-        </>
+          <input
+            type="range"
+            aria-label="Volume"
+            min={0}
+            max={100}
+            step={1}
+            value={sound ? Math.round(volume * 100) : 0}
+            aria-valuetext={`${sound ? Math.round(volume * 100) : 0}%`}
+            onChange={(event) => onVolumeChange(Number(event.target.value) / 100)}
+          />
+        </div>
+        <button type="button" aria-label="Playback settings" onClick={onOpenSettings} className="reel-playback-button">
+          <Settings2 size={15} />
+        </button>
+        {settingsMenu}
       </div>
 
-      {showDetails ? <div
-        className={`reel-overlay-details ${hasText ? "" : "is-author-only"} pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-6 pt-16 pr-20 md:pr-4`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {showAuthor ? (
-          <div className="reel-author-row pointer-events-auto" data-author-row>
-            <Link href={profileHref} className="reel-author-row__identity" onClick={(e) => e.stopPropagation()}>
-              <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="sm" />
-              <span className="min-w-0">
-                <span className="reel-author-row__name">{reel.authorName}</span>
-                {reel.authorUsername ? <span className="reel-author-row__handle">@{reel.authorUsername}</span> : null}
-              </span>
-            </Link>
-            {action === "subscribe" && subscribed !== undefined ? (
+      <div className="reel-overlay-details pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-6 pt-16 pr-20 lg:pr-4" onClick={(e) => e.stopPropagation()}>
+        <div className="reel-author-row pointer-events-auto" data-author-row>
+          <Link href={profileHref} className="reel-author-row__name" onClick={(e) => e.stopPropagation()} {...(authorAnchor ?? {})}>
+            {reel.authorName}
+          </Link>
+          {action === "subscribe" && subscribed !== undefined ? (
+            <button
+              type="button"
+              disabled={subscribePending}
+              aria-pressed={subscribed}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSubscribe?.();
+              }}
+              className={`reel-follow-pill ${subscribed ? "is-on" : ""}`}
+            >
+              {subscribed ? "Subscribed" : "Subscribe"}
+            </button>
+          ) : action === "follow" && following !== undefined ? (
+            <button
+              type="button"
+              disabled={followPending}
+              aria-pressed={following}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFollow();
+              }}
+              className={`reel-follow-pill ${following ? "is-on" : ""}`}
+            >
+              {following ? "Following" : "Follow"}
+            </button>
+          ) : null}
+        </div>
+
+        {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}
+
+        {caption ? (
+          <div className="reel-caption-row">
+            <p className={`reel-caption ${expanded ? "is-expanded" : ""}`}>{caption}</p>
+            {longCaption ? (
               <button
                 type="button"
-                disabled={subscribePending}
-                aria-pressed={subscribed}
+                className="reel-caption__more pointer-events-auto"
+                aria-expanded={expanded}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleSubscribe?.();
+                  setExpanded((v) => !v);
                 }}
-                className={`reel-author-row__action ${subscribed ? "is-on" : ""}`}
               >
-                {subscribed ? "Subscribed" : "Subscribe"}
-              </button>
-            ) : action === "follow" && following !== undefined && !following ? (
-              <button
-                type="button"
-                disabled={followPending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFollow();
-                }}
-                className="reel-author-row__action"
-              >
-                Follow
+                {expanded ? "less" : "more"}
               </button>
             ) : null}
           </div>
         ) : null}
 
-        {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}
-
         {reel.hashtags.length > 0 ? (
-          <p className="pointer-events-auto mt-1 flex flex-wrap gap-x-2 text-[12px] font-semibold text-white/85">
+          <p className="reel-hashtags pointer-events-auto">
             {reel.hashtags.slice(0, 6).map((tag) => (
               <Link key={tag} href={`/hashtag/${encodeURIComponent(tag)}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
                 #{tag}
@@ -150,7 +152,8 @@ export function ReelOverlay({
           </p>
         ) : null}
 
-      </div> : null}
+        <p className="reel-view-count">{formatCount(reel.viewCount)} views</p>
+      </div>
     </>
   );
 }

@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 import CommentSection from "@/components/CommentSection";
-import { Avatar } from "@/components/LetterAvatar";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 
 interface ReelCommentsDrawerProps {
@@ -12,44 +11,40 @@ interface ReelCommentsDrawerProps {
   reel: ReelItem;
   focusCommentId?: string;
   onClose: () => void;
+  /**
+   * "column" (≥1024px): a full-height column beside the stage with a left
+   * divider, no scrim. "sheet" (below): a bottom sheet over the stage
+   * behind a scrim.
+   */
+  variant?: "column" | "sheet";
 }
 
 /*
-  Comments. Below 1024px a bottom sheet over the stage. From 1024px up the
-  panel takes the creator column's slot to the LEFT of the stage, so opening
-  it opens where the creator card was without shifting the centered reel.
-  The reel keeps playing. CommentSection brings its own loading,
-  posting, replies, likes and edits.
+  Comments. The thread scrolls inside; CommentSection brings the composer
+  and keeps it pinned at the bottom (its own flex column). The reel keeps
+  playing. CommentSection brings its own loading, posting, replies, likes
+  and edits.
 */
-export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose }: ReelCommentsDrawerProps) {
+export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, variant = "sheet" }: ReelCommentsDrawerProps) {
+  const column = variant === "column";
   return (
     <AnimatePresence>
       {open ? (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="reel-comments-scrim"
-            onClick={onClose}
-          />
+          {!column ? <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="reel-comments-scrim" onClick={onClose} /> : null}
           <motion.aside
             data-comments-drawer="true"
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
+            initial={column ? { x: 24, opacity: 0 } : { y: 40, opacity: 0 }}
+            animate={{ x: 0, y: 0, opacity: 1 }}
+            exit={column ? { x: 24, opacity: 0 } : { y: 40, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
             aria-label="Reel comments"
-            className="reel-comments-panel"
+            className={`reel-comments-panel is-${variant}`}
           >
-            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-              <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="sm" />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-[13px] font-bold">Comments · {formatCount(reel.commentCount)}</h3>
-                <p className="truncate text-[11px] text-brand-text/60">{reel.authorUsername ? `@${reel.authorUsername}` : reel.authorName}</p>
-              </div>
-              <button type="button" onClick={onClose} aria-label="Close comments" className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary hover:text-brand-text">
+            <div className="reel-comments-head">
+              <h3 className="text-[14px] font-bold">Comments · {formatCount(reel.commentCount)}</h3>
+              <button type="button" onClick={onClose} aria-label="Close comments" className="reel-comments-close">
                 <X className="h-4 w-4" />
               </button>
             </div>

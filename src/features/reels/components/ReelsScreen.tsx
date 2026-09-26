@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize2, Minimize2, RefreshCw, Undo2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize2, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
-import { TrendingCard, VideoShell } from "@/features/video-shell";
+import { VideoShell } from "@/features/video-shell";
 import { connectToHub } from "@/services/messageService";
 import { useReelLive } from "../hooks/useReelLive";
 import "./reels-screen.css";
@@ -21,8 +21,10 @@ import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
-import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
+import { ReelTheaterBar } from "@/features/reels/components/ReelTheaterBar";
+import { ReelTheaterPanel } from "@/features/reels/components/ReelTheaterPanel";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
+import { feedFromSearch } from "@/features/reels/feed";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
   useBlockAuthor,
@@ -35,30 +37,38 @@ import {
   useSaveReel,
   useShareReel,
 } from "@/features/reels/hooks/useReelEngagement";
+import { useCreatorHoverCard } from "@/features/reels/hooks/useCreatorHoverCard";
+import { DESKTOP_QUERY, useMediaQuery } from "@/features/reels/hooks/useMediaQuery";
 import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription";
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
+import { STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
 import { useBatchRelationships } from "@/hooks/useConnections";
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile";
 import { useGlobalToast } from "@/contexts/ToastContext";
 
 /*
-  The reels stage — one reel at a time, portrait, on a black stage; the
-  action rail beside it; comments in a drawer; prev/next by keyboard, wheel,
-  swipe or the arrow buttons. Only short-form ever reaches here: the model
-  drops long video and feed posts before they are rendered.
+  The reels stage — one reel at a time on a canvas, the video framed at its
+  own aspect ratio; the action rail beside it; comments in a column to the
+  right; prev/next by keyboard, wheel, swipe or the arrows at the right
+  edge. Only short-form ever reaches here: the model drops long video and
+  feed posts before they are rendered.
 
   The page sits inside the shared video shell (header, collapsible left
-  menu, 340px right column). What the stage owns is the middle: a creator
-  column on the left (or the comment thread when open) and the stage
-  cluster with its rail. The right column carries the trending card and
-  the "More creators" panel.
+  menu). Nothing competes with the video: the creator's social graph is a
+  hover card on the author name and the rail avatar, not a column.
+
+  Theater (`f`, the expand button): a fixed black layer over the workspace
+  — the video with stacked arrows beside it, a right panel with the author,
+  caption, counts and the thread, and a full-width control bar along the
+  bottom. The browser's fullscreen is requested as well; if it refuses,
+  the layer alone is the theater.
 
   Deep links: /reels/{id} → ?reelId= pins that reel above the feed, as the
   Android screen does, so a shared link opens on the reel and swiping down
-  continues into the feed.
+  continues into the feed. ?feed=following switches to the Following feed.
 */
 
 const NAV_COOLDOWN_MS = 320;
@@ -68,7 +78,7 @@ const SWIPE_THRESHOLD = 48;
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
   const tag = t.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"], [data-reel-side-panel]'));
+  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"], [data-reel-side-panel], [data-creator-card]'));
 }
 
 export function ReelsScreen() {
@@ -76,8 +86,10 @@ export function ReelsScreen() {
   const reduceMotion = useReducedMotion();
   const qc = useQueryClient();
   const toast = useGlobalToast();
+  const desktop = useMediaQuery(DESKTOP_QUERY);
   const deepLinkId = searchParams.get("reelId") || searchParams.get("reel") || searchParams.get("postId");
   const focusCommentId = searchParams.get("focusCommentId") || undefined;
+  const feedKind = feedFromSearch(searchParams);
 
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -91,7 +103,9 @@ export function ReelsScreen() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [qualityHeights, setQualityHeights] = useState<number[]>([]);
   const [captionsAvailable, setCaptionsAvailable] = useState<"unknown" | "yes" | "no">("unknown");
-  const [fullscreen, setFullscreen] = useState(false);
+  const [theater, setTheater] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [clock, setClock] = useState({ currentMs: 0, durationMs: 0, bufferedMs: 0 });
   const [viewerId, setViewerId] = useState("");
   const [clear, dispatchClear] = useReducer(clearScreenReducer, CLEAR_SCREEN_INITIAL);
 
@@ -99,6 +113,8 @@ export function ReelsScreen() {
   const playerRef = useRef<ReelVideoHandle>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const theaterRef = useRef(false);
+  theaterRef.current = theater;
   const navAtRef = useRef(0);
   const wheelAccRef = useRef(0);
   const touchStartRef = useRef<number | null>(null);
@@ -110,7 +126,7 @@ export function ReelsScreen() {
   }, []);
 
   /* ── data ──────────────────────────────────────────────── */
-  const feed = useReelFeed(false);
+  const feed = useReelFeed(feedKind === "following");
   const pinned = useQuery({
     queryKey: ["reels", "pinned", deepLinkId],
     queryFn: () => fetchReel(deepLinkId!),
@@ -129,8 +145,15 @@ export function ReelsScreen() {
   }, [feed.data, pinned.data]);
 
   const active = reels[index];
-  useReelLive(active?.id, commentsOpen);
+  const showComments = theater || (commentsOpen && Boolean(active) && !active.commentsDisabled);
+  useReelLive(active?.id, showComments);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
+
+  // Switching feeds starts from the top of the new one.
+  useEffect(() => {
+    setIndex(0);
+    setDirection(1);
+  }, [feedKind]);
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -157,6 +180,7 @@ export function ReelsScreen() {
   // Captions availability is per reel; the player reports it once asked.
   useEffect(() => {
     setCaptionsAvailable("unknown");
+    setClock({ currentMs: 0, durationMs: 0, bufferedMs: 0 });
   }, [active?.id]);
 
   /* ── relationship / follow / subscribe ─────────────────── */
@@ -185,6 +209,12 @@ export function ReelsScreen() {
       toast({ type: "error", title: subscription.subscribed ? "Could not unsubscribe" : "Could not subscribe" });
     }
   };
+
+  const creatorHover = useCreatorHoverCard(
+    active
+      ? { reel: active, viewerId, isOwn, relationship, followPending, onToggleFollow: () => void toggleFollow() }
+      : null,
+  );
 
   /* ── engagement ────────────────────────────────────────── */
   const like = useLikeReel();
@@ -287,7 +317,7 @@ export function ReelsScreen() {
     );
   };
 
-  /* ── clear screen ─────────────────────────────────────── */
+  /* ── clear screen (not in theater: the bar is the UI there) ── */
   useEffect(() => {
     if (!clear.hint) return;
     const t = setTimeout(() => dispatchClear({ type: "hint-expired" }), CLEAR_SCREEN_HINT_MS);
@@ -295,10 +325,49 @@ export function ReelsScreen() {
   }, [clear.hint]);
 
   const enterClearScreen = () => {
+    if (theater) return;
     setMoreOpen(false);
     setSettingsOpen(false);
     dispatchClear({ type: "enter" });
   };
+
+  /* ── theater ───────────────────────────────────────────── */
+  const enterTheater = useCallback(async () => {
+    setTheater(true);
+    setMoreOpen(false);
+    setSettingsOpen(false);
+    dispatchClear({ type: "tap" });
+    const el = workspaceRef.current;
+    if (!el || document.fullscreenElement) return;
+    try {
+      await el.requestFullscreen();
+    } catch {
+      /* refused: the fixed layer alone is the theater */
+    }
+  }, []);
+  const exitTheater = useCallback(async () => {
+    setTheater(false);
+    setMoreOpen(false);
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+  const toggleTheater = useCallback(() => {
+    if (theaterRef.current) void exitTheater();
+    else void enterTheater();
+  }, [enterTheater, exitTheater]);
+  // Leaving the browser's fullscreen (its own Escape, the OS) leaves the theater too.
+  useEffect(() => {
+    const onChange = () => {
+      if (!document.fullscreenElement) setTheater(false);
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
 
   /* ── navigation ────────────────────────────────────────── */
   const go = useCallback(
@@ -326,6 +395,12 @@ export function ReelsScreen() {
       if (clear.on) {
         e.preventDefault();
         dispatchClear({ type: "key" });
+        return;
+      }
+      if (e.key === "Escape" && theater) {
+        void exitTheater();
+        setCommentsOpen(false);
+        setSettingsOpen(false);
         return;
       }
       if (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="alertdialog"], [role="toolbar"], [role="slider"]')) return;
@@ -363,7 +438,7 @@ export function ReelsScreen() {
           setCommentsOpen((v) => !v);
           break;
         case "f":
-          void toggleFullscreen();
+          toggleTheater();
           break;
         case "h":
           enterClearScreen();
@@ -378,7 +453,7 @@ export function ReelsScreen() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [go, prefs.sound, active?.id, active?.viewerLiked, clear.on, blockOpen, deleteOpen]);
+  }, [go, prefs.sound, active?.id, active?.viewerLiked, clear.on, blockOpen, deleteOpen, theater]);
 
   const onWheel = (e: React.WheelEvent) => {
     if (isTypingTarget(e.target)) return;
@@ -389,7 +464,10 @@ export function ReelsScreen() {
     }
   };
   const onTouchStart = (e: React.TouchEvent) => {
-    if (isTypingTarget(e.target) || (e.target instanceof HTMLElement && e.target.closest('button, a, [role="slider"]'))) { touchStartRef.current = null; return; }
+    if (isTypingTarget(e.target) || (e.target instanceof HTMLElement && e.target.closest('button, a, [role="slider"]'))) {
+      touchStartRef.current = null;
+      return;
+    }
     touchStartRef.current = e.touches[0]?.clientY ?? null;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -400,28 +478,26 @@ export function ReelsScreen() {
     if (Math.abs(dy) >= SWIPE_THRESHOLD) go(dy < 0 ? 1 : -1);
   };
 
-  const toggleFullscreen = async () => {
-    const el = workspaceRef.current;
-    if (!el) return;
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await el.requestFullscreen();
-    } catch {
-      toast({ type: "error", title: "Full screen is unavailable in this browser" });
-    }
-  };
-  useEffect(() => {
-    const onChange = () => setFullscreen(document.fullscreenElement === workspaceRef.current);
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
-
   const onEnded = useCallback(() => {
     if (prefs.onEnd === "next") go(1);
   }, [prefs.onEnd, go]);
 
   const onProgress = useCallback(() => {}, []);
   const onCaptionsAvailable = useCallback((available: boolean) => setCaptionsAvailable(available ? "yes" : "no"), []);
+  // The bar's clock: only worth a render while the bar is on screen.
+  const onTime = useCallback((currentMs: number, durationMs: number, bufferedMs: number) => {
+    if (theaterRef.current) setClock({ currentMs, durationMs, bufferedMs });
+  }, []);
+  const onVolumeChange = (volume: number) => {
+    playerRef.current?.setVolume(volume);
+    updatePrefs({ volume, sound: volume > 0 });
+  };
+  const onToggleSound = () => {
+    const sound = !prefs.sound;
+    const volume = prefs.volume || 1;
+    playerRef.current?.setVolume(sound ? volume : 0);
+    updatePrefs({ sound, volume });
+  };
 
   /* ── states ────────────────────────────────────────────── */
   const loading = (feed.isLoading || (Boolean(deepLinkId) && pinned.isLoading)) && reels.length === 0;
@@ -449,15 +525,20 @@ export function ReelsScreen() {
     />
   ) : null;
 
+  const arrows = (extraClass: string) =>
+    reels.length > 1 ? (
+      <div className={`reels-navigation ${extraClass}`} data-clear-screen={clear.on ? "" : undefined}>
+        <NavButton label="Previous reel" disabled={index === 0} onClick={() => go(-1)} icon={<ChevronUp className="h-5 w-5" />} />
+        <NavButton label="Next reel" disabled={index >= reels.length - 1 && !feed.hasNextPage} onClick={() => go(1)} icon={<ChevronDown className="h-5 w-5" />} />
+      </div>
+    ) : null;
+
+  const layoutTransition = { duration: reduceMotion ? 0 : 0.28, ease: "easeOut" as const };
+
   return (
     <VideoShell app="reels" immersive>
       <div ref={workspaceRef} className="reels-workspace">
-        <main
-          className="reels-main"
-          onWheel={onWheel}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
+        <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
             <StateLayout stageRef={stageRef}>
               <div className="flex h-full items-center justify-center text-[13px] text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
@@ -468,7 +549,14 @@ export function ReelsScreen() {
                 title="Couldn't load reels"
                 hint={(feed.error as { message?: string })?.message || "Check your connection and try again."}
                 action={
-                  <button type="button" onClick={() => { void feed.refetch(); if (deepLinkId) void pinned.refetch(); }} className="reel-state-action">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void feed.refetch();
+                      if (deepLinkId) void pinned.refetch();
+                    }}
+                    className="reel-state-action"
+                  >
                     <RefreshCw className="h-4 w-4" /> Retry
                   </button>
                 }
@@ -476,186 +564,217 @@ export function ReelsScreen() {
             </StateLayout>
           ) : empty ? (
             <StateLayout stageRef={stageRef}>
-              <StateCard
-                title="No reels yet"
-                hint="Be the first — reels are short videos up to 5 minutes."
-                action={
-                  <Link href="/reels/create" className="reel-state-action">
-                    <Clapperboard className="h-4 w-4" /> Create a reel
-                  </Link>
-                }
-              />
+              {feedKind === "following" ? (
+                <StateCard
+                  icon={<UserRoundCheck className="h-10 w-10 opacity-60" />}
+                  title="Nothing from people you follow yet"
+                  hint="Reels from creators you follow land here. Until then, For You has plenty."
+                  action={
+                    <Link href="/reels" className="reel-state-action">
+                      <Clapperboard className="h-4 w-4" /> Go to For You
+                    </Link>
+                  }
+                />
+              ) : (
+                <StateCard
+                  title="No reels yet"
+                  hint="Be the first — reels are short videos up to 5 minutes."
+                  action={
+                    <Link href="/reels/create" className="reel-state-action">
+                      <Clapperboard className="h-4 w-4" /> Create a reel
+                    </Link>
+                  }
+                />
+              )}
             </StateLayout>
           ) : active ? (
             <div
               className="reels-content"
-              data-comments-open={commentsOpen && !active.commentsDisabled}
+              data-comments-open={showComments}
               data-clear-screen={clear.on ? "" : undefined}
+              data-theater={theater ? "" : undefined}
             >
-              {/* left column: the creator, or the thread when comments are open */}
-              <div className="reel-left-column" data-reel-side-panel>
-                {commentsOpen && !active.commentsDisabled ? (
-                  <ReelCommentsDrawer open reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
-                ) : (
-                  <ReelCreatorPanel
-                    reel={active}
-                    viewerId={viewerId}
-                    isOwn={isOwn}
-                    relationship={relationship}
-                    followPending={followPending}
-                    onToggleFollow={toggleFollow}
-                  />
-                )}
-              </div>
-
-              <motion.div layout transition={{ duration: reduceMotion ? 0 : 0.28, ease: "easeOut" }} className="reel-center-column">
-              <div
-                className="reel-stage-cluster"
-                onClickCapture={(e) => {
-                  // A tap anywhere on the stage brings the controls back and does nothing else.
-                  if (!clear.on) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dispatchClear({ type: "tap" });
-                }}
-              >
-              {/* mirrors the rail's width so the stage sits on the exact centre line */}
-              <div className="reel-rail-spacer" aria-hidden="true" />
-              <StageFrame stageRef={stageRef}>
-                <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                  <motion.div
-                    key={active.id}
-                    custom={direction}
-                    initial={{ y: reduceMotion ? 0 : direction * 30, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: reduceMotion ? 0 : direction * -30, opacity: 0 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    className="reel-portrait-content"
-                  >
-                    <ReelVideo
-                      ref={playerRef}
-                      reel={active}
-                      active
-                      position={index}
-                      prefs={prefs}
-                      onPrefsChange={updatePrefs}
-                      onEnded={onEnded}
-                      onDoubleTap={onDoubleTapLike}
-                      onQualityLevels={setQualityHeights}
-                      onProgress={onProgress}
-                      onCaptionsAvailable={onCaptionsAvailable}
-                    />
-                    <ReelOverlay
-                      reel={active}
-                      isOwn={isOwn}
-                      following={following}
-                      followPending={followPending}
-                      onToggleFollow={() => void toggleFollow()}
-                      subscribed={subscription.subscribed}
-                      subscribePending={subscription.pending}
-                      onToggleSubscribe={() => void toggleSubscribe()}
-                      showAuthor
-                      sound={prefs.sound}
-                      volume={prefs.volume}
-                      onVolumeChange={(volume) => {
-                        playerRef.current?.setVolume(volume);
-                        updatePrefs({ volume, sound: volume > 0 });
-                      }}
-                      onToggleSound={() => {
-                        const sound = !prefs.sound;
-                        const volume = prefs.volume || 1;
-                        playerRef.current?.setVolume(sound ? volume : 0);
-                        updatePrefs({ sound, volume });
-                      }}
-                      onOpenSettings={() => setSettingsOpen((v) => !v)}
-                      settingsMenu={
-                        <ReelSettingsMenu
-                          open={settingsOpen}
-                          onClose={() => setSettingsOpen(false)}
+              {/* stage area: the video on the centre line, arrows at the right edge */}
+              <motion.div layout transition={layoutTransition} className="reel-stage-area">
+                {theater ? (
+                  <button type="button" aria-label="Exit theater" onClick={() => void exitTheater()} className="reel-theater-close">
+                    <X className="h-5 w-5" />
+                  </button>
+                ) : null}
+                <div
+                  className="reel-stage-cluster"
+                  onClickCapture={(e) => {
+                    // A tap anywhere on the stage brings the controls back and does nothing else.
+                    if (!clear.on) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dispatchClear({ type: "tap" });
+                  }}
+                >
+                  {/* mirrors the rail's width so the video itself sits on the exact centre line */}
+                  <div className="reel-rail-spacer" aria-hidden="true" />
+                  <StageFrame stageRef={stageRef} aspect={stageAspect(active.media.width, active.media.height)} layoutTransition={layoutTransition}>
+                    <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                      <motion.div
+                        key={active.id}
+                        custom={direction}
+                        initial={{ y: reduceMotion ? 0 : direction * 30, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: reduceMotion ? 0 : direction * -30, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        className="reel-portrait-content"
+                      >
+                        <ReelVideo
+                          ref={playerRef}
+                          reel={active}
+                          active
+                          position={index}
                           prefs={prefs}
-                          onChange={updatePrefs}
-                          qualityHeights={qualityHeights}
-                          captionsAvailable={captionsAvailable}
+                          onPrefsChange={updatePrefs}
+                          onEnded={onEnded}
+                          onDoubleTap={onDoubleTapLike}
+                          onQualityLevels={setQualityHeights}
+                          onProgress={onProgress}
+                          onCaptionsAvailable={onCaptionsAvailable}
+                          onTime={onTime}
+                          onPlayState={setPaused}
+                          chromeless={theater}
                         />
-                      }
-                    />
-                    {/* phone rail: floats over the stage */}
-                    <div className="reel-mobile-rail">
+                        {theater ? null : (
+                          <ReelOverlay
+                            reel={active}
+                            isOwn={isOwn}
+                            following={following}
+                            followPending={followPending}
+                            onToggleFollow={() => void toggleFollow()}
+                            subscribed={subscription.subscribed}
+                            subscribePending={subscription.pending}
+                            onToggleSubscribe={() => void toggleSubscribe()}
+                            authorAnchor={creatorHover.anchorProps("overlay")}
+                            sound={prefs.sound}
+                            volume={prefs.volume}
+                            onVolumeChange={onVolumeChange}
+                            onToggleSound={onToggleSound}
+                            onOpenSettings={() => setSettingsOpen((v) => !v)}
+                            settingsMenu={
+                              <ReelSettingsMenu
+                                open={settingsOpen}
+                                onClose={() => setSettingsOpen(false)}
+                                prefs={prefs}
+                                onChange={updatePrefs}
+                                qualityHeights={qualityHeights}
+                                captionsAvailable={captionsAvailable}
+                              />
+                            }
+                          />
+                        )}
+                        {/* phone / tablet rail: floats over the stage */}
+                        {theater ? null : (
+                          <div className="reel-mobile-rail">
+                            <ReelRail
+                              variant="phone"
+                              reel={active}
+                              onLike={onLike}
+                              onComments={() => setCommentsOpen(true)}
+                              onShare={onShare}
+                              onSave={onSave}
+                              onMore={() => setMoreOpen((v) => !v)}
+                              moreMenu={moreMenu}
+                            />
+                          </div>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                    {theater ? null : (
+                      <button
+                        type="button"
+                        aria-label="Theater mode"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void enterTheater();
+                        }}
+                        className="reel-expand-button"
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    <AnimatePresence>
+                      {clear.hint ? (
+                        <motion.div key="clear-hint" role="status" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="reel-clear-hint">
+                          Tap to show controls
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </StageFrame>
+
+                  {theater ? (
+                    /* theater: the arrows stand where the rail was, right beside the video */
+                    <div className="reel-desktop-rail is-arrows">{arrows("is-beside")}</div>
+                  ) : (
+                    <div className="reel-desktop-rail">
                       <ReelRail
                         reel={active}
                         onLike={onLike}
-                        onComments={() => setCommentsOpen(true)}
+                        onComments={() => setCommentsOpen((v) => !v)}
                         onShare={onShare}
                         onSave={onSave}
                         onMore={() => setMoreOpen((v) => !v)}
                         moreMenu={moreMenu}
+                        avatarAnchor={creatorHover.anchorProps("rail")}
                       />
                     </div>
-                  </motion.div>
-                </AnimatePresence>
-                {/* fullscreen toggle (desktop) */}
-                <button
-                  type="button"
-                  aria-label={fullscreen ? "Exit full screen" : "Full screen"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void toggleFullscreen();
-                  }}
-                  className="reel-expand-button"
-                >
-                  {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                </button>
-                <AnimatePresence>
-                  {clear.hint ? (
-                    <motion.div
-                      key="clear-hint"
-                      role="status"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="reel-clear-hint"
-                    >
-                      Tap to show controls
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-              </StageFrame>
+                  )}
+                </div>
 
-              {/* desktop rail */}
-              <div className="reel-desktop-rail">
-                <ReelRail
+                {theater ? null : arrows("is-edge")}
+              </motion.div>
+
+              {/* right column: the theater panel, the comments column, or the phone sheet */}
+              {theater ? (
+                <ReelTheaterPanel
                   reel={active}
+                  isOwn={isOwn}
+                  following={following}
+                  followPending={followPending}
+                  onToggleFollow={() => void toggleFollow()}
+                  subscribed={subscription.subscribed}
+                  subscribePending={subscription.pending}
+                  onToggleSubscribe={() => void toggleSubscribe()}
                   onLike={onLike}
-                  onComments={() => setCommentsOpen((v) => !v)}
-                  onShare={onShare}
                   onSave={onSave}
+                  onShare={onShare}
+                  focusCommentId={focusCommentId}
+                />
+              ) : desktop ? (
+                <div className="reel-comments-column" data-reel-side-panel>
+                  <ReelCommentsDrawer variant="column" open={showComments} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
+                </div>
+              ) : (
+                <div className="reel-comments-sheet">
+                  <ReelCommentsDrawer variant="sheet" open={showComments} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
+                </div>
+              )}
+
+              {theater ? (
+                <ReelTheaterBar
+                  player={playerRef}
+                  paused={paused}
+                  currentMs={clock.currentMs}
+                  durationMs={clock.durationMs || active.media.durationMs}
+                  bufferedMs={clock.bufferedMs}
+                  prefs={prefs}
+                  onPrefsChange={updatePrefs}
+                  onVolumeChange={onVolumeChange}
+                  onToggleSound={onToggleSound}
                   onMore={() => setMoreOpen((v) => !v)}
                   moreMenu={moreMenu}
                 />
-              </div>
-              </div>
-              </motion.div>
-
-              {/* right column: trending, the one thing worth a glance away from the video */}
-              <div className="reel-right-column" data-reel-side-panel>
-                <TrendingCard kind="flick" limit={6} />
-              </div>
-
-              {/* narrow screens: comments as a bottom sheet */}
-              <div className="reel-comments-sheet">
-                <ReelCommentsDrawer open={commentsOpen && !active.commentsDisabled} reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
-              </div>
-            </div>
-          ) : null}
-
-          {/* prev / next */}
-          {reels.length > 1 ? (
-            <div className="reels-navigation" data-clear-screen={clear.on ? "" : undefined}>
-              <NavButton label="Previous reel" disabled={index === 0} onClick={() => go(-1)} icon={<ChevronUp className="h-5 w-5" />} />
-              <NavButton label="Next reel" disabled={index >= reels.length - 1 && !feed.hasNextPage} onClick={() => go(1)} icon={<ChevronDown className="h-5 w-5" />} />
+              ) : null}
             </div>
           ) : null}
         </main>
+
+        {creatorHover.card}
 
         {active ? (
           <>
@@ -683,13 +802,7 @@ export function ReelsScreen() {
             />
             <AnimatePresence>
               {descriptionOpen ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="reel-confirm-scrim"
-                  onClick={() => setDescriptionOpen(false)}
-                >
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="reel-confirm-scrim" onClick={() => setDescriptionOpen(false)}>
                   <motion.div
                     role="dialog"
                     aria-modal
@@ -724,24 +837,33 @@ export function ReelsScreen() {
 
 /* ── layout pieces ─────────────────────────────────────────── */
 
-function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
+function StageFrame({
+  stageRef,
+  aspect,
+  layoutTransition,
+  children,
+}: {
+  stageRef: React.RefObject<HTMLDivElement | null>;
+  aspect: number;
+  layoutTransition?: { duration: number; ease: "easeOut" };
+  children: React.ReactNode;
+}) {
   return (
-    <div
+    <motion.div
       ref={stageRef}
-      // Width from the viewport height, not from h-full: a row flex item's
-      // width is resolved before its stretched height, so aspect-ratio on a
-      // percentage height collapses to 0. --reel-height is what the viewport
-      // leaves after the header and the stage padding.
-      //
-      // The frame is 3:5, a touch wider than the 9:16 the videos are shot
-      // in: the founder wanted more width without the stage leaving the
-      // viewport, and the height is what the viewport limits. A portrait
-      // video covers the frame (ReelVideo uses object-cover for portrait),
-      // losing ~6% at the top and bottom edges.
+      layout
+      transition={layoutTransition}
+      // The frame takes the media's own ratio (--reel-ar): tall for a
+      // portrait reel, wide for a landscape one. Its width is the smaller of
+      // what the stage height allows (height × ratio) and what the cluster
+      // leaves beside the rail and its mirror; the CSS in reels-screen.css
+      // does the arithmetic. --reel-height is what the viewport leaves after
+      // the header and the stage padding.
       className="reel-stage"
+      style={{ "--reel-ar": aspect } as CSSProperties}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -749,19 +871,23 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
 function StateLayout({ stageRef, children }: { stageRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode }) {
   return (
     <div className="reels-content" data-single-column="">
-      <div className="reel-center-column">
+      <div className="reel-stage-area">
         <div className="reel-stage-cluster">
-          <StageFrame stageRef={stageRef}>{children}</StageFrame>
+          <div className="reel-rail-spacer" aria-hidden="true" />
+          <StageFrame stageRef={stageRef} aspect={STAGE_DEFAULT_ASPECT}>
+            {children}
+          </StageFrame>
+          <div className="reel-desktop-rail" aria-hidden="true" />
         </div>
       </div>
     </div>
   );
 }
 
-function StateCard({ title, hint, action }: { title: string; hint: string; action?: React.ReactNode }) {
+function StateCard({ title, hint, action, icon }: { title: string; hint: string; action?: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="reel-state-card">
-      <Clapperboard className="h-10 w-10 opacity-60" />
+      {icon ?? <Clapperboard className="h-10 w-10 opacity-60" />}
       <h2 className="text-[16px] font-bold">{title}</h2>
       <p className="max-w-xs text-[13px] opacity-70">{hint}</p>
       {action ? <div className="mt-2">{action}</div> : null}
@@ -771,13 +897,7 @@ function StateCard({ title, hint, action }: { title: string; hint: string; actio
 
 function NavButton({ label, disabled, onClick, icon }: { label: string; disabled?: boolean; onClick: () => void; icon: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-secondary text-brand-text shadow transition hover:bg-brand-divider disabled:opacity-30"
-    >
+    <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className="reel-nav-button">
       {icon}
     </button>
   );
