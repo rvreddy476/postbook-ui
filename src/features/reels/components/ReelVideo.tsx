@@ -34,6 +34,7 @@ export interface ReelVideoHandle {
   seekBy(seconds: number): void;
   seekTo(ms: number): void;
   isPaused(): boolean;
+  setVolume(volume: number): void;
 }
 
 interface ReelVideoProps {
@@ -292,6 +293,15 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     ref,
     () => ({
       togglePlay,
+      setVolume: (volume) => {
+        const video = videoRef.current;
+        if (!video) return;
+        const level = Math.max(0, Math.min(1, volume));
+        video.volume = level;
+        video.muted = level === 0;
+        isMutedRef.current = level === 0;
+        setForcedMuted(false);
+      },
       seekBy: (seconds) => {
         const video = videoRef.current;
         if (!video) return;
@@ -410,7 +420,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
             e.stopPropagation();
             unmute();
           }}
-          className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur hover:bg-black/80"
+          className="reel-unmute-hint absolute left-3 bottom-10 z-20 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur hover:bg-black/80"
         >
           <VolumeX className="h-4 w-4" /> Tap to unmute
         </button>

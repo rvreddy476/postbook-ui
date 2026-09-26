@@ -26,6 +26,7 @@ import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { playNotificationSound } from '@/hooks/useNotificationSound';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import './header.css';
+import { resolveAppBrand } from '@/lib/appBrand';
 import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
 
 /**
@@ -127,6 +128,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, onCreateClick, onLogout, onToggleContactList, navExpanded = false, fullWidth = false }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const appBrand = resolveAppBrand(pathname);
   const { headerRef, alignment } = useFeedSearchAlignment((pathname === '/' || pathname === '/feed') && (activeTab === 'Home' || activeTab === 'Feed'));
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -411,7 +413,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
     <header ref={headerRef} data-feed-alignment={alignment ? (alignment.width ? 'field' : 'toggle') : undefined} className={`app-header fixed top-0 z-100 h-16 text-brand-text border-b border-brand-divider transition-[left] duration-300 ease-out ${fullWidth ? '' : navExpanded ? 'md:left-64' : 'md:left-16'} left-0 right-0`}>
       {/* Column 1 — brand mark, constant on every route */}
       <div className="app-header__identity">
-        {(pathname === '/' || fullWidth) && <Link href="/" aria-label="VChat home" className={fullWidth ? `app-header__brand ${pathname === '/' ? '' : 'hidden md:block'}` : 'app-header__brand md:hidden'}>VChat</Link>}
+        {appBrand.key !== 'home' ? <Link href={appBrand.href} className="app-header__brand">{appBrand.name}</Link> : (pathname === '/' || fullWidth) && <Link href="/" aria-label="VChat home" className={fullWidth ? `app-header__brand ${pathname === '/' ? '' : 'hidden md:block'}` : 'app-header__brand md:hidden'}>VChat</Link>}
         {/* Back, on phones only. A phone's browser has no app back button
             in reach and the sidebar is collapsed, so a page like a profile
             or a conversation had no visible way out except the address bar.

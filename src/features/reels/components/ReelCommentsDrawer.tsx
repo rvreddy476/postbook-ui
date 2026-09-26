@@ -17,8 +17,8 @@ interface ReelCommentsDrawerProps {
 /*
   Comments. On phones a bottom sheet over the stage. From md up the panel
   takes the creator column's slot to the LEFT of the stage, so opening it
-  slides the reel to the right and the thread opens where the creator card
-  was — the reel keeps playing. CommentSection brings its own loading,
+  opens where the creator card was without shifting the centered reel.
+  The reel keeps playing. CommentSection brings its own loading,
   posting, replies, likes and edits.
 */
 export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose }: ReelCommentsDrawerProps) {
@@ -41,7 +41,7 @@ export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose }: Reel
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
             aria-label="Reel comments"
-            className="reel-comments-panel fixed inset-x-0 bottom-0 z-40 flex h-[72vh] flex-col rounded-t-2xl border border-border bg-brand-card text-brand-text shadow-2xl md:static md:h-full md:w-[min(520px,38vw)] md:shrink-0 md:rounded-2xl md:shadow-none"
+            className="reel-comments-panel"
           >
             <div className="flex items-center gap-3 border-b border-border px-4 py-3">
               <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="sm" />

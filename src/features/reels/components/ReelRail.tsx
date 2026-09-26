@@ -23,29 +23,29 @@ interface ReelRailProps {
 */
 export function ReelRail({ reel, onLike, onComments, onShare, onSave, onMore, moreMenu }: ReelRailProps) {
   return (
-    <div className="pointer-events-auto flex flex-col items-center gap-4 md:gap-5" onClick={(e) => e.stopPropagation()}>
+    <div className="reel-action-rail" onClick={(e) => e.stopPropagation()}>
       <RailButton
         label={reel.viewerLiked ? "Unlike" : "Like"}
         count={reel.likeCount}
         active={reel.viewerLiked}
         onClick={onLike}
-        icon={<Heart className={`h-6 w-6 ${reel.viewerLiked ? "fill-current" : ""}`} />}
+        icon={<Heart size={18} className={reel.viewerLiked ? "fill-current" : ""} />}
         activeClass="text-danger md:text-danger"
       />
       {!reel.commentsDisabled ? (
-        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<MessageCircle className="h-6 w-6" />} />
+        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<MessageCircle size={18} />} />
       ) : null}
       {!reel.shareHidden ? (
-        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<Send className="h-6 w-6" />} />
+        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<Send size={18} />} />
       ) : null}
       <RailButton
         label={reel.viewerSaved ? "Unsave" : "Save"}
         active={reel.viewerSaved}
         onClick={onSave}
-        icon={<Bookmark className={`h-6 w-6 ${reel.viewerSaved ? "fill-current" : ""}`} />}
+        icon={<Bookmark size={18} className={reel.viewerSaved ? "fill-current" : ""} />}
       />
       <div className="relative">
-        <RailButton label="More" onClick={onMore} icon={<MoreHorizontal className="h-6 w-6" />} />
+        <RailButton label="More" onClick={onMore} icon={<MoreHorizontal size={18} />} />
         {moreMenu}
       </div>
     </div>
@@ -73,17 +73,15 @@ function RailButton({
       aria-label={label}
       aria-pressed={active}
       onClick={onClick}
-      className="group flex flex-col items-center gap-1"
+      className={`reel-action-button ${active ? activeClass : ''}`}
     >
       <span
-        className={`flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition group-hover:bg-white/25 group-active:scale-90 md:bg-brand-secondary md:text-brand-text md:backdrop-blur-none md:group-hover:bg-brand-divider ${
-          active ? activeClass : ""
-        }`}
+        className="reel-action-icon"
       >
         {icon}
       </span>
       {typeof count === "number" ? (
-        <span className="text-[11px] font-semibold tabular-nums text-white drop-shadow md:text-brand-text md:drop-shadow-none">
+        <span className="reel-action-count">
           {formatCount(count)}
         </span>
       ) : null}

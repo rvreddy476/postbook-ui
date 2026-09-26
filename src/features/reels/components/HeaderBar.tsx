@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, MessageCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
 import { resolveAppBrand } from "@/lib/appBrand";
+import { useUnreadCount } from '@/hooks/useActivityNotifications';
+import './app-bar.css';
 
 interface HeaderBarProps {
   /**
@@ -36,6 +38,7 @@ export function HeaderBar({
   const brand = resolveAppBrand(pathname);
   const BrandIcon = brand.icon;
   const [internalSearch, setInternalSearch] = useState("");
+  const unread = useUnreadCount();
 
   const searchValue = externalSearch ?? internalSearch;
   const onSearchValueChange = externalOnChange ?? setInternalSearch;
@@ -49,50 +52,48 @@ export function HeaderBar({
   return (
     <header
       data-app={brand.key}
-      className="sticky top-0 z-50 h-16 bg-brand-text text-brand-bg dark:bg-brand-bg dark:text-brand-text dark:border-b dark:border-brand-divider"
+      className="context-app-bar"
     >
-      <div className="flex h-full items-center px-4 sm:px-10">
+      <div className="context-app-bar__inner">
         {/* Left: product badge → home, then the app wordmark */}
-        <div className="flex w-[240px] shrink-0 items-center gap-3">
+        <div className="context-app-bar__brand">
           <Link href="/" aria-label="VChat home" className="group flex shrink-0 items-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded-[0.7rem] orchid-gradient shadow-lg shadow-brand-text/20 transition-all duration-500 group-hover:scale-105 group-hover:rotate-6">
-              <span className="text-base font-black tracking-tighter text-white">VC</span>
+            <div className="text-xl font-extrabold tracking-tight text-primary-ink">
+              <span>VC</span>
             </div>
           </Link>
-          <div className="h-5 w-px bg-white/20 dark:bg-brand-divider" />
-          <Link href={brand.href} className="flex min-w-0 items-center gap-2 text-white dark:text-brand-text">
-            <BrandIcon className="h-[18px] w-[18px] shrink-0 text-white/80 dark:text-brand-text/80" />
-            <span className="truncate text-xl font-black italic tracking-tighter">{sectionLabel ?? brand.name}</span>
+          <div className="h-5 border-l border-border" />
+          <Link href={brand.href} className="flex min-w-0 items-center gap-2 text-brand-text">
+            <BrandIcon className="h-5 w-5 shrink-0 text-primary-ink" />
+            <span className="truncate text-lg font-bold tracking-tight">{sectionLabel ?? brand.name}</span>
           </Link>
         </div>
 
         {/* Center: Search */}
-        <div className="flex flex-1 justify-center">
-          <form onSubmit={onSearchSubmit} className="w-[min(560px,50vw)] max-w-full">
+        <div className="context-app-bar__search">
+          <form onSubmit={onSearchSubmit} role="search" className="w-full">
             <div className="group relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-white/70 dark:text-brand-text/40" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <input
                 value={searchValue}
                 onChange={(event) => onSearchValueChange(event.target.value)}
                 placeholder={brand.searchPlaceholder}
-                className="h-[40px] w-full rounded-full border border-white/20 bg-white/10 pl-11 pr-4 text-[13px] text-white placeholder:text-white/40 outline-hidden transition-all focus:border-white/30 focus:bg-white/20 dark:border-brand-divider dark:bg-brand-secondary dark:text-brand-text dark:placeholder:text-brand-text/30"
+                aria-label={brand.searchPlaceholder}
+                className="context-app-bar__input"
               />
             </div>
           </form>
         </div>
 
         {/* Right: Create + Notifications + Profile */}
-        <div className="flex w-[240px] shrink-0 items-center justify-end gap-2">
+        <div className="context-app-bar__actions">
           <CreateButton />
-
-          <button
-            type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white dark:text-brand-text/60 dark:hover:bg-primary-ink/10 dark:hover:text-primary-ink"
-            aria-label="Notifications"
-          >
+          <Link href="/search" className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link>
+          <Link href="/messenger" className="context-app-bar__action" aria-label="Messenger"><MessageCircle size={20}/></Link>
+          <Link href="/notifications" className="context-app-bar__action" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary-ink" />
-          </button>
+            {(unread.data?.count ?? 0) > 0 ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary-ink" /> : null}
+          </Link>
 
           <ProfileDropdown />
         </div>

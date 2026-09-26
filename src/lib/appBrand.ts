@@ -12,6 +12,7 @@ import {
   Tv,
   UserRoundPlus,
   Users,
+  Home, Compass, SquarePlus, Bookmark, History, ListVideo,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,7 +56,7 @@ export const APP_BRANDS: readonly AppBrand[] = [
   { key: "groups", name: "Groups", href: "/groups", icon: Users, searchPlaceholder: "Search groups...", prefixes: ["/groups"] },
   { key: "communities", name: "Communities", href: "/communities", icon: Globe2, searchPlaceholder: "Search communities...", prefixes: ["/communities"] },
   { key: "connections", name: "Connections", href: "/connections", icon: UserRoundPlus, searchPlaceholder: "Search people...", prefixes: ["/connections"] },
-  { key: "messenger", name: "Messenger", href: "/messages", icon: MessageSquare, searchPlaceholder: "Search conversations...", prefixes: ["/messages", "/messenger", "/chat"] },
+  { key: "messenger", name: "Messenger", href: "/messenger", icon: MessageSquare, searchPlaceholder: "Search conversations...", prefixes: ["/messages", "/messenger", "/chat"] },
   { key: "live", name: "Live", href: "/live", icon: Radio, searchPlaceholder: "Search live streams...", prefixes: ["/live"] },
   { key: "ask", name: "Ask", href: "/qa", icon: HelpCircle, searchPlaceholder: "Search questions...", prefixes: ["/qa"] },
   { key: "pages", name: "Pages", href: "/pages", icon: Briefcase, searchPlaceholder: "Search pages...", prefixes: ["/pages"] },
@@ -78,4 +79,29 @@ export function resolveAppBrand(pathname: string | null | undefined): AppBrand {
     if (brand.prefixes.some((p) => matchesPrefix(path, p))) return brand;
   }
   return HOME;
+}
+
+export interface AppNavigationItem { label: string; href: string; icon: LucideIcon }
+/** Only routes implemented by the web app. Messenger is available in every app. */
+export function resolveAppNavigation(pathname: string | null | undefined): AppNavigationItem[] | null {
+  const brand = resolveAppBrand(pathname);
+  if (brand.key === 'home') return null;
+  const items: AppNavigationItem[] = [{ label: brand.name, href: brand.href, icon: brand.icon }];
+  if (brand.key === 'reels') items.push(
+    { label: 'Explore', href: '/search', icon: Compass },
+    { label: 'Create', href: '/reels/create', icon: SquarePlus },
+    { label: 'Saved', href: '/saved', icon: Bookmark },
+  );
+  if (brand.key === 'tube') items.push(
+    { label: 'Subscriptions', href: '/posttube/subscriptions', icon: Users },
+    { label: 'History', href: '/posttube/history', icon: History },
+    { label: 'Playlists', href: '/posttube/playlists', icon: ListVideo },
+    { label: 'Upload', href: '/posttube/upload', icon: SquarePlus },
+  );
+  if (brand.key === 'groups') items.push({ label: 'Create group', href: '/groups/create', icon: SquarePlus });
+  if (brand.key === 'live') items.push({ label: 'Go live', href: '/live/new', icon: Radio });
+  if (brand.key === 'ask') items.push({ label: 'Ask a question', href: '/qa/ask', icon: SquarePlus });
+  if (brand.key !== 'messenger') items.push({ label: 'Messenger', href: '/messenger', icon: MessageSquare });
+  items.push({ label: 'All apps', href: '/', icon: Home });
+  return items;
 }

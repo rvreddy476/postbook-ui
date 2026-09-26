@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { resolveAppBrand, resolveAppNavigation } from '@/lib/appBrand';
 import { NavItem } from '../types';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -103,9 +105,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { data: myProfile } = useMyProfile();
   const [moreOpen, setMoreOpen] = useState(false);
+  const pathname = usePathname();
+  const appItems = resolveAppNavigation(pathname);
+  const brand = resolveAppBrand(pathname);
+  const contextualItems: Item[] = appItems?.map(item => ({ ...item, id: item.label, color: 'text-current' })) ?? primaryItems;
 
-  const isItemActive = (item: Item) =>
-    activeTab === item.label || activeTab === item.id;
+  const isItemActive = (item: Item) => appItems
+    ? item.href?.split('?')[0] === pathname && !item.href?.includes('?')
+    : activeTab === item.label || activeTab === item.id;
   const moreActive = moreItems.some(isItemActive);
 
   const widthCls = expanded ? 'w-64 px-4' : 'w-16 items-center px-0';
@@ -152,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <nav className={navClass}>
+    <nav className={navClass} aria-label={`${brand.name} navigation`} data-app-navigation={brand.key}>
       {/*
         The wordmark, and the collapse toggle.
 
@@ -165,20 +172,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className={`mb-4 flex items-center ${expanded ? 'justify-between px-2' : 'justify-center'}`}>
         {expanded && (
           <Link
-            href="/"
+            href={brand.href}
             className="rounded-lg px-2 py-1 text-[20px] font-bold -tracking-[0.02em] text-primary-ink transition-opacity hover:opacity-80"
-            title="Home"
+            title={brand.name}
           >
-            VChat
+            {brand.name}
           </Link>
         )}
-        <button
+        {setExpanded ? <button
           onClick={() => setExpanded?.(!expanded)}
           aria-label="Toggle menu"
           className="rounded-lg p-2 text-brand-text/60 transition-colors hover:bg-primary-ink/10 hover:text-primary-ink"
         >
           <Menu size={20} strokeWidth={1.75} />
-        </button>
+        </button> : null}
       </div>
 
       {/* Nav items.
@@ -191,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           expanded ? 'gap-1' : 'items-center gap-1.5'
         }`}
       >
-        {primaryItems.map(renderRailItem)}
+        {contextualItems.map(renderRailItem)}
 
         {/* More — opens the rest of the services */}
         <div className="relative flex w-full justify-center">
@@ -227,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Flyout — the rest of the services */}
           {moreOpen && (
-            <div className="absolute bottom-0 left-full z-80 ml-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-brand-text shadow-2xl dark:border-brand-divider dark:bg-brand-card">
+            <div className="absolute bottom-0 left-full z-80 ml-3 w-56 overflow-hidden rounded-2xl border border-border bg-brand-card shadow-2xl">
               <div className="px-3 pb-1.5 pt-2.5 text-[10px] font-black tracking-widest text-brand-text/40 dark:text-brand-text/40">
                 More on VChat
               </div>
@@ -265,6 +272,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     );
                   }
                   const action = item.id === 'Messenger' ? onChatClick : onNotificationsClick;
+                  if (!action) return <Link key={item.id} href={item.id === 'Messenger' ? '/messenger' : '/notifications'} onClick={() => setMoreOpen(false)} className={itemCls}>{inner}</Link>;
                   return (
                     <button
                       key={item.id}

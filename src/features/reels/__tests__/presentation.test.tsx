@@ -23,12 +23,12 @@ test('settings anchor below the control bar, not off the left of the portrait fr
   expect(css).toContain('top: calc(100% + 8px)');
 });
 
-test('expanded details carry the creator, title and views outside the portrait video', () => {
+test('expanded details carry creator and title but never public view counts', () => {
   const html=renderToStaticMarkup(<ReelExpandedDetails reel={reel}/>);
   expect(html).toContain('reel-expanded-details');
   expect(html).toContain('Actual title');
   expect(html).toContain('/u/a');
-  expect(html).toContain('views');
+  expect(html).not.toContain('views');
   expect(html).not.toContain('Description belongs in details');
 });
 
@@ -37,11 +37,28 @@ test('reel title is separate from its description, never synthesized from descri
   expect(reel.caption).toBe('Description belongs in details');
   expect(toReelItem({id:'r2',author_id:'a',text:'Not a title',content_type:'reel',media:[{media_id:'m',kind:'video'}]})!.title).toBe('');
 });
-test('overlay renders title and the left-side views indicator, not description', () => {
-  const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={false} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+test('overlay renders title without exposing views even to the author', () => {
+  const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
   expect(html).toContain('Actual title');
   expect(html).not.toContain('Description belongs in details');
-  expect(html).toContain('reel-view-count');
+  expect(html).not.toContain('reel-view-count');
+});
+
+test('volume slider exposes the real level and reports zero while muted', () => {
+  for (const [sound,volume,expected] of [[true,.37,37],[true,1,100],[false,.8,0]] as const) {
+    const html=renderToStaticMarkup(<ReelOverlay reel={reel} isOwn following={undefined} followPending={false} onToggleFollow={()=>{}} sound={sound} volume={volume} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+    expect(html).toContain('aria-label="Volume"');
+    expect(html).toContain(`aria-valuetext="${expected}%"`);
+    expect(html).toContain('min="0" max="100" step="1"');
+  }
+});
+
+test('hover-only chrome has keyboard and touch exceptions, without hiding the video',()=>{
+  const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
+  expect(css).toContain('@media (hover: hover) and (pointer: fine)');
+  expect(css).toContain('.reel-stage-cluster:not(:hover):not(:has(:focus-visible))');
+  expect(css).toContain('@media (pointer: coarse)');
+  expect(css).toContain('.reel-playback-button { width: 40px; height: 40px; }');
 });
 test('absolute comment reconciliation patches feed variants and deep-link copy without duplicate increments', () => {
   const qc=new QueryClient();

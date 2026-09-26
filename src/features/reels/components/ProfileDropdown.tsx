@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, Bookmark, LogOut } from "lucide-react";
-import { Avatar } from "@/components/LetterAvatar";
+import Avatar from "@/components/ui/Avatar";
 import { useMyProfile } from "@/hooks/useEditProfile";
+import { logoutUser } from '@/services/authService';
 
 export function ProfileDropdown() {
   const { data: profile } = useMyProfile();
@@ -16,7 +17,7 @@ export function ProfileDropdown() {
   const displayName = profile?.display_name || "User";
   const handle = profile?.username || "";
   const avatarUrl = profile?.avatar_media_id
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${profile.avatar_media_id}/serve`
+    ? `/v1/media/${profile.avatar_media_id}/serve`
     : undefined;
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -50,15 +51,16 @@ export function ProfileDropdown() {
     <div className="relative" ref={containerRef}>
       <button
         type="button"
+        aria-label="Account menu"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-brand-text/10"
       >
         <Avatar
+          key={avatarUrl}
           src={avatarUrl}
           name={displayName}
-          seed={profile?.id}
-          size="sm"
-          className="border-2 border-white shadow-xs"
+          className="h-8 w-8 border-2 border-border shadow-xs"
         />
       </button>
 
@@ -76,11 +78,10 @@ export function ProfileDropdown() {
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
                   <Avatar
+                    key={avatarUrl}
                     src={avatarUrl}
                     name={displayName}
-                    seed={profile?.id}
-                    size="lg"
-                    className="border-2 border-white shadow-md ring-1 ring-brand-secondary"
+                    className="h-12 w-12 border-2 border-border shadow-md ring-1 ring-brand-secondary"
                   />
                   <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                 </div>
@@ -123,8 +124,8 @@ export function ProfileDropdown() {
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  // Logout logic handled by auth context
-                  window.location.href = "/auth/login";
+                  logoutUser();
+                  window.location.assign("/api/auth/logout");
                 }}
                 className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-rose-500 transition-all hover:bg-rose-50/50"
               >

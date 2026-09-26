@@ -1,17 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
 import { Avatar } from "@/components/LetterAvatar";
-import { formatCount, type ReelItem } from "../model";
+import { type ReelItem } from "../model";
 
 /** Outside the video in wide fullscreen; the normal overlay serves small screens. */
 export function ReelExpandedDetails({ reel }: { reel: ReelItem }) {
   return (
     <aside className="reel-expanded-details" aria-label="Reel details">
-      <p className="mb-4 flex items-center gap-2 text-xs text-brand-highlight">
-        <Eye size={15} /> {formatCount(reel.viewCount)} views
-      </p>
       <Link href={`/u/${reel.authorUsername || reel.authorId}`} className="flex items-center gap-3 font-semibold hover:underline">
         <Avatar src={reel.authorAvatarUrl || ""} name={reel.authorName} seed={reel.authorId} size="sm" />
         <span className="min-w-0 break-words">{reel.authorUsername ? `@${reel.authorUsername}` : reel.authorName}</span>

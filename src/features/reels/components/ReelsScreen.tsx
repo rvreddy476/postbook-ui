@@ -22,6 +22,7 @@ import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
 import { ReelCreatorPanel } from "@/features/reels/components/ReelCreatorPanel";
+import { ReelDiscoveryPanel } from './ReelDiscoveryPanel';
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -56,7 +57,7 @@ const SWIPE_THRESHOLD = 48;
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
   const tag = t.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"]'));
+  return tag === "input" || tag === "textarea" || t.isContentEditable || Boolean(t.closest('[data-comments-drawer="true"], [data-reel-side-panel]'));
 }
 
 export function ReelsScreen() {
@@ -327,7 +328,7 @@ export function ReelsScreen() {
   return (
     <div className="flex h-dvh flex-col bg-canvas text-brand-text">
       <HeaderBar />
-      <div className="flex min-h-0 flex-1">
+      <div className="reels-app-body flex min-h-0 flex-1">
         <div className="hidden md:block">
           <Sidebar inFlow activeTab="Reels" setActiveTab={() => {}} />
         </div>
@@ -370,7 +371,7 @@ export function ReelsScreen() {
           ) : active ? (
             <div className="reels-content" data-comments-open={commentsOpen && !active.commentsDisabled}>
               {/* left column: the creator, or the thread when comments are open */}
-              <div className="hidden h-full md:block">
+              <div className="reel-left-column" data-reel-side-panel>
                 {commentsOpen && !active.commentsDisabled ? (
                   <ReelCommentsDrawer open reel={active} focusCommentId={focusCommentId} onClose={() => setCommentsOpen(false)} />
                 ) : (
@@ -386,7 +387,9 @@ export function ReelsScreen() {
                 )}
               </div>
 
-              <motion.div layout transition={{ duration: reduceMotion ? 0 : 0.28, ease: "easeOut" }} className="flex h-full min-w-0 items-center gap-4">
+              <motion.div layout transition={{ duration: reduceMotion ? 0 : 0.28, ease: "easeOut" }} className="reel-center-column">
+              <Link className="reel-mobile-creator" href={`/u/${active.authorUsername || active.authorId}`}>{active.authorName}</Link>
+              <div className="reel-stage-cluster">
               <StageFrame stageRef={stageRef}>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   <motion.div
@@ -417,7 +420,17 @@ export function ReelsScreen() {
                       followPending={followMut.isPending || unfollowMut.isPending}
                       onToggleFollow={toggleFollow}
                       sound={prefs.sound}
-                      onToggleSound={() => updatePrefs({ sound: !prefs.sound })}
+                      volume={prefs.volume}
+                      onVolumeChange={(volume) => {
+                        playerRef.current?.setVolume(volume);
+                        updatePrefs({volume, sound: volume > 0});
+                      }}
+                      onToggleSound={() => {
+                        const sound = !prefs.sound;
+                        const volume = prefs.volume || 1;
+                        playerRef.current?.setVolume(sound ? volume : 0);
+                        updatePrefs({sound, volume});
+                      }}
                       onOpenSettings={() => setSettingsOpen((v) => !v)}
                       settingsMenu={
                         <ReelSettingsMenu
@@ -470,7 +483,13 @@ export function ReelsScreen() {
                   moreMenu={<MoreMenu />}
                 />
               </div>
+              </div>
               </motion.div>
+
+              <div className="reel-right-column" data-reel-side-panel>
+                <ReelDiscoveryPanel reels={reels} active={active} viewerId={viewerId} relationships={relationships.data}
+                  onOpenReel={openReel} canLoadMore={!!feed.hasNextPage} loadingMore={feed.isFetchingNextPage} onLoadMore={() => void feed.fetchNextPage()}/>
+              </div>
 
               {/* phone: comments as a bottom sheet */}
               <div className="md:hidden">
@@ -562,7 +581,7 @@ function StageFrame({ stageRef, children }: { stageRef: React.RefObject<HTMLDivE
       // viewport, and the height is what the viewport limits. A portrait
       // video covers the frame (ReelVideo uses object-cover for portrait),
       // losing ~6% at the top and bottom edges.
-      className="relative h-full w-full overflow-hidden bg-black md:h-auto md:w-[calc((100dvh-6rem)*3/5)] md:max-w-[560px] md:aspect-[3/5] md:rounded-2xl md:shadow-2xl [&:fullscreen]:h-full [&:fullscreen]:w-full [&:fullscreen]:rounded-none"
+      className="reel-stage"
     >
       {children}
     </div>

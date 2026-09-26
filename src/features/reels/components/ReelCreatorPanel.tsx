@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Link2, MessageCircle, UserCheck, Users } from "lucide-react";
+import { BadgeCheck, Link2, MessageCircle, UserCheck, Users, ArrowUpRight } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { formatCount, type ReelItem } from "@/features/reels/model";
@@ -49,11 +49,11 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
   return (
     <aside
       data-creator-panel="true"
-      className="flex h-full w-[300px] shrink-0 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-brand-card p-4 text-brand-text"
+      className="reel-creator-card"
       onClick={(e) => e.stopPropagation()}
     >
       {/* identity */}
-      <div className="flex flex-col items-center text-center">
+      <div className="reel-creator-identity">
         <Link href={profileHref} className="shrink-0">
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="xl" className="ring-2 ring-brand-accent/40" />
         </Link>
@@ -79,7 +79,7 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
       </div>
 
       {/* reach */}
-      <dl className="grid grid-cols-3 gap-1 rounded-xl bg-brand-secondary px-2 py-2.5 text-center">
+      <dl className="reel-social-counts">
         <Stat label="Followers" value={followers} />
         <Stat label="Following" value={followingCount} />
         <Stat label="Circle" value={friends} />
@@ -102,7 +102,7 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
           ) : null}
           {relationship?.can_dm ? (
             <Link
-              href={`/messages?to=${encodeURIComponent(reel.authorId)}`}
+              href={`/messenger?user=${encodeURIComponent(reel.authorId)}`}
               aria-label="Message"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-border transition hover:bg-brand-secondary"
             >
@@ -110,11 +110,9 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
             </Link>
           ) : null}
         </div>
-      ) : (
-        <Link href={profileHref} className="rounded-full border border-border px-3 py-2 text-center text-[13px] font-semibold transition hover:bg-brand-secondary">
-          Your profile
-        </Link>
-      )}
+      ) : null}
+      <Link href={profileHref} className="reel-profile-link">View profile <ArrowUpRight size={16}/></Link>
+      {reel.title ? <h2 className="text-sm font-semibold leading-relaxed">{reel.title}</h2> : null}
 
       {/* more reels from them */}
       {moreReels.length > 0 ? (
@@ -129,7 +127,7 @@ export function ReelCreatorPanel({ reel, viewerId, isOwn, relationship, followPe
                   type="button"
                   onClick={() => onOpenReel(post.id)}
                   aria-label="Open reel"
-                  className="relative aspect-[9/16] overflow-hidden rounded-lg bg-brand-secondary transition hover:opacity-90"
+                  className="relative aspect-square overflow-hidden rounded-lg bg-brand-secondary transition hover:opacity-90"
                 >
                   {poster ? <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" /> : null}
                   {typeof post.counts?.likes === "number" ? (

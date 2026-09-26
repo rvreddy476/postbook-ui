@@ -32,7 +32,9 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_ENABLE_STUB_PAYMENTS=$NEXT_PUBLIC_ENABLE_STUB_PAYMENTS
 ENV NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN bun run build
+# Turbopack's Google-font resolver rejects the generated Outfit query.
+# Use Next's supported production Webpack path without changing the fonts.
+RUN bun run build --webpack
 
 FROM node:20-alpine AS runner
 WORKDIR /app
