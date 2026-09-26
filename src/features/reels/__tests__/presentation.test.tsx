@@ -58,7 +58,7 @@ test('rail avatar: a plain profile link with the Follow badge attached; the badg
   expect(notFollowing).toContain('reel-rail-avatar-wrap');
   expect(notFollowing).toContain('class="reel-rail-avatar" aria-label="Bee&#x27;s profile" href="/u/bee"');
   expect(notFollowing).toContain('class="reel-rail-follow"');
-  expect(notFollowing).toContain('>Follow</button>');
+  expect(notFollowing).toContain('lucide-plus');
   expect(notFollowing).toContain('aria-label="Follow Bee"');
   expect(notFollowing).not.toContain('aria-haspopup="dialog"');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
@@ -70,7 +70,7 @@ test('rail badge subscribes instead when the reel came through a channel, and st
   const channelReel={...other,channelHandle:'bees'};
   const base={...railBase,reel:channelReel,following:false as const,onToggleSubscribe:()=>{}};
   const unsubscribed=renderToStaticMarkup(<ReelRail {...base} subscribed={false}/>);
-  expect(unsubscribed).toContain('>Follow</button>');
+  expect(unsubscribed).toContain('lucide-plus');
   expect(unsubscribed).toContain('aria-label="Subscribe to Bee&#x27;s channel"');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={true}/>)).not.toContain('reel-rail-follow');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={undefined}/>)).not.toContain('reel-rail-follow');
@@ -80,7 +80,7 @@ test('the phone rail carries the same avatar and badge', () => {
   const html=renderToStaticMarkup(<ReelRail {...railBase} variant="phone" following={false}/>);
   expect(html).toContain('reel-action-rail is-phone');
   expect(html).toContain('reel-rail-avatar-wrap');
-  expect(html).toContain('>Follow</button>');
+  expect(html).toContain('lucide-plus');
 });
 
 test('comments column is a fixed 380px panel driven by the constant; the hover card is gone', () => {

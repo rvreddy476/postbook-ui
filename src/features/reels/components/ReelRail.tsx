@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bookmark, Heart, MessageCircle, MoreHorizontal, Send } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, MoreHorizontal, Plus, Send } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
@@ -81,7 +81,7 @@ export function ReelRail({
         </Link>
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            Follow
+            <Plus className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
           </button>
         ) : null}
       </div>

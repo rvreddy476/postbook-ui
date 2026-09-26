@@ -50,9 +50,13 @@
   .reel-settings-popover button { gap: 10px; text-align: left; }
 }
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: rgb(var(--reel-stage) / .65); color: rgb(var(--reel-on-stage)); }
-.reel-volume-control { pointer-events: auto; display: flex; align-items: center; gap: 4px; padding-right: 10px; border-radius: 20px; background: rgb(var(--reel-stage) / .65); color: rgb(var(--reel-on-stage)); }
-.reel-volume-control .reel-playback-button { background: transparent; }
-.reel-volume-control input { width: 72px; height: 24px; accent-color: rgb(var(--reel-on-stage)); cursor: pointer; }
+/* The speaker: a small translucent square at the top-left of the video, as on TikTok; the slider slides out on hover or focus. */
+.reel-volume-control { pointer-events: auto; display: flex; align-items: center; gap: 0; padding-right: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .45); color: rgb(var(--reel-on-stage)); transition: padding 140ms ease, background-color 140ms ease; }
+.reel-volume-control:hover,.reel-volume-control:focus-within { padding-right: 10px; gap: 4px; background: rgb(var(--reel-stage) / .65); }
+.reel-volume-control .reel-playback-button { background: transparent; border-radius: 8px; }
+.reel-volume-control input { width: 0; opacity: 0; height: 24px; accent-color: rgb(var(--reel-on-stage)); cursor: pointer; transition: width 140ms ease, opacity 140ms ease; }
+.reel-volume-control:hover input,.reel-volume-control:focus-within input { width: 72px; opacity: 1; }
+.reel-settings-slot { pointer-events: auto; }
 .reel-author-row { display: flex; align-items: center; gap: 10px; min-width: 0; color: rgb(var(--reel-on-stage)); }
 .reel-author-row__name { min-width: 0; font-size: 16px; font-weight: 700; line-height: 1.2; color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reel-author-row__name:hover { text-decoration: underline; }
@@ -78,15 +82,17 @@
 .reel-action-rail.is-desktop { gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; }
 /* The avatar with the Follow badge attached to its bottom edge, where TikTok's "+" sits.
    Badge text is the stage white in both themes (accent under it in both). */
-.reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; padding-bottom: 9px; }
+.reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; padding-bottom: 10px; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .01em; white-space: nowrap; background: rgb(var(--brand-accent)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 1px rgb(var(--brand-card)); cursor: pointer; transition: opacity 120ms ease; }
+/* The follow badge: the round plus that sits on the avatar's bottom edge, as on TikTok. */
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--brand-accent)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--brand-card)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
+.reel-rail-follow:hover { transform: translateX(-50%) scale(1.08); }
 .reel-rail-follow:hover { opacity: .9; }
 .reel-rail-follow:disabled { opacity: .6; cursor: default; }
 .reel-action-rail.is-phone .reel-rail-avatar { width: 40px; height: 40px; }
 .reel-action-rail.is-phone .reel-rail-avatar-wrap { margin-top: 2px; }
-.reel-action-rail.is-phone .reel-rail-follow { box-shadow: 0 0 0 1px rgb(var(--brand-card)); }
+.reel-action-rail.is-phone .reel-rail-follow { box-shadow: 0 0 0 2px rgb(var(--reel-stage) / .6); }
 .reel-action-rail.is-desktop .reel-action-button { gap: 4px; min-width: var(--reel-side-w); min-height: 0; border-radius: 0; color: rgb(var(--brand-text)); }
 .reel-action-rail.is-desktop .reel-action-button:hover { background: transparent; }
 .reel-action-rail.is-desktop .reel-action-icon { width: 48px; height: 48px; border-radius: 50%; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }
@@ -220,9 +226,9 @@ button.reel-panel-count:hover .reel-panel-count__icon { background: rgb(var(--br
    the author row and the progress line stay, as on TikTok. Opacity, not visibility,
    preserves keyboard discovery; touch controls stay available. */
 @media (hover: hover) and (pointer: fine) {
-  .reel-stage-cluster :is(.reel-playback-controls,.reel-expand-button,.reel-unmute-hint) { transition: opacity 140ms ease; }
-  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)) :is(.reel-playback-controls,.reel-expand-button) { opacity: 0; pointer-events: none; }
-  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)) .reel-playback-controls * { pointer-events: none !important; }
+  .reel-stage-cluster :is(.reel-settings-slot,.reel-expand-button,.reel-unmute-hint) { transition: opacity 140ms ease; }
+  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)) :is(.reel-settings-slot,.reel-expand-button) { opacity: 0; pointer-events: none; }
+  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)) .reel-settings-slot * { pointer-events: none !important; }
 }
 @media (pointer: coarse) {
   .reel-action-button { min-width: 44px; min-height: 44px; }

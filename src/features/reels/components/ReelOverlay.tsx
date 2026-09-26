@@ -31,8 +31,8 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
 
   return (
     <>
-      {/* top-right controls */}
-      <div className="reel-playback-controls absolute left-3 right-3 top-3 z-30 flex items-center justify-end gap-2 pointer-events-none" onClick={(e) => e.stopPropagation()}>
+      {/* sound top-left (always visible, slider on hover), settings top-right (hover) */}
+      <div className="reel-playback-controls absolute left-3 right-3 top-3 z-30 flex items-center justify-between gap-2 pointer-events-none" onClick={(e) => e.stopPropagation()}>
         <div className="reel-volume-control">
           <button type="button" aria-label={sound ? "Mute" : "Unmute"} aria-pressed={!sound} onClick={onToggleSound} className="reel-playback-button">
             {sound && volume > 0 ? <Volume2 size={15} /> : <VolumeX size={15} />}
@@ -48,10 +48,12 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
             onChange={(event) => onVolumeChange(Number(event.target.value) / 100)}
           />
         </div>
-        <button type="button" aria-label="Playback settings" onClick={onOpenSettings} className="reel-playback-button">
-          <Settings2 size={15} />
-        </button>
-        {settingsMenu}
+        <div className="reel-settings-slot relative">
+          <button type="button" aria-label="Playback settings" onClick={onOpenSettings} className="reel-playback-button">
+            <Settings2 size={15} />
+          </button>
+          {settingsMenu}
+        </div>
       </div>
 
       <div className="reel-overlay-details pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-6 pt-16 pr-20 lg:pr-4" onClick={(e) => e.stopPropagation()}>
