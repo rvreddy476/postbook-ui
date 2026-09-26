@@ -2,20 +2,36 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { History, Loader2, Tv2, Upload } from "lucide-react";
+import { Flame, History, Loader2, Tv2, Upload } from "lucide-react";
 
 import { useAuthUser } from "@/store/auth";
 import { VideoCard } from "./VideoCard";
-import { VideoRow, VideoRowSkeleton } from "./VideoRow";
+import { VideoRow } from "./VideoRow";
 import { FlicksRow } from "./FlicksRow";
-import { useContinueWatchingFeed, useFlicksFeed, useLongVideosFeed, useVideoCategories } from "../hooks/usePosttubeHome";
+import { useContinueWatchingFeed, useFlicksFeed, useLongVideosFeed, useTrendingVideos, useVideoCategories } from "../hooks/usePosttubeHome";
 import { CHIP_ALL, CHIP_SUBSCRIPTIONS } from "../model";
+import { gridColumnsFor, interleaveShelves, type ShelfKey } from "../shelves";
+import type { PostTubeVideo } from "../types";
+
+const GRID_CLASS = "grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4";
+
+/** The grid's column count for the current viewport (mirrors GRID_CLASS). */
+function useGridColumns(): number {
+  const [columns, setColumns] = useState(3);
+  useEffect(() => {
+    const update = () => setColumns(gridColumnsFor(window.innerWidth));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  return columns;
+}
 
 /* ── Skeleton ─────────────────────────────────────────── */
 
 export function VideoGridSkeleton({ count = 9 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
+    <div className={GRID_CLASS}>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse rounded-2xl bg-brand-card p-3">
           <div className="aspect-video rounded-2xl bg-brand-secondary" />
@@ -78,10 +94,13 @@ export function HomePage() {
   const videosFeed = useLongVideosFeed(chip, 20);
   const flicksFeed = useFlicksFeed(20, chip === CHIP_ALL);
   const continueWatchingFeed = useContinueWatchingFeed(10);
+  const trendingFeed = useTrendingVideos(12);
+  const columns = useGridColumns();
 
   const videos = videosFeed.data?.pages.flatMap((p) => p.items) ?? [];
   const flicks = flicksFeed.data?.pages.flatMap((p) => p.items) ?? [];
   const continueWatching = continueWatchingFeed.data ?? [];
+  const trending = trendingFeed.data ?? [];
   const categories = categoriesQuery.data ?? [];
 
   const sentinelRef = useLoadMoreSentinel(
@@ -97,6 +116,15 @@ export function HomePage() {
 
   const isEmpty = !videosFeed.isLoading && videos.length === 0;
 
+  // Shelves only on "All": a category or the subscriptions feed is its own list.
+  const shelves = chip === CHIP_ALL ? { reels: flicks.length > 0, trending: trending.length > 0, continue: continueWatching.length > 0 } : { reels: false, trending: false, continue: false };
+  const blocks = interleaveShelves(videos, columns, shelves);
+  const shelfFor = (key: ShelfKey) => {
+    if (key === "reels") return <FlicksRow videos={flicks} />;
+    if (key === "trending") return <TrendingShelf videos={trending} />;
+    return <ContinueWatchingShelf videos={continueWatching} />;
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-5 sm:px-6">
       {/* Chips */}
@@ -109,37 +137,24 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Continue watching (only on All; hidden when empty) */}
-      {chip === CHIP_ALL ? (
-        continueWatchingFeed.isLoading ? (
-          <VideoRowSkeleton count={3} />
-        ) : continueWatching.length > 0 ? (
-          <VideoRow
-            title="Continue watching"
-            icon={
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-secondary text-brand-text">
-                <History className="h-4 w-4" />
-              </div>
-            }
-            videos={continueWatching}
-            variant="wide"
-            seeAllHref="/posttube/history"
-          />
-        ) : null
-      ) : null}
-
       {/* Video grid */}
       {videosFeed.isLoading ? (
         <VideoGridSkeleton />
       ) : isEmpty ? (
         <EmptyState chip={chip} />
       ) : (
-        <section>
-          <div className="grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
-            {videos.map((v) => (
-              <VideoCard key={v.id} video={v} />
-            ))}
-          </div>
+        <section className="space-y-7">
+          {blocks.map((block) =>
+            block.type === "videos" ? (
+              <div key={block.key} className={GRID_CLASS}>
+                {block.items.map((v) => (
+                  <VideoCard key={v.id} video={v} />
+                ))}
+              </div>
+            ) : (
+              <div key={block.key}>{shelfFor(block.shelf)}</div>
+            ),
+          )}
           <div ref={sentinelRef} className="h-px" />
           {videosFeed.hasNextPage ? (
             <div className="mt-6 flex justify-center">
@@ -157,11 +172,41 @@ export function HomePage() {
         </section>
       )}
 
-      {/* Reels shelf */}
-      {chip === CHIP_ALL && flicks.length > 0 ? <FlicksRow videos={flicks} /> : null}
+      {/* A short first page still deserves the reels shelf once. */}
+      {chip === CHIP_ALL && flicks.length > 0 && !blocks.some((b) => b.type === "shelf") && !videosFeed.isLoading ? <FlicksRow videos={flicks} /> : null}
 
       <div className="h-6" />
     </div>
+  );
+}
+
+function TrendingShelf({ videos }: { videos: PostTubeVideo[] }) {
+  return (
+    <VideoRow
+      title="Trending"
+      icon={
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-secondary text-brand-text">
+          <Flame className="h-4 w-4" />
+        </div>
+      }
+      videos={videos}
+    />
+  );
+}
+
+function ContinueWatchingShelf({ videos }: { videos: PostTubeVideo[] }) {
+  return (
+    <VideoRow
+      title="Continue watching"
+      icon={
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-secondary text-brand-text">
+          <History className="h-4 w-4" />
+        </div>
+      }
+      videos={videos}
+      variant="wide"
+      seeAllHref="/posttube/history"
+    />
   );
 }
 
