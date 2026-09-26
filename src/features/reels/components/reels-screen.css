@@ -122,7 +122,7 @@
 .reel-action-rail.is-desktop .reel-action-button:hover .reel-action-icon { background: rgb(var(--brand-divider)); }
 .reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }
 .reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }
-.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700; padding: 0; color: rgb(var(--brand-text)); }
+.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700; padding: 0; color: rgb(var(--brand-text) / .75); }
 .reel-mobile-rail { display: block; position: absolute; right: 8px; bottom: 100px; z-index: 20; }
 /* Arrows: two 40px circles at the area's right edge, 16px in, 16px apart, centred on the viewport. */
 .reels-navigation { display: none; flex-direction: column; gap: 16px; }

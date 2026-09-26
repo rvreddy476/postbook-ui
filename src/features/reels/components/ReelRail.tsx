@@ -2,7 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Bookmark, Heart, MessageCircle, MoreHorizontal, Plus, Send } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+
+import { RailBookmark, RailBubble, RailHeart, RailPlus, RailShare } from "@/features/reels/components/ReelRailIcons";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
@@ -89,7 +91,7 @@ export function ReelRail({
         </Link>
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <Plus size={14} strokeWidth={3} aria-hidden="true" />
+            <RailPlus size={desktop ? 14 : 12} />
           </button>
         ) : null}
       </div>
@@ -98,22 +100,22 @@ export function ReelRail({
         count={reel.likeCount}
         active={reel.viewerLiked}
         onClick={onLike}
-        icon={<Heart size={iconSize} className={reel.viewerLiked ? "fill-current" : ""} />}
+        icon={<RailHeart size={desktop ? 21 : 18} />}
         activeClass="is-liked"
       />
       {!reel.commentsDisabled ? (
-        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<MessageCircle size={iconSize} />} />
+        <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<RailBubble size={desktop ? 24 : 20} />} />
       ) : null}
       <RailButton
         label={reel.viewerSaved ? "Unsave" : "Save"}
         active={reel.viewerSaved}
         onClick={onSave}
-        icon={<Bookmark size={iconSize} className={reel.viewerSaved ? "fill-current" : ""} />}
+        icon={<RailBookmark size={desktop ? 21 : 18} />}
         activeClass="is-saved"
         count={desktop ? (reel.saveCount ?? 0) : undefined}
       />
       {!reel.shareHidden ? (
-        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<Send size={iconSize} />} />
+        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<RailShare size={desktop ? 24 : 20} />} />
       ) : null}
       {!desktop && onMore ? (
         <div className="relative">
