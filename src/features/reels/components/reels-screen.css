@@ -243,9 +243,9 @@ button.reel-panel-count:hover { opacity: .75; }
 @media (min-width: 1024px) {
   .reels-content[data-comments-open="true"]:not([data-theater]) { position: relative; grid-template-columns: minmax(0,1fr) 0; }
   /* The panel hangs 64px right of the rail (the arrows sit in that gap) and never runs past the viewport. */
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; bottom: 0; right: auto; left: var(--reel-panel-left, 60%); z-index: 35; width: min(340px, calc(100% - var(--reel-panel-left, 60%) - 72px)); overflow: visible; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; bottom: 0; right: auto; left: var(--reel-panel-left, 60%); z-index: 35; width: min(340px, calc(100% - var(--reel-panel-left, 60%) - 96px)); overflow: visible; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column::before { content: ""; position: absolute; left: -7px; top: calc(var(--reel-panel-caret, 50%) - 7px); width: 14px; height: 14px; transform: rotate(45deg); border-left: 1px solid var(--brand-divider); border-bottom: 1px solid var(--brand-divider); border-radius: 2px; background: rgb(var(--brand-card)); z-index: 1; }
-  /* The arrows keep the right corner, past the panel (the panel leaves 72px for them). */
+  /* The arrows keep the right corner, past the panel (the panel leaves 96px for them: the 62px arrow column plus its margins). */
   .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { z-index: 36; }
 }
 .reels-content[data-theater] .reel-nav-button { width: 48px; height: 48px; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
