@@ -189,8 +189,6 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(css).toContain(".video-shell__sidebar:has(> .video-nav.is-more) { flex-basis: 392px; width: 392px; }");
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__top { padding: 20px 16px 0 24px;');
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__brand { height: 28px;');
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__search { margin: 16px 16px 0; }');
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__search input { height: 40px; padding: 0 16px 0 44px; font-size: 16px; font-weight: 400; }');
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__scroll { padding: 24px 16px 8px; }');
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__list { gap: 4px; }');
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__item { height: 40px; padding: 0 16px; gap: 12px; border-radius: 6px; font-size: 16px; font-weight: 600; color: rgb(var(--brand-text)); }');

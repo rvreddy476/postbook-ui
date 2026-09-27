@@ -453,6 +453,12 @@ export function ReelsScreen() {
 
   const onWheel = (e: React.WheelEvent) => {
     if (isTypingTarget(e.target)) return;
+    // A portal (the emoji picker, a menu) bubbles through React but is not
+    // inside the stage in the DOM: scrolling it must never advance the reel.
+    // Neither must scrolling a menu, dialog or the comments panel.
+    const target = e.target as Node | null;
+    if (!target || !e.currentTarget.contains(target)) return;
+    if (target instanceof HTMLElement && target.closest('[role="menu"], [role="dialog"], [role="listbox"], .reel-comments-panel, em-emoji-picker')) return;
     wheelAccRef.current += e.deltaY;
     if (Math.abs(wheelAccRef.current) >= WHEEL_THRESHOLD) {
       go(wheelAccRef.current > 0 ? 1 : -1);

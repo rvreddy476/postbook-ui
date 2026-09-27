@@ -1,30 +1,36 @@
 "use client";
 
-import Link from "next/link";
-import { Bell } from "lucide-react";
-
-import { CreateButton } from "@/features/reels/components/CreateButton";
-import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
-import { useUnreadCount } from "@/hooks/useActivityNotifications";
+import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 
 /*
-  The small cluster that floats over the top-right of the main area under
-  the "sidebar" chrome, where TikTok keeps its upload button and avatar:
-  Create, notifications, the account menu. Nothing else — search lives in
-  the menu and the header is gone. A 40px pill with 4px padding: the
-  Create pill, the bell and the avatar are each 32px, 6px apart
-  (video-shell.css pins the numbers).
+  What floats over the top-right of the main area under the "sidebar"
+  chrome: the search pill, and nothing else. Create, alerts and the account
+  menu live in the left menu (Upload, Activity, Profile), so the corner
+  holds one thing. Submit goes to /search?q= (or /search when empty), the
+  same as the header's box. A 40px pill; video-shell.css pins the numbers.
 */
 export function VideoTopCluster() {
-  const unread = useUnreadCount();
+  const router = useRouter();
+  const [q, setQ] = useState("");
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const query = q.trim();
+    router.push(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
+  };
   return (
-    <div className="video-shell__top-cluster">
-      <CreateButton variant="pill" />
-      <Link href="/notifications" className="video-shell__top-action" aria-label="Notifications">
-        <Bell size={18} strokeWidth={1.75} aria-hidden />
-        {(unread.data?.count ?? 0) > 0 ? <span className="video-shell__top-dot" aria-hidden /> : null}
-      </Link>
-      <ProfileDropdown size="sm" />
-    </div>
+    <form role="search" className="video-shell__top-cluster video-shell__top-search" onSubmit={onSubmit}>
+      <Search size={18} strokeWidth={1.75} aria-hidden className="video-shell__top-search-icon" />
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search"
+        aria-label="Search"
+        className="video-shell__top-search-input"
+        enterKeyHint="search"
+      />
+    </form>
   );
 }

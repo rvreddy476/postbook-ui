@@ -106,7 +106,6 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
 
   const list = (
     <>
-      {tiktok ? <SidebarSearch expanded={listExpanded} onNavigate={onNavigate} /> : null}
 
       <div className="video-nav__scroll">
         {sections

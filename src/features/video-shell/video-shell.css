@@ -110,8 +110,12 @@
    A 40px pill, 4px padding, 6px gaps; inside it the Create pill is 32 tall (13/700, 16px icons),
    the bell a 32px circle, the avatar 32px. Top 12, right 16. */
 .video-shell__top-cluster { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; height: 40px; align-items: center; gap: 6px; padding: 4px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); box-shadow: 0 8px 24px -12px rgb(var(--brand-text) / .3); }
-.video-shell__top-cluster .context-app-bar__create { height: 32px; padding: 0 10px 0 8px; margin-right: 0; gap: 4px; font-size: 13px; font-weight: 700; }
-.video-shell__top-cluster .context-app-bar__create svg { width: 16px; height: 16px; }
+.video-shell__top-search { width: min(280px, calc(100% - 32px)); padding: 0 12px; gap: 8px; }
+.video-shell__top-search-icon { flex: 0 0 auto; color: rgb(var(--brand-text) / .55); }
+.video-shell__top-search-input { flex: 1 1 auto; min-width: 0; height: 100%; border: 0; background: transparent; font-size: 14px; color: rgb(var(--brand-text)); outline: none; }
+.video-shell__top-search-input::placeholder { color: rgb(var(--brand-text) / .5); }
+.video-shell__top-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.video-shell__top-search:focus-within { border-color: rgb(var(--brand-accent) / .6); }
 .video-shell__top-action { position: relative; display: flex; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 50%; color: rgb(var(--brand-text) / .75); transition: background-color 120ms ease, color 120ms ease; }
 .video-shell__top-action:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
 .video-shell__top-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: rgb(var(--brand-accent)); box-shadow: 0 0 0 2px rgb(var(--brand-card)); }
