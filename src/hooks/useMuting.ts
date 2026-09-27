@@ -4,6 +4,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { AxiosError } from "axios"
 
+/**
+ * graph-service reads the target as `user_id` (POST/DELETE /v1/graph/mute,
+ * handler.go Mute/Unmute) and answers 204. The callers keep passing
+ * `muted_id`; this is the one place the wire field is named.
+ */
+export function muteRequestBody(mutedId: string): { user_id: string } {
+    return { user_id: mutedId }
+}
+
 export interface MuteUser {
     muter_id: string
     muted_id: string
@@ -24,12 +33,15 @@ export function useMuteUser() {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: async ({ muted_id }: { muted_id: string }) => {
-            const res = await api.post<{ data: MuteUser }>("/v1/graph/mute", { muted_id })
-            return res.data.data
+            await api.post("/v1/graph/mute", muteRequestBody(muted_id))
+            return { muted_id }
         },
         onSuccess: (_data, variables) => {
             qc.invalidateQueries({ queryKey: ["relationship", variables.muted_id] })
             qc.invalidateQueries({ queryKey: ["muted"] })
+            // A mute is folded into the feed block scope: refetch the feeds so the author leaves.
+            qc.invalidateQueries({ queryKey: ["home-feed"] })
+            qc.invalidateQueries({ queryKey: ["reels", "feed"] })
         },
         onError: (error) => {
             console.error("[Muting] Failed to mute user", error)
@@ -43,14 +55,14 @@ export function useUnmuteUser() {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: async ({ muted_id }: { muted_id: string }) => {
-            const res = await api.delete<{ data: { status: string } }>("/v1/graph/mute", {
-                data: { muted_id },
-            })
-            return res.data.data
+            await api.delete("/v1/graph/mute", { data: muteRequestBody(muted_id) })
+            return { muted_id }
         },
         onSuccess: (_data, variables) => {
             qc.invalidateQueries({ queryKey: ["relationship", variables.muted_id] })
             qc.invalidateQueries({ queryKey: ["muted"] })
+            qc.invalidateQueries({ queryKey: ["home-feed"] })
+            qc.invalidateQueries({ queryKey: ["reels", "feed"] })
         },
         onError: (error) => {
             console.error("[Muting] Failed to unmute user", error)
