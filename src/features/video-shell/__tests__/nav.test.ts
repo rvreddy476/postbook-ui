@@ -69,8 +69,8 @@ describe("videoNav (tube)", () => {
     // The rail groups only: the footer's Help / Terms links are the app's, not this menu's.
     const rows = videoNav("tube").filter((s) => s.rail).flatMap((s) => s.items).filter((i) => i.href);
     const soon = rows.filter((i) => i.comingSoon).map((i) => i.href);
-    // Trending, Topics, Queue and Loved landed from the W2/W3 lanes in this same tree; only Creator Hub (W4) is still to come.
-    expect(soon).toEqual(["/posttube/hub"]);
+    // Every tube page has landed; nothing is flagged. A new flagged row must be added here on purpose.
+    expect(soon).toEqual([]);
     for (const item of rows) {
       // A flagged row whose page has landed means the flag was forgotten; an
       // unflagged row without a page is a dead link.

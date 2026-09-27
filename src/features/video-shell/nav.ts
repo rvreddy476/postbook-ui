@@ -113,7 +113,7 @@ export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "collections", label: "Collections", icon: ListVideo, href: "/posttube/playlists" },
   { key: "uploads", label: "Your videos", icon: Video, href: "/posttube/uploads" },
   { key: "scheduled", label: "Scheduled", icon: CalendarClock, href: "/posttube/scheduled" },
-  { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub", comingSoon: true },
+  { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
 ];
 
 export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
