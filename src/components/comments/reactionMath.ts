@@ -2,12 +2,12 @@ import type { CommentItem, CommentReaction } from '@/types/profile'
 
 /** The six quick reactions in the hover bar, in display order. */
 export const QUICK_REACTIONS: readonly { emoji: string; label: string }[] = [
-  { emoji: '❤️', label: 'Love' },
   { emoji: '👍', label: 'Like' },
+  { emoji: '👎', label: 'Dislike' },
+  { emoji: '❤️', label: 'Love' },
   { emoji: '😂', label: 'Haha' },
-  { emoji: '😮', label: 'Wow' },
   { emoji: '😢', label: 'Sad' },
-  { emoji: '😡', label: 'Angry' },
+  { emoji: '😮', label: 'Wow' },
 ]
 
 /** Human label for an emoji; quick reactions get their name, anything else the emoji itself. */

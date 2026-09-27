@@ -34,6 +34,8 @@ export interface VideoShellProps {
   aside?: ReactNode;
   /** When true the content area is full-bleed with no padding (the reels stage). */
   immersive?: boolean;
+  /** Sidebar chrome only: collapse the corner search to its icon (the reels page sets it while comments are open). */
+  compactSearch?: boolean;
   children: ReactNode;
 }
 
@@ -49,7 +51,7 @@ const SIDEBAR_ID = "video-shell-sidebar";
   the client from localStorage and the viewport — a deterministic first
   render, then a preference, rather than a hydration mismatch.
 */
-export function VideoShell({ app, chrome = "header", aside, immersive = false, children }: VideoShellProps) {
+export function VideoShell({ app, chrome = "header", aside, immersive = false, compactSearch = false, children }: VideoShellProps) {
   const [sidebar, dispatch] = useReducer(sidebarReducer, SIDEBAR_INITIAL);
   const [panel, dispatchPanel] = useReducer(sidebarPanelReducer, SIDEBAR_PANEL_INITIAL);
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -182,7 +184,7 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
                   <Menu size={22} strokeWidth={1.75} aria-hidden />
                 </button>
               ) : null}
-              <VideoTopCluster />
+              <VideoTopCluster compact={compactSearch} />
             </>
           ) : null}
         </div>

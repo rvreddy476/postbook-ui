@@ -11,9 +11,17 @@ import { useState, type FormEvent } from "react";
   holds one thing. Submit goes to /search?q= (or /search when empty), the
   same as the header's box. A 40px pill; video-shell.css pins the numbers.
 */
-export function VideoTopCluster() {
+export function VideoTopCluster({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const [q, setQ] = useState("");
+  if (compact) {
+    // Comments are open: the corner shrinks to the search icon; a click goes to the search page.
+    return (
+      <button type="button" className="video-shell__top-cluster video-shell__top-search is-compact" aria-label="Search" onClick={() => router.push("/search")}>
+        <Search size={18} strokeWidth={1.75} aria-hidden className="video-shell__top-search-icon" />
+      </button>
+    );
+  }
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const query = q.trim();

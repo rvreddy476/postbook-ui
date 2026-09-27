@@ -1,9 +1,8 @@
 'use client'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Heart, Plus } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import type { CommentItem } from '@/types/profile'
 import { QUICK_REACTIONS, reactionLabel, reactionTotal, topReactions } from './reactionMath'
-import EmojiPickerPopover from './EmojiPickerPopover'
 import './comments.css'
 
 export interface CommentReactionsProps {
@@ -28,7 +27,6 @@ export default function CommentReactions({ item, onChange, disabled = false }: C
   const total = reactionTotal(item)
   const top = topReactions(item.reactions, 3)
   const [open, setOpen] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const busy = disabled || pending
   const root = useRef<HTMLDivElement>(null)
@@ -56,7 +54,6 @@ export default function CommentReactions({ item, onChange, disabled = false }: C
     if (busy || saving.current) return
     saving.current = true
     setOpen(false)
-    setPickerOpen(false)
     setPending(true)
     try { await onChange(emoji) } catch { /* the caller rolls back and reports */ }
     finally { saving.current = false; setPending(false) }
@@ -127,18 +124,9 @@ export default function CommentReactions({ item, onChange, disabled = false }: C
               <span aria-hidden="true">{option.emoji}</span>
             </button>
           ))}
-          <button type="button" className="comment-reaction-more" disabled={busy} aria-label="More emoji" title="More emoji"
-            onClick={() => { setOpen(false); setPickerOpen(true) }}>
-            <Plus size={16} aria-hidden="true" />
-          </button>
         </div>
       )}
 
-      {pickerOpen && (
-        <EmojiPickerPopover anchorRef={trigger} perLine={8}
-          onSelect={native => { void choose(current === native ? null : native); trigger.current?.focus() }}
-          onClose={() => setPickerOpen(false)} />
-      )}
     </div>
   )
 }

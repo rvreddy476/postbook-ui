@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -451,6 +451,37 @@ export function ReelsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [go, prefs.sound, active?.id, active?.viewerLiked, clear.on, blockOpen, deleteOpen, theater]);
 
+  // The comments panel hangs beside the comment icon: measure the rail's right
+  // edge and the icon's centre (relative to the content grid) and hand them to
+  // the stylesheet as --reel-panel-left / --reel-panel-caret.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!desktop || !showComments || theater) return;
+    const place = () => {
+      const content = contentRef.current;
+      const rail = railRef.current;
+      if (!content || !rail) return;
+      const c = content.getBoundingClientRect();
+      const r = rail.getBoundingClientRect();
+      const btn = rail.querySelector('[aria-label="Comments"]');
+      const b = btn ? btn.getBoundingClientRect() : r;
+      content.style.setProperty("--reel-panel-left", `${Math.round(r.right - c.left + 64)}px`);
+      content.style.setProperty("--reel-panel-caret", `${Math.round(b.top + b.height / 2 - c.top)}px`);
+    };
+    place();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(place) : null;
+    if (ro) {
+      if (contentRef.current) ro.observe(contentRef.current);
+      if (railRef.current) ro.observe(railRef.current);
+    }
+    window.addEventListener("resize", place);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", place);
+    };
+  }, [desktop, showComments, theater, active?.id, measuredAspect]);
+
   const onWheel = (e: React.WheelEvent) => {
     if (isTypingTarget(e.target)) return;
     // A portal (the emoji picker, a menu) bubbles through React but is not
@@ -558,7 +589,7 @@ export function ReelsScreen() {
   const authorCard = { ...railFollow, onLike, onSave, onShare };
 
   return (
-    <VideoShell app="reels" chrome="sidebar" immersive>
+    <VideoShell app="reels" chrome="sidebar" immersive compactSearch={showComments && desktop && !theater}>
       <div ref={workspaceRef} className="reels-workspace" style={{ "--reel-comments-w": `${COMMENTS_TRACK_WIDTH}px` } as CSSProperties}>
         <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
@@ -611,6 +642,7 @@ export function ReelsScreen() {
             </StateLayout>
           ) : active ? (
             <div
+              ref={contentRef}
               className="reels-content"
               data-comments-open={showComments}
               data-clear-screen={clear.on ? "" : undefined}
@@ -720,7 +752,7 @@ export function ReelsScreen() {
                     /* theater: the arrows stand where the rail was, right beside the video */
                     <div className="reel-desktop-rail is-arrows">{arrows("is-beside")}</div>
                   ) : (
-                    <div className="reel-desktop-rail">
+                    <div className="reel-desktop-rail" ref={railRef}>
                       <ReelRail
                         playing={!paused}
                         reel={active}

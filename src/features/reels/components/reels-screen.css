@@ -137,7 +137,7 @@
 .reel-rail-avatar > * { width: 100%; height: 100%; }
 /* The Follow pill on the avatar's bottom edge, where TikTok's plus sits. */
 /* The Follow pill: a small capsule hung 6px over the avatar's bottom edge, ringed by the canvas so it reads as its own object, with a soft tinted shadow. Hover lifts it; active presses it. */
-.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: auto; height: 18px; padding: 0 8px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .02em; white-space: nowrap; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 4px 10px rgb(var(--danger) / .35); cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease; }
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: auto; height: 16px; padding: 0 6px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .02em; white-space: nowrap; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 4px 10px rgb(var(--danger) / .35); cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease; }
 .reel-rail-follow:hover { transform: translateX(-50%) translateY(-1px); box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 6px 14px rgb(var(--danger) / .45); filter: brightness(1.06); }
 .reel-rail-follow:active { transform: translateX(-50%) scale(.96); }
 .reel-rail-follow:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
@@ -193,7 +193,7 @@
 /* ---- comments: TikTok's 352px card with a 16px margin, the author card on top -- */
 .reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 0; }
 /* Padding only while open: a closed 0-width track with padding was 16px of overflow that a focus could scroll into view. */
-.reels-content[data-comments-open="true"] .reel-comments-column { padding: 60px 16px 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
+.reels-content[data-comments-open="true"] .reel-comments-column { padding: 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
 .reel-comments-panel { display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0; overflow: hidden; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
 .reel-comments-panel.is-column { border: 1px solid var(--brand-divider); border-radius: 12px; }
 .reel-comments-panel.is-sheet { position: fixed; z-index: 40; inset: auto 0 0; height: min(72dvh,640px); border: 1px solid var(--brand-divider); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
@@ -242,8 +242,10 @@ button.reel-panel-count:hover { opacity: .75; }
    right edge of the stage area and the arrows step left of it; the frame and rail stay put. */
 @media (min-width: 1024px) {
   .reels-content[data-comments-open="true"]:not([data-theater]) { position: relative; grid-template-columns: minmax(0,1fr) 0; }
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; right: 0; bottom: 0; z-index: 35; width: var(--reel-comments-w, 368px); }
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: calc(var(--reel-comments-w, 368px) + 16px); z-index: 36; }
+  /* The panel hangs 64px right of the rail (the arrows sit in that gap) and never runs past the viewport. */
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; bottom: 0; right: auto; left: var(--reel-panel-left, 60%); z-index: 35; width: min(340px, calc(100% - var(--reel-panel-left, 60%) - 16px)); overflow: visible; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column::before { content: ""; position: absolute; left: -7px; top: calc(var(--reel-panel-caret, 50%) - 7px); width: 14px; height: 14px; transform: rotate(45deg); border-left: 1px solid var(--brand-divider); border-bottom: 1px solid var(--brand-divider); border-radius: 2px; background: rgb(var(--brand-card)); z-index: 1; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: auto; left: calc(var(--reel-panel-left, 60%) - 52px); z-index: 36; }
 }
 .reels-content[data-theater] .reel-nav-button { width: 48px; height: 48px; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
 .reels-content[data-theater] .reel-nav-button:hover { background: rgb(var(--reel-on-stage) / .28); }

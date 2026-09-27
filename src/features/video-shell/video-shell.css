@@ -111,6 +111,8 @@
    the bell a 32px circle, the avatar 32px. Top 12, right 16. */
 .video-shell__top-cluster { position: absolute; top: 12px; right: 16px; z-index: 30; display: flex; height: 40px; align-items: center; gap: 6px; padding: 4px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); box-shadow: 0 8px 24px -12px rgb(var(--brand-text) / .3); }
 .video-shell__top-search { width: min(280px, calc(100% - 32px)); padding: 0 12px; gap: 8px; }
+.video-shell__top-search.is-compact { width: 40px; justify-content: center; padding: 0; cursor: pointer; }
+.video-shell__top-search.is-compact:hover { background: rgb(var(--brand-secondary)); }
 .video-shell__top-search-icon { flex: 0 0 auto; color: rgb(var(--brand-text) / .55); }
 .video-shell__top-search-input { flex: 1 1 auto; min-width: 0; height: 100%; border: 0; background: transparent; font-size: 14px; color: rgb(var(--brand-text)); outline: none; }
 .video-shell__top-search-input::placeholder { color: rgb(var(--brand-text) / .5); }

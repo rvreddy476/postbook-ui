@@ -59,7 +59,7 @@ describe('applyReaction', () => {
     expect(applyReaction(empty, null).reaction_count).toBe(0)
   })
   test('the quick bar offers exactly the six agreed emoji in order', () => {
-    expect(QUICK_REACTIONS.map(option => option.emoji)).toEqual(['❤️', '👍', '😂', '😮', '😢', '😡'])
+    expect(QUICK_REACTIONS.map(option => option.emoji)).toEqual(['👍', '👎', '❤️', '😂', '😢', '😮'])
   })
 })
 

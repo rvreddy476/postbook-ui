@@ -143,7 +143,7 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
-  expect(css).toContain('width: auto; height: 18px; padding: 0 8px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700;');
+  expect(css).toContain('width: auto; height: 16px; padding: 0 6px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 16px; }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 0; }');
 });
