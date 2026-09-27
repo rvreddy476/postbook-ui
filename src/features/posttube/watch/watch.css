@@ -1,0 +1,174 @@
+/*
+  The watch page: the Reels stage idea turned landscape. The player is
+  centred with the action rail on its right (the Reels rail: 36px circles,
+  56px pitch, counts under), the details card under the player, comments
+  in a right column that opens from the rail (380px, flush right, full
+  height under the header from 1024px; a bottom sheet below), and Up next
+  as compact rows (120×68 thumb, 13px title, 11px meta) under the column
+  or the card. Theater widens the player to the content width and turns
+  the rail into the Reels theater bar under it. Colour only through the
+  tokens; over the video the stage pair.
+*/
+
+.tube-watch { --tube-rail-w: 36px; --tube-rail-pitch: 56px; --tube-rail-gap: 15px; --tube-comments-w: 380px; --tube-header-h: 4rem; position: relative; margin: 0 auto; max-width: 1720px; }
+.tube-watch__main { min-width: 0; max-width: 1280px; margin: 0 auto; }
+.tube-watch[data-theater] .tube-watch__main { max-width: none; }
+.tube-watch[data-comments-open] { padding-right: 0; }
+@media (min-width: 1024px) {
+  .tube-watch[data-comments-open] { padding-right: var(--tube-comments-w); }
+}
+
+/* ---- stage row: player + rail, rail bottom-aligned to the frame ------- */
+.tube-watch__stage-row { display: flex; align-items: flex-end; gap: var(--tube-rail-gap); }
+.tube-watch__player { position: relative; flex: 1 1 auto; min-width: 0; }
+.tube-watch__rail { flex: 0 0 var(--tube-rail-w); width: var(--tube-rail-w); }
+.tube-stage { position: relative; aspect-ratio: 16 / 9; width: 100%; border-radius: 12px; background: rgb(var(--reel-stage)); }
+.tube-stage__note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; border-radius: 12px; font-size: 13px; font-weight: 600; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage) / .8); }
+.tube-stage__note:hover { color: rgb(var(--reel-on-stage)); }
+/* Theater: the dark band spans the main's padding, the rail becomes the bar. */
+.tube-watch[data-theater] .tube-watch__stage-row { display: block; margin: -24px -24px 0; padding: 0 24px; background: rgb(var(--reel-stage)); }
+.tube-watch[data-theater] .tube-watch__rail { display: none; }
+.tube-watch[data-theater] .tube-player__frame { border-radius: 0; }
+.tube-watch[data-theater] .tube-stage { border-radius: 0; }
+.tube-watch__theater-bar { display: none; }
+.tube-watch[data-theater] .tube-watch__theater-bar { display: block; margin: 0 -24px 12px; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage)); }
+@media (max-width: 767px) {
+  .tube-watch[data-theater] .tube-watch__stage-row { margin: -12px -12px 0; padding: 0; }
+  .tube-watch[data-theater] .tube-watch__theater-bar { margin: 0 -12px 12px; }
+}
+
+/* ---- the rail: the Reels desktop rail geometry ----------------------- */
+.tube-rail { display: flex; flex-direction: column; align-items: center; gap: 0; width: var(--tube-rail-w); }
+.tube-rail__button { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; width: var(--tube-rail-w); height: var(--tube-rail-pitch); padding: 0; border: 0; border-radius: 0; background: transparent; color: rgb(var(--brand-text)); text-decoration: none; cursor: pointer; }
+.tube-rail__icon { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); transition: background-color 120ms ease, color 120ms ease; }
+.tube-rail__button:hover .tube-rail__icon { background: rgb(var(--brand-divider)); }
+.tube-rail__button:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; border-radius: 12px; }
+.tube-rail__button:disabled { opacity: .5; cursor: not-allowed; }
+.tube-rail__count { height: 16px; font-size: 12px; line-height: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: rgb(var(--brand-text) / .75); }
+.tube-rail__button.is-loved .tube-rail__icon { color: rgb(var(--danger)); }
+.tube-rail__button.is-passed .tube-rail__icon { color: rgb(var(--brand-text)); background: rgb(var(--brand-text) / .14); }
+.tube-rail__button.is-queued .tube-rail__icon, .tube-rail__button.is-open .tube-rail__icon { color: rgb(var(--brand-accent)); }
+.tube-rail__more { position: relative; }
+/* The theater bar: the same buttons in a row, on the stage colour (the Reels theater bar). */
+.tube-rail.is-bar { flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; width: auto; height: 56px; padding: 0 16px; }
+.tube-rail.is-bar .tube-rail__button { flex-direction: row; gap: 6px; width: auto; height: 36px; padding: 0 4px; color: rgb(var(--reel-on-stage)); }
+.tube-rail.is-bar .tube-rail__icon { background: transparent; color: rgb(var(--reel-on-stage)); }
+.tube-rail.is-bar .tube-rail__button:hover .tube-rail__icon { background: rgb(var(--reel-on-stage) / .15); }
+.tube-rail.is-bar .tube-rail__count { color: rgb(var(--reel-on-stage) / .85); }
+.tube-rail.is-bar .tube-rail__button.is-passed .tube-rail__icon { background: rgb(var(--reel-on-stage) / .2); }
+.tube-rail.is-bar .tube-rail__spacer { flex: 1 1 auto; }
+.tube-rail.is-bar .tube-rail__leave { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
+.tube-rail.is-bar .tube-rail__leave:hover { background: rgb(var(--reel-on-stage) / .22); }
+/* The rail's More card opens to the left of the rail, growing up. */
+.tube-more-menu.reel-more-menu[role="menu"] { width: 260px; text-align: left; }
+.tube-rail.is-bar .tube-more-menu[role="menu"] { color: rgb(var(--brand-text)); }
+
+/* ---- details card -------------------------------------------------- */
+.tube-details { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.tube-details__title { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; letter-spacing: -.005em; color: rgb(var(--brand-text)); }
+.tube-details__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 11px; color: rgb(var(--text-muted)); }
+.tube-details__topic { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); text-decoration: none; }
+.tube-details__topic:hover { background: rgb(var(--brand-text) / .12); }
+.tube-details__source { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: rgb(var(--danger)); }
+.tube-creator { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.tube-creator__link { display: flex; min-width: 0; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.tube-creator__avatar > * { width: 36px; height: 36px; }
+.tube-creator__name { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-creator__name:hover { text-decoration: underline; }
+.tube-creator__followers { margin: 2px 0 0; font-size: 11px; color: rgb(var(--text-muted)); }
+.tube-creator__spacer { flex: 1 1 auto; }
+
+/* Chapters: a horizontal strip of small pills; the playing one inverted. */
+.tube-chapters { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.tube-chapters::-webkit-scrollbar { display: none; }
+.tube-chapters__pill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.tube-chapters__pill:hover { background: rgb(var(--brand-text) / .12); }
+.tube-chapters__pill[aria-current="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
+.tube-chapters__pill time { font-weight: 500; font-variant-numeric: tabular-nums; opacity: .7; }
+
+/* Description behind "More" */
+.tube-description { position: relative; padding: 10px 12px; border-radius: 12px; background: rgb(var(--brand-secondary)); font-size: 13px; line-height: 1.55; color: rgb(var(--brand-text)); }
+.tube-description__text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tube-description[data-collapsed] .tube-description__text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tube-description__text a { color: rgb(var(--brand-ink)); text-decoration: none; }
+.tube-description__text a:hover { text-decoration: underline; }
+.tube-description__text button { font: inherit; color: rgb(var(--brand-ink)); background: transparent; border: 0; padding: 0; cursor: pointer; }
+.tube-description__text button:hover { text-decoration: underline; }
+.tube-description__toggle { margin-top: 6px; border: 0; padding: 0; background: transparent; font-size: 12px; font-weight: 600; color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-description__toggle:hover { text-decoration: underline; }
+
+/* The join card on a gated video */
+.tube-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; aspect-ratio: 16 / 9; width: 100%; padding: 24px; border-radius: 12px; text-align: center; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage)); }
+.tube-gate__icon { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-on-stage) / .12); }
+.tube-gate__title { margin: 0; font-size: 15px; font-weight: 600; }
+.tube-gate__hint { margin: 0; font-size: 12px; color: rgb(var(--reel-on-stage) / .7); }
+.tube-gate__cta { display: inline-flex; align-items: center; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); text-decoration: none; }
+.tube-gate__cta:hover { opacity: .92; }
+
+/* ---- comments column ------------------------------------------------ */
+.tube-comments-column { display: none; }
+.tube-comments-column .reel-comments-panel.is-column { border-width: 0 0 0 1px; border-radius: 0; }
+.tube-comments__sort { display: inline-flex; align-items: center; gap: 4px; }
+.tube-comments__pill { display: inline-flex; height: 26px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-comments__pill[aria-pressed="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
+.tube-comments__thread { display: flex; flex: 1 1 55%; min-height: 0; flex-direction: column; overflow: hidden; }
+.tube-comments__upnext { flex: 0 1 45%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; border-top: 1px solid var(--brand-divider); padding: 10px 12px 12px; }
+.tube-comments__off { margin: 0; padding: 16px; font-size: 13px; color: rgb(var(--text-muted)); }
+@media (min-width: 1024px) {
+  .tube-comments-column { display: block; position: fixed; top: var(--tube-header-h, 4rem); right: 0; bottom: 0; z-index: 35; width: var(--tube-comments-w, 380px); background: rgb(var(--brand-card)); }
+  .tube-comments-column .reel-comments-panel { height: 100%; }
+}
+/* Below 1024 the sheet from reels-screen.css (.reel-comments-panel.is-sheet + .reel-comments-scrim) is used as is. */
+
+/* ---- up next ---------------------------------------------------------- */
+.tube-upnext { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.tube-comments__upnext .tube-upnext { margin-top: 0; }
+.tube-upnext__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tube-upnext__title { margin: 0; font-size: 13px; font-weight: 700; }
+.tube-upnext__pills { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tube-upnext__pills::-webkit-scrollbar { display: none; }
+.tube-upnext__pill { flex: 0 0 auto; display: inline-flex; height: 26px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-upnext__pill:hover { background: rgb(var(--brand-text) / .12); }
+.tube-upnext__pill[aria-pressed="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
+.tube-upnext__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tube-upnext__row { display: flex; gap: 10px; padding: 4px; border-radius: 10px; color: inherit; text-decoration: none; transition: background-color 120ms ease; }
+.tube-upnext__row:hover { background: rgb(var(--brand-secondary)); }
+.tube-upnext__row[aria-current="page"] { background: rgb(var(--brand-secondary)); }
+.tube-upnext__thumb { position: relative; flex: 0 0 120px; width: 120px; height: 68px; overflow: hidden; border-radius: 8px; background: rgb(var(--reel-stage)); }
+.tube-upnext__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.tube-upnext__duration { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; border-radius: 5px; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); }
+.tube-upnext__pos { position: absolute; left: 4px; top: 4px; padding: 1px 5px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); }
+.tube-upnext__text { min-width: 0; flex: 1 1 auto; padding-top: 1px; }
+.tube-upnext__name { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tube-upnext__meta { margin: 3px 0 0; font-size: 11px; line-height: 1.4; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-upnext__more { align-self: flex-start; height: 28px; padding: 0 12px; border: 1px solid var(--brand-divider); border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-upnext__more:disabled { opacity: .5; }
+.tube-upnext__empty { margin: 0; padding: 8px 4px; font-size: 12px; color: rgb(var(--text-muted)); }
+.tube-upnext__bone { display: flex; gap: 10px; padding: 4px; }
+.tube-upnext__bone > span:first-child { flex: 0 0 120px; height: 68px; border-radius: 8px; background: rgb(var(--brand-secondary)); animation: tube-pulse 1.4s ease-in-out infinite; }
+.tube-upnext__bone > span:last-child { flex: 1 1 auto; height: 13px; margin-top: 4px; border-radius: 6px; background: rgb(var(--brand-secondary)); animation: tube-pulse 1.4s ease-in-out infinite; }
+
+/* "Playing from <collection>" with prev / next */
+.tube-collection-bar { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 8px 6px 12px; border-radius: 10px; font-size: 12px; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.tube-collection-bar__title { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-collection-bar__title strong { font-weight: 600; }
+.tube-collection-bar__title a { color: inherit; text-decoration: none; }
+.tube-collection-bar__title a:hover { text-decoration: underline; }
+.tube-collection-bar__count { font-variant-numeric: tabular-nums; color: rgb(var(--text-muted)); }
+.tube-collection-bar__nav { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; color: rgb(var(--brand-text)); }
+.tube-collection-bar__nav:hover { background: rgb(var(--brand-text) / .1); }
+.tube-collection-bar__nav[aria-disabled="true"] { opacity: .35; pointer-events: none; }
+
+/* ---- the miniplayer dock (the host's box, portaled to body) ------------ */
+.tube-player-box { z-index: 5; }
+.tube-player-box.is-stage { position: fixed; left: 0; top: 0; }
+.tube-player-box.is-docked { position: fixed; right: 16px; bottom: 16px; z-index: 45; width: min(320px, calc(100vw - 32px)); border-radius: 12px; background: rgb(var(--reel-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }
+.tube-player-box__dock-bar { display: flex; justify-content: flex-end; gap: 2px; padding: 4px 4px 0; }
+.tube-player-box__dock-button { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 6px; color: rgb(var(--reel-on-stage) / .85); }
+.tube-player-box__dock-button:hover { background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
+.tube-player-box.is-docked .tube-player__ambient { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tube-rail__icon, .tube-chapters__pill, .tube-upnext__row { transition: none; }
+  .tube-upnext__bone > span { animation: none; }
+}

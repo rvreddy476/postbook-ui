@@ -6,9 +6,6 @@ import {
   AudioLines,
   Ban,
   Captions,
-  Check,
-  ChevronLeft,
-  ChevronRight,
   ChevronsDown,
   CircleSlash,
   Download,
@@ -17,8 +14,6 @@ import {
   Gauge,
   Info,
   Link2,
-  Minus,
-  Plus,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -27,10 +22,18 @@ import {
   UserX,
 } from "lucide-react";
 
+import {
+  ChoiceMenuBack as Back,
+  ChoiceMenuChoiceRow as ChoiceRow,
+  ChoiceMenuOption as Option,
+  ChoiceMenuRow as Row,
+  ChoiceMenuSwitchRow as SwitchRow,
+  SpeedPanel,
+} from "@/features/reels/components/ChoiceMenu";
 import { Popover } from "@/features/reels/components/Popover";
 import { MENU_SPEEDS, moreMenuItems, type MoreMenuItemKey } from "@/features/reels/menu";
 import type { ReelItem } from "@/features/reels/model";
-import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP, speedChipLabel, type PlayerPrefs, type PrefsPatch, type Speed } from "@/features/reels/playback/playerPrefs";
+import { clampSpeed, speedChipLabel, type PlayerPrefs, type PrefsPatch, type Speed } from "@/features/reels/playback/playerPrefs";
 export { speedChipLabel };
 
 /** One selectable audio track for the reel; the original is always first. */
@@ -147,7 +150,6 @@ export function ReelMoreMenu({
   const audioLabel = audioTracks.find((t) => t.id === currentAudioTrack)?.label ?? audioTracks[0]?.label ?? "Original";
   const audioChoices = audioTracks.length > 0 ? audioTracks : [{ id: ORIGINAL_AUDIO_ID, label: "Original" }];
   const setSpeed = (s: number) => onPrefsChange({ speed: clampSpeed(s) as Speed });
-  const stepSpeed = (dir: 1 | -1) => onPrefsChange((p) => ({ speed: clampSpeed(p.speed + dir * SPEED_STEP) as Speed }));
 
   const row = (key: MoreMenuItemKey) => {
     switch (key) {
@@ -223,33 +225,7 @@ export function ReelMoreMenu({
   const speedPane = (
     <div className="reel-more-menu__list" data-pane="speed">
       <Back label="Playback speed" onClick={() => setPane("root")} />
-      <div className="reel-speed-panel" role="group" aria-label="Playback speed">
-        <div className="reel-speed-panel__readout" aria-live="polite">{speedChipLabel(prefs.speed)}x</div>
-        <div className="reel-speed-panel__slider">
-          <button type="button" aria-label="Slower" disabled={prefs.speed <= SPEED_MIN} onClick={() => stepSpeed(-1)}><Minus /></button>
-          <input
-            type="range"
-            min={SPEED_MIN}
-            max={SPEED_MAX}
-            step={SPEED_STEP}
-            value={prefs.speed}
-            aria-label="Playback speed"
-            aria-valuetext={`${speedChipLabel(prefs.speed)}x`}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-          />
-          <button type="button" aria-label="Faster" disabled={prefs.speed >= SPEED_MAX} onClick={() => stepSpeed(1)}><Plus /></button>
-        </div>
-        <div className="reel-speed-panel__chips" role="radiogroup" aria-label="Preset speeds">
-          {MENU_SPEEDS.map((s) => (
-            <span key={s} className="reel-speed-panel__chip-wrap">
-              <button type="button" role="radio" aria-checked={prefs.speed === s} className="reel-more-menu__chip" onClick={() => setSpeed(s)}>
-                {speedChipLabel(s)}
-              </button>
-              {s === 1 ? <span className="reel-speed-panel__normal">Normal</span> : null}
-            </span>
-          ))}
-        </div>
-      </div>
+      <SpeedPanel speed={prefs.speed} presets={MENU_SPEEDS} onChange={setSpeed} />
     </div>
   );
 
@@ -296,112 +272,5 @@ export function ReelMoreMenu({
     >
       {pane === "speed" ? speedPane : pane === "quality" ? qualityPane : pane === "captions" ? captionsPane : pane === "audio" ? audioPane : root}
     </Popover>
-  );
-}
-
-function Back({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" className="reel-more-menu__row reel-more-menu__back" onClick={onClick}>
-      <span className="reel-more-menu__icon"><ChevronLeft /></span>
-      <span className="reel-more-menu__label">{label}</span>
-    </button>
-  );
-}
-
-function Row({
-  icon,
-  label,
-  hint,
-  onClick,
-  danger,
-  disabled,
-  dataRow,
-}: {
-  icon: ReactNode;
-  label: string;
-  hint?: string;
-  onClick?: () => void;
-  danger?: boolean;
-  disabled?: boolean;
-  dataRow?: string;
-}) {
-  return (
-    <button type="button" role="menuitem" disabled={disabled} onClick={onClick} data-row={dataRow} className={`reel-more-menu__row${danger ? " is-danger" : ""}`}>
-      <span className="reel-more-menu__icon">{icon}</span>
-      <span className="reel-more-menu__label">
-        <span className="reel-more-menu__title">{label}</span>
-        {hint ? <span className="reel-more-menu__hint">{hint}</span> : null}
-      </span>
-    </button>
-  );
-}
-
-/** A row that opens a pane: label, the current value, a chevron. */
-function ChoiceRow({
-  icon,
-  label,
-  value,
-  onClick,
-  disabled,
-  dataRow,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  onClick: () => void;
-  disabled?: boolean;
-  dataRow?: string;
-}) {
-  return (
-    <button type="button" role="menuitem" aria-haspopup="menu" disabled={disabled} onClick={onClick} data-row={dataRow} className="reel-more-menu__row">
-      <span className="reel-more-menu__icon">{icon}</span>
-      <span className="reel-more-menu__label">
-        <span className="reel-more-menu__title">{label}</span>
-      </span>
-      <span className="reel-more-menu__value">
-        {value}
-        <ChevronRight />
-      </span>
-    </button>
-  );
-}
-
-function SwitchRow({
-  icon,
-  label,
-  hint,
-  on,
-  onToggle,
-  disabled,
-  dataRow,
-}: {
-  icon: ReactNode;
-  label: string;
-  hint?: string;
-  on: boolean;
-  onToggle: () => void;
-  disabled?: boolean;
-  dataRow?: string;
-}) {
-  return (
-    <button type="button" role="menuitemcheckbox" aria-checked={on} disabled={disabled} onClick={onToggle} data-row={dataRow} className="reel-more-menu__row">
-      <span className="reel-more-menu__icon">{icon}</span>
-      <span className="reel-more-menu__label">
-        <span className="reel-more-menu__title">{label}</span>
-        {hint ? <span className="reel-more-menu__hint">{hint}</span> : null}
-      </span>
-      <span className="reel-more-menu__switch" data-on={on ? "" : undefined} aria-hidden>
-        <span className="reel-more-menu__knob" />
-      </span>
-    </button>
-  );
-}
-
-function Option({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-  return (
-    <button type="button" role="menuitemradio" aria-checked={selected} onClick={onClick} className="reel-more-menu__row">
-      <span className="reel-more-menu__icon">{selected ? <Check /> : null}</span>
-      <span className="reel-more-menu__label">{label}</span>
-    </button>
   );
 }

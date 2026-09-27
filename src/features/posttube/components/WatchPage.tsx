@@ -4,94 +4,73 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Ban,
-  Bookmark,
-  ChevronDown,
-  ChevronUp,
-  EyeOff,
-  Flag,
-  Link2,
-  ListPlus,
-  ListVideo,
-  Loader2,
-  MoreHorizontal,
-  Share2,
-  ThumbsUp,
-  UserX,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, ListVideo, Loader2 } from "lucide-react";
 
-import { Avatar } from "@/components/LetterAvatar";
-import CommentSection from "@/components/CommentSection";
 import ShareDialog from "@/components/ShareDialog";
 import { useToast } from "@/components/ui/toast";
-import { useToggleBookmark } from "@/hooks/usePostActions";
+import { useDeletePost } from "@/hooks/usePostActions";
 import { useToggleLike } from "@/hooks/usePostReaction";
 import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
 import { useChannelByRef } from "@/hooks/useChannels";
 import { useDataSaver } from "@/hooks/useDataSaver";
+import { useEntitlement } from "@/hooks/useMonetization";
 import { useVideoTracker } from "@/hooks/useVideoTracker";
 import { useSeries, useWatchProgress } from "@/hooks/usePosttubeExtras";
 import { useAuthUser } from "@/store/auth";
+import type { CommentSort } from "@/hooks/usePostComments";
 
-import { TubePlayer, type CaptionTrack } from "./TubePlayer";
+import { ReelAudioTracksDialog } from "@/features/reels/components/ReelAudioTracksDialog";
+import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
+import { useAudioTracks } from "@/features/reels/hooks/useAudioTracks";
+import { mediaHref } from "@/features/reels/model";
+import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
+import { isHistoryPaused, useLovedIds, useQueue } from "@/features/posttube/library";
+
+import { type CaptionTrack, type TubePlayerHandle } from "./TubePlayer";
 import { SubscribeButton } from "./SubscribeButton";
-import { ConfirmDialog } from "./ConfirmDialog";
 import { SaveToPlaylistDialog } from "./SaveToPlaylistDialog";
-import { useRelatedVideos } from "../hooks/usePosttubeHome";
+import { useVideoCategories } from "../hooks/usePosttubeHome";
 import { useAutoplayNextPref, useTubePrefs } from "../hooks/useTubePrefs";
+import { blockUser, channelAvatarUrl, getSubtitleTracks, getVideoDetail, saveVideoWatchProgress, sendFeedFeedback } from "../data/posttubeApi";
 import {
-  blockUser,
-  channelAvatarUrl,
-  getSubtitleTracks,
-  getVideoDetail,
-  getVideoPost,
-  saveVideoWatchProgress,
-  sendFeedFeedback,
-} from "../data/posttubeApi";
-import {
+  AUTOPLAY_COUNTDOWN_SECONDS,
   AUTOPLAY_IDLE,
   autoplayReducer,
   COMPLETED_PERCENT,
-  formatCount,
   formatDuration,
   hlsMasterUrl,
   mediaServeUrl,
   PROGRESS_SAVE_INTERVAL_MS,
   resumePositionMs,
+  rowToVideo,
   subtitleTrackUrl,
-  timeAgo,
   type SeriesInfo,
 } from "../model";
-import type { PostTubeVideo } from "../types";
+import { ambientAllowed } from "../watch/ambient";
+import { chapterIndexAt } from "../watch/chapters";
+import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
+import { useCollectionPlayback, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs, useWideLayout } from "../watch/hooks/useWatch";
+import { TubeStage } from "../watch/miniPlayer";
+import { RAIL_IDLE, railReducer } from "../watch/railState";
+import { upNextPills, type UpNextChip } from "../watch/upNext";
+import { downloadHref, setCommentHeart, setCommentPin, setPass, viewerSubtitleTracks } from "../watch/watchApi";
+import { UpNext, type UpNextRow } from "../watch/components/UpNext";
+import { WatchComments } from "../watch/components/WatchComments";
+import { MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
+import { WatchMoreMenu } from "../watch/components/WatchMoreMenu";
+import { WatchRail } from "../watch/components/WatchRail";
+import "@/features/reels/components/reels-screen.css";
+import "./tube.css";
+import "../watch/watch.css";
 
-/* ── Related card ─────────────────────────────────────── */
+/*
+  The watch page (W1): the player centred with the action rail on its
+  right, the details card under it, comments in a right column opened
+  from the rail, Up next under the column or the card. See watch.css for
+  the geometry and watchApi.ts for every request.
+*/
 
-function RelatedCard({ video }: { video: PostTubeVideo }) {
-  return (
-    <Link href={`/posttube/watch/${video.id}`} className="group flex gap-2">
-      <div className="relative aspect-video w-[168px] shrink-0 overflow-hidden rounded-lg bg-brand-secondary">
-        {video.thumbnail_url ? (
-          <img src={video.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="h-full w-full bg-primary-ink/80" />
-        )}
-        {video.duration_seconds > 0 ? (
-          <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[10px] font-medium text-white">
-            {formatDuration(video.duration_seconds)}
-          </span>
-        ) : null}
-      </div>
-      <div className="min-w-0 flex-1 py-0.5">
-        <h4 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text group-hover:text-primary-ink">{video.title}</h4>
-        <p className="mt-1 text-[11px] text-muted-foreground">{video.channel_name}</p>
-        <p className="text-[11px] text-muted-foreground">
-          {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
-        </p>
-      </div>
-    </Link>
-  );
-}
+const UP_NEXT_COUNTDOWN_SECONDS = 5;
 
 /* ── Series list ──────────────────────────────────────── */
 
@@ -100,13 +79,8 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
   const title = series.series?.title?.trim() || "This series";
   const currentNum = series.current?.episode_num;
   return (
-    <section className="rounded-xl border border-border bg-brand-card">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
-        aria-expanded={open}
-      >
+    <section className="mt-4 rounded-xl border border-border bg-brand-card">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-4 py-3 text-left" aria-expanded={open}>
         <span className="flex items-center gap-2">
           <ListVideo className="h-4 w-4 text-brand-text" />
           <span className="text-[13px] font-bold text-brand-text">In this series · {title}</span>
@@ -156,24 +130,25 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
 
 interface WatchPageProps {
   videoId?: string;
+  /** `?list=<playlistId>`: play through that collection. */
+  listId?: string | null;
 }
 
-function WatchPageContent({ videoId }: WatchPageProps) {
+function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const router = useRouter();
   const user = useAuthUser();
   const { effective: dataSaver } = useDataSaver();
   const { toast, ToastContainer } = useToast();
   const { prefs, update: updatePrefs } = useTubePrefs();
+  const { prefs: watchPrefs, update: updateWatchPrefs } = useWatchPrefs();
   const { on: autoplayNextOn, update: setAutoplayNextOn } = useAutoplayNextPref();
+  const reducedMotion = useReducedMotion();
+  const wide = useWideLayout();
 
   /* ── data ──────────────────────────────────────────── */
-  const videoQuery = useQuery({
-    queryKey: ["posttube", "video", videoId],
-    queryFn: () => getVideoPost(videoId!),
-    enabled: !!videoId,
-    staleTime: 60_000,
-  });
-  const video = videoQuery.data ?? null;
+  const detailQuery = useWatchDetail(videoId);
+  const detail = detailQuery.data ?? null;
+  const video = detail?.video ?? null;
 
   const videoMetadataQuery = useQuery({
     queryKey: ["posttube", "video-metadata", videoId],
@@ -182,7 +157,7 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     staleTime: 60_000,
     retry: false,
   });
-  const mediaAssetId = videoMetadataQuery.data?.media_asset_id;
+  const mediaAssetId = videoMetadataQuery.data?.media_asset_id || detail?.mediaId || undefined;
   const trimStartMs = videoMetadataQuery.data?.trim_start_ms ?? 0;
   const trimEndMs = videoMetadataQuery.data?.trim_end_ms ?? undefined;
 
@@ -191,8 +166,13 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   const progressQuery = useWatchProgress(user ? videoId : undefined);
   const seriesQuery = useSeries(videoId);
   const series = seriesQuery.data ?? null;
-  const relatedQuery = useRelatedVideos(videoId, 16);
-  const related = relatedQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const categories = useVideoCategories();
+  const collectionQuery = useCollectionPlayback(listId);
+  const collection = collectionQuery.data ?? null;
+
+  const [chip, setChip] = useState<UpNextChip>("all");
+  const upNextQuery = useUpNext(videoId, chip, detail?.topicSlug ?? null, 16);
+  const related = useMemo(() => upNextQuery.data?.pages.flatMap((p) => p.items) ?? [], [upNextQuery.data]);
 
   const subtitleQuery = useQuery({
     queryKey: ["posttube", "subtitles", mediaAssetId],
@@ -202,13 +182,26 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   });
   const captions = useMemo<CaptionTrack[]>(
     () =>
-      (subtitleQuery.data ?? []).map((t) => ({
+      viewerSubtitleTracks(subtitleQuery.data).map((t) => ({
         lang: t.language || "en",
         label: (t.language || "en").toUpperCase(),
         src: t.content_url && t.format?.toLowerCase() === "vtt" ? t.content_url : subtitleTrackUrl(mediaAssetId!, t.language || "en"),
       })),
     [subtitleQuery.data, mediaAssetId],
   );
+
+  const storyboardQuery = useStoryboard(mediaAssetId);
+  const audioTracksQuery = useAudioTracks(mediaAssetId);
+  const audioTracks = useMemo(() => audioTracksQuery.data ?? [], [audioTracksQuery.data]);
+  const activeAudioTrack = pickAudioTrack(audioTracks, watchPrefs.audioLanguage);
+
+  const isOwner = !!user && !!video && user.id === video.author_id;
+  const gateCreator = detail?.tierRequiredId && !isOwner ? video?.author_id : null;
+  const entitlement = useEntitlement(gateCreator, detail?.tierRequiredId ?? null);
+  const gated = !!gateCreator && (!user || (entitlement.data ? !entitlement.data.allowed : false));
+
+  const queue = useQueue();
+  const lovedIds = useLovedIds();
 
   /* ── playback urls ─────────────────────────────────── */
   const hlsUrl = mediaAssetId ? hlsMasterUrl(mediaAssetId) : null;
@@ -223,6 +216,9 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   const lastSavedRef = useRef(-1);
   const [ended, setEnded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [chapterIndex, setChapterIndex] = useState(-1);
+  const chaptersRef = useRef(detail?.chapters ?? []);
+  chaptersRef.current = detail?.chapters ?? [];
 
   const trackingDurationMs = Math.max(0, Math.round((video?.duration_seconds ?? 0) * 1000));
   const tracker = useVideoTracker({
@@ -234,14 +230,13 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     position: 0,
     isAutoplay: !dataSaver,
   });
-  // useVideoTracker returns a fresh object each render; read it through a ref
-  // so the player callbacks (and its listener effect) stay stable.
   const trackerRef = useRef(tracker);
   trackerRef.current = tracker;
 
   const persist = useCallback(
     (opts?: { completed?: boolean; force?: boolean }) => {
       if (!video?.id || !user) return;
+      if (isHistoryPaused()) return;
       const { positionMs, durationMs } = latestRef.current;
       if (durationMs <= 0 || positionMs <= 0) return;
       if (!opts?.force && Math.abs(positionMs - lastSavedRef.current) < 1000) return;
@@ -252,14 +247,12 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     [user, video?.id],
   );
 
-  // Every 10 s while playing.
   useEffect(() => {
     if (!isPlaying) return;
     const id = setInterval(() => persist(), PROGRESS_SAVE_INTERVAL_MS);
     return () => clearInterval(id);
   }, [isPlaying, persist]);
 
-  // On unmount (navigation to the next video, closing the page).
   useEffect(() => {
     return () => {
       if (!startedRef.current || finishedRef.current) return;
@@ -286,21 +279,51 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     [persist],
   );
 
-  const onTimeUpdate = useCallback(
-    (positionMs: number, durationMs: number) => {
-      latestRef.current = { positionMs, durationMs };
-      trackerRef.current.onTimeUpdate(positionMs);
-    },
-    [],
-  );
+  const onTimeUpdate = useCallback((positionMs: number, durationMs: number) => {
+    latestRef.current = { positionMs, durationMs };
+    trackerRef.current.onTimeUpdate(positionMs);
+    const idx = chapterIndexAt(chaptersRef.current, positionMs);
+    setChapterIndex((cur) => (cur === idx ? cur : idx));
+  }, []);
 
-  /* ── autoplay next episode ─────────────────────────── */
-  const [autoplay, dispatch] = useReducer(autoplayReducer, AUTOPLAY_IDLE);
-  const nextEpisodeId = series?.next?.post_id ?? null;
-  const nextEpisode = useMemo(
-    () => (series && series.next ? series.episodes.find((e) => e.post_id === series.next!.post_id) ?? null : null),
-    [series],
+  /* ── what "next" is ────────────────────────────────── */
+  const neighbours = useMemo(() => collectionNeighbours(collection?.ids ?? [], video?.id ?? ""), [collection, video?.id]);
+  const collectionRows = useMemo<UpNextRow[]>(
+    () =>
+      (collection?.items ?? [])
+        .filter((it) => !!it.post)
+        .map((it, i) => ({
+          video: rowToVideo(it.post!),
+          href: collectionWatchHref(it.postId, collection!.collection.id),
+          position: i + 1,
+          current: it.postId === video?.id,
+        })),
+    [collection, video?.id],
   );
+  const nextTarget = useMemo(() => {
+    if (collection && neighbours.next && neighbours.next !== video?.id) {
+      const row = collectionRows.find((r) => r.video.id === neighbours.next);
+      return { href: collectionWatchHref(neighbours.next, collection.collection.id), label: row?.video.title ?? "Next in collection", kind: "collection" as const };
+    }
+    if (series?.next) {
+      const ep = series.episodes.find((e) => e.post_id === series.next!.post_id);
+      return { href: `/posttube/watch/${series.next.post_id}`, label: `Episode ${series.next.episode_num}${ep?.title ? ` · ${ep.title}` : ""}`, kind: "series" as const };
+    }
+    const first = related[0];
+    if (first) return { href: `/posttube/watch/${first.id}`, label: first.title, kind: "related" as const };
+    return null;
+  }, [collection, neighbours.next, video?.id, collectionRows, series, related]);
+  const nextTargetRef = useRef(nextTarget);
+  nextTargetRef.current = nextTarget;
+
+  const goNext = useCallback(() => {
+    const t = nextTargetRef.current;
+    if (t) router.push(t.href);
+  }, [router]);
+
+  /* ── autoplay next ─────────────────────────────────── */
+  const [autoplay, dispatch] = useReducer(autoplayReducer, AUTOPLAY_IDLE);
+  const sleepFiredRef = useRef(false);
 
   const onEnded = useCallback(
     (positionMs: number, durationMs: number) => {
@@ -311,10 +334,19 @@ function WatchPageContent({ videoId }: WatchPageProps) {
         trackerRef.current.onPlayEnd("ended");
       }
       persist({ completed: true, force: true });
-      if (nextEpisodeId && autoplayNextOn) dispatch({ type: "start" });
+      const t = nextTargetRef.current;
+      if (t && autoplayNextOn && !sleepFiredRef.current) {
+        dispatch({ type: "start", seconds: t.kind === "series" ? AUTOPLAY_COUNTDOWN_SECONDS : UP_NEXT_COUNTDOWN_SECONDS });
+      }
     },
-    [autoplayNextOn, nextEpisodeId, persist],
+    [autoplayNextOn, persist],
   );
+
+  const onSleep = useCallback(() => {
+    sleepFiredRef.current = true;
+    dispatch({ type: "cancel" });
+    toast({ type: "info", title: "Sleep timer", description: "Playback paused." });
+  }, [toast]);
 
   useEffect(() => {
     if (autoplay.status !== "counting") return;
@@ -323,56 +355,56 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   }, [autoplay.status]);
 
   useEffect(() => {
-    if (autoplay.status === "fired" && nextEpisodeId) {
-      router.push(`/posttube/watch/${nextEpisodeId}`);
-    }
-  }, [autoplay.status, nextEpisodeId, router]);
+    if (autoplay.status === "fired") goNext();
+  }, [autoplay.status, goNext]);
 
   const onEndedChange = useCallback((next: boolean) => {
     setEnded(next);
-    if (!next) dispatch({ type: "reset" });
+    if (!next) {
+      dispatch({ type: "reset" });
+      sleepFiredRef.current = false;
+    }
   }, []);
 
-  /* ── engagement ────────────────────────────────────── */
-  const likeMutation = useToggleLike();
-  const bookmarkMutation = useToggleBookmark();
-  const reportMutation = useSubmitReport();
+  /* ── rail state (love / pass exclusive) ────────────── */
+  const [rail, railDispatch] = useReducer(railReducer, RAIL_IDLE);
+  const railRef = useRef(rail);
+  railRef.current = rail;
+  useEffect(() => {
+    if (!detail) return;
+    railDispatch({ type: "sync", loved: detail.video.viewer_has_liked, passed: detail.viewerDisliked, likeCount: detail.likeCount });
+  }, [detail]);
 
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [saved, setSaved] = useState(false);
-  const [subscriberCount, setSubscriberCount] = useState(0);
-  const [descExpanded, setDescExpanded] = useState(false);
+  const likeMutation = useToggleLike();
+  const reportMutation = useSubmitReport();
+  const deleteMutation = useDeletePost();
+
+  const [followerCount, setFollowerCount] = useState(0);
+  useEffect(() => {
+    if (video) setFollowerCount(video.channel_subscriber_count);
+  }, [video]);
+  useEffect(() => {
+    if (channel) setFollowerCount(channel.subscriber_count ?? 0);
+  }, [channel]);
+
+  const [theater, setTheater] = useState(false);
+  const [miniOn, setMiniOn] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentSort, setCommentSort] = useState<CommentSort>("top");
   const [shareOpen, setShareOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [blockPending, setBlockPending] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [audioDialogOpen, setAudioDialogOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const playerRef = useRef<TubePlayerHandle | null>(null);
 
-  useEffect(() => {
-    if (!video) return;
-    setLiked(video.viewer_has_liked);
-    setLikeCount(video.like_count);
-    setSaved(video.viewer_has_saved);
-    setSubscriberCount(video.channel_subscriber_count);
-  }, [video]);
-
-  useEffect(() => {
-    if (channel) setSubscriberCount(channel.subscriber_count ?? 0);
-  }, [channel]);
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if ((e.target as HTMLElement | null)?.closest?.("[data-more-menu]")) return;
-      setMoreOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [moreOpen]);
+  const toggleTheater = useCallback(() => setTheater((t) => !t), []);
+  const toggleMini = useCallback(() => setMiniOn((m) => !m), []);
 
   const requireUser = useCallback(() => {
     if (user) return true;
@@ -380,47 +412,40 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     return false;
   }, [toast, user]);
 
-  const handleLike = () => {
+  const handleLove = () => {
     if (!video || !requireUser()) return;
-    const prevLiked = liked;
-    const prevCount = likeCount;
-    setLiked(!prevLiked);
-    setLikeCount(Math.max(0, prevCount + (prevLiked ? -1 : 1)));
+    const prev = railRef.current;
+    railDispatch({ type: "love" });
     likeMutation.mutate(video.id, {
       onSuccess: (r) => {
-        setLiked(r.liked);
-        setLikeCount(r.count);
+        railDispatch({ type: "settle-love", loved: r.liked, likeCount: r.count });
+        lovedIds.invalidate();
       },
-      onError: () => {
-        setLiked(prevLiked);
-        setLikeCount(prevCount);
-      },
+      onError: () => railDispatch({ type: "revert", state: prev }),
     });
   };
 
-  const handleSave = () => {
+  const handlePass = () => {
     if (!video || !requireUser()) return;
-    const prev = saved;
-    setSaved(!prev);
-    bookmarkMutation.mutate(video.id, {
-      onSuccess: (r) => setSaved(r.bookmarked),
-      onError: () => setSaved(prev),
-    });
+    const prev = railRef.current;
+    railDispatch({ type: "pass" });
+    setPass(video.id, !prev.passed)
+      .then(() => {
+        if (prev.loved) lovedIds.invalidate();
+      })
+      .catch(() => {
+        railDispatch({ type: "revert", state: prev });
+        toast({ type: "error", title: "Could not save that" });
+      });
   };
 
-  const copyLink = async () => {
-    setMoreOpen(false);
-    const url = `${window.location.origin}/posttube/watch/${video?.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ type: "success", title: "Link copied" });
-    } catch {
-      toast({ type: "error", title: "Could not copy", description: url });
-    }
+  const handleQueue = async () => {
+    if (!video || !requireUser()) return;
+    const ok = await queue.toggle(video.id, detail?.viewerQueued);
+    if (!ok) toast({ type: "error", title: "Could not update your Queue" });
   };
 
   const notInterested = async () => {
-    setMoreOpen(false);
     if (!video || !requireUser()) return;
     try {
       await sendFeedFeedback({ post_id: video.id, signal: "not_interested" });
@@ -431,7 +456,6 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   };
 
   const dontRecommend = async () => {
-    setMoreOpen(false);
     if (!video || !requireUser()) return;
     try {
       await sendFeedFeedback({ author_id: video.author_id, signal: "not_interested" });
@@ -456,27 +480,41 @@ function WatchPageContent({ videoId }: WatchPageProps) {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!video) return;
+    try {
+      await deleteMutation.mutateAsync(video.id);
+      setDeleteOpen(false);
+      toast({ type: "success", title: "Deleted" });
+      router.push("/posttube/hub/library");
+    } catch {
+      toast({ type: "error", title: "Could not delete" });
+    }
+  };
+
+  const creatorTools = useMemo(() => ({ onHeart: setCommentHeart, onPin: setCommentPin }), []);
+
   /* ── render ────────────────────────────────────────── */
-  if (videoId && videoQuery.isLoading) {
+  if (videoId && detailQuery.isLoading) {
     return (
-      <div className="mx-auto w-full max-w-[1720px] px-4 py-4 sm:px-6">
-        <div className="flex flex-col gap-6 xl:flex-row">
-          <div className="min-w-0 flex-1 xl:max-w-[1280px]">
-            <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-black">
-              <Loader2 className="h-10 w-10 animate-spin text-white/60" />
+      <div className="tube-watch">
+        <div className="tube-watch__main">
+          <div className="tube-watch__stage-row">
+            <div className="tube-watch__player">
+              <div className="tube-stage flex items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-white/60" />
+              </div>
             </div>
-            <div className="mt-4 h-6 w-2/3 animate-pulse rounded bg-brand-secondary" />
-            <div className="mt-3 h-12 w-full animate-pulse rounded bg-brand-secondary" />
+            <div className="tube-watch__rail" />
           </div>
-          <aside className="w-full xl:w-[400px] xl:shrink-0">
-            <RelatedSkeleton />
-          </aside>
+          <div className="mt-3 h-5 w-2/3 animate-pulse rounded bg-brand-secondary" />
+          <div className="mt-3 h-10 w-full animate-pulse rounded bg-brand-secondary" />
         </div>
       </div>
     );
   }
 
-  if (!video) {
+  if (!video || !detail) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
         <h2 className="text-[18px] font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
@@ -484,299 +522,252 @@ function WatchPageContent({ videoId }: WatchPageProps) {
           {videoId ? "This video may still be processing or has been removed." : "Browse PostTube to find videos to watch."}
         </p>
         <Link href="/posttube" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">
-          Back to PostTube
+          Back to Watch
         </Link>
       </div>
     );
   }
 
-  const isOwnChannel = !!user && user.id === video.author_id;
   const channelName = channel?.name || video.channel_name;
   const channelHandle = channel?.handle || video.channel_handle;
   const channelAvatar = channelAvatarUrl(channel) || video.channel_avatar_url;
   const channelHref = channelHandle ? `/posttube/channel/${encodeURIComponent(channelHandle)}` : `/posttube/channel/${video.author_id}`;
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/posttube/watch/${video.id}` : undefined;
-  const description = video.description ?? "";
-  const descriptionLong = description.split(/\r?\n/).length > 3 || description.length > 220;
+  const topic = detail.topicSlug
+    ? { slug: detail.topicSlug, label: categories.data?.find((c) => c.slug === detail.topicSlug)?.label ?? detail.topicSlug }
+    : null;
+  const keepHref = mediaAssetId && (detail.allowDownload || isOwner) ? downloadHref(mediaAssetId) : null;
+  const queued = queue.queued(video.id, detail.viewerQueued);
+  const ambient = ambientAllowed({ pref: watchPrefs.ambient, reducedMotion, theater, fullscreen: false });
+  const audioOptions = audioTrackOptions(audioTracks);
+  const sourceOverride = activeAudioTrack?.playback_url ? mediaHref(activeAudioTrack.playback_url) : null;
 
-  const countdownActive = ended && autoplay.status === "counting" && !!nextEpisode;
+  const countdownActive = ended && autoplay.status === "counting" && !!nextTarget;
+  const countdownTotal = nextTarget?.kind === "series" ? AUTOPLAY_COUNTDOWN_SECONDS : UP_NEXT_COUNTDOWN_SECONDS;
   const endScreen = (
-    <div className="w-full text-center text-white">
-      {countdownActive && nextEpisode ? (
+    <div className="w-full text-center">
+      {countdownActive && nextTarget ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-[12px] uppercase tracking-wider text-white/70">Up next in {autoplay.remaining}s</p>
-          <p className="text-[16px] font-bold">
-            Episode {nextEpisode.episode_num}
-            {nextEpisode.title ? ` · ${nextEpisode.title}` : ""}
-          </p>
+          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next in {autoplay.remaining}s</p>
+          <p className="text-[15px] font-semibold">{nextTarget.label}</p>
           <div className="h-1 w-56 overflow-hidden rounded-full bg-white/25">
-            <div className="h-full bg-brand-accent transition-all duration-1000" style={{ width: `${((10 - autoplay.remaining) / 10) * 100}%` }} />
+            <div
+              className="h-full bg-brand-accent transition-all duration-1000"
+              style={{ width: `${((countdownTotal - autoplay.remaining) / countdownTotal) * 100}%` }}
+            />
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => dispatch({ type: "cancel" })}
-              className="rounded-full border border-white/50 px-4 py-2 text-[13px] font-semibold text-white hover:bg-white/10"
-            >
+            <button type="button" onClick={() => dispatch({ type: "cancel" })} className="rounded-full border border-white/50 px-4 py-2 text-[13px] font-semibold hover:bg-white/10">
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={() => dispatch({ type: "playNow" })}
-              className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90"
-            >
+            <button type="button" onClick={() => dispatch({ type: "playNow" })} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
               Play now
             </button>
           </div>
         </div>
-      ) : nextEpisode && autoplay.status === "cancelled" ? (
+      ) : nextTarget ? (
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[12px] uppercase tracking-wider text-white/70">Next episode</p>
-          <Link href={`/posttube/watch/${nextEpisode.post_id}`} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
-            Play episode {nextEpisode.episode_num}
+          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next</p>
+          <Link href={nextTarget.href} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
+            {nextTarget.label}
           </Link>
-        </div>
-      ) : related.length > 0 ? (
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-[12px] uppercase tracking-wider text-white/70">Up next</p>
-          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
-            {related.slice(0, 3).map((r) => (
-              <Link key={r.id} href={`/posttube/watch/${r.id}`} className="group text-left">
-                <div className="relative aspect-video overflow-hidden rounded-lg bg-white/10">
-                  {r.thumbnail_url ? <img src={r.thumbnail_url} alt="" className="h-full w-full object-cover" /> : null}
-                </div>
-                <p className="mt-1 line-clamp-2 text-[12px] font-semibold leading-tight text-white group-hover:underline">{r.title}</p>
-              </Link>
-            ))}
-          </div>
         </div>
       ) : null}
     </div>
   );
 
+  const upNextNode = collection ? (
+    <UpNext
+      rows={collectionRows}
+      loading={collectionQuery.isLoading}
+      collection={{ id: collection.collection.id, title: collection.collection.title, index: neighbours.index, count: neighbours.count, prev: neighbours.prev, next: neighbours.next }}
+    />
+  ) : (
+    <UpNext
+      rows={related.map((v) => ({ video: v, href: `/posttube/watch/${v.id}` }))}
+      loading={upNextQuery.isLoading}
+      hasMore={!!upNextQuery.hasNextPage}
+      fetchingMore={upNextQuery.isFetchingNextPage}
+      onMore={() => void upNextQuery.fetchNextPage()}
+      pills={upNextPills(topic)}
+      chip={chip}
+      onChip={setChip}
+    />
+  );
+
+  const moreMenu = (
+    <WatchMoreMenu
+      open={moreOpen}
+      onClose={() => setMoreOpen(false)}
+      isOwner={isOwner}
+      channelName={channelName}
+      onNotInterested={() => void notInterested()}
+      onDontRecommend={() => void dontRecommend()}
+      onReport={() => {
+        if (!requireUser()) return;
+        setReportOpen(true);
+        setReportSubmitted(false);
+        setReportReason("");
+      }}
+      onBlock={() => requireUser() && setBlockOpen(true)}
+      onEdit={() => router.push(`/posttube/hub/library?edit=${encodeURIComponent(video.id)}`)}
+      onAudioTracks={() => setAudioDialogOpen(true)}
+      onDelete={() => setDeleteOpen(true)}
+    />
+  );
+
+  const railProps = {
+    loved: rail.loved,
+    likeCount: rail.likeCount,
+    passed: rail.passed,
+    shareHidden: detail.shareHidden,
+    keepHref,
+    queued,
+    commentCount: video.comment_count,
+    commentsOff: detail.commentsOff,
+    commentsOpen,
+    onLove: handleLove,
+    onPass: handlePass,
+    onShare: () => setShareOpen(true),
+    onQueue: () => void handleQueue(),
+    onAdd: () => requireUser() && setPlaylistOpen(true),
+    onComments: () => setCommentsOpen((o) => !o),
+    onMore: () => setMoreOpen((o) => !o),
+    moreMenu,
+  };
+
   return (
-    <div className="mx-auto w-full max-w-[1720px] px-4 py-4 sm:px-6">
-      <div className="flex flex-col gap-6 xl:flex-row">
-        {/* Main column */}
-        <div className="min-w-0 flex-1 xl:max-w-[1280px]">
-          <TubePlayer
-            videoId={video.id}
-            hlsUrl={hlsUrl}
-            fileUrl={fileUrl}
-            poster={video.thumbnail_url || undefined}
-            captions={captions}
-            startPositionMs={startPositionMs}
-            startReady={startReady}
-            autoPlay={!dataSaver}
-            deferLoad={dataSaver}
-            trimStartMs={trimStartMs}
-            trimEndMs={trimEndMs}
-            prefs={prefs}
-            onPrefsChange={updatePrefs}
-            autoplayNext={series ? { on: autoplayNextOn, onChange: setAutoplayNextOn } : null}
-            onPlay={onPlay}
-            onPause={onPause}
-            onTimeUpdate={onTimeUpdate}
-            onEnded={onEnded}
-            endScreen={endScreen}
-            ended={ended}
-            onEndedChange={onEndedChange}
-          />
+    <div className="tube-watch" data-theater={theater ? "" : undefined} data-comments-open={commentsOpen && wide ? "" : undefined}>
+      <div className="tube-watch__main">
+        <div className="tube-watch__stage-row">
+          <div className="tube-watch__player">
+            {gated ? (
+              <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
+            ) : (
+              <TubeStage
+                miniplayerOn={miniOn}
+                returnHref={collectionWatchHref(video.id, listId)}
+                videoId={video.id}
+                hlsUrl={hlsUrl}
+                fileUrl={fileUrl}
+                poster={video.thumbnail_url || undefined}
+                captions={captions}
+                startPositionMs={startPositionMs}
+                startReady={startReady}
+                autoPlay={!dataSaver}
+                deferLoad={dataSaver}
+                trimStartMs={trimStartMs}
+                trimEndMs={trimEndMs}
+                prefs={prefs}
+                onPrefsChange={updatePrefs}
+                autoplayNext={{ on: autoplayNextOn, onChange: setAutoplayNextOn }}
+                onPlay={onPlay}
+                onPause={onPause}
+                onTimeUpdate={onTimeUpdate}
+                onEnded={onEnded}
+                endScreen={endScreen}
+                ended={ended}
+                onEndedChange={onEndedChange}
+                onTheater={toggleTheater}
+                theater={theater}
+                onMiniplayer={toggleMini}
+                miniplayer={miniOn}
+                onNext={nextTarget ? goNext : undefined}
+                chapters={detail.chapters}
+                storyboard={storyboardQuery.data ?? null}
+                ambient={ambient}
+                onAmbientChange={(on) => updateWatchPrefs({ ambient: on })}
+                stableVolume={watchPrefs.stableVolume}
+                onStableVolumeChange={(on) => updateWatchPrefs({ stableVolume: on })}
+                audioTracks={{
+                  options: audioOptions,
+                  current: activeAudioTrack?.id ?? ORIGINAL_TRACK_ID,
+                  onChange: (id) => updateWatchPrefs({ audioLanguage: languageForChoice(audioTracks, id) }),
+                  onManage: isOwner && mediaAssetId ? () => setAudioDialogOpen(true) : undefined,
+                }}
+                sourceOverride={sourceOverride}
+                onSleep={onSleep}
+                controller={playerRef}
+              />
+            )}
+          </div>
+          <div className="tube-watch__rail">
+            <WatchRail {...railProps} />
+          </div>
+        </div>
+        <div className="tube-watch__theater-bar">{theater ? <WatchRail {...railProps} variant="bar" onLeaveTheater={toggleTheater} /> : null}</div>
 
-          {/* Title */}
-          <h1 className="mt-3 text-[20px] font-bold leading-snug text-brand-text">{video.title}</h1>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
-            {startPositionMs > 0 ? ` · Resumed at ${formatDuration(startPositionMs / 1000)}` : ""}
-          </p>
-
-          {/* Channel row + actions */}
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Link href={channelHref} className="flex min-w-0 items-center gap-3">
-              <Avatar src={channelAvatar} name={channelName} seed={video.author_id} size="md" />
-              <div className="min-w-0">
-                <p className="truncate text-[14px] font-bold leading-tight text-brand-text">{channelName}</p>
-                <p className="text-[12px] text-muted-foreground">{formatCount(subscriberCount)} subscribers</p>
-              </div>
-            </Link>
+        <WatchDetails
+          title={video.title}
+          authorId={video.author_id}
+          channelName={channelName}
+          channelAvatar={channelAvatar}
+          channelHref={channelHref}
+          followerCount={followerCount}
+          follow={
             <SubscribeButton
               channelRef={video.author_id}
               initialSubscribed={channel?.is_subscribed ?? video.viewer_has_subscribed}
               initialNotifyOn={channel?.notify_on ?? null}
-              hidden={isOwnChannel || !user}
-              onSubscribedChange={(s) => setSubscriberCount((c) => Math.max(0, c + (s ? 1 : -1)))}
+              hidden={isOwner || !user}
+              size="sm"
+              labels={{ off: "Follow", on: "Following" }}
+              onSubscribedChange={(s) => setFollowerCount((c) => Math.max(0, c + (s ? 1 : -1)))}
             />
+          }
+          topic={topic}
+          viewCount={video.view_count}
+          publishedAt={video.published_at}
+          source={detail.source}
+          resumedAtMs={startPositionMs}
+          chapters={detail.chapters}
+          currentChapter={chapterIndex}
+          onSeek={(ms) => playerRef.current?.seekTo(ms)}
+          description={video.description}
+          hashtags={video.hashtags}
+        />
 
-            <div className="flex-1" />
+        {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleLike}
-                aria-pressed={liked}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
-                  liked ? "bg-primary-tint text-primary-ink" : "bg-brand-secondary text-brand-text hover:bg-brand-divider"
-                }`}
-              >
-                <ThumbsUp className={`h-[18px] w-[18px] ${liked ? "fill-current" : ""}`} />
-                {formatCount(likeCount)}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShareOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-brand-secondary px-4 py-2 text-[13px] font-semibold text-brand-text hover:bg-brand-divider"
-              >
-                <Share2 className="h-[18px] w-[18px]" /> Share
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                aria-pressed={saved}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
-                  saved ? "bg-primary-tint text-primary-ink" : "bg-brand-secondary text-brand-text hover:bg-brand-divider"
-                }`}
-              >
-                <Bookmark className={`h-[18px] w-[18px] ${saved ? "fill-current" : ""}`} />
-                {saved ? "Saved" : "Save"}
-              </button>
-              <div className="relative" data-more-menu>
-                <button
-                  type="button"
-                  onClick={() => setMoreOpen((o) => !o)}
-                  aria-label="More"
-                  aria-expanded={moreOpen}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-brand-text hover:bg-brand-divider"
-                >
-                  <MoreHorizontal className="h-[18px] w-[18px]" />
-                </button>
-                {moreOpen ? (
-                  <div role="menu" className="absolute right-0 top-11 z-30 w-[240px] overflow-hidden rounded-xl border border-border bg-brand-card py-1 shadow-xl">
-                    <MenuItem icon={<Link2 className="h-4 w-4" />} label="Copy link" onClick={copyLink} />
-                    <MenuItem
-                      icon={<ListPlus className="h-4 w-4" />}
-                      label="Save to playlist"
-                      onClick={() => {
-                        setMoreOpen(false);
-                        if (requireUser()) setPlaylistOpen(true);
-                      }}
-                    />
-                    <MenuItem icon={<EyeOff className="h-4 w-4" />} label="Not interested" onClick={notInterested} />
-                    {!isOwnChannel ? (
-                      <>
-                        <MenuItem icon={<UserX className="h-4 w-4" />} label={`Don't recommend ${channelName}`} onClick={dontRecommend} />
-                        <MenuItem
-                          icon={<Ban className="h-4 w-4" />}
-                          label={`Block ${channelName}`}
-                          danger
-                          onClick={() => {
-                            setMoreOpen(false);
-                            if (requireUser()) setBlockOpen(true);
-                          }}
-                        />
-                      </>
-                    ) : null}
-                    <MenuItem
-                      icon={<Flag className="h-4 w-4" />}
-                      label="Report"
-                      onClick={() => {
-                        setMoreOpen(false);
-                        if (!requireUser()) return;
-                        setReportOpen(true);
-                        setReportSubmitted(false);
-                        setReportReason("");
-                      }}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          {description ? (
-            <div
-              className="mt-3 cursor-pointer rounded-xl bg-brand-secondary px-4 py-3 transition-colors hover:bg-brand-secondary/70"
-              onClick={() => !descExpanded && setDescExpanded(true)}
-            >
-              <p className={`whitespace-pre-line text-[13px] leading-relaxed text-brand-text ${descExpanded ? "" : "line-clamp-3"}`}>{description}</p>
-              {video.hashtags.length > 0 && descExpanded ? (
-                <p className="mt-2 text-[12px] font-semibold text-primary-ink">{video.hashtags.map((h) => `#${h.replace(/^#/, "")}`).join(" ")}</p>
-              ) : null}
-              {descriptionLong ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDescExpanded((c) => !c);
-                  }}
-                  className="mt-1 flex items-center gap-1 text-[13px] font-semibold text-brand-text hover:underline"
-                >
-                  {descExpanded ? (
-                    <>
-                      Show less <ChevronUp className="h-3.5 w-3.5" />
-                    </>
-                  ) : (
-                    "...more"
-                  )}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Series */}
-          {series && series.episodes.length > 0 ? (
-            <div className="mt-4">
-              <SeriesPanel series={series} currentId={video.id} />
-            </div>
-          ) : null}
-
-          {/* Comments */}
-          <div className="mt-6 mb-8">
-            <h3 className="mb-3 text-[16px] font-bold text-brand-text">{formatCount(video.comment_count)} Comments</h3>
-            <CommentSection postId={video.id} postAuthorId={video.author_id} commentsCount={video.comment_count} alwaysExpanded />
-          </div>
-        </div>
-
-        {/* Up next */}
-        <aside className="w-full xl:w-[400px] xl:shrink-0">
-          <h3 className="mb-3 text-[14px] font-bold text-brand-text">Up next</h3>
-          <div className="space-y-3">
-            {relatedQuery.isLoading ? (
-              <RelatedSkeleton />
-            ) : related.length > 0 ? (
-              related.map((item) => <RelatedCard key={item.id} video={item} />)
-            ) : (
-              <p className="py-4 text-[13px] text-muted-foreground">No related videos</p>
-            )}
-            {relatedQuery.hasNextPage ? (
-              <button
-                type="button"
-                onClick={() => relatedQuery.fetchNextPage()}
-                disabled={relatedQuery.isFetchingNextPage}
-                className="w-full rounded-full border border-border bg-brand-card py-2 text-[12px] font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
-              >
-                {relatedQuery.isFetchingNextPage ? "Loading..." : "Show more"}
-              </button>
-            ) : null}
-          </div>
-        </aside>
+        {!(commentsOpen && wide) ? upNextNode : null}
       </div>
+
+      <WatchComments
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        wide={wide}
+        postId={video.id}
+        authorId={video.author_id}
+        count={video.comment_count}
+        commentsOff={detail.commentsOff}
+        sort={commentSort}
+        onSort={setCommentSort}
+        creatorTools={creatorTools}
+        upNext={upNextNode}
+      />
 
       <ShareDialog postId={video.id} isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
       <SaveToPlaylistDialog open={playlistOpen} postId={video.id} onClose={() => setPlaylistOpen(false)} />
-      <ConfirmDialog
+      {mediaAssetId ? <ReelAudioTracksDialog open={audioDialogOpen} mediaId={mediaAssetId} onClose={() => setAudioDialogOpen(false)} /> : null}
+      <ReelConfirmDialog
         open={blockOpen}
         title={`Block ${channelName}?`}
-        body={
-          <>
-            They won&apos;t be able to message you, comment on your posts, or see your content. You won&apos;t see their videos any more.
-          </>
-        }
+        description="They won't be able to message you, comment on your posts, or see your content. You won't see their videos any more."
         confirmLabel="Block"
         danger
         pending={blockPending}
-        onConfirm={confirmBlock}
-        onClose={() => setBlockOpen(false)}
+        onConfirm={() => void confirmBlock()}
+        onCancel={() => setBlockOpen(false)}
+      />
+      <ReelConfirmDialog
+        open={deleteOpen}
+        title="Delete this video?"
+        description="It disappears from your channel, every collection and every feed. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        pending={deleteMutation.isPending}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteOpen(false)}
       />
 
       {reportOpen ? (
@@ -844,36 +835,6 @@ function WatchPageContent({ videoId }: WatchPageProps) {
   );
 }
 
-function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] font-medium hover:bg-brand-secondary ${danger ? "text-danger" : "text-brand-text"}`}
-    >
-      {icon}
-      <span className="truncate">{label}</span>
-    </button>
-  );
-}
-
-function RelatedSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex gap-2">
-          <div className="aspect-video w-[168px] shrink-0 animate-pulse rounded-lg bg-brand-secondary" />
-          <div className="flex-1 space-y-1.5 py-0.5">
-            <div className="h-3.5 w-full animate-pulse rounded-sm bg-brand-secondary" />
-            <div className="h-3.5 w-3/4 animate-pulse rounded-sm bg-brand-secondary" />
-          </div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-export function WatchPage({ videoId }: WatchPageProps) {
-  return <WatchPageContent key={videoId ?? "posttube-watch"} videoId={videoId} />;
+export function WatchPage({ videoId, listId }: WatchPageProps) {
+  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} />;
 }

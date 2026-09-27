@@ -1,27 +1,50 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import type Hls from "hls.js";
 import {
+  AudioLines,
+  AudioWaveform,
   Captions,
-  Check,
-  ChevronLeft,
-  ChevronRight,
+  Gauge,
+  Keyboard,
   Loader2,
   Maximize,
   Minimize,
+  Moon,
   Pause,
+  PictureInPicture2,
   Play,
+  RectangleHorizontal,
   RotateCcw,
   RotateCw,
   Settings,
+  SkipForward,
+  SlidersHorizontal,
+  Sparkles,
   Volume2,
   VolumeX,
 } from "lucide-react";
 
-import { clampSpeed, pickHlsLevel, SPEEDS, speedChipLabel } from "@/features/reels/playback/playerPrefs";
+import {
+  ChoiceMenuBack,
+  ChoiceMenuChoiceRow,
+  ChoiceMenuOption,
+  ChoiceMenuRow,
+  ChoiceMenuSwitchRow,
+  SpeedPanel,
+} from "@/features/reels/components/ChoiceMenu";
+import { Popover } from "@/features/reels/components/Popover";
+import { pickHlsLevel, SPEEDS, speedChipLabel } from "@/features/reels/playback/playerPrefs";
 import { formatClockMs, type TubePlayerPrefs } from "../model";
 import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../playerKeys";
+import { startAmbient } from "../watch/ambient";
+import { chapterAt, chapterTicks, type Chapter } from "../watch/chapters";
+import { keyHelpRows } from "../watch/keysHelp";
+import { scheduleSleep, SLEEP_CHOICES, sleepRemainingMs, sleepValueLabel, type SleepChoice, type SleepSchedule } from "../watch/sleepTimer";
+import { createStableVolume, type StableVolumeHandle } from "../watch/stableVolume";
+import { storyboardCueAt, type StoryboardCue } from "../watch/storyboard";
+import "./tube-player.css";
 
 /*
   The long-video player. One <video>, HLS through hls.js (native on Safari)
@@ -30,12 +53,34 @@ import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../play
   (playerKeys.ts). It reports position/duration upward and never persists
   anything itself: the watch page owns progress saving and the end-of-video
   decision.
+
+  W1 added, all on this one element: chapter ticks and the storyboard
+  preview above the seek bar; theater and miniplayer controls (the page
+  owns both states — the player only asks); the settings menu as the reels
+  choice-pane shell (Ambient mode · Audio track · Auto play · Captions ·
+  Keys · Playback speed · Quality · Sleep timer · Stable volume); an
+  alternate audio track as a muxed MP4 with the clock carried across the
+  switch; the ambient canvas behind the frame; the sleep timer; a Web Audio
+  compressor for stable volume, built on first enable.
 */
 
 export interface CaptionTrack {
   lang: string;
   label: string;
   src: string;
+}
+
+export interface AudioTrackChoice {
+  id: string;
+  label: string;
+}
+
+/** What the page can drive from outside (the chapter strip seeks, the collection bar skips). */
+export interface TubePlayerHandle {
+  seekTo: (ms: number) => void;
+  play: () => void;
+  pause: () => void;
+  togglePlay: () => void;
 }
 
 export interface TubePlayerProps {
@@ -56,7 +101,7 @@ export interface TubePlayerProps {
   trimEndMs?: number;
   prefs: TubePlayerPrefs;
   onPrefsChange: (patch: Partial<TubePlayerPrefs>) => void;
-  /** Autoplay-next row in the gear menu; hidden when not in a series. */
+  /** The Auto play switch in the settings menu; null hides the row. */
   autoplayNext?: { on: boolean; onChange: (on: boolean) => void } | null;
   onPlay?: () => void;
   onPause?: (positionMs: number, durationMs: number) => void;
@@ -67,13 +112,32 @@ export interface TubePlayerProps {
   endScreen?: ReactNode;
   ended: boolean;
   onEndedChange: (ended: boolean) => void;
-  /** The T key. The player only dispatches; theater itself is the watch page's (W1). */
+  /** The T key and the theater control. The page owns the state. */
   onTheater?: () => void;
-  /** The N key. The player only dispatches; the watch page decides what "next" is. */
+  theater?: boolean;
+  /** The I key and the miniplayer control. The page owns the state. */
+  onMiniplayer?: () => void;
+  miniplayer?: boolean;
+  /** The N key and the collection bar. The page decides what "next" is. */
   onNext?: () => void;
+  chapters?: Chapter[];
+  storyboard?: StoryboardCue[] | null;
+  /** Ambient glow: the page has already applied the switch, reduced motion and theater; fullscreen is dropped here. */
+  ambient?: boolean;
+  onAmbientChange?: (on: boolean) => void;
+  stableVolume?: boolean;
+  onStableVolumeChange?: (on: boolean) => void;
+  /** Alternate audio (the reels helpers): the choices, the current one, and the owner's manage row. */
+  audioTracks?: { options: AudioTrackChoice[]; current: string; onChange: (id: string) => void; onManage?: () => void } | null;
+  /** A muxed MP4 for the chosen alternate track; the clock carries across the switch. */
+  sourceOverride?: string | null;
+  /** The sleep timer fired (paused by the clock, or the video ended under "End of video"). */
+  onSleep?: () => void;
+  controller?: MutableRefObject<TubePlayerHandle | null>;
 }
 
 const HIDE_CONTROLS_AFTER_MS = 2600;
+const PREVIEW_W = 160;
 
 function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
@@ -106,16 +170,36 @@ export function TubePlayer({
   ended,
   onEndedChange,
   onTheater,
+  theater = false,
+  onMiniplayer,
+  miniplayer = false,
   onNext,
+  chapters = [],
+  storyboard = null,
+  ambient = false,
+  onAmbientChange,
+  stableVolume = false,
+  onStableVolumeChange,
+  audioTracks = null,
+  sourceOverride = null,
+  onSleep,
+  controller,
 }: TubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const ambientRef = useRef<HTMLCanvasElement>(null);
+  const seekRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const levelHeightsRef = useRef<number[]>([]);
   const seekAppliedRef = useRef(false);
+  /** The clock at the moment the source is switched (an audio track), replayed once the new source has metadata. */
+  const carryRef = useRef<{ at: number; paused: boolean } | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stableRef = useRef<StableVolumeHandle | null>(null);
   const endedRef = useRef(ended);
   endedRef.current = ended;
+  const onSleepRef = useRef(onSleep);
+  onSleepRef.current = onSleep;
 
   const [tapped, setTapped] = useState(!deferLoad);
   const [playing, setPlaying] = useState(false);
@@ -129,17 +213,25 @@ export function TubePlayer({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [captionLang, setCaptionLang] = useState<string | null>(captions[0]?.lang ?? null);
+  const [hoverMs, setHoverMs] = useState<number | null>(null);
+  const [hoverX, setHoverX] = useState(0);
+  const [sleepChoice, setSleepChoice] = useState<SleepChoice>("off");
+  const [sleepSchedule, setSleepSchedule] = useState<SleepSchedule>(null);
+  const sleepScheduleRef = useRef<SleepSchedule>(null);
+  sleepScheduleRef.current = sleepSchedule;
 
   useEffect(() => {
     setTapped(!deferLoad);
     setFailed(false);
     seekAppliedRef.current = false;
+    carryRef.current = null;
     setPositionMs(0);
     setDurationMs(0);
     setBufferedMs(0);
     setLevels([]);
     levelHeightsRef.current = [];
     setSettingsOpen(false);
+    setHoverMs(null);
   }, [videoId, deferLoad]);
 
   useEffect(() => {
@@ -156,22 +248,27 @@ export function TubePlayer({
     setFailed(false);
     setBuffering(true);
 
-    const useFile = () => {
+    const useFile = (url = fileUrl) => {
       if (cancelled) return;
       hlsRef.current?.destroy();
       hlsRef.current = null;
       levelHeightsRef.current = [];
       setLevels([]);
-      if (!fileUrl) {
+      if (!url) {
         setFailed(true);
         setBuffering(false);
         return;
       }
-      video.src = fileUrl;
+      video.src = url;
       video.load();
     };
 
     const attach = async () => {
+      if (sourceOverride) {
+        // An alternate audio track: one muxed MP4, no rungs to choose from.
+        useFile(sourceOverride);
+        return;
+      }
       if (!hlsUrl) {
         useFile();
         return;
@@ -218,6 +315,8 @@ export function TubePlayer({
     void attach();
     return () => {
       cancelled = true;
+      // Leaving for a source switch on the same video (an audio track): remember the clock so it carries over.
+      if (video.currentTime > 0 && seekAppliedRef.current) carryRef.current = { at: video.currentTime, paused: video.paused };
       hlsRef.current?.destroy();
       hlsRef.current = null;
       video.removeAttribute("src");
@@ -225,7 +324,7 @@ export function TubePlayer({
     };
     // prefs.quality is applied by its own effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hlsUrl, fileUrl, tapped]);
+  }, [hlsUrl, fileUrl, tapped, sourceOverride]);
 
   /* ── prefs → element ───────────────────────────────────── */
   useEffect(() => {
@@ -240,7 +339,8 @@ export function TubePlayer({
     video.playbackRate = prefs.speed;
     video.volume = prefs.volume;
     video.muted = prefs.muted;
-  }, [prefs.speed, prefs.volume, prefs.muted]);
+    // load() resets playbackRate to 1, so this runs after every source switch too.
+  }, [prefs.speed, prefs.volume, prefs.muted, sourceOverride, hlsUrl, fileUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -251,6 +351,34 @@ export function TubePlayer({
       t.mode = prefs.captions && t.language === captionLang ? "showing" : "hidden";
     }
   }, [prefs.captions, captionLang, captions]);
+
+  /* ── stable volume (Web Audio compressor, built on first enable) ── */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (stableVolume) {
+      if (!stableRef.current) stableRef.current = createStableVolume(video);
+      stableRef.current.enable();
+    } else {
+      stableRef.current?.disable();
+    }
+  }, [stableVolume]);
+
+  useEffect(() => {
+    return () => {
+      stableRef.current?.dispose();
+      stableRef.current = null;
+    };
+  }, []);
+
+  /* ── ambient canvas ────────────────────────────────────── */
+  const ambientOn = ambient && !fullscreen && !theater && tapped;
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = ambientRef.current;
+    if (!ambientOn || !video || !canvas) return;
+    return startAmbient(video, canvas);
+  }, [ambientOn]);
 
   /* ── element events ────────────────────────────────────── */
   useEffect(() => {
@@ -263,6 +391,14 @@ export function TubePlayer({
     };
 
     const applyStart = () => {
+      const carry = carryRef.current;
+      if (carry) {
+        carryRef.current = null;
+        video.currentTime = carry.at;
+        if (!carry.paused) void video.play().catch(() => undefined);
+        seekAppliedRef.current = true;
+        return;
+      }
       if (seekAppliedRef.current || !startReady) return;
       let target = Math.max(trimStartMs, startPositionMs);
       const d = currentDuration();
@@ -304,6 +440,7 @@ export function TubePlayer({
         video.currentTime = trimEndMs / 1000;
         onEndedChange(true);
         onEnded?.(trimEndMs, d);
+        if (sleepScheduleRef.current?.kind === "end") onSleepRef.current?.();
         return;
       }
       onTimeUpdate?.(pos, d);
@@ -321,6 +458,7 @@ export function TubePlayer({
       const d = currentDuration();
       onEndedChange(true);
       onEnded?.(d || Math.round(video.currentTime * 1000), d);
+      if (sleepScheduleRef.current?.kind === "end") onSleepRef.current?.();
     };
     const onError = () => {
       if (!hlsRef.current) setFailed(true);
@@ -369,6 +507,24 @@ export function TubePlayer({
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
+  /* ── sleep timer ───────────────────────────────────────── */
+  const chooseSleep = useCallback((choice: SleepChoice) => {
+    setSleepChoice(choice);
+    setSleepSchedule(scheduleSleep(choice, Date.now()));
+  }, []);
+
+  useEffect(() => {
+    if (!sleepSchedule || sleepSchedule.kind !== "at") return;
+    const wait = sleepRemainingMs(sleepSchedule, Date.now()) ?? 0;
+    const id = setTimeout(() => {
+      videoRef.current?.pause();
+      setSleepChoice("off");
+      setSleepSchedule(null);
+      onSleepRef.current?.();
+    }, wait);
+    return () => clearTimeout(id);
+  }, [sleepSchedule]);
+
   /* ── actions ───────────────────────────────────────────── */
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
@@ -393,9 +549,23 @@ export function TubePlayer({
   const seekTo = useCallback((ms: number) => {
     const video = videoRef.current;
     if (!video) return;
+    if (!tapped) setTapped(true);
     video.currentTime = Math.max(0, ms / 1000);
     if (endedRef.current) onEndedChange(false);
-  }, [onEndedChange]);
+  }, [onEndedChange, tapped]);
+
+  useEffect(() => {
+    if (!controller) return;
+    controller.current = {
+      seekTo,
+      togglePlay,
+      play: () => void videoRef.current?.play().catch(() => undefined),
+      pause: () => videoRef.current?.pause(),
+    };
+    return () => {
+      controller.current = null;
+    };
+  }, [controller, seekTo, togglePlay]);
 
   const toggleMute = useCallback(() => onPrefsChange({ muted: !prefs.muted }), [onPrefsChange, prefs.muted]);
   const toggleCaptions = useCallback(() => onPrefsChange({ captions: !prefs.captions }), [onPrefsChange, prefs.captions]);
@@ -476,6 +646,9 @@ export function TubePlayer({
         case "toggle-theater":
           onTheater?.();
           break;
+        case "toggle-miniplayer":
+          onMiniplayer?.();
+          break;
         case "next":
           onNext?.();
           break;
@@ -484,7 +657,25 @@ export function TubePlayer({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [togglePlay, seekBy, seekPercent, toggleMute, toggleFullscreen, toggleCaptions, onTheater, onNext, showControls]);
+  }, [togglePlay, seekBy, seekPercent, toggleMute, toggleFullscreen, toggleCaptions, onTheater, onMiniplayer, onNext, showControls]);
+
+  /* ── seek bar hover: storyboard + chapter title ────────── */
+  const onSeekHover = useCallback(
+    (clientX: number) => {
+      const bar = seekRef.current;
+      if (!bar || durationMs <= 0) return;
+      const rect = bar.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      setHoverMs(Math.round(ratio * durationMs));
+      // Keep the 160px card inside the bar.
+      setHoverX(Math.max(PREVIEW_W / 2, Math.min(rect.width - PREVIEW_W / 2, clientX - rect.left)));
+    },
+    [durationMs],
+  );
+
+  const ticks = useMemo(() => chapterTicks(chapters, durationMs), [chapters, durationMs]);
+  const hoverCue = hoverMs !== null && storyboard ? storyboardCueAt(storyboard, hoverMs) : null;
+  const hoverChapter = hoverMs !== null ? chapterAt(chapters, hoverMs) : null;
 
   const pct = durationMs > 0 ? Math.min(100, (positionMs / durationMs) * 100) : 0;
   const bufferedPct = durationMs > 0 ? Math.min(100, (bufferedMs / durationMs) * 100) : 0;
@@ -492,160 +683,174 @@ export function TubePlayer({
   const chromeVisible = controlsVisible || !playing || ended;
 
   return (
-    <div
-      ref={containerRef}
-      className="group/player relative aspect-video w-full overflow-hidden rounded-xl bg-black select-none focus:outline-none"
-      onMouseMove={showControls}
-      onMouseLeave={() => playing && !settingsOpen && setControlsVisible(false)}
-      tabIndex={0}
-      aria-label="Video player"
-    >
-      <video
-        ref={videoRef}
-        poster={poster || undefined}
-        className="h-full w-full object-contain"
-        playsInline
-        autoPlay={autoPlay && tapped}
-        preload={tapped ? "auto" : "none"}
-        crossOrigin="use-credentials"
-        onClick={togglePlay}
-        onDoubleClick={toggleFullscreen}
-      >
-        {captions.map((c) => (
-          <track key={c.lang} kind="subtitles" src={c.src} srcLang={c.lang} label={c.label} default={false} />
-        ))}
-      </video>
-
-      {/* Poster tap (data-saver) */}
-      {!tapped ? (
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/40"
-          aria-label="Play video"
-        >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-black shadow-lg">
-            <Play className="ml-1 h-7 w-7 fill-current" />
-          </span>
-        </button>
-      ) : null}
-
-      {/* Buffering */}
-      {tapped && buffering && !ended && !failed ? (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-white/80" />
-        </div>
-      ) : null}
-
-      {failed ? (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/80 text-center text-white">
-          <p className="text-[14px] font-semibold">This video can&apos;t be played right now.</p>
-          <p className="text-[12px] text-white/70">It may still be processing. Try again in a moment.</p>
-        </div>
-      ) : null}
-
-      {/* End screen */}
-      {showEnd ? (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/75 p-4">
-          <div className="flex w-full max-w-[560px] flex-col items-center gap-5">
-            {endScreen}
-            <button
-              type="button"
-              onClick={replay}
-              className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-semibold text-black hover:bg-white/90"
-            >
-              <RotateCcw className="h-4 w-4" /> Replay
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Big centre play (paused, not ended) */}
-      {tapped && !playing && !ended && !buffering && !failed ? (
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="absolute inset-0 z-10 flex items-center justify-center"
-          aria-label="Play"
-        >
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm">
-            <Play className="ml-1 h-7 w-7 fill-current" />
-          </span>
-        </button>
-      ) : null}
-
-      {/* Controls */}
+    <div className="tube-player" data-ambient={ambientOn ? "" : undefined} data-mini={miniplayer ? "" : undefined}>
+      <canvas ref={ambientRef} className="tube-player__ambient" aria-hidden />
       <div
-        className={`absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-3 pb-2 pt-10 transition-opacity duration-200 ${
-          chromeVisible ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        ref={containerRef}
+        className="tube-player__frame group/player"
+        onMouseMove={showControls}
+        onMouseLeave={() => playing && !settingsOpen && setControlsVisible(false)}
+        tabIndex={0}
+        aria-label="Video player"
       >
-        {/* Seek bar */}
-        <div className="group/seek relative h-3 w-full cursor-pointer" onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          seekTo(ratio * durationMs);
-        }}>
-          <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/25 group-hover/seek:h-1.5">
-            <div className="absolute inset-y-0 left-0 rounded-full bg-white/40" style={{ width: `${bufferedPct}%` }} />
-            <div className="absolute inset-y-0 left-0 rounded-full bg-brand-accent" style={{ width: `${pct}%` }} />
-          </div>
-          <div
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-accent opacity-0 shadow group-hover/seek:opacity-100"
-            style={{ left: `${pct}%` }}
-          />
-          <input
-            type="range"
-            min={0}
-            max={durationMs || 1}
-            step={250}
-            value={Math.min(positionMs, durationMs || 1)}
-            onChange={(e) => seekTo(Number(e.target.value))}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            aria-label="Seek"
-          />
-        </div>
+        <video
+          ref={videoRef}
+          poster={poster || undefined}
+          className="tube-player__video"
+          playsInline
+          autoPlay={autoPlay && tapped}
+          preload={tapped ? "auto" : "none"}
+          crossOrigin="use-credentials"
+          onClick={togglePlay}
+          onDoubleClick={toggleFullscreen}
+        >
+          {captions.map((c) => (
+            <track key={c.lang} kind="subtitles" src={c.src} srcLang={c.lang} label={c.label} default={false} />
+          ))}
+        </video>
 
-        <div className="mt-1 flex items-center gap-1 text-white">
-          <ControlButton label={playing ? "Pause" : "Play"} onClick={togglePlay}>
-            {playing ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
-          </ControlButton>
-          <ControlButton label="Back 10 seconds" onClick={() => seekBy(-SEEK_LARGE_S)}>
-            <RotateCcw className="h-[18px] w-[18px]" />
-          </ControlButton>
-          <ControlButton label="Forward 10 seconds" onClick={() => seekBy(SEEK_LARGE_S)}>
-            <RotateCw className="h-[18px] w-[18px]" />
-          </ControlButton>
-          <div className="group/vol flex items-center">
-            <ControlButton label={prefs.muted ? "Unmute" : "Mute"} onClick={toggleMute}>
-              {prefs.muted || prefs.volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </ControlButton>
+        {/* Poster tap (data-saver) */}
+        {!tapped ? (
+          <button type="button" onClick={togglePlay} className="tube-player__tap" aria-label="Play video">
+            <span className="tube-player__big">
+              <Play className="ml-1 h-7 w-7 fill-current" />
+            </span>
+          </button>
+        ) : null}
+
+        {/* Buffering */}
+        {tapped && buffering && !ended && !failed ? (
+          <div className="tube-player__spinner">
+            <Loader2 className="h-10 w-10 animate-spin" />
+          </div>
+        ) : null}
+
+        {failed ? (
+          <div className="tube-player__failed">
+            <p className="text-[14px] font-semibold">This video can&apos;t be played right now.</p>
+            <p className="text-[12px] opacity-70">It may still be processing. Try again in a moment.</p>
+          </div>
+        ) : null}
+
+        {/* End screen */}
+        {showEnd ? (
+          <div className="tube-player__end">
+            <div className="flex w-full max-w-[560px] flex-col items-center gap-5">
+              {endScreen}
+              <button type="button" onClick={replay} className="tube-player__replay">
+                <RotateCcw className="h-4 w-4" /> Replay
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Big centre play (paused, not ended) */}
+        {tapped && !playing && !ended && !buffering && !failed ? (
+          <button type="button" onClick={togglePlay} className="tube-player__tap is-paused" aria-label="Play">
+            <span className="tube-player__big">
+              <Play className="ml-1 h-7 w-7 fill-current" />
+            </span>
+          </button>
+        ) : null}
+
+        {/* Controls */}
+        <div className={`tube-player__controls ${chromeVisible ? "is-visible" : ""}`} data-controls>
+          {/* Seek bar */}
+          <div
+            ref={seekRef}
+            className="tube-seek"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+              seekTo(ratio * durationMs);
+            }}
+            onMouseMove={(e) => onSeekHover(e.clientX)}
+            onMouseLeave={() => setHoverMs(null)}
+          >
+            {hoverMs !== null ? (
+              <div className="tube-seek__preview" style={{ left: hoverX }} aria-hidden>
+                {hoverCue ? (
+                  <div
+                    className="tube-seek__thumb"
+                    style={{
+                      width: hoverCue.w,
+                      height: hoverCue.h,
+                      backgroundImage: `url("${hoverCue.image}")`,
+                      backgroundPosition: `-${hoverCue.x}px -${hoverCue.y}px`,
+                    }}
+                  />
+                ) : null}
+                <div className="tube-seek__label">
+                  {hoverChapter ? <span className="tube-seek__chapter">{hoverChapter.title}</span> : null}
+                  <span className="tube-seek__time">{formatClockMs(hoverMs)}</span>
+                </div>
+              </div>
+            ) : null}
+            <div className="tube-seek__track">
+              <div className="tube-seek__buffered" style={{ width: `${bufferedPct}%` }} />
+              <div className="tube-seek__played" style={{ width: `${pct}%` }} />
+              {ticks.map((t) => (
+                <span key={t.startMs} className="tube-seek__tick" style={{ left: `${t.pct}%` }} title={t.title} />
+              ))}
+            </div>
+            <div className="tube-seek__knob" style={{ left: `${pct}%` }} />
             <input
               type="range"
               min={0}
-              max={1}
-              step={0.05}
-              value={prefs.muted ? 0 : prefs.volume}
-              onChange={(e) => onPrefsChange({ volume: Number(e.target.value), muted: Number(e.target.value) === 0 })}
-              className="h-1 w-0 cursor-pointer accent-brand-accent opacity-0 transition-all group-hover/vol:w-20 group-hover/vol:opacity-100"
-              aria-label="Volume"
+              max={durationMs || 1}
+              step={250}
+              value={Math.min(positionMs, durationMs || 1)}
+              onChange={(e) => seekTo(Number(e.target.value))}
+              className="tube-seek__input"
+              aria-label="Seek"
             />
           </div>
-          <span className="ml-1 text-[12px] font-medium tabular-nums text-white/90">
-            {formatClockMs(positionMs)} / {formatClockMs(durationMs)}
-          </span>
-          <div className="flex-1" />
-          {captions.length > 0 ? (
-            <ControlButton label={prefs.captions ? "Hide captions" : "Show captions"} onClick={toggleCaptions} active={prefs.captions}>
-              <Captions className="h-5 w-5" />
+
+          <div className="tube-player__bar">
+            <ControlButton label={playing ? "Pause" : "Play"} onClick={togglePlay}>
+              {playing ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
             </ControlButton>
-          ) : null}
-          <div className="relative">
-            <ControlButton label="Settings" onClick={() => setSettingsOpen((o) => !o)} active={settingsOpen}>
-              <Settings className="h-5 w-5" />
+            <ControlButton label="Back 10 seconds" onClick={() => seekBy(-SEEK_LARGE_S)}>
+              <RotateCcw className="h-[18px] w-[18px]" />
             </ControlButton>
-            {settingsOpen ? (
+            <ControlButton label="Forward 10 seconds" onClick={() => seekBy(SEEK_LARGE_S)}>
+              <RotateCw className="h-[18px] w-[18px]" />
+            </ControlButton>
+            {onNext ? (
+              <ControlButton label="Next video" onClick={onNext}>
+                <SkipForward className="h-[18px] w-[18px]" />
+              </ControlButton>
+            ) : null}
+            <div className="tube-player__volume">
+              <ControlButton label={prefs.muted ? "Unmute" : "Mute"} onClick={toggleMute}>
+                {prefs.muted || prefs.volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </ControlButton>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={prefs.muted ? 0 : prefs.volume}
+                onChange={(e) => onPrefsChange({ volume: Number(e.target.value), muted: Number(e.target.value) === 0 })}
+                aria-label="Volume"
+              />
+            </div>
+            <span className="tube-player__time">
+              {formatClockMs(positionMs)} / {formatClockMs(durationMs)}
+            </span>
+            <div className="flex-1" />
+            {captions.length > 0 ? (
+              <ControlButton label={prefs.captions ? "Hide captions" : "Show captions"} onClick={toggleCaptions} active={prefs.captions}>
+                <Captions className="h-5 w-5" />
+              </ControlButton>
+            ) : null}
+            <div className="relative">
+              <ControlButton label="Settings" onClick={() => setSettingsOpen((o) => !o)} active={settingsOpen}>
+                <Settings className="h-5 w-5" />
+              </ControlButton>
               <TubeSettingsMenu
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
                 prefs={prefs}
                 onChange={onPrefsChange}
                 levels={levels}
@@ -653,13 +858,30 @@ export function TubePlayer({
                 captionLang={captionLang}
                 onCaptionLang={setCaptionLang}
                 autoplayNext={autoplayNext ?? null}
-                onClose={() => setSettingsOpen(false)}
+                ambient={ambient}
+                onAmbient={onAmbientChange}
+                stableVolume={stableVolume}
+                onStableVolume={onStableVolumeChange}
+                audioTracks={audioTracks}
+                sleepChoice={sleepChoice}
+                sleepSchedule={sleepSchedule}
+                onSleep={chooseSleep}
               />
+            </div>
+            {onMiniplayer ? (
+              <ControlButton label={miniplayer ? "Leave miniplayer" : "Miniplayer"} onClick={onMiniplayer} active={miniplayer}>
+                <PictureInPicture2 className="h-5 w-5" />
+              </ControlButton>
             ) : null}
+            {onTheater ? (
+              <ControlButton label={theater ? "Leave theater" : "Theater"} onClick={onTheater} active={theater}>
+                <RectangleHorizontal className="h-5 w-5" />
+              </ControlButton>
+            ) : null}
+            <ControlButton label={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen}>
+              {fullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+            </ControlButton>
           </div>
-          <ControlButton label={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen}>
-            {fullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-          </ControlButton>
         </div>
       </div>
     </div>
@@ -676,18 +898,21 @@ function ControlButton({ label, onClick, active, children }: { label: string; on
       }}
       aria-label={label}
       title={label}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-white/15 ${active ? "text-brand-accent" : "text-white"}`}
+      aria-pressed={active}
+      className={`tube-player__button ${active ? "is-active" : ""}`}
     >
       {children}
     </button>
   );
 }
 
-/* ── Settings (gear) menu ───────────────────────────────── */
+/* ── Settings menu: the reels choice-pane shell ─────────── */
 
-type Pane = "root" | "quality" | "speed" | "captions";
+type Pane = "root" | "audio" | "captions" | "keys" | "speed" | "quality" | "sleep";
 
-function TubeSettingsMenu({
+export function TubeSettingsMenu({
+  open,
+  onClose,
   prefs,
   onChange,
   levels,
@@ -695,8 +920,17 @@ function TubeSettingsMenu({
   captionLang,
   onCaptionLang,
   autoplayNext,
-  onClose,
+  ambient,
+  onAmbient,
+  stableVolume,
+  onStableVolume,
+  audioTracks,
+  sleepChoice,
+  sleepSchedule,
+  onSleep,
 }: {
+  open: boolean;
+  onClose: () => void;
   prefs: TubePlayerPrefs;
   onChange: (patch: Partial<TubePlayerPrefs>) => void;
   levels: number[];
@@ -704,145 +938,133 @@ function TubeSettingsMenu({
   captionLang: string | null;
   onCaptionLang: (lang: string) => void;
   autoplayNext: { on: boolean; onChange: (on: boolean) => void } | null;
-  onClose: () => void;
+  ambient: boolean;
+  onAmbient?: (on: boolean) => void;
+  stableVolume: boolean;
+  onStableVolume?: (on: boolean) => void;
+  audioTracks: { options: AudioTrackChoice[]; current: string; onChange: (id: string) => void; onManage?: () => void } | null;
+  sleepChoice: SleepChoice;
+  sleepSchedule: SleepSchedule;
+  onSleep: (choice: SleepChoice) => void;
 }) {
   const [pane, setPane] = useState<Pane>("root");
+  useEffect(() => {
+    if (!open) setPane("root");
+  }, [open]);
+
   const rungs = Array.from(new Set(levels.filter((h) => h > 0))).sort((a, b) => b - a);
   const qualityLabel = prefs.quality === "auto" ? "Auto" : prefs.quality;
-  const captionLabel = !prefs.captions ? "Off" : captions.find((c) => c.lang === captionLang)?.label ?? "On";
+  const captionLabel = captions.length === 0 ? "None" : !prefs.captions ? "Off" : captions.find((c) => c.lang === captionLang)?.label ?? "On";
+  const audioChoices = audioTracks?.options.length ? audioTracks.options : [{ id: "original", label: "Original" }];
+  const audioLabel = audioChoices.find((t) => t.id === (audioTracks?.current ?? "original"))?.label ?? audioChoices[0].label;
+  const keys = useMemo(() => keyHelpRows(), []);
+  const close = () => {
+    setPane("root");
+    onClose();
+  };
 
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (el?.closest?.("[data-tube-settings]")) return;
-      onClose();
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [onClose]);
-
-  return (
-    <div
-      data-tube-settings
-      role="menu"
-      className="absolute bottom-11 right-0 z-50 w-[260px] overflow-hidden rounded-xl border border-border bg-brand-card text-brand-text shadow-xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {pane === "root" ? (
-        <div className="py-1">
-          <MenuRow label="Quality" value={qualityLabel} onClick={() => setPane("quality")} />
-          <MenuRow label="Playback speed" value={prefs.speed === 1 ? "Normal" : `${speedChipLabel(prefs.speed)}×`} onClick={() => setPane("speed")} />
-          <MenuRow label="Captions" value={captions.length === 0 ? "None" : captionLabel} onClick={() => captions.length > 0 && setPane("captions")} disabled={captions.length === 0} />
-          {autoplayNext ? (
-            <MenuToggle
-              label="Autoplay next episode"
-              hint={autoplayNext.on ? "Plays the next episode when this one ends" : "Stops at the end of this episode"}
-              on={autoplayNext.on}
-              onToggle={() => autoplayNext.onChange(!autoplayNext.on)}
-            />
-          ) : null}
-        </div>
-      ) : pane === "quality" ? (
-        <div className="py-1">
-          <MenuBack label="Quality" onClick={() => setPane("root")} />
-          <MenuOption label="Auto" selected={prefs.quality === "auto"} onClick={() => onChange({ quality: "auto" })} />
-          {rungs.map((h) => (
-            <MenuOption key={h} label={`${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onChange({ quality: `${h}p` })} />
-          ))}
-          {rungs.length === 0 ? <p className="px-4 py-2 text-[11px] text-muted-foreground">Only Auto is available for this video.</p> : null}
-        </div>
-      ) : pane === "speed" ? (
-        <div className="py-1">
-          <MenuBack label="Playback speed" onClick={() => setPane("root")} />
-          {/* The reels presets for now; W1 swaps this list for the reels speed slider (0.25–2 in 0.05 steps). */}
-          {SPEEDS.map((s) => (
-            <MenuOption key={s} label={s === 1 ? "Normal" : `${speedChipLabel(s)}×`} selected={prefs.speed === s} onClick={() => onChange({ speed: clampSpeed(s) })} />
-          ))}
-          {!(SPEEDS as readonly number[]).includes(prefs.speed) ? (
-            <MenuOption label={`${speedChipLabel(prefs.speed)}×`} selected onClick={() => undefined} />
-          ) : null}
-        </div>
-      ) : (
-        <div className="py-1">
-          <MenuBack label="Captions" onClick={() => setPane("root")} />
-          <MenuOption label="Off" selected={!prefs.captions} onClick={() => onChange({ captions: false })} />
-          {captions.map((c) => (
-            <MenuOption
-              key={c.lang}
-              label={c.label}
-              selected={prefs.captions && captionLang === c.lang}
-              onClick={() => {
-                onCaptionLang(c.lang);
-                onChange({ captions: true });
-              }}
-            />
-          ))}
-        </div>
-      )}
+  // Ascending order, the founder's rule: Ambient mode · Audio track · Auto play · Captions · Keys · Playback speed · Quality · Sleep timer · Stable volume.
+  const root = (
+    <div className="reel-more-menu__list" data-pane="root">
+      <ChoiceMenuSwitchRow icon={<Sparkles />} label="Ambient mode" dataRow="ambient" on={ambient} onToggle={() => onAmbient?.(!ambient)} disabled={!onAmbient} />
+      <ChoiceMenuChoiceRow icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} />
+      {autoplayNext ? (
+        <ChoiceMenuSwitchRow icon={<SkipForward />} label="Auto play" dataRow="autoplay" on={autoplayNext.on} onToggle={() => autoplayNext.onChange(!autoplayNext.on)} />
+      ) : null}
+      <ChoiceMenuChoiceRow icon={<Captions />} label="Captions" value={captionLabel} dataRow="captions" disabled={captions.length === 0} onClick={() => setPane("captions")} />
+      <ChoiceMenuChoiceRow icon={<Keyboard />} label="Keys" value="" dataRow="keys" onClick={() => setPane("keys")} />
+      <ChoiceMenuChoiceRow icon={<Gauge />} label="Playback speed" value={prefs.speed === 1 ? "Normal" : `${speedChipLabel(prefs.speed)}x`} dataRow="speed" onClick={() => setPane("speed")} />
+      <ChoiceMenuChoiceRow icon={<SlidersHorizontal />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} />
+      <ChoiceMenuChoiceRow icon={<Moon />} label="Sleep timer" value={sleepValueLabel(sleepChoice, sleepSchedule, Date.now())} dataRow="sleep" onClick={() => setPane("sleep")} />
+      <ChoiceMenuSwitchRow icon={<AudioWaveform />} label="Stable volume" dataRow="stable-volume" on={stableVolume} onToggle={() => onStableVolume?.(!stableVolume)} disabled={!onStableVolume} />
     </div>
   );
-}
 
-function MenuRow({ label, value, onClick, disabled }: { label: string; value: string; onClick: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      disabled={disabled}
-      className="flex w-full items-center justify-between px-4 py-2.5 text-[13px] font-medium hover:bg-brand-secondary disabled:opacity-50"
-    >
-      <span>{label}</span>
-      <span className="flex items-center gap-1 text-muted-foreground">
-        {value} <ChevronRight className="h-4 w-4" />
-      </span>
-    </button>
-  );
-}
+  const panes: Record<Exclude<Pane, "root">, ReactNode> = {
+    audio: (
+      <div className="reel-more-menu__list" data-pane="audio">
+        <ChoiceMenuBack label="Audio track" onClick={() => setPane("root")} />
+        {audioChoices.map((t) => (
+          <ChoiceMenuOption key={t.id} label={t.label} selected={t.id === (audioTracks?.current ?? "original")} onClick={() => audioTracks?.onChange(t.id)} />
+        ))}
+        {audioChoices.length < 2 ? <p className="reel-more-menu__note">No other languages for this video yet.</p> : null}
+        {audioTracks?.onManage ? (
+          <ChoiceMenuRow
+            icon={<AudioLines />}
+            label="Manage tracks"
+            hint="Upload or generate a dub"
+            dataRow="manage-audio"
+            onClick={() => {
+              close();
+              audioTracks.onManage?.();
+            }}
+          />
+        ) : null}
+      </div>
+    ),
+    captions: (
+      <div className="reel-more-menu__list" data-pane="captions">
+        <ChoiceMenuBack label="Captions" onClick={() => setPane("root")} />
+        <ChoiceMenuOption label="Off" selected={!prefs.captions} onClick={() => onChange({ captions: false })} />
+        {captions.map((c) => (
+          <ChoiceMenuOption
+            key={c.lang}
+            label={c.label}
+            selected={prefs.captions && captionLang === c.lang}
+            onClick={() => {
+              onCaptionLang(c.lang);
+              onChange({ captions: true });
+            }}
+          />
+        ))}
+      </div>
+    ),
+    keys: (
+      <div className="reel-more-menu__list" data-pane="keys">
+        <ChoiceMenuBack label="Keys" onClick={() => setPane("root")} />
+        <dl className="tube-keys">
+          {keys.map((row) => (
+            <div key={row.action} className="tube-keys__row">
+              <dt>
+                {row.keys.map((k) => (
+                  <kbd key={k}>{k}</kbd>
+                ))}
+              </dt>
+              <dd>{row.action}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    ),
+    speed: (
+      <div className="reel-more-menu__list" data-pane="speed">
+        <ChoiceMenuBack label="Playback speed" onClick={() => setPane("root")} />
+        <SpeedPanel speed={prefs.speed} presets={SPEEDS} onChange={(speed) => onChange({ speed })} />
+      </div>
+    ),
+    quality: (
+      <div className="reel-more-menu__list" data-pane="quality">
+        <ChoiceMenuBack label="Quality" onClick={() => setPane("root")} />
+        <ChoiceMenuOption label="Auto" selected={prefs.quality === "auto"} onClick={() => onChange({ quality: "auto" })} />
+        {rungs.map((h) => (
+          <ChoiceMenuOption key={h} label={`${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onChange({ quality: `${h}p` })} />
+        ))}
+        {rungs.length === 0 ? <p className="reel-more-menu__note">Only Auto is available for this video.</p> : null}
+      </div>
+    ),
+    sleep: (
+      <div className="reel-more-menu__list" data-pane="sleep">
+        <ChoiceMenuBack label="Sleep timer" onClick={() => setPane("root")} />
+        {SLEEP_CHOICES.map((c) => (
+          <ChoiceMenuOption key={c.value} label={c.label} selected={sleepChoice === c.value} onClick={() => onSleep(c.value)} />
+        ))}
+      </div>
+    ),
+  };
 
-function MenuToggle({ label, hint, on, onToggle }: { label: string; hint?: string; on: boolean; onToggle: () => void }) {
   return (
-    <button
-      type="button"
-      role="menuitemcheckbox"
-      aria-checked={on}
-      onClick={onToggle}
-      className="flex w-full items-center justify-between px-4 py-2.5 text-[13px] font-medium hover:bg-brand-secondary"
-    >
-      <span className="min-w-0 text-left">
-        <span className="block">{label}</span>
-        {hint ? <span className="block text-[11px] font-normal text-muted-foreground">{hint}</span> : null}
-      </span>
-      <span className={`relative ml-3 h-5 w-9 shrink-0 rounded-full transition ${on ? "bg-brand-accent" : "bg-brand-divider"}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${on ? "left-[18px]" : "left-0.5"}`} />
-      </span>
-    </button>
-  );
-}
-
-function MenuBack({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-2 border-b border-border px-3 py-2.5 text-[13px] font-semibold hover:bg-brand-secondary"
-    >
-      <ChevronLeft className="h-4 w-4" /> {label}
-    </button>
-  );
-}
-
-function MenuOption({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      role="menuitemradio"
-      aria-checked={selected}
-      onClick={onClick}
-      className="flex w-full items-center justify-between px-4 py-2 text-[13px] hover:bg-brand-secondary"
-    >
-      <span className={selected ? "font-semibold" : ""}>{label}</span>
-      {selected ? <Check className="h-4 w-4 text-brand-accent" /> : null}
-    </button>
+    <Popover open={open} onClose={close} align="right" label="Player settings" placement="up" tone="stage" className="reel-more-menu tube-settings-menu">
+      {pane === "root" ? root : panes[pane]}
+    </Popover>
   );
 }

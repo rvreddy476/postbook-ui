@@ -1,0 +1,76 @@
+/*
+  The long-video player's chrome, in the reels frame conventions: the
+  controls appear on hover only, one thin seek bar with chapter ticks and
+  the storyboard card above it, 11px time, the volume slider slides out on
+  hover, the settings menu is the reels choice-pane card. Over the video
+  the stage tokens are used (dark in both themes because the frame is).
+  The ambient glow is a tiny canvas behind the frame, blurred by CSS.
+*/
+
+.tube-player { position: relative; width: 100%; }
+.tube-player__frame { position: relative; z-index: 1; aspect-ratio: 16 / 9; width: 100%; overflow: hidden; border-radius: 12px; background: rgb(var(--reel-stage)); user-select: none; outline: none; }
+.tube-player__frame:fullscreen { border-radius: 0; }
+.tube-player__video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.tube-player[data-mini] .tube-player__frame { border-radius: 10px; }
+
+/* Ambient: the sampled frame, blurred and stretched past the frame; off = hidden. */
+.tube-player__ambient { position: absolute; inset: -32px; z-index: 0; width: calc(100% + 64px); height: calc(100% + 64px); border-radius: 24px; opacity: 0; filter: blur(48px) saturate(1.3); transform: translateZ(0); pointer-events: none; transition: opacity 400ms ease; }
+.tube-player[data-ambient] .tube-player__ambient { opacity: .55; }
+
+/* Big centre states */
+.tube-player__tap { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(var(--reel-stage) / .4); }
+.tube-player__tap.is-paused { z-index: 10; background: transparent; }
+.tube-player__big { display: flex; width: 64px; height: 64px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .7); color: rgb(var(--reel-on-stage)); backdrop-filter: blur(4px); }
+.tube-player__tap:not(.is-paused) .tube-player__big { background: rgb(var(--reel-on-stage) / .9); color: rgb(var(--reel-stage)); }
+.tube-player__spinner { pointer-events: none; position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .8); }
+.tube-player__failed { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; background: rgb(var(--reel-stage) / .8); color: rgb(var(--reel-on-stage)); }
+.tube-player__end { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); }
+.tube-player__replay { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
+.tube-player__replay:hover { opacity: .92; }
+
+/* Controls: hover only, one gradient band */
+.tube-player__controls { position: absolute; inset: auto 0 0; z-index: 40; padding: 40px 10px 6px; background: linear-gradient(to top, rgb(var(--reel-stage) / .9), rgb(var(--reel-stage) / .4) 55%, transparent); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
+.tube-player__controls.is-visible { opacity: 1; pointer-events: auto; }
+.tube-player__bar { display: flex; align-items: center; gap: 2px; margin-top: 4px; color: rgb(var(--reel-on-stage)); }
+.tube-player__button { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 8px; color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
+.tube-player__button:hover { background: rgb(var(--reel-on-stage) / .15); }
+.tube-player__button.is-active { color: rgb(var(--brand-accent)); }
+.tube-player__time { margin-left: 6px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: rgb(var(--reel-on-stage) / .9); white-space: nowrap; }
+.tube-player__volume { display: inline-flex; align-items: center; }
+.tube-player__volume input { width: 0; height: 4px; margin: 0; opacity: 0; accent-color: rgb(var(--brand-accent)); cursor: pointer; transition: width 140ms ease, opacity 140ms ease; }
+.tube-player__volume:hover input, .tube-player__volume:focus-within input { width: 72px; opacity: 1; margin-right: 6px; }
+
+/* The seek bar: 3px, 4px on hover, ticks for chapters, the knob on hover */
+.tube-seek { position: relative; height: 14px; width: 100%; cursor: pointer; }
+.tube-seek__track { position: absolute; inset: 50% 0 auto; height: 3px; transform: translateY(-50%); border-radius: 999px; background: rgb(var(--reel-on-stage) / .25); transition: height 120ms ease; }
+.tube-seek:hover .tube-seek__track { height: 4px; }
+.tube-seek__buffered, .tube-seek__played { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
+.tube-seek__buffered { background: rgb(var(--reel-on-stage) / .35); }
+.tube-seek__played { background: rgb(var(--brand-accent)); }
+.tube-seek__tick { position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: rgb(var(--reel-stage) / .9); }
+.tube-seek__knob { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) scale(0); border-radius: 50%; background: rgb(var(--brand-accent)); transition: transform 120ms ease; pointer-events: none; }
+.tube-seek:hover .tube-seek__knob { transform: translate(-50%, -50%) scale(1); }
+.tube-seek__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+
+/* The storyboard card above the bar: 160×90 tile, the chapter title and the time under it. */
+.tube-seek__preview { position: absolute; bottom: calc(100% + 6px); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 4px; transform: translateX(-50%); pointer-events: none; }
+.tube-seek__thumb { border-radius: 6px; background-repeat: no-repeat; box-shadow: 0 0 0 2px rgb(var(--reel-on-stage) / .9); }
+.tube-seek__label { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 8px; border-radius: 6px; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); white-space: nowrap; }
+.tube-seek__chapter { max-width: 220px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; font-weight: 600; }
+.tube-seek__time { font-size: 11px; font-variant-numeric: tabular-nums; }
+
+/* The settings card: the reels choice-pane shell, 280px, hung above the gear. */
+.tube-settings-menu.reel-more-menu[role="menu"] { width: 280px; max-height: min(420px, 70vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; text-align: left; }
+.tube-keys { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 4px 8px 8px; }
+.tube-keys__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-size: 12px; }
+.tube-keys__row dt { display: flex; gap: 4px; margin: 0; }
+.tube-keys__row dd { margin: 0; color: rgb(var(--brand-text) / .7); }
+.tube-keys kbd { display: inline-flex; min-width: 22px; height: 20px; align-items: center; justify-content: center; padding: 0 5px; border-radius: 5px; font-family: inherit; font-size: 11px; font-weight: 600; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); }
+
+@media (pointer: coarse) {
+  .tube-player__controls { opacity: 1; pointer-events: auto; }
+  .tube-player__volume input { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tube-player__ambient, .tube-player__controls, .tube-seek__track, .tube-seek__knob, .tube-player__volume input { transition: none; }
+}

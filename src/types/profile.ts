@@ -190,6 +190,10 @@ export interface CommentItem {
     reaction_count?: number
     /** The viewer's own emoji, null when none. */
     viewer_reaction?: string | null
+    /** The post author hearted this comment (long video). */
+    hearted_by_author?: boolean
+    /** Pinned by the post author (one per post). */
+    pinned?: boolean
 }
 
 export interface PostDetail {

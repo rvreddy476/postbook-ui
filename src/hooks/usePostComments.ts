@@ -11,12 +11,21 @@ interface CommentsResponse {
     meta?: { next_cursor?: string }
 }
 
-export function useComments(postId: string | undefined, enabled = false) {
+export type CommentSort = "top" | "newest"
+
+/**
+ * GET /v1/posts/:id/comments. `sort` (top | newest) is the watch page's
+ * pill; without it the key and the request stay exactly as before, so
+ * every other surface (and every cache patch keyed on ["comments", postId])
+ * is untouched. A sorted list keys on ["comments", postId, sort] — the
+ * same prefix, so invalidations and patches reach it too.
+ */
+export function useComments(postId: string | undefined, enabled = false, sort?: CommentSort) {
     return useQuery({
-        queryKey: ["comments", postId],
+        queryKey: sort ? ["comments", postId, sort] : ["comments", postId],
         queryFn: async () => {
             const res = await api.get<CommentsResponse>(`/v1/posts/${postId}/comments`, {
-                params: { limit: "50" },
+                params: { limit: "50", ...(sort ? { sort } : {}) },
             })
             // Backend now returns data as array directly (PG-backed)
             const data = res.data.data

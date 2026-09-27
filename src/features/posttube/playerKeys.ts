@@ -5,9 +5,9 @@
   without a <video> and the player only has to dispatch. Space and K both
   toggle play (K used to fall through to L and skip forward); J and L jump
   ten seconds, the arrows five; M, F, C toggle mute, fullscreen and
-  captions; T asks for theater and N for the next video — the player
-  dispatches both and the watch page decides what they do (theater lands
-  in W1); 0–9 seek to that tenth of the video, Home and End to the ends.
+  captions; T asks for theater, I for the miniplayer and N for the next
+  video — the player dispatches them and the watch page decides what they
+  do; 0–9 seek to that tenth of the video, Home and End to the ends.
 
   Ctrl, Alt and Meta chords are never ours: a browser shortcut stays a
   browser shortcut. Shift is tolerated on the letters (Shift+N reads as
@@ -22,6 +22,7 @@ export type PlayerKeyAction =
   | { type: "toggle-fullscreen" }
   | { type: "toggle-captions" }
   | { type: "toggle-theater" }
+  | { type: "toggle-miniplayer" }
   | { type: "next" };
 
 export interface PlayerKeyModifiers {
@@ -78,6 +79,8 @@ export function playerKeyAction(key: string, modifiers: PlayerKeyModifiers = {})
       return { type: "toggle-captions" };
     case "t":
       return { type: "toggle-theater" };
+    case "i":
+      return { type: "toggle-miniplayer" };
     case "n":
       return { type: "next" };
     default:

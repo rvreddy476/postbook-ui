@@ -7,7 +7,8 @@ import { WatchPage } from "@/features/posttube/components/WatchPage";
 function WatchContent() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get("v") ?? undefined;
-  return <WatchPage videoId={videoId} />;
+  const listId = searchParams.get("list");
+  return <WatchPage videoId={videoId} listId={listId} />;
 }
 
 export default function PostTubeWatchRoute() {

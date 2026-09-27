@@ -21,6 +21,8 @@ interface SubscribeButtonProps {
   size?: "sm" | "md";
   /** Hide the button entirely when it is the viewer's own channel. */
   hidden?: boolean;
+  /** The words on the button; the watch page says Follow / Following (our vocabulary). The API underneath is unchanged. */
+  labels?: { off: string; on: string };
 }
 
 export function SubscribeButton({
@@ -30,6 +32,7 @@ export function SubscribeButton({
   onSubscribedChange,
   size = "md",
   hidden = false,
+  labels = { off: "Subscribe", on: "Subscribed" },
 }: SubscribeButtonProps) {
   const subscriptionQuery = useChannelSubscriptionByRef(channelRef, !hidden);
   const subscribeMutation = useSubscribeChannel();
@@ -95,7 +98,7 @@ export function SubscribeButton({
             : "bg-primary-ink text-primary-foreground hover:bg-primary-hover"
         }`}
       >
-        {subscribed ? "Subscribed" : "Subscribe"}
+        {subscribed ? labels.on : labels.off}
       </button>
       {subscribed ? (
         <button
