@@ -25,8 +25,8 @@ test('the separate playback-settings popover is gone: one menu hangs from the fr
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).not.toContain('reel-settings-popover');
   expect(css).not.toContain('reel-settings-slot');
-  expect(css).toContain('.reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 367px;');
-  expect(css).toContain('.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 367px; max-width: 100%; }');
+  expect(css).toContain('.reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 100%;');
+  expect(css).toContain('.reel-frame-actions .reel-frame-popover[role="menu"] { left: 0; right: 0; width: 100%; max-width: 100%; }');
 });
 
 test('expanded details carry creator and title but never public view counts', () => {
@@ -74,7 +74,7 @@ test('overlay carries the author name (a plain link), the title and the hashtags
 test('frame top-right is the three dots alone, 48px circle 8px in; Theater and Playback settings live in its menu', () => {
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   const screen=readFileSync(resolve(import.meta.dir,'../components/ReelsScreen.tsx'),'utf8');
-  expect(css).toContain('.reel-frame-actions { position: absolute; top: 8px; right: 8px; left: 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }');
+  expect(css).toContain('.reel-frame-actions { position: absolute; top: 8px; right: 0; left: 0; padding: 0 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }');
   expect(css).toContain('.reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage));');
   expect(css).not.toContain('reel-expand-button');
   expect(screen).not.toContain('reel-expand-button');

@@ -77,17 +77,17 @@ test('own reel: no Report or Not interested; the playback rows stay; Theater is 
   expect(html).not.toContain('data-row="theater"');
 });
 
-test("TikTok's card in CSS (measured in Chrome): 367 wide, radius 16, 4px padding, 52px rows at 10/16 with 16/600 labels, chips 28, switches 48×28 with a 24px knob", () => {
+test("TikTok's card in CSS (measured in Chrome): the full video width, radius 14, 4px padding, 40px rows with 14/600 labels, chips 24, switches 48×28 with a 24px knob", () => {
   const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
   expect(css).toContain('.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }');
-  expect(css).toContain('.reel-more-menu[role="menu"] { width: 367px; border-radius: 16px;');
-  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; height: 52px; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 16px; font-weight: 600;');
+  expect(css).toContain('.reel-more-menu[role="menu"] { width: 100%; border-radius: 14px;');
+  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 8px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 600; letter-spacing: -.01em;');
   expect(css).toContain('.reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .08); }');
   expect(css).toContain('.reel-more-menu__row.is-danger { color: rgb(var(--danger)); }');
-  expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }');
-  expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 0 14px; background: rgb(var(--reel-on-stage) / .12); }');
+  expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 18px; width: 18px; height: 18px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }');
+  expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 2px 12px; background: rgb(var(--reel-on-stage) / .12); }');
   expect(css).toContain('.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }');
-  expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 28px;');
+  expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 24px;');
   expect(css).toContain('.reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }');
   expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 48px; width: 48px; height: 28px;');
   expect(css).toContain('.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;');
