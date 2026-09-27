@@ -469,7 +469,12 @@ export function ReelsScreen() {
       content.style.setProperty("--reel-panel-left", `${Math.round(r.right - c.left + 64)}px`);
       content.style.setProperty("--reel-panel-caret", `${Math.round(b.top + b.height / 2 - c.top)}px`);
     };
+    // Measure now, on the next frame and after the open transition: the first
+    // click used to read the rail before the grid settled and parked the panel
+    // at the far right.
     place();
+    const raf = requestAnimationFrame(place);
+    const late = window.setTimeout(place, 350);
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(place) : null;
     if (ro) {
       if (contentRef.current) ro.observe(contentRef.current);
@@ -477,6 +482,8 @@ export function ReelsScreen() {
     }
     window.addEventListener("resize", place);
     return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(late);
       ro?.disconnect();
       window.removeEventListener("resize", place);
     };
