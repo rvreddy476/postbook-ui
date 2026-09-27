@@ -86,7 +86,7 @@ test("TikTok's card in CSS (measured in Chrome): the full video width, radius 14
   expect(css).toContain('.reel-more-menu__row.is-danger { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 18px; width: 18px; height: 18px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }');
   expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 2px 12px; background: rgb(var(--reel-on-stage) / .12); }');
-  expect(css).toContain('.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }');
+  expect(css).toContain('.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; margin-left: auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }');
   expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 24px;');
   expect(css).toContain('.reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }');
   expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 48px; width: 48px; height: 28px;');
