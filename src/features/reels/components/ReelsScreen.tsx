@@ -401,7 +401,8 @@ export function ReelsScreen() {
         setCommentsOpen(false);
         return;
       }
-      if (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="alertdialog"], [role="toolbar"], [role="slider"]')) return;
+      // Typing anywhere (search bar, comment composer) must never trigger the stage shortcuts.
+      if (e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="search"], button, a, [role="dialog"], [role="alertdialog"], [role="toolbar"], [role="slider"]')) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.key) {
         case "ArrowDown":
