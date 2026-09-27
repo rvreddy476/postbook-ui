@@ -115,6 +115,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   /* ── source attach ─────────────────────────────────────── */
   // Where the clock was when the source last changed (an audio-track switch), restored after load.
   const resumeRef = useRef<{ at: number; paused: boolean } | null>(null);
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -128,6 +130,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       const onLoaded = () => {
         video.removeEventListener("loadedmetadata", onLoaded);
         if (cancelled) return;
+        video.playbackRate = prefsRef.current.speed;
         video.currentTime = resume.at;
         if (!resume.paused) void video.play().catch(() => undefined);
       };
@@ -209,6 +212,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   }, [reel.media.hlsUrl, reel.media.fileUrl, sourceOverride]);
 
   /* ── prefs → element ───────────────────────────────────── */
+  // Re-applied after every source switch too: load() resets playbackRate to 1.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -219,7 +223,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       video.muted = !prefs.sound;
       isMutedRef.current = !prefs.sound;
     }
-  }, [prefs.speed, prefs.volume, prefs.onEnd, prefs.sound, forcedMuted]);
+  }, [prefs.speed, prefs.volume, prefs.onEnd, prefs.sound, forcedMuted, sourceOverride, reel.media.hlsUrl, reel.media.fileUrl]);
 
   useEffect(() => {
     const hls = hlsRef.current;

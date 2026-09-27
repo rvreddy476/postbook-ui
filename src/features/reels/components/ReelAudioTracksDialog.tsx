@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { AudioLines, Loader2, Sparkles, Trash2, Upload, X } from "lucide-react";
 
@@ -34,6 +35,10 @@ export function ReelAudioTracksDialog({ open, mediaId, onClose }: ReelAudioTrack
   const [file, setFile] = useState<File | null>(null);
   const [dubbing, setDubbing] = useState<"unknown" | "yes" | "no">("unknown");
   const fileInput = useRef<HTMLInputElement>(null);
+  // Portaled to <body>: the stage is drawn with a transform, which would turn
+  // the fixed scrim into a stage-relative box behind the video.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +102,7 @@ export function ReelAudioTracksDialog({ open, mediaId, onClose }: ReelAudioTrack
     }
   };
 
-  return (
+  const tree = (
     <AnimatePresence>
       {open ? (
         <motion.div
@@ -185,4 +190,6 @@ export function ReelAudioTracksDialog({ open, mediaId, onClose }: ReelAudioTrack
       ) : null}
     </AnimatePresence>
   );
+  if (!mounted) return null;
+  return createPortal(tree, document.body);
 }
