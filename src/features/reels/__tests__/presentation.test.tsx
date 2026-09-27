@@ -127,10 +127,10 @@ test('the phone rail carries the same avatar and badge, and keeps its More', () 
   expect(renderToStaticMarkup(<ReelRail {...railBase} variant="phone" following={false} onMore={undefined}/>)).not.toContain('aria-label="More"');
 });
 
-test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom — no More — as 48px circles with counts 6px under', () => {
-  expect([...RAIL_ORDER].reverse()).toEqual(['share','save','comments','like','avatar']);
+test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom — no More — as 48px circles with counts 6px under', () => {
+  expect([...RAIL_ORDER].reverse()).toEqual(['save','share','comments','like','avatar']);
   const html=renderToStaticMarkup(<ReelRail {...railBase} following={false}/>);
-  const order=['reel-rail-avatar','aria-label="Like"','aria-label="Comments"','aria-label="Save"','aria-label="Share"'].map((m)=>html.indexOf(m));
+  const order=['reel-rail-avatar','aria-label="Like"','aria-label="Comments"','aria-label="Share"','aria-label="Save"'].map((m)=>html.indexOf(m));
   for(const at of order) expect(at).toBeGreaterThan(-1);
   expect([...order].sort((a,b)=>a-b)).toEqual(order);
   expect(html).not.toContain('aria-label="More"');

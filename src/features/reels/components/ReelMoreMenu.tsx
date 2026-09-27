@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   AlignLeft,
@@ -164,6 +165,81 @@ export function ReelMoreMenu({
     }
   };
 
+  // Every row carries a label so the list can be sorted alphabetically.
+  const mappedLabel = (key: MoreMenuItemKey): string => {
+    switch (key) {
+      case "copy-link": return "Copy link";
+      case "description": return "Description";
+      case "download": return "Download";
+      case "why": return "Why you're seeing this";
+      case "interested": return "Interested";
+      case "follow": return `Follow ${handle}`;
+      case "unfollow": return `Unfollow ${handle}`;
+      case "block": return `Block ${handle}`;
+      case "delete": return "Delete reel";
+      case "clear-screen": return "Clear screen";
+      case "not-interested": return "Not interested";
+      case "dont-recommend": return `Don't recommend ${handle}`;
+      case "report": return "Report";
+      default: return key;
+    }
+  };
+  const playbackRows: { key: string; label: string; node: ReactNode }[] = [
+    { key: "speed", label: "Speed", node: (
+            <div className="reel-more-menu__row is-static" role="group" aria-label="Speed" data-row="speed">
+              <span className="reel-more-menu__icon"><Gauge /></span>
+              <span className="reel-more-menu__label">Speed</span>
+              <span className="reel-more-menu__segmented" role="radiogroup" aria-label="Playback speed">
+                {MENU_SPEEDS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="radio"
+                    aria-checked={prefs.speed === s}
+                    className="reel-more-menu__chip"
+                    onClick={() => onPrefsChange({ speed: s as Speed })}
+                  >
+                    {speedChipLabel(s)}
+                  </button>
+                ))}
+              </span>
+            </div>
+    ) },
+    { key: "quality", label: "Quality", node: (
+            <button type="button" role="menuitem" aria-haspopup="menu" className="reel-more-menu__row" data-row="quality" onClick={() => setPane("quality")}>
+              <span className="reel-more-menu__icon"><SlidersHorizontal /></span>
+              <span className="reel-more-menu__label">Quality</span>
+              <span className="reel-more-menu__value">
+                {qualityLabel}
+                <ChevronRight />
+              </span>
+            </button>
+    ) },
+    { key: "auto-scroll", label: "Auto scroll", node: (
+            <SwitchRow
+              icon={<ChevronsDown />}
+              label="Auto scroll"
+              dataRow="auto-scroll"
+              on={prefs.onEnd === "next"}
+              onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })}
+            />
+    ) },
+    { key: "captions", label: "Captions", node: (
+            <SwitchRow
+              icon={<Captions />}
+              label="Captions"
+              dataRow="captions"
+              hint={noCaptions ? "None for this reel" : undefined}
+              disabled={noCaptions}
+              on={prefs.captions}
+              onToggle={() => onPrefsChange({ captions: !prefs.captions })}
+            />
+    ) },
+  ];
+  const sortedRows = [...playbackRows, ...items.map((k) => ({ key: k as string, label: mappedLabel(k), node: row(k) }))].sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
+  );
+
   // Visual groups: info · relationship · clear screen · feedback/report.
   const groups = MENU_GROUPS
     .map((g) => g.filter((k) => items.includes(k)))
@@ -195,58 +271,9 @@ export function ReelMoreMenu({
         </div>
       ) : (
         <div className="reel-more-menu__list" data-pane="root">
-          {/* 1. Speed: an inline segmented control; the row itself is not a menu item. */}
-          <div className="reel-more-menu__row is-static" role="group" aria-label="Speed" data-row="speed">
-            <span className="reel-more-menu__icon"><Gauge /></span>
-            <span className="reel-more-menu__label">Speed</span>
-            <span className="reel-more-menu__segmented" role="radiogroup" aria-label="Playback speed">
-              {MENU_SPEEDS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  role="radio"
-                  aria-checked={prefs.speed === s}
-                  className="reel-more-menu__chip"
-                  onClick={() => onPrefsChange({ speed: s as Speed })}
-                >
-                  {speedChipLabel(s)}
-                </button>
-              ))}
-            </span>
-          </div>
-          {/* 2. Quality: the current value, a chevron, and a sub-list in the same card. */}
-          <button type="button" role="menuitem" aria-haspopup="menu" className="reel-more-menu__row" data-row="quality" onClick={() => setPane("quality")}>
-            <span className="reel-more-menu__icon"><SlidersHorizontal /></span>
-            <span className="reel-more-menu__label">Quality</span>
-            <span className="reel-more-menu__value">
-              {qualityLabel}
-              <ChevronRight />
-            </span>
-          </button>
-          {/* 3. Auto scroll: on → the next reel plays when this one ends; off → it loops. */}
-          <SwitchRow
-            icon={<ChevronsDown />}
-            label="Auto scroll"
-            dataRow="auto-scroll"
-            on={prefs.onEnd === "next"}
-            onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })}
-          />
-          {/* 5. Captions. */}
-          <SwitchRow
-            icon={<Captions />}
-            label="Captions"
-            dataRow="captions"
-            hint={noCaptions ? "None for this reel" : undefined}
-            disabled={noCaptions}
-            on={prefs.captions}
-            onToggle={() => onPrefsChange({ captions: !prefs.captions })}
-          />
-          <Divider />
-          {groups.map((group, gi) => (
-            <div key={group[0]}>
-              {gi > 0 ? <Divider /> : null}
-              {group.map(row)}
-            </div>
+          {/* Every row, playback and mapped alike, in alphabetical order — the founder's rule. */}
+          {sortedRows.map((r) => (
+            <Fragment key={r.key}>{r.node}</Fragment>
           ))}
         </div>
       )}

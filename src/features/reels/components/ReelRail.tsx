@@ -44,7 +44,7 @@ interface ReelRailProps {
 }
 
 /** Top to bottom; the rail reads Share, Save, Comments, Like, Avatar from the bottom, as TikTok's. */
-export const RAIL_ORDER = ["avatar", "like", "comments", "save", "share"] as const;
+export const RAIL_ORDER = ["avatar", "like", "comments", "share", "save"] as const;
 
 /*
   The action rail. The author's avatar on top (a link to the profile) with
@@ -106,6 +106,9 @@ export function ReelRail({
       {!reel.commentsDisabled ? (
         <RailButton label="Comments" count={reel.commentCount} onClick={onComments} icon={<RailBubble size={desktop ? 18 : 20} />} />
       ) : null}
+      {!reel.shareHidden ? (
+        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<RailShare size={desktop ? 18 : 20} />} />
+      ) : null}
       <RailButton
         label={reel.viewerSaved ? "Unsave" : "Save"}
         active={reel.viewerSaved}
@@ -114,9 +117,6 @@ export function ReelRail({
         activeClass="is-saved"
         count={desktop ? (reel.saveCount ?? 0) : undefined}
       />
-      {!reel.shareHidden ? (
-        <RailButton label="Share" count={reel.shareCount} onClick={onShare} icon={<RailShare size={desktop ? 18 : 20} />} />
-      ) : null}
       {!desktop && onMore ? (
         <div className="relative">
           <RailButton label="More" onClick={onMore} icon={<MoreHorizontal size={iconSize} />} />

@@ -22,16 +22,14 @@ const base = {
   onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop,
 };
 
-test('one card: Speed, Quality, Auto scroll, Captions, then Description, Not interested, Report last', () => {
+test('one card, alphabetical: Auto scroll, Captions, Description, Not interested, Quality, Report, Speed', () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
   const marks = [
-    'data-row="speed"', 'data-row="quality"', 'data-row="auto-scroll"', 'data-row="captions"',
-    '>Description<', '>Not interested<', '>Report<',
+    'data-row="auto-scroll"', 'data-row="captions"', '>Description<', '>Not interested<', 'data-row="quality"', '>Report<', 'data-row="speed"',
   ];
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
-  expect(html.lastIndexOf('role="menuitem"')).toBeLessThan(html.indexOf('>Report<'));
   // Playback rows keep the menu open (no run(): they are radios / a submenu / checkboxes), Report is the danger row.
   expect(html).toContain('role="radiogroup" aria-label="Playback speed"');
   expect(html).toContain('aria-haspopup="menu" class="reel-more-menu__row" data-row="quality"');

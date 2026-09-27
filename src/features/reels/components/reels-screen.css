@@ -238,6 +238,13 @@ button.reel-panel-count:hover { opacity: .75; }
 .reels-content[data-theater] .reel-desktop-rail, .reels-content[data-theater] .reel-stage-reserve { display: block; }
 .reel-desktop-rail.is-arrows { display: flex; align-self: center; align-items: center; justify-content: center; }
 .reel-desktop-rail.is-arrows .reels-navigation { display: flex; }
+/* Comments open without moving the video (the founder's rule): from 1280px the panel overlays the
+   right edge of the stage area and the arrows step left of it; the frame and rail stay put. */
+@media (min-width: 1280px) {
+  .reels-content[data-comments-open="true"]:not([data-theater]) { position: relative; grid-template-columns: minmax(0,1fr) 0; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; right: 0; bottom: 0; z-index: 35; width: var(--reel-comments-w, 368px); }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: calc(var(--reel-comments-w, 368px) + 16px); }
+}
 .reels-content[data-theater] .reel-nav-button { width: 48px; height: 48px; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
 .reels-content[data-theater] .reel-nav-button:hover { background: rgb(var(--reel-on-stage) / .28); }
 .reel-theater-close { position: absolute; left: 16px; top: 16px; z-index: 5; display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
