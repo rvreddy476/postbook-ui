@@ -47,6 +47,9 @@ export interface PlayerPrefs {
   audioLanguage: string | null;
 }
 
+/** What onPrefsChange accepts: a partial, or a function of the latest prefs. */
+export type PrefsPatch = Partial<PlayerPrefs> | ((prev: PlayerPrefs) => Partial<PlayerPrefs>);
+
 export const DEFAULT_PREFS: PlayerPrefs = {
   sound: false,
   volume: 1,

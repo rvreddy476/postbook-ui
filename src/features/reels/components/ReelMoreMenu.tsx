@@ -30,7 +30,7 @@ import {
 import { Popover } from "@/features/reels/components/Popover";
 import { MENU_SPEEDS, moreMenuItems, type MoreMenuItemKey } from "@/features/reels/menu";
 import type { ReelItem } from "@/features/reels/model";
-import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP, speedChipLabel, type PlayerPrefs, type Speed } from "@/features/reels/playback/playerPrefs";
+import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP, speedChipLabel, type PlayerPrefs, type PrefsPatch, type Speed } from "@/features/reels/playback/playerPrefs";
 export { speedChipLabel };
 
 /** One selectable audio track for the reel; the original is always first. */
@@ -50,7 +50,7 @@ interface ReelMoreMenuProps {
   followPending?: boolean;
   /** The viewer's playback preferences; the playback rows read and write them. */
   prefs: PlayerPrefs;
-  onPrefsChange: (patch: Partial<PlayerPrefs>) => void;
+  onPrefsChange: (patch: PrefsPatch) => void;
   /** Heights the current manifest offers; empty = Auto only. */
   qualityHeights: number[];
   captionsAvailable: "unknown" | "yes" | "no";
@@ -145,6 +145,7 @@ export function ReelMoreMenu({
   const hasAudioChoice = audioTracks.length > 1;
   const audioLabel = audioTracks.find((t) => t.id === currentAudioTrack)?.label ?? audioTracks[0]?.label ?? "Original";
   const setSpeed = (s: number) => onPrefsChange({ speed: clampSpeed(s) as Speed });
+  const stepSpeed = (dir: 1 | -1) => onPrefsChange((p) => ({ speed: clampSpeed(p.speed + dir * SPEED_STEP) as Speed }));
 
   const row = (key: MoreMenuItemKey) => {
     switch (key) {
@@ -203,7 +204,7 @@ export function ReelMoreMenu({
       <div className="reel-speed-panel" role="group" aria-label="Playback speed">
         <div className="reel-speed-panel__readout" aria-live="polite">{speedChipLabel(prefs.speed)}x</div>
         <div className="reel-speed-panel__slider">
-          <button type="button" aria-label="Slower" disabled={prefs.speed <= SPEED_MIN} onClick={() => setSpeed(prefs.speed - SPEED_STEP)}><Minus /></button>
+          <button type="button" aria-label="Slower" disabled={prefs.speed <= SPEED_MIN} onClick={() => stepSpeed(-1)}><Minus /></button>
           <input
             type="range"
             min={SPEED_MIN}
@@ -214,7 +215,7 @@ export function ReelMoreMenu({
             aria-valuetext={`${speedChipLabel(prefs.speed)}x`}
             onChange={(e) => setSpeed(Number(e.target.value))}
           />
-          <button type="button" aria-label="Faster" disabled={prefs.speed >= SPEED_MAX} onClick={() => setSpeed(prefs.speed + SPEED_STEP)}><Plus /></button>
+          <button type="button" aria-label="Faster" disabled={prefs.speed >= SPEED_MAX} onClick={() => stepSpeed(1)}><Plus /></button>
         </div>
         <div className="reel-speed-panel__chips" role="radiogroup" aria-label="Preset speeds">
           {MENU_SPEEDS.map((s) => (

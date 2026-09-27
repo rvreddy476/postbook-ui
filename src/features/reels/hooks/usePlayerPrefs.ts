@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { DEFAULT_PREFS, loadPrefs, savePrefs, type PlayerPrefs } from "@/features/reels/playback/playerPrefs";
+import { DEFAULT_PREFS, loadPrefs, savePrefs, type PlayerPrefs, type PrefsPatch } from "@/features/reels/playback/playerPrefs";
 
 /** React binding for the persisted playback preferences. */
 export function usePlayerPrefs() {
@@ -14,9 +14,10 @@ export function usePlayerPrefs() {
     setPrefs(loadPrefs());
   }, []);
 
-  const update = useCallback((patch: Partial<PlayerPrefs>) => {
+  // A function patch reads the latest prefs, so rapid +/- presses never use a stale value.
+  const update = useCallback((patch: PrefsPatch) => {
     setPrefs((prev) => {
-      const next = { ...prev, ...patch };
+      const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
       savePrefs(next);
       return next;
     });

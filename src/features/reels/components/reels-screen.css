@@ -101,6 +101,15 @@
 .reel-speed-panel__chips { display: flex; width: 100%; justify-content: space-between; gap: 6px; }
 .reel-speed-panel__chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .reel-speed-panel__normal { font-size: 11px; color: rgb(var(--brand-text) / .6); }
+/* A narrow frame (a portrait reel at a zoomed browser): tighter rows so no label truncates. */
+@container (max-width: 320px) {
+  .reel-more-menu__row { gap: 10px; padding: 0 10px; font-size: 14px; }
+  .reel-more-menu__value { font-size: 12px; }
+  .reel-more-menu__value svg { width: 18px; height: 18px; }
+  .reel-speed-panel { gap: 12px; padding: 8px 8px 12px; }
+  .reel-speed-panel__chips { gap: 4px; }
+  .reel-more-menu__chip { min-width: 36px; padding: 0 6px; font-size: 12px; }
+}
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
 /* The speaker: TikTok's translucent 40px square at the top-left of the video; the slider slides out on hover or focus. */
 .reel-volume-control { pointer-events: auto; display: flex; align-items: center; gap: 0; padding-right: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); transition: padding 140ms ease, background-color 140ms ease; }
@@ -111,6 +120,7 @@
 /* Frame top-right: the More circle — 48px, 8px in. */
 /* The corner strip spans the frame so a card hung from it can never be wider than the video. Only its buttons take clicks. */
 .reel-frame-actions { position: absolute; top: 8px; right: 0; left: 0; padding: 0 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.reel-frame-actions { container-type: inline-size; } /* the More card queries the frame width */
 .reel-frame-actions > * { pointer-events: auto; }
 .reel-frame-action-wrap { position: static; }
 .reel-frame-actions .reel-frame-popover[role="menu"] { left: 0; right: 0; width: 100%; max-width: 100%; }
