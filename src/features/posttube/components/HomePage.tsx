@@ -8,7 +8,8 @@ import { useAuthUser } from "@/store/auth";
 import { VideoCard } from "./VideoCard";
 import { TileSkeleton, VideoRow } from "./VideoRow";
 import { FlicksRow } from "./FlicksRow";
-import { useContinueWatchingFeed, useFlicksFeed, useLongVideosFeed, useTrendingVideos, useVideoCategories } from "../hooks/usePosttubeHome";
+import { useContinueWatchingFeed, useFlicksFeed, useTrendingVideos } from "../hooks/usePosttubeHome";
+import { TopicStrip, useStripFeed } from "@/features/posttube/discovery";
 import { CHIP_ALL, CHIP_SUBSCRIPTIONS } from "../model";
 import { gridColumnsFor, interleaveShelves, type ShelfKey } from "../shelves";
 import type { PostTubeVideo } from "../types";
@@ -59,24 +60,13 @@ export function useLoadMoreSentinel(enabled: boolean, onVisible: () => void) {
   return ref;
 }
 
-/* ── Topic strip pills ────────────────────────────────── */
-
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={active} className="tube-strip__pill">
-      {label}
-    </button>
-  );
-}
-
 /* ── Home ─────────────────────────────────────────────── */
 
 export function HomePage() {
   const user = useAuthUser();
   const [chip, setChip] = useState<string>(CHIP_ALL);
 
-  const categoriesQuery = useVideoCategories();
-  const videosFeed = useLongVideosFeed(chip, 20);
+  const videosFeed = useStripFeed(chip, 20);
   const flicksFeed = useFlicksFeed(20, chip === CHIP_ALL);
   const continueWatchingFeed = useContinueWatchingFeed(10);
   const trendingFeed = useTrendingVideos(12);
@@ -86,18 +76,11 @@ export function HomePage() {
   const flicks = flicksFeed.data?.pages.flatMap((p) => p.items) ?? [];
   const continueWatching = continueWatchingFeed.data ?? [];
   const trending = trendingFeed.data ?? [];
-  const categories = categoriesQuery.data ?? [];
 
   const sentinelRef = useLoadMoreSentinel(
     !!videosFeed.hasNextPage && !videosFeed.isFetchingNextPage,
     () => void videosFeed.fetchNextPage(),
   );
-
-  const chips = [
-    { slug: CHIP_ALL, label: "All" },
-    ...(user ? [{ slug: CHIP_SUBSCRIPTIONS, label: "Subscriptions" }] : []),
-    ...categories,
-  ];
 
   const isEmpty = !videosFeed.isLoading && videos.length === 0;
 
@@ -112,15 +95,8 @@ export function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-5 sm:px-6">
-      {/* Topic strip */}
-      <div className="tube-strip">
-        <div className="tube-strip__scroller" role="group" aria-label="Topics">
-          {chips.map((c) => (
-            <Chip key={c.slug} label={c.label} active={chip === c.slug} onClick={() => setChip(c.slug)} />
-          ))}
-          {categoriesQuery.isLoading ? <Loader2 className="tube-strip__spinner h-4 w-4 animate-spin" aria-label="Loading topics" /> : null}
-        </div>
-      </div>
+      {/* Topic strip: All · Following · Fresh · Seen · New to you · topics */}
+      <TopicStrip value={chip} onChange={setChip} showFollowing={Boolean(user)} />
 
       {/* Video grid */}
       {videosFeed.isLoading ? (
