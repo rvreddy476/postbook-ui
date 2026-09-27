@@ -19,15 +19,14 @@ const base = {
   open: true, onClose: noop, reel: { ...other, downloadAllowed: true, reasonText: 'Popular' }, isOwn: false, following: false as const,
   prefs: DEFAULT_PREFS, onPrefsChange: noop, qualityHeights: [720, 1080], captionsAvailable: 'unknown' as const,
   onCopyLink: noop, onDescription: noop, onInterested: noop, onToggleFollow: noop, onBlock: noop, onDelete: noop,
-  onClearScreen: noop, onTheater: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop,
+  onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop,
 };
 
-test('one card: the playback rows first, then the mapped rows in menu.ts order, Report last', () => {
+test('one card: Speed, Quality, Auto scroll, Captions, then Description, Not interested, Report last', () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
   const marks = [
-    'data-row="speed"', 'data-row="quality"', 'data-row="auto-scroll"', 'data-row="theater"', 'data-row="captions"',
-    '>Copy link<', '>Description<', '>Download<', ">Why you&#x27;re seeing this<", '>Interested<', '>Follow @bee<', '>Block @bee<',
-    '>Clear screen<', '>Not interested<', ">Don&#x27;t recommend @bee<", '>Report<',
+    'data-row="speed"', 'data-row="quality"', 'data-row="auto-scroll"', 'data-row="captions"',
+    '>Description<', '>Not interested<', '>Report<',
   ];
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
@@ -71,27 +70,27 @@ test('quality shows the current value and a chevron; captions disable with a hin
   expect((on.match(/reel-more-menu__switch" data-on=""/g) ?? []).length).toBe(2);
 });
 
-test('own reel: Delete instead of the relationship and feedback rows; the playback rows stay', () => {
+test('own reel: no Report or Not interested; the playback rows stay; Theater is not a row', () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} />);
-  expect(html).toContain('>Delete reel<');
-  for (const gone of ['Block', 'Follow', 'Report', 'Not interested']) expect(html).not.toContain(`>${gone}`);
-  for (const key of ['speed', 'quality', 'auto-scroll', 'theater', 'captions']) expect(html).toContain(`data-row="${key}"`);
+  for (const gone of ['Block', 'Follow', 'Report', 'Not interested', 'Delete reel', 'Theater mode', 'Copy link']) expect(html).not.toContain(`>${gone}`);
+  for (const key of ['speed', 'quality', 'auto-scroll', 'captions']) expect(html).toContain(`data-row="${key}"`);
+  expect(html).not.toContain('data-row="theater"');
 });
 
-test("TikTok's card in CSS: 320 wide, radius 16, the on-video pair at .92 behind a 12px blur, 44px rows, chips 28, switches 44×24 with a 20px knob", () => {
+test("TikTok's card in CSS (measured in Chrome): 367 wide, radius 16, 4px padding, 52px rows at 10/16 with 16/600 labels, chips 28, switches 48×28 with a 24px knob", () => {
   const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
-  expect(css).toContain('.reel-more-menu[role="menu"] { padding: 8px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }');
-  expect(css).toContain('.reel-more-menu[role="menu"] { width: 320px; border-radius: 16px;');
-  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; height: 44px; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font-size: 15px; font-weight: 600;');
+  expect(css).toContain('.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }');
+  expect(css).toContain('.reel-more-menu[role="menu"] { width: 367px; border-radius: 16px;');
+  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; height: 52px; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 16px; font-weight: 600;');
   expect(css).toContain('.reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .08); }');
   expect(css).toContain('.reel-more-menu__row.is-danger { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }');
-  expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 6px 0; background: rgb(var(--reel-on-stage) / .12); }');
+  expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 0 14px; background: rgb(var(--reel-on-stage) / .12); }');
   expect(css).toContain('.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }');
   expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 28px;');
   expect(css).toContain('.reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }');
-  expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 44px; width: 44px; height: 24px;');
-  expect(css).toContain('.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;');
+  expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 48px; width: 48px; height: 28px;');
+  expect(css).toContain('.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;');
   expect(css).toContain('.reel-more-menu__switch[data-on] { background: rgb(var(--reel-on-stage)); }');
   expect(css).toContain('.reel-more-menu__switch[data-on] .reel-more-menu__knob { background: rgb(var(--reel-stage)); transform: translateX(20px); }');
   // The only literal colour in the block is the black shadow under the dark card.

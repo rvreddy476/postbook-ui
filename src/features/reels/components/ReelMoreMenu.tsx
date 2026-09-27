@@ -51,8 +51,6 @@ interface ReelMoreMenuProps {
   onBlock: () => void;
   onDelete: () => void;
   onClearScreen: () => void;
-  /** Enters theater mode (fullscreen with the side panel). */
-  onTheater: () => void;
   onNotInterested: () => void;
   onDontRecommend: () => void;
   onReport: () => void;
@@ -103,7 +101,6 @@ export function ReelMoreMenu({
   onBlock,
   onDelete,
   onClearScreen,
-  onTheater,
   onNotInterested,
   onDontRecommend,
   onReport,
@@ -234,8 +231,6 @@ export function ReelMoreMenu({
             on={prefs.onEnd === "next"}
             onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })}
           />
-          {/* 4. Theater mode (TikTok's Floating player slot). */}
-          <Row icon={<Maximize />} label="Theater mode" hint="Full screen with comments · F" dataRow="theater" onClick={run(onTheater)} />
           {/* 5. Captions. */}
           <SwitchRow
             icon={<Captions />}

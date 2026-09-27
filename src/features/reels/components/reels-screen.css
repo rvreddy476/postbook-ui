@@ -53,7 +53,7 @@
 .reel-frame-popover { pointer-events: auto; }
 @media (min-width: 768px) {
   /* Anchored under its trigger: the More menu under its circle at the frame's top-right (8 + 48 + 8 from the top, 8 left at the bottom). */
-  .reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 320px; max-height: calc(var(--reel-height) - 72px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 367px; max-height: calc(var(--reel-height) - 72px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 }
 
 /* ---- the More menu: TikTok's card, our rows ----
@@ -63,13 +63,13 @@
    Auto scroll and Captions are 44×24 switches with a 20px knob (on = white track, dark knob).
    Only the shadow is a literal colour: black under a dark card on the video. Below md the
    Popover draws it as the bottom sheet (full width, its own corners) with the same rows. */
-.reel-more-menu[role="menu"] { padding: 8px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }
+.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }
 @media (min-width: 768px) {
-  .reel-more-menu[role="menu"] { width: 320px; border-radius: 16px; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .reel-more-menu[role="menu"] { width: 367px; border-radius: 16px; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .reel-more-menu.reel-frame-popover[role="menu"] { max-height: calc(var(--reel-height) - 72px); }
 }
 .reel-more-menu__list { display: flex; flex-direction: column; }
-.reel-more-menu__row { display: flex; width: 100%; height: 44px; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease; }
+.reel-more-menu__row { display: flex; width: 100%; height: 52px; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 16px; font-weight: 600; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease; }
 .reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .08); }
 .reel-more-menu__row.is-static { cursor: default; }
 .reel-more-menu__row.is-static:hover { background: transparent; }
@@ -86,13 +86,13 @@
 .reel-more-menu__value svg { width: 18px; height: 18px; }
 .reel-more-menu__back { font-weight: 700; }
 .reel-more-menu__note { margin: 0; padding: 6px 12px 8px; font-size: 12px; color: rgb(var(--reel-on-stage) / .6); }
-.reel-more-menu__divider { height: 1px; margin: 6px 0; background: rgb(var(--reel-on-stage) / .12); }
+.reel-more-menu__divider { height: 1px; margin: 0 14px; background: rgb(var(--reel-on-stage) / .12); }
 .reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }
-.reel-more-menu__chip { display: inline-flex; height: 28px; min-width: 34px; align-items: center; justify-content: center; padding: 0 7px; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--reel-on-stage) / .8); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.reel-more-menu__chip { display: inline-flex; height: 28px; min-width: 0; align-items: center; justify-content: center; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--reel-on-stage) / .8); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .reel-more-menu__chip:hover { color: rgb(var(--reel-on-stage)); }
 .reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
-.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 44px; width: 44px; height: 24px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .25); transition: background-color 140ms ease; }
-.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgb(var(--reel-on-stage)); transition: transform 140ms ease, background-color 140ms ease; }
+.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 48px; width: 48px; height: 28px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .25); transition: background-color 140ms ease; }
+.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: rgb(var(--reel-on-stage)); transition: transform 140ms ease, background-color 140ms ease; }
 .reel-more-menu__switch[data-on] { background: rgb(var(--reel-on-stage)); }
 .reel-more-menu__switch[data-on] .reel-more-menu__knob { background: rgb(var(--reel-stage)); transform: translateX(20px); }
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
@@ -107,7 +107,7 @@
 .reel-frame-actions { position: absolute; top: 8px; right: 8px; left: 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }
 .reel-frame-actions > * { pointer-events: auto; }
 .reel-frame-action-wrap { position: static; }
-.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 320px; max-width: 100%; }
+.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 367px; max-width: 100%; }
 .reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
 .reel-frame-action:hover { background: rgb(var(--reel-stage) / .6); }
 /* Bottom-left text block: 12px in, 16px up, at most 381px wide (TikTok's video-desc). */

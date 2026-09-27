@@ -25,8 +25,8 @@ test('the separate playback-settings popover is gone: one menu hangs from the fr
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).not.toContain('reel-settings-popover');
   expect(css).not.toContain('reel-settings-slot');
-  expect(css).toContain('.reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 320px;');
-  expect(css).toContain('.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 320px; max-width: 100%; }');
+  expect(css).toContain('.reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 367px;');
+  expect(css).toContain('.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 367px; max-width: 100%; }');
 });
 
 test('expanded details carry creator and title but never public view counts', () => {
@@ -82,9 +82,8 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
   expect(screen).not.toContain('Maximize2');
   // Only More sits on the frame; Theater and Playback settings are rows in its menu.
   expect(screen).toContain('aria-label="More"');
-  expect(screen).not.toContain('aria-label="Theater mode"');
+  expect(screen).toContain('aria-label="Theater mode"');
   expect(screen).not.toContain('aria-label="Playback settings"');
-  expect(screen).toContain('onTheater={() => void enterTheater()}');
   expect(screen).toContain('onPrefsChange={updatePrefs}');
   expect(screen).toContain('qualityHeights={qualityHeights}');
   expect(screen).toContain('captionsAvailable={captionsAvailable}');

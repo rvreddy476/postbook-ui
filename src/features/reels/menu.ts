@@ -40,29 +40,22 @@ export interface MoreMenuContext {
   moreMenuItems. Speed offers five chips — 0.5 stays a valid stored value
   (playerPrefs.SPEEDS) but is not offered here.
 */
-export const PLAYBACK_ROWS = ["speed", "quality", "auto-scroll", "theater", "captions"] as const;
+export const PLAYBACK_ROWS = ["speed", "quality", "auto-scroll", "captions"] as const;
 export type PlaybackRowKey = (typeof PLAYBACK_ROWS)[number];
 export const MENU_SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
 
-/** The mapped rows in display order, after the playback rows. Separators are the renderer's business. */
+/**
+ * The mapped rows in display order, after the playback rows. The founder's
+ * cut (2026-09-27) is TikTok's short list: Description, Not interested,
+ * Report. The other actions (copy link, download, follow, block, delete,
+ * clear screen, don't recommend, why) keep their renderers and handlers
+ * but are not offered until asked for again. Separators are the
+ * renderer's business.
+ */
 export function moreMenuItems(reel: ReelItem, ctx: MoreMenuContext): MoreMenuItemKey[] {
-  // Only the three dots sit on the frame; everything a viewer can do with a reel is in here.
-  const items: MoreMenuItemKey[] = ["copy-link"];
+  const items: MoreMenuItemKey[] = [];
   if (reel.caption || reel.hashtags.length) items.push("description");
-  if (reel.downloadAllowed) items.push("download");
-  if (reel.reasonText) items.push("why");
-
-  if (!ctx.isOwn) {
-    if (reel.reasonText) items.push("interested");
-    if (ctx.relationshipKnown && reel.authorUsername) items.push(ctx.following ? "unfollow" : "follow");
-    items.push("block");
-  } else {
-    items.push("delete");
-  }
-
-  items.push("clear-screen");
-
-  if (!ctx.isOwn) items.push("not-interested", "dont-recommend", "report");
+  if (!ctx.isOwn) items.push("not-interested", "report");
   return items;
 }
 

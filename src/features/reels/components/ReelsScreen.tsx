@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -522,7 +522,6 @@ export function ReelsScreen() {
       onBlock={() => setBlockOpen(true)}
       onDelete={() => setDeleteOpen(true)}
       onClearScreen={enterClearScreen}
-      onTheater={() => void enterTheater()}
       onNotInterested={onNotInterested}
       onDontRecommend={onDontRecommend}
       onReport={() => setReportOpen(true)}
@@ -697,6 +696,9 @@ export function ReelsScreen() {
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
+                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
+                          <Maximize size={24} aria-hidden />
+                        </button>
                       </div>
                     )}
                     <AnimatePresence>
