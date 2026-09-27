@@ -35,7 +35,7 @@ export function ReelSearchScreen() {
   };
 
   return (
-    <VideoShell app="reels" chrome="sidebar" immersive>
+    <VideoShell app="reels" chrome="sidebar" immersive compactSearch>
       <div className="liked-reels__scroll">
         <section className="liked-reels" aria-labelledby="reel-search-title">
           <header className="liked-reels__head">
