@@ -164,19 +164,32 @@ export interface PollData {
     has_ended: boolean
 }
 
+/** One emoji tally on a comment; the server sends the top three by count. */
+export interface CommentReaction {
+    emoji: string
+    count: number
+}
+
 export interface CommentItem {
     id: string
     post_id: string
     author_id: string
     body: string
     text?: string
+    /** Equals reaction_count; kept for older readers. */
     like_count: number
     dislike_count: number
     reply_count: number
     is_reply: boolean
     created_at: string
     updated_at: string
+    /** First reply preview on a top-level comment. */
     reply?: CommentItem | null
+    /** Top three emoji tallies. Absent on rows written before reactions shipped. */
+    reactions?: CommentReaction[]
+    reaction_count?: number
+    /** The viewer's own emoji, null when none. */
+    viewer_reaction?: string | null
 }
 
 export interface PostDetail {

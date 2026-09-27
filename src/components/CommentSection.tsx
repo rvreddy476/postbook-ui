@@ -1,26 +1,29 @@
 'use client';
-import ReactionControl from '@/components/reactions/ReactionControl';
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { useComments, useAddComment, useCreateReply, useDeleteComment, useEditComment, useToggleCommentLike, useToggleCommentDislike } from '@/hooks/usePostComments';
+import React, { useState, useEffect, useRef } from 'react';
+import { useComments, useAddComment, useDeleteComment, useEditComment, useCommentReplies, useSetCommentReaction, flattenReplies } from '@/hooks/usePostComments';
 import { useCommentsAround } from '@/hooks/useCommentsAround';
 import { usePostRoom } from '@/hooks/usePostRoom';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
-import { ThumbsUp, ThumbsDown, Smile, Trash2, Pencil, Send, MessageCircle, Flag, X, Check } from 'lucide-react';
+import { useGlobalToast } from '@/contexts/ToastContext';
+import { Smile, Trash2, Pencil, Send, MessageCircle, Flag, X, Check, CornerDownRight } from 'lucide-react';
 import type { CommentItem } from '@/types/profile';
-import data from '@emoji-mart/data';
+import CommentReactions from '@/components/comments/CommentReactions';
+import MentionInput from '@/components/comments/MentionInput';
+import MentionText from '@/components/comments/MentionText';
+import ReplyComposer from '@/components/comments/ReplyComposer';
+import EmojiPickerPopover from '@/components/comments/EmojiPickerPopover';
 
-const EmojiPicker = lazy(() => import('@emoji-mart/react'));
-
-// Resolves a comment author's display name and avatar via cached profile lookup.
-const useCommentAuthor = (authorId: string, myId?: string, myName?: string, myAvatar?: string) => {
+// Resolves a comment author's display name, username and avatar via cached profile lookup.
+const useCommentAuthor = (authorId: string, myId?: string, myName?: string, myAvatar?: string, myUsername?: string) => {
   const isOwn = myId === authorId;
   const { data: authorProfile } = useUserProfile(isOwn ? undefined : authorId);
 
   if (isOwn) {
     return {
       name: myName || 'You',
+      username: myUsername,
       avatar: myAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorId.slice(0, 8)}`,
     };
   }
@@ -31,6 +34,7 @@ const useCommentAuthor = (authorId: string, myId?: string, myName?: string, myAv
 
   return {
     name: authorProfile?.display_name || `User ${authorId.slice(0, 6)}`,
+    username: authorProfile?.username || undefined,
     avatar: resolvedAvatar,
   };
 };
@@ -62,6 +66,11 @@ function timeAgo(dateStr: string): string {
 function canEdit(createdAt: string): boolean {
   const created = new Date(createdAt).getTime();
   return Date.now() - created < 15 * 60 * 1000;
+}
+
+/** "View 3 replies" / "View 1 reply". */
+export function repliesLabel(count: number): string {
+  return `View ${count} ${count === 1 ? 'reply' : 'replies'}`;
 }
 
 /* ── Report Dialog ─────────────────────────────────────────── */
@@ -171,216 +180,85 @@ function ReportDialog({
   );
 }
 
-/* ── Reply Component ───────────────────────────────────────── */
+/* ── One comment or reply ──────────────────────────────────── */
 
-const ReplyItem: React.FC<{
-  reply: CommentItem;
-  postId: string;
-  postAuthorId: string;
+interface Viewer {
   myId?: string;
   myName?: string;
+  myUsername?: string;
   myAvatar?: string;
-}> = ({ reply, postId, myId, myName, myAvatar }) => {
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(reply.body || reply.text || '');
-  const [reportOpen, setReportOpen] = useState(false);
+}
 
-  const deleteMutation = useDeleteComment();
-  const editMutation = useEditComment();
-  const likeMutation = useToggleCommentLike();
-  const dislikeMutation = useToggleCommentDislike();
-  const author = useCommentAuthor(reply.author_id, myId, myName, myAvatar);
-
-  useEffect(() => { setLocalLikes(reply.like_count ?? 0); setLocalDislikes(reply.dislike_count ?? 0); }, [reply.like_count, reply.dislike_count]);
-  const isOwn = myId === reply.author_id;
-  const replyBody = reply.body || reply.text || '';
-  const [localLikes, setLocalLikes] = useState(reply.like_count ?? 0);
-  const [localDislikes, setLocalDislikes] = useState(reply.dislike_count ?? 0);
-  const [localLiked, setLocalLiked] = useState(false);
-  const [localDisliked, setLocalDisliked] = useState(false);
-
-  const handleLike = async () => {
-    if (likeMutation.isPending || dislikeMutation.isPending) return;
-    const result = await likeMutation.mutateAsync({ commentId: reply.id, postId });
-    setLocalLiked(result.liked);
-    setLocalLikes(result.count);
-    setLocalDislikes(result.dislike_count);
-    if (result.liked) setLocalDisliked(false);
-  };
-  const handleDislike = () => {
-    if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
-    else {
-      if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
-      setLocalDisliked(true); setLocalDislikes(c => c + 1);
-    }
-    dislikeMutation.mutate({ commentId: reply.id, postId });
-  };
-
-  return (
-    <div className="ml-10 mt-1.5 py-1.5">
-      {/* Header: avatar + name + time */}
-      <div className="flex items-center gap-2">
-        <img src={author.avatar} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
-        <span className="text-[12px] font-semibold text-brand-text">@{author.name}</span>
-        <span className="text-[11px] text-brand-text/60">{timeAgo(reply.created_at)}</span>
-      </div>
-
-      {/* Body */}
-      {editing ? (
-        <form onSubmit={async (e) => {
-          e.preventDefault();
-          if (!editText.trim() || editMutation.isPending) return;
-          await editMutation.mutateAsync({ commentId: reply.id, body: editText.trim(), postId });
-          setEditing(false);
-        }} className="mt-1 ml-7 space-y-2">
-          <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
-            className="w-full rounded-xl bg-brand-secondary px-3 py-1.5 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
-          <div className="flex justify-end gap-1.5">
-            <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-brand-highlight font-medium px-2.5 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
-            <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-              className="text-[11px] font-semibold px-2.5 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40">Save</button>
-          </div>
-        </form>
-      ) : (
-        <p className="text-[13px] text-brand-text mt-0.5 ml-7 leading-relaxed">{replyBody}</p>
-      )}
-
-      {/* Actions */}
-      {!editing && (
-        <div data-comment-actions className="flex flex-wrap items-center gap-3 mt-1 ml-7">
-          <ReactionControl allowed={['like']} current={localLiked ? 'like' : null} count={localLikes} onChange={handleLike} disabled={likeMutation.isPending || dislikeMutation.isPending} />
-          <button onClick={handleDislike} disabled={likeMutation.isPending || dislikeMutation.isPending} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
-            <ThumbsDown className={`w-3 h-3 ${localDisliked ? 'fill-slate-800 text-brand-text' : ''}`} />
-            {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
-          </button>
-          {isOwn && canEdit(reply.created_at) && (
-            <button onClick={() => { setEditing(true); setEditText(replyBody); }} className="text-[11px] text-brand-highlight hover:text-brand-text transition">Edit</button>
-          )}
-          {isOwn && (
-            <button onClick={() => { if (confirm('Delete this reply?')) deleteMutation.mutate({ commentId: reply.id, postId }); }}
-              className="text-[11px] text-brand-highlight hover:text-red-600 transition">Delete</button>
-          )}
-          {!isOwn && (
-            <button onClick={() => setReportOpen(true)} className="text-[11px] text-brand-highlight hover:text-red-600 transition">Report</button>
-          )}
-        </div>
-      )}
-
-      <ReportDialog open={reportOpen} onClose={() => setReportOpen(false)} targetType="comment" targetId={reply.id} />
-    </div>
-  );
-};
-
-/* ── Single Comment Component ──────────────────────────────── */
-
-const SingleComment: React.FC<{
+interface CommentNodeProps extends Viewer {
   comment: CommentItem;
   postId: string;
   postAuthorId: string;
-  myId?: string;
-  myName?: string;
-  myAvatar?: string;
+  /** The top-level comment a reply attaches to; a top-level comment is its own parent. */
+  parentId: string;
+  isReply: boolean;
   isFocused?: boolean;
-}> = ({ comment, postId, postAuthorId, myId, myName, myAvatar, isFocused }) => {
-  const [replyText, setReplyText] = useState('');
-  const [showReplyInput, setShowReplyInput] = useState(false);
+  notifyError: (title: string) => void;
+}
+
+/**
+ * Author row, body with linked mentions, emoji reactions, Reply / Report /
+ * Edit / Delete, and an inline reply composer. Top-level comments also own
+ * their replies list (first-reply preview, "View N replies", paging).
+ */
+export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postAuthorId, parentId, isReply, isFocused, myId, myName, myUsername, myAvatar, notifyError }) => {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(comment.body || comment.text || '');
-  const [localReply, setLocalReply] = useState<CommentItem | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const emojiRef = useRef<HTMLDivElement>(null);
+  const [repliesOpen, setRepliesOpen] = useState(false);
 
-  const replyMutation = useCreateReply();
   const deleteMutation = useDeleteComment();
   const editMutation = useEditComment();
-  const likeMutation = useToggleCommentLike();
-  const dislikeMutation = useToggleCommentDislike();
-  const author = useCommentAuthor(comment.author_id, myId, myName, myAvatar);
-  const [localLikes, setLocalLikes] = useState(comment.like_count ?? 0);
-  const [localDislikes, setLocalDislikes] = useState(comment.dislike_count ?? 0);
-  const [localLiked, setLocalLiked] = useState(false);
-  const [localDisliked, setLocalDisliked] = useState(false);
-
-  useEffect(() => { setLocalLikes(comment.like_count ?? 0); setLocalDislikes(comment.dislike_count ?? 0); }, [comment.like_count, comment.dislike_count]);
+  const setReaction = useSetCommentReaction();
+  const author = useCommentAuthor(comment.author_id, myId, myName, myAvatar, myUsername);
   const isOwn = myId === comment.author_id;
-  const isPostOwner = myId === postAuthorId;
-  // The server reply is authoritative after refetch, including deletion.
-  useEffect(() => { if (comment.reply || comment.reply_count === 0) setLocalReply(null); }, [comment]);
-  const visibleReply = comment.reply || localReply;
-  const canReply = isPostOwner && !comment.is_reply && !visibleReply && comment.reply_count === 0;
-  const commentBody = comment.body || comment.text || '';
+  const body = comment.body || comment.text || '';
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
-    };
-    if (showEmojiPicker) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showEmojiPicker]);
-
-  const handleLike = async () => {
-    if (likeMutation.isPending || dislikeMutation.isPending) return;
-    const result = await likeMutation.mutateAsync({ commentId: comment.id, postId });
-    setLocalLiked(result.liked);
-    setLocalLikes(result.count);
-    setLocalDislikes(result.dislike_count);
-    if (result.liked) setLocalDisliked(false);
-  };
-  const handleDislike = () => {
-    if (localDisliked) { setLocalDisliked(false); setLocalDislikes(c => Math.max(0, c - 1)); }
-    else {
-      if (localLiked) { setLocalLiked(false); setLocalLikes(c => Math.max(0, c - 1)); }
-      setLocalDisliked(true); setLocalDislikes(c => c + 1);
-    }
-    dislikeMutation.mutate({ commentId: comment.id, postId });
-  };
-
-  const handleReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!replyText.trim() || replyMutation.isPending) return;
-    try {
-      const result = await replyMutation.mutateAsync({ commentId: comment.id, text: replyText.trim(), postId });
-      setLocalReply(result.reply);
-      setReplyText('');
-      setShowReplyInput(false);
-      setShowEmojiPicker(false);
-    } catch {
-      // Keep input open for retry
-    }
-  };
+  const replyCount = comment.reply_count ?? 0;
+  const replies = useCommentReplies(isReply ? undefined : comment.id, !isReply && repliesOpen);
+  const loadedReplies = flattenReplies(replies.data);
+  const showList = !isReply && repliesOpen && loadedReplies.length > 0;
+  const preview = !isReply && !showList ? comment.reply : null;
+  const canToggle = !isReply && replyCount > 0 && (replyCount > 1 || !comment.reply);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editText.trim() || editMutation.isPending) return;
-    await editMutation.mutateAsync({ commentId: comment.id, body: editText.trim(), postId });
-    setEditing(false);
+    try {
+      await editMutation.mutateAsync({ commentId: comment.id, body: editText.trim(), postId });
+      setEditing(false);
+    } catch { notifyError('Could not save your edit'); }
   };
 
-  const handleEmojiSelect = (emoji: { native: string }) => {
-    setReplyText(prev => prev + emoji.native);
-    setShowEmojiPicker(false);
-  };
+  const react = (emoji: string | null) =>
+    setReaction.mutateAsync({ commentId: comment.id, emoji, postId }).catch(error => { notifyError('Could not save reaction'); throw error; });
+
+  const replyPrefill = isReply && author.username ? `@${author.username} ` : '';
+  const indent = isReply ? 'ml-7' : 'ml-8';
 
   return (
     <div
       id={`comment-${comment.id}`}
-      className={`px-4 py-3 transition-colors duration-300 ${
-        isFocused ? 'bg-blue-50/50' : ''
-      }`}
+      className={isReply
+        ? 'mt-1.5 py-1.5'
+        : `px-4 py-3 transition-colors duration-300 ${isFocused ? 'bg-brand-tint' : ''}`}
     >
-      {/* Header row: small avatar + name + time + 3-dot */}
+      {/* Header row: small avatar + name + time */}
       <div className="flex items-center gap-2">
-        <img src={author.avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-        <span className="text-[12px] font-semibold text-brand-text">@{author.name}</span>
+        <img src={author.avatar} alt="" className={`${isReply ? 'w-5 h-5' : 'w-6 h-6'} rounded-full object-cover shrink-0`} />
+        <span className="text-[12px] font-semibold text-brand-text">{author.username ? `@${author.username}` : author.name}</span>
         <span className="text-[11px] text-brand-text/60">{timeAgo(comment.created_at)}</span>
       </div>
 
-      {/* Comment body */}
-      <div className="mt-1 ml-8">
+      <div className={`mt-1 ${indent}`}>
         {editing ? (
           <form onSubmit={handleEdit} className="space-y-2">
-            <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
+            <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)} aria-label="Edit comment"
               className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
             <div className="flex justify-end gap-1.5">
               <button type="button" onClick={() => setEditing(false)} className="text-[12px] text-brand-highlight font-medium px-3 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
@@ -389,86 +267,91 @@ const SingleComment: React.FC<{
             </div>
           </form>
         ) : (
-          <p className="text-[13px] text-brand-text leading-relaxed">{commentBody}</p>
+          <p className="text-[13px] text-brand-text leading-relaxed break-words"><MentionText body={body} /></p>
         )}
 
-        {/* Action bar: Like  Dislike  Reply  Report  |  Edit  Delete */}
+        {/* Action bar: Reactions  Reply  Report  |  Edit  Delete */}
         {!editing && (
-          <div className="flex items-center gap-3.5 mt-2">
-            <ReactionControl allowed={['like']} current={localLiked ? 'like' : null} count={localLikes} onChange={handleLike} disabled={likeMutation.isPending || dislikeMutation.isPending} />
+          <div data-comment-actions className="flex flex-wrap items-center gap-3 mt-1.5">
+            <CommentReactions item={comment} onChange={react} disabled={setReaction.isPending} />
 
-            <button onClick={handleDislike} disabled={likeMutation.isPending || dislikeMutation.isPending} className="flex items-center gap-1 text-brand-highlight hover:text-brand-text transition">
-              <ThumbsDown className={`w-3.5 h-3.5 ${localDisliked ? 'fill-slate-800 text-brand-text' : ''}`} />
-              {localDislikes > 0 && <span className="text-[11px]">{localDislikes}</span>}
+            <button type="button" onClick={() => setShowReplyInput(open => !open)} aria-expanded={showReplyInput}
+              className="text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
+              Reply
             </button>
 
-            {canReply && (
-              <button onClick={() => setShowReplyInput(!showReplyInput)}
-                className="text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
-                Reply
-              </button>
-            )}
-
             {!isOwn && (
-              <button onClick={() => setReportOpen(true)}
-                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-red-600 transition">
+              <button type="button" onClick={() => setReportOpen(true)}
+                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-danger transition">
                 <Flag className="w-3 h-3" />
                 <span>Report</span>
               </button>
             )}
 
             {isOwn && canEdit(comment.created_at) && (
-              <button onClick={() => { setEditing(true); setEditText(commentBody); }}
+              <button type="button" onClick={() => { setEditing(true); setEditText(body); }}
                 className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-brand-text transition">
                 <Pencil className="w-3 h-3" /> Edit
               </button>
             )}
 
             {isOwn && (
-              <button onClick={() => { if (confirm('Delete this comment?')) deleteMutation.mutate({ commentId: comment.id, postId }); }}
-                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-red-600 transition">
+              <button type="button" onClick={() => { if (confirm(isReply ? 'Delete this reply?' : 'Delete this comment?')) deleteMutation.mutate({ commentId: comment.id, postId }); }}
+                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-danger transition">
                 <Trash2 className="w-3 h-3" /> Delete
               </button>
             )}
           </div>
         )}
 
-        {/* Reply input */}
         {showReplyInput && (
-          <div className="mt-3">
-            <div className="flex items-center gap-2">
-              <div className="relative" ref={emojiRef}>
-                <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-1.5 rounded-full hover:bg-brand-secondary transition">
-                  <Smile className="w-4 h-4 text-brand-text/60" />
-                </button>
-                {showEmojiPicker && (
-                  <div className="absolute bottom-10 left-0 z-20">
-                    <Suspense fallback={<div className="w-[352px] h-[435px] bg-brand-card rounded-2xl shadow-xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
-                      <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
-                    </Suspense>
-                  </div>
-                )}
-              </div>
-              <form onSubmit={handleReply} className="flex-1">
-                <input type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Reply..."
-                  autoFocus
-                  className="w-full rounded-full bg-brand-secondary px-4 py-2 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" />
-              </form>
-              <button onClick={handleReply} disabled={!replyText.trim() || replyMutation.isPending}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-ink text-white disabled:opacity-40 transition hover:bg-primary-ink/90">
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <button type="button" onClick={() => { setShowReplyInput(false); setReplyText(''); setShowEmojiPicker(false); }}
-              className="mt-1.5 ml-10 text-[11px] text-brand-text/60 hover:text-brand-highlight transition">Cancel</button>
-          </div>
+          <ReplyComposer postId={postId} parentId={parentId} prefill={replyPrefill} myId={myId}
+            onDone={() => { setShowReplyInput(false); setRepliesOpen(true); }}
+            onCancel={() => setShowReplyInput(false)}
+            onError={() => notifyError('Reply was not sent. Your draft is still here.')} />
         )}
       </div>
 
-      {/* Inline reply */}
-      {visibleReply && (
-        <ReplyItem reply={visibleReply} postId={postId} postAuthorId={postAuthorId} myId={myId} myName={myName} myAvatar={myAvatar} />
+      {/* Replies: preview, toggle, list */}
+      {preview && (
+        <div className="ml-10">
+          <CommentNode comment={preview} postId={postId} postAuthorId={postAuthorId} parentId={comment.id} isReply
+            myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} />
+        </div>
+      )}
+
+      {canToggle && (
+        <button type="button" onClick={() => setRepliesOpen(open => !open)} aria-expanded={repliesOpen}
+          className="ml-10 mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
+          <CornerDownRight className="w-3.5 h-3.5" />
+          {repliesOpen ? 'Hide replies' : repliesLabel(replyCount)}
+        </button>
+      )}
+
+      {!isReply && repliesOpen && replies.isLoading && (
+        <div className="ml-10 mt-2 flex items-center gap-2 text-[12px] text-brand-text/60">
+          <span className="comment-spinner" aria-hidden="true" /> Loading replies…
+        </div>
+      )}
+      {!isReply && repliesOpen && replies.isError && (
+        <div role="alert" className="ml-10 mt-2 text-[12px] text-brand-text/60">
+          Replies could not load. <button type="button" className="underline" onClick={() => void replies.refetch()}>Try again</button>
+        </div>
+      )}
+
+      {showList && (
+        <div className="ml-10">
+          {loadedReplies.map(reply => (
+            <CommentNode key={reply.id} comment={reply} postId={postId} postAuthorId={postAuthorId} parentId={comment.id} isReply
+              myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} />
+          ))}
+          {replies.hasNextPage && (
+            <button type="button" disabled={replies.isFetchingNextPage} onClick={() => void replies.fetchNextPage()}
+              className="mt-1.5 text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition disabled:opacity-40">
+              {replies.isFetchingNextPage ? 'Loading…' : 'Load more replies'}
+            </button>
+          )}
+        </div>
       )}
 
       <ReportDialog open={reportOpen} onClose={() => setReportOpen(false)} targetType="comment" targetId={comment.id} />
@@ -486,8 +369,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [highlightId, setHighlightId] = useState<string | undefined>(focusCommentId);
   const scrolledRef = useRef(false);
-  const emojiRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const toast = useGlobalToast();
+  const notifyError = (title: string) => { toast({ type: 'error', title }); };
 
   const { data: profile } = useMyProfile();
 
@@ -509,14 +394,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const avatarSrc = profile?.avatar_media_id
     ? `/v1/media/${profile.avatar_media_id}/serve`
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User';
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
-    };
-    if (showEmojiPicker) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showEmojiPicker]);
 
   useEffect(() => {
     if (!focusCommentId || !comments?.length || scrolledRef.current) return;
@@ -545,10 +422,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     } catch { setSubmitError(true); }
   };
 
-  const handleEmojiSelect = (emoji: { native: string }) => {
-    setCommentText(prev => prev + emoji.native);
+  const handleEmojiSelect = (native: string) => {
+    const el = inputRef.current;
+    const at = el?.selectionStart ?? commentText.length;
+    setCommentText(prev => prev.slice(0, at) + native + prev.slice(at));
     setShowEmojiPicker(false);
-    inputRef.current?.focus();
+    requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(at + native.length, at + native.length); });
   };
 
   if (!isExpanded && !alwaysExpanded && !focusCommentId) {
@@ -587,15 +466,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
         )}
 
         {comments?.map((comment: CommentItem) => (
-          <SingleComment
+          <CommentNode
             key={comment.id}
             comment={comment}
             postId={postId}
             postAuthorId={postAuthorId}
+            parentId={comment.id}
+            isReply={false}
             myId={profile?.id}
             myName={profile?.display_name}
+            myUsername={profile?.username}
             myAvatar={avatarSrc}
             isFocused={highlightId === comment.id}
+            notifyError={notifyError}
           />
         ))}
       </div>
@@ -605,28 +488,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
         <div className="flex items-center gap-2.5">
           <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
-          <form onSubmit={handleSubmit} className="relative flex flex-1 items-center">
-            <div className="relative" ref={emojiRef}>
-              <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="p-1.5 rounded-full hover:bg-brand-secondary transition mr-1">
-                <Smile className="w-[18px] h-[18px] text-brand-text/60" />
-              </button>
-              {showEmojiPicker && (
-                <div className="absolute bottom-12 left-0 z-20">
-                  <Suspense fallback={<div className="w-[352px] h-[435px] bg-brand-card rounded-2xl shadow-xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" /></div>}>
-                    <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="light" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
-                  </Suspense>
-                </div>
-              )}
-            </div>
-            <input
-              ref={inputRef}
+          <form onSubmit={handleSubmit} className="relative flex flex-1 items-center min-w-0">
+            <button ref={emojiButtonRef} type="button" aria-label="Add emoji" aria-expanded={showEmojiPicker}
+              onClick={() => setShowEmojiPicker(open => !open)}
+              className="p-1.5 rounded-full hover:bg-brand-secondary transition mr-1 shrink-0">
+              <Smile className="w-[18px] h-[18px] text-brand-text/60" />
+            </button>
+            {showEmojiPicker && (
+              <EmojiPickerPopover anchorRef={emojiButtonRef} onSelect={handleEmojiSelect} onClose={() => setShowEmojiPicker(false)} />
+            )}
+            <MentionInput
+              inputRef={inputRef}
+              placement="top"
               aria-label="Write a comment"
               type="text"
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
+              onValueChange={setCommentText}
               placeholder="Add a comment..."
-              className="min-w-0 flex-1 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
+              className="w-full min-w-0 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
             />
             <button
               type="submit"
