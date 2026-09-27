@@ -62,53 +62,52 @@
    speed pane is YouTube's panel: a 24/700 readout, − slider + in 0.05 steps, preset chips 36px
    with "Normal" under 1.0. Only the shadow is a literal colour. Below md the Popover draws it
    as the bottom sheet with the same rows. */
-.reel-more-menu[role="menu"] { padding: 8px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 12px 32px rgb(0 0 0 / .28); }
+.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 12px 32px rgb(0 0 0 / .28); }
 @media (min-width: 768px) {
   .reel-more-menu[role="menu"] { width: 100%; border-radius: 12px; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .reel-more-menu.reel-frame-popover[role="menu"] { max-height: calc(var(--reel-height) - 72px); }
 }
 .reel-more-menu__list { display: flex; flex-direction: column; }
-.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 48px; align-items: center; gap: 16px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 15px; font-weight: 500; letter-spacing: -.005em; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease; }
+.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 500; letter-spacing: -.005em; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease; }
 .reel-more-menu__row:hover { background: rgb(var(--brand-text) / .06); }
 .reel-more-menu__row:disabled { opacity: .45; cursor: not-allowed; }
 .reel-more-menu__row:disabled:hover { background: transparent; }
 .reel-more-menu__row.is-danger { color: rgb(var(--danger)); }
 .reel-more-menu__row.is-danger .reel-more-menu__icon { color: currentColor; }
-.reel-more-menu__icon { display: inline-flex; flex: 0 0 24px; width: 24px; height: 24px; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .9); }
-.reel-more-menu__icon svg { width: 22px; height: 22px; }
+.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .9); }
+.reel-more-menu__icon svg { width: 18px; height: 18px; }
 .reel-more-menu__label { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; }
 .reel-more-menu__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reel-more-menu__hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 400; color: rgb(var(--brand-text) / .6); }
-.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; color: rgb(var(--brand-text) / .6); }
-.reel-more-menu__value svg { width: 20px; height: 20px; }
+.reel-more-menu__hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 400; color: rgb(var(--brand-text) / .6); }
+.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; color: rgb(var(--brand-text) / .6); }
+.reel-more-menu__value svg { width: 18px; height: 18px; }
 .reel-more-menu__back { font-weight: 600; }
-.reel-more-menu__note { margin: 0; padding: 6px 16px 8px; font-size: 12px; color: rgb(var(--brand-text) / .6); }
-.reel-more-menu__divider { height: 1px; margin: 4px 16px; background: rgb(var(--brand-text) / .12); }
-.reel-more-menu__chip { display: inline-flex; height: 36px; min-width: 52px; align-items: center; justify-content: center; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.reel-more-menu__note { margin: 0; padding: 4px 12px 6px; font-size: 11px; color: rgb(var(--brand-text) / .6); }
+.reel-more-menu__divider { height: 1px; margin: 2px 12px; background: rgb(var(--brand-text) / .12); }
+.reel-more-menu__chip { display: inline-flex; height: 30px; min-width: 44px; align-items: center; justify-content: center; padding: 0 10px; border: 0; border-radius: 999px; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .reel-more-menu__chip:hover { background: rgb(var(--brand-text) / .14); }
 .reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
-.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 44px; width: 44px; height: 24px; border-radius: 999px; background: rgb(var(--brand-text) / .25); transition: background-color 140ms ease; }
-.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgb(var(--brand-card)); transition: transform 140ms ease; }
+.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 40px; width: 40px; height: 22px; border-radius: 999px; background: rgb(var(--brand-text) / .25); transition: background-color 140ms ease; }
+.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: rgb(var(--brand-card)); transition: transform 140ms ease; }
 .reel-more-menu__switch[data-on] { background: rgb(var(--brand-text)); }
-.reel-more-menu__switch[data-on] .reel-more-menu__knob { transform: translateX(20px); }
-.reel-speed-panel { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8px 16px 16px; }
-.reel-speed-panel__readout { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.reel-speed-panel__slider { display: flex; width: 100%; align-items: center; gap: 12px; }
-.reel-speed-panel__slider > button { display: inline-flex; width: 36px; height: 36px; flex: 0 0 36px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); cursor: pointer; }
+.reel-more-menu__switch[data-on] .reel-more-menu__knob { transform: translateX(18px); }
+.reel-speed-panel { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 12px 12px; }
+.reel-speed-panel__readout { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.reel-speed-panel__slider { display: flex; width: 100%; align-items: center; gap: 10px; }
+.reel-speed-panel__slider > button { display: inline-flex; width: 30px; height: 30px; flex: 0 0 30px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); cursor: pointer; }
 .reel-speed-panel__slider > button:disabled { opacity: .35; cursor: not-allowed; }
-.reel-speed-panel__slider > button svg { width: 18px; height: 18px; }
+.reel-speed-panel__slider > button svg { width: 16px; height: 16px; }
 .reel-speed-panel__slider input[type="range"] { flex: 1 1 auto; min-width: 0; height: 4px; margin: 0; accent-color: rgb(var(--brand-text)); cursor: pointer; }
 .reel-speed-panel__chips { display: flex; width: 100%; justify-content: space-between; gap: 6px; }
-.reel-speed-panel__chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.reel-speed-panel__normal { font-size: 11px; color: rgb(var(--brand-text) / .6); }
+.reel-speed-panel__chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.reel-speed-panel__normal { font-size: 10px; color: rgb(var(--brand-text) / .6); }
 /* A narrow frame (a portrait reel at a zoomed browser): tighter rows so no label truncates. */
 @container (max-width: 320px) {
-  .reel-more-menu__row { gap: 10px; padding: 0 10px; font-size: 14px; }
-  .reel-more-menu__value { font-size: 12px; }
-  .reel-more-menu__value svg { width: 18px; height: 18px; }
-  .reel-speed-panel { gap: 12px; padding: 8px 8px 12px; }
+  .reel-more-menu__row { gap: 8px; padding: 0 8px; font-size: 13px; }
+  .reel-more-menu__value { font-size: 11px; }
+  .reel-speed-panel { padding: 4px 6px 10px; }
   .reel-speed-panel__chips { gap: 4px; }
-  .reel-more-menu__chip { min-width: 36px; padding: 0 6px; font-size: 12px; }
+  .reel-more-menu__chip { min-width: 36px; padding: 0 6px; font-size: 11px; }
 }
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
 /* The speaker: TikTok's translucent 40px square at the top-left of the video; the slider slides out on hover or focus. */
@@ -263,6 +262,10 @@ button.reel-panel-count:hover { opacity: .75; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; right: 0; bottom: 0; left: auto; z-index: 35; width: var(--reel-panel-w); padding: 0; overflow: hidden; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-panel.is-column { border-width: 0 0 0 1px; border-radius: 0; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: calc(var(--reel-panel-w) + 16px); z-index: 36; }
+  /* A landscape frame is wider than the room left of the panel, so its cluster is centred in the
+     area left of the arrows (panel + 94: the 62px arrows and their margins) and shrinks to fit.
+     Portrait frames keep the full area and never move. */
+  .reels-content[data-comments-open="true"][data-wide]:not([data-theater]) .reel-stage-area { padding-right: calc(var(--reel-panel-w) + 94px); }
 }
 .reels-content[data-theater] .reel-nav-button { width: 48px; height: 48px; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
 .reels-content[data-theater] .reel-nav-button:hover { background: rgb(var(--reel-on-stage) / .28); }
@@ -295,8 +298,7 @@ button.reel-panel-count:hover { opacity: .75; }
 /* ---- breakpoints ------------------------------------------------------- */
 /* Desktop: [stage area | comments track]; the cluster centred in the area, arrows at its edge. */
 @media (min-width: 1024px) {
-  .reels-content { grid-template-columns: minmax(0,1fr) 0; }
-  .reels-content[data-comments-open="true"]:not([data-theater]) { grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px); }
+  .reels-content { grid-template-columns: minmax(0,1fr) 0; } /* the comments column is absolute (see the placement block above); the grid never gives it a track, so the stage area keeps its width and the video stays put */
   .reels-content[data-single-column] { grid-template-columns: minmax(0,1fr); }
   .reel-stage-area { padding: 16px 56px 16px 0; } /* 56 = the arrows zone, outside TikTok's placement area */
   .reel-desktop-rail,.reel-stage-reserve { display: block; }

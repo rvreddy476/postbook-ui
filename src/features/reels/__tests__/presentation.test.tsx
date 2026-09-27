@@ -179,7 +179,7 @@ test('comments column is TikTok\'s 352px card in a 368px track driven by the con
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(COMMENTS_COLUMN_WIDTH).toBe(352);
   expect(COMMENTS_TRACK_WIDTH).toBe(368);
-  expect(css).toContain('grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px)');
+  expect(css).not.toContain('grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px)');
   expect(css).not.toContain('34vw');
   expect(css).not.toContain('reel-creator-popover');
   expect(css).not.toContain('reel-follow-pill');

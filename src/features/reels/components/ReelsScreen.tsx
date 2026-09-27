@@ -650,6 +650,7 @@ export function ReelsScreen() {
               className="reels-content"
               style={{ "--reel-ar": measuredAspect[active.id] ?? stageAspect(active.media.width, active.media.height) } as CSSProperties}
               data-comments-open={showComments}
+              data-wide={(measuredAspect[active.id] ?? stageAspect(active.media.width, active.media.height)) > 1 ? "" : undefined}
               data-clear-screen={clear.on ? "" : undefined}
               data-theater={theater ? "" : undefined}
             >

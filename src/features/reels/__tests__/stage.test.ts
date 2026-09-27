@@ -27,7 +27,9 @@ describe("comments column", () => {
     expect(COMMENTS_COLUMN_WIDTH).toBe(352);
     expect(COMMENTS_COLUMN_MARGIN).toBe(16);
     expect(COMMENTS_TRACK_WIDTH).toBe(368);
-    expect(css).toContain("grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px)");
+    // The comments column is absolute over the area; no grid track may ever be given to it (that rule shrank the area and moved the video).
+    expect(css).not.toContain("grid-template-columns: minmax(0,1fr) var(--reel-comments-w, 368px)");
+    expect(css).toContain('.reels-content[data-comments-open="true"][data-wide]:not([data-theater]) .reel-stage-area { padding-right: calc(var(--reel-panel-w) + 94px); }');
     expect(css).toContain(".reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 0; }");
     expect(css).toContain(".reel-comments-panel.is-column { border: 1px solid var(--brand-divider); border-radius: 12px; }");
   });

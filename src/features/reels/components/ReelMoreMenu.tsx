@@ -86,14 +86,16 @@ export function speedValueLabel(speed: number): string {
 }
 
 /*
-  YouTube Shorts' More card, with our rows: Description · Captions · Audio
-  track · Playback speed · Quality · Auto scroll · Not interested · Don't
-  recommend this channel · Report. Rows that hold a choice show the current
-  value and a chevron and open a pane inside the same card (speed is
-  YouTube's slider panel: the big readout, − / + in 0.05 steps, preset
-  chips). The card is the theme's surface (white in light mode, dark in
-  dark mode) through reels-screen.css (.reel-more-menu). The choice panes
-  keep the menu open; the actions close it.
+  YouTube Shorts' More card with our rows, always in ascending alphabetical
+  order (the founder's rule): Audio track · Auto scroll · Captions ·
+  Description · Don't recommend this channel · Not interested · Playback
+  speed · Quality · Report. Rows that hold a choice show the current value
+  and a chevron and open a pane inside the same card (speed is YouTube's
+  slider panel: the readout, − / + in 0.05 steps, preset chips). Audio
+  track is always offered; with no alternate the pane says so, and the
+  owner manages tracks from a row at the bottom of that pane. The card is
+  the theme's surface through reels-screen.css (.reel-more-menu). The
+  choice panes keep the menu open; the actions close it.
 */
 export function ReelMoreMenu({
   open,
@@ -142,8 +144,8 @@ export function ReelMoreMenu({
   const qualityLabel = prefs.quality === "auto" ? "Auto" : prefs.quality;
   const noCaptions = captionsAvailable === "no";
   const captionsLabel = noCaptions ? "None" : prefs.captions ? "On" : "Off";
-  const hasAudioChoice = audioTracks.length > 1;
   const audioLabel = audioTracks.find((t) => t.id === currentAudioTrack)?.label ?? audioTracks[0]?.label ?? "Original";
+  const audioChoices = audioTracks.length > 0 ? audioTracks : [{ id: ORIGINAL_AUDIO_ID, label: "Original" }];
   const setSpeed = (s: number) => onPrefsChange({ speed: clampSpeed(s) as Speed });
   const stepSpeed = (dir: 1 | -1) => onPrefsChange((p) => ({ speed: clampSpeed(p.speed + dir * SPEED_STEP) as Speed }));
 
@@ -185,16 +187,36 @@ export function ReelMoreMenu({
     }
   };
 
+  const mappedLabel = (key: MoreMenuItemKey): string => {
+    switch (key) {
+      case "description": return "Description";
+      case "not-interested": return "Not interested";
+      case "dont-recommend": return "Don't recommend this channel";
+      case "report": return "Report";
+      case "copy-link": return "Copy link";
+      case "download": return "Download";
+      case "why": return "Why you're seeing this";
+      case "interested": return "Interested";
+      case "follow": return `Follow ${handle}`;
+      case "unfollow": return `Unfollow ${handle}`;
+      case "block": return `Block ${handle}`;
+      case "delete": return "Delete reel";
+      case "clear-screen": return "Clear screen";
+      default: return key;
+    }
+  };
+  const rows: { label: string; node: ReactNode }[] = [
+    { label: "Audio track", node: <ChoiceRow key="audio" icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} /> },
+    { label: "Auto scroll", node: <SwitchRow key="auto-scroll" icon={<ChevronsDown />} label="Auto scroll" dataRow="auto-scroll" on={prefs.onEnd === "next"} onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })} /> },
+    { label: "Captions", node: <ChoiceRow key="captions" icon={<Captions />} label="Captions" value={captionsLabel} dataRow="captions" disabled={noCaptions} onClick={() => setPane("captions")} /> },
+    { label: "Playback speed", node: <ChoiceRow key="speed" icon={<Gauge />} label="Playback speed" value={speedValueLabel(prefs.speed)} dataRow="speed" onClick={() => setPane("speed")} /> },
+    { label: "Quality", node: <ChoiceRow key="quality" icon={<SlidersHorizontal />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} /> },
+    ...items.map((k) => ({ label: mappedLabel(k), node: row(k) })),
+  ].sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
+
   const root = (
     <div className="reel-more-menu__list" data-pane="root">
-      {items.includes("description") ? row("description") : null}
-      <ChoiceRow icon={<Captions />} label="Captions" value={captionsLabel} dataRow="captions" disabled={noCaptions} onClick={() => setPane("captions")} />
-      {hasAudioChoice ? <ChoiceRow icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} /> : null}
-      {onManageAudio ? <ChoiceRow icon={<AudioLines />} label="Audio tracks" value={`${Math.max(0, audioTracks.length - 1)} added`} dataRow="manage-audio" onClick={run(onManageAudio)} /> : null}
-      <ChoiceRow icon={<Gauge />} label="Playback speed" value={speedValueLabel(prefs.speed)} dataRow="speed" onClick={() => setPane("speed")} />
-      <ChoiceRow icon={<SlidersHorizontal />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} />
-      <SwitchRow icon={<ChevronsDown />} label="Auto scroll" dataRow="auto-scroll" on={prefs.onEnd === "next"} onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })} />
-      {items.filter((k) => k !== "description").map(row)}
+      {rows.map((r) => r.node)}
     </div>
   );
 
@@ -253,9 +275,11 @@ export function ReelMoreMenu({
   const audioPane = (
     <div className="reel-more-menu__list" data-pane="audio">
       <Back label="Audio track" onClick={() => setPane("root")} />
-      {audioTracks.map((t) => (
+      {audioChoices.map((t) => (
         <Option key={t.id} label={t.label} selected={t.id === currentAudioTrack} onClick={() => onAudioTrack?.(t.id)} />
       ))}
+      {audioChoices.length < 2 ? <p className="reel-more-menu__note">No other languages for this reel yet.</p> : null}
+      {onManageAudio ? <Row icon={<AudioLines />} label="Manage tracks" hint="Upload or generate a dub" dataRow="manage-audio" onClick={run(onManageAudio)} /> : null}
     </div>
   );
 
