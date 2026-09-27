@@ -243,7 +243,7 @@ button.reel-panel-count:hover { opacity: .75; }
 /* TikTok's placement: the panel is a full-height column flush against the right edge of the window,
    the arrows stand just left of it, and the video and rail do not move at all. */
 @media (min-width: 1024px) {
-  .reels-content[data-comments-open="true"]:not([data-theater]) { --reel-panel-w: min(384px, 40%); position: relative; grid-template-columns: minmax(0,1fr) 0; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) { /* narrower on small windows: half the area minus half the frame leaves room for the arrows (62 + margins) between rail and panel */ --reel-panel-w: clamp(220px, calc(50% - (var(--reel-viewport) * var(--reel-ar, .5625)) / 2 - 67px), 384px); position: relative; grid-template-columns: minmax(0,1fr) 0; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; right: 0; bottom: 0; left: auto; z-index: 35; width: var(--reel-panel-w); padding: 0; overflow: hidden; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-panel.is-column { border-width: 0 0 0 1px; border-radius: 0; }
   .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: calc(var(--reel-panel-w) + 16px); z-index: 36; }

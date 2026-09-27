@@ -612,6 +612,7 @@ export function ReelsScreen() {
           ) : active ? (
             <div
               className="reels-content"
+              style={{ "--reel-ar": measuredAspect[active.id] ?? stageAspect(active.media.width, active.media.height) } as CSSProperties}
               data-comments-open={showComments}
               data-clear-screen={clear.on ? "" : undefined}
               data-theater={theater ? "" : undefined}
