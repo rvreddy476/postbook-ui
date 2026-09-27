@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
-import { resolveAppBrand } from "@/lib/appBrand";
+import { brandSearchHref, resolveAppBrand } from "@/lib/appBrand";
 import { useUnreadCount } from '@/hooks/useActivityNotifications';
 import { useVideoShell } from "@/features/video-shell/useVideoShell";
 import './app-bar.css';
@@ -45,11 +45,10 @@ export function HeaderBar({
 
   const searchValue = externalSearch ?? internalSearch;
   const onSearchValueChange = externalOnChange ?? setInternalSearch;
+  // Each app's box submits to its own results page (appBrand.searchHref); the rest go to /search.
   const onSearchSubmit = externalOnSubmit ?? ((e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const q = searchValue.trim();
-    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
-    else router.push("/search");
+    router.push(brandSearchHref(brand, searchValue));
   });
 
   return (
@@ -103,7 +102,7 @@ export function HeaderBar({
         {/* Right: Create + Notifications + Profile */}
         <div className="context-app-bar__actions">
           <CreateButton variant="pill" />
-          <Link href="/search" className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link>
+          <Link href={brandSearchHref(brand)} className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link>
           <Link href="/messenger" className="context-app-bar__action" aria-label="Messenger"><MessageCircle size={20}/></Link>
           <Link href="/notifications" className="context-app-bar__action" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" />

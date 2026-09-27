@@ -1,0 +1,141 @@
+/*
+  The discovery screens of MTube — Trending, Topics, Search, Live and the
+  home topic strip — in the Reels design language: the theme tokens only
+  (rgb(var(--…)) as reels-screen.css writes them), 13–14px body and
+  11–12px meta, calm cards on the canvas, one accent. Own layout, own
+  words; nothing here is measured against another product.
+
+  Prefixed disco- so it never collides with tube.css (tube-tile__*,
+  tube-strip__*), which the foundations lane owns; when those tiles land
+  the grids here swap VideoCard for them without touching this file.
+*/
+
+/* ---- page frame: 16px gutters, no horizontal scroll ------------------ */
+.disco-page { width: 100%; max-width: 1400px; margin: 0 auto; padding: 4px 16px 32px; color: rgb(var(--brand-text)); }
+.disco-page > * + * { margin-top: 20px; }
+@media (min-width: 640px) { .disco-page { padding-left: 24px; padding-right: 24px; } }
+
+/* ---- page head: a small mark, a 18px title and a 12px line under it --- */
+.disco-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.disco-head__mark { display: inline-flex; flex: 0 0 36px; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 12px; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); }
+.disco-head__mark svg { width: 18px; height: 18px; }
+.disco-head__title { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+.disco-head__sub { margin: 2px 0 0; font-size: 12px; line-height: 1.35; color: rgb(var(--brand-text) / .6); }
+.disco-head__aside { margin-left: auto; flex: 0 0 auto; }
+
+/* ---- pills: one row, scrolls sideways on a phone, never wraps the page --- */
+.disco-pills { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.disco-pills::-webkit-scrollbar { display: none; }
+.disco-pills__label { flex: 0 0 auto; margin-right: 2px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: rgb(var(--brand-text) / .5); }
+.disco-pill { display: inline-flex; flex: 0 0 auto; height: 30px; align-items: center; gap: 6px; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(var(--brand-text) / .07); color: rgb(var(--brand-text)); font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.disco-pill:hover { background: rgb(var(--brand-text) / .12); }
+.disco-pill[aria-checked="true"], .disco-pill[aria-current="page"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
+.disco-pill:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
+.disco-pill__count { font-size: 11px; font-weight: 500; opacity: .7; font-variant-numeric: tabular-nums; }
+/* several rows of pills on one bar (the search filters) */
+.disco-filterbar { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgb(var(--brand-card)); }
+.disco-filterbar__row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.disco-filterbar__divider { height: 1px; background: rgb(var(--brand-text) / .08); }
+
+/* ---- the home strip's extras (the band and pills are tube.css's tube-strip__*) --- */
+.disco-strip__sep { flex: 0 0 1px; width: 1px; height: 18px; margin: 0 4px; background: rgb(var(--brand-text) / .14); }
+.disco-strip__more { color: rgb(var(--brand-text) / .7); text-decoration: none; }
+
+/* ---- tile grid: 4-up at desktop, the Reels tile rhythm ----------------- */
+.disco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px 16px; }
+@media (min-width: 1536px) { .disco-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .disco-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- topic cards: a label, a kind, an arrow — a calm tile, no artwork -- */
+.disco-topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.disco-topic { display: flex; min-height: 72px; flex-direction: column; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); text-decoration: none; transition: background-color 120ms ease, transform 160ms ease; }
+.disco-topic:hover { background: rgb(var(--brand-text) / .06); transform: translateY(-1px); }
+.disco-topic:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
+.disco-topic__label { font-size: 14px; font-weight: 650; line-height: 1.25; }
+.disco-topic__meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: rgb(var(--brand-text) / .55); }
+.disco-topic__meta svg { width: 14px; height: 14px; }
+
+/* ---- result rows: 160×90 thumb, 13px title, 11px meta ------------------ */
+.disco-rows { display: flex; flex-direction: column; gap: 6px; }
+.disco-row { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); text-decoration: none; transition: background-color 120ms ease; }
+.disco-row:hover { background: rgb(var(--brand-text) / .06); }
+.disco-row:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
+.disco-row__thumb { position: relative; flex: 0 0 160px; width: 160px; height: 90px; overflow: hidden; border-radius: 10px; background: rgb(var(--brand-text) / .08); }
+.disco-row__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.disco-row__thumb-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .35); }
+.disco-row__thumb-empty svg { width: 22px; height: 22px; }
+.disco-row__duration { position: absolute; right: 6px; bottom: 6px; padding: 2px 6px; border-radius: 6px; background: rgb(var(--brand-text) / .85); color: rgb(var(--brand-card)); font-size: 10px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.disco-row__body { min-width: 0; flex: 1 1 auto; }
+.disco-row__title { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.disco-row__meta { margin: 4px 0 0; font-size: 11px; line-height: 1.35; color: rgb(var(--brand-text) / .6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.disco-row__avatar { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: rgb(var(--brand-text) / .08); display: flex; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .45); }
+.disco-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.disco-row__avatar svg { width: 20px; height: 20px; }
+.disco-row__cover { flex: 0 0 96px; width: 96px; height: 54px; border-radius: 8px; overflow: hidden; background: rgb(var(--brand-text) / .08); position: relative; display: flex; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .45); }
+.disco-row__cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.disco-row__cover svg { width: 18px; height: 18px; }
+.disco-row__cover-count { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; width: 36px; background: rgb(var(--brand-text) / .8); color: rgb(var(--brand-card)); font-size: 11px; font-weight: 700; }
+.disco-row__arrow { flex: 0 0 auto; color: rgb(var(--brand-text) / .35); }
+.disco-row__arrow svg { width: 16px; height: 16px; }
+@media (max-width: 480px) {
+  .disco-row__thumb { flex-basis: 120px; width: 120px; height: 68px; }
+}
+
+/* ---- search box on the page (the header's box goes here too) ---------- */
+.disco-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
+.disco-search:focus-within { box-shadow: 0 0 0 2px rgb(var(--brand-accent) / .6); }
+.disco-search svg { width: 16px; height: 16px; flex: 0 0 auto; color: rgb(var(--brand-text) / .55); }
+.disco-search input { flex: 1 1 auto; min-width: 0; height: 100%; border: 0; background: transparent; color: inherit; font-size: 13px; outline: none; }
+.disco-search input::placeholder { color: rgb(var(--brand-text) / .45); }
+.disco-search__go { display: inline-flex; height: 28px; align-items: center; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); font-size: 12px; font-weight: 600; cursor: pointer; }
+
+/* ---- sections (Live now / Upcoming) ------------------------------------ */
+.disco-section { display: flex; flex-direction: column; gap: 12px; }
+.disco-section__head { display: flex; align-items: baseline; gap: 8px; }
+.disco-section__title { margin: 0; font-size: 14px; font-weight: 700; }
+.disco-section__count { font-size: 11px; color: rgb(var(--brand-text) / .55); font-variant-numeric: tabular-nums; }
+.disco-section__note { margin: 0; font-size: 12px; color: rgb(var(--brand-text) / .6); }
+
+/* ---- live cards ---------------------------------------------------------- */
+.disco-live { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); text-decoration: none; transition: transform 160ms ease; }
+.disco-live:hover { transform: translateY(-1px); }
+.disco-live:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
+.disco-live__cover { position: relative; aspect-ratio: 16 / 9; background: rgb(var(--brand-text) / .08); display: flex; align-items: center; justify-content: center; color: rgb(var(--brand-text) / .4); }
+.disco-live__cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.disco-live__cover svg { width: 26px; height: 26px; }
+.disco-live__badge { position: absolute; left: 8px; top: 8px; display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.disco-live__badge.is-upcoming { background: rgb(var(--brand-text) / .8); color: rgb(var(--brand-card)); letter-spacing: 0; text-transform: none; font-weight: 600; font-size: 11px; }
+.disco-live__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: disco-pulse 1.4s ease-in-out infinite; }
+.disco-live__viewers { position: absolute; right: 8px; top: 8px; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; background: rgb(var(--brand-text) / .75); color: rgb(var(--brand-card)); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.disco-live__viewers svg { width: 12px; height: 12px; }
+.disco-live__body { padding: 10px 12px 12px; }
+.disco-live__title { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.disco-live__meta { margin: 4px 0 0; font-size: 11px; color: rgb(var(--brand-text) / .6); }
+@keyframes disco-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .disco-live__dot { animation: none; } .disco-topic, .disco-live { transition: none; } }
+
+/* ---- states: loading / empty / error, and the tile skeleton ------------ */
+.disco-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 48px 16px; text-align: center; border-radius: 16px; background: rgb(var(--brand-card)); }
+.disco-state__icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: 12px; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text) / .7); }
+.disco-state__icon svg { width: 20px; height: 20px; }
+.disco-state__title { margin: 4px 0 0; font-size: 14px; font-weight: 650; color: rgb(var(--brand-text)); }
+.disco-state__body { margin: 0; max-width: 360px; font-size: 12px; line-height: 1.45; color: rgb(var(--brand-text) / .6); }
+.disco-state__action { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.disco-state__action:hover { opacity: .92; }
+.disco-state.is-loading { background: transparent; color: rgb(var(--brand-text) / .55); font-size: 12px; }
+.disco-spin { animation: disco-spin 1s linear infinite; }
+@keyframes disco-spin { to { transform: rotate(360deg); } }
+.disco-skeleton { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 16px; background: rgb(var(--brand-card)); animation: disco-pulse 1.6s ease-in-out infinite; }
+.disco-skeleton__thumb { aspect-ratio: 16 / 9; border-radius: 12px; background: rgb(var(--brand-text) / .08); }
+.disco-skeleton__line { height: 10px; border-radius: 6px; background: rgb(var(--brand-text) / .08); }
+.disco-skeleton__line.is-short { width: 55%; }
+.disco-skeleton.is-row { flex-direction: row; align-items: center; padding: 8px; border-radius: 14px; }
+.disco-skeleton.is-row .disco-skeleton__thumb { flex: 0 0 160px; width: 160px; height: 90px; aspect-ratio: auto; border-radius: 10px; }
+.disco-skeleton__body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- load more ----------------------------------------------------------- */
+.disco-more { display: flex; justify-content: center; padding-top: 8px; }
+.disco-more__button { display: inline-flex; height: 34px; align-items: center; gap: 6px; padding: 0 16px; border: 1px solid rgb(var(--brand-text) / .14); border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); font-size: 12px; font-weight: 600; cursor: pointer; }
+.disco-more__button:hover { background: rgb(var(--brand-text) / .06); }
+.disco-more__button:disabled { opacity: .5; cursor: default; }
+.disco-sentinel { height: 1px; }

@@ -38,8 +38,21 @@ export interface AppBrand {
   icon: LucideIcon;
   /** The search box hint inside this app. */
   searchPlaceholder: string;
+  /**
+   * Where the header's search box submits inside this app (`?q=` is
+   * appended). Unset means the product-wide /search. PostTube has its own
+   * results page with the pill filter bar, so its box goes there.
+   */
+  searchHref?: string;
   /** Route prefixes that belong to this app. */
   prefixes: readonly string[];
+}
+
+/** The page the header search submits to for a brand, with the query appended when there is one. */
+export function brandSearchHref(brand: Pick<AppBrand, "searchHref">, q = ""): string {
+  const base = brand.searchHref ?? "/search";
+  const query = q.trim();
+  return query ? `${base}?q=${encodeURIComponent(query)}` : base;
 }
 
 const HOME: AppBrand = {
@@ -53,7 +66,7 @@ const HOME: AppBrand = {
 
 export const APP_BRANDS: readonly AppBrand[] = [
   { key: "reels", name: "Reels", href: "/reels", icon: Clapperboard, searchPlaceholder: "Search reels, creators, hashtags...", prefixes: ["/reels"] },
-  { key: "tube", name: "PostTube", href: "/posttube", icon: Tv, searchPlaceholder: "Search videos and channels...", prefixes: ["/posttube", "/tube"] },
+  { key: "tube", name: "PostTube", href: "/posttube", icon: Tv, searchPlaceholder: "Search videos and channels...", searchHref: "/posttube/search", prefixes: ["/posttube", "/tube"] },
   { key: "groups", name: "Groups", href: "/groups", icon: Users, searchPlaceholder: "Search groups...", prefixes: ["/groups"] },
   { key: "communities", name: "Communities", href: "/communities", icon: Globe2, searchPlaceholder: "Search communities...", prefixes: ["/communities"] },
   { key: "connections", name: "Connections", href: "/connections", icon: UserRoundPlus, searchPlaceholder: "Search people...", prefixes: ["/connections"] },
