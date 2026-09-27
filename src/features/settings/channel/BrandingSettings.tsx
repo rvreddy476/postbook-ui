@@ -12,6 +12,7 @@ import { useAuthUser } from "@/store/auth";
 
 import { BrandingScreen } from "./BrandingScreen";
 import { useActiveSection, useFeaturedPicker, useHandleAvailability } from "./hooks";
+import { useCreateChannelForm } from "./useCreateChannelForm";
 import {
   BrandingValidationError,
   brandingFromChannel,
@@ -206,46 +207,7 @@ export function BrandingSettings() {
 
   /* ── No channel yet ────────────────────────────────────── */
   const noChannel = !channelQuery.isPending && !channelQuery.isError && channel === null;
-  const legacyQuery = useMyChannels(noChannel);
-  const legacy = legacyQuery.data?.[0];
-  const profile = profileQuery.data;
-  const [createDraft, setCreateDraft] = useState<{ name: string; handle: string } | null>(null);
-  useEffect(() => {
-    if (!noChannel || createDraft !== null) return;
-    if (profileQuery.isPending || (noChannel && legacyQuery.isPending)) return;
-    const name = legacy?.name || profile?.display_name || "";
-    const handle = normalizeHandleInput(legacy?.handle || suggestHandle(profile?.username || profile?.display_name || ""));
-    setCreateDraft({ name, handle });
-  }, [noChannel, createDraft, legacy, profile, profileQuery.isPending, legacyQuery.isPending]);
-  const createAvailability = useHandleAvailability(createDraft?.handle ?? "", "");
-  const [createServerErrors, setCreateServerErrors] = useState<FieldErrors>({});
-  const [createMessage, setCreateMessage] = useState<string | undefined>();
-  const [createAttempted, setCreateAttempted] = useState(false);
-
-  const onCreate = () => {
-    if (!createDraft) return;
-    setCreateAttempted(true);
-    const all = validateBranding({ ...baseline, name: createDraft.name, handle: createDraft.handle, links: [], contact_email: "" });
-    const errs: FieldErrors = {};
-    if (all.name) errs.name = all.name;
-    if (all.handle) errs.handle = all.handle;
-    if (hasErrors(errs) || createAvailability.state === "taken") return;
-    create.mutate(
-      { name: createDraft.name.trim(), handle: normalizeHandleInput(createDraft.handle), about: legacy?.description?.trim() || undefined },
-      {
-        onSuccess: () => {
-          setCreateServerErrors({});
-          setCreateMessage(undefined);
-          toast({ type: "success", title: "Your channel is ready" });
-        },
-        onError: (err) => {
-          const { errors: fieldErrors, pageMessage: msg } = fieldErrorsFromApi(err);
-          setCreateServerErrors(fieldErrors);
-          setCreateMessage(msg);
-        },
-      },
-    );
-  };
+  const createForm = useCreateChannelForm(noChannel);
 
   /* ── Render ────────────────────────────────────────────── */
   if (!user) return <BrandingScreen kind="signed-out" />;
@@ -253,37 +215,8 @@ export function BrandingSettings() {
   if (channelQuery.isError) return <BrandingScreen kind="error" message="Could not load your channel." onRetry={() => void channelQuery.refetch()} />;
 
   if (channel === null) {
-    if (!createDraft) return <BrandingScreen kind="loading" />;
-    const all = validateBranding({ ...baseline, name: createDraft.name, handle: createDraft.handle, links: [], contact_email: "" });
-    const createErrors: FieldErrors = { ...createServerErrors };
-    if (createAttempted) {
-      if (all.name && !createErrors.name) createErrors.name = all.name;
-      if (all.handle && !createErrors.handle) createErrors.handle = all.handle;
-    }
-    return (
-      <BrandingScreen
-        kind="no-channel"
-        create={{
-          name: createDraft.name,
-          handle: createDraft.handle,
-          availability: createAvailability,
-          errors: createErrors,
-          creating: create.isPending,
-          pageMessage: createMessage,
-          onChange: (field, value) => {
-            setCreateDraft((d) => (d ? { ...d, [field]: field === "handle" ? normalizeHandleInput(value) : value } : d));
-            setCreateServerErrors((e) => {
-              if (!(field in e)) return e;
-              const next = { ...e };
-              delete next[field];
-              return next;
-            });
-            setCreateMessage(undefined);
-          },
-          onCreate,
-        }}
-      />
-    );
+    if (!createForm) return <BrandingScreen kind="loading" />;
+    return <BrandingScreen kind="no-channel" create={createForm} />;
   }
 
   const d = effective;
