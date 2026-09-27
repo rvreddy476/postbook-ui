@@ -28,7 +28,7 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, saveUploadChapters } from "./studioApi";
+import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -604,6 +604,7 @@ export function useUploadStudio(contentType: ContentType) {
         cover_media_id: coverMediaId,
         content_type: classified,
         publish_to_feed: form.publishToFeed,
+        fields: studioCreateFields(form),
       });
       return { reel, coverMediaId };
     },

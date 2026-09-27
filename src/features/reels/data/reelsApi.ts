@@ -367,6 +367,8 @@ export interface CreateReelInput {
   publish_to_feed?: boolean;
   /** Stable across retries of one publish; see createReel. */
   idempotencyKey?: string;
+  /** More CreatePostRequest fields (title, category, settings, publish_at…); the core fields above win. */
+  fields?: Record<string, unknown>;
 }
 
 export async function createReel(input: CreateReelInput): Promise<Reel> {
@@ -376,6 +378,7 @@ export async function createReel(input: CreateReelInput): Promise<Reel> {
   // chip UI in DetailsStep is silently discarded.
   const text = mergeHashtagsIntoText(input.text, input.hashtags ?? []);
   const body: Record<string, unknown> = {
+    ...(input.fields ?? {}),
     text,
     visibility: input.visibility ?? "public",
     content_type: input.content_type ?? "long_video",

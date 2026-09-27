@@ -2,6 +2,44 @@ import api from "@/lib/api";
 
 import { saveChapters } from "@/features/posttube/hub/hubApi";
 
+import type { StudioFormState } from "./types";
+
+/**
+ * Everything the studio collected, as POST /v1/posts fields, for the
+ * publish path that creates the post directly (no draft was saved). Before
+ * this the direct create sent only the caption, so a long video was refused
+ * with TITLE_REQUIRED and its topic, settings and schedule were dropped.
+ * Field names are post-service CreatePostRequest's.
+ */
+export function studioCreateFields(form: StudioFormState): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    title: form.title.trim(),
+    no_comments: !form.commentsEnabled,
+    no_likes: !form.likesEnabled,
+    is_made_for_kids: form.isMadeForKids,
+    paid_promotion: form.paidPromotion,
+    altered_content: form.alteredContent,
+    license: form.license,
+    allow_embedding: form.allowEmbedding,
+    remix_setting: form.remixSetting,
+    comment_moderation: form.commentModeration,
+    comment_access: form.commentAccess,
+    original_audio_volume: form.originalAudioVolume,
+    overlay_audio_volume: form.overlayAudioVolume,
+  };
+  if (form.category) out.category = form.category;
+  if (form.language) out.language = form.language;
+  if (form.tags.length > 0) out.tags = form.tags;
+  if (form.recordingDate) out.recording_date = form.recordingDate;
+  if (form.recordingLocation) out.recording_location = form.recordingLocation;
+  // The picker holds a local "YYYY-MM-DDTHH:mm"; the create route wants RFC3339.
+  if (form.scheduleAt) {
+    const at = new Date(form.scheduleAt);
+    if (!Number.isNaN(at.getTime())) out.publish_at = at.toISOString();
+  }
+  return out;
+}
+
 /*
   The upload studio's follow-up requests — what runs after the post
   exists: series assignment and chapters. Every request shape the studio
