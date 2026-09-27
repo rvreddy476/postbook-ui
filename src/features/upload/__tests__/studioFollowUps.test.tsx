@@ -144,7 +144,7 @@ describe("applySeriesChoice: the requests after publish", () => {
   test("the follow-up toast points at the right hub sheet", () => {
     expect(hubEditHref("p 1", "elements")).toBe("/posttube/hub/library?edit=p%201&sheet=elements");
     expect(followUpNotice([])).toBeNull();
-    expect(followUpNotice(["series"])).toMatchObject({ sheet: "details" });
+    expect(followUpNotice(["series"])).toMatchObject({ sheet: "elements" });
     expect(followUpNotice(["chapters"])?.description).toContain("the chapters");
     expect(followUpNotice(["series", "chapters"])).toMatchObject({ sheet: "elements" });
   });

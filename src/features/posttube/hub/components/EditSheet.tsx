@@ -40,6 +40,7 @@ import {
 import { PUBLISH_LANGUAGES } from "../publishDefaults";
 import { chapterRowsComplete, chapterRowsFrom, chapterRowsToWire, type ChapterDraft } from "../chaptersModel";
 import { ChaptersEditor } from "./ChaptersEditor";
+import { SeriesSection } from "./SeriesSection";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
 
@@ -454,6 +455,9 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
 
   return (
     <div className="hub-sheet-body">
+      {/* Series (long videos): move, renumber or remove; the upload studio sends the same requests */}
+      {post.content_type === "long_video" ? <SeriesSection postId={post.id} /> : null}
+
       {/* Chapters (the shared editor; the upload studio uses it too) */}
       <ChaptersEditor
         rows={chapterRows ?? []}

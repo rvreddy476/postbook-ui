@@ -12,6 +12,7 @@ import { saveChapters } from "@/features/posttube/hub/hubApi";
     POST /v1/video-series                                  { title }            → the new series row
     GET  /v1/video-series/:seriesId/episodes               [{ series_id, post_id, episode_num, title?, added_at }]
     POST /v1/video-series/:seriesId/episodes               { post_id, episode_num }  (409 when the number is taken)
+    DELETE /v1/video-series/:seriesId/episodes/:postId     removes the post from the series (the ref may be a post id or a number)
     POST /v1/posts/:postId/chapters                        hubApi.saveChapters — { chapters: [{chapter_index, title, start_ms, source:"manual"}] }
 
   Shapes verbatim from post-service internal/http/video_series_handler.go
@@ -76,6 +77,56 @@ export async function addSeriesEpisode(seriesId: string, postId: string, episode
   await api.post(`/v1/video-series/${encodeURIComponent(seriesId)}/episodes`, { post_id: postId, episode_num: episodeNum });
 }
 
+export async function removeSeriesEpisode(seriesId: string, postId: string): Promise<void> {
+  await api.delete(`/v1/video-series/${encodeURIComponent(seriesId)}/episodes/${encodeURIComponent(postId)}`);
+}
+
+/* ── Pure: moving a published post between series (Creator Hub) ── */
+
+export interface SeriesMembership {
+  seriesId: string;
+  episodeNum: number;
+}
+
+export type SeriesChangePlan =
+  | { kind: "noop" }
+  | { kind: "remove"; from: string }
+  | { kind: "add"; choice: Exclude<SeriesChoice, { kind: "none" }>; episode: number | null }
+  | { kind: "move"; from: string; choice: Exclude<SeriesChoice, { kind: "none" }>; episode: number | null };
+
+/**
+ * What saving the series control does for a post that may already be an
+ * episode: nothing, remove it, add it, or move it (remove then add). A
+ * renumber inside the same series is a move to itself.
+ */
+export function planSeriesChange(current: SeriesMembership | null, choice: SeriesChoice, episode: number | null): SeriesChangePlan {
+  if (choice.kind === "none") return current ? { kind: "remove", from: current.seriesId } : { kind: "noop" };
+  if (!current) return { kind: "add", choice, episode };
+  if (choice.kind === "existing" && choice.id === current.seriesId && (episode === null || episode === current.episodeNum)) return { kind: "noop" };
+  return { kind: "move", from: current.seriesId, choice, episode };
+}
+
+/**
+ * Runs a plan. A move removes first (the backend holds one membership per
+ * series); if the add then fails, the old membership is put back so the
+ * post is never left out of a series it was in, and the error is rethrown.
+ */
+export async function applySeriesPlan(postId: string, current: SeriesMembership | null, plan: SeriesChangePlan): Promise<{ seriesId: string; episodeNum: number } | null> {
+  if (plan.kind === "noop") return current ? { seriesId: current.seriesId, episodeNum: current.episodeNum } : null;
+  if (plan.kind === "remove") {
+    await removeSeriesEpisode(plan.from, postId);
+    return null;
+  }
+  if (plan.kind === "add") return applySeriesChoice(postId, plan.choice, plan.episode);
+  await removeSeriesEpisode(plan.from, postId);
+  try {
+    return await applySeriesChoice(postId, plan.choice, plan.episode);
+  } catch (err) {
+    if (current) await addSeriesEpisode(current.seriesId, postId, current.episodeNum).catch(() => undefined);
+    throw err;
+  }
+}
+
 /** Chapters through the hub's adapter, the one place their body lives. */
 export async function saveUploadChapters(postId: string, chapters: { title: string; start_ms: number }[]): Promise<void> {
   await saveChapters(postId, chapters);
@@ -107,8 +158,8 @@ export function hubEditHref(postId: string, sheet: HubSheet = "details"): string
 
 /**
  * The follow-up toast for what did not stick after publish: its words and
- * the sheet to open (chapters live on Elements; series has no hub control
- * yet, so it opens Details). null when nothing failed.
+ * the sheet to open. Series and chapters both live on the Elements tab.
+ * null when nothing failed.
  */
 export function followUpNotice(failures: readonly ("series" | "chapters")[]): { title: string; description: string; sheet: HubSheet } | null {
   const series = failures.includes("series");
@@ -118,7 +169,7 @@ export function followUpNotice(failures: readonly ("series" | "chapters")[]): { 
   return {
     title: "Published, with one thing left",
     description: `Your video went through, but ${what} did not save. Finish it in Creator Hub.`,
-    sheet: chapters ? "elements" : "details",
+    sheet: "elements",
   };
 }
 
