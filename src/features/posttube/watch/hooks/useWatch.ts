@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
-import { fetchStoryboard, getCollectionPlayback, getUpNext, getWatchDetail } from "../watchApi";
+import { fetchStoryboard, getCollectionPlayback, getCreatorSupport, getUpNext, getWatchDetail } from "../watchApi";
 import { DEFAULT_WATCH_PREFS, parseWatchPrefs, WATCH_PREFS_KEY, type WatchPrefs } from "../watchPrefs";
 import type { UpNextChip } from "../upNext";
 
@@ -12,6 +12,7 @@ export const WATCH_KEYS = {
   upNext: (id?: string, chip?: UpNextChip, topic?: string | null) => ["posttube", "watch", "up-next", id, chip, topic ?? null] as const,
   collection: (id?: string) => ["posttube", "watch", "collection", id] as const,
   storyboard: (mediaId?: string) => ["posttube", "watch", "storyboard", mediaId] as const,
+  support: (creatorId?: string) => ["posttube", "watch", "support", creatorId] as const,
 };
 
 export function useWatchDetail(videoId: string | undefined) {
@@ -103,4 +104,15 @@ export function useWideLayout(): boolean {
     return () => mq.removeEventListener("change", apply);
   }, []);
   return wide;
+}
+
+/** GET /v1/monetization/creators/:id/support; null (no Thanks) on any failure. */
+export function useCreatorSupport(creatorId: string | null | undefined) {
+  return useQuery({
+    queryKey: WATCH_KEYS.support(creatorId ?? undefined),
+    queryFn: () => getCreatorSupport(creatorId!),
+    enabled: !!creatorId,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
 }

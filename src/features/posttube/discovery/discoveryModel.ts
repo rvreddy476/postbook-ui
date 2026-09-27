@@ -87,8 +87,9 @@ export interface LiveSplit {
 /**
  * Live now = status "live", newest start first. Upcoming = status
  * "scheduled" with a scheduled_at, soonest first. Ended and failed
- * streams are dropped. Today's list route returns live rows only, so
- * upcoming stays empty until it lists scheduled streams as well.
+ * streams are dropped. The Live page reads Upcoming from its own
+ * `?status=scheduled` list (groupUpcomingByDay); this split stays for any
+ * list that mixes both.
  */
 export function splitLiveStreams(streams: readonly LiveStream[]): LiveSplit {
   const live = streams
@@ -102,15 +103,87 @@ export function splitLiveStreams(streams: readonly LiveStream[]): LiveSplit {
   return { live, upcoming };
 }
 
-/** "Today 18:30" / "Tue 09:00" / "12 Oct" for an upcoming stream, in the viewer's locale. */
+/* ── Live: upcoming, by day ─────────────────────────────── */
+
+/** Local midnight of the day `t` falls on. */
+function startOfLocalDay(t: number): number {
+  const d = new Date(t);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** Whole calendar days from `now`'s day to `t`'s day (DST-safe: rounded). */
+export function calendarDaysFrom(t: number, now = Date.now()): number {
+  return Math.round((startOfLocalDay(t) - startOfLocalDay(now)) / DAY_MS);
+}
+
+/** The viewer's clock for a time, "18:30" (or "06:30 pm" where the locale says so). */
+export function formatClock(t: number): string {
+  return new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+/**
+ * The day heading: Today (also for a stream that is late — its time has
+ * passed and it has not started), Tomorrow, the weekday within the week,
+ * then "12 Oct".
+ */
+export function scheduledDayLabel(t: number, now = Date.now()): string {
+  const days = calendarDaysFrom(t, now);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  const d = new Date(t);
+  if (days < 7) return d.toLocaleDateString(undefined, { weekday: "short" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/** "Today · 18:30" / "Tomorrow · 09:00" / "Tue · 09:00" / "12 Oct · 18:30"; "" when unparsable. */
 export function formatScheduled(iso: string | null | undefined, now = Date.now()): string {
   if (!iso) return "";
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
+  return `${scheduledDayLabel(t, now)} · ${formatClock(t)}`;
+}
+
+export interface UpcomingDay {
+  /** Local `YYYY-MM-DD`; stable across renders, the React key. */
+  key: string;
+  label: string;
+  streams: LiveStream[];
+}
+
+function localDayKey(t: number): string {
   const d = new Date(t);
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-  const sameDay = new Date(now).toDateString() === d.toDateString();
-  if (sameDay) return `Today ${time}`;
-  if (t - now < 6 * DAY_MS) return `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * `GET /v1/livestream/streams?status=scheduled` rows → one group per local
+ * day, soonest first, each day's streams by time. Only status "scheduled"
+ * with a parsable scheduled_at is kept (a stream that has gone live shows
+ * under Live now); a late one joins Today; ids are deduped (pages can
+ * overlap while the list moves).
+ */
+export function groupUpcomingByDay(streams: readonly LiveStream[], now = Date.now()): UpcomingDay[] {
+  const seen = new Set<string>();
+  const timed: { s: LiveStream; t: number }[] = [];
+  for (const s of streams) {
+    if (s.status !== "scheduled" || seen.has(s.id)) continue;
+    const t = Date.parse(s.scheduled_at ?? "");
+    if (Number.isNaN(t)) continue;
+    seen.add(s.id);
+    timed.push({ s, t });
+  }
+  timed.sort((a, b) => a.t - b.t);
+  const today = startOfLocalDay(now);
+  const days: UpcomingDay[] = [];
+  for (const { s, t } of timed) {
+    const dayT = Math.max(t, today);
+    const key = localDayKey(dayT);
+    let day = days[days.length - 1];
+    if (!day || day.key !== key) {
+      day = { key, label: scheduledDayLabel(dayT, now), streams: [] };
+      days.push(day);
+    }
+    day.streams.push(s);
+  }
+  return days;
 }

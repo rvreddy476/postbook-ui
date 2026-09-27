@@ -1,3 +1,5 @@
+import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
+
 import type { StudioFormState } from "./types";
 import type { StepId } from "./tokens";
 
@@ -18,12 +20,30 @@ export function getStepErrors(step: StepId, form: StudioFormState): FieldError[]
     case "engage":
       return [];
     case "enrich":
-      return [];
+      return getEnrichErrors(form);
     case "publish":
       return getPublishErrors(form);
     default:
       return [];
   }
+}
+
+/** Chapters written at upload: first at 0:00, ascending, titled, inside the video. */
+export function getEnrichErrors(form: StudioFormState): FieldError[] {
+  const durationMs = form.videoDurationSec ? form.videoDurationSec * 1000 : null;
+  return validateChapterRows(form.chapterRows, durationMs).map((issue, i) => ({ field: `chapters-${i}`, message: issue.message }));
+}
+
+/** A series picked as "New series" needs a name; an episode number, when typed, is a whole number ≥ 1. */
+export function getSeriesErrors(form: StudioFormState): FieldError[] {
+  const errors: FieldError[] = [];
+  if (form.seriesChoice.kind === "new" && !form.seriesChoice.title.trim()) {
+    errors.push({ field: "seriesTitle", message: "Name the new series" });
+  }
+  if (form.seriesChoice.kind !== "none" && form.seriesEpisodeNum !== null && (!Number.isInteger(form.seriesEpisodeNum) || form.seriesEpisodeNum < 1)) {
+    errors.push({ field: "seriesEpisode", message: "Episode number must be 1 or more" });
+  }
+  return errors;
 }
 
 function getVideoErrors(form: StudioFormState): FieldError[] {
@@ -70,6 +90,7 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
       errors.push({ field: "scheduleAt", message: "Schedule date must be in the future" });
     }
   }
+  errors.push(...getSeriesErrors(form));
   return errors;
 }
 

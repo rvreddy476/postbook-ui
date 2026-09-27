@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, CheckCircle2, Copy, ExternalLink, AlertTriangle, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Copy, ExternalLink, AlertTriangle, Check, LayoutPanelTop } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useGlobalToast } from "@/contexts/ToastContext";
 import { AppShell } from "@/features/reels/components/AppShell";
+import { followUpNotice, hubEditHref } from "./studioApi";
 import { CONTENT_TYPE_META, STEP_META, type ContentType } from "./tokens";
 import { useUploadStudio, classifyVideo } from "./useUploadStudio";
 import { StudioToolbar } from "./components/StudioToolbar";
@@ -29,6 +31,31 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [attemptedNext, setAttemptedNext] = useState(false);
   const publishError = studio.publishMutation.error instanceof Error ? studio.publishMutation.error.message : null;
+  const toast = useGlobalToast();
+
+  // Series / chapters that did not stick after publish: one toast per
+  // published post, with a link to the Creator Hub edit sheet.
+  const noticedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const postId = form.publishedPostId;
+    if (!form.publishSuccess || !postId || noticedRef.current === postId) return;
+    const notice = followUpNotice(form.followUpFailures);
+    if (!notice) return;
+    noticedRef.current = postId;
+    toast({
+      type: "warning",
+      title: notice.title,
+      customContent: (
+        <div className="px-4 py-3 pr-10" data-toast="upload-follow-up">
+          <p className="text-[13px] font-semibold text-brand-text">{notice.title}</p>
+          <p className="mt-0.5 text-[12px] text-brand-text/70">{notice.description}</p>
+          <Link href={hubEditHref(postId, notice.sheet)} className="mt-1.5 inline-block text-[12px] font-semibold text-brand-text underline underline-offset-2">
+            Open in Creator Hub
+          </Link>
+        </div>
+      ),
+    });
+  }, [form.publishSuccess, form.publishedPostId, form.followUpFailures, toast]);
 
   const checksPass = canPublish(form, steps);
   const draftSaved = studio.saveDraftMutation.isSuccess && !studio.saveDraftMutation.isPending;
@@ -133,6 +160,11 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
               Your video is being processed and will be available to viewers shortly.
               This usually takes a few minutes.
             </p>
+            {form.publishedEpisodeNum !== null && form.seriesChoice.kind !== "none" && (
+              <p className="mt-2 text-[13px] text-brand-text/70" data-series-result>
+                Added to {form.seriesChoice.title.trim() || "your series"} as episode {form.publishedEpisodeNum}.
+              </p>
+            )}
             {form.publishWarning && (
               <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[12px] text-amber-600 dark:text-amber-400">
                 {form.publishWarning}
@@ -151,6 +183,20 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
+            )}
+
+            {isLongVideo && form.publishedPostId && (
+              <Link
+                href={hubEditHref(form.publishedPostId, "elements")}
+                className="mt-4 flex items-center gap-3 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 text-left shadow-xs transition-colors hover:bg-brand-secondary"
+                data-link="hub-elements"
+              >
+                <LayoutPanelTop className="h-4 w-4 shrink-0 text-brand-text/60" />
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-brand-text">Add an end screen and cards</span>
+                  <span className="block text-[11px] text-brand-text/60">In Creator Hub, next to chapters</span>
+                </span>
+              </Link>
             )}
 
             <div className="mt-8 flex items-center justify-center gap-3">

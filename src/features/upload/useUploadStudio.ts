@@ -23,7 +23,12 @@ import {
 } from "@/features/posttube/data/posttubeApi";
 
 import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
-import { type StudioFormState, INITIAL_FORM_STATE } from "./types";
+import { getPublishDefaults } from "@/features/posttube/hub";
+import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
+
+import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
+import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
+import { applySeriesChoice, saveUploadChapters } from "./studioApi";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -120,6 +125,21 @@ export function useUploadStudio(contentType: ContentType) {
     [],
   );
 
+  /* ── Creator Hub preferences ─────────────────────────
+   * Applied after mount (localStorage is client-only; doing it in the
+   * initial state would differ from the server render) and on every fresh
+   * draft (selectFile / clearFile go through freshStudioForm). Only
+   * fields still at their initial value are filled.
+   */
+  useEffect(() => {
+    if (!takesPublishDefaults(contentType)) return;
+    const defaults = getPublishDefaults();
+    setForm((prev) => {
+      const next = mergePublishDefaults(prev, defaults);
+      return Object.keys(next).length ? { ...prev, ...next } : prev;
+    });
+  }, [contentType]);
+
   /* ── File selection ──────────────────────────────── */
 
   const selectFile = useCallback(
@@ -138,7 +158,7 @@ export function useUploadStudio(contentType: ContentType) {
 
       setForm((prev) => {
         if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
-        return { ...INITIAL_FORM_STATE, contentType, currentStep: prev.currentStep };
+        return freshStudioForm(contentType, prev.currentStep, getPublishDefaults());
       });
 
       const previewUrl = URL.createObjectURL(file);
@@ -204,7 +224,7 @@ export function useUploadStudio(contentType: ContentType) {
     uploadTriggeredRef.current = null;
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
-      return { ...INITIAL_FORM_STATE, contentType, currentStep: "video" };
+      return freshStudioForm(contentType, "video", getPublishDefaults());
     });
   }, [contentType]);
 
@@ -620,10 +640,34 @@ export function useUploadStudio(contentType: ContentType) {
         }
       }
 
+      // Series and chapters: each in its own try/catch, scheduled or not
+      // (the post row exists either way). A failure leaves the post
+      // published; the studio points at the Creator Hub to finish it.
+      const followUpFailures: FollowUpFailure[] = [];
+      let publishedEpisodeNum: number | null = null;
+      const isLongVideo = isLongStudio && (form.finalVideoCategory ?? "long_video") === "long_video";
+      if (isLongVideo && postId && form.seriesChoice.kind !== "none") {
+        try {
+          const added = await applySeriesChoice(postId, form.seriesChoice, form.seriesEpisodeNum);
+          publishedEpisodeNum = added?.episodeNum ?? null;
+        } catch {
+          followUpFailures.push("series");
+        }
+      }
+      if (isLongVideo && postId && form.chapterRows.length > 0) {
+        try {
+          await saveUploadChapters(postId, chapterRowsToWire(form.chapterRows));
+        } catch {
+          followUpFailures.push("chapters");
+        }
+      }
+
       patch({
         publishedPostId: postId,
         publishSuccess: true,
         publishWarning: warnings.length > 0 ? warnings.join(" ") : null,
+        followUpFailures,
+        publishedEpisodeNum,
       });
 
       await Promise.all([

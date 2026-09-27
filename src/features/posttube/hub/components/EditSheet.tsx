@@ -38,6 +38,8 @@ import {
   useUploadCover,
 } from "../hooks/useHub";
 import { PUBLISH_LANGUAGES } from "../publishDefaults";
+import { chapterRowsComplete, chapterRowsFrom, chapterRowsToWire, type ChapterDraft } from "../chaptersModel";
+import { ChaptersEditor } from "./ChaptersEditor";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
 
@@ -376,12 +378,6 @@ function DetailsTab({ post, scheduleFirst, onClose }: { post: HubPostDetail; sch
 
 /* ── Elements: chapters, end screen, cards ──────────────── */
 
-interface ChapterDraft {
-  key: number;
-  clock: string;
-  title: string;
-}
-
 function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: HubLibraryRow[] }) {
   const toast = useGlobalToast();
   const chapters = useHubChapters(post.id);
@@ -397,7 +393,7 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
   const [cardRows, setCardRows] = useState<HubCard[] | null>(null);
 
   useEffect(() => {
-    if (chapters.data && chapterRows === null) setChapterRows(chapters.data.map((c, i) => ({ key: i, clock: formatMs(c.start_ms), title: c.title })));
+    if (chapters.data && chapterRows === null) setChapterRows(chapterRowsFrom(chapters.data));
   }, [chapters.data, chapterRows]);
   useEffect(() => {
     if (endScreens.data && screenRows === null) setScreenRows(endScreens.data);
@@ -406,13 +402,11 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
     if (cards.data && cardRows === null) setCardRows(cards.data);
   }, [cards.data, cardRows]);
 
-  const nextKey = useRef(1000);
-
-  const chaptersValid = (chapterRows ?? []).every((r) => parseClock(r.clock) !== null && r.title.trim() !== "");
+  const chaptersValid = chapterRowsComplete(chapterRows ?? []);
   const commitChapters = async () => {
     if (!chapterRows || !chaptersValid) return;
     try {
-      await saveChapters.mutateAsync({ postId: post.id, chapters: chapterRows.map((r) => ({ title: r.title.trim(), start_ms: parseClock(r.clock) ?? 0 })) });
+      await saveChapters.mutateAsync({ postId: post.id, chapters: chapterRowsToWire(chapterRows) });
       toast({ type: "success", title: "Chapters saved" });
     } catch {
       toast({ type: "error", title: "Could not save chapters" });
@@ -460,30 +454,19 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
 
   return (
     <div className="hub-sheet-body">
-      {/* Chapters */}
-      <div className="hub-elem">
-        <div className="hub-elem-head">
-          <span>Chapters</span>
-          <button type="button" className="hub-btn hub-btn-sm" onClick={() => setChapterRows([...(chapterRows ?? []), { key: nextKey.current++, clock: chapterRows?.length ? "" : "0:00", title: "" }])}>
-            <Plus /> Add
-          </button>
-        </div>
-        {(chapterRows ?? []).length === 0 ? <span className="hub-hint">None saved. Timestamps in the description (00:00 Intro) are used until you add some.</span> : null}
-        {(chapterRows ?? []).map((r, i) => (
-          <div key={r.key} className="hub-elem-row">
-            <input className="hub-input hub-input-sm" value={r.clock} placeholder="m:ss" aria-label={`Chapter ${i + 1} start`} onChange={(e) => setChapterRows((rows) => rows!.map((x) => (x.key === r.key ? { ...x, clock: e.target.value } : x)))} aria-invalid={parseClock(r.clock) === null} />
-            <input className="hub-input hub-input-sm" value={r.title} placeholder="Title" aria-label={`Chapter ${i + 1} title`} onChange={(e) => setChapterRows((rows) => rows!.map((x) => (x.key === r.key ? { ...x, title: e.target.value } : x)))} />
-            <button type="button" className="hub-icon-btn" aria-label="Remove chapter" onClick={() => setChapterRows((rows) => rows!.filter((x) => x.key !== r.key))}>
-              <X />
+      {/* Chapters (the shared editor; the upload studio uses it too) */}
+      <ChaptersEditor
+        rows={chapterRows ?? []}
+        onChange={setChapterRows}
+        emptyHint="None saved. Timestamps in the description (00:00 Intro) are used until you add some."
+        footer={
+          <div className="hub-row" style={{ justifyContent: "flex-end" }}>
+            <button type="button" className="hub-btn hub-btn-sm hub-btn-primary" onClick={commitChapters} disabled={!chaptersValid || saveChapters.isPending || chapterRows === null}>
+              {saveChapters.isPending ? "Saving…" : "Save chapters"}
             </button>
           </div>
-        ))}
-        <div className="hub-row" style={{ justifyContent: "flex-end" }}>
-          <button type="button" className="hub-btn hub-btn-sm hub-btn-primary" onClick={commitChapters} disabled={!chaptersValid || saveChapters.isPending || chapterRows === null}>
-            {saveChapters.isPending ? "Saving…" : "Save chapters"}
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* End screen */}
       <div className="hub-elem">

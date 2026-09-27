@@ -10,8 +10,13 @@ import type {
   AudioTrack,
 } from "@/features/reels/types";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
+import type { ChapterDraft } from "@/features/posttube/hub/chaptersModel";
+import type { SeriesChoice } from "./studioApi";
 
-export type { ContentType, StepId };
+export type { ContentType, StepId, ChapterDraft, SeriesChoice };
+
+/** What ran after publish and did not stick; the post itself stays published. */
+export type FollowUpFailure = "series" | "chapters";
 
 /** Form state for the Upload Studio */
 export interface StudioFormState {
@@ -90,6 +95,12 @@ export interface StudioFormState {
   crossPostPosttube: boolean;
   publishToFeed: boolean;
 
+  /* ── Series + chapters (long videos; applied after publish) ── */
+  seriesChoice: SeriesChoice;
+  /** null = the default (one past the series' highest episode). */
+  seriesEpisodeNum: number | null;
+  chapterRows: ChapterDraft[];
+
   /* ── Processing ─────────────────── */
   processingReady: boolean;
   processingStatus: "idle" | "processing" | "ready" | "failed";
@@ -100,6 +111,9 @@ export interface StudioFormState {
   publishedPostId: string | null;
   publishSuccess: boolean;
   publishWarning: string | null;
+  followUpFailures: FollowUpFailure[];
+  /** The episode the post became, when a series was chosen and the add worked. */
+  publishedEpisodeNum: number | null;
   trimStartMs: number;
   trimEndMs: number | null;
   computedVideoCategory: "flick" | "long_video" | null;
@@ -161,6 +175,9 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   crossPostPostbook: false,
   crossPostPosttube: false,
   publishToFeed: true,
+  seriesChoice: { kind: "none" },
+  seriesEpisodeNum: null,
+  chapterRows: [],
   processingReady: false,
   processingStatus: "idle",
   processingError: null,
@@ -168,6 +185,8 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   publishedPostId: null,
   publishSuccess: false,
   publishWarning: null,
+  followUpFailures: [],
+  publishedEpisodeNum: null,
   trimStartMs: 0,
   trimEndMs: null,
   computedVideoCategory: null,

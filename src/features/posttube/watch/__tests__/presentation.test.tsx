@@ -26,6 +26,7 @@ const railBase = {
   onLove: noop,
   onPass: noop,
   onShare: noop,
+  onThanks: noop,
   onQueue: noop,
   onAdd: noop,
   onComments: noop,
@@ -46,7 +47,7 @@ describe("the rail", () => {
     expect(playerCss).toMatch(/\.tube-seek__track \{[^}]*height: 3px/);
   });
 
-  test("order: Love · Pass · Share · Keep · Queue · Add · Comments · More; Keep is a new-tab link; counts under Love and Comments", () => {
+  test("order: Love · Pass · Share · Thanks · Keep · Queue · Add · Comments · More; Keep is a new-tab link; counts under Love and Comments", () => {
     const html = renderToStaticMarkup(<WatchRail {...railBase} />);
     const at = WATCH_RAIL_ORDER.map((a) => html.indexOf(`data-action="${a}"`));
     for (const [i, pos] of at.entries()) expect(pos, WATCH_RAIL_ORDER[i]).toBeGreaterThan(-1);

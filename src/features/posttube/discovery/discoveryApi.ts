@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import { hydrateRows } from "../data/posttubeApi";
 import { CHIP_ALL, CHIP_SUBSCRIPTIONS, mediaServeUrl, type HydratedPostRow } from "../model";
 import type { FeedPage, PostTubeVideo } from "../types";
+import type { LiveStream } from "@/hooks/useLiveV2";
 
 /*
   The ONE adapter for the discovery screens (Trending, Topics, Search,
@@ -24,8 +25,9 @@ import type { FeedPage, PostTubeVideo } from "../types";
     GET /v1/search/posts?type=videos&q&sort=relevance|views|date&duration=short|medium|long&date=hour|today|week|month|year&limit
     GET /v1/search/channels?q&limit   rows {id, owner_id, name, handle, avatar_media_id, follower_count}
     GET /v1/search/collections?q&limit rows {id, owner_id, title, item_count, cover_media_id}
-    Live now / upcoming: hooks/useLiveV2 (GET /v1/livestream/streams), not here.
-    Past streams: see PAST_STREAMS_ROUTE below — no route serves it yet.
+    Live now: hooks/useLiveV2 (GET /v1/livestream/streams), shared with the live screens.
+    GET /v1/livestream/streams?status=scheduled&limit&cursor   Upcoming (rows carry scheduled_at)
+    GET /v1/posts/live-recordings?limit&cursor                  Past streams (hydrated post rows)
 */
 
 /* ── Envelope ───────────────────────────────────────────── */
@@ -456,18 +458,59 @@ export async function searchCollections(q: string, limit = 30): Promise<Collecti
   return compact(listOf<CollectionSearchRow>(res.data?.data).map(collectionRowToResult));
 }
 
-/* ── Live (past streams) ────────────────────────────────── */
+/* ── Live: upcoming and past streams ────────────────────── */
+
+export type LiveListStatus = "live" | "scheduled" | "all";
+
+export interface LiveListInput {
+  status: LiveListStatus;
+  limit?: number;
+  cursor?: string;
+}
+
+/** `GET /v1/livestream/streams?status=&limit&cursor` — status is always sent. */
+export function buildLiveListParams(input: LiveListInput): Record<string, string> {
+  const params: Record<string, string> = { status: input.status, limit: String(input.limit ?? 24) };
+  if (input.cursor) params.cursor = input.cursor;
+  return params;
+}
+
+export interface LiveListPage {
+  items: LiveStream[];
+  next_cursor?: string;
+}
 
 /**
- * TODO(live VOD): the plan pins past streams as long_video posts with
- * `source = "live"` (post-service consumes live.stream.vod_ready). No
- * route lists them yet: /v1/feed/videos has no `source` filter and
- * /v1/search/posts has no `source` either. When one lands, implement
- * getPastStreams here against `GET /v1/feed/videos?source=live` (the
- * plan's route), returning a FeedPage through hydrateRows, and the Live
- * page's "Past streams" section mounts on it.
+ * The live-service list with a status. Upcoming uses `status=scheduled`
+ * (rows carry `scheduled_at`); Live now stays on hooks/useLiveV2's
+ * useLiveStreams, which the live screens share.
  */
-export const PAST_STREAMS_ROUTE = "/v1/feed/videos?source=live" as const;
-export const PAST_STREAMS_AVAILABLE = false;
+export async function getLiveStreamsPage(input: LiveListInput): Promise<LiveListPage> {
+  const res = await api.get<Envelope<unknown>>("/v1/livestream/streams", { params: buildLiveListParams(input) });
+  return { items: listOf<LiveStream>(res.data?.data), next_cursor: cursorOf(res.data) };
+}
+
+export interface PastStreamsInput {
+  limit?: number;
+  cursor?: string;
+}
+
+export function buildPastStreamsParams(input: PastStreamsInput = {}): Record<string, string> {
+  const params: Record<string, string> = { limit: String(input.limit ?? 12) };
+  if (input.cursor) params.cursor = input.cursor;
+  return params;
+}
+
+/**
+ * `GET /v1/posts/live-recordings?limit&cursor` — recordings that became
+ * videos (post-service consumes live.stream.vod_ready), hydrated rows of
+ * the `/v1/posts/by-author` shape, newest first, `meta.next_cursor`.
+ * Mapped to tube tiles through hydrateRows like every other video list.
+ */
+export async function getPastStreams(input: PastStreamsInput = {}): Promise<FeedPage> {
+  const res = await api.get<Envelope<unknown>>("/v1/posts/live-recordings", { params: buildPastStreamsParams(input) });
+  const rows = listOf<HydratedPostRow>(res.data?.data);
+  return { items: await hydrateRows(rows), next_cursor: cursorOf(res.data) };
+}
 
 export type { PostTubeVideo, FeedPage };

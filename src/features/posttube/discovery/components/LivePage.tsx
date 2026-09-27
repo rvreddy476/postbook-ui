@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { CalendarClock, Radio, Users } from "lucide-react";
 import type { LiveStream } from "@/hooks/useLiveV2";
 import { formatCount, mediaServeUrl, timeAgo } from "../../model";
-import { PAST_STREAMS_AVAILABLE } from "../discoveryApi";
-import { formatScheduled } from "../discoveryModel";
+import type { PostTubeVideo } from "../../types";
+import { VideoCard } from "../../components/VideoCard";
+import { VideoGridSkeleton } from "../../components/HomePage";
+import { formatScheduled, groupUpcomingByDay } from "../discoveryModel";
 import { useLiveDiscovery } from "../hooks/useDiscovery";
 import { EmptyState, ErrorState, LoadMore, TileSkeleton } from "./DiscoveryState";
 import { PageHead } from "./PageHead";
 import type { ViewStatus } from "./TrendingPage";
+import "../../components/tube.css";
 import "../discovery.css";
 
-export function LiveStreamCard({ stream, creatorName }: { stream: LiveStream; creatorName?: string }) {
+export function LiveStreamCard({ stream, creatorName, now }: { stream: LiveStream; creatorName?: string; now?: number }) {
   const upcoming = stream.status === "scheduled";
   const cover = stream.cover_media_id ? mediaServeUrl(stream.cover_media_id) : "";
   const meta = [creatorName || "", upcoming ? "" : stream.started_at ? `started ${timeAgo(stream.started_at)}` : ""].filter(Boolean).join(" · ");
@@ -23,7 +27,7 @@ export function LiveStreamCard({ stream, creatorName }: { stream: LiveStream; cr
         {upcoming ? (
           <span className="disco-live__badge is-upcoming">
             <CalendarClock size={12} strokeWidth={2} aria-hidden />
-            {formatScheduled(stream.scheduled_at) || "Soon"}
+            {formatScheduled(stream.scheduled_at, now) || "Soon"}
           </span>
         ) : (
           <span className="disco-live__badge">
@@ -47,25 +51,63 @@ export function LiveStreamCard({ stream, creatorName }: { stream: LiveStream; cr
 }
 
 export interface LiveViewProps {
+  /** Live now (the page-level state: loading and error cover the whole screen). */
   status: ViewStatus;
   live: LiveStream[];
+  /** `?status=scheduled` rows; grouped by day here. */
   upcoming: LiveStream[];
   creatorNames: Record<string, string>;
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
   onRetry?: () => void;
+  upcomingHasMore?: boolean;
+  upcomingLoadingMore?: boolean;
+  onUpcomingMore?: () => void;
+  /** Recordings that became videos (`GET /v1/posts/live-recordings`), as tube tiles. */
+  past?: PostTubeVideo[];
+  pastStatus?: ViewStatus;
+  pastHasMore?: boolean;
+  pastLoadingMore?: boolean;
+  onPastMore?: () => void;
+  onPastRetry?: () => void;
+  /** The clock the day headings are measured from (tests pin it). */
+  now?: number;
 }
 
-/** The pure screen: Live now, then Upcoming. Past streams wait on the VOD route (see discoveryApi.PAST_STREAMS_ROUTE). */
-export function LiveView({ status, live, upcoming, creatorNames, hasMore, loadingMore, onLoadMore, onRetry }: LiveViewProps) {
-  const nothing = live.length === 0 && upcoming.length === 0;
+const noop = () => {};
+
+/** The pure screen: Live now, Upcoming by day, then Past streams. */
+export function LiveView({
+  status,
+  live,
+  upcoming,
+  creatorNames,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+  onRetry,
+  upcomingHasMore = false,
+  upcomingLoadingMore = false,
+  onUpcomingMore = noop,
+  past = [],
+  pastStatus = "ready",
+  pastHasMore = false,
+  pastLoadingMore = false,
+  onPastMore = noop,
+  onPastRetry,
+  now,
+}: LiveViewProps) {
+  const days = useMemo(() => groupUpcomingByDay(upcoming, now), [upcoming, now]);
+  const upcomingCount = days.reduce((n, d) => n + d.streams.length, 0);
+  const showPast = pastStatus !== "ready" || past.length > 0;
+  const nothing = live.length === 0 && upcomingCount === 0 && !showPast;
   return (
     <div className="disco-page" data-screen="live">
       <PageHead
         icon={<Radio strokeWidth={1.75} />}
         title="Live"
-        sub="Broadcasts happening now, and what is coming up"
+        sub="Broadcasts happening now, what is coming up, and the ones you missed"
         aside={
           <Link href="/live/new" className="disco-pill">
             <Radio size={14} strokeWidth={2} aria-hidden />
@@ -99,30 +141,54 @@ export function LiveView({ status, live, upcoming, creatorNames, hasMore, loadin
             )}
             <LoadMore hasMore={hasMore} loading={loadingMore} onLoadMore={onLoadMore} />
           </section>
-          <section className="disco-section" aria-labelledby="disco-upcoming">
+
+          <section className="disco-section" aria-labelledby="disco-upcoming" data-section="upcoming">
             <div className="disco-section__head">
               <h2 id="disco-upcoming" className="disco-section__title">
                 Upcoming
               </h2>
-              <span className="disco-section__count">{upcoming.length}</span>
+              <span className="disco-section__count">{upcomingCount}</span>
             </div>
-            {upcoming.length === 0 ? (
+            {days.length === 0 ? (
               <p className="disco-section__note">Nothing scheduled yet.</p>
             ) : (
-              <div className="disco-grid">
-                {upcoming.map((s) => (
-                  <LiveStreamCard key={s.id} stream={s} creatorName={creatorNames[s.creator_user_id]} />
-                ))}
-              </div>
+              days.map((day) => (
+                <div key={day.key} className="disco-day" data-day={day.key}>
+                  <h3 className="disco-day__title">{day.label}</h3>
+                  <div className="disco-grid">
+                    {day.streams.map((s) => (
+                      <LiveStreamCard key={s.id} stream={s} creatorName={creatorNames[s.creator_user_id]} now={now} />
+                    ))}
+                  </div>
+                </div>
+              ))
             )}
+            <LoadMore hasMore={upcomingHasMore} loading={upcomingLoadingMore} onLoadMore={onUpcomingMore} />
           </section>
-          {/*
-            TODO(live VOD): "Past streams" — the plan pins these as long_video posts with
-            source = "live" (post-service consumes live.stream.vod_ready). Mount a third
-            section here on discoveryApi.getPastStreams once GET /v1/feed/videos?source=live
-            exists; PAST_STREAMS_AVAILABLE flips in the adapter, nothing else changes.
-          */}
-          {PAST_STREAMS_AVAILABLE ? null : null}
+
+          {showPast ? (
+            <section className="disco-section" aria-labelledby="disco-past" data-section="past">
+              <div className="disco-section__head">
+                <h2 id="disco-past" className="disco-section__title">
+                  Past streams
+                </h2>
+              </div>
+              {pastStatus === "loading" ? (
+                <VideoGridSkeleton count={4} />
+              ) : pastStatus === "error" ? (
+                <ErrorState what="past streams" onRetry={onPastRetry} />
+              ) : (
+                <>
+                  <div className="tube-grid">
+                    {past.map((v) => (
+                      <VideoCard key={v.id} video={v} />
+                    ))}
+                  </div>
+                  <LoadMore hasMore={pastHasMore} loading={pastLoadingMore} onLoadMore={onPastMore} />
+                </>
+              )}
+            </section>
+          ) : null}
         </>
       )}
     </div>
@@ -130,8 +196,9 @@ export function LiveView({ status, live, upcoming, creatorNames, hasMore, loadin
 }
 
 export function LivePage() {
-  const { streams, live, upcoming, creatorNames } = useLiveDiscovery(24);
+  const { streams, scheduled, past, live, upcoming, pastVideos, creatorNames } = useLiveDiscovery(24);
   const status: ViewStatus = streams.isLoading ? "loading" : streams.isError ? "error" : "ready";
+  const pastStatus: ViewStatus = past.isLoading ? "loading" : past.isError ? "error" : "ready";
   return (
     <LiveView
       status={status}
@@ -142,6 +209,15 @@ export function LivePage() {
       loadingMore={streams.isFetchingNextPage}
       onLoadMore={() => void streams.fetchNextPage()}
       onRetry={() => void streams.refetch()}
+      upcomingHasMore={!!scheduled.hasNextPage}
+      upcomingLoadingMore={scheduled.isFetchingNextPage}
+      onUpcomingMore={() => void scheduled.fetchNextPage()}
+      past={pastVideos}
+      pastStatus={pastStatus}
+      pastHasMore={!!past.hasNextPage}
+      pastLoadingMore={past.isFetchingNextPage}
+      onPastMore={() => void past.fetchNextPage()}
+      onPastRetry={() => void past.refetch()}
     />
   );
 }

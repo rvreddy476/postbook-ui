@@ -49,11 +49,13 @@ import {
 import { ambientAllowed } from "../watch/ambient";
 import { chapterIndexAt } from "../watch/chapters";
 import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
-import { useCollectionPlayback, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs, useWideLayout } from "../watch/hooks/useWatch";
+import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs, useWideLayout } from "../watch/hooks/useWatch";
 import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
+import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { downloadHref, setCommentHeart, setCommentPin, setPass, viewerSubtitleTracks } from "../watch/watchApi";
+import { downloadHref, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks } from "../watch/watchApi";
+import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { WatchComments } from "../watch/components/WatchComments";
 import { MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
@@ -202,6 +204,11 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
 
   const queue = useQueue();
   const lovedIds = useLovedIds();
+
+  /* Thanks: only for a creator with tips on, never on your own video (the read is skipped then). */
+  const supportQuery = useCreatorSupport(video && !isOwner ? video.author_id : null);
+  const support = supportQuery.data ?? null;
+  const thanksVisible = showThanks(support, user?.id ?? null, video?.author_id ?? null);
 
   /* ── playback urls ─────────────────────────────────── */
   const hlsUrl = mediaAssetId ? hlsMasterUrl(mediaAssetId) : null;
@@ -398,6 +405,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const [blockPending, setBlockPending] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [audioDialogOpen, setAudioDialogOpen] = useState(false);
+  const [thanksOpen, setThanksOpen] = useState(false);
+  const [thanksPending, setThanksPending] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
@@ -489,6 +498,21 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       router.push("/posttube/hub/library");
     } catch {
       toast({ type: "error", title: "Could not delete" });
+    }
+  };
+
+  const closeThanks = useCallback(() => setThanksOpen(false), []);
+  const submitThanks = async ({ amountPaise, message }: { amountPaise: number; message: string }) => {
+    if (!video || thanksPending) return;
+    setThanksPending(true);
+    try {
+      await sendThanks({ creatorId: video.author_id, postId: video.id, amountPaise, message });
+      setThanksOpen(false);
+      toast({ type: "success", title: "Thanks sent" });
+    } catch (err) {
+      toast({ type: "error", title: "Could not send", description: thanksErrorMessage(err) });
+    } finally {
+      setThanksPending(false);
     }
   };
 
@@ -629,6 +653,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     onLove: handleLove,
     onPass: handlePass,
     onShare: () => setShareOpen(true),
+    onThanks: thanksVisible ? () => requireUser() && setThanksOpen(true) : undefined,
     onQueue: () => void handleQueue(),
     onAdd: () => requireUser() && setPlaylistOpen(true),
     onComments: () => setCommentsOpen((o) => !o),
@@ -748,6 +773,9 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
 
       <ShareDialog postId={video.id} isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
       <SaveToPlaylistDialog open={playlistOpen} postId={video.id} onClose={() => setPlaylistOpen(false)} />
+      {support && thanksVisible ? (
+        <ThanksSheet open={thanksOpen} channelName={channelName} support={support} pending={thanksPending} onSend={(input) => void submitThanks(input)} onCancel={closeThanks} />
+      ) : null}
       {mediaAssetId ? <ReelAudioTracksDialog open={audioDialogOpen} mediaId={mediaAssetId} onClose={() => setAudioDialogOpen(false)} /> : null}
       <ReelConfirmDialog
         open={blockOpen}

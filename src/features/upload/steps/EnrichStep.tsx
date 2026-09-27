@@ -1,5 +1,8 @@
 "use client";
 
+import { PUBLISH_LANGUAGES } from "@/features/posttube/hub";
+import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
+import { ChaptersEditor } from "@/features/posttube/hub/components/ChaptersEditor";
 import { SectionHeader, ToggleRow, RadioOption, StudioInput, StudioSelect } from "../primitives";
 import type { StudioFormState } from "../types";
 
@@ -9,7 +12,7 @@ interface EnrichStepProps {
   showErrors?: boolean;
 }
 
-const LANGUAGES = [
+const BASE_LANGUAGES = [
   { value: "en", label: "English" },
   { value: "hi", label: "Hindi" },
   { value: "es", label: "Spanish" },
@@ -27,7 +30,16 @@ const LANGUAGES = [
   { value: "vi", label: "Vietnamese" },
 ];
 
-export function EnrichStep({ form, patch }: EnrichStepProps) {
+/** The studio's list plus every language Creator Hub → Preferences can store, so a default always shows. */
+const LANGUAGES = [
+  ...BASE_LANGUAGES,
+  ...PUBLISH_LANGUAGES.filter((l) => l.code && !BASE_LANGUAGES.some((b) => b.value === l.code)).map((l) => ({ value: l.code, label: l.label })),
+];
+
+export function EnrichStep({ form, patch, showErrors }: EnrichStepProps) {
+  const durationMs = form.videoDurationSec ? form.videoDurationSec * 1000 : null;
+  const chapterIssues = validateChapterRows(form.chapterRows, durationMs);
+  const invalidKeys = new Set(chapterIssues.map((i) => i.key).filter((k): k is number => k !== null));
   return (
     <div className="space-y-6">
       {/* ── Language ── */}
@@ -79,6 +91,28 @@ export function EnrichStep({ form, patch }: EnrichStepProps) {
             <p className="mt-3 text-[12px] text-rose-500">{form.subtitleUploadError}</p>
           )}
         </div>
+      </div>
+
+      {/* ── Chapters (saved right after publish; the Creator Hub edits them later) ── */}
+      <div>
+        <SectionHeader title="Chapters" subtitle="Start times and titles viewers can jump to. The first starts at 0:00." />
+        <ChaptersEditor
+          rows={form.chapterRows}
+          onChange={(rows) => patch({ chapterRows: rows })}
+          emptyHint="Optional. Without them, timestamps in the description (00:00 Intro) become chapters."
+          invalidKeys={showErrors ? invalidKeys : undefined}
+          footer={
+            chapterIssues.length > 0 && (showErrors || form.chapterRows.length > 1) ? (
+              <ul className="space-y-0.5" data-issues="chapters">
+                {chapterIssues.map((issue, i) => (
+                  <li key={i} className="hub-hint is-error">
+                    {issue.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null
+          }
+        />
       </div>
 
       {/* ── Recording Details ── */}

@@ -168,7 +168,19 @@
 .tube-player-box__dock-button:hover { background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
 .tube-player-box.is-docked .tube-player__ambient { display: none; }
 
+/* ---- Thanks sheet: the reels confirm card with amount pills ----------- */
+.tube-thanks__pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.tube-thanks__pill { display: inline-flex; height: 30px; align-items: center; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.tube-thanks__pill:hover { background: rgb(var(--brand-text) / .12); }
+.tube-thanks__pill[aria-checked="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
+.tube-thanks__field { display: block; width: 100%; margin-top: 10px; padding: 8px 12px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); font-size: 13px; outline: none; }
+.tube-thanks__field:focus { border-color: rgb(var(--brand-accent)); }
+.tube-thanks__field::placeholder { color: rgb(var(--text-muted)); }
+.tube-thanks__field[aria-invalid="true"] { border-color: rgb(var(--danger)); }
+.tube-thanks__hint { margin-top: 6px; font-size: 11px; color: rgb(var(--text-muted)); }
+.tube-thanks__hint.is-error { color: rgb(var(--danger)); }
+
 @media (prefers-reduced-motion: reduce) {
-  .tube-rail__icon, .tube-chapters__pill, .tube-upnext__row { transition: none; }
+  .tube-rail__icon, .tube-chapters__pill, .tube-upnext__row, .tube-thanks__pill { transition: none; }
   .tube-upnext__bone > span { animation: none; }
 }

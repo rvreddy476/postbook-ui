@@ -8,6 +8,7 @@ import { mapRelatedRows } from "../model";
 import type { MediaSubtitleTrack, PostTubeVideo } from "../types";
 import { normalizeChapters, type Chapter } from "./chapters";
 import { parseStoryboardVtt, type StoryboardCue } from "./storyboard";
+import { normalizeSupport, type CreatorSupport } from "./thanks";
 import { upNextChipQuery, type UpNextChip } from "./upNext";
 
 /*
@@ -27,7 +28,8 @@ import { upNextChipQuery, type UpNextChip } from "./upNext";
     GET    /v1/media/:mediaId/serve/storyboard_vtt|storyboard_jpg   (404 = none)
     GET    /v1/media/:mediaId/audio-tracks     (features/reels/hooks/useAudioTracks)
     GET    /v1/playlists/:id, /v1/playlists/:id/items  (features/posttube/library)
-    POST   /v1/monetization/tips/post/:postId  Thanks (button hidden until a "tips on" read exists)
+    GET    /v1/monetization/creators/:creatorId/support   {tips_enabled, min_tip_paise, currency, membership_tiers}
+    POST   /v1/monetization/tips               Thanks { creator_id, post_id?, amount_paise, message? } (thanksBody)
     GET|POST /v1/videos/:id/progress           (data/posttubeApi; POST only when !isHistoryPaused())
 */
 
@@ -217,15 +219,57 @@ export async function getCollectionPlayback(listId: string): Promise<CollectionP
 /* ── Thanks (tip) ───────────────────────────────────────── */
 
 /**
- * POST /v1/monetization/tips/post/:postId (the pinned route). The button is
- * hidden until a "creator has tips on" read exists — today monetization
- * only exposes the tier list and the entitlement check.
+ * GET /v1/monetization/creators/:creatorId/support. null on any failure
+ * (the route not deployed yet, a 404 for a creator with no row): the rail
+ * then simply has no Thanks button.
  */
-export async function sendThanks(postId: string, input: { amountPaise: number; message?: string }): Promise<void> {
-  await api.post(`/v1/monetization/tips/post/${encodeURIComponent(postId)}`, {
-    amount_paise: input.amountPaise,
-    message: input.message ?? "",
-  });
+export async function getCreatorSupport(creatorId: string): Promise<CreatorSupport | null> {
+  try {
+    const res = await api.get<Envelope<unknown>>(`/v1/monetization/creators/${encodeURIComponent(creatorId)}/support`);
+    return normalizeSupport(res.data?.data ?? res.data);
+  } catch {
+    return null;
+  }
 }
 
-export type { Chapter, StoryboardCue, Collection, CollectionItem };
+export interface ThanksInput {
+  creatorId: string;
+  postId?: string | null;
+  amountPaise: number;
+  message?: string | null;
+}
+
+/**
+ * The one place the tip body lives (the monetization lane pinned
+ * `{ creator_id, post_id?, amount_paise, message? }`; if it confirms a
+ * different key, this is the only edit). `post_id` and `message` go only
+ * when present.
+ */
+export function thanksBody(input: ThanksInput): Record<string, unknown> {
+  const message = input.message?.trim() ?? "";
+  return {
+    creator_id: input.creatorId,
+    ...(input.postId ? { post_id: input.postId } : {}),
+    amount_paise: Math.round(input.amountPaise),
+    ...(message ? { message } : {}),
+  };
+}
+
+/** POST /v1/monetization/tips. Throws the axios error; thanksErrorMessage reads it. */
+export async function sendThanks(input: ThanksInput): Promise<void> {
+  await api.post("/v1/monetization/tips", thanksBody(input));
+}
+
+/** A 4xx → the server's own message; anything else → a generic line. */
+export function thanksErrorMessage(err: unknown): string {
+  const res = (err as { response?: { status?: number; data?: unknown } })?.response;
+  const status = res?.status ?? 0;
+  if (status >= 400 && status < 500) {
+    const body = res?.data as { error?: { message?: string } | string; message?: string } | undefined;
+    const msg = body?.error && typeof body.error === "object" ? body.error.message : typeof body?.error === "string" ? body.error : body?.message;
+    if (typeof msg === "string" && msg.trim()) return msg.trim();
+  }
+  return "Could not send your thanks. Try again.";
+}
+
+export type { Chapter, StoryboardCue, Collection, CollectionItem, CreatorSupport };

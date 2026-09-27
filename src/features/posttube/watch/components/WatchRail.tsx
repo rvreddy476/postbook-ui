@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Download, FolderPlus, ListVideo, MoreHorizontal, RectangleHorizontal, ThumbsDown } from "lucide-react";
+import { Download, FolderPlus, HandHeart, ListVideo, MoreHorizontal, RectangleHorizontal, ThumbsDown } from "lucide-react";
 
 import { RailBubble, RailHeart, RailShare } from "@/features/reels/components/ReelRailIcons";
 import { formatCount } from "@/features/reels/model";
@@ -9,15 +9,17 @@ import { formatCount } from "@/features/reels/model";
 /*
   The action rail beside the player, the Reels rail turned to our
   vocabulary: Love (count under, filled when loved), Pass (private; filled
-  when passed; never lit together with Love), Share, Keep (only when the
-  post allows downloads or the viewer owns it — a link that opens the 307
-  in a new tab), Queue (filled when queued), Add (to a collection),
+  when passed; never lit together with Love), Share, Thanks (a tip; only
+  when the page passes onThanks — the creator has tips on and the viewer
+  is not the creator, see thanks.showThanks), Keep (only when the post
+  allows downloads or the viewer owns it — a link that opens the 307 in a
+  new tab), Queue (filled when queued), Add (to a collection),
   Comments (count; opens the column), More (the choice-pane menu). 36px
   circles on a 56px pitch (watch.css). In theater the same buttons lie in
   a row on the stage colour, the Reels theater bar.
 */
 
-export const WATCH_RAIL_ORDER = ["love", "pass", "share", "keep", "queue", "add", "comments", "more"] as const;
+export const WATCH_RAIL_ORDER = ["love", "pass", "share", "thanks", "keep", "queue", "add", "comments", "more"] as const;
 
 export interface WatchRailProps {
   loved: boolean;
@@ -33,6 +35,8 @@ export interface WatchRailProps {
   onLove: () => void;
   onPass: () => void;
   onShare: () => void;
+  /** Absent hides Thanks; the page passes it only when thanks.showThanks is true. */
+  onThanks?: () => void;
   onQueue: () => void;
   onAdd: () => void;
   onComments: () => void;
@@ -58,6 +62,7 @@ export function WatchRail({
   onLove,
   onPass,
   onShare,
+  onThanks,
   onQueue,
   onAdd,
   onComments,
@@ -72,6 +77,7 @@ export function WatchRail({
       <RailButton label={loved ? "Unlove" : "Love"} count={likeCount} active={loved} activeClass="is-loved" onClick={onLove} icon={<RailHeart size={16} />} dataAction="love" />
       <RailButton label={passed ? "Undo pass" : "Pass"} active={passed} activeClass="is-passed" onClick={onPass} icon={<ThumbsDown size={17} className={passed ? "fill-current" : ""} />} dataAction="pass" />
       {!shareHidden ? <RailButton label="Share" onClick={onShare} icon={<RailShare size={18} />} dataAction="share" /> : null}
+      {onThanks ? <RailButton label="Thanks" onClick={onThanks} icon={<HandHeart size={17} />} dataAction="thanks" /> : null}
       {keepHref ? (
         <a href={keepHref} target="_blank" rel="noopener" className="tube-rail__button" aria-label="Keep (download)" title="Keep" data-action="keep">
           <span className="tube-rail__icon">

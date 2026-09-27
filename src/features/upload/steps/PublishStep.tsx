@@ -4,6 +4,7 @@ import { Globe, Calendar, Link2, AlertCircle, Loader2, Tag } from "lucide-react"
 import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
 import { ToggleRow, RadioOption, StudioSelect } from "../primitives";
 import { categoryOptions } from "../categories";
+import { SeriesPicker } from "../components/SeriesPicker";
 import type { ContentType } from "../tokens";
 import type { StudioFormState } from "../types";
 
@@ -26,6 +27,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
   const categories = useVideoCategories();
   const topicOptions = categoryOptions(categories.data, contentType, form.category);
   const topicsUnavailable = !categories.isLoading && topicOptions.length === 0;
+  const isLongStudio = contentType === "long" || contentType === "podcast";
 
   return (
     <div className="space-y-7">
@@ -128,6 +130,9 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
         )}
       </div>
+
+      {/* ── Series (long videos; added after publish) ── */}
+      {isLongStudio && (form.finalVideoCategory ?? "long_video") === "long_video" ? <SeriesPicker form={form} patch={patch} showErrors={showErrors} /> : null}
 
       {/* ── Schedule ── */}
       <div>

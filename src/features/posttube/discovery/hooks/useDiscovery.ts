@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import { useLiveStreams } from "@/hooks/useLiveV2";
 import { useBatchProfiles } from "@/hooks/useProfile";
 import {
+  getLiveStreamsPage,
+  getPastStreams,
   getStripFeed,
   getTopicFeed,
   getTopics,
@@ -98,12 +100,37 @@ export function useTubeSearch(filters: SearchFilters) {
   return { videos, channels, collections };
 }
 
-/** Live now + upcoming from live-service-v2, with the creators' names. */
+/**
+ * The Live page's three lists: Live now (useLiveStreams, shared with the
+ * live screens), Upcoming (`?status=scheduled`) and Past streams
+ * (`GET /v1/posts/live-recordings`), each paged on its own, plus the
+ * creators' names for the stream cards. Upcoming and Past failing leave
+ * Live now standing: each section reads its own query state.
+ */
 export function useLiveDiscovery(limit = 24) {
   const streams = useLiveStreams(limit);
-  const all = useMemo(() => streams.data?.pages.flatMap((p) => p.items) ?? [], [streams.data]);
-  const split = useMemo(() => splitLiveStreams(all), [all]);
-  const creatorIds = useMemo(() => Array.from(new Set(all.map((s) => s.creator_user_id))), [all]);
+  const scheduled = useInfiniteQuery({
+    queryKey: [...KEY, "live", "scheduled", limit],
+    queryFn: ({ pageParam }) => getLiveStreamsPage({ status: "scheduled", limit, cursor: pageParam || undefined }),
+    initialPageParam: "" as string,
+    getNextPageParam: (last) => last.next_cursor,
+    staleTime: 60 * 1000,
+  });
+  const past = useInfiniteQuery({
+    queryKey: [...KEY, "live", "past"],
+    queryFn: ({ pageParam }) => getPastStreams({ limit: 12, cursor: pageParam || undefined }),
+    initialPageParam: "" as string,
+    getNextPageParam: (last) => last.next_cursor,
+    staleTime: 2 * 60 * 1000,
+  });
+  const liveRows = useMemo(() => streams.data?.pages.flatMap((p) => p.items) ?? [], [streams.data]);
+  const upcoming = useMemo(() => (scheduled.data?.pages.flatMap((p) => p.items) ?? []).filter((s) => s.status === "scheduled"), [scheduled.data]);
+  const pastVideos = useMemo(() => {
+    const seen = new Set<string>();
+    return (past.data?.pages.flatMap((p) => p.items) ?? []).filter((v) => (seen.has(v.id) ? false : (seen.add(v.id), true)));
+  }, [past.data]);
+  const { live } = useMemo(() => splitLiveStreams(liveRows), [liveRows]);
+  const creatorIds = useMemo(() => Array.from(new Set([...liveRows, ...upcoming].map((s) => s.creator_user_id))), [liveRows, upcoming]);
   const profiles = useBatchProfiles(creatorIds);
   const creatorNames = useMemo(() => {
     const out: Record<string, string> = {};
@@ -111,5 +138,5 @@ export function useLiveDiscovery(limit = 24) {
     if (map) for (const [id, p] of map) out[id] = p.display_name || p.username || "";
     return out;
   }, [profiles.data]);
-  return { streams, ...split, creatorNames };
+  return { streams, scheduled, past, live, upcoming, pastVideos, creatorNames };
 }
