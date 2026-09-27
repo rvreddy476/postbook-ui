@@ -126,6 +126,7 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
         data-chrome={chrome}
         data-sidebar={mode}
         data-immersive={immersive ? "" : undefined}
+        data-search={compactSearch ? "gap" : undefined}
         data-hydrated={sidebar.hydrated ? "" : undefined}
       >
         {chrome === "header" ? <HeaderBar /> : null}

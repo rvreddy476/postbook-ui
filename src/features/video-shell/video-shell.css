@@ -239,3 +239,6 @@
   .video-shell__sidebar, .video-nav__item, .video-nav__toggle, .video-nav__search-button, .video-shell__top-action, .video-more__close, .video-more__segment, .explore-launcher__tile, .trending-card__link { transition: none; }
   .trending-card__row.is-skeleton * { animation: none; }
 }
+
+/* The reels page moves the search into the gap between the video and the open comments; the corner pill hides. */
+.video-shell[data-search="gap"] .video-shell__top-cluster { display: none; }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Search, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -738,6 +738,12 @@ export function ReelsScreen() {
                 </div>
 
                 {theater ? null : arrows("is-edge")}
+                {/* comments open: search sits in the gap between the video and the panel */}
+                {!theater && showComments && desktop ? (
+                  <Link href="/search" className="reel-gap-search" aria-label="Search">
+                    <Search size={18} strokeWidth={1.75} aria-hidden />
+                  </Link>
+                ) : null}
               </motion.div>
 
               {/* right column: the theater panel, the comments column, or the phone sheet */}
