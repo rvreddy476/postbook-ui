@@ -193,7 +193,7 @@
 /* ---- comments: TikTok's 352px card with a 16px margin, the author card on top -- */
 .reel-comments-column { display: none; min-width: 0; min-height: 0; height: 100%; overflow: hidden; padding: 0; }
 /* Padding only while open: a closed 0-width track with padding was 16px of overflow that a focus could scroll into view. */
-.reels-content[data-comments-open="true"] .reel-comments-column { padding: 16px 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
+.reels-content[data-comments-open="true"] .reel-comments-column { padding: 0; } /* 60 top: the panel sits under the top-right cluster, as TikTok's does */
 .reel-comments-panel { display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0; overflow: hidden; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
 .reel-comments-panel.is-column { border: 1px solid var(--brand-divider); border-radius: 12px; }
 .reel-comments-panel.is-sheet { position: fixed; z-index: 40; inset: auto 0 0; height: min(72dvh,640px); border: 1px solid var(--brand-divider); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
@@ -240,13 +240,13 @@ button.reel-panel-count:hover { opacity: .75; }
 .reel-desktop-rail.is-arrows .reels-navigation { display: flex; }
 /* Comments open without moving the video (the founder's rule): from 1280px the panel overlays the
    right edge of the stage area and the arrows step left of it; the frame and rail stay put. */
+/* TikTok's placement: the panel is a full-height column flush against the right edge of the window,
+   the arrows stand just left of it, and the video and rail do not move at all. */
 @media (min-width: 1024px) {
-  .reels-content[data-comments-open="true"]:not([data-theater]) { position: relative; grid-template-columns: minmax(0,1fr) 0; }
-  /* The panel hangs 64px right of the rail (the arrows sit in that gap) and never runs past the viewport. */
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; bottom: 0; right: auto; left: var(--reel-panel-left, 60%); z-index: 35; width: min(340px, calc(100% - var(--reel-panel-left, 60%) - 96px)); overflow: visible; }
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column::before { content: ""; position: absolute; left: -7px; top: calc(var(--reel-panel-caret, 50%) - 7px); width: 14px; height: 14px; transform: rotate(45deg); border-left: 1px solid var(--brand-divider); border-bottom: 1px solid var(--brand-divider); border-radius: 2px; background: rgb(var(--brand-card)); z-index: 1; }
-  /* The arrows keep the right corner, past the panel (the panel leaves 96px for them: the 62px arrow column plus its margins). */
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { z-index: 36; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) { --reel-panel-w: min(384px, 40%); position: relative; grid-template-columns: minmax(0,1fr) 0; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-column { position: absolute; top: 0; right: 0; bottom: 0; left: auto; z-index: 35; width: var(--reel-panel-w); padding: 0; overflow: hidden; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-comments-panel.is-column { border-width: 0 0 0 1px; border-radius: 0; }
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reels-navigation.is-edge { right: calc(var(--reel-panel-w) + 16px); z-index: 36; }
 }
 .reels-content[data-theater] .reel-nav-button { width: 48px; height: 48px; background: rgb(var(--reel-on-stage) / .15); color: rgb(var(--reel-on-stage)); }
 .reels-content[data-theater] .reel-nav-button:hover { background: rgb(var(--reel-on-stage) / .28); }
