@@ -348,4 +348,18 @@ button.reel-panel-count:hover { opacity: .75; }
 @media (min-width: 1024px) {
   .reels-content[data-comments-open="true"]:not([data-theater]) .reel-gap-search { position: absolute; top: 12px; right: calc(var(--reel-panel-w, 384px) + 16px); z-index: 36; display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--brand-divider); border-radius: 50%; background: rgb(var(--brand-card)); color: rgb(var(--brand-text) / .75); }
   .reel-gap-search:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+  /* Open: the circle grows leftward into a text bar, its right edge staying put beside the panel. */
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-gap-search.is-open { width: min(300px, calc(100% - var(--reel-panel-w, 384px) - 32px)); border-radius: 999px; padding: 0 8px 0 12px; gap: 8px; justify-content: flex-start; cursor: default; }
+  .reel-gap-search.is-open:hover { background: rgb(var(--brand-card)); }
+  .reel-gap-search.is-open input { flex: 1 1 auto; min-width: 0; height: 100%; border: 0; background: transparent; font-size: 14px; color: rgb(var(--brand-text)); outline: none; }
+  .reel-gap-search.is-open input::placeholder { color: rgb(var(--brand-text) / .5); }
+  .reel-gap-search.is-open input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .reel-gap-search.is-open > button { display: flex; width: 24px; height: 24px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 50%; color: rgb(var(--brand-text) / .6); }
+  .reel-gap-search.is-open > button:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
 }
+/* The results page's refine box. */
+.reel-search-form { display: flex; align-items: center; gap: 8px; height: 40px; min-width: 260px; padding: 0 14px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text) / .6); }
+.reel-search-form:focus-within { border-color: rgb(var(--brand-accent) / .6); }
+.reel-search-form input { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font-size: 14px; color: rgb(var(--brand-text)); outline: none; }
+.reel-search-form input::placeholder { color: rgb(var(--brand-text) / .5); }
+.reel-search-form input::-webkit-search-cancel-button { -webkit-appearance: none; }
