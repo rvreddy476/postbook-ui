@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { authorAction, moreMenuItems } from "@/features/reels/menu";
+import { authorAction, MENU_SPEEDS, moreMenuItems, PLAYBACK_ROWS } from "@/features/reels/menu";
 import type { ReelItem } from "@/features/reels/model";
+import { SPEEDS } from "@/features/reels/playback/playerPrefs";
 
 function reel(extra: Partial<ReelItem> = {}): ReelItem {
   return {
@@ -66,15 +67,27 @@ describe("moreMenuItems", () => {
     expect(items).not.toContain("delete");
   });
 
-  test("order: link and info first, relationship rows, clear screen, feedback and report last", () => {
+  test("order: link and info first, relationship rows, clear screen, feedback and report last; no playback keys", () => {
     const items = moreMenuItems(reel({ caption: "hi", downloadAllowed: true, reasonText: "r" }), { isOwn: false, relationshipKnown: true, following: false });
     expect(items).toEqual([
-      "playback", "theater",
       "copy-link", "description", "download", "why",
       "interested", "follow", "block",
       "clear-screen",
       "not-interested", "dont-recommend", "report",
     ]);
+    expect(items).not.toContain("playback");
+    expect(items).not.toContain("theater");
+  });
+});
+
+describe("playback rows", () => {
+  test("Speed, Quality, Auto scroll, Theater mode, Captions — in that order, above the mapped rows", () => {
+    expect([...PLAYBACK_ROWS]).toEqual(["speed", "quality", "auto-scroll", "theater", "captions"]);
+  });
+  test("the speed control offers exactly 0.75 / 1 / 1.25 / 1.5 / 2 (0.5 stays a valid stored value)", () => {
+    expect([...MENU_SPEEDS]).toEqual([0.75, 1, 1.25, 1.5, 2]);
+    for (const s of MENU_SPEEDS) expect(SPEEDS).toContain(s);
+    expect(SPEEDS).toContain(0.5);
   });
 });
 

@@ -1,67 +1,55 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Plus, Film, Clapperboard, Radio, Mic, PenSquare, Zap } from "lucide-react";
+import { ChevronDown, Clapperboard, ImagePlus, Plus, Sparkles } from "lucide-react";
 import "./app-bar.css";
 
-const CREATE_OPTIONS = [
-  {
-    label: "Video",
-    description: "Upload a video to Posttube",
-    href: "/posttube/upload?type=long",
-    icon: Film,
-    gradient: "from-brand-text to-black",
-    hoverBg: "hover:bg-brand-secondary",
-  },
-  {
-    label: "Reel / Clip",
-    description: "Short vertical video with music & effects",
-    href: "/posttube/upload?type=short",
-    icon: Clapperboard,
-    gradient: "from-brand-text to-black",
-    hoverBg: "hover:bg-brand-secondary",
-  },
-  {
-    label: "Live",
-    description: "Go live and interact with your audience",
-    href: "/live/start",
-    icon: Radio,
-    gradient: "from-warning to-[#D97706]",
-    hoverBg: "hover:bg-[#FFF8EB]",
-  },
-  {
-    label: "Podcast",
-    description: "Record or upload a podcast episode",
-    href: "/posttube/upload?type=podcast",
-    icon: Mic,
-    gradient: "from-brand-text to-black",
-    hoverBg: "hover:bg-brand-secondary",
-  },
-  {
-    label: "Create Post",
-    description: "Share text, photos, or a quick update",
-    href: "/create/post",
-    icon: PenSquare,
-    gradient: "from-brand-text to-black",
-    hoverBg: "hover:bg-brand-secondary",
-  },
-] as const;
+export interface CreateMenuItem {
+  key: "photos" | "videos";
+  label: string;
+  hint: string;
+  href: string;
+}
+
+/**
+ * The two things a person can create, as data. Videos goes to the reel
+ * composer inside Reels and to the PostTube upload everywhere else.
+ */
+export function createMenuItems(pathname: string | null | undefined): CreateMenuItem[] {
+  const inReels = Boolean(pathname && pathname.startsWith("/reels"));
+  return [
+    { key: "photos", label: "Photos", hint: "Post photos", href: "/create/post" },
+    { key: "videos", label: "Videos", hint: "Upload a video or reel", href: inReels ? "/reels/create" : "/posttube/upload?type=long" },
+  ];
+}
+
+const ROW_ICON = { photos: ImagePlus, videos: Clapperboard } as const;
 
 export interface CreateButtonProps {
   /**
-   * "pill": Plus icon + "Create" label (label hidden under 640px), the
+   * "pill": Plus + "Create" + a chevron (label hidden under 640px), the
    * prominent header control. "icon" (default, what older callers get): the
    * original square sparkle button.
    */
   variant?: "pill" | "icon";
+  /** Start open — for static renders; the menu is closed by default. */
+  defaultOpen?: boolean;
 }
 
-export function CreateButton({ variant = "icon" }: CreateButtonProps) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
+/*
+  Create: a dropdown with exactly two rows, Photos and Videos. Escape and
+  an outside click close it; arrows move between the rows; every row is a
+  real link. Style through app-bar.css (.create-menu).
+*/
+export function CreateButton({ variant = "icon", defaultOpen = false }: CreateButtonProps) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(defaultOpen);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const items = createMenuItems(pathname);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -83,6 +71,30 @@ export function CreateButton({ variant = "icon" }: CreateButtonProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Arrow keys walk the rows (wrapping); Home/End jump.
+  const onMenuKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const rows = rowRefs.current.filter((r): r is HTMLAnchorElement => Boolean(r));
+    if (rows.length === 0) return;
+    const at = rows.findIndex((r) => r === document.activeElement);
+    let next = -1;
+    if (e.key === "ArrowDown") next = at < 0 ? 0 : (at + 1) % rows.length;
+    else if (e.key === "ArrowUp") next = at < 0 ? rows.length - 1 : (at - 1 + rows.length) % rows.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = rows.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    rows[next].focus();
+  };
+
+  const onTriggerKey = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!open) setOpen(true);
+      // Focus lands on the first row once it is in the tree.
+      requestAnimationFrame(() => rowRefs.current[e.key === "ArrowDown" ? 0 : items.length - 1]?.focus());
+    }
+  };
+
   return (
     <div className="relative" ref={containerRef}>
       {/* Trigger */}
@@ -91,13 +103,15 @@ export function CreateButton({ variant = "icon" }: CreateButtonProps) {
           whileTap={{ scale: 0.97 }}
           type="button"
           onClick={() => setOpen((prev) => !prev)}
+          onKeyDown={onTriggerKey}
           className="context-app-bar__create"
           aria-label="Create"
           aria-haspopup="menu"
           aria-expanded={open}
         >
-          <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden />
+          <Plus className="context-app-bar__create-plus" strokeWidth={2.5} aria-hidden />
           <span className="context-app-bar__create-label">Create</span>
+          <ChevronDown className="context-app-bar__create-chevron" strokeWidth={2.25} aria-hidden />
         </motion.button>
       ) : (
         <motion.button
@@ -105,14 +119,15 @@ export function CreateButton({ variant = "icon" }: CreateButtonProps) {
           whileTap={{ scale: 0.95 }}
           type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-brand-text to-black text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_6px_20px_-4px_rgba(0,0,0,0.5)]"
+          onKeyDown={onTriggerKey}
+          className="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-ink text-primary-foreground shadow-md transition-shadow hover:shadow-lg"
           aria-label="Create"
           aria-haspopup="menu"
           aria-expanded={open}
         >
           <Sparkles className="h-[17px] w-[17px]" />
-          <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-warning ring-2 ring-white">
-            <Plus className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+          <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent ring-2 ring-brand-card">
+            <Plus className="h-2.5 w-2.5 text-primary-foreground" strokeWidth={3} />
           </div>
         </motion.button>
       )}
@@ -127,35 +142,33 @@ export function CreateButton({ variant = "icon" }: CreateButtonProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "circOut" }}
-            className="absolute right-0 mt-3 w-[280px] rounded-2xl border border-border bg-brand-card/95 p-1.5 shadow-[0_24px_48px_-12px_rgba(15,13,21,0.12)] backdrop-blur-xl z-100"
+            className="create-menu"
+            onKeyDown={onMenuKey}
           >
-            <div className="px-3 py-2 flex items-center gap-2">
-              <Zap className="h-3 w-3 text-warning" />
-              <p className="text-[10px] font-bold tracking-widest text-[#B0ADBE]">
-                Create New
-              </p>
-            </div>
-
-            {CREATE_OPTIONS.map((option) => (
-              <button
-                key={option.href}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  router.push(option.href);
-                }}
-                className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${option.hoverBg}`}
-              >
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${option.gradient} text-white shadow-xs`}>
-                  <option.icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 text-left">
-                  <p className="text-[13px] font-semibold text-foreground group-hover:text-brand-text transition-colors">{option.label}</p>
-                  <p className="text-[11px] text-[#B0ADBE]">{option.description}</p>
-                </div>
-              </button>
-            ))}
+            {items.map((item, i) => {
+              const Icon = ROW_ICON[item.key];
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  role="menuitem"
+                  className="create-menu__row"
+                  data-row={item.key}
+                  ref={(el) => {
+                    rowRefs.current[i] = el;
+                  }}
+                  onClick={() => setOpen(false)}
+                >
+                  <span className="create-menu__icon">
+                    <Icon aria-hidden />
+                  </span>
+                  <span className="create-menu__text">
+                    <span className="create-menu__label">{item.label}</span>
+                    <span className="create-menu__hint">{item.hint}</span>
+                  </span>
+                </Link>
+              );
+            })}
           </motion.div>
         ) : null}
       </AnimatePresence>

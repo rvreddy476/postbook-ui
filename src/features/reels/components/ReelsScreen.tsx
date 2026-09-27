@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -16,7 +16,6 @@ import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { ReelVideo, type ReelVideoHandle } from "@/features/reels/components/ReelVideo";
 import { ReelRail } from "@/features/reels/components/ReelRail";
 import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
-import { ReelSettingsMenu } from "@/features/reels/components/ReelSettingsMenu";
 import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
@@ -104,7 +103,6 @@ export function ReelsScreen() {
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -330,7 +328,6 @@ export function ReelsScreen() {
   const enterClearScreen = () => {
     if (theater) return;
     setMoreOpen(false);
-    setSettingsOpen(false);
     dispatchClear({ type: "enter" });
   };
 
@@ -338,7 +335,6 @@ export function ReelsScreen() {
   const enterTheater = useCallback(async () => {
     setTheater(true);
     setMoreOpen(false);
-    setSettingsOpen(false);
     dispatchClear({ type: "tap" });
     const el = workspaceRef.current;
     if (!el || document.fullscreenElement) return;
@@ -383,7 +379,6 @@ export function ReelsScreen() {
         navAtRef.current = now;
         setDirection(delta);
         setMoreOpen(false);
-        setSettingsOpen(false);
         return next;
       });
     },
@@ -403,7 +398,6 @@ export function ReelsScreen() {
       if (e.key === "Escape" && theater) {
         void exitTheater();
         setCommentsOpen(false);
-        setSettingsOpen(false);
         return;
       }
       if (e.target instanceof HTMLElement && e.target.closest('button, a, [role="dialog"], [role="alertdialog"], [role="toolbar"], [role="slider"]')) return;
@@ -449,7 +443,6 @@ export function ReelsScreen() {
         case "Escape":
           setCommentsOpen(false);
           setMoreOpen(false);
-          setSettingsOpen(false);
           break;
       }
     };
@@ -508,6 +501,7 @@ export function ReelsScreen() {
   const empty = !loading && !errored && reels.length === 0;
 
   // One menu, one open state; where it is drawn depends on which trigger holds it.
+  // The playback rows (speed, quality, auto scroll, captions) live in it too.
   const moreMenuFor = (anchor: "beside" | "below") => active ? (
     <ReelMoreMenu
       anchor={anchor}
@@ -517,6 +511,10 @@ export function ReelsScreen() {
       isOwn={isOwn}
       following={following}
       followPending={followPending}
+      prefs={prefs}
+      onPrefsChange={updatePrefs}
+      qualityHeights={qualityHeights}
+      captionsAvailable={captionsAvailable}
       onCopyLink={onCopyLink}
       onDescription={() => setDescriptionOpen(true)}
       onInterested={onInterested}
@@ -524,7 +522,6 @@ export function ReelsScreen() {
       onBlock={() => setBlockOpen(true)}
       onDelete={() => setDeleteOpen(true)}
       onClearScreen={enterClearScreen}
-      onOpenSettings={() => setSettingsOpen(true)}
       onTheater={() => void enterTheater()}
       onNotInterested={onNotInterested}
       onDontRecommend={onDontRecommend}
@@ -691,7 +688,7 @@ export function ReelsScreen() {
                       </motion.div>
                     </AnimatePresence>
                     {/* frame top-right: the three dots, on hover only (the phone rail has its own More).
-                        Playback settings hang from the same corner when opened from the menu. */}
+                        The one menu — playback rows and the mapped rows — hangs from this corner. */}
                     {theater ? null : (
                       <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
                         <div className="reel-frame-action-wrap is-more">
@@ -699,16 +696,6 @@ export function ReelsScreen() {
                             <MoreHorizontal size={24} aria-hidden />
                           </button>
                           {desktop ? moreMenuFor("below") : null}
-                        </div>
-                        <div className="reel-frame-action-wrap is-settings">
-                          <ReelSettingsMenu
-                            open={settingsOpen}
-                            onClose={() => setSettingsOpen(false)}
-                            prefs={prefs}
-                            onChange={updatePrefs}
-                            qualityHeights={qualityHeights}
-                            captionsAvailable={captionsAvailable}
-                          />
                         </div>
                       </div>
                     )}

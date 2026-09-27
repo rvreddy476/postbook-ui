@@ -8,24 +8,25 @@ import { RAIL_ORDER, ReelRail } from '../components/ReelRail';
 import { ReelAuthorCard } from '../components/ReelAuthorCard';
 import { ReelExpandedDetails } from '../components/ReelExpandedDetails';
 import { COMMENTS_COLUMN_WIDTH, COMMENTS_TRACK_WIDTH } from '../stage';
-import { ReelSettingsMenu } from '../components/ReelSettingsMenu';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { patchReelEverywhere } from '../hooks/useReelFeed';
 import { refreshCommentSurfaces } from '@/lib/commentCache';
 
 const reel = toReelItem({id:'r1',author_id:'a',title:'Actual title',text:'Description belongs in details',content_type:'reel',counts:{comments:0},media:[{media_id:'m',kind:'video'}]})!;
 
-test('settings anchor below the control bar, not off the left of the portrait frame', () => {
-  const html=renderToStaticMarkup(<ReelSettingsMenu open onClose={()=>{}} prefs={{quality:'auto',speed:1,captions:false,onEnd:'loop',sound:false}} onChange={()=>{}} qualityHeights={[720]} captionsAvailable="unknown"/>);
-  expect(html).toContain('reel-settings-popover');
-  expect(html).not.toContain('md:right-full');
-  for(const label of ['Quality','Playback speed','Captions','Auto-advance']) expect(html).toContain(label);
+test('the separate playback-settings popover is gone: one menu hangs from the frame\'s top-right and never outgrows it', () => {
+  expect(existsSync(resolve(import.meta.dir,'../components/ReelSettingsMenu.tsx'))).toBe(false);
+  const screen=readFileSync(resolve(import.meta.dir,'../components/ReelsScreen.tsx'),'utf8');
+  expect(screen).not.toContain('ReelSettingsMenu');
+  expect(screen).not.toContain('is-settings');
+  expect(screen).not.toContain('settingsOpen');
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
-  expect(css).toContain('width: 280px');
-  expect(css).toContain('top: calc(100% + 8px)');
-  // Settings hang from the frame's top-right corner and never outgrow the frame.
-  expect(css).toContain('.reel-frame-actions .reel-settings-popover[role="menu"] { left: auto; right: 0; width: 280px; max-width: 100%; }');
+  expect(css).not.toContain('reel-settings-popover');
+  expect(css).not.toContain('reel-settings-slot');
+  expect(css).toContain('.reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 320px;');
+  expect(css).toContain('.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 320px; max-width: 100%; }');
 });
 
 test('expanded details carry creator and title but never public view counts', () => {
@@ -42,14 +43,23 @@ test('reel title is separate from its description, never synthesized from descri
   expect(reel.caption).toBe('Description belongs in details');
   expect(toReelItem({id:'r2',author_id:'a',text:'Not a title',content_type:'reel',media:[{media_id:'m',kind:'video'}]})!.title).toBe('');
 });
-test('overlay always carries the author name (a plain link), title, caption and view count; never a Follow pill or a hover anchor', () => {
-  const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+test('overlay carries the author name (a plain link), the title and the hashtags only — no caption, no view count, no Follow pill, no hover anchor', () => {
+  const tagged={...reel,hashtags:['dance','fyp']};
+  const html=renderToStaticMarkup(<ReelOverlay reel={tagged} sound={false} volume={1} onVolumeChange={()=>{}} onToggleSound={()=>{}}/>);
   expect(html).toContain('Actual title');
-  expect(html).toContain('Description belongs in details');
+  expect(html).not.toContain('Description belongs in details');
+  expect(html).not.toContain('reel-caption');
+  expect(html).toContain('class="reel-hashtags pointer-events-auto"');
+  expect(html).toContain('href="/hashtag/dance"');
   expect(html).not.toContain('views');
   expect(html).toContain('class="reel-author-row__name" href="/u/a"');
   expect(html).not.toContain('reel-follow-pill');
   expect(html).not.toContain('aria-haspopup="dialog"');
+  // The description is read through More → Description: the modal shows the caption and the hashtags.
+  const screen=readFileSync(resolve(import.meta.dir,'../components/ReelsScreen.tsx'),'utf8');
+  expect(screen).toContain('aria-label="Description"');
+  expect(screen).toContain('{active.caption || "No description."}');
+  expect(screen).toContain('{active.hashtags.map((t) => (');
   // TikTok's bottom-left block: 12px in, 16px up, 381px wide at most; the sound control 8px in, 40px square.
   expect(html).toContain('class="reel-overlay-text"');
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
@@ -74,8 +84,10 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
   expect(screen).toContain('aria-label="More"');
   expect(screen).not.toContain('aria-label="Theater mode"');
   expect(screen).not.toContain('aria-label="Playback settings"');
-  expect(screen).toContain('onOpenSettings={() => setSettingsOpen(true)}');
   expect(screen).toContain('onTheater={() => void enterTheater()}');
+  expect(screen).toContain('onPrefsChange={updatePrefs}');
+  expect(screen).toContain('qualityHeights={qualityHeights}');
+  expect(screen).toContain('captionsAvailable={captionsAvailable}');
   expect(screen).toContain('moreMenuFor("below")');
   // The desktop rail no longer carries More; the phone rail keeps its own.
   expect(css).toContain('.reel-frame-action-wrap.is-more { display: none; }');
@@ -180,7 +192,7 @@ test('comments column is TikTok\'s 352px card in a 368px track driven by the con
 
 test('volume slider exposes the real level and reports zero while muted', () => {
   for (const [sound,volume,expected] of [[true,.37,37],[true,1,100],[false,.8,0]] as const) {
-    const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={sound} volume={volume} onVolumeChange={()=>{}} onToggleSound={()=>{}} onOpenSettings={()=>{}}/>);
+    const html=renderToStaticMarkup(<ReelOverlay reel={reel} sound={sound} volume={volume} onVolumeChange={()=>{}} onToggleSound={()=>{}}/>);
     expect(html).toContain('aria-label="Volume"');
     expect(html).toContain(`aria-valuetext="${expected}%"`);
     expect(html).toContain('min="0" max="100" step="1"');

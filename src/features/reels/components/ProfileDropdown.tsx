@@ -9,7 +9,16 @@ import Avatar from "@/components/ui/Avatar";
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { logoutUser } from '@/services/authService';
 
-export function ProfileDropdown() {
+export interface ProfileDropdownProps {
+  /**
+   * "md" (default): a 40px trigger ringed on hover around a 32px avatar.
+   * "sm": the avatar alone at 32px, no extra chrome — the floating
+   * top-right cluster over the video.
+   */
+  size?: "sm" | "md";
+}
+
+export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
   const { data: profile } = useMyProfile();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,13 +63,17 @@ export function ProfileDropdown() {
         aria-label="Account menu"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-brand-text/10"
+        className={
+          size === "sm"
+            ? "flex h-8 w-8 items-center justify-center rounded-full transition-opacity hover:opacity-90"
+            : "flex h-10 w-10 items-center justify-center rounded-full transition-all hover:ring-4 hover:ring-brand-text/10"
+        }
       >
         <Avatar
           key={avatarUrl}
           src={avatarUrl}
           name={displayName}
-          className="h-8 w-8 border-2 border-border shadow-xs"
+          className={size === "sm" ? "h-8 w-8" : "h-8 w-8 border-2 border-border shadow-xs"}
         />
       </button>
 

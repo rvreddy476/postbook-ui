@@ -48,14 +48,53 @@
 
 .reels-workspace :is(button,a):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
 
-/* ---- overlay: sound + settings top-left, More + Cinema top-right, text bottom-left ---- */
+/* ---- overlay: sound top-left, More top-right, text bottom-left ---- */
 .reel-playback-controls { position: absolute; left: 8px; top: 8px; z-index: 30; display: flex; align-items: center; gap: 8px; }
-.reel-settings-popover { pointer-events: auto; }
+.reel-frame-popover { pointer-events: auto; }
 @media (min-width: 768px) {
-  /* Anchored under its trigger: the settings under the gear at the top-left, the More menu under its circle at the top-right. */
-  .reel-settings-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 280px; max-height: min(420px,calc(var(--reel-height) - 80px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-  .reel-settings-popover button { gap: 10px; text-align: left; }
+  /* Anchored under its trigger: the More menu under its circle at the frame's top-right (8 + 48 + 8 from the top, 8 left at the bottom). */
+  .reel-frame-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 320px; max-height: calc(var(--reel-height) - 72px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 }
+
+/* ---- the More menu: TikTok's card, our rows ----
+   320 wide, radius 16, the on-video dark at .92 behind a 12px blur, white text, 8px padding;
+   44px rows 12px in with a 20px icon, 15/600 labels, hover at .08, radius 10; dividers 1px at .12
+   with 6px margins. Speed is a pill group of 28px chips (the active one white with dark text);
+   Auto scroll and Captions are 44×24 switches with a 20px knob (on = white track, dark knob).
+   Only the shadow is a literal colour: black under a dark card on the video. Below md the
+   Popover draws it as the bottom sheet (full width, its own corners) with the same rows. */
+.reel-more-menu[role="menu"] { padding: 8px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }
+@media (min-width: 768px) {
+  .reel-more-menu[role="menu"] { width: 320px; border-radius: 16px; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .reel-more-menu.reel-frame-popover[role="menu"] { max-height: calc(var(--reel-height) - 72px); }
+}
+.reel-more-menu__list { display: flex; flex-direction: column; }
+.reel-more-menu__row { display: flex; width: 100%; height: 44px; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: inherit; font-size: 15px; font-weight: 600; line-height: 1.2; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease; }
+.reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .08); }
+.reel-more-menu__row.is-static { cursor: default; }
+.reel-more-menu__row.is-static:hover { background: transparent; }
+.reel-more-menu__row:disabled { opacity: .45; cursor: not-allowed; }
+.reel-more-menu__row:disabled:hover { background: transparent; }
+.reel-more-menu__row.is-danger { color: rgb(var(--danger)); }
+.reel-more-menu__row.is-danger .reel-more-menu__icon { color: currentColor; }
+.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }
+.reel-more-menu__icon svg { width: 20px; height: 20px; }
+.reel-more-menu__label { display: flex; min-width: 0; flex: 1 1 auto; flex-direction: column; }
+.reel-more-menu__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reel-more-menu__hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 400; color: rgb(var(--reel-on-stage) / .6); }
+.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: rgb(var(--reel-on-stage) / .7); }
+.reel-more-menu__value svg { width: 18px; height: 18px; }
+.reel-more-menu__back { font-weight: 700; }
+.reel-more-menu__note { margin: 0; padding: 6px 12px 8px; font-size: 12px; color: rgb(var(--reel-on-stage) / .6); }
+.reel-more-menu__divider { height: 1px; margin: 6px 0; background: rgb(var(--reel-on-stage) / .12); }
+.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }
+.reel-more-menu__chip { display: inline-flex; height: 28px; min-width: 34px; align-items: center; justify-content: center; padding: 0 7px; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--reel-on-stage) / .8); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.reel-more-menu__chip:hover { color: rgb(var(--reel-on-stage)); }
+.reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
+.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 44px; width: 44px; height: 24px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .25); transition: background-color 140ms ease; }
+.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgb(var(--reel-on-stage)); transition: transform 140ms ease, background-color 140ms ease; }
+.reel-more-menu__switch[data-on] { background: rgb(var(--reel-on-stage)); }
+.reel-more-menu__switch[data-on] .reel-more-menu__knob { background: rgb(var(--reel-stage)); transform: translateX(20px); }
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
 /* The speaker: TikTok's translucent 40px square at the top-left of the video; the slider slides out on hover or focus. */
 .reel-volume-control { pointer-events: auto; display: flex; align-items: center; gap: 0; padding-right: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); transition: padding 140ms ease, background-color 140ms ease; }
@@ -63,13 +102,12 @@
 .reel-volume-control .reel-playback-button { background: transparent; }
 .reel-volume-control input { width: 0; opacity: 0; height: 24px; accent-color: rgb(var(--reel-on-stage)); cursor: pointer; transition: width 140ms ease, opacity 140ms ease; }
 .reel-volume-control:hover input,.reel-volume-control:focus-within input { width: 72px; opacity: 1; }
-.reel-settings-slot { pointer-events: auto; }
-/* Frame top-right: More at right 56, Cinema at the far right — 48px circles, 8px in, 8px apart. */
+/* Frame top-right: the More circle — 48px, 8px in. */
 /* The corner strip spans the frame so a card hung from it can never be wider than the video. Only its buttons take clicks. */
 .reel-frame-actions { position: absolute; top: 8px; right: 8px; left: 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }
 .reel-frame-actions > * { pointer-events: auto; }
 .reel-frame-action-wrap { position: static; }
-.reel-frame-actions .reel-settings-popover[role="menu"] { left: auto; right: 0; width: 280px; max-width: 100%; }
+.reel-frame-actions .reel-frame-popover[role="menu"] { left: auto; right: 0; width: 320px; max-width: 100%; }
 .reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
 .reel-frame-action:hover { background: rgb(var(--reel-stage) / .6); }
 /* Bottom-left text block: 12px in, 16px up, at most 381px wide (TikTok's video-desc). */
@@ -79,11 +117,7 @@
 .reel-author-row__name { min-width: 0; font-size: 18px; font-weight: 700; line-height: 1.25; color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reel-author-row__name:hover { text-decoration: underline; }
 .reel-title { margin: 6px 0 0; color: rgb(var(--reel-on-stage)); font-size: 14px; line-height: 1.4; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.reel-caption-row { margin-top: 4px; color: rgb(var(--reel-on-stage)); }
-.reel-caption { margin: 0; font-size: 14px; font-weight: 400; line-height: 1.4; white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.reel-caption.is-expanded { display: block; max-height: 40vh; overflow-y: auto; scrollbar-width: thin; }
-.reel-caption__more { font-size: 14px; font-weight: 700; color: rgb(var(--reel-on-stage)); }
-.reel-caption__more:hover { text-decoration: underline; }
+/* No description over the video: it is read through More → Description. */
 .reel-hashtags { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 14px; font-weight: 700; color: rgb(var(--reel-on-stage)); }
 
 
@@ -260,13 +294,12 @@ button.reel-panel-count:hover { opacity: .75; }
   .reel-theater-bar { gap: 8px; padding: 0 8px; }
   .reel-theater-bar__switch span:first-child, .reel-theater-bar__volume input { display: none; }
 }
-/* Keep the settings gear and the top-right circles hover-only on a mouse; the rail, the sound control,
-   the text block and the progress line stay, as on TikTok. Opacity, not visibility, preserves keyboard
-   discovery; an open menu keeps its trigger visible; touch controls stay available. */
+/* Keep the top-right More circle hover-only on a mouse; the rail, the sound control, the text block
+   and the progress line stay, as on TikTok. Opacity, not visibility, preserves keyboard discovery; an
+   open menu keeps its trigger visible; touch controls stay available. */
 @media (hover: hover) and (pointer: fine) {
-  .reel-stage-cluster :is(.reel-settings-slot,.reel-frame-actions,.reel-unmute-hint) { transition: opacity 140ms ease; }
-  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)):not(:has([role="menu"])) :is(.reel-settings-slot,.reel-frame-actions) { opacity: 0; pointer-events: none; }
-  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)):not(:has([role="menu"])) .reel-settings-slot * { pointer-events: none !important; }
+  .reel-stage-cluster :is(.reel-frame-actions,.reel-unmute-hint) { transition: opacity 140ms ease; }
+  .reel-stage-cluster:not(:hover):not(:has(:focus-visible)):not(:has([role="menu"])) .reel-frame-actions { opacity: 0; pointer-events: none; }
 }
 @media (pointer: coarse) {
   .reel-action-button { min-width: 44px; min-height: 44px; }

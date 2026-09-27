@@ -18,6 +18,17 @@
 .context-app-bar__create { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px 0 12px; margin-right: 4px; border: 0; border-radius: 999px; background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); font-size: 13px; font-weight: 650; letter-spacing: .01em; cursor: pointer; box-shadow: 0 6px 16px -8px rgb(var(--brand-ink) / .7); transition: background-color 120ms ease, box-shadow 120ms ease; }
 .context-app-bar__create:hover { background: rgb(var(--brand-ink-hover)); box-shadow: 0 8px 20px -8px rgb(var(--brand-ink) / .8); }
 .context-app-bar__create-label { white-space: nowrap; }
+.context-app-bar__create-plus { width: 18px; height: 18px; }
+.context-app-bar__create-chevron { width: 16px; height: 16px; margin-left: -2px; opacity: .85; }
+/* The Create menu: two rows (Photos, Videos), 240 wide, radius 14, the card surface, 44px rows. */
+.create-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 100; width: 240px; padding: 6px; border: 1px solid var(--brand-divider); border-radius: 14px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 16px 40px -16px rgb(var(--brand-text) / .3); }
+.create-menu__row { display: flex; width: 100%; height: 44px; align-items: center; gap: 12px; padding: 0 10px; border-radius: 10px; color: inherit; text-decoration: none; transition: background-color 120ms ease; }
+.create-menu__row:hover, .create-menu__row:focus-visible { background: rgb(var(--brand-secondary)); outline: none; }
+.create-menu__icon { display: inline-flex; flex: 0 0 32px; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 9px; background: rgb(var(--brand-tint)); color: rgb(var(--brand-ink)); }
+.create-menu__icon svg { width: 18px; height: 18px; }
+.create-menu__text { display: flex; min-width: 0; flex-direction: column; line-height: 1.25; }
+.create-menu__label { font-size: 14px; font-weight: 650; color: rgb(var(--brand-text)); }
+.create-menu__hint { font-size: 12px; font-weight: 400; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .context-app-bar :is(a,button):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
 .context-app-bar__mobile-search { display: none; }
 @media(max-width: 767px) {
@@ -31,6 +42,6 @@
 }
 @media(max-width: 639px) {
   .context-app-bar__create { width: 38px; padding: 0; justify-content: center; margin-right: 0; }
-  .context-app-bar__create-label { display: none; }
+  .context-app-bar__create-label, .context-app-bar__create-chevron { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .context-app-bar__create { transition: none; } }

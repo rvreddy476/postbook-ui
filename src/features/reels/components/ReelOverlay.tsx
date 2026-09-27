@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
 
@@ -16,20 +15,17 @@ interface ReelOverlayProps {
 
 /*
   What sits on top of the video: the sound control at the top-left (8px
-  in, 40px square, the slider on hover) with the playback settings beside
-  it, and at the bottom-left over a soft gradient — always — the author's
-  name (18/700, a plain link), the title, the description (14/400, two
-  lines and "more"), the hashtags (14/700) and the view count (12/600).
-  TikTok's description block: 12px from the left, 16px from the bottom,
-  at most 381px wide. No Follow here: following is the badge on the rail
-  avatar. The More and Cinema circles at the top-right are the screen's.
-  Clicks on any of it stop before reaching the stage.
+  in, 40px square, the slider on hover), and at the bottom-left over a
+  soft gradient — always — the author's name (18/700, a plain link), the
+  title (if any) and the hashtags (14/700). Nothing else: the description
+  is read through More → Description, never drawn over the video. TikTok's
+  block: 12px from the left, 16px from the bottom, at most 381px wide. No
+  Follow here: following is the badge on the rail avatar. The More circle
+  at the top-right is the screen's. Clicks on any of it stop before
+  reaching the stage.
 */
 export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound }: ReelOverlayProps) {
-  const [expanded, setExpanded] = useState(false);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
-  const caption = reel.caption.trim();
-  const longCaption = caption.length > 120 || caption.split("\n").length > 2;
 
   return (
     <>
@@ -61,25 +57,6 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
           </div>
 
           {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}
-
-          {caption ? (
-            <div className="reel-caption-row">
-              <p className={`reel-caption ${expanded ? "is-expanded" : ""}`}>{caption}</p>
-              {longCaption ? (
-                <button
-                  type="button"
-                  className="reel-caption__more pointer-events-auto"
-                  aria-expanded={expanded}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpanded((v) => !v);
-                  }}
-                >
-                  {expanded ? "less" : "more"}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
 
           {reel.hashtags.length > 0 ? (
             <p className="reel-hashtags pointer-events-auto">
