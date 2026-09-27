@@ -3,7 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { Channel, ChannelDetail } from "@/types/profile"
+import type { ChannelBrandingWire, ChannelPatch } from "@/features/settings/channel/model"
 import {
+    channelUserId,
     getChannel,
     getChannelSubscription,
     getMyChannel,
@@ -17,7 +19,6 @@ import {
 
 interface ChannelsResponse { data: Channel[] }
 interface ChannelDetailResponse { data: ChannelDetail }
-interface ChannelResponse { data: Channel }
 interface ChannelSubscriptionState {
     subscribed: boolean
     subscription?: {
@@ -31,13 +32,15 @@ interface ChannelSubscriptionResponse { data: ChannelSubscriptionState }
 
 // === QUERIES ===
 
-export function useMyChannels() {
+/** Legacy user-service channel rows (`/v1/users/me/channels`); the Tube channel itself is `useMyChannel`. */
+export function useMyChannels(enabled = true) {
     return useQuery({
         queryKey: ["my-channels"],
         queryFn: async () => {
             const res = await api.get<ChannelsResponse>("/v1/users/me/channels")
             return res.data.data
         },
+        enabled,
     })
 }
 
@@ -80,56 +83,51 @@ export function useChannelSubscription(channelId: string | undefined) {
 
 // === MUTATIONS ===
 
+/**
+ * `POST /v1/channels` — the caller's one Tube channel (post-service). This
+ * is the channel `GET /v1/channels/me` and the Branding page read; the
+ * legacy `POST /v1/users/me/channels` row is not what those routes serve.
+ */
 export function useCreateChannel() {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: async (payload: {
-            handle: string
             name: string
-            description?: string
-            category?: string
+            handle: string
+            about?: string
             avatar_media_id?: string
-            banner_media_id?: string
         }) => {
-            const res = await api.post<ChannelResponse>("/v1/users/me/channels", payload)
-            return res.data.data
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["my-channels"] })
-        },
-    })
-}
-
-export function useUpdateChannel() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async ({ id, ...payload }: {
-            id: string
-            handle?: string
-            name?: string
-            description?: string
-            category?: string
-            avatar_media_id?: string
-            banner_media_id?: string
-        }) => {
-            const res = await api.patch<ChannelResponse>(`/v1/channels/${id}`, payload)
+            const res = await api.post<{ data: ChannelInfo & ChannelBrandingWire }>("/v1/channels", payload)
             return res.data.data
         },
         onSuccess: (data) => {
+            qc.setQueryData(CHANNEL_REF_KEYS.mine, data)
+            qc.invalidateQueries({ queryKey: CHANNEL_REF_KEYS.mine })
             qc.invalidateQueries({ queryKey: ["my-channels"] })
-            qc.invalidateQueries({ queryKey: ["channel", data.handle] })
+            invalidateAuthorCache(channelUserId(data))
         },
     })
 }
 
-export function useDeleteChannel() {
+/**
+ * `PATCH /v1/channels/me` — only the changed keys (see
+ * features/settings/channel/model.ts `channelPatch`). `null` clears a media
+ * id or the featured post; `links` replaces the whole list.
+ */
+export function useUpdateChannel() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (id: string) => {
-            await api.delete(`/v1/channels/${id}`)
+        mutationFn: async (patch: ChannelPatch) => {
+            const res = await api.patch<{ data: ChannelInfo & ChannelBrandingWire }>("/v1/channels/me", patch)
+            return res.data.data
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            qc.setQueryData(CHANNEL_REF_KEYS.mine, data)
+            qc.invalidateQueries({ queryKey: CHANNEL_REF_KEYS.mine })
+            qc.invalidateQueries({ queryKey: ["channel-ref"] })
             qc.invalidateQueries({ queryKey: ["my-channels"] })
+            if (data.handle) qc.invalidateQueries({ queryKey: ["channel", data.handle] })
+            invalidateAuthorCache(channelUserId(data))
         },
     })
 }
