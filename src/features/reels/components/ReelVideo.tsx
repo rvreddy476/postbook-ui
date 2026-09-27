@@ -157,15 +157,18 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         useFile();
         return;
       }
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = hlsUrl;
-        video.load();
-        onQualityLevels?.([]);
-        return;
-      }
+      // hls.js first wherever Media Source exists: some Chromes answer "maybe"
+      // to native HLS and then never load a byte. Native only where MSE is
+      // absent (iOS Safari), the MP4 after that.
       const { default: HlsCtor } = await import("hls.js");
       if (cancelled) return;
       if (!HlsCtor.isSupported()) {
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = hlsUrl;
+          video.load();
+          onQualityLevels?.([]);
+          return;
+        }
         useFile();
         return;
       }
