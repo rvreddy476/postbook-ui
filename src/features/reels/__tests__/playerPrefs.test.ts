@@ -12,7 +12,7 @@ describe("parsePrefs", () => {
     const p = parsePrefs(JSON.stringify({ sound: true, volume: 7, speed: 3, quality: "720p", captions: "yes", onEnd: "next" }));
     expect(p.sound).toBe(true);
     expect(p.volume).toBe(1); // out of range → default
-    expect(p.speed).toBe(1); // not an offered speed → default
+    expect(p.speed).toBe(1); // above 2× → default
     expect(p.quality).toBe("720p");
     expect(p.captions).toBe(false);
     expect(p.onEnd).toBe("next");

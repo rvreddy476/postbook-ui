@@ -23,6 +23,7 @@ import {
     Receipt,
     Flag,
     Gauge,
+    UserX,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -253,6 +254,12 @@ export default function SettingsPage() {
                         icon={<Lock className="h-4 w-4 text-brand-highlight" />}
                         label="Privacy"
                         description="Profile visibility, tagging, and content filters"
+                    />
+                    <SettingsLink
+                        href="/settings/hidden-channels"
+                        icon={<UserX className="h-4 w-4 text-brand-highlight" />}
+                        label="Hidden channels"
+                        description="Channels you asked not to be recommended"
                     />
                     <SettingsLink
                         href="/apps"

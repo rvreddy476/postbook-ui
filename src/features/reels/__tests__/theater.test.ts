@@ -4,13 +4,18 @@ import { SPEEDS } from "../playback/playerPrefs";
 import { cycleSpeed, speedLabel } from "../theater";
 
 describe("cycleSpeed", () => {
-  test("walks the settings rungs in order and wraps after 2×", () => {
-    expect(cycleSpeed(0.5)).toBe(0.75);
-    expect(cycleSpeed(0.75)).toBe(1);
+  test("walks the preset chips in order and wraps after 2×", () => {
+    expect(cycleSpeed(0.25)).toBe(1);
     expect(cycleSpeed(1)).toBe(1.25);
     expect(cycleSpeed(1.25)).toBe(1.5);
     expect(cycleSpeed(1.5)).toBe(2);
-    expect(cycleSpeed(2)).toBe(0.5);
+    expect(cycleSpeed(2)).toBe(0.25);
+  });
+
+  test("a slider value between presets steps up to the next preset", () => {
+    expect(cycleSpeed(0.75)).toBe(1);
+    expect(cycleSpeed(1.1)).toBe(1.25);
+    expect(cycleSpeed(1.95)).toBe(2);
   });
 
   test("visits every rung exactly once round the loop", () => {

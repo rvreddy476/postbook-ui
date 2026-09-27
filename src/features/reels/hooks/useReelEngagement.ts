@@ -152,7 +152,11 @@ export function useRestoreReel() {
   });
 }
 
-/** "Don't recommend @author": waits for the server, then hides their reels. */
+/**
+ * "Don't recommend this channel": every reel by the author leaves the feed
+ * at once; the server keeps the exclusion (feed_author_feedback) until the
+ * viewer shows the channel again. A failed call refetches so they return.
+ */
 export function useDontRecommendAuthor() {
   const qc = useQueryClient();
   return useMutation({
@@ -160,8 +164,28 @@ export function useDontRecommendAuthor() {
       await sendAuthorFeedback(reel.authorId, "not_interested");
       return reel.authorId;
     },
+    onMutate: (reel) => {
+      removeAuthorEverywhere(qc, reel.authorId);
+    },
+    onError: () => {
+      void qc.invalidateQueries({ queryKey: ["reels", "feed"] });
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["reels", "feed"] });
+      void qc.invalidateQueries({ queryKey: ["feed", "hidden-authors"] });
+    },
+  });
+}
+
+/** Undo for the above: the positive signal, then the feed refetches so the reels come back. */
+export function useShowAuthorAgainFromStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (authorId: string) => {
+      await sendAuthorFeedback(authorId, "interested");
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["reels", "feed"] });
+      void qc.invalidateQueries({ queryKey: ["feed", "hidden-authors"] });
     },
   });
 }

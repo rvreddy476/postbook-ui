@@ -1,9 +1,9 @@
 "use client";
 
-import { Fragment } from "react";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   AlignLeft,
+  AudioLines,
   Ban,
   Captions,
   Check,
@@ -17,7 +17,8 @@ import {
   Gauge,
   Info,
   Link2,
-  Maximize,
+  Minus,
+  Plus,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -29,7 +30,15 @@ import {
 import { Popover } from "@/features/reels/components/Popover";
 import { MENU_SPEEDS, moreMenuItems, type MoreMenuItemKey } from "@/features/reels/menu";
 import type { ReelItem } from "@/features/reels/model";
-import type { PlayerPrefs, Speed } from "@/features/reels/playback/playerPrefs";
+import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP, speedChipLabel, type PlayerPrefs, type Speed } from "@/features/reels/playback/playerPrefs";
+export { speedChipLabel };
+
+/** One selectable audio track for the reel; the original is always first. */
+export interface AudioTrackOption {
+  id: string;
+  label: string;
+}
+export const ORIGINAL_AUDIO_ID = "original";
 
 interface ReelMoreMenuProps {
   open: boolean;
@@ -45,6 +54,12 @@ interface ReelMoreMenuProps {
   /** Heights the current manifest offers; empty = Auto only. */
   qualityHeights: number[];
   captionsAvailable: "unknown" | "yes" | "no";
+  /** Alternate audio for this reel (original first). One entry = no choice, row hidden. */
+  audioTracks?: AudioTrackOption[];
+  currentAudioTrack?: string;
+  onAudioTrack?: (id: string) => void;
+  /** Own reel: opens the creator's audio-tracks dialog. */
+  onManageAudio?: () => void;
   onCopyLink: () => void;
   onDescription: () => void;
   onInterested: () => void;
@@ -63,26 +78,22 @@ interface ReelMoreMenuProps {
   anchor?: "beside" | "below";
 }
 
-const MENU_GROUPS: readonly (readonly MoreMenuItemKey[])[] = [
-  ["copy-link", "description", "download", "why"],
-  ["interested", "follow", "unfollow", "block", "delete"],
-  ["clear-screen"],
-  ["not-interested", "dont-recommend", "report"],
-];
+type Pane = "root" | "speed" | "quality" | "captions" | "audio";
 
-/** "0.75", "1.0", "1.25", "1.5", "2.0" — the chip labels. */
-export function speedChipLabel(s: number): string {
-  return Number.isInteger(s) ? s.toFixed(1) : String(s);
+/** "Normal" at 1×, else "1.25x" — the value shown beside Playback speed. */
+export function speedValueLabel(speed: number): string {
+  return speed === 1 ? "Normal" : `${speedChipLabel(speed)}x`;
 }
 
 /*
-  TikTok's More card, with our rows: the playback controls first (Speed as
-  an inline segmented control, Quality opening a sub-list in the same card,
-  Auto scroll and Captions as switches, Theater mode), a divider, then the
-  mapped rows moreMenuItems decides (pure, tested). Every row does
-  something real. The playback rows keep the menu open; the rest close it.
-  Colour is the on-video pair (--reel-stage / --reel-on-stage) through
-  reels-screen.css (.reel-more-menu).
+  YouTube Shorts' More card, with our rows: Description · Captions · Audio
+  track · Playback speed · Quality · Auto scroll · Not interested · Don't
+  recommend this channel · Report. Rows that hold a choice show the current
+  value and a chevron and open a pane inside the same card (speed is
+  YouTube's slider panel: the big readout, − / + in 0.05 steps, preset
+  chips). The card is the theme's surface (white in light mode, dark in
+  dark mode) through reels-screen.css (.reel-more-menu). The choice panes
+  keep the menu open; the actions close it.
 */
 export function ReelMoreMenu({
   open,
@@ -95,6 +106,10 @@ export function ReelMoreMenu({
   onPrefsChange,
   qualityHeights,
   captionsAvailable,
+  audioTracks = [],
+  currentAudioTrack = ORIGINAL_AUDIO_ID,
+  onAudioTrack,
+  onManageAudio,
   onCopyLink,
   onDescription,
   onInterested,
@@ -107,7 +122,7 @@ export function ReelMoreMenu({
   onReport,
   anchor = "beside",
 }: ReelMoreMenuProps) {
-  const [pane, setPane] = useState<"root" | "quality">("root");
+  const [pane, setPane] = useState<Pane>("root");
   // Reopening always lands on the root pane, however the menu was closed.
   useEffect(() => {
     if (!open) setPane("root");
@@ -126,13 +141,17 @@ export function ReelMoreMenu({
   const rungs = Array.from(new Set(qualityHeights)).sort((a, b) => b - a);
   const qualityLabel = prefs.quality === "auto" ? "Auto" : prefs.quality;
   const noCaptions = captionsAvailable === "no";
+  const captionsLabel = noCaptions ? "None" : prefs.captions ? "On" : "Off";
+  const hasAudioChoice = audioTracks.length > 1;
+  const audioLabel = audioTracks.find((t) => t.id === currentAudioTrack)?.label ?? audioTracks[0]?.label ?? "Original";
+  const setSpeed = (s: number) => onPrefsChange({ speed: clampSpeed(s) as Speed });
 
   const row = (key: MoreMenuItemKey) => {
     switch (key) {
       case "copy-link":
         return <Row key={key} icon={<Link2 />} label="Copy link" onClick={run(onCopyLink)} />;
       case "description":
-        return <Row key={key} icon={<AlignLeft />} label="Description" onClick={run(onDescription)} />;
+        return <Row key={key} icon={<AlignLeft />} label="Description" dataRow="description" onClick={run(onDescription)} />;
       case "download":
         return (
           <a key={key} role="menuitem" href={reel.media.downloadUrl} download={`reel-${reel.id}.mp4`} onClick={close} className="reel-more-menu__row">
@@ -155,95 +174,89 @@ export function ReelMoreMenu({
       case "clear-screen":
         return <Row key={key} icon={<EyeOff />} label="Clear screen" hint="Hide the controls · H" onClick={run(onClearScreen)} />;
       case "not-interested":
-        return <Row key={key} icon={<CircleSlash />} label="Not interested" onClick={run(onNotInterested)} />;
+        return <Row key={key} icon={<CircleSlash />} label="Not interested" dataRow="not-interested" onClick={run(onNotInterested)} />;
       case "dont-recommend":
-        return <Row key={key} icon={<UserX />} label={`Don't recommend ${handle}`} onClick={run(onDontRecommend)} />;
+        return <Row key={key} icon={<UserX />} label="Don't recommend this channel" hint={handle} dataRow="dont-recommend" onClick={run(onDontRecommend)} />;
       case "report":
-        return <Row key={key} icon={<Flag />} label="Report" danger onClick={run(onReport)} />;
+        return <Row key={key} icon={<Flag />} label="Report" dataRow="report" danger onClick={run(onReport)} />;
       default:
         return null;
     }
   };
 
-  // Every row carries a label so the list can be sorted alphabetically.
-  const mappedLabel = (key: MoreMenuItemKey): string => {
-    switch (key) {
-      case "copy-link": return "Copy link";
-      case "description": return "Description";
-      case "download": return "Download";
-      case "why": return "Why you're seeing this";
-      case "interested": return "Interested";
-      case "follow": return `Follow ${handle}`;
-      case "unfollow": return `Unfollow ${handle}`;
-      case "block": return `Block ${handle}`;
-      case "delete": return "Delete reel";
-      case "clear-screen": return "Clear screen";
-      case "not-interested": return "Not interested";
-      case "dont-recommend": return `Don't recommend ${handle}`;
-      case "report": return "Report";
-      default: return key;
-    }
-  };
-  const playbackRows: { key: string; label: string; node: ReactNode }[] = [
-    { key: "speed", label: "Speed", node: (
-            <div className="reel-more-menu__row is-static" role="group" aria-label="Speed" data-row="speed">
-              <span className="reel-more-menu__icon"><Gauge /></span>
-              <span className="reel-more-menu__label">Speed</span>
-              <span className="reel-more-menu__segmented" role="radiogroup" aria-label="Playback speed">
-                {MENU_SPEEDS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={prefs.speed === s}
-                    className="reel-more-menu__chip"
-                    onClick={() => onPrefsChange({ speed: s as Speed })}
-                  >
-                    {speedChipLabel(s)}
-                  </button>
-                ))}
-              </span>
-            </div>
-    ) },
-    { key: "quality", label: "Quality", node: (
-            <button type="button" role="menuitem" aria-haspopup="menu" className="reel-more-menu__row" data-row="quality" onClick={() => setPane("quality")}>
-              <span className="reel-more-menu__icon"><SlidersHorizontal /></span>
-              <span className="reel-more-menu__label">Quality</span>
-              <span className="reel-more-menu__value">
-                {qualityLabel}
-                <ChevronRight />
-              </span>
-            </button>
-    ) },
-    { key: "auto-scroll", label: "Auto scroll", node: (
-            <SwitchRow
-              icon={<ChevronsDown />}
-              label="Auto scroll"
-              dataRow="auto-scroll"
-              on={prefs.onEnd === "next"}
-              onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })}
-            />
-    ) },
-    { key: "captions", label: "Captions", node: (
-            <SwitchRow
-              icon={<Captions />}
-              label="Captions"
-              dataRow="captions"
-              hint={noCaptions ? "None for this reel" : undefined}
-              disabled={noCaptions}
-              on={prefs.captions}
-              onToggle={() => onPrefsChange({ captions: !prefs.captions })}
-            />
-    ) },
-  ];
-  const sortedRows = [...playbackRows, ...items.map((k) => ({ key: k as string, label: mappedLabel(k), node: row(k) }))].sort((a, b) =>
-    a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
+  const root = (
+    <div className="reel-more-menu__list" data-pane="root">
+      {items.includes("description") ? row("description") : null}
+      <ChoiceRow icon={<Captions />} label="Captions" value={captionsLabel} dataRow="captions" disabled={noCaptions} onClick={() => setPane("captions")} />
+      {hasAudioChoice ? <ChoiceRow icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} /> : null}
+      {onManageAudio ? <ChoiceRow icon={<AudioLines />} label="Audio tracks" value={`${Math.max(0, audioTracks.length - 1)} added`} dataRow="manage-audio" onClick={run(onManageAudio)} /> : null}
+      <ChoiceRow icon={<Gauge />} label="Playback speed" value={speedValueLabel(prefs.speed)} dataRow="speed" onClick={() => setPane("speed")} />
+      <ChoiceRow icon={<SlidersHorizontal />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} />
+      <SwitchRow icon={<ChevronsDown />} label="Auto scroll" dataRow="auto-scroll" on={prefs.onEnd === "next"} onToggle={() => onPrefsChange({ onEnd: prefs.onEnd === "next" ? "loop" : "next" })} />
+      {items.filter((k) => k !== "description").map(row)}
+    </div>
   );
 
-  // Visual groups: info · relationship · clear screen · feedback/report.
-  const groups = MENU_GROUPS
-    .map((g) => g.filter((k) => items.includes(k)))
-    .filter((g) => g.length > 0);
+  const speedPane = (
+    <div className="reel-more-menu__list" data-pane="speed">
+      <Back label="Playback speed" onClick={() => setPane("root")} />
+      <div className="reel-speed-panel" role="group" aria-label="Playback speed">
+        <div className="reel-speed-panel__readout" aria-live="polite">{speedChipLabel(prefs.speed)}x</div>
+        <div className="reel-speed-panel__slider">
+          <button type="button" aria-label="Slower" disabled={prefs.speed <= SPEED_MIN} onClick={() => setSpeed(prefs.speed - SPEED_STEP)}><Minus /></button>
+          <input
+            type="range"
+            min={SPEED_MIN}
+            max={SPEED_MAX}
+            step={SPEED_STEP}
+            value={prefs.speed}
+            aria-label="Playback speed"
+            aria-valuetext={`${speedChipLabel(prefs.speed)}x`}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+          />
+          <button type="button" aria-label="Faster" disabled={prefs.speed >= SPEED_MAX} onClick={() => setSpeed(prefs.speed + SPEED_STEP)}><Plus /></button>
+        </div>
+        <div className="reel-speed-panel__chips" role="radiogroup" aria-label="Preset speeds">
+          {MENU_SPEEDS.map((s) => (
+            <span key={s} className="reel-speed-panel__chip-wrap">
+              <button type="button" role="radio" aria-checked={prefs.speed === s} className="reel-more-menu__chip" onClick={() => setSpeed(s)}>
+                {speedChipLabel(s)}
+              </button>
+              {s === 1 ? <span className="reel-speed-panel__normal">Normal</span> : null}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const qualityPane = (
+    <div className="reel-more-menu__list" data-pane="quality">
+      <Back label="Quality" onClick={() => setPane("root")} />
+      <Option label="Auto" selected={prefs.quality === "auto"} onClick={() => onPrefsChange({ quality: "auto" })} />
+      {rungs.map((h) => (
+        <Option key={h} label={`${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onPrefsChange({ quality: `${h}p` })} />
+      ))}
+      {rungs.length === 0 ? <p className="reel-more-menu__note">Only Auto is available for this reel.</p> : null}
+    </div>
+  );
+
+  const captionsPane = (
+    <div className="reel-more-menu__list" data-pane="captions">
+      <Back label="Captions" onClick={() => setPane("root")} />
+      <Option label="Off" selected={!prefs.captions} onClick={() => onPrefsChange({ captions: false })} />
+      <Option label="On" selected={prefs.captions} onClick={() => onPrefsChange({ captions: true })} />
+    </div>
+  );
+
+  const audioPane = (
+    <div className="reel-more-menu__list" data-pane="audio">
+      <Back label="Audio track" onClick={() => setPane("root")} />
+      {audioTracks.map((t) => (
+        <Option key={t.id} label={t.label} selected={t.id === currentAudioTrack} onClick={() => onAudioTrack?.(t.id)} />
+      ))}
+    </div>
+  );
 
   return (
     <Popover
@@ -256,33 +269,18 @@ export function ReelMoreMenu({
       tone="stage"
       className="reel-more-menu"
     >
-      {pane === "quality" ? (
-        <div className="reel-more-menu__list" data-pane="quality">
-          <button type="button" className="reel-more-menu__row reel-more-menu__back" onClick={() => setPane("root")}>
-            <span className="reel-more-menu__icon"><ChevronLeft /></span>
-            <span className="reel-more-menu__label">Quality</span>
-          </button>
-          <Divider />
-          <Option label="Auto" selected={prefs.quality === "auto"} onClick={() => onPrefsChange({ quality: "auto" })} />
-          {rungs.map((h) => (
-            <Option key={h} label={`${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onPrefsChange({ quality: `${h}p` })} />
-          ))}
-          {rungs.length === 0 ? <p className="reel-more-menu__note">Only Auto is available for this reel.</p> : null}
-        </div>
-      ) : (
-        <div className="reel-more-menu__list" data-pane="root">
-          {/* Every row, playback and mapped alike, in alphabetical order — the founder's rule. */}
-          {sortedRows.map((r) => (
-            <Fragment key={r.key}>{r.node}</Fragment>
-          ))}
-        </div>
-      )}
+      {pane === "speed" ? speedPane : pane === "quality" ? qualityPane : pane === "captions" ? captionsPane : pane === "audio" ? audioPane : root}
     </Popover>
   );
 }
 
-function Divider() {
-  return <div role="separator" className="reel-more-menu__divider" />;
+function Back({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" className="reel-more-menu__row reel-more-menu__back" onClick={onClick}>
+      <span className="reel-more-menu__icon"><ChevronLeft /></span>
+      <span className="reel-more-menu__label">{label}</span>
+    </button>
+  );
 }
 
 function Row({
@@ -308,6 +306,36 @@ function Row({
       <span className="reel-more-menu__label">
         <span className="reel-more-menu__title">{label}</span>
         {hint ? <span className="reel-more-menu__hint">{hint}</span> : null}
+      </span>
+    </button>
+  );
+}
+
+/** A row that opens a pane: label, the current value, a chevron. */
+function ChoiceRow({
+  icon,
+  label,
+  value,
+  onClick,
+  disabled,
+  dataRow,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  onClick: () => void;
+  disabled?: boolean;
+  dataRow?: string;
+}) {
+  return (
+    <button type="button" role="menuitem" aria-haspopup="menu" disabled={disabled} onClick={onClick} data-row={dataRow} className="reel-more-menu__row">
+      <span className="reel-more-menu__icon">{icon}</span>
+      <span className="reel-more-menu__label">
+        <span className="reel-more-menu__title">{label}</span>
+      </span>
+      <span className="reel-more-menu__value">
+        {value}
+        <ChevronRight />
       </span>
     </button>
   );
@@ -347,8 +375,8 @@ function SwitchRow({
 function Option({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
   return (
     <button type="button" role="menuitemradio" aria-checked={selected} onClick={onClick} className="reel-more-menu__row">
+      <span className="reel-more-menu__icon">{selected ? <Check /> : null}</span>
       <span className="reel-more-menu__label">{label}</span>
-      {selected ? <span className="reel-more-menu__value"><Check /></span> : null}
     </button>
   );
 }

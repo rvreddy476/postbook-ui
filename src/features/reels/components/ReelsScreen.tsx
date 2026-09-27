@@ -23,6 +23,9 @@ import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDraw
 import { ReelTheaterBar } from "@/features/reels/components/ReelTheaterBar";
 import { ReelTheaterPanel } from "@/features/reels/components/ReelTheaterPanel";
 import { ReelGapSearch } from "@/features/reels/components/ReelGapSearch";
+import { ReelAudioTracksDialog } from "@/features/reels/components/ReelAudioTracksDialog";
+import { useAudioTracks } from "@/features/reels/hooks/useAudioTracks";
+import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { feedFromSearch } from "@/features/reels/feed";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
@@ -30,6 +33,7 @@ import {
   useBlockAuthor,
   useDeleteReel,
   useDontRecommendAuthor,
+  useShowAuthorAgainFromStage,
   useInterested,
   useLikeReel,
   useNotInterested,
@@ -104,6 +108,7 @@ export function ReelsScreen() {
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [audioOpen, setAudioOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -210,6 +215,12 @@ export function ReelsScreen() {
     }
   };
   const subscription = useReelSubscription(active?.channelHandle, Boolean(active?.channelHandle) && !isOwn);
+  // Alternate audio: the viewer's preferred language, satisfied per reel or falling back to the original.
+  const audioTracks = useAudioTracks(active?.media.mediaId);
+  const audioOptions = audioTrackOptions(audioTracks.data ?? []);
+  const activeAudioTrack = pickAudioTrack(audioTracks.data ?? [], prefs.audioLanguage);
+  const currentAudioTrack = activeAudioTrack?.id ?? ORIGINAL_TRACK_ID;
+  const onAudioTrack = (id: string) => updatePrefs({ audioLanguage: languageForChoice(audioTracks.data ?? [], id) });
   const toggleSubscribe = async () => {
     try {
       await subscription.toggle();
@@ -224,6 +235,7 @@ export function ReelsScreen() {
   const share = useShareReel();
   const notInterested = useNotInterested();
   const dontRecommend = useDontRecommendAuthor();
+  const showAuthorAgain = useShowAuthorAgainFromStage();
   const interested = useInterested();
   const block = useBlockAuthor();
   const remove = useDeleteReel();
@@ -258,10 +270,28 @@ export function ReelsScreen() {
     });
     toast({ type: "info", title: "You'll see fewer reels like this" });
   };
+  /** Don't recommend this channel: their reels leave at once, the server keeps it, Undo brings them back. */
   const onDontRecommend = () => {
     if (!active) return;
-    dontRecommend.mutate(active, {
-      onSuccess: () => toast({ type: "info", title: `You'll see fewer reels from ${active.authorUsername ? `@${active.authorUsername}` : "this creator"}` }),
+    const target = active;
+    const who = target.authorUsername ? `@${target.authorUsername}` : target.authorName || "this channel";
+    if (pinned.data?.authorId === target.authorId) qc.setQueryData(["reels", "pinned", deepLinkId], null);
+    setDirection(1);
+    dontRecommend.mutate(target, {
+      onSuccess: () =>
+        toast({
+          type: "info",
+          title: `${who} won't be recommended`,
+          customContent: (
+            <ReelUndoToast
+              title={`${who} won't be recommended`}
+              doneTitle={`${who} will be recommended again`}
+              busyLabel="Undoing…"
+              onUndo={() => showAuthorAgain.mutateAsync(target.authorId)}
+              onFailed={() => toast({ type: "error", title: "Could not undo" })}
+            />
+          ),
+        }),
       onError: () => toast({ type: "error", title: "Could not save that preference" }),
     });
   };
@@ -523,6 +553,10 @@ export function ReelsScreen() {
       onPrefsChange={updatePrefs}
       qualityHeights={qualityHeights}
       captionsAvailable={captionsAvailable}
+      audioTracks={audioOptions}
+      currentAudioTrack={currentAudioTrack}
+      onAudioTrack={onAudioTrack}
+      onManageAudio={isOwn ? () => setAudioOpen(true) : undefined}
       onCopyLink={onCopyLink}
       onDescription={() => setDescriptionOpen(true)}
       onInterested={onInterested}
@@ -667,6 +701,7 @@ export function ReelsScreen() {
                             setMeasuredAspect((m) => (m[id] === ar ? m : { ...m, [id]: ar }));
                           }}
                           chromeless={theater}
+                          sourceOverride={activeAudioTrack?.playback_url ?? null}
                         />
                         {theater ? null : (
                           <ReelOverlay
@@ -782,6 +817,7 @@ export function ReelsScreen() {
           <>
             <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
             <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
+            {active ? <ReelAudioTracksDialog open={audioOpen} mediaId={active.media.mediaId} onClose={() => setAudioOpen(false)} /> : null}
             <ReelConfirmDialog
               open={blockOpen}
               title={`Block ${active.authorUsername ? `@${active.authorUsername}` : active.authorName}?`}
@@ -905,12 +941,24 @@ function NavButton({ label, disabled, onClick, icon }: { label: string; disabled
   );
 }
 
-/** The body of the "Reel deleted" toast: the title and an Undo that restores it. */
-function ReelUndoToast({ onUndo, onFailed }: { onUndo: () => Promise<void>; onFailed: () => void }) {
+/** The body of an Undo toast: a title, and an Undo that reverses the action. */
+function ReelUndoToast({
+  onUndo,
+  onFailed,
+  title = "Reel deleted",
+  doneTitle = "Reel restored",
+  busyLabel = "Restoring…",
+}: {
+  onUndo: () => Promise<void>;
+  onFailed: () => void;
+  title?: string;
+  doneTitle?: string;
+  busyLabel?: string;
+}) {
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   return (
     <div className="flex items-center gap-3 py-3 pl-4 pr-9">
-      <p className="min-w-0 flex-1 text-sm font-semibold text-brand-text">{state === "done" ? "Reel restored" : "Reel deleted"}</p>
+      <p className="min-w-0 flex-1 text-sm font-semibold text-brand-text">{state === "done" ? doneTitle : title}</p>
       {state !== "done" ? (
         <button
           type="button"
@@ -927,7 +975,7 @@ function ReelUndoToast({ onUndo, onFailed }: { onUndo: () => Promise<void>; onFa
           }}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-[12px] font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
         >
-          <Undo2 className="h-3.5 w-3.5" /> {state === "busy" ? "Restoring…" : "Undo"}
+          <Undo2 className="h-3.5 w-3.5" /> {state === "busy" ? busyLabel : "Undo"}
         </button>
       ) : null}
     </div>

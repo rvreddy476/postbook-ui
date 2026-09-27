@@ -33,21 +33,20 @@ export interface MoreMenuContext {
 }
 
 /*
-  The playback rows at the top of the More menu (TikTok's layout): Speed
-  as an inline segmented control, Quality opening a sub-list, Auto scroll
-  and Captions as switches, Theater mode in the "Floating player" slot.
-  They are always present; the mapped rows below them come from
-  moreMenuItems. Speed offers five chips — 0.5 stays a valid stored value
-  (playerPrefs.SPEEDS) but is not offered here.
+  The playback rows of the More menu (YouTube Shorts' layout): Captions,
+  Audio track, Playback speed and Quality open panes inside the card and
+  show their current value; Auto scroll is a switch. The mapped rows come
+  from moreMenuItems (Description first, the feedback rows last).
+  MENU_SPEEDS are the preset chips under the speed slider.
 */
-export const PLAYBACK_ROWS = ["speed", "quality", "auto-scroll", "captions"] as const;
+export const PLAYBACK_ROWS = ["captions", "audio", "speed", "quality", "auto-scroll"] as const;
 export type PlaybackRowKey = (typeof PLAYBACK_ROWS)[number];
-export const MENU_SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
+export const MENU_SPEEDS = [0.25, 1, 1.25, 1.5, 2] as const;
 
 /**
- * The mapped rows in display order, after the playback rows. The founder's
- * cut (2026-09-27) is TikTok's short list: Description, Not interested,
- * Report. The other actions (copy link, download, follow, block, delete,
+ * The mapped rows in display order, around the playback rows. The founder's
+ * cut (2026-09-27, YouTube Shorts' list): Description, then Not interested,
+ * Don't recommend this channel, Report. The other actions (copy link, download, follow, block, delete,
  * clear screen, don't recommend, why) keep their renderers and handlers
  * but are not offered until asked for again. Separators are the
  * renderer's business.
@@ -55,7 +54,7 @@ export const MENU_SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
 export function moreMenuItems(reel: ReelItem, ctx: MoreMenuContext): MoreMenuItemKey[] {
   const items: MoreMenuItemKey[] = [];
   if (reel.caption || reel.hashtags.length) items.push("description");
-  if (!ctx.isOwn) items.push("not-interested", "report");
+  if (!ctx.isOwn) items.push("not-interested", "dont-recommend", "report");
   return items;
 }
 

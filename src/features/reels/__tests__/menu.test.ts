@@ -32,14 +32,14 @@ function reel(extra: Partial<ReelItem> = {}): ReelItem {
 }
 
 describe("moreMenuItems", () => {
-  test("someone else's reel: Description (when there is text), Not interested, Report — nothing else", () => {
+  test("someone else's reel: Description (when there is text), Not interested, Don't recommend, Report — nothing else", () => {
     const items = moreMenuItems(reel({ caption: "hi", downloadAllowed: true, reasonText: "r" }), { isOwn: false, relationshipKnown: true, following: false });
-    expect(items).toEqual(["description", "not-interested", "report"]);
+    expect(items).toEqual(["description", "not-interested", "dont-recommend", "report"]);
   });
 
   test("no caption and no hashtags: no Description row", () => {
-    expect(moreMenuItems(reel(), { isOwn: false, relationshipKnown: true, following: false })).toEqual(["not-interested", "report"]);
-    expect(moreMenuItems(reel({ hashtags: ["x"] }), { isOwn: false, relationshipKnown: true, following: false })).toEqual(["description", "not-interested", "report"]);
+    expect(moreMenuItems(reel(), { isOwn: false, relationshipKnown: true, following: false })).toEqual(["not-interested", "dont-recommend", "report"]);
+    expect(moreMenuItems(reel({ hashtags: ["x"] }), { isOwn: false, relationshipKnown: true, following: false })).toEqual(["description", "not-interested", "dont-recommend", "report"]);
   });
 
   test("own reel: only Description; never Not interested or Report", () => {
@@ -49,7 +49,7 @@ describe("moreMenuItems", () => {
 
   test("the cut rows never appear, whatever the reel carries", () => {
     const items = moreMenuItems(reel({ caption: "hi", downloadAllowed: true, reasonText: "r" }), { isOwn: false, relationshipKnown: true, following: true });
-    for (const key of ["copy-link", "download", "why", "interested", "follow", "unfollow", "block", "delete", "clear-screen", "dont-recommend", "playback", "theater"]) {
+    for (const key of ["copy-link", "download", "why", "interested", "follow", "unfollow", "block", "delete", "clear-screen", "playback", "theater"]) {
       expect(items).not.toContain(key);
     }
   });

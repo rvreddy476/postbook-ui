@@ -357,6 +357,16 @@ export default function PrivacyPage() {
                     </div>
                     <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
                 </Link>
+                <Link
+                    href="/settings/hidden-channels"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                >
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-brand-text">Hidden channels</p>
+                        <p className="text-xs text-brand-highlight">Channels you asked not to be recommended, and how to show them again</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
+                </Link>
             </SectionCard>
 
             {/* Save */}

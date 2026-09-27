@@ -63,12 +63,18 @@ interface ReelVideoProps {
   onDimensions?: (width: number, height: number) => void;
   /** No in-frame scrubber (the theater bar carries its own, driving this same element). */
   chromeless?: boolean;
+  /**
+   * Play this progressive file instead of the reel's own sources: an
+   * alternate audio track muxed into the same picture. Switching keeps the
+   * playhead and the play/pause state.
+   */
+  sourceOverride?: string | null;
 }
 
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -107,6 +113,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   });
 
   /* ── source attach ─────────────────────────────────────── */
+  // Where the clock was when the source last changed (an audio-track switch), restored after load.
+  const resumeRef = useRef<{ at: number; paused: boolean } | null>(null);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -114,15 +122,33 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     setFailed(false);
     setBuffering(true);
 
-    const useFile = () => {
+    const resume = resumeRef.current;
+    resumeRef.current = null;
+    if (resume) {
+      const onLoaded = () => {
+        video.removeEventListener("loadedmetadata", onLoaded);
+        if (cancelled) return;
+        video.currentTime = resume.at;
+        if (!resume.paused) void video.play().catch(() => undefined);
+      };
+      video.addEventListener("loadedmetadata", onLoaded);
+    }
+
+    const useFile = (url = reel.media.fileUrl) => {
       if (cancelled) return;
       hlsRef.current?.destroy();
       hlsRef.current = null;
-      video.src = reel.media.fileUrl;
+      video.src = url;
       video.load();
     };
 
     const attach = async () => {
+      if (sourceOverride) {
+        // An alternate audio track: one muxed MP4, no rungs to choose from.
+        onQualityLevels?.([]);
+        useFile(sourceOverride);
+        return;
+      }
       const hlsUrl = reel.media.hlsUrl;
       if (!hlsUrl) {
         useFile();
@@ -171,6 +197,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     void attach();
     return () => {
       cancelled = true;
+      // Leaving for a source switch on the same reel: remember the clock so it carries over.
+      if (video.currentTime > 0) resumeRef.current = { at: video.currentTime, paused: video.paused };
       hlsRef.current?.destroy();
       hlsRef.current = null;
       video.removeAttribute("src");
@@ -178,7 +206,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     };
     // prefs.quality is applied by its own effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reel.media.hlsUrl, reel.media.fileUrl]);
+  }, [reel.media.hlsUrl, reel.media.fileUrl, sourceOverride]);
 
   /* ── prefs → element ───────────────────────────────────── */
   useEffect(() => {
@@ -238,6 +266,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     if (!video) return;
     if (active) {
       autoplayRef.current = true;
+      resumeRef.current = null;
       video.currentTime = 0;
       void tryPlay();
     } else {

@@ -11,8 +11,28 @@
 export const PLAYER_PREFS_KEY = "reels_player_prefs_v1";
 
 export type QualityPref = "auto" | string; // "auto" | "360p" | "720p" | …
-export const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-export type Speed = (typeof SPEEDS)[number];
+/*
+  Playback speed is any 0.05 step between 0.25× and 2× (YouTube's slider);
+  SPEEDS are the preset chips the menu and the theater bar cycle through.
+*/
+export const SPEED_MIN = 0.25;
+export const SPEED_MAX = 2;
+export const SPEED_STEP = 0.05;
+export const SPEEDS = [0.25, 1, 1.25, 1.5, 2] as const;
+export type Speed = number;
+
+/** Snaps any number onto the 0.05 grid inside [0.25, 2]; NaN and garbage land on 1. */
+export function clampSpeed(n: unknown): Speed {
+  if (typeof n !== "number" || !Number.isFinite(n)) return 1;
+  const snapped = Math.round(n / SPEED_STEP) * SPEED_STEP;
+  const bounded = Math.min(SPEED_MAX, Math.max(SPEED_MIN, snapped));
+  return Math.round(bounded * 100) / 100;
+}
+
+/** "0.25", "1.0", "1.25", "1.5", "2.0" — chip labels; "1.05" for slider values. */
+export function speedChipLabel(s: number): string {
+  return Number.isInteger(s) ? s.toFixed(1) : String(Math.round(s * 100) / 100);
+}
 
 export interface PlayerPrefs {
   /** true = play with sound. Browsers may still force a muted autoplay. */
@@ -23,6 +43,8 @@ export interface PlayerPrefs {
   captions: boolean;
   /** "loop" replays the reel; "next" advances when it ends. */
   onEnd: "loop" | "next";
+  /** Preferred alternate audio language (BCP-47); null = the original track. */
+  audioLanguage: string | null;
 }
 
 export const DEFAULT_PREFS: PlayerPrefs = {
@@ -32,6 +54,7 @@ export const DEFAULT_PREFS: PlayerPrefs = {
   quality: "auto",
   captions: false,
   onEnd: "loop",
+  audioLanguage: null,
 };
 
 export function parsePrefs(raw: string | null | undefined): PlayerPrefs {
@@ -45,8 +68,8 @@ export function parsePrefs(raw: string | null | undefined): PlayerPrefs {
         typeof obj.volume === "number" && obj.volume >= 0 && obj.volume <= 1
           ? obj.volume
           : DEFAULT_PREFS.volume,
-      speed: (SPEEDS as readonly number[]).includes(obj.speed as number)
-        ? (obj.speed as Speed)
+      speed: typeof obj.speed === "number" && Number.isFinite(obj.speed) && obj.speed >= SPEED_MIN && obj.speed <= SPEED_MAX
+        ? clampSpeed(obj.speed)
         : DEFAULT_PREFS.speed,
       quality:
         typeof obj.quality === "string" && /^(auto|\d{3,4}p)$/.test(obj.quality)
@@ -54,6 +77,7 @@ export function parsePrefs(raw: string | null | undefined): PlayerPrefs {
           : DEFAULT_PREFS.quality,
       captions: typeof obj.captions === "boolean" ? obj.captions : DEFAULT_PREFS.captions,
       onEnd: obj.onEnd === "next" || obj.onEnd === "loop" ? obj.onEnd : DEFAULT_PREFS.onEnd,
+      audioLanguage: typeof obj.audioLanguage === "string" && /^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(obj.audioLanguage) ? obj.audioLanguage.toLowerCase() : null,
     };
   } catch {
     return { ...DEFAULT_PREFS };

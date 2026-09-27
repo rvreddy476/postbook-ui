@@ -9,7 +9,13 @@ import { SPEEDS, type Speed } from "@/features/reels/playback/playerPrefs";
 */
 
 export function cycleSpeed(current: number): Speed {
+  if (!Number.isFinite(current)) return 1;
   const at = (SPEEDS as readonly number[]).indexOf(current);
+  if (at === -1) {
+    // A slider value between presets steps up to the next preset.
+    const above = SPEEDS.find((s) => s > current);
+    return above !== undefined && current >= SPEEDS[0] && current <= SPEEDS[SPEEDS.length - 1] ? above : 1;
+  }
   if (at === -1) return 1;
   return SPEEDS[(at + 1) % SPEEDS.length];
 }

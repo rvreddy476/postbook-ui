@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { toReelItem } from '../model';
-import { ReelMoreMenu, speedChipLabel } from '../components/ReelMoreMenu';
+import { ReelMoreMenu, speedChipLabel, speedValueLabel } from '../components/ReelMoreMenu';
 import { MENU_SPEEDS } from '../menu';
 import { DEFAULT_PREFS } from '../playback/playerPrefs';
 
@@ -22,50 +22,71 @@ const base = {
   onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop,
 };
 
-test('one card, alphabetical: Auto scroll, Captions, Description, Not interested, Quality, Report, Speed', () => {
-  const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
-  const marks = [
-    'data-row="auto-scroll"', 'data-row="captions"', '>Description<', '>Not interested<', 'data-row="quality"', '>Report<', 'data-row="speed"',
-  ];
+test("YouTube Shorts' order: Description, Captions, Audio track (only with a choice), Playback speed, Quality, Auto scroll, Not interested, Don't recommend, Report", () => {
+  const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" audioTracks={[{ id: 'original', label: 'Original' }, { id: 't1', label: 'Hindi' }]} />);
+  const marks = ['data-row="description"', 'data-row="captions"', 'data-row="audio"', 'data-row="speed"', 'data-row="quality"', 'data-row="auto-scroll"', 'data-row="not-interested"', 'data-row="dont-recommend"', 'data-row="report"'];
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
-  // Playback rows keep the menu open (no run(): they are radios / a submenu / checkboxes), Report is the danger row.
-  expect(html).toContain('role="radiogroup" aria-label="Playback speed"');
-  expect(html).toContain('aria-haspopup="menu" class="reel-more-menu__row" data-row="quality"');
+  // Choice rows show their value and a chevron; Auto scroll is the one switch; Report is the danger row.
+  expect(html).toContain('class="reel-more-menu__value">Off<svg');
+  expect(html).toContain('class="reel-more-menu__value">Original<svg');
+  expect(html).toContain('class="reel-more-menu__value">Normal<svg');
+  expect(html).toContain('class="reel-more-menu__value">Auto<svg');
   expect(html).toContain('role="menuitemcheckbox" aria-checked="false" data-row="auto-scroll"');
-  expect(html).toContain('role="menuitemcheckbox" aria-checked="false" data-row="captions"');
+  expect(html).toContain("Don&#x27;t recommend this channel");
   expect(html).toContain('class="reel-more-menu__row is-danger"');
-  // Nothing from the retired playback-settings popover.
-  expect(html).not.toContain('Playback settings');
-  expect(html).not.toContain('Auto-advance');
-  // The stage tone, hung under the three dots.
+  expect(html).not.toContain('role="radiogroup"');
+  // No audio choice → no Audio track row; not the owner → no manage row.
+  const one = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
+  expect(one).not.toContain('data-row="audio"');
+  expect(one).not.toContain('data-row="manage-audio"');
   expect(html).toContain('reel-frame-popover');
   expect(html).toContain('reel-more-menu');
-  expect(html).not.toContain('bg-brand-card');
 });
 
-test('the speed control lists exactly 0.75 · 1.0 · 1.25 · 1.5 · 2.0 and marks the current one', () => {
-  expect([...MENU_SPEEDS].map(speedChipLabel)).toEqual(['0.75', '1.0', '1.25', '1.5', '2.0']);
+test('the speed value reads Normal at 1× and the chip labels are 0.25 · 1.0 · 1.25 · 1.5 · 2.0', () => {
+  expect([...MENU_SPEEDS].map(speedChipLabel)).toEqual(['0.25', '1.0', '1.25', '1.5', '2.0']);
+  expect(speedValueLabel(1)).toBe('Normal');
+  expect(speedValueLabel(1.5)).toBe('1.5x');
+  expect(speedValueLabel(1.05)).toBe('1.05x');
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} prefs={{ ...DEFAULT_PREFS, speed: 1.5 }} />);
-  const chips = html.match(/role="radio" aria-checked="(true|false)" class="reel-more-menu__chip">([^<]+)</g) ?? [];
-  expect(chips.map((c) => c.replace(/.*>([^<]+)</, '$1'))).toEqual(['0.75', '1.0', '1.25', '1.5', '2.0']);
-  expect(chips.filter((c) => c.includes('aria-checked="true"')).map((c) => c.replace(/.*>([^<]+)</, '$1'))).toEqual(['1.5']);
-  expect(html).not.toContain('>0.5<');
+  expect(html).toContain('class="reel-more-menu__value">1.5x<svg');
 });
 
-test('quality shows the current value and a chevron; captions disable with a hint when the reel has none', () => {
-  const auto = renderToStaticMarkup(<ReelMoreMenu {...base} />);
-  expect(auto).toContain('class="reel-more-menu__value">Auto<svg');
+test('quality and captions show their current value; captions is disabled with None when the reel has none', () => {
   const p720 = renderToStaticMarkup(<ReelMoreMenu {...base} prefs={{ ...DEFAULT_PREFS, quality: '720p' }} />);
   expect(p720).toContain('class="reel-more-menu__value">720p<svg');
   const none = renderToStaticMarkup(<ReelMoreMenu {...base} captionsAvailable="no" />);
-  expect(none).toContain('None for this reel');
-  expect(none).toContain('aria-checked="false" disabled="" data-row="captions"');
+  expect(none).toContain('disabled="" data-row="captions"');
+  expect(none).toContain('class="reel-more-menu__value">None<svg');
   const on = renderToStaticMarkup(<ReelMoreMenu {...base} prefs={{ ...DEFAULT_PREFS, captions: true, onEnd: 'next' }} />);
+  expect(on).toContain('class="reel-more-menu__value">On<svg');
   expect(on).toContain('aria-checked="true" data-row="auto-scroll"');
-  expect(on).toContain('aria-checked="true" data-row="captions"');
-  expect((on.match(/reel-more-menu__switch" data-on=""/g) ?? []).length).toBe(2);
+  expect((on.match(/reel-more-menu__switch" data-on=""/g) ?? []).length).toBe(1);
+});
+
+test('the owner gets a manage row and no feedback rows', () => {
+  const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} onManageAudio={() => {}} audioTracks={[{ id: 'original', label: 'Original' }, { id: 't1', label: 'Hindi' }, { id: 't2', label: 'Tamil' }]} />);
+  expect(html).toContain('data-row="manage-audio"');
+  expect(html).toContain('class="reel-more-menu__value">2 added<svg');
+  for (const gone of ['data-row="report"', 'data-row="not-interested"', 'data-row="dont-recommend"']) expect(html).not.toContain(gone);
+});
+
+test("the card in CSS: the theme surface, radius 12, 8px padding, 48px rows with a 24px icon and 15/500 labels; the speed pane; no literal colours but the shadow", () => {
+  const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
+  expect(css).toContain('.reel-more-menu[role="menu"] { padding: 8px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 12px 32px rgb(0 0 0 / .28); }');
+  expect(css).toContain('.reel-more-menu[role="menu"] { width: 100%; border-radius: 12px;');
+  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 48px; align-items: center; gap: 16px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 15px; font-weight: 500;');
+  expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 24px; width: 24px; height: 24px;');
+  expect(css).toContain('.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; color: rgb(var(--brand-text) / .6); }');
+  expect(css).toContain('.reel-speed-panel__readout { font-size: 24px; font-weight: 700;');
+  expect(css).toContain('.reel-speed-panel__slider input[type="range"] { flex: 1 1 auto; min-width: 0; height: 4px; margin: 0; accent-color: rgb(var(--brand-text)); cursor: pointer; }');
+  expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 36px;');
+  expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 44px; width: 44px; height: 24px;');
+  const block = css.slice(css.indexOf('.reel-more-menu[role="menu"]'), css.indexOf('.reel-speed-panel__normal'));
+  expect(block.match(/#[0-9a-f]{3,8}\b/gi)).toBeNull();
+  expect(block.match(/rgba?\((?!var\()[^)]*\)/g)).toEqual(['rgb(0 0 0 / .28)']);
 });
 
 test('own reel: no Report or Not interested; the playback rows stay; Theater is not a row', () => {
@@ -73,26 +94,4 @@ test('own reel: no Report or Not interested; the playback rows stay; Theater is 
   for (const gone of ['Block', 'Follow', 'Report', 'Not interested', 'Delete reel', 'Theater mode', 'Copy link']) expect(html).not.toContain(`>${gone}`);
   for (const key of ['speed', 'quality', 'auto-scroll', 'captions']) expect(html).toContain(`data-row="${key}"`);
   expect(html).not.toContain('data-row="theater"');
-});
-
-test("TikTok's card in CSS (measured in Chrome): the full video width, radius 14, 4px padding, 40px rows with 14/600 labels, chips 24, switches 48×28 with a 24px knob", () => {
-  const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
-  expect(css).toContain('.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--reel-stage) / .92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: rgb(var(--reel-on-stage)); box-shadow: 0 12px 32px rgb(0 0 0 / .35); }');
-  expect(css).toContain('.reel-more-menu[role="menu"] { width: 100%; border-radius: 14px;');
-  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 8px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 600; letter-spacing: -.01em;');
-  expect(css).toContain('.reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .08); }');
-  expect(css).toContain('.reel-more-menu__row.is-danger { color: rgb(var(--danger)); }');
-  expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 18px; width: 18px; height: 18px; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .9); }');
-  expect(css).toContain('.reel-more-menu__divider { height: 1px; margin: 2px 12px; background: rgb(var(--reel-on-stage) / .12); }');
-  expect(css).toContain('.reel-more-menu__segmented { display: inline-flex; flex: 0 0 auto; margin-left: auto; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(var(--reel-on-stage) / .12); }');
-  expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 24px;');
-  expect(css).toContain('.reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }');
-  expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 48px; width: 48px; height: 28px;');
-  expect(css).toContain('.reel-more-menu__knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;');
-  expect(css).toContain('.reel-more-menu__switch[data-on] { background: rgb(var(--reel-on-stage)); }');
-  expect(css).toContain('.reel-more-menu__switch[data-on] .reel-more-menu__knob { background: rgb(var(--reel-stage)); transform: translateX(20px); }');
-  // The only literal colour in the block is the black shadow under the dark card.
-  const block = css.slice(css.indexOf('.reel-more-menu[role="menu"]'), css.indexOf('.reel-more-menu__switch[data-on] .reel-more-menu__knob'));
-  expect(block.match(/#[0-9a-f]{3,8}\b/gi)).toBeNull();
-  expect(block.match(/rgba?\((?!var\()[^)]*\)/g)).toEqual(['rgb(0 0 0 / .35)']);
 });

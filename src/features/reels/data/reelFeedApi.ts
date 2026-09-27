@@ -82,6 +82,17 @@ export async function sendAuthorFeedback(authorId: string, signal: FeedbackSigna
   await api.post("/v1/feed/feedback", { author_id: authorId, signal });
 }
 
+export interface HiddenAuthor {
+  author_id: string;
+  created_at: string;
+}
+
+/** GET /v1/feed/feedback/authors — the channels the viewer asked not to be recommended, newest first. */
+export async function fetchHiddenAuthors(signal?: AbortSignal): Promise<HiddenAuthor[]> {
+  const res = await api.get<Envelope<HiddenAuthor[] | null>>("/v1/feed/feedback/authors", { signal });
+  return res.data.data ?? [];
+}
+
 /** POST /v1/graph/block { user_id } — the author's reels leave the feed on success. */
 export async function blockUser(userId: string): Promise<void> {
   await api.post("/v1/graph/block", { user_id: userId });
