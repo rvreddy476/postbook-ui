@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Maximize,
+  Settings2,
   AlignLeft,
   Ban,
   CircleSlash,
@@ -35,6 +37,10 @@ interface ReelMoreMenuProps {
   onBlock: () => void;
   onDelete: () => void;
   onClearScreen: () => void;
+  /** Opens the playback settings card (quality, speed, captions, auto-advance). */
+  onOpenSettings: () => void;
+  /** Enters theater mode (fullscreen with the side panel). */
+  onTheater: () => void;
   onNotInterested: () => void;
   onDontRecommend: () => void;
   onReport: () => void;
@@ -49,6 +55,7 @@ interface ReelMoreMenuProps {
 const ICON = "h-[18px] w-[18px]";
 
 const MENU_GROUPS: readonly (readonly MoreMenuItemKey[])[] = [
+  ["playback", "theater"],
   ["copy-link", "description", "download", "why"],
   ["interested", "follow", "unfollow", "block", "delete"],
   ["clear-screen"],
@@ -71,6 +78,8 @@ export function ReelMoreMenu({
   onBlock,
   onDelete,
   onClearScreen,
+  onOpenSettings,
+  onTheater,
   onNotInterested,
   onDontRecommend,
   onReport,
@@ -102,6 +111,10 @@ export function ReelMoreMenu({
             <Download className={`${ICON} text-current/80`} /> Download
           </a>
         );
+      case "playback":
+        return <MenuRow key={key} icon={<Settings2 className={ICON} />} label="Playback settings" hint="Quality · speed · captions" onClick={run(onOpenSettings)} />;
+      case "theater":
+        return <MenuRow key={key} icon={<Maximize className={ICON} />} label="Theater mode" hint="Full screen with comments · F" onClick={run(onTheater)} />;
       case "why":
         return <MenuRow key={key} icon={<Info className={ICON} />} label="Why you're seeing this" hint={reel.reasonText ?? undefined} />;
       case "interested":

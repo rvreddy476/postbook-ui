@@ -69,6 +69,7 @@ describe("moreMenuItems", () => {
   test("order: link and info first, relationship rows, clear screen, feedback and report last", () => {
     const items = moreMenuItems(reel({ caption: "hi", downloadAllowed: true, reasonText: "r" }), { isOwn: false, relationshipKnown: true, following: false });
     expect(items).toEqual([
+      "playback", "theater",
       "copy-link", "description", "download", "why",
       "interested", "follow", "block",
       "clear-screen",

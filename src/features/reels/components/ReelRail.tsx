@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 
-import { RailBookmark, RailBubble, RailHeart, RailPlus, RailShare } from "@/features/reels/components/ReelRailIcons";
+import { RailBookmark, RailBubble, RailHeart, RailShare } from "@/features/reels/components/ReelRailIcons";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
@@ -91,7 +91,7 @@ export function ReelRail({
         </Link>
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <RailPlus size={desktop ? 11 : 12} />
+            Follow
           </button>
         ) : null}
       </div>

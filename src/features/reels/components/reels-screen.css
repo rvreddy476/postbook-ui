@@ -54,7 +54,6 @@
 @media (min-width: 768px) {
   /* Anchored under its trigger: the settings under the gear at the top-left, the More menu under its circle at the top-right. */
   .reel-settings-popover[role="menu"] { top: calc(100% + 8px); right: 0; bottom: auto; margin: 0; width: 280px; max-height: min(420px,calc(var(--reel-height) - 80px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-  .reel-settings-slot .reel-settings-popover[role="menu"] { left: 0; right: auto; }
   .reel-settings-popover button { gap: 10px; text-align: left; }
 }
 .reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
@@ -66,8 +65,11 @@
 .reel-volume-control:hover input,.reel-volume-control:focus-within input { width: 72px; opacity: 1; }
 .reel-settings-slot { pointer-events: auto; }
 /* Frame top-right: More at right 56, Cinema at the far right — 48px circles, 8px in, 8px apart. */
-.reel-frame-actions { position: absolute; top: 8px; right: 8px; z-index: 30; display: flex; align-items: center; gap: 8px; }
-.reel-frame-action-wrap { position: relative; }
+/* The corner strip spans the frame so a card hung from it can never be wider than the video. Only its buttons take clicks. */
+.reel-frame-actions { position: absolute; top: 8px; right: 8px; left: 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.reel-frame-actions > * { pointer-events: auto; }
+.reel-frame-action-wrap { position: static; }
+.reel-frame-actions .reel-settings-popover[role="menu"] { left: auto; right: 0; width: 280px; max-width: 100%; }
 .reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
 .reel-frame-action:hover { background: rgb(var(--reel-stage) / .6); }
 /* Bottom-left text block: 12px in, 16px up, at most 381px wide (TikTok's video-desc). */
@@ -99,7 +101,8 @@
 .reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
+/* The Follow pill on the avatar's bottom edge, where TikTok's plus sits. */
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: auto; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .01em; white-space: nowrap; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--brand-card)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
 .reel-rail-follow:hover { transform: translateX(-50%) scale(1.08); opacity: .9; }
 .reel-rail-follow:disabled { opacity: .6; cursor: default; }
 .reel-action-rail.is-phone .reel-rail-avatar { width: 40px; height: 40px; }
@@ -116,7 +119,7 @@
 @keyframes reel-disc-spin { to { transform: rotate(360deg); } }
 .reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 12px; }
 .reel-action-rail.is-desktop .reel-rail-avatar { width: 36px; height: 36px; }
-.reel-action-rail.is-desktop .reel-rail-follow { width: 18px; height: 18px; border-radius: 18px; }
+.reel-action-rail.is-desktop .reel-rail-follow { height: 18px; }
 .reel-action-rail.is-desktop .reel-rail-follow { bottom: 3px; }
 .reel-action-rail.is-desktop .reel-action-button { gap: 2px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 2px; border-radius: 0; color: rgb(var(--brand-text)); }
 .reel-action-rail.is-desktop .reel-action-button:hover { background: transparent; }

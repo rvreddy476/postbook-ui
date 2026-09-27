@@ -11,6 +11,8 @@ import type { ReelItem } from "@/features/reels/model";
 */
 
 export type MoreMenuItemKey =
+  | "playback"
+  | "theater"
   | "copy-link"
   | "description"
   | "download"
@@ -34,7 +36,8 @@ export interface MoreMenuContext {
 
 /** The rows in display order. Separators are the renderer's business. */
 export function moreMenuItems(reel: ReelItem, ctx: MoreMenuContext): MoreMenuItemKey[] {
-  const items: MoreMenuItemKey[] = ["copy-link"];
+  // Player controls live here, not over the video: only the three dots sit on the frame.
+  const items: MoreMenuItemKey[] = ["playback", "theater", "copy-link"];
   if (reel.caption || reel.hashtags.length) items.push("description");
   if (reel.downloadAllowed) items.push("download");
   if (reel.reasonText) items.push("why");

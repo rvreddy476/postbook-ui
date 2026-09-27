@@ -524,6 +524,8 @@ export function ReelsScreen() {
       onBlock={() => setBlockOpen(true)}
       onDelete={() => setDeleteOpen(true)}
       onClearScreen={enterClearScreen}
+      onOpenSettings={() => setSettingsOpen(true)}
+      onTheater={() => void enterTheater()}
       onNotInterested={onNotInterested}
       onDontRecommend={onDontRecommend}
       onReport={() => setReportOpen(true)}
@@ -668,17 +670,6 @@ export function ReelsScreen() {
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
                             onToggleSound={onToggleSound}
-                            onOpenSettings={() => setSettingsOpen((v) => !v)}
-                            settingsMenu={
-                              <ReelSettingsMenu
-                                open={settingsOpen}
-                                onClose={() => setSettingsOpen(false)}
-                                prefs={prefs}
-                                onChange={updatePrefs}
-                                qualityHeights={qualityHeights}
-                                captionsAvailable={captionsAvailable}
-                              />
-                            }
                           />
                         )}
                         {/* phone / tablet rail: floats over the stage */}
@@ -699,7 +690,8 @@ export function ReelsScreen() {
                         )}
                       </motion.div>
                     </AnimatePresence>
-                    {/* frame top-right: More (desktop; the phone rail has its own) and Cinema */}
+                    {/* frame top-right: the three dots, on hover only (the phone rail has its own More).
+                        Playback settings hang from the same corner when opened from the menu. */}
                     {theater ? null : (
                       <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
                         <div className="reel-frame-action-wrap is-more">
@@ -708,9 +700,16 @@ export function ReelsScreen() {
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
-                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
-                          <Maximize size={24} aria-hidden />
-                        </button>
+                        <div className="reel-frame-action-wrap is-settings">
+                          <ReelSettingsMenu
+                            open={settingsOpen}
+                            onClose={() => setSettingsOpen(false)}
+                            prefs={prefs}
+                            onChange={updatePrefs}
+                            qualityHeights={qualityHeights}
+                            captionsAvailable={captionsAvailable}
+                          />
+                        </div>
                       </div>
                     )}
                     <AnimatePresence>

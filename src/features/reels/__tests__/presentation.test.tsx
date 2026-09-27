@@ -24,8 +24,8 @@ test('settings anchor below the control bar, not off the left of the portrait fr
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).toContain('width: 280px');
   expect(css).toContain('top: calc(100% + 8px)');
-  // The gear now sits beside the sound control at the top-left, so its card hangs from the left edge.
-  expect(css).toContain('.reel-settings-slot .reel-settings-popover[role="menu"] { left: 0; right: auto; }');
+  // Settings hang from the frame's top-right corner and never outgrow the frame.
+  expect(css).toContain('.reel-frame-actions .reel-settings-popover[role="menu"] { left: auto; right: 0; width: 280px; max-width: 100%; }');
 });
 
 test('expanded details carry creator and title but never public view counts', () => {
@@ -61,20 +61,21 @@ test('overlay always carries the author name (a plain link), title, caption and 
   expect(css).toContain('.reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;');
 });
 
-test('frame top-right is More then Cinema, 48px circles 8px in; the old bottom-right expand button is gone', () => {
+test('frame top-right is the three dots alone, 48px circle 8px in; Theater and Playback settings live in its menu', () => {
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   const screen=readFileSync(resolve(import.meta.dir,'../components/ReelsScreen.tsx'),'utf8');
-  expect(css).toContain('.reel-frame-actions { position: absolute; top: 8px; right: 8px; z-index: 30; display: flex; align-items: center; gap: 8px; }');
+  expect(css).toContain('.reel-frame-actions { position: absolute; top: 8px; right: 8px; left: 8px; z-index: 30; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }');
   expect(css).toContain('.reel-frame-action { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage));');
   expect(css).not.toContain('reel-expand-button');
   expect(screen).not.toContain('reel-expand-button');
   expect(screen).not.toContain('reel-rail-spacer');
   expect(screen).not.toContain('Maximize2');
-  // More first (right 56), then Cinema at the far right; More opens the existing menu below its circle.
-  const more=screen.indexOf('aria-label="More"');
-  const cinema=screen.indexOf('aria-label="Theater mode"');
-  expect(more).toBeGreaterThan(-1);
-  expect(cinema).toBeGreaterThan(more);
+  // Only More sits on the frame; Theater and Playback settings are rows in its menu.
+  expect(screen).toContain('aria-label="More"');
+  expect(screen).not.toContain('aria-label="Theater mode"');
+  expect(screen).not.toContain('aria-label="Playback settings"');
+  expect(screen).toContain('onOpenSettings={() => setSettingsOpen(true)}');
+  expect(screen).toContain('onTheater={() => void enterTheater()}');
   expect(screen).toContain('moreMenuFor("below")');
   // The desktop rail no longer carries More; the phone rail keeps its own.
   expect(css).toContain('.reel-frame-action-wrap.is-more { display: none; }');
@@ -131,7 +132,7 @@ test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
-  expect(css).toContain('width: 24px; height: 24px; padding: 0; border: 0; border-radius: 24px; background: rgb(var(--danger));');
+  expect(css).toContain('width: auto; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 12px; }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 3px; }');
 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Settings2, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 
 import type { ReelItem } from "@/features/reels/model";
 
@@ -12,8 +12,6 @@ interface ReelOverlayProps {
   volume: number;
   onVolumeChange: (volume: number) => void;
   onToggleSound: () => void;
-  onOpenSettings: () => void;
-  settingsMenu?: React.ReactNode;
 }
 
 /*
@@ -27,7 +25,7 @@ interface ReelOverlayProps {
   avatar. The More and Cinema circles at the top-right are the screen's.
   Clicks on any of it stop before reaching the stage.
 */
-export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound, onOpenSettings, settingsMenu }: ReelOverlayProps) {
+export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound }: ReelOverlayProps) {
   const [expanded, setExpanded] = useState(false);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
   const caption = reel.caption.trim();
@@ -51,12 +49,6 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
             aria-valuetext={`${sound ? Math.round(volume * 100) : 0}%`}
             onChange={(event) => onVolumeChange(Number(event.target.value) / 100)}
           />
-        </div>
-        <div className="reel-settings-slot relative">
-          <button type="button" aria-label="Playback settings" onClick={onOpenSettings} className="reel-playback-button">
-            <Settings2 size={18} />
-          </button>
-          {settingsMenu}
         </div>
       </div>
 
