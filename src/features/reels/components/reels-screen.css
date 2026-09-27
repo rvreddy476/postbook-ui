@@ -346,4 +346,6 @@ button.reel-panel-count:hover { opacity: .75; }
 /* Search while comments are open: a 40px circle in the gap, just left of the panel, level with the corner pill it replaces. */
 .reel-gap-search { display: none; }
 @media (min-width: 1024px) {
-  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-gap-search { position: absolute; top: 12px; right: calc(var(--reel-panel-w, 384px) + 16px); z-index: 36; display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--brand-divider); border-radius: 50
+  .reels-content[data-comments-open="true"]:not([data-theater]) .reel-gap-search { position: absolute; top: 12px; right: calc(var(--reel-panel-w, 384px) + 16px); z-index: 36; display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--brand-divider); border-radius: 50%; background: rgb(var(--brand-card)); color: rgb(var(--brand-text) / .75); }
+  .reel-gap-search:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+}
