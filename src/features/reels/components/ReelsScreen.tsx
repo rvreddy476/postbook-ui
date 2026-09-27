@@ -739,9 +739,11 @@ export function ReelsScreen() {
                 </div>
 
                 {theater ? null : arrows("is-edge")}
-                {/* comments open: search sits in the gap between the video and the panel */}
-                {!theater && showComments && desktop ? <ReelGapSearch /> : null}
               </motion.div>
+              {/* comments open: search sits in the gap between the video and the panel. Outside the
+                  stage area on purpose: that element carries the layout transform, which would
+                  stretch anything positioned inside it. */}
+              {!theater && showComments && desktop ? <ReelGapSearch /> : null}
 
               {/* right column: the theater panel, the comments column, or the phone sheet */}
               {theater ? (
