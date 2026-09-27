@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import {
@@ -17,30 +17,72 @@ import {
   VIDEO_NAV_YOU,
 } from "../nav";
 
+/** Whether `src/app<href>/page.tsx` exists — the nav's coming-soon flag is checked against it. */
+const appDir = resolve(import.meta.dir, "../../../app");
+const routeExists = (href: string) => existsSync(resolve(appDir, `.${href}/page.tsx`)) || existsSync(resolve(appDir, `.${href}/[[...path]]/page.tsx`));
+
 describe("videoNav (tube)", () => {
-  test("top group is Home, Reels, PostTube, Explore and highlights the current app", () => {
+  test("top group reads Watch, Reels, Following, Live, Trending, Topics — our words, no app highlight", () => {
     const tube = videoNav("tube").find((s) => s.key === "top")!;
-    expect(tube.items.map((i) => i.label)).toEqual(["Home", "Reels", "PostTube", "Explore"]);
-    expect(tube.items.map((i) => i.href ?? i.action)).toEqual(["/", "/reels", "/posttube", "explore"]);
-    expect(tube.items.find((i) => i.key === "tube")!.active).toBe(true);
-    expect(tube.items.find((i) => i.key === "reels")!.active).toBe(false);
+    expect(tube.items.map((i) => i.label)).toEqual(["Watch", "Reels", "Following", "Live", "Trending", "Topics"]);
+    expect(tube.items.map((i) => i.href)).toEqual(["/posttube", "/reels", "/posttube/subscriptions", "/live", "/posttube/trending", "/posttube/topics"]);
+    for (const i of tube.items) expect(Boolean(i.active)).toBe(false);
+    expect(tube.items.find((i) => i.key === "watch")!.exact).toBe(true);
   });
 
-  test("the You section lists the library routes in order", () => {
+  test("Watch is current on the home grid only; Following on its page", () => {
+    const watch = VIDEO_NAV_TOP.find((i) => i.key === "watch")!;
+    expect(isNavItemCurrent(watch, "/posttube", "")).toBe(true);
+    expect(isNavItemCurrent(watch, "/posttube/watch/abc", "")).toBe(false);
+    expect(isNavItemCurrent(watch, "/posttube/history", "")).toBe(false);
+    const following = VIDEO_NAV_TOP.find((i) => i.key === "following")!;
+    expect(isNavItemCurrent(following, "/posttube/subscriptions", "")).toBe(true);
+    expect(isNavItemCurrent(following, "/posttube", "")).toBe(false);
+  });
+
+  test("the You section reads Your channel, Recent, Queue, Loved, Collections, Your videos, Scheduled, Creator Hub", () => {
     const you = videoNav("tube").find((s) => s.key === "you")!;
     expect(you.title).toBe("You");
     expect(you.items.map((i) => i.href)).toEqual([
       "/posttube/channel",
       "/posttube/history",
+      "/posttube/queue",
+      "/posttube/loved",
       "/posttube/playlists",
       "/posttube/uploads",
-      "/saved",
-      "/reels/liked",
       "/posttube/scheduled",
+      "/posttube/hub",
     ]);
     expect(you.items.map((i) => i.label)).toEqual([
-      "Your channel", "History", "Playlists", "Your videos", "Saved", "Liked reels", "Scheduled",
+      "Your channel", "Recent", "Queue", "Loved", "Collections", "Your videos", "Scheduled", "Creator Hub",
     ]);
+  });
+
+  test("no borrowed labels anywhere in the tube menu", () => {
+    const labels = videoNav("tube").flatMap((s) => s.items.map((i) => i.label));
+    for (const borrowed of ["Home", "Subscriptions", "History", "Playlists", "Watch later", "Liked videos", "Studio", "Dashboard", "Saved", "Liked reels", "PostTube"]) {
+      expect(labels).not.toContain(borrowed);
+    }
+  });
+
+  test("coming-soon rows are exactly the routes that have no page yet, and every other row has one", () => {
+    // The rail groups only: the footer's Help / Terms links are the app's, not this menu's.
+    const rows = videoNav("tube").filter((s) => s.rail).flatMap((s) => s.items).filter((i) => i.href);
+    const soon = rows.filter((i) => i.comingSoon).map((i) => i.href);
+    // Trending, Topics, Queue and Loved landed from the W2/W3 lanes in this same tree; only Creator Hub (W4) is still to come.
+    expect(soon).toEqual(["/posttube/hub"]);
+    for (const item of rows) {
+      // A flagged row whose page has landed means the flag was forgotten; an
+      // unflagged row without a page is a dead link.
+      expect([item.href, routeExists(item.href!)]).toEqual([item.href, !item.comingSoon]);
+    }
+  });
+
+  test("the sidebar CSS draws a coming-soon row dimmed with a tag that the rail hides", () => {
+    const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
+    expect(css).toContain(".video-nav__item.is-soon { color: rgb(var(--brand-text) / .45); cursor: default; }");
+    expect(css).toContain(".video-nav__tag {");
+    expect(css).toContain(".video-nav.is-rail .video-nav__tag { display: none; }");
   });
 
   test("the footer has Settings, Help, Terms, Privacy and is not in the rail", () => {

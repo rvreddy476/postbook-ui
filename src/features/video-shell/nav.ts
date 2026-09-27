@@ -1,23 +1,27 @@
 import {
   Bell,
-  Bookmark,
   CalendarClock,
   CircleUserRound,
   Clapperboard,
   Compass,
   Ellipsis,
   FileText,
-  History,
+  Flame,
+  Heart,
   HelpCircle,
+  History,
   Home,
   Info,
+  LayoutDashboard,
   LayoutGrid,
+  ListPlus,
   ListVideo,
   LogOut,
   MessageSquare,
   Moon,
   Radio,
   Settings,
+  Shapes,
   ShieldCheck,
   ThumbsUp,
   Tv,
@@ -32,8 +36,14 @@ import {
 /*
   The left menu of the two video apps, as data.
 
-  PostTube keeps the library menu (channel, history, playlists, uploads)
-  with the app roots on top. Reels has its own list, shaped like TikTok's:
+  PostTube's menu uses our own words (the MTube plan, §4a): Watch (home),
+  Reels, Following, Live, Trending, Topics; then You: Your channel, Recent,
+  Queue, Loved, Collections, Your videos, Scheduled, Creator Hub. A route a
+  later wave delivers is listed already but flagged `comingSoon`, so the
+  sidebar draws it disabled with a small "soon" tag until the page exists —
+  the shape is settled once and only the flag changes. The way back to the
+  app home is the header's product badge. Reels has its own list, shaped
+  like TikTok's:
   For You / Explore / Following / Friends / LIVE / Messages / Activity /
   Upload / Profile. Under the "sidebar" chrome (search in the menu, no
   header) the list ends with "More", which opens a panel beside the icon
@@ -67,6 +77,12 @@ export interface VideoNavItem {
   exact?: boolean;
   /** Current only when none of these query keys is present (For You vs Following). */
   absentParams?: readonly string[];
+  /**
+   * The route is planned but not built yet: the sidebar renders the row
+   * disabled with a "soon" tag instead of a link. Drop the flag when the
+   * page lands; the nav test checks the flag against the app directory.
+   */
+  comingSoon?: boolean;
 }
 
 export interface VideoNavSection {
@@ -78,21 +94,26 @@ export interface VideoNavSection {
   rail: boolean;
 }
 
-export const VIDEO_NAV_TOP: readonly Omit<VideoNavItem, "active">[] = [
-  { key: "home", label: "Home", icon: Home, href: "/" },
+/** The PostTube top group. Watch is the home grid and is current only there. */
+export const VIDEO_NAV_TOP: readonly VideoNavItem[] = [
+  { key: "watch", label: "Watch", icon: Tv, href: "/posttube", exact: true },
   { key: "reels", label: "Reels", icon: Clapperboard, href: "/reels" },
-  { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
-  { key: "explore", label: "Explore", icon: Compass, action: "explore" },
+  { key: "following", label: "Following", icon: UserRoundCheck, href: "/posttube/subscriptions" },
+  { key: "live", label: "Live", icon: Radio, href: "/live" },
+  { key: "trending", label: "Trending", icon: Flame, href: "/posttube/trending" },
+  { key: "topics", label: "Topics", icon: Shapes, href: "/posttube/topics" },
 ];
 
+/** The PostTube "You" group: the viewer's own library, then the creator's side. */
 export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
-  { key: "history", label: "History", icon: History, href: "/posttube/history" },
-  { key: "playlists", label: "Playlists", icon: ListVideo, href: "/posttube/playlists" },
+  { key: "recent", label: "Recent", icon: History, href: "/posttube/history" },
+  { key: "queue", label: "Queue", icon: ListPlus, href: "/posttube/queue" },
+  { key: "loved", label: "Loved", icon: Heart, href: "/posttube/loved" },
+  { key: "collections", label: "Collections", icon: ListVideo, href: "/posttube/playlists" },
   { key: "uploads", label: "Your videos", icon: Video, href: "/posttube/uploads" },
-  { key: "saved", label: "Saved", icon: Bookmark, href: "/saved" },
-  { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
   { key: "scheduled", label: "Scheduled", icon: CalendarClock, href: "/posttube/scheduled" },
+  { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub", comingSoon: true },
 ];
 
 export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
@@ -181,12 +202,8 @@ export function videoNav(app: VideoApp, chrome: VideoChrome = "header"): VideoNa
     ];
   }
   return [
-    {
-      key: "top",
-      rail: true,
-      items: VIDEO_NAV_TOP.map((item) => ({ ...item, active: item.key === app })),
-    },
-    { key: "you", title: "You", rail: true, items: [...VIDEO_NAV_YOU] },
+    { key: "top", rail: true, items: VIDEO_NAV_TOP.map((item) => ({ ...item })) },
+    { key: "you", title: "You", rail: true, items: VIDEO_NAV_YOU.map((item) => ({ ...item })) },
     { key: "footer", rail: false, items: [...VIDEO_NAV_FOOTER] },
   ];
 }

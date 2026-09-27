@@ -75,9 +75,5 @@ export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLab
   podcast: { label: "Podcast",       platformLabel: "Posttube",        icon: "mic",           aspect: "1/1",  maxDuration: 28800, maxSize: 2 * 1024 * 1024 * 1024 },
 };
 
-export const CATEGORIES = [
-  "Film & Animation", "Music", "Gaming", "Entertainment", "Comedy",
-  "Education", "Science & Technology", "Sports", "Travel & Events",
-  "People & Blogs", "Howto & Style", "News & Politics", "Pets & Animals",
-  "Nonprofits & Activism", "Other",
-] as const;
+// Topics are not a list here any more: the studio reads GET /v1/posts/categories
+// (features/upload/categories.ts) so a topic is one deploy, never an app change.

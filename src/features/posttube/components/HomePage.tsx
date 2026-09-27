@@ -6,16 +6,18 @@ import { Flame, History, Loader2, Tv2, Upload } from "lucide-react";
 
 import { useAuthUser } from "@/store/auth";
 import { VideoCard } from "./VideoCard";
-import { VideoRow } from "./VideoRow";
+import { TileSkeleton, VideoRow } from "./VideoRow";
 import { FlicksRow } from "./FlicksRow";
 import { useContinueWatchingFeed, useFlicksFeed, useLongVideosFeed, useTrendingVideos, useVideoCategories } from "../hooks/usePosttubeHome";
 import { CHIP_ALL, CHIP_SUBSCRIPTIONS } from "../model";
 import { gridColumnsFor, interleaveShelves, type ShelfKey } from "../shelves";
 import type { PostTubeVideo } from "../types";
+import "./tube.css";
 
-const GRID_CLASS = "grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4";
+/** The tile grid (tube.css): 1 / 2 / 3 / 4 columns at the breakpoints gridColumnsFor mirrors. */
+const GRID_CLASS = "tube-grid";
 
-/** The grid's column count for the current viewport (mirrors GRID_CLASS). */
+/** The grid's column count for the current viewport (mirrors .tube-grid). */
 function useGridColumns(): number {
   const [columns, setColumns] = useState(3);
   useEffect(() => {
@@ -31,19 +33,9 @@ function useGridColumns(): number {
 
 export function VideoGridSkeleton({ count = 9 }: { count?: number }) {
   return (
-    <div className={GRID_CLASS}>
+    <div className={GRID_CLASS} aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="animate-pulse rounded-2xl bg-brand-card p-3">
-          <div className="aspect-video rounded-2xl bg-brand-secondary" />
-          <div className="mt-3.5 flex gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-full bg-brand-secondary" />
-            <div className="flex-1 space-y-2 pt-1">
-              <div className="h-4 w-full rounded-lg bg-brand-secondary" />
-              <div className="h-3.5 w-3/4 rounded-lg bg-brand-secondary" />
-              <div className="h-3 w-1/2 rounded-lg bg-brand-secondary" />
-            </div>
-          </div>
-        </div>
+        <TileSkeleton key={i} />
       ))}
     </div>
   );
@@ -67,18 +59,11 @@ export function useLoadMoreSentinel(enabled: boolean, onVisible: () => void) {
   return ref;
 }
 
-/* ── Chips ────────────────────────────────────────────── */
+/* ── Topic strip pills ────────────────────────────────── */
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-semibold transition-colors ${
-        active ? "bg-primary-ink text-primary-foreground" : "bg-brand-secondary text-brand-text hover:bg-brand-divider"
-      }`}
-    >
+    <button type="button" onClick={onClick} aria-pressed={active} className="tube-strip__pill">
       {label}
     </button>
   );
@@ -127,13 +112,13 @@ export function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-7 px-4 py-5 sm:px-6">
-      {/* Chips */}
-      <div className="sticky top-0 z-20 -mx-4 bg-canvas/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+      {/* Topic strip */}
+      <div className="tube-strip">
+        <div className="tube-strip__scroller" role="group" aria-label="Topics">
           {chips.map((c) => (
             <Chip key={c.slug} label={c.label} active={chip === c.slug} onClick={() => setChip(c.slug)} />
           ))}
-          {categoriesQuery.isLoading ? <Loader2 className="ml-1 h-4 w-4 shrink-0 animate-spin text-muted-foreground" /> : null}
+          {categoriesQuery.isLoading ? <Loader2 className="tube-strip__spinner h-4 w-4 animate-spin" aria-label="Loading topics" /> : null}
         </div>
       </div>
 
@@ -182,31 +167,13 @@ export function HomePage() {
 
 function TrendingShelf({ videos }: { videos: PostTubeVideo[] }) {
   return (
-    <VideoRow
-      title="Trending"
-      icon={
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-secondary text-brand-text">
-          <Flame className="h-4 w-4" />
-        </div>
-      }
-      videos={videos}
-    />
+    <VideoRow title="Trending" icon={<Flame aria-hidden />} videos={videos} />
   );
 }
 
 function ContinueWatchingShelf({ videos }: { videos: PostTubeVideo[] }) {
   return (
-    <VideoRow
-      title="Continue watching"
-      icon={
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-secondary text-brand-text">
-          <History className="h-4 w-4" />
-        </div>
-      }
-      videos={videos}
-      variant="wide"
-      seeAllHref="/posttube/history"
-    />
+    <VideoRow title="Continue watching" icon={<History aria-hidden />} videos={videos} variant="wide" seeAllHref="/posttube/history" />
   );
 }
 

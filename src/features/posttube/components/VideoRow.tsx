@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { PostTubeVideo } from "../types";
 import { VideoCard } from "./VideoCard";
+import "./tube.css";
 
 interface VideoRowProps {
   title: string;
@@ -38,52 +39,35 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, seeA
   if (videos.length === 0) return null;
 
   return (
-    <section className="relative">
-      <div className="mb-3 flex items-center gap-2.5 px-1">
-        {icon}
-        <h2 className="text-[16px] font-bold text-brand-text">{title}</h2>
-        {badge && <span className="rounded-full bg-brand-secondary px-2.5 py-0.5 text-[10px] font-bold text-brand-text">{badge}</span>}
+    <section className="tube-row">
+      <div className="tube-row__head">
+        {icon ? <span className="tube-row__icon">{icon}</span> : null}
+        <h2 className="tube-row__title">{title}</h2>
+        {badge && <span className="tube-row__badge">{badge}</span>}
         {seeAllHref && (
-          <Link href={seeAllHref} className="ml-auto text-[12px] font-semibold text-primary-ink hover:underline">
+          <Link href={seeAllHref} className="tube-row__all">
             See all
           </Link>
         )}
       </div>
 
-      <div className="group/row relative">
-        {canScrollLeft && (
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            aria-label="Scroll left"
-            className="absolute -left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-brand-card text-brand-text opacity-0 shadow-lg transition-opacity hover:bg-brand-secondary group-hover/row:opacity-100"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-        )}
-        {canScrollRight && (
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            aria-label="Scroll right"
-            className="absolute -right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-brand-card text-brand-text opacity-0 shadow-lg transition-opacity hover:bg-brand-secondary group-hover/row:opacity-100"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        )}
+      {canScrollLeft && (
+        <button type="button" onClick={() => scroll("left")} aria-label="Scroll left" className="tube-row__arrow tube-row__arrow--left">
+          <ChevronLeft aria-hidden />
+        </button>
+      )}
+      {canScrollRight && (
+        <button type="button" onClick={() => scroll("right")} aria-label="Scroll right" className="tube-row__arrow tube-row__arrow--right">
+          <ChevronRight aria-hidden />
+        </button>
+      )}
 
-        <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto scroll-smooth"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {videos.map((v) => (
-            <div key={v.id} className={variant === "wide" ? "w-[360px] shrink-0" : "w-[280px] shrink-0"}>
-              <VideoCard video={v} variant={variant} />
-            </div>
-          ))}
-        </div>
+      <div ref={scrollRef} onScroll={checkScroll} className="tube-row__scroller">
+        {videos.map((v) => (
+          <div key={v.id} className={variant === "wide" ? "tube-row__item tube-row__item--wide" : "tube-row__item"}>
+            <VideoCard video={v} variant={variant} />
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -93,24 +77,33 @@ export function VideoRow({ title, icon, videos, variant = "default", badge, seeA
 
 export function VideoRowSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <section>
-      <div className="mb-3 flex items-center gap-2.5 px-1">
-        <div className="h-5 w-32 animate-pulse rounded-sm bg-brand-secondary" />
+    <section className="tube-row" aria-hidden>
+      <div className="tube-row__head">
+        <div className="tube-tile__bone" style={{ width: 128, height: 14 }} />
       </div>
-      <div className="flex gap-4 overflow-hidden">
+      <div className="tube-row__scroller" style={{ overflow: "hidden" }}>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="w-[280px] shrink-0">
-            <div className="aspect-video animate-pulse rounded-xl bg-brand-secondary" />
-            <div className="mt-3 flex gap-2.5">
-              <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-brand-secondary" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 w-3/4 animate-pulse rounded-sm bg-brand-secondary" />
-                <div className="h-3 w-1/2 animate-pulse rounded-sm bg-brand-secondary" />
-              </div>
-            </div>
+          <div key={i} className="tube-row__item">
+            <TileSkeleton />
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+/** One pulsing tile: the poster box, an avatar dot, a title line and a meta line. */
+export function TileSkeleton() {
+  return (
+    <div className="tube-tile is-skeleton" aria-hidden>
+      <div className="tube-tile__poster" />
+      <div className="tube-tile__body">
+        <div className="tube-tile__bone tube-tile__bone--avatar" />
+        <div className="tube-tile__bones">
+          <div className="tube-tile__bone tube-tile__bone--title" />
+          <div className="tube-tile__bone tube-tile__bone--line" />
+        </div>
+      </div>
+    </div>
   );
 }

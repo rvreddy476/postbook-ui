@@ -1,8 +1,10 @@
 "use client";
 
-import { Globe, Calendar, Link2, AlertCircle, Tag } from "lucide-react";
+import { Globe, Calendar, Link2, AlertCircle, Loader2, Tag } from "lucide-react";
+import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
 import { ToggleRow, RadioOption, StudioSelect } from "../primitives";
-import { CATEGORIES } from "../tokens";
+import { categoryOptions } from "../categories";
+import type { ContentType } from "../tokens";
 import type { StudioFormState } from "../types";
 
 interface PublishStepProps {
@@ -12,11 +14,18 @@ interface PublishStepProps {
   publishError?: string | null;
   retryProcessingCheck?: () => void;
   onReplaceVideo?: () => void;
+  /** Which studio this is: decides which taxonomy kinds the topic select offers. */
+  contentType?: ContentType;
 }
 
-export function PublishStep({ form, patch, showErrors, publishError }: PublishStepProps) {
+export function PublishStep({ form, patch, showErrors, publishError, contentType = "long" }: PublishStepProps) {
   const categoryError = showErrors && !form.category;
   const scheduleError = showErrors && form.scheduleAt && new Date(form.scheduleAt) <= new Date();
+  // One taxonomy for all video: GET /v1/posts/categories, the same list the
+  // home strip reads. The select stores the slug and shows the label.
+  const categories = useVideoCategories();
+  const topicOptions = categoryOptions(categories.data, contentType, form.category);
+  const topicsUnavailable = !categories.isLoading && topicOptions.length === 0;
 
   return (
     <div className="space-y-7">
@@ -77,7 +86,7 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
         </div>
       </div>
 
-      {/* ── Category (required) ── */}
+      {/* ── Topic (required; the slug is stored) ── */}
       <div>
         <div className="flex items-center gap-2.5 mb-4">
           <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
@@ -87,10 +96,11 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">
-              Category <span className="text-rose-500 font-semibold">*</span>
+              Topic <span className="text-rose-500 font-semibold">*</span>
             </h3>
-            <p className="text-[11px] text-brand-text/50">Help viewers discover your content</p>
+            <p className="text-[11px] text-brand-text/50">Where viewers find it — the same topics as the Watch page</p>
           </div>
+          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-brand-text/50" aria-label="Loading topics" /> : null}
         </div>
         <div className={`rounded-xl border bg-brand-card shadow-xs transition-colors ${
           categoryError ? "border-rose-500/40" : "border-brand-divider"
@@ -98,14 +108,23 @@ export function PublishStep({ form, patch, showErrors, publishError }: PublishSt
           <StudioSelect
             value={form.category}
             onChange={(v) => patch({ category: v })}
-            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-            placeholder="Select a category"
+            options={topicOptions}
+            placeholder={categories.isLoading ? "Loading topics…" : "Select a topic"}
           />
         </div>
+        {topicsUnavailable && (
+          <div className="mt-2 flex items-center gap-2 text-[12px] text-brand-text/60">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <span>Topics could not be loaded.</span>
+            <button type="button" onClick={() => void categories.refetch()} className="font-semibold text-brand-text underline-offset-2 hover:underline">
+              Try again
+            </button>
+          </div>
+        )}
         {categoryError && (
           <div className="mt-2 flex items-center gap-1.5 text-[12px] text-rose-500 font-semibold">
             <AlertCircle className="h-3.5 w-3.5" />
-            Please select a category before publishing
+            Please select a topic before publishing
           </div>
         )}
       </div>

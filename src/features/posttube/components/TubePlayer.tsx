@@ -19,15 +19,17 @@ import {
   VolumeX,
 } from "lucide-react";
 
-import { pickHlsLevel } from "@/features/reels/playback/playerPrefs";
-import { formatClockMs, TUBE_SPEEDS, type TubePlayerPrefs, type TubeSpeed } from "../model";
+import { clampSpeed, pickHlsLevel, SPEEDS, speedChipLabel } from "@/features/reels/playback/playerPrefs";
+import { formatClockMs, type TubePlayerPrefs } from "../model";
+import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../playerKeys";
 
 /*
   The long-video player. One <video>, HLS through hls.js (native on Safari)
   with the progressive file as the fallback, a quality picker from the
-  manifest, speed, captions from the subtitles service, and the YouTube
-  keyboard. It reports position/duration upward and never persists anything
-  itself: the watch page owns progress saving and the end-of-video decision.
+  manifest, speed, captions from the subtitles service, and our keyboard
+  (playerKeys.ts). It reports position/duration upward and never persists
+  anything itself: the watch page owns progress saving and the end-of-video
+  decision.
 */
 
 export interface CaptionTrack {
@@ -65,11 +67,13 @@ export interface TubePlayerProps {
   endScreen?: ReactNode;
   ended: boolean;
   onEndedChange: (ended: boolean) => void;
+  /** The T key. The player only dispatches; theater itself is the watch page's (W1). */
+  onTheater?: () => void;
+  /** The N key. The player only dispatches; the watch page decides what "next" is. */
+  onNext?: () => void;
 }
 
 const HIDE_CONTROLS_AFTER_MS = 2600;
-const SEEK_SMALL_S = 5;
-const SEEK_LARGE_S = 10;
 
 function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
@@ -101,6 +105,8 @@ export function TubePlayer({
   endScreen,
   ended,
   onEndedChange,
+  onTheater,
+  onNext,
 }: TubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -430,55 +436,55 @@ export function TubePlayer({
     };
   }, [playing, settingsOpen, showControls]);
 
-  /* ── keyboard ──────────────────────────────────────────── */
+  /** 0–100 → that point of the playable range (trim-aware). */
+  const seekPercent = useCallback((percent: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const startS = trimStartMs / 1000;
+    const endS = (trimEndMs ? trimEndMs / 1000 : video.duration) || 0;
+    if (!Number.isFinite(endS) || endS <= startS) return;
+    const ratio = Math.max(0, Math.min(1, percent / 100));
+    seekTo((startS + (endS - startS) * ratio) * 1000);
+  }, [seekTo, trimEndMs, trimStartMs]);
+
+  /* ── keyboard: the bindings live in playerKeys.ts; this only dispatches ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      switch (e.key) {
-        case " ":
-        case "Spacebar":
-          e.preventDefault();
+      const action = playerKeyAction(e.key, { shift: e.shiftKey, ctrl: e.ctrlKey, alt: e.altKey, meta: e.metaKey });
+      if (!action) return;
+      if (playerKeyPreventsDefault(e.key)) e.preventDefault();
+      switch (action.type) {
+        case "toggle-play":
           togglePlay();
           break;
-        case "ArrowLeft":
-          e.preventDefault();
-          seekBy(-SEEK_SMALL_S);
+        case "seek-by":
+          seekBy(action.seconds);
           break;
-        case "ArrowRight":
-          e.preventDefault();
-          seekBy(SEEK_SMALL_S);
+        case "seek-percent":
+          seekPercent(action.percent);
           break;
-        case "j":
-        case "J":
-          seekBy(-SEEK_LARGE_S);
-          break;
-        case "k":
-        case "K":
-        case "l":
-        case "L":
-          seekBy(SEEK_LARGE_S);
-          break;
-        case "m":
-        case "M":
+        case "toggle-mute":
           toggleMute();
           break;
-        case "f":
-        case "F":
+        case "toggle-fullscreen":
           toggleFullscreen();
           break;
-        case "c":
-        case "C":
+        case "toggle-captions":
           toggleCaptions();
           break;
-        default:
-          return;
+        case "toggle-theater":
+          onTheater?.();
+          break;
+        case "next":
+          onNext?.();
+          break;
       }
       showControls();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [togglePlay, seekBy, toggleMute, toggleFullscreen, toggleCaptions, showControls]);
+  }, [togglePlay, seekBy, seekPercent, toggleMute, toggleFullscreen, toggleCaptions, onTheater, onNext, showControls]);
 
   const pct = durationMs > 0 ? Math.min(100, (positionMs / durationMs) * 100) : 0;
   const bufferedPct = durationMs > 0 ? Math.min(100, (bufferedMs / durationMs) * 100) : 0;
@@ -725,7 +731,7 @@ function TubeSettingsMenu({
       {pane === "root" ? (
         <div className="py-1">
           <MenuRow label="Quality" value={qualityLabel} onClick={() => setPane("quality")} />
-          <MenuRow label="Playback speed" value={prefs.speed === 1 ? "Normal" : `${prefs.speed}×`} onClick={() => setPane("speed")} />
+          <MenuRow label="Playback speed" value={prefs.speed === 1 ? "Normal" : `${speedChipLabel(prefs.speed)}×`} onClick={() => setPane("speed")} />
           <MenuRow label="Captions" value={captions.length === 0 ? "None" : captionLabel} onClick={() => captions.length > 0 && setPane("captions")} disabled={captions.length === 0} />
           {autoplayNext ? (
             <MenuToggle
@@ -748,9 +754,13 @@ function TubeSettingsMenu({
       ) : pane === "speed" ? (
         <div className="py-1">
           <MenuBack label="Playback speed" onClick={() => setPane("root")} />
-          {TUBE_SPEEDS.map((s) => (
-            <MenuOption key={s} label={s === 1 ? "Normal" : `${s}×`} selected={prefs.speed === s} onClick={() => onChange({ speed: s as TubeSpeed })} />
+          {/* The reels presets for now; W1 swaps this list for the reels speed slider (0.25–2 in 0.05 steps). */}
+          {SPEEDS.map((s) => (
+            <MenuOption key={s} label={s === 1 ? "Normal" : `${speedChipLabel(s)}×`} selected={prefs.speed === s} onClick={() => onChange({ speed: clampSpeed(s) })} />
           ))}
+          {!(SPEEDS as readonly number[]).includes(prefs.speed) ? (
+            <MenuOption label={`${speedChipLabel(prefs.speed)}×`} selected onClick={() => undefined} />
+          ) : null}
         </div>
       ) : (
         <div className="py-1">

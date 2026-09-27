@@ -95,6 +95,18 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
         </li>
       );
     }
+    if (item.comingSoon) {
+      // Planned route, page not built yet: the row is there so the menu's
+      // shape is final, but it is not a link until the page lands.
+      return (
+        <li key={item.key}>
+          <span className={`${cls} is-soon`} aria-disabled="true" title={`${item.label} is coming soon`} data-nav-soon>
+            {inner}
+            <span className="video-nav__tag" aria-label="coming soon">soon</span>
+          </span>
+        </li>
+      );
+    }
     return (
       <li key={item.key}>
         <Link href={item.href ?? "/"} className={cls} aria-current={current ? "page" : undefined} onClick={onNavigate}>
@@ -121,8 +133,8 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
           })}
 
         {listExpanded && subs.length > 0 ? (
-          <section className="video-nav__section" aria-label="Subscriptions">
-            <h3 className="video-nav__heading">Subscriptions</h3>
+          <section className="video-nav__section" aria-label="Channels you follow">
+            <h3 className="video-nav__heading">Following</h3>
             <ul className="video-nav__list">
               {subs.map(({ channel }) => {
                 const href = `/posttube/channel/${encodeURIComponent(channel.handle)}`;

@@ -1,4 +1,5 @@
 import { formatCount, mediaHref } from "@/features/reels/model";
+import { clampSpeed, SPEED_MAX, SPEED_MIN, type Speed } from "@/features/reels/playback/playerPrefs";
 import type { PostTubeVideo } from "./types";
 
 /*
@@ -216,8 +217,14 @@ export function writeAutoplayNextPref(storage: Pick<Storage, "setItem"> | null |
 /* ── Player prefs (quality, speed, captions) ────────────── */
 
 export const TUBE_PREFS_KEY = "posttube_player_prefs_v1";
-export const TUBE_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
-export type TubeSpeed = (typeof TUBE_SPEEDS)[number];
+
+/**
+ * Speed is the reels model (features/reels/playback/playerPrefs.ts): any
+ * 0.05 step between 0.25× and 2×, snapped by clampSpeed, so a slider value
+ * such as 1.05 survives the round trip through storage. The old fixed
+ * `TUBE_SPEEDS` list is gone; the presets are `SPEEDS` from the same file.
+ */
+export type TubeSpeed = Speed;
 
 export interface TubePlayerPrefs {
   speed: TubeSpeed;
@@ -242,7 +249,10 @@ export function parseTubePrefs(raw: string | null | undefined): TubePlayerPrefs 
     const obj = JSON.parse(raw) as Partial<TubePlayerPrefs> | null;
     if (!obj || typeof obj !== "object") return { ...DEFAULT_TUBE_PREFS };
     return {
-      speed: (TUBE_SPEEDS as readonly number[]).includes(obj.speed as number) ? (obj.speed as TubeSpeed) : 1,
+      speed:
+        typeof obj.speed === "number" && Number.isFinite(obj.speed) && obj.speed >= SPEED_MIN && obj.speed <= SPEED_MAX
+          ? clampSpeed(obj.speed)
+          : 1,
       quality: typeof obj.quality === "string" && /^(auto|\d{3,4}p)$/.test(obj.quality) ? obj.quality : "auto",
       captions: typeof obj.captions === "boolean" ? obj.captions : false,
       volume: typeof obj.volume === "number" && obj.volume >= 0 && obj.volume <= 1 ? obj.volume : 1,
@@ -284,12 +294,23 @@ export function buildVideoFeedQuery(input: VideoFeedQueryInput): Record<string, 
 
 /* ── Categories ─────────────────────────────────────────── */
 
+/** Which studio a topic is for: the merged taxonomy (plan §3) tags each entry; the flick list has no tag. */
+export type VideoCategoryKind = "all" | "short" | "long";
+
 export interface VideoCategory {
   slug: string;
   label: string;
+  /** Absent while the API still answers with the flick-only `{id,label}` shape. */
+  kind?: VideoCategoryKind;
 }
 
-/** `/v1/posts/categories` → chips. Accepts strings or objects; drops what has no slug. */
+const CATEGORY_KINDS: readonly VideoCategoryKind[] = ["all", "short", "long"];
+
+/**
+ * `/v1/posts/categories` → chips and the studio's topic select. Accepts the
+ * new `{slug,label,kind}` shape and the current `{id,label}` one (plus bare
+ * strings and the older `key`/`name` spellings); drops what has no slug.
+ */
 export function normalizeCategories(raw: unknown): VideoCategory[] {
   const list: unknown[] = Array.isArray(raw)
     ? raw
@@ -303,17 +324,20 @@ export function normalizeCategories(raw: unknown): VideoCategory[] {
   for (const entry of list) {
     let slug = "";
     let label = "";
+    let kind: VideoCategoryKind | undefined;
     if (typeof entry === "string") {
       slug = entry;
     } else if (entry && typeof entry === "object") {
       const o = entry as Record<string, unknown>;
       slug = String(o.slug ?? o.key ?? o.id ?? o.value ?? "");
       label = String(o.name ?? o.label ?? o.title ?? o.display_name ?? "");
+      const rawKind = typeof o.kind === "string" ? o.kind.trim().toLowerCase() : "";
+      if ((CATEGORY_KINDS as readonly string[]).includes(rawKind)) kind = rawKind as VideoCategoryKind;
     }
     slug = slug.trim();
     if (!slug || seen.has(slug)) continue;
     seen.add(slug);
-    out.push({ slug, label: label.trim() || titleCase(slug) });
+    out.push(kind ? { slug, label: label.trim() || titleCase(slug), kind } : { slug, label: label.trim() || titleCase(slug) });
   }
   return out;
 }

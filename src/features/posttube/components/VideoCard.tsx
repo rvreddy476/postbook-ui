@@ -7,6 +7,7 @@ import type { PostTubeVideo } from "../types";
 import { formatCount, formatDuration, timeAgo } from "../model";
 import { useDataSaver } from "@/hooks/useDataSaver";
 import { resolveImageUrl } from "@/lib/imageUrl";
+import "./tube.css";
 
 function clampPercent(value: number) {
   return Math.max(0, Math.min(100, value));
@@ -27,17 +28,15 @@ function VideoThumbnail({ thumbnailUrl, videoUrl, className }: { thumbnailUrl: s
 
   return (
     <>
-      <div className="absolute inset-0 flex items-center justify-center bg-primary-ink">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10">
-          <Play className="ml-0.5 h-7 w-7 text-white/40" />
-        </div>
+      <div className="tube-tile__poster-fallback" aria-hidden>
+        <Play className="h-7 w-7" />
       </div>
       {hasVideoFallback && (
         <video
           src={videoUrl}
           muted
           preload="metadata"
-          className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
+          className={className}
           onError={() => setVideoFailed(true)}
         />
       )}
@@ -45,7 +44,7 @@ function VideoThumbnail({ thumbnailUrl, videoUrl, className }: { thumbnailUrl: s
         <img
           src={resolvedThumb}
           alt=""
-          className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
+          className={className}
           loading="lazy"
           onError={() => setImgFailed(true)}
         />
@@ -144,38 +143,53 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   const hasResumeState = resumePosition > 0 && resumePercent > 0;
   const href = `/posttube/watch/${video.id}`;
 
+  const poster = (
+    <div className="tube-tile__poster">
+      <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
+      <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
+      {duration && <span className="tube-tile__duration">{duration}</span>}
+      {hasResumeState && (
+        <div className="tube-tile__progress" aria-hidden>
+          <div className="tube-tile__progress-bar" style={{ width: `${Math.max(4, resumePercent)}%` }} />
+        </div>
+      )}
+      {variant === "default" ? (
+        <>
+          <div className={`tube-tile__play${spotlightActive ? " is-hidden" : ""}`} aria-hidden>
+            <span className="tube-tile__play-circle">
+              <Play className="fill-current" />
+            </span>
+          </div>
+          {video.view_count >= 100 && (
+            <span className="tube-tile__views">
+              <Eye aria-hidden />
+              <span>{formatCount(video.view_count)}</span>
+            </span>
+          )}
+        </>
+      ) : null}
+    </div>
+  );
+
   if (variant === "wide") {
     return (
       <Link
         href={href}
-        className="group flex gap-3.5 rounded-2xl bg-brand-card p-2.5 transition-shadow duration-300 hover:shadow-md"
+        className="tube-tile tube-tile--wide"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
-        <div className="relative aspect-video w-[220px] shrink-0 overflow-hidden rounded-xl bg-brand-secondary">
-          <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} />
-          <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
-          {duration && (
-            <span className="absolute bottom-2 right-2 z-10 rounded-md bg-black/80 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
-              {duration}
-            </span>
-          )}
+        {poster}
+        <div className="tube-tile__text">
+          <h3 className="tube-tile__title">{video.title}</h3>
+          <p className="tube-tile__meta">{video.channel_name}</p>
           {hasResumeState && (
-            <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/30">
-              <div className="h-full bg-brand-accent" style={{ width: `${Math.max(4, resumePercent)}%` }} />
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1 py-1">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-brand-text transition-colors group-hover:text-primary-ink">{video.title}</h3>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">{video.channel_name}</p>
-          {hasResumeState && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="tube-tile__meta">
               Resume at {formatDuration(resumePosition)} · {Math.round(resumePercent)}%
               {video.last_watched_at ? ` · ${timeAgo(video.last_watched_at)}` : ""}
             </p>
           )}
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
+          <p className="tube-tile__meta">
             {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
           </p>
         </div>
@@ -186,68 +200,33 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
   return (
     <Link
       href={href}
-      className={`group flex flex-col rounded-2xl bg-brand-card p-3 transition-all duration-300 ${spotlightActive ? "z-10 -translate-y-1 shadow-lg ring-1 ring-border" : "shadow-xs"}`}
+      className="tube-tile"
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
     >
-      <div className="relative aspect-video overflow-hidden rounded-2xl bg-brand-secondary">
-        <VideoThumbnail thumbnailUrl={video.thumbnail_url} videoUrl={video.video_url} className="transition-transform duration-500 ease-out" />
-        <SpotlightPreview videoUrl={video.video_url} previewUrl={video.preview_url} isActive={spotlightActive} />
-
-        {duration && (
-          <span className="absolute bottom-3 right-3 z-10 rounded-lg bg-black/80 px-2 py-0.5 text-[11px] font-bold tracking-wider text-white">
-            {duration}
-          </span>
-        )}
-
-        {hasResumeState && (
-          <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/30">
-            <div className="h-full bg-brand-accent" style={{ width: `${Math.max(4, resumePercent)}%` }} />
-          </div>
-        )}
-
-        <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-300 ${spotlightActive ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"}`}>
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-card shadow-md">
-            <Play className="ml-0.5 h-6 w-6 fill-brand-accent text-primary-ink" />
-          </div>
-        </div>
-
-        {video.view_count >= 100 && (
-          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1">
-            <Eye className="h-3 w-3 text-white" />
-            <span className="text-[10px] font-bold text-white">{formatCount(video.view_count)}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-3.5 flex gap-3">
-        <img
-          src={video.channel_avatar_url}
-          alt=""
-          className="mt-0.5 h-10 w-10 shrink-0 rounded-full bg-brand-secondary object-cover ring-1 ring-border"
-          loading="lazy"
-        />
-        <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-[14px] font-semibold leading-snug text-brand-text transition-colors group-hover:text-primary-ink">{video.title}</h3>
-          <p className="mt-1 text-[12px] text-muted-foreground">{video.channel_name}</p>
-          <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+      {poster}
+      <div className="tube-tile__body">
+        <img src={video.channel_avatar_url} alt="" className="tube-tile__avatar" loading="lazy" />
+        <div className="tube-tile__text">
+          <h3 className="tube-tile__title">{video.title}</h3>
+          <p className="tube-tile__meta">{video.channel_name}</p>
+          <p className="tube-tile__meta">
             {video.like_count > 0 && (
-              <span className="flex items-center gap-0.5">
-                <ThumbsUp className="h-3 w-3" />
-                <span className="font-semibold">{formatCount(video.like_count)}</span>
+              <span className="tube-tile__meta-count">
+                <ThumbsUp aria-hidden />
+                <strong>{formatCount(video.like_count)}</strong>
               </span>
             )}
             {video.comment_count > 0 && (
-              <span className="flex items-center gap-0.5">
-                <MessageCircle className="h-3 w-3" />
+              <span className="tube-tile__meta-count">
+                <MessageCircle aria-hidden />
                 <span>{formatCount(video.comment_count)}</span>
               </span>
             )}
             <span>{formatCount(video.view_count)} views</span>
             <span aria-hidden>·</span>
             <span>{timeAgo(video.published_at)}</span>
-          </div>
+          </p>
         </div>
       </div>
     </Link>

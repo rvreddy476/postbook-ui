@@ -259,6 +259,22 @@ describe("normalizeCategories", () => {
     expect(normalizeCategories({ categories: [{ slug: "tech", label: "Tech" }] })).toEqual([{ slug: "tech", label: "Tech" }]);
     expect(normalizeCategories(null)).toEqual([]);
   });
+
+  test("carries the merged taxonomy's kind and ignores an unknown one", () => {
+    expect(normalizeCategories([
+      { slug: "comedy", label: "Comedy", kind: "all" },
+      { slug: "documentary", label: "Documentary", kind: "long" },
+      { slug: "dance", label: "Dance", kind: "SHORT" },
+      { slug: "other", label: "Other", kind: "weird" },
+      { id: "music", label: "Music" },
+    ])).toEqual([
+      { slug: "comedy", label: "Comedy", kind: "all" },
+      { slug: "documentary", label: "Documentary", kind: "long" },
+      { slug: "dance", label: "Dance", kind: "short" },
+      { slug: "other", label: "Other" },
+      { slug: "music", label: "Music" },
+    ]);
+  });
 });
 
 /* ── Player prefs ───────────────────────────────────────── */
@@ -269,5 +285,18 @@ describe("parseTubePrefs", () => {
     expect(parseTubePrefs(JSON.stringify({ speed: 1.5, quality: "720p", captions: true, volume: 0.4, muted: true }))).toEqual({ speed: 1.5, quality: "720p", captions: true, volume: 0.4, muted: true });
     expect(parseTubePrefs(JSON.stringify({ speed: 3, quality: "hd", volume: 7 }))).toEqual({ speed: 1, quality: "auto", captions: false, volume: 1, muted: false });
     expect(parseTubePrefs("{not json")).toEqual({ speed: 1, quality: "auto", captions: false, volume: 1, muted: false });
+  });
+
+  test("speed is the reels model: any 0.05 step in 0.25–2 survives, off-grid values snap, out of range resets", () => {
+    const speedOf = (speed: unknown) => parseTubePrefs(JSON.stringify({ speed })).speed;
+    expect(speedOf(1.05)).toBe(1.05);
+    expect(speedOf(0.25)).toBe(0.25);
+    expect(speedOf(2)).toBe(2);
+    expect(speedOf(0.75)).toBe(0.75);
+    expect(speedOf(1.33)).toBe(1.35);
+    expect(speedOf(0.1)).toBe(1);
+    expect(speedOf(2.5)).toBe(1);
+    expect(speedOf("1.5")).toBe(1);
+    expect(speedOf(Number.NaN)).toBe(1);
   });
 });

@@ -161,6 +161,12 @@
 .video-nav__more { color: rgb(var(--brand-text) / .65); }
 .video-nav :is(a, button):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: -2px; }
 
+/* A planned route (nav.ts `comingSoon`): the row keeps its place, dimmed, with a small tag; it is not a link. */
+.video-nav__item.is-soon { color: rgb(var(--brand-text) / .45); cursor: default; }
+.video-nav__item.is-soon:hover { background: transparent; color: rgb(var(--brand-text) / .45); }
+.video-nav__tag { flex: 0 0 auto; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1.4; letter-spacing: .04em; text-transform: uppercase; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .6); }
+.video-nav.is-rail .video-nav__tag { display: none; }
+
 /* Rail: icon + 10px label, like a mini guide. */
 .video-nav.is-rail .video-nav__scroll { padding: 8px 6px; }
 .video-nav.is-rail .video-nav__section + .video-nav__section { margin-top: 6px; padding-top: 8px; }

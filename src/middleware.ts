@@ -76,6 +76,10 @@ const PUBLIC_PREFIXES = [
     // Content permalinks people paste into other apps.
     "/post/",
     "/posttube/watch",
+    // The /tube alias only redirects to /posttube/* (app/tube/[[...path]]);
+    // it must be reachable signed out so a push's /tube/watch/{id} reaches
+    // the public watch page. The destination is gated on its own path.
+    "/tube/",
     // Storefront product detail — a shared product link should open.
     "/products/",
 ]

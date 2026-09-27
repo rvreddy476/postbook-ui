@@ -101,6 +101,7 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             publishError={publishError}
             retryProcessingCheck={studio.retryProcessingCheck}
             onReplaceVideo={studio.clearFile}
+            contentType={contentType}
           />
         );
       default:

@@ -59,7 +59,7 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
     errors.push({ field: "videoFile", message: "Please select a video to publish" });
   }
   if (!form.category) {
-    errors.push({ field: "category", message: "Please select a category" });
+    errors.push({ field: "category", message: "Please select a topic" });
   }
   // NOTE: the video is uploaded and transcoded on Publish (not on selection),
   // so we no longer block publishing on processing being "ready". The post

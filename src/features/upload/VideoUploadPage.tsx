@@ -21,6 +21,8 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { AppShell } from "@/features/reels/components/AppShell";
+import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
+import { categoryLabel, categoryOptions } from "./categories";
 
 /* ── Upload type config ─────────────────────────────────── */
 
@@ -36,12 +38,7 @@ const TYPE_CONFIG: Record<
   podcast: { title: "Upload Podcast",      section: "Podcast", icon: Mic,          acceptHint: "MP3, M4A, WAV, or MP4 up to 2 GB",    accept: "video/*,audio/*",                      aspect: "1/1" },
 };
 
-const CATEGORIES = [
-  "Film & Animation", "Music", "Gaming", "Entertainment", "Comedy",
-  "Education", "Science & Technology", "Sports", "Travel & Events",
-  "People & Blogs", "Howto & Style", "News & Politics", "Pets & Animals",
-  "Nonprofits & Activism", "Other",
-];
+// Topics come from GET /v1/posts/categories (features/upload/categories.ts), never a list here.
 
 const VISIBILITY_OPTIONS = [
   { value: "public",    label: "Public",    icon: Globe },
@@ -120,6 +117,8 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const categories = useVideoCategories();
+  const topicOptions = categoryOptions(categories.data, type, category);
   const [tags, setTags] = useState("");
   const [visibility, setVisibility] = useState("public");
 
@@ -334,15 +333,15 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                     {/* Category + Visibility in a row */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="mb-1.5 block text-[12px] font-semibold text-brand-text">Category <span className="text-rose-400">*</span></label>
+                        <label className="mb-1.5 block text-[12px] font-semibold text-brand-text">Topic <span className="text-rose-400">*</span></label>
                         <div className="relative">
                           <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
                             className="h-11 w-full appearance-none rounded-xl border border-brand-divider bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text/30 focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
                           >
-                            <option value="">Select category</option>
-                            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                            <option value="">{categories.isLoading ? "Loading topics…" : "Select topic"}</option>
+                            {topicOptions.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/60" />
                         </div>
@@ -398,7 +397,7 @@ export function VideoUploadPage({ type }: { type: UploadType }) {
                     <div className="p-3">
                       <p className="truncate text-[12px] font-semibold text-brand-text">{title || "Untitled"}</p>
                       <p className="mt-0.5 text-[11px] text-brand-text/60">
-                        {category || "No category"} · {VISIBILITY_OPTIONS.find((v) => v.value === visibility)?.label ?? "Public"}
+                        {category ? categoryLabel(categories.data, category) : "No topic"} · {VISIBILITY_OPTIONS.find((v) => v.value === visibility)?.label ?? "Public"}
                       </p>
                     </div>
                   </div>
