@@ -102,8 +102,11 @@
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
 /* The Follow pill on the avatar's bottom edge, where TikTok's plus sits. */
-.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: auto; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .01em; white-space: nowrap; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--brand-card)); cursor: pointer; transition: opacity 120ms ease, transform 120ms ease; }
-.reel-rail-follow:hover { transform: translateX(-50%) scale(1.08); opacity: .9; }
+/* The Follow pill: a small capsule hung 6px over the avatar's bottom edge, ringed by the canvas so it reads as its own object, with a soft tinted shadow. Hover lifts it; active presses it. */
+.reel-rail-follow { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); display: inline-flex; align-items: center; justify-content: center; width: auto; height: 22px; padding: 0 11px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: .02em; white-space: nowrap; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 4px 10px rgb(var(--danger) / .35); cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease; }
+.reel-rail-follow:hover { transform: translateX(-50%) translateY(-1px); box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 6px 14px rgb(var(--danger) / .45); filter: brightness(1.06); }
+.reel-rail-follow:active { transform: translateX(-50%) scale(.96); }
+.reel-rail-follow:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
 .reel-rail-follow:disabled { opacity: .6; cursor: default; }
 .reel-action-rail.is-phone .reel-rail-avatar { width: 40px; height: 40px; }
 .reel-action-rail.is-phone .reel-rail-avatar-wrap { margin-top: 2px; }
@@ -117,10 +120,9 @@
 .reel-action-rail.is-desktop .reel-rail-disc > * { width: 100%; height: 100%; }
 .reel-action-rail.is-desktop .reel-rail-disc[data-playing] { animation: reel-disc-spin 6s linear infinite; }
 @keyframes reel-disc-spin { to { transform: rotate(360deg); } }
-.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 12px; }
+.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 16px; }
 .reel-action-rail.is-desktop .reel-rail-avatar { width: 36px; height: 36px; }
-.reel-action-rail.is-desktop .reel-rail-follow { height: 18px; }
-.reel-action-rail.is-desktop .reel-rail-follow { bottom: 3px; }
+.reel-action-rail.is-desktop .reel-rail-follow { bottom: 0; }
 .reel-action-rail.is-desktop .reel-action-button { gap: 2px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 2px; border-radius: 0; color: rgb(var(--brand-text)); }
 .reel-action-rail.is-desktop .reel-action-button:hover { background: transparent; }
 .reel-action-rail.is-desktop .reel-action-icon { width: 36px; height: 36px; border-radius: 50%; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }

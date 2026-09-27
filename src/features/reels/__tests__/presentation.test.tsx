@@ -132,9 +132,9 @@ test('desktop rail reads Share, Save, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
-  expect(css).toContain('width: auto; height: 18px; padding: 0 7px; border: 0; border-radius: 999px; font-size: 10px; font-weight: 700;');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 12px; }');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 3px; }');
+  expect(css).toContain('width: auto; height: 22px; padding: 0 11px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700;');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 16px; }');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 0; }');
 });
 
 test('the author card: avatar, name link, handle, Follow pill (Following outlined, Subscribe for a channel, nothing when own), counts row', () => {
