@@ -28,7 +28,7 @@ export default function PosttubeSubscriptionsPage() {
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-16 text-center sm:px-6">
-        <h1 className="text-2xl font-semibold text-brand-text">Subscriptions</h1>
+        <h1 className="text-2xl font-semibold text-brand-text">Following</h1>
         <p className="mt-2 text-[13px] text-muted-foreground">Sign in to see the channels you follow.</p>
       </div>
     );
@@ -41,7 +41,7 @@ export default function PosttubeSubscriptionsPage() {
           <Users className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold text-brand-text">Subscriptions</h1>
+          <h1 className="text-2xl font-semibold text-brand-text">Following</h1>
           <p className="text-[12px] text-muted-foreground">New videos from the channels you follow.</p>
         </div>
       </div>
