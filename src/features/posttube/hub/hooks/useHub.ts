@@ -23,6 +23,8 @@ import {
   getUploadCounts,
   heartComment,
   listCaptionTracks,
+  listMyPublicCollections,
+  searchChannelTargets,
   listInbox,
   listLibrary,
   listMyCaptions,
@@ -76,7 +78,32 @@ export const HUB_KEYS = {
   creatorInsights: (period: InsightsPeriod) => ["hub", "insights", "creator", period] as const,
   contentInsights: (id: string, period: InsightsPeriod) => ["hub", "insights", "content", id, period] as const,
   privateShares: (id: string) => ["hub", "private-shares", id] as const,
+  publicCollections: (creatorId: string) => ["hub", "public-collections", creatorId] as const,
+  channelSearch: (q: string) => ["hub", "channel-search", q] as const,
 };
+
+/** The end-screen / card collection picker: the creator's public collections. */
+export function useMyPublicCollections(creatorId: string | null | undefined) {
+  return useQuery({
+    queryKey: HUB_KEYS.publicCollections(creatorId ?? ""),
+    queryFn: () => listMyPublicCollections(creatorId as string),
+    enabled: !!creatorId,
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+/** The end-screen channel picker; the caller debounces `q` (2+ characters). */
+export function useChannelTargetSearch(q: string) {
+  const query = q.trim();
+  return useQuery({
+    queryKey: HUB_KEYS.channelSearch(query),
+    queryFn: () => searchChannelTargets(query),
+    enabled: query.length >= 2,
+    staleTime: 60_000,
+    retry: false,
+  });
+}
 
 /* ── Library ────────────────────────────────────────────── */
 

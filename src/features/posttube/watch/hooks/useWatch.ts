@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
-import { fetchStoryboard, getCollectionPlayback, getCreatorSupport, getUpNext, getWatchDetail } from "../watchApi";
+import { fetchStoryboard, getCollectionPlayback, getCreatorSupport, getUpNext, getViewerCards, getViewerEndScreens, getWatchDetail, type ViewerCard, type ViewerEndScreenElement } from "../watchApi";
 import { DEFAULT_WATCH_PREFS, parseWatchPrefs, WATCH_PREFS_KEY, type WatchPrefs } from "../watchPrefs";
 import type { UpNextChip } from "../upNext";
 
@@ -13,7 +13,36 @@ export const WATCH_KEYS = {
   collection: (id?: string) => ["posttube", "watch", "collection", id] as const,
   storyboard: (mediaId?: string) => ["posttube", "watch", "storyboard", mediaId] as const,
   support: (creatorId?: string) => ["posttube", "watch", "support", creatorId] as const,
+  endScreens: (id?: string) => ["posttube", "watch", "end-screens", id] as const,
+  cards: (id?: string) => ["posttube", "watch", "cards", id] as const,
 };
+
+/**
+  The end screen and the cards, once per video. `enabled` is false for a
+  made-for-kids video, a gated one and before the detail answered (a 404
+  or an age code never gets here). Failures read as "none".
+*/
+const NO_ELEMENTS: ViewerEndScreenElement[] = [];
+const NO_CARDS: ViewerCard[] = [];
+
+export function useVideoElements(videoId: string | undefined, enabled: boolean) {
+  const on = !!videoId && enabled;
+  const endScreens = useQuery({
+    queryKey: WATCH_KEYS.endScreens(videoId),
+    queryFn: () => getViewerEndScreens(videoId!),
+    enabled: on,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const cards = useQuery({
+    queryKey: WATCH_KEYS.cards(videoId),
+    queryFn: () => getViewerCards(videoId!),
+    enabled: on,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  return { endScreens: (on && endScreens.data) || NO_ELEMENTS, cards: (on && cards.data) || NO_CARDS };
+}
 
 export function useWatchDetail(videoId: string | undefined) {
   return useQuery({

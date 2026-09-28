@@ -1,17 +1,15 @@
 "use client";
 
-import { ChevronDown, Plus, Sparkles, Upload, X } from "lucide-react";
+import { ChevronDown, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
+import { useAuthUser } from "@/store/auth";
 import {
-  HUB_CARD_TYPES,
   HUB_COMMENT_ACCESSES,
   HUB_COMMENT_MODERATIONS,
   HUB_COMMENT_SORTS,
-  HUB_END_SCREEN_MAX,
-  HUB_END_SCREEN_TYPES,
   HUB_LICENSES,
   HUB_REMIX_SETTINGS,
   HUB_VISIBILITIES,
@@ -31,7 +29,6 @@ import {
   LICENSE_LABEL,
   REMIX_LABEL,
   VISIBILITY_LABEL,
-  formatMs,
   fromLocalInput,
   parseClock,
   readableHubError,
@@ -45,6 +42,7 @@ import {
   useHubChapters,
   useHubEndScreens,
   useHubPost,
+  useMyPublicCollections,
   usePickCoverFrame,
   useRequestAutoCaption,
   useReschedule,
@@ -59,6 +57,8 @@ import {
 import { PUBLISH_LANGUAGES } from "../publishDefaults";
 import { chapterRowsComplete, chapterRowsFrom, chapterRowsToWire, type ChapterDraft } from "../chaptersModel";
 import { ChaptersEditor } from "./ChaptersEditor";
+import { CardsEditor, EndScreenEditor } from "./EndScreenEditor";
+import { cardsBlocked, durationMsOf, endScreenBlock, validateCards, validateEndScreens } from "../endScreenEditor";
 import { SeriesSection } from "./SeriesSection";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
@@ -545,24 +545,42 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
   const chapters = useHubChapters(post.id);
   const endScreens = useHubEndScreens(post.id);
   const cards = useHubCards(post.id);
+  const me = useAuthUser();
+  const collections = useMyPublicCollections(post.author_id || me?.id || null);
   const saveChapters = useSaveChapters();
   const saveScreens = useSaveEndScreens();
   const saveCards = useSaveCards();
-  const durationMs = Math.max(0, Math.round(post.duration_seconds * 1000));
+  const durationMs = durationMsOf(post);
+  const block = endScreenBlock(post);
 
   const [chapterRows, setChapterRows] = useState<ChapterDraft[] | null>(null);
   const [screenRows, setScreenRows] = useState<HubEndScreen[] | null>(null);
+  const [screensDirty, setScreensDirty] = useState(false);
+  const [screenError, setScreenError] = useState<string | null>(null);
   const [cardRows, setCardRows] = useState<HubCard[] | null>(null);
+  const [cardsDirty, setCardsDirty] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
 
   useEffect(() => {
     if (chapters.data && chapterRows === null) setChapterRows(chapterRowsFrom(chapters.data));
   }, [chapters.data, chapterRows]);
+  // Re-seeded from the server whenever there is nothing unsaved (after a save the refetch brings ids and stats).
   useEffect(() => {
-    if (endScreens.data && screenRows === null) setScreenRows(endScreens.data);
-  }, [endScreens.data, screenRows]);
+    if (endScreens.data && !screensDirty) setScreenRows(endScreens.data);
+  }, [endScreens.data, screensDirty]);
   useEffect(() => {
-    if (cards.data && cardRows === null) setCardRows(cards.data);
-  }, [cards.data, cardRows]);
+    if (cards.data && !cardsDirty) setCardRows(cards.data);
+  }, [cards.data, cardsDirty]);
+
+  /* Targets: your other long videos that viewers can open (public or unlisted); your public collections. */
+  const videos = useMemo(
+    () => candidates.filter((c) => c.id !== post.id && !isShortType(c.content_type) && (c.visibility === "public" || c.visibility === "unlisted")),
+    [candidates, post.id],
+  );
+  const collectionOptions = collections.data ?? [];
+
+  const screenProblems = useMemo(() => validateEndScreens(screenRows ?? [], { durationMs, block, postId: post.id }), [screenRows, durationMs, block, post.id]);
+  const cardProblems = useMemo(() => validateCards(cardRows ?? [], { durationMs, madeForKids: post.made_for_kids, postId: post.id }), [cardRows, durationMs, post.made_for_kids, post.id]);
 
   const chaptersValid = chapterRowsComplete(chapterRows ?? []);
   const commitChapters = async () => {
@@ -576,34 +594,31 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
   };
 
   const commitScreens = async () => {
-    if (!screenRows) return;
+    if (!screenRows || screenProblems.length > 0) return;
+    setScreenError(null);
     try {
       await saveScreens.mutateAsync({ postId: post.id, screens: screenRows });
+      setScreensDirty(false);
       toast({ type: "success", title: "End screen saved" });
-    } catch {
-      toast({ type: "error", title: "Could not save the end screen", description: "Each pick needs a target and a window inside the video." });
+    } catch (err) {
+      const message = readableHubError(hubErrorCode(err), "Check each element and try again.");
+      setScreenError(message);
+      toast({ type: "error", title: "Could not save the end screen", description: message });
     }
   };
 
   const commitCards = async () => {
-    if (!cardRows) return;
+    if (!cardRows || cardProblems.length > 0) return;
+    setCardError(null);
     try {
       await saveCards.mutateAsync({ postId: post.id, cards: cardRows });
+      setCardsDirty(false);
       toast({ type: "success", title: "Cards saved" });
-    } catch {
-      toast({ type: "error", title: "Could not save cards", description: "Every card needs a title." });
+    } catch (err) {
+      const message = readableHubError(hubErrorCode(err), "Check each card and try again.");
+      setCardError(message);
+      toast({ type: "error", title: "Could not save cards", description: message });
     }
-  };
-
-  const addScreen = () => {
-    if (!screenRows || screenRows.length >= HUB_END_SCREEN_MAX) return;
-    const start = Math.max(0, durationMs - 10_000);
-    setScreenRows([...screenRows, { type: "video", target_id: candidates[0]?.id ?? null, target_url: null, title: null, position: { slot: screenRows.length }, start_ms: start, end_ms: Math.max(start + 1000, durationMs) }]);
-  };
-
-  const addCard = () => {
-    if (!cardRows) return;
-    setCardRows([...cardRows, { type: "video", target_id: candidates[0]?.id ?? null, target_url: null, title: candidates[0]?.title ?? "", teaser_text: null, appear_at_ms: Math.min(durationMs, 30_000) }]);
   };
 
   if (chapters.isPending || endScreens.isPending || cards.isPending) {
@@ -633,103 +648,45 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
         }
       />
 
-      {/* End screen */}
-      <div className="hub-elem">
-        <div className="hub-elem-head">
-          <span>End screen</span>
-          <button type="button" className="hub-btn hub-btn-sm" onClick={addScreen} disabled={(screenRows?.length ?? 0) >= HUB_END_SCREEN_MAX}>
-            <Plus /> Add ({screenRows?.length ?? 0}/{HUB_END_SCREEN_MAX})
-          </button>
-        </div>
-        {(screenRows ?? []).length === 0 ? <span className="hub-hint">Up to four picks shown over the last seconds: a video, a collection, a follow button or a link.</span> : null}
-        {(screenRows ?? []).map((s, i) => (
-          <div key={s.id ?? `new-${i}`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div className="hub-elem-row hub-elem-row-3">
-              <select className="hub-select hub-input-sm" value={s.type} aria-label={`End screen ${i + 1} type`} onChange={(e) => setScreenRows((rows) => rows!.map((x, j) => (j === i ? { ...x, type: e.target.value as HubEndScreen["type"], target_id: null, target_url: null } : x)))}>
-                {HUB_END_SCREEN_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t === "channel_subscribe" ? "Subscribe" : t === "external_link" ? "Link" : t === "playlist" ? "Collection" : "Video"}
-                  </option>
-                ))}
-              </select>
-              <input className="hub-input hub-input-sm" value={formatMs(s.start_ms)} aria-label="Shows from" onChange={(e) => { const ms = parseClock(e.target.value); if (ms !== null) setScreenRows((rows) => rows!.map((x, j) => (j === i ? { ...x, start_ms: ms } : x))); }} placeholder="from m:ss" />
-              <TargetField kind={s.type} targetId={s.target_id} targetUrl={s.target_url} candidates={candidates} onChange={(target_id, target_url) => setScreenRows((rows) => rows!.map((x, j) => (j === i ? { ...x, target_id, target_url } : x)))} />
-              <button type="button" className="hub-icon-btn" aria-label="Remove end screen pick" onClick={() => setScreenRows((rows) => rows!.filter((_, j) => j !== i))}>
-                <X />
-              </button>
-            </div>
-          </div>
-        ))}
-        {(screenRows ?? []).length > 0 ? (
-          <div className="hub-row" style={{ justifyContent: "space-between" }}>
-            <span className="hub-hint">Shown until the video ends ({formatMs(durationMs)}).</span>
-            <button type="button" className="hub-btn hub-btn-sm hub-btn-primary" onClick={commitScreens} disabled={saveScreens.isPending}>
-              {saveScreens.isPending ? "Saving…" : "Save end screen"}
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <EndScreenEditor
+        postId={post.id}
+        thumbnailUrl={post.thumbnail_url}
+        durationMs={durationMs}
+        block={block}
+        rows={screenRows ?? []}
+        onChange={(rows) => {
+          setScreenRows(rows);
+          setScreensDirty(true);
+          setScreenError(null);
+        }}
+        videos={videos}
+        collections={collectionOptions}
+        problems={screenProblems}
+        serverError={screenError}
+        dirty={screensDirty}
+        saving={saveScreens.isPending}
+        onSave={() => void commitScreens()}
+      />
 
-      {/* Cards */}
-      <div className="hub-elem">
-        <div className="hub-elem-head">
-          <span>Cards</span>
-          <button type="button" className="hub-btn hub-btn-sm" onClick={addCard}>
-            <Plus /> Add
-          </button>
-        </div>
-        {(cardRows ?? []).length === 0 ? <span className="hub-hint">A small card that appears at a moment in the video, pointing at another video, a collection, a poll or a link.</span> : null}
-        {(cardRows ?? []).map((c, i) => (
-          <div key={c.id ?? `new-${i}`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <div className="hub-elem-row hub-elem-row-3">
-              <input className="hub-input hub-input-sm" value={formatMs(c.appear_at_ms)} aria-label={`Card ${i + 1} time`} placeholder="m:ss" onChange={(e) => { const ms = parseClock(e.target.value); if (ms !== null) setCardRows((rows) => rows!.map((x, j) => (j === i ? { ...x, appear_at_ms: ms } : x))); }} />
-              <select className="hub-select hub-input-sm" value={c.type} aria-label={`Card ${i + 1} type`} onChange={(e) => setCardRows((rows) => rows!.map((x, j) => (j === i ? { ...x, type: e.target.value as HubCard["type"], target_id: null, target_url: null } : x)))}>
-                {HUB_CARD_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t === "external_link" ? "Link" : t === "playlist" ? "Collection" : t === "poll" ? "Poll" : "Video"}
-                  </option>
-                ))}
-              </select>
-              <TargetField kind={c.type} targetId={c.target_id} targetUrl={c.target_url} candidates={candidates} onChange={(target_id, target_url) => setCardRows((rows) => rows!.map((x, j) => (j === i ? { ...x, target_id, target_url, title: x.title || candidates.find((v) => v.id === target_id)?.title || x.title } : x)))} />
-              <button type="button" className="hub-icon-btn" aria-label="Remove card" onClick={() => setCardRows((rows) => rows!.filter((_, j) => j !== i))}>
-                <X />
-              </button>
-            </div>
-            <input className="hub-input hub-input-sm" value={c.title} placeholder="Card title (required)" aria-label={`Card ${i + 1} title`} aria-invalid={c.title.trim() === ""} onChange={(e) => setCardRows((rows) => rows!.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} />
-          </div>
-        ))}
-        {(cardRows ?? []).length > 0 ? (
-          <div className="hub-row" style={{ justifyContent: "flex-end" }}>
-            <button type="button" className="hub-btn hub-btn-sm hub-btn-primary" onClick={commitCards} disabled={saveCards.isPending || (cardRows ?? []).some((c) => c.title.trim() === "")}>
-              {saveCards.isPending ? "Saving…" : "Save cards"}
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <CardsEditor
+        postId={post.id}
+        durationMs={durationMs}
+        blocked={cardsBlocked(post)}
+        rows={cardRows ?? []}
+        onChange={(rows) => {
+          setCardRows(rows);
+          setCardsDirty(true);
+          setCardError(null);
+        }}
+        videos={videos}
+        collections={collectionOptions}
+        problems={cardProblems}
+        serverError={cardError}
+        dirty={cardsDirty}
+        saving={saveCards.isPending}
+        onSave={() => void commitCards()}
+      />
     </div>
-  );
-}
-
-function TargetField({ kind, targetId, targetUrl, candidates, onChange }: { kind: string; targetId: string | null; targetUrl: string | null; candidates: HubLibraryRow[]; onChange: (targetId: string | null, targetUrl: string | null) => void }) {
-  if (kind === "external_link") {
-    return <input className="hub-input hub-input-sm" value={targetUrl ?? ""} placeholder="https://…" aria-label="Link" onChange={(e) => onChange(null, e.target.value || null)} />;
-  }
-  if (kind === "channel_subscribe" || kind === "poll") {
-    return <span className="hub-hint">{kind === "poll" ? "Poll id" : "Your channel"}{kind === "poll" ? null : " — no target needed"}{kind === "poll" ? <input className="hub-input hub-input-sm" value={targetId ?? ""} aria-label="Poll id" onChange={(e) => onChange(e.target.value || null, null)} /> : null}</span>;
-  }
-  if (kind === "playlist") {
-    return <input className="hub-input hub-input-sm" value={targetId ?? ""} placeholder="Collection id" aria-label="Collection id" onChange={(e) => onChange(e.target.value || null, null)} />;
-  }
-  return (
-    <select className="hub-select hub-input-sm" value={targetId ?? ""} aria-label="Target video" onChange={(e) => onChange(e.target.value || null, null)}>
-      <option value="">Pick a video</option>
-      {candidates.map((c) => (
-        <option key={c.id} value={c.id}>
-          {c.title}
-        </option>
-      ))}
-      {targetId && !candidates.some((c) => c.id === targetId) ? <option value={targetId}>{targetId}</option> : null}
-    </select>
   );
 }
 

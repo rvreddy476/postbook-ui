@@ -28,6 +28,12 @@
 .tube-player__replay { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
 .tube-player__replay:hover { opacity: .92; }
 
+/* The 16:9 overlay layer (end-screen elements, cards) and the compact Up next card that keeps off them. */
+.tube-player__overlay { position: absolute; z-index: 35; pointer-events: none; }
+.tube-player__end-compact { position: absolute; z-index: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 288px; max-width: 100%; padding: 10px 12px; border-radius: 12px; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); pointer-events: auto; }
+.tube-player__end-compact > p, .tube-player__end-compact > .tube-end-compact__bar { flex-basis: 100%; margin: 0; }
+.tube-player__replay.is-compact { height: 36px; padding: 0 12px; gap: 6px; font-size: 12px; }
+
 /* Controls: hover only, one gradient band */
 .tube-player__controls { position: absolute; inset: auto 0 0; z-index: 40; padding: 40px 10px 6px; background: linear-gradient(to top, rgb(var(--reel-stage) / .9), rgb(var(--reel-stage) / .4) 55%, transparent); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
 .tube-player__controls.is-visible { opacity: 1; pointer-events: auto; }

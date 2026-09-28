@@ -140,10 +140,11 @@ describe("elements", () => {
 
   test("end screens accept a JSON string position and an unknown type falls back to video", () => {
     const s = normalizeEndScreens([{ id: "e1", type: "channel_subscribe", position: '{"slot":2}', start_ms: 5, end_ms: 10 }, { type: "nope", position: { x: 1 }, start_ms: 0, end_ms: 1 }]);
-    expect(s[0].position).toEqual({ slot: 2 });
+    // 29 Sep contract: positions are {x,y,w}; an old {slot:n} reads as that corner, a partial one as the slot of its index.
+    expect(s[0].position).toEqual({ x: 0.05, y: 0.5444, w: 0.2 }); // slot 2 = bottom-left
     expect(s[0].type).toBe("channel_subscribe");
     expect(s[1].type).toBe("video");
-    expect(s[1].position).toEqual({ x: 1 });
+    expect(s[1].position).toEqual({ x: 0.65, y: 0.1, w: 0.3 }); // no y → the slot of its index (1 = top-right)
   });
 
   test("cards sort by appear time", () => {

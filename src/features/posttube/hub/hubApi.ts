@@ -4,6 +4,9 @@ import { extractCoverFrame } from "@/features/reels/data/reelsApi";
 import { uploadMedia } from "@/lib/mediaUpload";
 import { addPlaylistItem, createSubtitleTrack, getPlaylistItems, getSubtitleTracks, setCoverFrame, updateSchedule } from "@/features/posttube/data/posttubeApi";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
+import { fetchCreatorCollections } from "@/features/posttube/library/libraryApi";
+import { readEndScreenPosition } from "@/features/posttube/watch/watchApi";
+import type { EndScreenKind, EndScreenPosition } from "@/features/posttube/endScreenGeometry";
 import type { CommentItem } from "@/types/profile";
 
 /*
@@ -28,8 +31,10 @@ import type { CommentItem } from "@/types/profile";
     GET    /v1/posts/:id
     PATCH  /v1/posts/:id                         (owner edit, see HubPostPatch)
     GET|POST /v1/posts/:id/chapters              { chapters: [...] }
-    GET|POST /v1/posts/:id/end-screens           { screens: [...] }
-    GET|POST /v1/posts/:id/cards                 { cards: [...] }
+    GET|POST /v1/posts/:id/end-screens           { screens: [...] } (29 Sep contract: {x,y,w} positions, video_mode, stats)
+    GET|POST /v1/posts/:id/cards                 { cards: [...] } (+ stats)
+    GET    /v1/creators/:creatorId/playlists     (library adapter; the end-screen collection picker, public only)
+    GET    /v1/search/channels?q&limit           (the end-screen channel picker; owner_id is the target)
     GET    /v1/posts/categories
     GET    /v1/comments/inbox?status&content&sort&cursor&limit
     POST|DELETE /v1/comments/:id/heart
@@ -437,6 +442,10 @@ export interface HubPostDetail {
   made_for_kids: boolean;
   /** "draft" / "scheduled" / "published"…; "" when the detail does not say. */
   status: string;
+  /** The creator (whose public collections the end-screen picker lists); "" when absent. */
+  author_id: string;
+  /** The video asset's processing state ("ready", "processing", …); "" when the detail does not say. */
+  processing_status: string;
   published_at: string | null;
   /* Contract A/B — every viewer */
   age_restricted: boolean;
@@ -487,6 +496,11 @@ export function normalizeRecordingDate(raw: unknown): string {
   return m ? m[1] : "";
 }
 
+function videoProcessingStatus(raw: Record<string, unknown>): string {
+  const media = Array.isArray(raw.media) ? raw.media.filter(isRecord) : [];
+  return str(media.find((m) => m.kind === "video")?.processing_status);
+}
+
 export function normalizePostDetail(raw: unknown): HubPostDetail | null {
   if (!isRecord(raw) || typeof raw.id !== "string") return null;
   const row = normalizeLibraryRow(raw);
@@ -510,6 +524,8 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     no_comments: bool(raw.no_comments),
     made_for_kids: bool(raw.is_made_for_kids ?? raw.made_for_kids),
     status: str(raw.status).toLowerCase(),
+    author_id: str(raw.author_id) || (isRecord(raw.author) ? str(raw.author.id) : ""),
+    processing_status: (row.processing_status || videoProcessingStatus(raw)).toLowerCase(),
     published_at: row.published_at,
     age_restricted: row.age_restricted,
     hide_like_count: row.hide_like_count,
@@ -656,58 +672,87 @@ export async function saveChapters(postId: string, chapters: Pick<HubChapter, "t
   return num(res.data?.data?.saved, sorted.length);
 }
 
-/**
-  `POST /v1/posts/:postId/end-screens`, verbatim:
-    type endScreenInput struct {
-      Type      string          `json:"type" binding:"required"`   // video | playlist | channel_subscribe | external_link
-      TargetID  *string         `json:"target_id"`                 // UUID when set
-      TargetURL *string         `json:"target_url"`
-      Title     *string         `json:"title"`
-      Position  json.RawMessage `json:"position" binding:"required"`
-      StartMs   int             `json:"start_ms"`
-      EndMs     int             `json:"end_ms"`                    // must be > start_ms
-    }
-    type saveEndScreensRequest struct { Screens []endScreenInput `json:"screens" binding:"required"` }
+/*
+  End screens (contract of 29 Sep, "end screens and cards that viewers see"):
+    POST /v1/posts/:postId/end-screens  { screens: [...] }  replace all; [] clears
+    element: { type, video_mode (video only), target_id, target_url, title,
+               position: {x, y, w} (frame fractions), start_ms, end_ms }
+    GET (owner) adds id, the resolved video|playlist|channel|link objects and
+    stats {impressions, clicks, click_rate} over the last 28 days.
+    422: END_SCREEN_TOO_MANY → _NOT_ELIGIBLE → _KIDS → _TIMING → _POSITION →
+         _OVERLAP → _TARGET (hubModel.readableHubError has the sentences).
+  Old rows whose position is {slot:n} read as that corner (watchApi.readEndScreenPosition)
+  and are written back as {x, y, w} on the next save.
 */
-export type HubEndScreenType = "video" | "playlist" | "channel_subscribe" | "external_link";
-export const HUB_END_SCREEN_TYPES: readonly HubEndScreenType[] = ["video", "playlist", "channel_subscribe", "external_link"];
+export type HubEndScreenType = EndScreenKind;
+export const HUB_END_SCREEN_TYPES: readonly HubEndScreenType[] = ["video", "playlist", "channel_subscribe", "channel", "external_link"];
 export const HUB_END_SCREEN_MAX = 4;
+export type HubVideoMode = "specific" | "latest" | "popular";
+export const HUB_VIDEO_MODES: readonly HubVideoMode[] = ["specific", "latest", "popular"];
+
+/** Owner stats: the click rate is clicks / impressions (0..1). */
+export interface HubElementStats {
+  impressions: number;
+  clicks: number;
+  click_rate: number;
+}
+
+export function normalizeElementStats(raw: unknown): HubElementStats | null {
+  if (!isRecord(raw)) return null;
+  const impressions = Math.max(0, num(raw.impressions));
+  const clicks = Math.max(0, num(raw.clicks));
+  let rate = impressions > 0 ? clicks / impressions : num(raw.click_rate);
+  // With no impressions to divide by, a server percentage (12.5) reads as a fraction.
+  if (impressions === 0 && rate > 1) rate = rate / 100;
+  return { impressions, clicks, click_rate: Math.max(0, Math.min(1, rate)) };
+}
 
 export interface HubEndScreen {
   id?: string;
   type: HubEndScreenType;
+  /** Only meaningful for type=video; "specific" otherwise. */
+  video_mode: HubVideoMode;
   target_id: string | null;
   target_url: string | null;
   title: string | null;
-  /** Free JSON; the hub writes `{slot: 0..3}` and reads whatever is there back. */
-  position: Record<string, unknown>;
+  position: EndScreenPosition;
   start_ms: number;
   end_ms: number;
+  /** The owner GET's 28-day stats; null on a new element. */
+  stats: HubElementStats | null;
+  /** What the owner GET resolved the target to (a name for a target outside the loaded pickers). */
+  target_label: string | null;
+}
+
+/** The resolved object on an owner row → a label for the picker. */
+function resolvedLabel(s: Record<string, unknown>): string | null {
+  const v = isRecord(s.video) ? s.video : isRecord(s.playlist) ? s.playlist : isRecord(s.collection) ? s.collection : null;
+  if (v) return strOrNull(str(v.title).trim());
+  if (isRecord(s.channel)) {
+    const handle = str(s.channel.handle).replace(/^@/, "");
+    return strOrNull(str(s.channel.name).trim()) ?? (handle ? `@${handle}` : null);
+  }
+  if (isRecord(s.link)) return strOrNull(str(s.link.title).trim()) ?? strOrNull(str(s.link.domain));
+  return null;
 }
 
 export function normalizeEndScreens(raw: unknown): HubEndScreen[] {
   const list = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.screens) ? raw.screens : [];
   return list.filter(isRecord).map((s, i) => {
-    let position: Record<string, unknown> = { slot: i };
-    if (isRecord(s.position)) position = s.position;
-    else if (typeof s.position === "string") {
-      try {
-        const parsed: unknown = JSON.parse(s.position);
-        if (isRecord(parsed)) position = parsed;
-      } catch {
-        /* keep the slot */
-      }
-    }
-    const type = str(s.type) as HubEndScreenType;
+    const type = pick(s.type, HUB_END_SCREEN_TYPES, "video");
+    const mode = type === "video" ? pick(s.video_mode, HUB_VIDEO_MODES, "specific") : "specific";
     return {
       id: strOrNull(s.id) ?? undefined,
-      type: HUB_END_SCREEN_TYPES.includes(type) ? type : "video",
-      target_id: strOrNull(s.target_id),
-      target_url: strOrNull(s.target_url),
+      type,
+      video_mode: mode,
+      target_id: mode === "specific" ? strOrNull(s.target_id) : null,
+      target_url: strOrNull(s.target_url) ?? (isRecord(s.link) ? strOrNull(s.link.url) : null),
       title: strOrNull(s.title),
-      position,
-      start_ms: num(s.start_ms),
-      end_ms: num(s.end_ms),
+      position: readEndScreenPosition(s.position, type, i),
+      start_ms: Math.max(0, num(s.start_ms)),
+      end_ms: Math.max(0, num(s.end_ms)),
+      stats: normalizeElementStats(s.stats),
+      target_label: resolvedLabel(s),
     };
   });
 }
@@ -717,18 +762,43 @@ export async function getEndScreens(postId: string): Promise<HubEndScreen[]> {
   return normalizeEndScreens(res.data.data);
 }
 
-export async function saveEndScreens(postId: string, screens: HubEndScreen[]): Promise<number> {
-  const body = {
-    screens: screens.slice(0, HUB_END_SCREEN_MAX).map((s, i) => ({
-      type: s.type,
-      target_id: s.target_id ?? undefined,
-      target_url: s.target_url ?? undefined,
-      title: s.title ?? undefined,
-      position: { ...s.position, slot: i },
-      start_ms: Math.max(0, Math.round(s.start_ms)),
-      end_ms: Math.max(Math.round(s.start_ms) + 1, Math.round(s.end_ms)),
-    })),
+function round4(n: number): number {
+  return Math.round(n * 10_000) / 10_000;
+}
+
+/** A saved element's server id; echoing it keeps its click stats across edits (anything else is a new element). */
+const SAVED_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The save body, exactly: targets only where the type takes one, video_mode only on videos, positions as {x, y, w}. */
+export function endScreensBody(screens: HubEndScreen[]): { screens: Record<string, unknown>[] } {
+  return {
+    screens: screens.slice(0, HUB_END_SCREEN_MAX).map((s) => {
+      const start = Math.max(0, Math.round(s.start_ms));
+      const out: Record<string, unknown> = {
+        type: s.type,
+        position: { x: round4(s.position.x), y: round4(s.position.y), w: round4(s.position.w) },
+        start_ms: start,
+        end_ms: Math.max(start + 1, Math.round(s.end_ms)),
+      };
+      if (s.id && SAVED_ID.test(s.id)) out.id = s.id;
+      if (s.type === "video") {
+        out.video_mode = s.video_mode;
+        if (s.video_mode === "specific" && s.target_id) out.target_id = s.target_id;
+      } else if ((s.type === "playlist" || s.type === "channel") && s.target_id) {
+        out.target_id = s.target_id;
+      } else if (s.type === "external_link") {
+        const url = s.target_url?.trim();
+        if (url) out.target_url = url;
+        const title = s.title?.trim();
+        if (title) out.title = title;
+      }
+      return out;
+    }),
   };
+}
+
+export async function saveEndScreens(postId: string, screens: HubEndScreen[]): Promise<number> {
+  const body = endScreensBody(screens);
   const res = await api.post<ApiResponse<{ saved?: number }>>(`/v1/posts/${postId}/end-screens`, body);
   return num(res.data?.data?.saved, body.screens.length);
 }
@@ -744,9 +814,13 @@ export async function saveEndScreens(postId: string, screens: HubEndScreen[]): P
       AppearAtMs int     `json:"appear_at_ms"`              // >= 0
     }
     type saveVideoCardsRequest struct { Cards []videoCardInput `json:"cards" binding:"required"` }
+  29 Sep: ≤ 5 (CARD_TOO_MANY), appear_at_ms within the video (CARD_TIMING),
+  the end-screen target rules (CARD_TARGET), none on made-for-kids (CARD_KIDS).
+  The owner GET adds stats like end screens.
 */
 export type HubCardType = "video" | "playlist" | "poll" | "external_link";
 export const HUB_CARD_TYPES: readonly HubCardType[] = ["video", "playlist", "poll", "external_link"];
+export const HUB_CARD_MAX = 5;
 
 export interface HubCard {
   id?: string;
@@ -756,6 +830,8 @@ export interface HubCard {
   title: string;
   teaser_text: string | null;
   appear_at_ms: number;
+  stats?: HubElementStats | null;
+  target_label?: string | null;
 }
 
 export function normalizeCards(raw: unknown): HubCard[] {
@@ -768,10 +844,12 @@ export function normalizeCards(raw: unknown): HubCard[] {
         id: strOrNull(c.id) ?? undefined,
         type: HUB_CARD_TYPES.includes(type) ? type : "video",
         target_id: strOrNull(c.target_id),
-        target_url: strOrNull(c.target_url),
+        target_url: strOrNull(c.target_url) ?? (isRecord(c.link) ? strOrNull(c.link.url) : null),
         title: str(c.title),
         teaser_text: strOrNull(c.teaser_text),
-        appear_at_ms: num(c.appear_at_ms),
+        appear_at_ms: Math.max(0, num(c.appear_at_ms)),
+        stats: normalizeElementStats(c.stats),
+        target_label: resolvedLabel(c),
       };
     })
     .sort((a, b) => a.appear_at_ms - b.appear_at_ms);
@@ -782,21 +860,76 @@ export async function getCards(postId: string): Promise<HubCard[]> {
   return normalizeCards(res.data.data);
 }
 
-export async function saveCards(postId: string, cards: HubCard[]): Promise<number> {
-  const body = {
+export function cardsBody(cards: HubCard[]): { cards: Record<string, unknown>[] } {
+  return {
     cards: cards
       .filter((c) => c.title.trim() !== "")
+      .slice(0, HUB_CARD_MAX)
       .map((c) => ({
+        ...(c.id && SAVED_ID.test(c.id) ? { id: c.id } : {}),
         type: c.type,
-        target_id: c.target_id ?? undefined,
-        target_url: c.target_url ?? undefined,
+        target_id: c.type === "external_link" ? undefined : c.target_id ?? undefined,
+        target_url: c.type === "external_link" ? c.target_url?.trim() || undefined : undefined,
         title: c.title.trim(),
-        teaser_text: c.teaser_text ?? undefined,
+        teaser_text: c.teaser_text?.trim() || undefined,
         appear_at_ms: Math.max(0, Math.round(c.appear_at_ms)),
       })),
   };
+}
+
+export async function saveCards(postId: string, cards: HubCard[]): Promise<number> {
+  const body = cardsBody(cards);
   const res = await api.post<ApiResponse<{ saved?: number }>>(`/v1/posts/${postId}/cards`, body);
   return num(res.data?.data?.saved, body.cards.length);
+}
+
+/* ── Target pickers: your public collections, a channel search ── */
+
+export interface HubCollectionOption {
+  id: string;
+  title: string;
+  item_count: number;
+}
+
+/** GET /v1/creators/:creatorId/playlists (the library adapter), public user collections only. */
+export async function listMyPublicCollections(creatorId: string): Promise<HubCollectionOption[]> {
+  const rows = await fetchCreatorCollections(creatorId, { limit: 100 });
+  return rows
+    .filter((c) => c.kind === "user" && c.visibility === "public")
+    .map((c) => ({ id: c.id, title: c.title || "Untitled collection", item_count: c.itemCount }));
+}
+
+export interface HubChannelOption {
+  /** The channel owner's user id: what an end-screen channel element targets. */
+  user_id: string;
+  name: string;
+  handle: string;
+  avatar_url: string;
+}
+
+/** A `/v1/search/channels` row → a picker option; rows without an owner id are dropped (the target is the owner). */
+export function normalizeChannelOption(raw: unknown): HubChannelOption | null {
+  if (!isRecord(raw)) return null;
+  const userId = str(raw.owner_id) || str(raw.user_id);
+  if (!userId) return null;
+  const handle = str(raw.handle).replace(/^@/, "");
+  const avatarId = str(raw.avatar_media_id);
+  const avatar = str(raw.avatar_url);
+  return {
+    user_id: userId,
+    name: str(raw.name).trim() || (handle ? `@${handle}` : "Channel"),
+    handle,
+    avatar_url: avatar ? (avatar.startsWith("/v1/") ? mediaHref(avatar) : avatar) : avatarId ? mediaHref(`/v1/media/${avatarId}/serve`) : "",
+  };
+}
+
+/** GET /v1/search/channels?q&limit (the discovery route). */
+export async function searchChannelTargets(q: string, limit = 8): Promise<HubChannelOption[]> {
+  const query = q.trim();
+  if (query.length < 2) return [];
+  const res = await api.get<ApiResponse<unknown>>("/v1/search/channels", { params: { q: query, limit: String(limit) } });
+  const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+  return rows.map(normalizeChannelOption).filter((c): c is HubChannelOption => c !== null);
 }
 
 /* ── Categories (topics) ────────────────────────────────── */

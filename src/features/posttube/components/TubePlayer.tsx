@@ -36,10 +36,12 @@ import {
 } from "@/features/reels/components/ChoiceMenu";
 import { Popover } from "@/features/reels/components/Popover";
 import { pickHlsLevel, SPEEDS, speedChipLabel } from "@/features/reels/playback/playerPrefs";
+import { fitFrame, type FrameBox } from "../endScreenGeometry";
 import { formatClockMs, type TubePlayerPrefs } from "../model";
 import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../playerKeys";
 import { startAmbient } from "../watch/ambient";
 import { chapterAt, chapterTicks, type Chapter } from "../watch/chapters";
+import { countdownSpot, END_SCREEN_MIN_FRAME_WIDTH } from "../watch/endScreenView";
 import { keyHelpRows } from "../watch/keysHelp";
 import { scheduleSleep, SLEEP_CHOICES, sleepRemainingMs, sleepValueLabel, type SleepChoice, type SleepSchedule } from "../watch/sleepTimer";
 import { createStableVolume, type StableVolumeHandle } from "../watch/stableVolume";
@@ -75,6 +77,16 @@ export interface AudioTrackChoice {
   label: string;
 }
 
+/** What the page's overlay layer is told on every render (the frame is the 16:9 box, in px). */
+export interface TubeOverlayState {
+  positionMs: number;
+  durationMs: number;
+  ended: boolean;
+  playing: boolean;
+  frameWidth: number;
+  frameHeight: number;
+}
+
 /** What the page can drive from outside (the chapter strip seeks, the collection bar skips). */
 export interface TubePlayerHandle {
   seekTo: (ms: number) => void;
@@ -108,8 +120,17 @@ export interface TubePlayerProps {
   onTimeUpdate?: (positionMs: number, durationMs: number) => void;
   onEnded?: (positionMs: number, durationMs: number) => void;
   onDurationKnown?: (durationMs: number) => void;
-  /** Drawn over the frame once playback ends (Replay + up next / series countdown). */
-  endScreen?: ReactNode;
+  /**
+    Drawn over the frame once playback ends (Replay + up next / series
+    countdown). A function gets `compact`: true when `endAvoid` holds
+    boxes, and the card is then drawn small, off those boxes, without the
+    dark backdrop.
+  */
+  endScreen?: ReactNode | ((compact: boolean) => ReactNode);
+  /** Frame-fraction boxes (end-screen elements still up at the end) the Up next card must not cover; used on frames ≥ 480px, where they are drawn. */
+  endAvoid?: readonly FrameBox[] | null;
+  /** A layer over the 16:9 frame (end-screen elements, cards). Painted above the end card, below the controls. */
+  overlay?: (state: TubeOverlayState) => ReactNode;
   ended: boolean;
   onEndedChange: (ended: boolean) => void;
   /** The T key and the theater control. The page owns the state. */
@@ -167,6 +188,8 @@ export function TubePlayer({
   onEnded,
   onDurationKnown,
   endScreen,
+  endAvoid = null,
+  overlay,
   ended,
   onEndedChange,
   onTheater,
@@ -217,6 +240,7 @@ export function TubePlayer({
   const [hoverX, setHoverX] = useState(0);
   const [sleepChoice, setSleepChoice] = useState<SleepChoice>("off");
   const [sleepSchedule, setSleepSchedule] = useState<SleepSchedule>(null);
+  const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
   const sleepScheduleRef = useRef<SleepSchedule>(null);
   sleepScheduleRef.current = sleepSchedule;
 
@@ -503,6 +527,24 @@ export function TubePlayer({
     seekAppliedRef.current = true;
   }, [startReady, startPositionMs, trimStartMs, trimEndMs]);
 
+  /* ── the frame's size (the overlay's 16:9 box follows it: theater, fullscreen, the dock) ── */
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setFrameSize((cur) => (Math.abs(cur.width - r.width) < 0.5 && Math.abs(cur.height - r.height) < 0.5 ? cur : { width: r.width, height: r.height }));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   /* ── fullscreen ────────────────────────────────────────── */
   useEffect(() => {
     const onChange = () => setFullscreen(!!document.fullscreenElement);
@@ -684,6 +726,11 @@ export function TubePlayer({
   const bufferedPct = durationMs > 0 ? Math.min(100, (bufferedMs / durationMs) * 100) : 0;
   const showEnd = ended && !!endScreen;
   const chromeVisible = controlsVisible || !playing || ended;
+  const fit = fitFrame(frameSize.width, frameSize.height);
+  const endCompact = showEnd && !!endAvoid && endAvoid.length > 0 && fit.width >= END_SCREEN_MIN_FRAME_WIDTH;
+  const endNode = typeof endScreen === "function" ? endScreen(endCompact) : endScreen;
+  const compactSpot = endCompact ? countdownSpot(endAvoid ?? [], fit) : null;
+  const overlayNode = overlay ? overlay({ positionMs, durationMs, ended, playing, frameWidth: fit.width, frameHeight: fit.height }) : null;
 
   return (
     <div className="tube-player" data-ambient={ambientOn ? "" : undefined} data-mini={miniplayer ? "" : undefined}>
@@ -736,14 +783,29 @@ export function TubePlayer({
         ) : null}
 
         {/* End screen */}
-        {showEnd ? (
+        {showEnd && !endCompact ? (
           <div className="tube-player__end">
             <div className="flex w-full max-w-[560px] flex-col items-center gap-5">
-              {endScreen}
+              {endNode}
               <button type="button" onClick={replay} className="tube-player__replay">
                 <RotateCcw className="h-4 w-4" /> Replay
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {/* The 16:9 layer: the compact Up next card, then the page's overlay (end-screen elements, cards) above it */}
+        {(overlayNode || compactSpot) && fit.width > 0 ? (
+          <div className="tube-player__overlay" style={{ left: fit.left, top: fit.top, width: fit.width, height: fit.height }}>
+            {compactSpot ? (
+              <div className="tube-player__end-compact" style={{ left: compactSpot.left, top: compactSpot.top }} data-end-compact>
+                {endNode}
+                <button type="button" onClick={replay} className="tube-player__replay is-compact">
+                  <RotateCcw className="h-4 w-4" /> Replay
+                </button>
+              </div>
+            ) : null}
+            {overlayNode}
           </div>
         ) : null}
 

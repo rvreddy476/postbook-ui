@@ -3,6 +3,7 @@ import api from "@/lib/api";
 import { fetchCollection, fetchCollectionItems, type Collection, type CollectionItem } from "@/features/posttube/library";
 import { mediaHref } from "@/features/reels/model";
 
+import { clampPosition, defaultWidth, slotPosition, type EndScreenKind, type EndScreenPosition } from "../endScreenGeometry";
 import { getPostDetail, hydrateRows, type HydratedPostRow } from "../data/posttubeApi";
 import { mapRelatedRows } from "../model";
 import type { MediaSubtitleTrack, PostTubeVideo } from "../types";
@@ -34,6 +35,10 @@ import { upNextChipQuery, type UpNextChip } from "./upNext";
     GET    /v1/monetization/creators/:creatorId/support   {tips_enabled, min_tip_paise, currency, membership_tiers}
     POST   /v1/monetization/tips               Thanks { creator_id, post_id?, amount_paise, message? } (thanksBody)
     GET|POST /v1/videos/:id/progress           (data/posttubeApi; POST only when !isHistoryPaused())
+    GET    /v1/posts/:id/end-screens           resolved for this viewer (see normalizeViewerEndScreens); [] for made-for-kids
+    GET    /v1/posts/:id/cards                 resolved cards (see normalizeViewerCards)
+    POST   /v1/posts/:id/end-screens/:elementId/impression|click   204, fire-and-forget
+    POST   /v1/posts/:id/cards/:cardId/impression|click            204, fire-and-forget
 */
 
 interface Envelope<T> {
@@ -71,6 +76,9 @@ export interface WatchPostRow extends HydratedPostRow {
   hide_like_count?: boolean | null;
   default_comment_sort?: string | null;
   related_post_id?: string | null;
+  /** End screens and cards are off for made-for-kids videos (either key). */
+  made_for_kids?: boolean | null;
+  is_made_for_kids?: boolean | null;
   related_post?: {
     id?: string | null;
     title?: string | null;
@@ -126,6 +134,8 @@ export interface WatchDetail {
   defaultCommentSort: "top" | "newest";
   relatedPost: WatchRelatedPost | null;
   ageRestricted: boolean;
+  /** No end screen or cards are fetched for it. */
+  madeForKids: boolean;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -151,6 +161,7 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     defaultCommentSort: typeof row.default_comment_sort === "string" && row.default_comment_sort.toLowerCase() === "newest" ? "newest" : "top",
     relatedPost: row.related_post_id === row.id ? null : normalizeRelatedPost(row.related_post),
     ageRestricted: row.age_restricted === true,
+    madeForKids: row.made_for_kids === true || row.is_made_for_kids === true,
   };
 }
 
@@ -354,6 +365,281 @@ export function thanksErrorMessage(err: unknown): string {
     if (typeof msg === "string" && msg.trim()) return msg.trim();
   }
   return "Could not send your thanks. Try again.";
+}
+
+/* ── End screens and cards (what the viewer sees) ───────── */
+
+type Rec = Record<string, unknown>;
+
+function asRec(v: unknown): Rec | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Rec) : null;
+}
+
+function text(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
+/** A finite number, or a numeric string; null for "", null, missing and anything else. */
+function finite(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) return Number(v);
+  return null;
+}
+
+function count(v: unknown): number {
+  const n = finite(v);
+  return n !== null && n > 0 ? n : 0;
+}
+
+function mediaUrl(v: unknown): string {
+  const raw = text(v);
+  return raw ? (raw.startsWith("/v1/") ? mediaHref(raw) : raw) : "";
+}
+
+function listFrom(raw: unknown, ...keys: string[]): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  const r = asRec(raw);
+  if (!r) return [];
+  for (const k of keys) if (Array.isArray(r[k])) return r[k] as unknown[];
+  return [];
+}
+
+export const END_SCREEN_KINDS: readonly EndScreenKind[] = ["video", "playlist", "channel_subscribe", "channel", "external_link"];
+
+
+/**
+  A stored position → {x, y, w}. Accepts the object or its JSON string.
+  {x, y, w} is read as is (a missing / zero w takes the kind's default);
+  an old {slot: n} row sits in that corner (0 top-left, 1 top-right,
+  2 bottom-left, 3 bottom-right); anything else falls back to the slot of
+  its index. The result is kept inside the frame.
+*/
+export function readEndScreenPosition(raw: unknown, kind: EndScreenKind, index: number): EndScreenPosition {
+  let parsed: unknown = raw;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      parsed = null;
+    }
+  }
+  const r = asRec(parsed);
+  if (r) {
+    const x = finite(r.x);
+    const y = finite(r.y);
+    const w = finite(r.w);
+    if (x !== null && y !== null) return clampPosition(kind, { x, y, w: w !== null && w > 0 ? w : defaultWidth(kind) });
+    const slot = finite(r.slot);
+    if (slot !== null) return slotPosition(slot, kind);
+  }
+  return slotPosition(index, kind);
+}
+
+/** An https URL, normalised; "" for anything else (http, javascript:, junk). */
+export function safeHttpsUrl(v: unknown): string {
+  const raw = text(v);
+  if (!raw) return "";
+  try {
+    const u = new URL(raw);
+    return u.protocol === "https:" && !!u.hostname ? u.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function linkDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+export interface EndScreenVideo {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  durationSeconds: number;
+  channelName: string;
+  viewCount: number;
+}
+
+export interface EndScreenCollection {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  itemCount: number;
+}
+
+export interface EndScreenChannel {
+  userId: string;
+  handle: string;
+  name: string;
+  avatarUrl: string;
+  subscriberCount: number;
+  isSubscribed: boolean;
+}
+
+export interface EndScreenLink {
+  url: string;
+  title: string;
+  domain: string;
+}
+
+/** One end-screen element as the viewer sees it: always resolved (a half-empty element is dropped). */
+export interface ViewerEndScreenElement {
+  id: string;
+  type: EndScreenKind;
+  position: EndScreenPosition;
+  startMs: number;
+  endMs: number;
+  video: EndScreenVideo | null;
+  playlist: EndScreenCollection | null;
+  channel: EndScreenChannel | null;
+  link: EndScreenLink | null;
+}
+
+export function normalizeEndScreenVideo(raw: unknown): EndScreenVideo | null {
+  const r = asRec(raw);
+  const id = text(r?.id);
+  if (!r || !id) return null;
+  return {
+    id,
+    title: text(r.title) || "Untitled",
+    thumbnailUrl: mediaUrl(r.thumbnail_url),
+    durationSeconds: count(r.duration_seconds),
+    channelName: text(r.channel_name),
+    viewCount: count(r.view_count),
+  };
+}
+
+export function normalizeEndScreenCollection(raw: unknown): EndScreenCollection | null {
+  const r = asRec(raw);
+  const id = text(r?.id);
+  if (!r || !id) return null;
+  return { id, title: text(r.title) || "Untitled collection", thumbnailUrl: mediaUrl(r.thumbnail_url), itemCount: count(r.item_count) };
+}
+
+export function normalizeEndScreenChannel(raw: unknown): EndScreenChannel | null {
+  const r = asRec(raw);
+  if (!r) return null;
+  const userId = text(r.user_id) || text(r.owner_id) || text(r.id);
+  const handle = text(r.handle).replace(/^@/, "");
+  if (!userId && !handle) return null;
+  return {
+    userId,
+    handle,
+    name: text(r.name) || (handle ? `@${handle}` : "Channel"),
+    avatarUrl: mediaUrl(r.avatar_url),
+    subscriberCount: count(r.subscriber_count),
+    isSubscribed: r.is_subscribed === true,
+  };
+}
+
+export function normalizeEndScreenLink(raw: unknown): EndScreenLink | null {
+  const r = asRec(raw);
+  const url = safeHttpsUrl(r?.url);
+  if (!r || !url) return null;
+  const domain = text(r.domain) || linkDomain(url);
+  return { url, title: text(r.title) || domain, domain };
+}
+
+/**
+  `GET /v1/posts/:id/end-screens` for a viewer → the elements to draw.
+  Accepts a bare array or {screens|elements:[…]}. An element with no id,
+  an unknown type, no window (end ≤ start) or without the resolved
+  object its type needs is dropped; at most four are kept.
+*/
+export function normalizeViewerEndScreens(raw: unknown): ViewerEndScreenElement[] {
+  const out: ViewerEndScreenElement[] = [];
+  listFrom(raw, "screens", "elements", "items").forEach((item, index) => {
+    const r = asRec(item);
+    if (!r) return;
+    const id = text(r.id);
+    const type = text(r.type).toLowerCase() as EndScreenKind;
+    if (!id || !END_SCREEN_KINDS.includes(type)) return;
+    const startMs = count(r.start_ms);
+    const endMs = count(r.end_ms);
+    if (endMs <= startMs) return;
+    const video = type === "video" ? normalizeEndScreenVideo(r.video) : null;
+    const playlist = type === "playlist" ? normalizeEndScreenCollection(r.playlist ?? r.collection) : null;
+    const channel = type === "channel" || type === "channel_subscribe" ? normalizeEndScreenChannel(r.channel) : null;
+    const link = type === "external_link" ? normalizeEndScreenLink(r.link) : null;
+    if (!video && !playlist && !channel && !link) return;
+    out.push({ id, type, position: readEndScreenPosition(r.position, type, index), startMs, endMs, video, playlist, channel, link });
+  });
+  return out.slice(0, 4);
+}
+
+export type ViewerCardType = "video" | "playlist" | "external_link";
+
+export interface ViewerCard {
+  id: string;
+  type: ViewerCardType;
+  appearAtMs: number;
+  title: string;
+  teaser: string;
+  video: EndScreenVideo | null;
+  playlist: EndScreenCollection | null;
+  link: EndScreenLink | null;
+}
+
+/**
+  `GET /v1/posts/:id/cards` → the cards to show, by time. Poll cards are
+  dropped (there is no poll surface on the watch page to open), as is any
+  card whose target did not resolve. At most five.
+*/
+export function normalizeViewerCards(raw: unknown): ViewerCard[] {
+  const out: ViewerCard[] = [];
+  for (const item of listFrom(raw, "cards", "items")) {
+    const r = asRec(item);
+    if (!r) continue;
+    const id = text(r.id);
+    const type = text(r.type).toLowerCase();
+    if (!id || (type !== "video" && type !== "playlist" && type !== "external_link")) continue;
+    const video = type === "video" ? normalizeEndScreenVideo(r.video) : null;
+    const playlist = type === "playlist" ? normalizeEndScreenCollection(r.playlist ?? r.collection) : null;
+    const link = type === "external_link" ? normalizeEndScreenLink(r.link) : null;
+    if (!video && !playlist && !link) continue;
+    const title = text(r.title) || video?.title || playlist?.title || link?.title || "";
+    out.push({ id, type, appearAtMs: count(r.appear_at_ms), title, teaser: text(r.teaser_text) || title, video, playlist, link });
+  }
+  return out.sort((a, b) => a.appearAtMs - b.appearAtMs).slice(0, 5);
+}
+
+/** Any failure (404, an age code, the route not deployed) is "none": the overlay is never an error. */
+export async function getViewerEndScreens(postId: string): Promise<ViewerEndScreenElement[]> {
+  try {
+    const res = await api.get<Envelope<unknown>>(`/v1/posts/${encodeURIComponent(postId)}/end-screens`);
+    return normalizeViewerEndScreens(res.data?.data ?? res.data);
+  } catch {
+    return [];
+  }
+}
+
+export async function getViewerCards(postId: string): Promise<ViewerCard[]> {
+  try {
+    const res = await api.get<Envelope<unknown>>(`/v1/posts/${encodeURIComponent(postId)}/cards`);
+    return normalizeViewerCards(res.data?.data ?? res.data);
+  } catch {
+    return [];
+  }
+}
+
+export type ElementSurface = "end-screens" | "cards";
+export type ElementEvent = "impression" | "click";
+
+export function elementEventPath(postId: string, surface: ElementSurface, elementId: string, event: ElementEvent): string {
+  return `/v1/posts/${encodeURIComponent(postId)}/${surface}/${encodeURIComponent(elementId)}/${event}`;
+}
+
+/** POST …/impression|click with an empty body. Fire-and-forget: never awaited, never throws, never blocks navigation. */
+export function recordElementEvent(postId: string, surface: ElementSurface, elementId: string, event: ElementEvent): void {
+  try {
+    void api.post(elementEventPath(postId, surface, elementId, event)).catch(() => undefined);
+  } catch {
+    /* never in the way */
+  }
 }
 
 export type { Chapter, StoryboardCue, Collection, CollectionItem, CreatorSupport };

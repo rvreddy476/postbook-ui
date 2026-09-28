@@ -49,14 +49,16 @@ import {
 import { ambientAllowed } from "../watch/ambient";
 import { chapterIndexAt } from "../watch/chapters";
 import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
-import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs } from "../watch/hooks/useWatch";
+import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useVideoElements, useWatchDetail, useWatchPrefs } from "../watch/hooks/useWatch";
+import { endBoxesAtEnd } from "../watch/endScreenView";
 import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { ageGateFromError, downloadHref, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks } from "../watch/watchApi";
+import { ageGateFromError, downloadHref, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
+import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
 import { WatchComments } from "../watch/components/WatchComments";
 import { AgeGateCard, MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
 import { WatchMoreMenu } from "../watch/components/WatchMoreMenu";
@@ -202,6 +204,16 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const gateCreator = detail?.tierRequiredId && !isOwner ? video?.author_id : null;
   const entitlement = useEntitlement(gateCreator, detail?.tierRequiredId ?? null);
   const gated = !!gateCreator && (!user || (entitlement.data ? !entitlement.data.allowed : false));
+
+  /* End screen + cards: once per video; none for made-for-kids or a gated video. */
+  const videoElements = useVideoElements(videoId, !!detail && !detail.madeForKids && !gated);
+  const [endScreenHidden, setEndScreenHidden] = useState(false);
+  const onElementEvent = useCallback(
+    (surface: ElementSurface, id: string, event: ElementEvent) => {
+      if (videoId) recordElementEvent(videoId, surface, id, event);
+    },
+    [videoId],
+  );
 
   const queue = useQueue();
   const lovedIds = useLovedIds();
@@ -586,7 +598,33 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
 
   const countdownActive = ended && autoplay.status === "counting" && !!nextTarget;
   const countdownTotal = nextTarget?.kind === "series" ? AUTOPLAY_COUNTDOWN_SECONDS : UP_NEXT_COUNTDOWN_SECONDS;
-  const endScreen = (
+  /* End-screen elements still up at the end: the Up next card goes compact and keeps off them (the player places it). */
+  const endAvoid = ended && !endScreenHidden ? endBoxesAtEnd(videoElements.endScreens, latestRef.current.durationMs || trackingDurationMs) : null;
+  const countdownPct = ((countdownTotal - autoplay.remaining) / countdownTotal) * 100;
+  const compactEnd = countdownActive && nextTarget ? (
+    <>
+      <p className="tube-end-compact__label">Up next in {autoplay.remaining}s</p>
+      <p className="tube-end-compact__title">{nextTarget.label}</p>
+      <div className="tube-end-compact__bar">
+        <span style={{ width: `${countdownPct}%` }} />
+      </div>
+      <button type="button" onClick={() => dispatch({ type: "cancel" })} className="tube-end-compact__btn">
+        Cancel
+      </button>
+      <button type="button" onClick={() => dispatch({ type: "playNow" })} className="tube-end-compact__btn is-primary">
+        Play now
+      </button>
+    </>
+  ) : nextTarget ? (
+    <>
+      <p className="tube-end-compact__label">Up next</p>
+      <p className="tube-end-compact__title">{nextTarget.label}</p>
+      <Link href={nextTarget.href} className="tube-end-compact__btn is-primary">
+        Play now
+      </Link>
+    </>
+  ) : null;
+  const fullEnd = (
     <div className="w-full text-center">
       {countdownActive && nextTarget ? (
         <div className="flex flex-col items-center gap-3">
@@ -595,7 +633,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
           <div className="h-1 w-56 overflow-hidden rounded-full bg-white/25">
             <div
               className="h-full bg-brand-accent transition-all duration-1000"
-              style={{ width: `${((countdownTotal - autoplay.remaining) / countdownTotal) * 100}%` }}
+              style={{ width: `${countdownPct}%` }}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -617,6 +655,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       ) : null}
     </div>
   );
+  const endScreen = (compact: boolean) => (compact ? compactEnd : fullEnd);
+  const hasElements = videoElements.endScreens.length > 0 || videoElements.cards.length > 0;
 
   const upNextNode = collection ? (
     <UpNext
@@ -705,6 +745,28 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
               onTimeUpdate={onTimeUpdate}
               onEnded={onEnded}
               endScreen={endScreen}
+              endAvoid={endAvoid}
+              overlay={
+                hasElements
+                  ? (s) => (
+                      <VideoElementsOverlay
+                        key={video.id}
+                        elements={videoElements.endScreens}
+                        cards={videoElements.cards}
+                        positionMs={s.positionMs}
+                        durationMs={s.durationMs}
+                        ended={s.ended}
+                        frameWidth={s.frameWidth}
+                        hidden={endScreenHidden}
+                        onHide={() => setEndScreenHidden(true)}
+                        onEvent={onElementEvent}
+                        signedIn={!!user}
+                        isOwner={isOwner}
+                        onRequireUser={() => void requireUser()}
+                      />
+                    )
+                  : undefined
+              }
               ended={ended}
               onEndedChange={onEndedChange}
               onTheater={toggleTheater}

@@ -490,6 +490,19 @@ const HUB_ERROR_TEXT: Record<string, string> = {
   NOT_FOUND: "This video no longer exists.",
   POST_NOT_FOUND: "This video no longer exists.",
   FAILED: "It didn't go through.",
+  /* End screens and cards (29 Sep contract) */
+  END_SCREEN_TOO_MANY: "An end screen holds four elements at most.",
+  END_SCREEN_NOT_ELIGIBLE: "End screens need a finished long video of at least 25 seconds.",
+  END_SCREEN_KIDS: "End screens are off for videos made for kids.",
+  END_SCREEN_TIMING: "Each element must start in the last 20 seconds, at least 5 seconds before the end, and end after it starts.",
+  END_SCREEN_POSITION: "Each element must sit inside the frame and be 12–50% of its width.",
+  END_SCREEN_OVERLAP: "Two elements overlap. Move one so both can be seen.",
+  END_SCREEN_TARGET: "An element points somewhere it can't: pick one of your public or unlisted videos, one of your public collections, another channel, or an https:// link.",
+  END_SCREEN_SUBSCRIBE: "Use one Subscribe element at most.",
+  CARD_TOO_MANY: "A video holds five cards at most.",
+  CARD_TIMING: "Each card must appear while the video is playing.",
+  CARD_TARGET: "A card points somewhere it can't: pick one of your public or unlisted videos, one of your public collections, or an https:// link.",
+  CARD_KIDS: "Cards are off for videos made for kids.",
 };
 
 /** A server code → a sentence for people; an unknown code keeps the fallback. */
