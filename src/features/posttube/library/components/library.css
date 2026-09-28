@@ -52,6 +52,7 @@
 .tube-library__row.is-drop-before::before { top: -4px; }
 .tube-library__row.is-drop-after::after { bottom: -4px; }
 .tube-library__row.is-static { grid-template-columns: 20px 160px minmax(0, 1fr) auto; padding-left: 10px; }
+.tube-library__row.is-history { grid-template-columns: 160px minmax(0, 1fr) auto; }
 .tube-library__handle { display: flex; width: 20px; height: 32px; align-items: center; justify-content: center; border: 0; background: transparent; color: rgb(var(--brand-text) / .4); cursor: grab; touch-action: none; }
 .tube-library__handle:active { cursor: grabbing; }
 .tube-library__handle svg { width: 14px; height: 14px; }

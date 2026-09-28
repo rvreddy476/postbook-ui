@@ -36,7 +36,7 @@ function RecentRow({ entry, onRemove, removing }: { entry: WatchProgress; onRemo
     .join(" · ");
 
   return (
-    <li className="tube-library__row is-static">
+    <li className="tube-library__row is-static is-history">
       <Link href={href} className="tube-library__thumb" tabIndex={-1} aria-hidden>
         {video?.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
