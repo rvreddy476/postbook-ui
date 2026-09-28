@@ -50,7 +50,7 @@ export function OverviewPage() {
             ["Shorts", summary.data?.shorts],
             ["Live", summary.data?.live],
             ["Collections", summary.data?.collections],
-            ["Followers", summary.data?.followers],
+            ["Subscribers", summary.data?.followers],
           ] as const
         ).map(([label, value]) => (
           <div key={label} className="hub-tile">

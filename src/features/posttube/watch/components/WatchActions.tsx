@@ -8,8 +8,9 @@ import { formatCount } from "@/features/reels/model";
 
 /*
   The action row under the creator row (the RUTUBE watch layout): one
-  pill with Love and its count, a divider, and Pass (private, never lit
-  together with Love); Queue and Add to collection as labelled pills;
+  pill with Like and its count, a divider, and Dislike (private, never
+  lit together with Like); Watch later (lit when saved) and Add to
+  collection as labelled pills;
   the ⋯ circle opening the More menu under it (Share, Keep, Not
   interested, Don't recommend, Report, Block; the owner's Audio tracks,
   Edit, Delete). 36px high, 13px labels.
@@ -36,18 +37,18 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
   return (
     <div className="tube-actions" role="toolbar" aria-label="Video actions">
       <div className="tube-actions__vote">
-        <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Unlove" : "Love"} title="Love" onClick={onLove} data-action="love">
+        <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
           <RailHeart size={16} />
           <span className="tube-actions__count">{formatCount(likeCount)}</span>
         </button>
         <span className="tube-actions__divider" aria-hidden />
-        <button type="button" className={`tube-actions__btn is-pass${passed ? " is-on" : ""}`} aria-pressed={passed} aria-label={passed ? "Undo pass" : "Pass"} title="Pass" onClick={onPass} data-action="pass">
+        <button type="button" className={`tube-actions__btn is-pass${passed ? " is-on" : ""}`} aria-pressed={passed} aria-label={passed ? "Remove dislike" : "Dislike"} title="Dislike" onClick={onPass} data-action="pass">
           <ThumbsDown size={17} className={passed ? "fill-current" : ""} />
         </button>
       </div>
       <button type="button" className={`tube-actions__pill${queued ? " is-on" : ""}`} aria-pressed={queued} onClick={onQueue} data-action="queue">
         <ListVideo size={17} />
-        {queued ? "In Queue" : "Queue"}
+        Watch later
       </button>
       <button type="button" className="tube-actions__pill" onClick={onAdd} data-action="add">
         <FolderPlus size={17} />

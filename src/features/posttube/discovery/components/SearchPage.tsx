@@ -52,7 +52,7 @@ export function VideoResultRow({ video }: { video: VideoResult }) {
 }
 
 export function ChannelResultRow({ channel }: { channel: ChannelResult }) {
-  const meta = [channel.handle ? `@${channel.handle}` : "", `${formatCount(channel.followerCount)} followers`].filter(Boolean).join(" · ");
+  const meta = [channel.handle ? `@${channel.handle}` : "", `${formatCount(channel.followerCount)} subscribers`].filter(Boolean).join(" · ");
   return (
     <Link href={channel.href} className="disco-row" data-kind="channel">
       <span className="disco-row__avatar">{channel.avatarUrl ? <img src={channel.avatarUrl} alt="" loading="lazy" /> : <UserRound strokeWidth={1.75} aria-hidden />}</span>

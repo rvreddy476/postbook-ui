@@ -36,9 +36,9 @@ import {
 /*
   The left menu of the two video apps, as data.
 
-  PostTube's menu uses our own words (the MTube plan, §4a): Watch (home),
-  Reels, Following, Live, Trending, Topics; then You: Your channel, Recent,
-  Queue, Loved, Collections, Your videos, Scheduled, Creator Hub. A route a
+  PostTube's menu uses the RUTUBE words (founder, 28 Sep): Watch (home),
+  Reels, Subscriptions, Live, Trending, Topics; then You: Your channel, Recent,
+  Watch later, Liked videos, Collections, Your videos, Scheduled, Creator Hub. A route a
   later wave delivers is listed already but flagged `comingSoon`, so the
   sidebar draws it disabled with a small "soon" tag until the page exists —
   the shape is settled once and only the flag changes. The way back to the
@@ -98,7 +98,7 @@ export interface VideoNavSection {
 export const VIDEO_NAV_TOP: readonly VideoNavItem[] = [
   { key: "watch", label: "Watch", icon: Tv, href: "/posttube", exact: true },
   { key: "reels", label: "Reels", icon: Clapperboard, href: "/reels" },
-  { key: "following", label: "Following", icon: UserRoundCheck, href: "/posttube/subscriptions" },
+  { key: "following", label: "Subscriptions", icon: UserRoundCheck, href: "/posttube/subscriptions" },
   { key: "live", label: "Live", icon: Radio, href: "/live" },
   { key: "trending", label: "Trending", icon: Flame, href: "/posttube/trending" },
   { key: "topics", label: "Topics", icon: Shapes, href: "/posttube/topics" },
@@ -108,8 +108,8 @@ export const VIDEO_NAV_TOP: readonly VideoNavItem[] = [
 export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
   { key: "recent", label: "Recent", icon: History, href: "/posttube/history" },
-  { key: "queue", label: "Queue", icon: ListPlus, href: "/posttube/queue" },
-  { key: "loved", label: "Loved", icon: Heart, href: "/posttube/loved" },
+  { key: "queue", label: "Watch later", icon: ListPlus, href: "/posttube/queue" },
+  { key: "loved", label: "Liked videos", icon: Heart, href: "/posttube/loved" },
   { key: "collections", label: "Collections", icon: ListVideo, href: "/posttube/playlists" },
   { key: "uploads", label: "Your videos", icon: Video, href: "/posttube/uploads" },
   { key: "scheduled", label: "Scheduled", icon: CalendarClock, href: "/posttube/scheduled" },

@@ -22,15 +22,15 @@ const appDir = resolve(import.meta.dir, "../../../app");
 const routeExists = (href: string) => existsSync(resolve(appDir, `.${href}/page.tsx`)) || existsSync(resolve(appDir, `.${href}/[[...path]]/page.tsx`));
 
 describe("videoNav (tube)", () => {
-  test("top group reads Watch, Reels, Following, Live, Trending, Topics — our words, no app highlight", () => {
+  test("top group reads Watch, Reels, Subscriptions, Live, Trending, Topics — the RUTUBE words, no app highlight", () => {
     const tube = videoNav("tube").find((s) => s.key === "top")!;
-    expect(tube.items.map((i) => i.label)).toEqual(["Watch", "Reels", "Following", "Live", "Trending", "Topics"]);
+    expect(tube.items.map((i) => i.label)).toEqual(["Watch", "Reels", "Subscriptions", "Live", "Trending", "Topics"]);
     expect(tube.items.map((i) => i.href)).toEqual(["/posttube", "/reels", "/posttube/subscriptions", "/live", "/posttube/trending", "/posttube/topics"]);
     for (const i of tube.items) expect(Boolean(i.active)).toBe(false);
     expect(tube.items.find((i) => i.key === "watch")!.exact).toBe(true);
   });
 
-  test("Watch is current on the home grid only; Following on its page", () => {
+  test("Watch is current on the home grid only; Subscriptions on its page", () => {
     const watch = VIDEO_NAV_TOP.find((i) => i.key === "watch")!;
     expect(isNavItemCurrent(watch, "/posttube", "")).toBe(true);
     expect(isNavItemCurrent(watch, "/posttube/watch/abc", "")).toBe(false);
@@ -40,7 +40,7 @@ describe("videoNav (tube)", () => {
     expect(isNavItemCurrent(following, "/posttube", "")).toBe(false);
   });
 
-  test("the You section reads Your channel, Recent, Queue, Loved, Collections, Your videos, Scheduled, Creator Hub", () => {
+  test("the You section reads Your channel, Recent, Watch later, Liked videos, Collections, Your videos, Scheduled, Creator Hub", () => {
     const you = videoNav("tube").find((s) => s.key === "you")!;
     expect(you.title).toBe("You");
     expect(you.items.map((i) => i.href)).toEqual([
@@ -54,14 +54,14 @@ describe("videoNav (tube)", () => {
       "/posttube/hub",
     ]);
     expect(you.items.map((i) => i.label)).toEqual([
-      "Your channel", "Recent", "Queue", "Loved", "Collections", "Your videos", "Scheduled", "Creator Hub",
+      "Your channel", "Recent", "Watch later", "Liked videos", "Collections", "Your videos", "Scheduled", "Creator Hub",
     ]);
   });
 
-  test("no borrowed labels anywhere in the tube menu", () => {
+  test("the tube menu speaks RUTUBE's words (founder, 28 Sep): none of the retired ones", () => {
     const labels = videoNav("tube").flatMap((s) => s.items.map((i) => i.label));
-    for (const borrowed of ["Home", "Subscriptions", "History", "Playlists", "Watch later", "Liked videos", "Studio", "Dashboard", "Saved", "Liked reels", "PostTube"]) {
-      expect(labels).not.toContain(borrowed);
+    for (const retired of ["Following", "Queue", "Loved", "Liked reels", "PostTube"]) {
+      expect(labels).not.toContain(retired);
     }
   });
 

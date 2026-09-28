@@ -5,10 +5,10 @@ import { isSystemKind, isSystemPlaylistRefusal, normalizeItems, normalizePlaylis
 describe("normalizePlaylist tolerates both wire variants", () => {
   test("the current row: visibility + kind + item_count", () => {
     const c = normalizePlaylist({ id: "p1", creator_id: "u1", kind: "watch_later", title: "Watch later", visibility: "private", item_count: 3, created_at: "2026-09-01T00:00:00Z" });
-    expect(c).toMatchObject({ id: "p1", creatorId: "u1", kind: "watch_later", title: "Queue", visibility: "private", itemCount: 3, createdAt: "2026-09-01T00:00:00Z" });
+    expect(c).toMatchObject({ id: "p1", creatorId: "u1", kind: "watch_later", title: "Watch later", visibility: "private", itemCount: 3, createdAt: "2026-09-01T00:00:00Z" });
     expect(c.description).toBe("");
     // the server's row title never leaks: the vocabulary is ours
-    expect(normalizePlaylist({ id: "p", kind: "liked", title: "Liked videos" }).title).toBe("Loved");
+    expect(normalizePlaylist({ id: "p", kind: "liked", title: "Loved" }).title).toBe("Liked videos");
   });
   test("the older row: is_public, no kind → a private/public user collection", () => {
     expect(normalizePlaylist({ id: "p2", title: "Mix", is_public: true })).toMatchObject({ kind: "user", visibility: "public", itemCount: 0 });
@@ -22,7 +22,7 @@ describe("normalizePlaylist tolerates both wire variants", () => {
   test("an unknown kind is a user collection; a blank title gets the system name or Untitled", () => {
     expect(normalizePlaylist({ id: "p", kind: "banana", title: "x" }).kind).toBe("user");
     expect(normalizePlaylist({ id: "p", kind: "liked", title: "" }).title).toBe(SYSTEM_TITLES.liked);
-    expect(normalizePlaylist({ id: "p", kind: "watch_later", title: null }).title).toBe("Queue");
+    expect(normalizePlaylist({ id: "p", kind: "watch_later", title: null }).title).toBe("Watch later");
     expect(normalizePlaylist({ id: "p", title: "  " }).title).toBe("Untitled");
     expect(normalizePlaylist({ id: "p", title: "t", item_count: -4 }).itemCount).toBe(0);
   });

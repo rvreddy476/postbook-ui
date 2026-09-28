@@ -57,7 +57,7 @@ describe("rail presence: Thanks only when tips are on and the viewer is not the 
     expect(showThanks(on, "viewer", null)).toBe(false);
   });
 
-  test("the creator row renders Thanks right after Follow only when onThanks is passed", () => {
+  test("the creator row renders Thanks right after Subscribe only when onThanks is passed", () => {
     const base = {
       title: "t",
       authorId: "u1",
@@ -74,7 +74,7 @@ describe("rail presence: Thanks only when tips are on and the viewer is not the 
       hashtags: [],
       follow: (
         <button type="button" data-follow>
-          Follow
+          Subscribe
         </button>
       ),
     };

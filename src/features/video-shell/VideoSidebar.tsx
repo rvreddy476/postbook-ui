@@ -133,8 +133,8 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
           })}
 
         {listExpanded && subs.length > 0 ? (
-          <section className="video-nav__section" aria-label="Channels you follow">
-            <h3 className="video-nav__heading">Following</h3>
+          <section className="video-nav__section" aria-label="Your subscriptions">
+            <h3 className="video-nav__heading">Subscriptions</h3>
             <ul className="video-nav__list">
               {subs.map(({ channel }) => {
                 const href = `/posttube/channel/${encodeURIComponent(channel.handle)}`;

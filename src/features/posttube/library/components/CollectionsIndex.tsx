@@ -83,7 +83,7 @@ export function CollectionsIndex() {
             Collections
           </h1>
           <p className="tube-library__meta">
-            <span>Lists you keep. Queue and Loved are always yours.</span>
+            <span>Lists you keep. Watch later and Liked videos are always yours.</span>
           </p>
         </div>
         {signedIn && !showNew ? (
@@ -102,7 +102,7 @@ export function CollectionsIndex() {
               <Clock />
             </span>
             <span className="tube-library__card-body">
-              <span className="tube-library__card-title">Queue</span>
+              <span className="tube-library__card-title">Watch later</span>
               <span className="tube-library__card-meta">Videos to watch later</span>
             </span>
           </Link>
@@ -113,7 +113,7 @@ export function CollectionsIndex() {
               <Heart />
             </span>
             <span className="tube-library__card-body">
-              <span className="tube-library__card-title">Loved</span>
+              <span className="tube-library__card-title">Liked videos</span>
               <span className="tube-library__card-meta">Videos you loved</span>
             </span>
           </Link>

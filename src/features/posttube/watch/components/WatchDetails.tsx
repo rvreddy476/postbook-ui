@@ -13,7 +13,7 @@ import { ChapterStrip } from "./ChapterStrip";
 
 /*
   Under the player, the RUTUBE watch layout: the title (20/700), the
-  creator row (40px avatar, name, follower count, then Follow + bell and
+  creator row (40px avatar, name, subscriber count, then Subscribe + bell and
   Thanks right after the name), the action row (WatchActions, passed in),
   the chapter strip, and the about card: views · date (and "From a live
   stream") on top; collapsed it shows two lines of the description, and
@@ -82,7 +82,7 @@ export function WatchDetails({
           </span>
           <span className="min-w-0">
             <p className="tube-creator__name">{channelName}</p>
-            <p className="tube-creator__followers">{formatCount(followerCount)} followers</p>
+            <p className="tube-creator__followers">{formatCount(followerCount)} subscribers</p>
           </span>
         </Link>
         <span className="tube-creator__buttons">

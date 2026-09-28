@@ -100,7 +100,7 @@ export function NoChannelCard() {
     <EmptyState
       icon={<Tv size={20} strokeWidth={1.75} />}
       title="You don't have a channel yet"
-      body="A channel gives your long videos a home: a name, a handle, a banner and followers. Create it and upload your first video."
+      body="A channel gives your long videos a home: a name, a handle, a banner and subscribers. Create it and upload your first video."
       actionHref="/posttube/upload?type=long"
       actionLabel="Create your channel"
     />

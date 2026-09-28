@@ -67,8 +67,8 @@ import "../watch/watch.css";
 
 /*
   The watch page in the RUTUBE layout: on the left the player, the title,
-  the creator row (Follow + bell, Thanks), the action row (Love | Pass,
-  Queue, Add to collection, ⋯), the about card, the series and the
+  the creator row (Subscribe + bell, Thanks), the action row (Like |
+  Dislike, Watch later, Add to collection, ⋯), the about card, the series and the
   comments inline; on the right the Up next list. Theater widens the
   player across both columns. See watch.css for the geometry and
   watchApi.ts for every request.
@@ -451,7 +451,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const handleQueue = async () => {
     if (!video || !requireUser()) return;
     const ok = await queue.toggle(video.id, detail?.viewerQueued);
-    if (!ok) toast({ type: "error", title: "Could not update your Queue" });
+    if (!ok) toast({ type: "error", title: "Could not update Watch later" });
   };
 
   const notInterested = async () => {
@@ -729,7 +729,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
                 initialNotifyOn={channel?.notify_on ?? null}
                 hidden={isOwner || !user}
                 size="md"
-                labels={{ off: "Follow", on: "Following" }}
+                labels={{ off: "Subscribe", on: "Subscribed" }}
                 onSubscribedChange={(s) => setFollowerCount((c) => Math.max(0, c + (s ? 1 : -1)))}
               />
             }

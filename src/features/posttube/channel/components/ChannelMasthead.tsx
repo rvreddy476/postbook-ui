@@ -34,7 +34,7 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
   const [expanded, setExpanded] = useState(false);
   const meta: string[] = [];
   if (channel.handle) meta.push(`@${channel.handle}`);
-  if (!channel.thin) meta.push(plural(followerCount, "follower", "followers", formatCount));
+  if (!channel.thin) meta.push(plural(followerCount, "subscriber", "subscribers", formatCount));
   if (typeof channel.counts.videos === "number") meta.push(plural(channel.counts.videos, "video", "videos", formatCount));
   const followRef = channel.handle || channel.userId;
   const toggle = aboutNeedsToggle(channel.about);
@@ -94,7 +94,7 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
                 initialNotifyOn={channel.notifyOn}
                 hidden={!signedIn || channel.thin}
                 size="sm"
-                labels={{ off: "Follow", on: "Following" }}
+                labels={{ off: "Subscribe", on: "Subscribed" }}
                 onSubscribedChange={onFollowChange}
               />
               <ChannelMoreMenu signedIn={signedIn} onShare={() => onShare?.()} onReport={() => onReport?.()} />

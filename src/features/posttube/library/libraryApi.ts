@@ -74,8 +74,8 @@ export interface PlaylistItemWire {
 }
 
 export const SYSTEM_TITLES: Record<SystemCollectionKind, string> = {
-  watch_later: "Queue",
-  liked: "Loved",
+  watch_later: "Watch later",
+  liked: "Liked videos",
 };
 
 export function isSystemKind(kind: string | null | undefined): kind is SystemCollectionKind {

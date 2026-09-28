@@ -235,43 +235,43 @@ describe("links", () => {
 });
 
 describe("masthead", () => {
-  test("visitor: banner strip, name, meta line, Follow + bell, More", () => {
+  test("visitor: banner strip, name, meta line, Subscribed + bell, More", () => {
     const html = wrap(<ChannelMasthead channel={fixture} isOwner={false} signedIn followerCount={1200} />);
     expect(html).toContain('class="tube-chan-head__banner"');
     expect(html).toContain('<h1 class="tube-chan-head__name">Raghu Builds</h1>');
-    expect(textOf(html)).toContain("@raghu.builds · 1.2K followers · 12 videos");
-    expect(html).toContain(">Following<"); // is_subscribed in the fixture
+    expect(textOf(html)).toContain("@raghu.builds · 1.2K subscribers · 12 videos");
+    expect(html).toContain(">Subscribed<"); // is_subscribed in the fixture
     expect(html).toContain('aria-label="Turn off notifications"');
     expect(html).toContain('aria-label="More"');
     expect(html).not.toContain("Creator Hub");
     expect(html).not.toContain("tube-chan-head__toggle"); // short about, no toggle
   });
-  test("owner: Branding and Creator Hub, no Follow, no More", () => {
+  test("owner: Branding and Creator Hub, no Subscribe, no More", () => {
     const html = wrap(<ChannelMasthead channel={fixture} isOwner signedIn followerCount={1} />);
     expect(html).toContain('href="/settings/channel"');
     expect(html).toContain('href="/posttube/hub"');
     expect(html).toContain(">Branding<");
     expect(html).toContain(">Creator Hub<");
-    expect(html).not.toContain(">Follow");
+    expect(html).not.toContain(">Subscribe");
     expect(html).not.toContain('aria-label="More"');
-    expect(textOf(html)).toContain("1 follower ·");
+    expect(textOf(html)).toContain("1 subscriber ·");
   });
-  test("long description gets the more toggle; signed-out visitor gets no Follow; old shape has no banner", () => {
+  test("long description gets the more toggle; signed-out visitor gets no Subscribe; old shape has no banner", () => {
     const long = { ...fixture, about: "x".repeat(200) };
     expect(aboutNeedsToggle(long.about)).toBe(true);
     const html = wrap(<ChannelMasthead channel={long} isOwner={false} signedIn={false} followerCount={0} />);
     expect(html).toContain('aria-expanded="false" aria-controls="tube-chan-about"');
-    expect(html).not.toContain(">Follow<");
+    expect(html).not.toContain(">Subscribe<");
     const old = wrap(<ChannelMasthead channel={normalizeChannel(OLD_SHAPE) as ChannelView} isOwner={false} signedIn followerCount={5} />);
     expect(old).not.toContain("tube-chan-head__banner");
-    expect(textOf(old)).toContain("@old · 5 followers");
+    expect(textOf(old)).toContain("@old · 5 subscribers");
     expect(textOf(old)).not.toContain("videos");
   });
-  test("a thin channel (user id without a channel row) has no Follow and no follower count", () => {
+  test("a thin channel (user id without a channel row) has no Subscribe and no subscriber count", () => {
     const html = wrap(<ChannelMasthead channel={thinChannel("u-1", "Someone")} isOwner={false} signedIn followerCount={0} />);
     expect(html).toContain(">Someone<");
-    expect(html).not.toContain("follower");
-    expect(html).not.toContain(">Follow<");
+    expect(html).not.toContain("subscriber");
+    expect(html).not.toContain(">Subscribe<");
   });
   test("More rows are alphabetical; Report only when signed in", () => {
     expect(channelMoreRows(true).map((r) => r.label)).toEqual(["Report", "Share channel"]);
@@ -320,8 +320,8 @@ describe("panels and states", () => {
   });
 });
 
-describe("our words, our tokens", () => {
-  test("no YouTube vocabulary anywhere in the rendered page parts", () => {
+describe("RUTUBE words, our tokens", () => {
+  test("Subscribe and subscribers, never the retired Follow / followers", () => {
     const html = [
       wrap(<ChannelMasthead channel={fixture} isOwner={false} signedIn followerCount={1200} />),
       wrap(<ChannelMasthead channel={{ ...fixture, isFollowing: false }} isOwner={false} signedIn followerCount={1200} />),
@@ -332,9 +332,9 @@ describe("our words, our tokens", () => {
       channelMoreRows(true).map((r) => r.label).join(" "),
     ].join("\n");
     // Case-sensitive on words a person reads; URLs (/posttube/playlists) stay the API's.
-    expect(textOf(html)).not.toMatch(/Subscribe|Subscriber|subscriber|Playlist|playlist|Community|Home tab|Studio/);
-    expect(html).not.toMatch(/"[^"]*(Subscribe|Subscriber|Playlist|Community)[^"]*"/); // no attribute text either (aria-label, title, placeholder)
-    expect(html).toContain(">Follow<");
+    expect(textOf(html)).not.toMatch(/\bFollow\b|\bFollowing\b|\bfollowers?\b|Playlist|playlist|Community|Home tab|Studio/);
+    expect(html).toContain(">Subscribe<");
+    expect(html).toContain(">Subscribed<");
   });
 
   test("channel.css: tokens only, small type", () => {

@@ -487,7 +487,7 @@ function ElementsTab({ post, candidates }: { post: HubPostDetail; candidates: Hu
               <select className="hub-select hub-input-sm" value={s.type} aria-label={`End screen ${i + 1} type`} onChange={(e) => setScreenRows((rows) => rows!.map((x, j) => (j === i ? { ...x, type: e.target.value as HubEndScreen["type"], target_id: null, target_url: null } : x)))}>
                 {HUB_END_SCREEN_TYPES.map((t) => (
                   <option key={t} value={t}>
-                    {t === "channel_subscribe" ? "Follow" : t === "external_link" ? "Link" : t === "playlist" ? "Collection" : "Video"}
+                    {t === "channel_subscribe" ? "Subscribe" : t === "external_link" ? "Link" : t === "playlist" ? "Collection" : "Video"}
                   </option>
                 ))}
               </select>

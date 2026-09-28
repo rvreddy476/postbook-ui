@@ -33,8 +33,8 @@ export interface CollectionViewProps {
 }
 
 const SYSTEM_COPY: Record<SystemCollectionKind, { title: string; icon: typeof Clock; emptyTitle: string; emptyBody: string }> = {
-  watch_later: { title: "Queue", icon: Clock, emptyTitle: "Nothing queued yet", emptyBody: "Tap Queue on a video to keep it for later." },
-  liked: { title: "Loved", icon: Heart, emptyTitle: "Videos you love will show up here", emptyBody: "Tap Love on any video to keep it." },
+  watch_later: { title: "Watch later", icon: Clock, emptyTitle: "Nothing saved for later yet", emptyBody: "Tap Watch later on a video to keep it here." },
+  liked: { title: "Liked videos", icon: Heart, emptyTitle: "Videos you like will show up here", emptyBody: "Tap Like on any video to keep it." },
 };
 
 function VisibilityPill({ visibility }: { visibility: CollectionVisibility }) {

@@ -16,8 +16,8 @@ import { DEFAULT_SEARCH_FILTERS } from "../discoveryApi";
   The pure screens rendered to static markup, the way
   features/reels/__tests__/presentation.test.tsx pins the reels screens:
   every page has a loading state, an empty state with one next step, and
-  an error state with Retry, and the words on them are ours (Watch,
-  Following, Topics, Collections) — never the other product's labels.
+  an error state with Retry, and the words on them are RUTUBE's (Watch,
+  Subscriptions, Topics, Collections).
 */
 
 const noop = () => {};
@@ -132,7 +132,7 @@ describe("Search", () => {
     );
     expect(html).not.toContain('aria-label="Length"');
     expect(html).toContain('data-kind="channel"');
-    expect(html).toContain("@bee · 1.2K followers");
+    expect(html).toContain("@bee · 1.2K subscribers");
   });
 
   test("the CSS pins the result row: 160×90 thumb, 13px title, 11px meta", () => {
@@ -187,20 +187,20 @@ describe("Live", () => {
 });
 
 describe("Topic strip", () => {
-  test("All · Following · Fresh · Seen · New to you, then the topics, then the link to Topics; loading spins in place", () => {
+  test("All · Subscriptions · Fresh · Seen · New to you, then the topics, then the link to Topics; loading spins in place", () => {
     const html = renderToStaticMarkup(<TopicStripView value="fresh" onChange={noop} topics={[{ slug: "music", label: "Music", kind: "all" }]} />);
     // The band and the pills are tube.css's tube-strip__* (the foundations lane's).
     expect(html).toContain('class="tube-strip"');
     expect(html).toContain('role="group" aria-label="Narrow the feed" class="tube-strip__scroller"');
-    const order = [">All<", ">Following<", ">Fresh<", ">Seen<", ">New to you<", ">Music<", 'href="/posttube/topics"'];
+    const order = [">All<", ">Subscriptions<", ">Fresh<", ">Seen<", ">New to you<", ">Music<", 'href="/posttube/topics"'];
     const positions = order.map((s) => html.indexOf(s));
     expect(positions.every((p) => p >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
     expect(html).toContain('aria-pressed="true" class="tube-strip__pill">Fresh');
     expect(html).not.toContain('aria-pressed="true" class="tube-strip__pill">All');
-    expect(html).not.toContain("Subscriptions");
+    expect(html).not.toContain(">Following<");
     const loading = renderToStaticMarkup(<TopicStripView value="all" onChange={noop} topics={[]} loading />);
     expect(loading).toContain('aria-label="Loading topics"');
-    expect(renderToStaticMarkup(<TopicStripView value="all" onChange={noop} topics={[]} showFollowing={false} />)).not.toContain(">Following<");
+    expect(renderToStaticMarkup(<TopicStripView value="all" onChange={noop} topics={[]} showFollowing={false} />)).not.toContain(">Subscriptions<");
   });
 });

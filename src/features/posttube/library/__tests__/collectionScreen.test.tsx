@@ -63,9 +63,9 @@ describe("CollectionView states", () => {
     expect(html).not.toContain("Playlist"); // vocabulary: Collections, never Playlists
   });
 
-  test("system Queue with a row: no edit/delete/visibility pill, Yours pill, Play all carries ?list=, rows reorder + remove", () => {
+  test("system Watch later with a row: no edit/delete/visibility pill, Yours pill, Play all carries ?list=, rows reorder + remove", () => {
     const html = renderToStaticMarkup(<CollectionView {...base} systemKind="watch_later" collection={queue} items={items} />);
-    expect(html).toContain(">Queue<");
+    expect(html).toContain(">Watch later<");
     expect(html).toContain("Yours");
     expect(html).not.toContain('aria-label="Edit collection"');
     expect(html).not.toContain('aria-label="Delete collection"');
@@ -81,14 +81,13 @@ describe("CollectionView states", () => {
     expect(html).toMatch(/aria-label="Move down: Second video" disabled/);
     expect(html).toContain("2:05"); // duration pill
     expect(html).toContain("1.2K views");
-    expect(html).not.toContain("Watch later"); // the wire title never leaks; the vocabulary is Queue
   });
 
-  test("Loved and the signed-out card use our words", () => {
+  test("Liked videos and the signed-out card use the RUTUBE words", () => {
     const html = renderToStaticMarkup(<CollectionView {...base} status="signed-out" systemKind="liked" />);
-    expect(html).toContain("Sign in to see your Loved");
+    expect(html).toContain("Sign in to see your Liked videos");
     expect(html).toContain('href="/login?next=%2Fposttube%2Floved"');
-    expect(html).not.toContain("Liked videos");
+    expect(html).not.toContain("Loved");
   });
 
   test("a viewer who does not own a public collection sees a static list: no handles, no move buttons", () => {
@@ -114,7 +113,7 @@ describe("CollectionScreen", () => {
   test("the server render is a neutral skeleton for a system list (no sign-in flash) and reads its title from the source", () => {
     const html = wrap(<CollectionScreen source={{ kind: "system", system: "watch_later" }} />);
     expect(html).toContain('aria-busy="true"');
-    expect(html).toContain(">Queue<");
+    expect(html).toContain(">Watch later<");
     expect(html).not.toContain("Sign in");
     expect(html).not.toContain('href="/posttube/playlists"'); // system lists have no Back
   });
@@ -131,7 +130,7 @@ describe("CollectionScreen", () => {
   });
 });
 
-describe("the library never copies YouTube's words or bypasses the tokens", () => {
+describe("the library speaks the RUTUBE words and never bypasses the tokens", () => {
   test("CSS uses tokens only and the 160×90 row thumb", () => {
     const css = readFileSync(resolve(import.meta.dir, "../components/library.css"), "utf8");
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
@@ -139,11 +138,11 @@ describe("the library never copies YouTube's words or bypasses the tokens", () =
     expect(css).toContain(".tube-library__row-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px;");
     expect(css).toContain(".tube-library__row-meta { margin: 0; font-size: 11px;");
   });
-  test("no YouTube labels in the screens", () => {
+  test("none of the retired labels in the screens", () => {
     for (const f of ["CollectionView.tsx", "CollectionsIndex.tsx", "RecentScreen.tsx", "CollectionRow.tsx"]) {
       const src = readFileSync(resolve(import.meta.dir, "../components", f), "utf8");
       // user-visible strings only (icons and hooks may carry the API's own names)
-      expect(src).not.toMatch(/[>"'“](Watch later|Liked videos|Playlists|History|Subscribe)[<"'.”]/);
+      expect(src).not.toMatch(/[>"'“](Queue|Loved|Playlists)[<"'.”]/);
     }
   });
 });

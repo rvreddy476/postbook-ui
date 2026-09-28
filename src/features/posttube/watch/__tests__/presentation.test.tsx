@@ -60,7 +60,7 @@ describe("the RUTUBE layout", () => {
     expect(playerCss).toMatch(/\.tube-seek__track \{[^}]*height: 3px/);
   });
 
-  test("action row: Love (count) | Pass in one pill, then Queue, Add to collection, More", () => {
+  test("action row: Like (count) | Dislike in one pill, then Watch later, Add to collection, More", () => {
     const html = renderToStaticMarkup(<WatchActions {...actionsBase} />);
     const at = WATCH_ACTION_ORDER.map((a) => html.indexOf(`data-action="${a}"`));
     for (const [i, pos] of at.entries()) expect(pos, WATCH_ACTION_ORDER[i]).toBeGreaterThan(-1);
@@ -69,26 +69,29 @@ describe("the RUTUBE layout", () => {
     const vote = html.slice(html.indexOf("tube-actions__vote"), html.indexOf('data-action="queue"'));
     expect(vote).toContain('data-action="love"');
     expect(vote).toContain('data-action="pass"');
-    expect(html).toContain(">Queue<");
+    expect(html).toContain(">Watch later<");
     expect(html).toContain(">Add to collection<");
+    expect(html).toContain('aria-label="Like"');
+    expect(html).toContain('aria-label="Dislike"');
+    expect(html).not.toMatch(/Love|Pass|Queue/);
   });
 
-  test("loved and passed light their own button only; queued reads In Queue", () => {
+  test("liked and disliked light their own button only; Watch later lights when saved", () => {
     const loved = renderToStaticMarkup(<WatchActions {...actionsBase} loved />);
     expect(loved).toContain('class="tube-actions__btn is-love is-on" aria-pressed="true"');
     expect(loved).toContain('class="tube-actions__btn is-pass" aria-pressed="false"');
     const passed = renderToStaticMarkup(<WatchActions {...actionsBase} passed queued />);
     expect(passed).toContain('class="tube-actions__btn is-pass is-on" aria-pressed="true"');
     expect(passed).not.toContain("is-love is-on");
-    expect(passed).toContain(">In Queue<");
+    expect(passed).toContain('class="tube-actions__pill is-on" aria-pressed="true" data-action="queue"');
   });
 
-  test("details: title, the creator row with Follow and Thanks after the name, the actions, the about card", () => {
-    const html = renderToStaticMarkup(<WatchDetails {...detailsBase} follow={<button type="button">Follow</button>} onThanks={noop} actions={<div data-slot="actions" />} />);
-    const order = ['class="tube-details__title"', 'class="tube-creator__name"', ">Follow<", 'data-action="thanks"', 'data-slot="actions"', 'class="tube-about"'].map((m) => html.indexOf(m));
+  test("details: title, the creator row with Subscribe and Thanks after the name, the actions, the about card", () => {
+    const html = renderToStaticMarkup(<WatchDetails {...detailsBase} follow={<button type="button">Subscribe</button>} onThanks={noop} actions={<div data-slot="actions" />} />);
+    const order = ['class="tube-details__title"', 'class="tube-creator__name"', ">Subscribe<", 'data-action="thanks"', 'data-slot="actions"', 'class="tube-about"'].map((m) => html.indexOf(m));
     for (const pos of order) expect(pos).toBeGreaterThan(-1);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).toContain("2.1K followers");
+    expect(html).toContain("2.1K subscribers");
     expect(html).toContain("272K views");
     // collapsed: no facts yet, the toggle reads Show more
     expect(html).not.toContain("tube-about__facts");

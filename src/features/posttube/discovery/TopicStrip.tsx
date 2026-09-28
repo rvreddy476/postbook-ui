@@ -29,7 +29,7 @@ export interface TopicStripViewProps {
   onChange: (value: string) => void;
   topics: readonly Topic[];
   loading?: boolean;
-  /** Show the "Following" pill (subscribed channels only). Default true. */
+  /** Show the "Subscriptions" pill (subscribed channels only). Default true. */
   showFollowing?: boolean;
 }
 
@@ -43,7 +43,7 @@ export function TopicStripView({ value, onChange, topics, loading = false, showF
     <div className="tube-strip" data-strip="topics">
       <div role="group" aria-label="Narrow the feed" className="tube-strip__scroller">
         {pill(CHIP_ALL, "All")}
-        {showFollowing ? pill(CHIP_SUBSCRIPTIONS, "Following") : null}
+        {showFollowing ? pill(CHIP_SUBSCRIPTIONS, "Subscriptions") : null}
         {STRIP_CHIPS.map((c) => pill(c.value, c.label))}
         {topics.length > 0 ? <span className="disco-strip__sep" aria-hidden /> : null}
         {topics.map((t) => pill(t.slug, t.label))}
