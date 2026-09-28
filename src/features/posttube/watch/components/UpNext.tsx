@@ -103,7 +103,7 @@ export function UpNext({ rows, loading = false, hasMore = false, fetchingMore = 
             <li key={r.video.id}>
               <Link href={r.href} className="tube-upnext__row" aria-current={r.current ? "page" : undefined}>
                 <span className="tube-upnext__thumb">
-                  {r.video.thumbnail_url ? <img src={r.video.thumbnail_url} alt="" loading="lazy" /> : null}
+                  {r.video.thumbnail_url ? <img src={r.video.thumbnail_url} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} /> : null}
                   {typeof r.position === "number" ? <span className="tube-upnext__pos">{r.position}</span> : null}
                   {r.video.duration_seconds > 0 ? <span className="tube-upnext__duration">{formatDuration(r.video.duration_seconds)}</span> : null}
                 </span>
