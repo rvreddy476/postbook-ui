@@ -2,23 +2,54 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, Upload } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
-import ShareDialog from "@/components/ShareDialog";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { ConfirmDialog } from "@/features/posttube/components/ConfirmDialog";
 import { useCreatorPlaylists } from "@/hooks/usePosttubeExtras";
 import { playlistIsPublic } from "@/features/posttube/data/posttubeApi";
 import { useAuthUser } from "@/store/auth";
-import { HUB_VISIBILITIES, watchHref, type HubLibraryKind, type HubLibraryRow, type HubVisibility } from "../hubApi";
-import { LIBRARY_FILTER_DEFAULT, VISIBILITY_LABEL, filterLibraryRows, liveRows, sortLibraryRows, toggleSelection, type LibraryFilter, type LibrarySortKey, type SortDir } from "../hubModel";
-import { useBulkVisibility, useDeleteHubUpload, useHubCounts, useHubLibrary } from "../hooks/useHub";
+import { absoluteWatchUrl, downloadHref, hubErrorCode, type HubBulkPatch, type HubLibraryKind, type HubLibraryRow } from "../hubApi";
+import {
+  LIBRARY_FILTER_DEFAULT,
+  bulkFailures,
+  filterLibraryRows,
+  liveRows,
+  readableHubError,
+  sortLibraryRows,
+  toggleSelection,
+  type BulkFailure,
+  type LibraryFilter,
+  type LibrarySortKey,
+  type SortDir,
+} from "../hubModel";
+import { useAddToCollection, useBulkDelete, useBulkEdit, useDeleteHubUpload, useHubCategories, useHubCounts, useHubLibrary } from "../hooks/useHub";
 import { EditSheet, type SheetTab } from "./EditSheet";
 import { HubHead } from "./HubFrame";
 import { HubError, HubSkeleton, LibraryEmpty } from "./HubEmpty";
+import { BulkBar, FilterChips, FilterMenu, type BulkCollection } from "./LibraryActions";
 import { LibraryTable } from "./LibraryTable";
 import { PillGroup } from "./Pills";
+
+/**
+  Keep a copy for several videos: one hidden frame per file. The download
+  route answers a 307 to a signed attachment, so each frame saves its file
+  without opening a tab (browsers block all but the first scripted
+  window.open).
+*/
+function startDownloads(urls: string[]) {
+  if (typeof document === "undefined") return;
+  urls.forEach((url, i) => {
+    window.setTimeout(() => {
+      const frame = document.createElement("iframe");
+      frame.style.display = "none";
+      frame.src = url;
+      document.body.appendChild(frame);
+      window.setTimeout(() => frame.remove(), 60_000);
+    }, i * 400);
+  });
+}
 
 type LibraryTab = "videos" | "shorts" | "live" | "collections";
 
@@ -85,7 +116,7 @@ export function LibraryPage() {
       {tab === "collections" ? (
         <CollectionsTab />
       ) : (
-        <RowsTab tab={tab} library={library} onEdit={openEdit} onSchedule={(row) => openEdit(row, "details", true)} />
+        <RowsTab tab={tab} library={library} onEdit={openEdit} />
       )}
 
       <EditSheet postId={editId} initialTab={sheetTab} scheduleFirst={scheduleFirst} candidates={videosForTargets.rows} onClose={closeEdit} />
@@ -99,22 +130,26 @@ function RowsTab({
   tab,
   library,
   onEdit,
-  onSchedule,
 }: {
   tab: Exclude<LibraryTab, "collections">;
   library: ReturnType<typeof useHubLibrary>;
   onEdit: (row: HubLibraryRow) => void;
-  onSchedule: (row: HubLibraryRow) => void;
 }) {
   const toast = useGlobalToast();
+  const user = useAuthUser();
   const [filter, setFilter] = useState<LibraryFilter>(LIBRARY_FILTER_DEFAULT);
   const [sortKey, setSortKey] = useState<LibrarySortKey>("published");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [shareRow, setShareRow] = useState<HubLibraryRow | null>(null);
+  const [failures, setFailures] = useState<BulkFailure[]>([]);
   const [deleteRow, setDeleteRow] = useState<HubLibraryRow | null>(null);
-  const bulk = useBulkVisibility();
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const bulkEdit = useBulkEdit();
+  const bulkDelete = useBulkDelete();
+  const addToCollection = useAddToCollection();
   const del = useDeleteHubUpload();
+  const categories = useHubCategories();
+  const playlists = useCreatorPlaylists(user?.id);
 
   const baseRows = useMemo(() => {
     if (tab !== "live") return library.rows;
@@ -123,6 +158,11 @@ function RowsTab({
   const liveUnknown = tab === "live" && liveRows(library.rows) === null;
 
   const rows = useMemo(() => sortLibraryRows(filterLibraryRows(baseRows, filter), sortKey, sortDir), [baseRows, filter, sortKey, sortDir]);
+  const selectedRows = useMemo(() => baseRows.filter((r) => selected.has(r.id)), [baseRows, selected]);
+  const short = tab === "shorts";
+  const topics = useMemo(() => (categories.data ?? []).filter((c) => c.kind === "all" || c.kind === (short ? "short" : "long")), [categories.data, short]);
+  const collections: BulkCollection[] | null = user && playlists.isPending ? null : (playlists.data ?? []).map((p) => ({ id: p.id, title: p.title || "Untitled" }));
+  const busy = bulkEdit.isPending || bulkDelete.isPending || addToCollection.isPending;
 
   const onSort = (key: LibrarySortKey) => {
     if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -132,19 +172,61 @@ function RowsTab({
     }
   };
 
-  const applyBulk = (visibility: Exclude<HubVisibility, "scheduled">) => {
-    const ids = [...selected];
+  /** Keeps the failed rows ticked (so a retry is one click) and lists why. */
+  const settle = (outcomes: { post_id: string; ok: boolean; error?: string }[], done: string) => {
+    const failed = bulkFailures(outcomes, baseRows);
+    setFailures(failed);
+    setSelected(new Set(failed.map((f) => f.id)));
+    const okCount = outcomes.length - failed.length;
+    if (failed.length === 0) toast({ type: "success", title: done });
+    else toast({ type: "warning", title: `${okCount} done, ${failed.length} not changed`, description: failed[0]?.message });
+  };
+
+  const applyEdit = (patch: HubBulkPatch, fieldLabel: string) => {
+    const ids = selectedRows.map((r) => r.id);
     if (ids.length === 0) return;
-    bulk.mutate(
-      { postIds: ids, visibility },
+    setFailures([]);
+    bulkEdit.mutate(
+      { postIds: ids, patch },
+      {
+        onSuccess: (outcomes) => settle(outcomes, `${fieldLabel} updated on ${ids.length} ${ids.length === 1 ? "video" : "videos"}`),
+        onError: (err) => toast({ type: "error", title: "Bulk change failed", description: readableHubError(hubErrorCode(err)) }),
+      },
+    );
+  };
+
+  const applyCollection = (c: BulkCollection) => {
+    const ids = selectedRows.map((r) => r.id);
+    if (ids.length === 0) return;
+    setFailures([]);
+    addToCollection.mutate(
+      { collectionId: c.id, postIds: ids },
+      {
+        onSuccess: (outcomes) => settle(outcomes, `Added to ${c.title}`),
+        onError: () => toast({ type: "error", title: `Could not add to ${c.title}` }),
+      },
+    );
+  };
+
+  const downloadable = selectedRows.filter((r) => !!r.media_id);
+  const keepCopies = () => {
+    if (downloadable.length === 0) return;
+    startDownloads(downloadable.map((r) => downloadHref(r.media_id as string)));
+    toast({ type: "info", title: downloadable.length === 1 ? "Keeping a copy" : `Keeping ${downloadable.length} copies`, description: "Your browser may ask to allow several downloads." });
+  };
+
+  const confirmBulkDelete = () => {
+    const ids = selectedRows.map((r) => r.id);
+    if (ids.length === 0) return;
+    setFailures([]);
+    bulkDelete.mutate(
+      { postIds: ids },
       {
         onSuccess: (outcomes) => {
-          const failed = outcomes.filter((o) => !o.ok);
-          setSelected(new Set(failed.map((o) => o.post_id)));
-          if (failed.length === 0) toast({ type: "success", title: `${ids.length} set to ${VISIBILITY_LABEL[visibility]}` });
-          else toast({ type: "warning", title: `${ids.length - failed.length} updated, ${failed.length} failed`, description: failed[0]?.error });
+          setBulkDeleteOpen(false);
+          settle(outcomes, `Deleted ${outcomes.filter((o) => o.ok).length} forever`);
         },
-        onError: () => toast({ type: "error", title: "Bulk change failed" }),
+        onError: (err) => toast({ type: "error", title: "Could not delete", description: readableHubError(hubErrorCode(err)) }),
       },
     );
   };
@@ -162,14 +244,22 @@ function RowsTab({
             n.delete(row.id);
             return n;
           });
-          toast({ type: "success", title: "Deleted" });
+          toast({ type: "success", title: "Deleted forever" });
         },
         onError: () => toast({ type: "error", title: "Could not delete" }),
       },
     );
   };
 
-  const shareUrl = shareRow && typeof window !== "undefined" ? `${window.location.origin}${watchHref(shareRow)}` : undefined;
+  const copyLink = async (row: HubLibraryRow) => {
+    const url = absoluteWatchUrl(row, window.location.origin);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ type: "success", title: "Link copied" });
+    } catch {
+      toast({ type: "error", title: "Could not copy the link", description: url });
+    }
+  };
 
   return (
     <>
@@ -178,32 +268,41 @@ function RowsTab({
           <Search size={12} aria-hidden="true" style={{ position: "absolute", left: 8, opacity: 0.6 }} />
           <input className="hub-input" style={{ paddingLeft: 24 }} placeholder="Filter by title" value={filter.title} onChange={(e) => setFilter((f) => ({ ...f, title: e.target.value }))} aria-label="Filter by title" />
         </div>
-        <select className="hub-select" value={filter.visibility} aria-label="Filter by visibility" onChange={(e) => setFilter((f) => ({ ...f, visibility: e.target.value as LibraryFilter["visibility"] }))}>
-          <option value="all">Any visibility</option>
-          {HUB_VISIBILITIES.map((v) => (
-            <option key={v} value={v}>
-              {VISIBILITY_LABEL[v]}
-            </option>
-          ))}
-        </select>
+        <FilterMenu filter={filter} onChange={setFilter} />
         <span className="hub-hint" style={{ marginLeft: "auto" }}>
           {rows.length} of {baseRows.length} loaded
         </span>
       </div>
+      <FilterChips filter={filter} onChange={setFilter} />
 
-      {selected.size > 0 ? (
-        <div className="hub-bulk" role="region" aria-label="Bulk actions">
-          <strong>{selected.size} selected</strong>
-          <span className="hub-hint">Set visibility:</span>
-          {(["public", "unlisted", "private"] as const).map((v) => (
-            <button key={v} type="button" className="hub-btn hub-btn-sm" disabled={bulk.isPending} onClick={() => applyBulk(v)}>
-              {VISIBILITY_LABEL[v]}
-            </button>
+      {selectedRows.length > 0 ? (
+        <BulkBar
+          count={selectedRows.length}
+          total={rows.length}
+          allSelected={rows.every((r) => selected.has(r.id))}
+          onSelectAll={() => setSelected((s) => new Set([...s, ...rows.map((r) => r.id)]))}
+          onClear={() => {
+            setSelected(new Set());
+            setFailures([]);
+          }}
+          pending={busy}
+          topics={topics}
+          collections={collections}
+          onApplyEdit={applyEdit}
+          onAddToCollection={applyCollection}
+          downloadable={downloadable.length}
+          onDownload={keepCopies}
+          onDeleteForever={() => setBulkDeleteOpen(true)}
+          failures={failures}
+          onDismissFailures={() => setFailures([])}
+        />
+      ) : failures.length > 0 ? (
+        <div className="hub-error hub-bulk-failures" role="alert">
+          {failures.map((f) => (
+            <div key={f.id}>
+              {f.title}: {f.message}
+            </div>
           ))}
-          {bulk.isPending ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : null}
-          <button type="button" className="hub-btn hub-btn-sm" style={{ marginLeft: "auto" }} onClick={() => setSelected(new Set())}>
-            Clear
-          </button>
         </div>
       ) : null}
 
@@ -221,7 +320,7 @@ function RowsTab({
         <div className="hub-card">
           <div className="hub-empty">
             <div className="hub-empty-title">Nothing matches</div>
-            <div className="hub-empty-body">Clear the title or visibility filter, or load more pages below.</div>
+            <div className="hub-empty-body">Remove a filter above, or load more pages below.</div>
           </div>
         </div>
       ) : (
@@ -240,8 +339,8 @@ function RowsTab({
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={onSort}
-          onSchedule={onSchedule}
-          actions={{ onEdit, onShare: setShareRow, onDelete: setDeleteRow }}
+          ownerId={user?.id ?? null}
+          actions={{ onEdit, onCopyLink: (row) => void copyLink(row), onDelete: setDeleteRow }}
         />
       )}
 
@@ -253,10 +352,9 @@ function RowsTab({
         </div>
       ) : null}
 
-      {shareRow ? <ShareDialog postId={shareRow.id} isOpen onClose={() => setShareRow(null)} shareUrl={shareUrl} /> : null}
       <ConfirmDialog
         open={!!deleteRow}
-        title="Delete this video?"
+        title="Delete forever?"
         body={
           deleteRow ? (
             <>
@@ -264,11 +362,31 @@ function RowsTab({
             </>
           ) : null
         }
-        confirmLabel="Delete"
+        confirmLabel="Delete forever"
         danger
         pending={del.isPending}
         onConfirm={confirmDelete}
         onClose={() => setDeleteRow(null)}
+      />
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selectedRows.length} ${selectedRows.length === 1 ? "video" : "videos"} forever?`}
+        body={
+          <>
+            {selectedRows.slice(0, 5).map((r) => (
+              <span key={r.id} style={{ display: "block", fontWeight: 600 }}>
+                {r.title}
+              </span>
+            ))}
+            {selectedRows.length > 5 ? <span style={{ display: "block" }}>and {selectedRows.length - 5} more</span> : null}
+            They are removed for everyone, with their views and conversations. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete forever"
+        danger
+        pending={bulkDelete.isPending}
+        onConfirm={confirmBulkDelete}
+        onClose={() => setBulkDeleteOpen(false)}
       />
     </>
   );

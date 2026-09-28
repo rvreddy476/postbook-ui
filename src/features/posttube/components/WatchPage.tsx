@@ -54,11 +54,11 @@ import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { downloadHref, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks } from "../watch/watchApi";
+import { ageGateFromError, downloadHref, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks } from "../watch/watchApi";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { WatchComments } from "../watch/components/WatchComments";
-import { MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
+import { AgeGateCard, MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
 import { WatchMoreMenu } from "../watch/components/WatchMoreMenu";
 import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
@@ -398,6 +398,13 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const [theater, setTheater] = useState(false);
   const [miniOn, setMiniOn] = useState(false);
   const [commentSort, setCommentSort] = useState<CommentSort>("top");
+  /* The creator's default_comment_sort is where the comments open; the viewer's own pick wins after that. */
+  const sortSeededRef = useRef(false);
+  useEffect(() => {
+    if (!detail || sortSeededRef.current) return;
+    sortSeededRef.current = true;
+    setCommentSort(detail.defaultCommentSort);
+  }, [detail]);
   const [shareOpen, setShareOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -538,6 +545,18 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   }
 
   if (!video || !detail) {
+    const gate = ageGateFromError(detailQuery.error);
+    if (videoId && gate) {
+      return (
+        <div className="tube-watch">
+          <div className="tube-watch__grid">
+            <div className="tube-watch__player">
+              <AgeGateCard gate={gate} videoId={videoId} />
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
         <h2 className="text-[18px] font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
@@ -644,7 +663,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const actions = (
     <WatchActions
       loved={rail.loved}
-      likeCount={rail.likeCount}
+      likeCount={detail.likeCountHidden ? null : rail.likeCount}
       passed={rail.passed}
       queued={queued}
       onLove={handleLove}
@@ -743,6 +762,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
             onSeek={(ms) => playerRef.current?.seekTo(ms)}
             description={video.description}
             hashtags={video.hashtags}
+            related={detail.relatedPost}
           />
 
           {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}

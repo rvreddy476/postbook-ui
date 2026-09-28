@@ -101,6 +101,23 @@
 .tube-gate__hint { margin: 0; font-size: 12px; color: rgb(var(--reel-on-stage) / .7); }
 .tube-gate__cta { display: inline-flex; align-items: center; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); text-decoration: none; }
 .tube-gate__cta:hover { opacity: .92; }
+.tube-gate__hint { max-width: 420px; line-height: 1.5; }
+.tube-gate__back { font-size: 12px; font-weight: 600; color: rgb(var(--reel-on-stage) / .8); text-decoration: none; }
+.tube-gate__back:hover { text-decoration: underline; }
+@media (max-width: 480px) { .tube-gate { aspect-ratio: auto; min-height: 220px; padding: 20px 16px; } }
+
+/* the creator's related video, inside the about card */
+.tube-related { margin-top: 10px; }
+.tube-related__label { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: rgb(var(--text-muted)); }
+.tube-related__link { display: flex; align-items: center; gap: 10px; max-width: 420px; padding: 6px; margin: 0 -6px; border-radius: 10px; color: rgb(var(--brand-text)); text-decoration: none; }
+.tube-related__link:hover { background: rgb(var(--brand-text) / .06); }
+.tube-related__link:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 1px; }
+.tube-related__thumb { position: relative; flex: 0 0 auto; width: 120px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: rgb(var(--brand-text) / .08); }
+.tube-related__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tube-related__dur { position: absolute; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 4px; background: rgb(var(--reel-stage) / .8); color: rgb(var(--reel-on-stage)); font-size: 11px; font-weight: 600; line-height: 1.3; }
+.tube-related__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tube-related__title { font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tube-related__channel { font-size: 12px; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---- comments, inline under the about card -------------------------------- */
 .tube-comments { margin-top: 24px; }

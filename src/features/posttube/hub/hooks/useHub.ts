@@ -4,8 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
 import {
+  addVideosToCollection,
+  bulkDelete,
+  bulkEdit,
   bulkSetVisibility,
   deleteUpload,
+  getPrivateShares,
+  setPrivateShares,
+  type HubBulkPatch,
   getCards,
   getChapters,
   getContentInsights,
@@ -46,7 +52,7 @@ import {
   type InboxStatus,
   type InsightsPeriod,
 } from "../hubApi";
-import { dedupeRows } from "../hubModel";
+import { dedupeRows, rowPatchFromBulk, type VisibilityPlan } from "../hubModel";
 
 /*
   Query keys all start with "hub" so one invalidation clears the console.
@@ -69,6 +75,7 @@ export const HUB_KEYS = {
   captionTracks: (mediaId: string) => ["hub", "caption-tracks", mediaId] as const,
   creatorInsights: (period: InsightsPeriod) => ["hub", "insights", "creator", period] as const,
   contentInsights: (id: string, period: InsightsPeriod) => ["hub", "insights", "content", id, period] as const,
+  privateShares: (id: string) => ["hub", "private-shares", id] as const,
 };
 
 /* ── Library ────────────────────────────────────────────── */
@@ -148,6 +155,87 @@ export function useBulkVisibility() {
   });
 }
 
+/** Contract C: one field across the ticked rows; each row's outcome is its own. */
+export function useBulkEdit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postIds, patch }: { postIds: string[]; patch: HubBulkPatch }) => bulkEdit(postIds, patch),
+    onSuccess: (outcomes, { patch }) => {
+      const rowPatch = rowPatchFromBulk(patch);
+      if (Object.keys(rowPatch).length > 0) for (const o of outcomes) if (o.ok) patchLibraryRow(qc, o.post_id, rowPatch);
+      for (const o of outcomes) if (o.ok) void qc.invalidateQueries({ queryKey: HUB_KEYS.post(o.post_id) });
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["hub", "library"] });
+    },
+  });
+}
+
+/** Contract D: Delete forever for the ticked rows. */
+export function useBulkDelete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postIds }: { postIds: string[] }) => bulkDelete(postIds),
+    onSuccess: (outcomes) => {
+      for (const o of outcomes) if (o.ok) removeLibraryRow(qc, o.post_id);
+      void qc.invalidateQueries({ queryKey: HUB_KEYS.counts });
+      void qc.invalidateQueries({ queryKey: HUB_KEYS.summary });
+      void qc.invalidateQueries({ queryKey: ["my-uploads"] });
+    },
+  });
+}
+
+/** Add the ticked videos to one collection, one request per video. */
+export function useAddToCollection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ collectionId, postIds }: { collectionId: string; postIds: string[] }) => addVideosToCollection(collectionId, postIds),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["posttube", "playlists"] });
+      void qc.invalidateQueries({ queryKey: ["posttube", "playlist"] });
+      void qc.invalidateQueries({ queryKey: ["posttube", "playlist-items"] });
+    },
+  });
+}
+
+/**
+  The visibility popover's Save: the plan from hubModel.visibilityPlan,
+  run in order (publish now → visibility, or the schedule time).
+*/
+export function useApplyVisibility() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ postId, plan }: { postId: string; plan: VisibilityPlan }) => {
+      if (plan.publishNow) await reschedule(postId);
+      if (plan.visibility) await updatePost(postId, { visibility: plan.visibility });
+      if (plan.scheduleAt) await reschedule(postId, plan.scheduleAt);
+    },
+    onSuccess: (_d, { postId, plan }) => {
+      if (plan.scheduleAt) patchLibraryRow(qc, postId, { visibility: "scheduled", scheduled_at: plan.scheduleAt });
+      else if (plan.visibility) patchLibraryRow(qc, postId, { visibility: plan.visibility, ...(plan.publishNow ? { scheduled_at: null } : {}) });
+    },
+    onSettled: (_d, _e, { postId }) => {
+      void qc.invalidateQueries({ queryKey: HUB_KEYS.post(postId) });
+      void qc.invalidateQueries({ queryKey: ["hub", "library"] });
+      void qc.invalidateQueries({ queryKey: ["posttube", "scheduled"] });
+    },
+  });
+}
+
+/* ── Private sharing (contract F) ───────────────────────── */
+
+export function usePrivateShares(postId: string | null | undefined) {
+  return useQuery({ queryKey: HUB_KEYS.privateShares(postId ?? ""), queryFn: () => getPrivateShares(postId as string), enabled: !!postId, retry: false });
+}
+
+export function useSetPrivateShares() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, userIds, ownerId }: { postId: string; userIds: string[]; ownerId?: string | null }) => setPrivateShares(postId, userIds, ownerId),
+    onSuccess: (users, { postId }) => qc.setQueryData(HUB_KEYS.privateShares(postId), users),
+  });
+}
+
 export function useDeleteHubUpload() {
   const qc = useQueryClient();
   return useMutation({
@@ -183,6 +271,12 @@ export function useUpdatePost() {
       if (patch.text !== undefined) rowPatch.text = patch.text;
       if (patch.visibility !== undefined) rowPatch.visibility = patch.visibility;
       if (patch.allow_download !== undefined) rowPatch.allow_download = patch.allow_download;
+      if (patch.made_for_kids !== undefined) rowPatch.made_for_kids = patch.made_for_kids;
+      if (patch.age_restricted !== undefined) rowPatch.age_restricted = patch.age_restricted;
+      if (patch.hide_like_count !== undefined) rowPatch.hide_like_count = patch.hide_like_count;
+      if (patch.default_comment_sort !== undefined) rowPatch.default_comment_sort = patch.default_comment_sort;
+      if (patch.related_post_id !== undefined) rowPatch.related_post_id = patch.related_post_id || null;
+      if (patch.text !== undefined) rowPatch.description = patch.text;
       if (detail?.cover_media_id) {
         rowPatch.cover_media_id = detail.cover_media_id;
         rowPatch.thumbnail_url = detail.thumbnail_url;

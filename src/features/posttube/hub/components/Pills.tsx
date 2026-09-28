@@ -30,9 +30,15 @@ export function VisibilityIcon({ visibility }: { visibility: HubVisibility }) {
   return <EyeOff aria-hidden="true" />;
 }
 
-/** Closes on outside click, Escape and any scroll; the caller owns `open`. */
-export function useDismiss(open: boolean, onClose: () => void) {
+/**
+  Closes on outside click, Escape and any scroll; the caller owns `open`.
+  `form: true` (panels with inputs) keeps it open on scroll and resize, so
+  a phone keyboard opening — which scrolls and resizes — never closes the
+  panel mid-typing.
+*/
+export function useDismiss(open: boolean, onClose: () => void, opts?: { form?: boolean }) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const form = opts?.form === true;
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -47,15 +53,17 @@ export function useDismiss(open: boolean, onClose: () => void) {
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
-    document.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onClose);
+    if (!form) {
+      document.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", onClose);
+    }
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onClose);
     };
-  }, [open, onClose]);
+  }, [open, onClose, form]);
   return ref;
 }
 
@@ -64,17 +72,24 @@ export function useDismiss(open: boolean, onClose: () => void) {
   an absolutely positioned popover. They are placed `fixed`, under the
   button that opened them, and useDismiss closes them on any scroll.
 */
-export function useAnchoredMenu(open: boolean, align: "left" | "right") {
+export function useAnchoredMenu(open: boolean, align: "left" | "right", size?: { width?: number; height?: number }) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [style, setStyle] = useState<CSSProperties>({});
+  const width = size?.width;
+  const height = size?.height;
   useLayoutEffect(() => {
     if (!open || !buttonRef.current) return;
     const r = buttonRef.current.getBoundingClientRect();
-    const next: CSSProperties = { position: "fixed", top: r.bottom + 4 };
-    if (align === "right") next.right = Math.max(8, window.innerWidth - r.right);
-    else next.left = Math.max(8, r.left);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // A tall panel opens upward when it would run past the bottom and there is more room above.
+    const up = typeof height === "number" && r.bottom + 4 + height > vh && r.top > vh - r.bottom;
+    const next: CSSProperties = up ? { position: "fixed", bottom: vh - r.top + 4 } : { position: "fixed", top: r.bottom + 4 };
+    if (align === "right") next.right = Math.max(8, vw - r.right);
+    else next.left = typeof width === "number" ? Math.max(8, Math.min(r.left, vw - width - 8)) : Math.max(8, r.left);
+    if (typeof width === "number") next.maxWidth = vw - 16;
     setStyle(next);
-  }, [open, align]);
+  }, [open, align, width, height]);
   return { buttonRef, style };
 }
 

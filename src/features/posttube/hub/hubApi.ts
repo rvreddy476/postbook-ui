@@ -2,7 +2,7 @@ import api from "@/lib/api";
 import { mediaHref } from "@/features/reels/model";
 import { extractCoverFrame } from "@/features/reels/data/reelsApi";
 import { uploadMedia } from "@/lib/mediaUpload";
-import { createSubtitleTrack, getSubtitleTracks, setCoverFrame, updateSchedule } from "@/features/posttube/data/posttubeApi";
+import { addPlaylistItem, createSubtitleTrack, getPlaylistItems, getSubtitleTracks, setCoverFrame, updateSchedule } from "@/features/posttube/data/posttubeApi";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import type { CommentItem } from "@/types/profile";
 
@@ -17,8 +17,11 @@ import type { CommentItem } from "@/types/profile";
   Requests (all through `@/lib/api`, the gateway):
     GET    /v1/uploads/videos|flicks?limit&cursor
     GET    /v1/uploads/counts
-    POST   /v1/uploads/bulk                      { post_ids, patch: { visibility } }
+    POST   /v1/uploads/bulk                      { post_ids, patch: HubBulkPatch } (contract C: tags + tags_mode)
+    POST   /v1/uploads/bulk-delete               { post_ids } (contract D)
     DELETE /v1/uploads/:postId
+    GET|PUT /v1/posts/:id/private-shares         { user_ids } (contract F, owner only)
+    GET    /v1/playlists/:id/items + POST /v1/playlists/:id/items  (bulk Add to collection, one POST per video)
     GET    /v1/posts/me/summary
     GET    /v1/posts/me/scheduled
     PATCH  /v1/posts/:id/schedule                { publish_at } (posttubeApi.updateSchedule)
@@ -68,6 +71,11 @@ function bool(v: unknown, fallback = false): boolean {
   return typeof v === "boolean" ? v : fallback;
 }
 
+function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
+  const s = str(v).toLowerCase() as T;
+  return allowed.includes(s) ? s : fallback;
+}
+
 function strArray(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x !== "") : [];
 }
@@ -75,6 +83,19 @@ function strArray(v: unknown): string[] {
 function nextCursor(meta: ApiResponse<unknown>["meta"] | undefined): string | undefined {
   return meta?.next_cursor || undefined;
 }
+
+/* ── Setting values (the create route's validators) ─────── */
+
+export type HubLicense = "standard" | "creative_commons";
+export const HUB_LICENSES: readonly HubLicense[] = ["standard", "creative_commons"];
+export type HubRemixSetting = "allow" | "allow_audio_only" | "disallow";
+export const HUB_REMIX_SETTINGS: readonly HubRemixSetting[] = ["allow", "allow_audio_only", "disallow"];
+export type HubCommentModeration = "none" | "basic" | "strict" | "hold_all";
+export const HUB_COMMENT_MODERATIONS: readonly HubCommentModeration[] = ["none", "basic", "strict", "hold_all"];
+export type HubCommentAccess = "everyone" | "followers" | "nobody";
+export const HUB_COMMENT_ACCESSES: readonly HubCommentAccess[] = ["everyone", "followers", "nobody"];
+export type HubCommentSort = "top" | "newest";
+export const HUB_COMMENT_SORTS: readonly HubCommentSort[] = ["top", "newest"];
 
 /* ── Library rows ───────────────────────────────────────── */
 
@@ -109,6 +130,13 @@ export interface HubLibraryRow {
   allow_download: boolean;
   /** "live" when the row was born from a stream recording; null when the row does not say. */
   source: string | null;
+  /** Contract E: the first 200 runes of the description ("" when none); falls back to `text`. */
+  description: string;
+  made_for_kids: boolean;
+  age_restricted: boolean;
+  hide_like_count: boolean;
+  default_comment_sort: HubCommentSort;
+  related_post_id: string | null;
 }
 
 export function normalizeVisibility(raw: unknown, scheduledAt?: string | null): HubVisibility {
@@ -173,6 +201,12 @@ export function normalizeLibraryRow(raw: unknown): HubLibraryRow | null {
     flags: normalizeFlags(raw.flags ?? raw.notices, { scheduledAt, madeForKids: raw.made_for_kids, processingStatus }),
     allow_download: bool(raw.allow_download),
     source: strOrNull(raw.source),
+    description: str(raw.description) || str(raw.text),
+    made_for_kids: bool(raw.made_for_kids ?? raw.is_made_for_kids),
+    age_restricted: bool(raw.age_restricted),
+    hide_like_count: bool(raw.hide_like_count),
+    default_comment_sort: pick(raw.default_comment_sort, HUB_COMMENT_SORTS, "top"),
+    related_post_id: strOrNull(raw.related_post_id),
   };
 }
 
@@ -217,6 +251,13 @@ export interface HubBulkOutcome {
   error?: string;
 }
 
+/** A row's `error`: a code string, or `{code, message}` (the service envelope) → the code first. */
+function errorText(v: unknown): string | undefined {
+  if (typeof v === "string") return v || undefined;
+  if (isRecord(v)) return str(v.code) || str(v.message) || undefined;
+  return undefined;
+}
+
 /** Tolerates `{results:[…]}`, a bare array, or a `{id: "ok" | {error}}` map. */
 export function normalizeBulkOutcomes(raw: unknown, requested: string[]): HubBulkOutcome[] {
   const data = isRecord(raw) && Array.isArray(raw.results) ? raw.results : raw;
@@ -226,7 +267,7 @@ export function normalizeBulkOutcomes(raw: unknown, requested: string[]): HubBul
       .map((r) => ({
         post_id: str(r.post_id ?? r.id),
         ok: typeof r.ok === "boolean" ? r.ok : !r.error && str(r.status).toLowerCase() !== "failed",
-        error: strOrNull(r.error) ?? undefined,
+        error: errorText(r.error),
       }))
       .filter((r) => r.post_id);
     if (out.length > 0) return out;
@@ -235,7 +276,7 @@ export function normalizeBulkOutcomes(raw: unknown, requested: string[]): HubBul
     const entries = Object.entries(data).filter(([k]) => requested.includes(k));
     if (entries.length > 0) {
       return entries.map(([post_id, v]) => {
-        if (isRecord(v)) return { post_id, ok: typeof v.ok === "boolean" ? v.ok : !v.error, error: strOrNull(v.error) ?? undefined };
+        if (isRecord(v)) return { post_id, ok: typeof v.ok === "boolean" ? v.ok : !v.error, error: errorText(v.error) };
         const s = str(v).toLowerCase();
         return { post_id, ok: v === true || s === "ok" || s === "updated" || s === "success" };
       });
@@ -245,9 +286,106 @@ export function normalizeBulkOutcomes(raw: unknown, requested: string[]): HubBul
   return requested.map((post_id) => ({ post_id, ok: true }));
 }
 
+/**
+  Contract C: the bulk-editable subset. Title and description are not in
+  it. `tags` goes with `tags_mode` ("add" is the server default; the hub
+  always sends the mode it means).
+*/
+export interface HubBulkPatch {
+  visibility?: Exclude<HubVisibility, "scheduled">;
+  category?: string;
+  language?: string;
+  made_for_kids?: boolean;
+  age_restricted?: boolean;
+  no_comments?: boolean;
+  comment_moderation?: HubCommentModeration;
+  comment_access?: HubCommentAccess;
+  default_comment_sort?: HubCommentSort;
+  allow_embedding?: boolean;
+  license?: HubLicense;
+  remix_setting?: HubRemixSetting;
+  recording_date?: string;
+  hide_like_count?: boolean;
+  altered_content?: boolean;
+  paid_promotion?: boolean;
+  tags?: string[];
+  tags_mode?: HubTagsMode;
+}
+
+export type HubTagsMode = "add" | "replace" | "remove";
+
+/** `{post_ids, patch}` — ids deduped in order, undefined keys dropped, `tags_mode` only with `tags`. */
+export function bulkEditBody(postIds: string[], patch: HubBulkPatch): { post_ids: string[]; patch: Record<string, unknown> } {
+  const body: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) if (v !== undefined) body[k] = v;
+  if (body.tags === undefined) delete body.tags_mode;
+  else if (body.tags_mode === undefined) body.tags_mode = "add";
+  return { post_ids: dedupeIds(postIds), patch: body };
+}
+
+export function bulkDeleteBody(postIds: string[]): { post_ids: string[] } {
+  return { post_ids: dedupeIds(postIds) };
+}
+
+function dedupeIds(ids: string[]): string[] {
+  return [...new Set(ids.filter((id) => typeof id === "string" && id !== ""))];
+}
+
+export async function bulkEdit(postIds: string[], patch: HubBulkPatch): Promise<HubBulkOutcome[]> {
+  const body = bulkEditBody(postIds, patch);
+  const res = await api.post<ApiResponse<unknown>>("/v1/uploads/bulk", body);
+  return normalizeBulkOutcomes(res.data?.data ?? res.data, body.post_ids);
+}
+
 export async function bulkSetVisibility(postIds: string[], visibility: HubVisibility): Promise<HubBulkOutcome[]> {
-  const res = await api.post<ApiResponse<unknown>>("/v1/uploads/bulk", { post_ids: postIds, patch: { visibility } });
-  return normalizeBulkOutcomes(res.data?.data ?? res.data, postIds);
+  return bulkEdit(postIds, { visibility: visibility === "scheduled" ? undefined : visibility });
+}
+
+/** Contract D: each id through the owner delete path; one bad id never stops the rest. */
+export async function bulkDelete(postIds: string[]): Promise<HubBulkOutcome[]> {
+  const body = bulkDeleteBody(postIds);
+  const res = await api.post<ApiResponse<unknown>>("/v1/uploads/bulk-delete", body);
+  return normalizeBulkOutcomes(res.data?.data ?? res.data, body.post_ids);
+}
+
+/* ── Bulk: add to one collection (the existing per-item route) ── */
+
+/**
+  Loops `POST /v1/playlists/:id/items` one video at a time, appending after
+  what is already there; a video already in it counts as done. Each
+  video's outcome is its own — one failure never stops the rest.
+*/
+export async function addVideosToCollection(collectionId: string, postIds: string[]): Promise<HubBulkOutcome[]> {
+  const ids = dedupeIds(postIds);
+  const existing: { post_id?: string }[] = await getPlaylistItems(collectionId).catch(() => []);
+  const present = new Set(existing.map((i) => i.post_id).filter((x): x is string => !!x));
+  let position = existing.length;
+  const out: HubBulkOutcome[] = [];
+  for (const id of ids) {
+    if (present.has(id)) {
+      out.push({ post_id: id, ok: true });
+      continue;
+    }
+    try {
+      await addPlaylistItem(collectionId, id, position);
+      position += 1;
+      out.push({ post_id: id, ok: true });
+    } catch (err) {
+      out.push({ post_id: id, ok: false, error: hubErrorCode(err) ?? "FAILED" });
+    }
+  }
+  return out;
+}
+
+/* ── Errors ─────────────────────────────────────────────── */
+
+/** The service envelope `{"error":{"code","message"}}` (or a bare `{code}` / `{error:"CODE"}`) → the code. */
+export function hubErrorCode(err: unknown): string | null {
+  const data = (err as { response?: { data?: unknown } })?.response?.data;
+  if (!isRecord(data)) return null;
+  if (isRecord(data.error)) return str(data.error.code) || null;
+  if (typeof data.error === "string" && /^[A-Z0-9_]+$/.test(data.error)) return data.error;
+  return str(data.code) || null;
 }
 
 /* ── Summary ────────────────────────────────────────────── */
@@ -297,6 +435,56 @@ export interface HubPostDetail {
   allow_download: boolean;
   no_comments: boolean;
   made_for_kids: boolean;
+  /** "draft" / "scheduled" / "published"…; "" when the detail does not say. */
+  status: string;
+  published_at: string | null;
+  /* Contract A/B — every viewer */
+  age_restricted: boolean;
+  hide_like_count: boolean;
+  default_comment_sort: HubCommentSort;
+  related_post_id: string | null;
+  related_post: HubRelatedPost | null;
+  /* Contract A/B — owner only; the defaults are the create route's */
+  paid_promotion: boolean;
+  altered_content: boolean;
+  license: HubLicense;
+  allow_embedding: boolean;
+  /** "YYYY-MM-DD" or "". */
+  recording_date: string;
+  recording_location: string;
+  remix_setting: HubRemixSetting;
+  comment_moderation: HubCommentModeration;
+  comment_access: HubCommentAccess;
+  notify_subscribers: boolean;
+}
+
+/** `related_post` on the detail: `{id, title, thumbnail_url, duration_seconds, channel_name}` or null. */
+export interface HubRelatedPost {
+  id: string;
+  title: string;
+  thumbnail_url: string;
+  duration_seconds: number;
+  channel_name: string;
+}
+
+export function normalizeRelatedPost(raw: unknown): HubRelatedPost | null {
+  if (!isRecord(raw)) return null;
+  const id = str(raw.id);
+  if (!id) return null;
+  const thumb = str(raw.thumbnail_url);
+  return {
+    id,
+    title: str(raw.title).trim() || "Untitled",
+    thumbnail_url: thumb ? (thumb.startsWith("/v1/") ? mediaHref(thumb) : thumb) : "",
+    duration_seconds: Math.max(0, num(raw.duration_seconds)),
+    channel_name: str(raw.channel_name),
+  };
+}
+
+/** `recording_date` is a DATE column Go may marshal as a full timestamp; the sheet keeps the day. */
+export function normalizeRecordingDate(raw: unknown): string {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(str(raw));
+  return m ? m[1] : "";
 }
 
 export function normalizePostDetail(raw: unknown): HubPostDetail | null {
@@ -320,7 +508,24 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     language: str(raw.language),
     allow_download: row.allow_download,
     no_comments: bool(raw.no_comments),
-    made_for_kids: bool(raw.made_for_kids),
+    made_for_kids: bool(raw.is_made_for_kids ?? raw.made_for_kids),
+    status: str(raw.status).toLowerCase(),
+    published_at: row.published_at,
+    age_restricted: row.age_restricted,
+    hide_like_count: row.hide_like_count,
+    default_comment_sort: row.default_comment_sort,
+    related_post_id: row.related_post_id ?? (isRecord(raw.related_post) ? strOrNull(raw.related_post.id) : null),
+    related_post: normalizeRelatedPost(raw.related_post),
+    paid_promotion: bool(raw.paid_promotion),
+    altered_content: bool(raw.altered_content),
+    license: pick(raw.license, HUB_LICENSES, "standard"),
+    allow_embedding: bool(raw.allow_embedding, true),
+    recording_date: normalizeRecordingDate(raw.recording_date),
+    recording_location: str(raw.recording_location),
+    remix_setting: pick(raw.remix_setting, HUB_REMIX_SETTINGS, "allow"),
+    comment_moderation: pick(raw.comment_moderation, HUB_COMMENT_MODERATIONS, "none"),
+    comment_access: pick(raw.comment_access, HUB_COMMENT_ACCESSES, "everyone"),
+    notify_subscribers: bool(raw.notify_subscribers, true),
   };
 }
 
@@ -342,11 +547,35 @@ export interface HubPostPatch {
   no_comments?: boolean;
   made_for_kids?: boolean;
   language?: string;
+  /* contract A */
+  paid_promotion?: boolean;
+  altered_content?: boolean;
+  license?: HubLicense;
+  allow_embedding?: boolean;
+  /** "YYYY-MM-DD", or "" to clear. */
+  recording_date?: string;
+  /** ≤ 100 runes; "" clears. */
+  recording_location?: string;
+  remix_setting?: HubRemixSetting;
+  comment_moderation?: HubCommentModeration;
+  comment_access?: HubCommentAccess;
+  notify_subscribers?: boolean;
+  age_restricted?: boolean;
+  hide_like_count?: boolean;
+  default_comment_sort?: HubCommentSort;
+  /** A uuid of the caller's own post, or "" to clear. */
+  related_post_id?: string;
+}
+
+/** The PATCH body: only the keys present (undefined dropped; "" kept — it clears). */
+export function postPatchBody(patch: HubPostPatch): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) if (v !== undefined) body[k] = v;
+  return body;
 }
 
 export async function updatePost(postId: string, patch: HubPostPatch): Promise<HubPostDetail | null> {
-  const body: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(patch)) if (v !== undefined) body[k] = v;
+  const body = postPatchBody(patch);
   const res = await api.patch<ApiResponse<unknown>>(`/v1/posts/${postId}`, body);
   return normalizePostDetail(res.data?.data);
 }
@@ -897,6 +1126,55 @@ export async function getContentInsights(contentId: string, period: InsightsPeri
   return normalizeContentInsights(res.data.data ?? res.data);
 }
 
+/* ── Private sharing (contract F) ───────────────────────── */
+
+export const PRIVATE_SHARES_MAX = 50;
+
+export interface HubPrivateShare {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string;
+  added_at: string;
+}
+
+/** `{users:[{user_id, username, display_name, avatar_url, added_at}]}`; a bare array still reads. */
+export function normalizePrivateShares(raw: unknown): HubPrivateShare[] {
+  const list: unknown[] = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.users) ? raw.users : [];
+  const seen = new Set<string>();
+  const out: HubPrivateShare[] = [];
+  for (const entry of list) {
+    if (!isRecord(entry)) continue;
+    const id = str(entry.user_id) || str(entry.id);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const username = str(entry.username);
+    out.push({
+      user_id: id,
+      username,
+      display_name: str(entry.display_name).trim() || str(entry.name).trim() || username || "Someone",
+      avatar_url: str(entry.avatar_url) || str(entry.avatar),
+      added_at: str(entry.added_at),
+    });
+  }
+  return out;
+}
+
+/** `{user_ids}`: deduped, never the owner, at most 50 (the server's cap; 422 TOO_MANY_SHARES past it). */
+export function privateSharesBody(userIds: string[], ownerId?: string | null): { user_ids: string[] } {
+  return { user_ids: dedupeIds(userIds).filter((id) => id !== ownerId).slice(0, PRIVATE_SHARES_MAX) };
+}
+
+export async function getPrivateShares(postId: string): Promise<HubPrivateShare[]> {
+  const res = await api.get<ApiResponse<unknown>>(`/v1/posts/${postId}/private-shares`);
+  return normalizePrivateShares(res.data?.data ?? res.data);
+}
+
+export async function setPrivateShares(postId: string, userIds: string[], ownerId?: string | null): Promise<HubPrivateShare[]> {
+  const res = await api.put<ApiResponse<unknown>>(`/v1/posts/${postId}/private-shares`, privateSharesBody(userIds, ownerId));
+  return normalizePrivateShares(res.data?.data ?? res.data);
+}
+
 /* ── Links ──────────────────────────────────────────────── */
 
 /** `GET /v1/media/:id/download` — a 307 to a signed attachment URL; only when `allow_download`. */
@@ -906,6 +1184,11 @@ export function downloadHref(mediaId: string): string {
 
 export function coverHref(coverMediaId: string): string {
   return mediaHref(`/v1/media/${coverMediaId}/serve`);
+}
+
+/** The absolute link Copy link writes: `<origin>/posttube/watch/<id>` (a short keeps its reels link). */
+export function absoluteWatchUrl(row: Pick<HubLibraryRow, "id" | "content_type">, origin: string): string {
+  return `${origin.replace(/\/+$/, "")}${watchHref(row)}`;
 }
 
 export function watchHref(row: Pick<HubLibraryRow, "id" | "content_type">): string {

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDown, ArrowUp, BarChart3, Download, MessageSquareText, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 import { formatCount, formatDuration } from "@/features/posttube/model";
-import { downloadHref, isShortType, watchHref, type HubLibraryRow, type HubVisibility } from "../hubApi";
+import { isShortType, watchHref, type HubLibraryRow } from "../hubApi";
 import { formatDateTime, rowDate, type LibrarySortKey, type SortDir } from "../hubModel";
-import { useContentInsights, useInView, useSetVisibility } from "../hooks/useHub";
+import { useContentInsights, useInView } from "../hooks/useHub";
 import { Sparkline } from "./Charts";
-import { FlagPills, VisibilityPill, useAnchoredMenu, useDismiss } from "./Pills";
+import { RowHoverActions } from "./LibraryActions";
+import { FlagPills } from "./Pills";
+import { VisibilityCell } from "./VisibilityCell";
 
 /* ── Row sparkline: fetched only once the row is on screen ── */
 
@@ -24,56 +25,13 @@ function RowSparkline({ postId }: { postId: string }) {
   );
 }
 
-/* ── Row menu ───────────────────────────────────────────── */
+/* ── Table ──────────────────────────────────────────────── */
 
 export interface RowActions {
   onEdit: (row: HubLibraryRow) => void;
-  onShare: (row: HubLibraryRow) => void;
+  onCopyLink: (row: HubLibraryRow) => void;
   onDelete: (row: HubLibraryRow) => void;
 }
-
-function RowMenu({ row, actions }: { row: HubLibraryRow; actions: RowActions }) {
-  const [open, setOpen] = useState(false);
-  const ref = useDismiss(open, () => setOpen(false));
-  const { buttonRef, style } = useAnchoredMenu(open, "right");
-  const close = () => setOpen(false);
-  return (
-    <div className="hub-vis" ref={ref} style={{ position: "relative" }}>
-      <button ref={buttonRef} type="button" className="hub-icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={`More for ${row.title}`} onClick={() => setOpen((o) => !o)}>
-        <MoreHorizontal />
-      </button>
-      {open ? (
-        <div className="hub-menu" style={style} role="menu">
-          <button type="button" role="menuitem" className="hub-menu-item" onClick={() => { close(); actions.onEdit(row); }}>
-            <Pencil /> Edit
-          </button>
-          <Link href={`/posttube/hub/insights/${row.id}`} role="menuitem" className="hub-menu-item" onClick={close}>
-            <BarChart3 /> Insights
-          </Link>
-          <Link href={`/posttube/hub/conversations?post=${row.id}`} role="menuitem" className="hub-menu-item" onClick={close}>
-            <MessageSquareText /> Conversations
-          </Link>
-          <button type="button" role="menuitem" className="hub-menu-item" onClick={() => { close(); actions.onShare(row); }}>
-            <Share2 /> Share
-          </button>
-          {row.media_id ? (
-            // GET /v1/media/:id/download — a 307 to the signed file; the owner is always allowed,
-            // `allow_download` only gates viewers.
-            <a role="menuitem" className="hub-menu-item" href={downloadHref(row.media_id)} title={row.allow_download ? "Download the original (viewers can too)" : "Download the original (viewers cannot; turn on Keep in Edit)"} onClick={close}>
-              <Download /> Keep
-            </a>
-          ) : null}
-          <div className="hub-menu-sep" />
-          <button type="button" role="menuitem" className="hub-menu-item is-danger" onClick={() => { close(); actions.onDelete(row); }}>
-            <Trash2 /> Delete
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/* ── Table ──────────────────────────────────────────────── */
 
 export interface LibraryTableProps {
   rows: HubLibraryRow[];
@@ -84,7 +42,8 @@ export interface LibraryTableProps {
   sortDir: SortDir;
   onSort: (key: LibrarySortKey) => void;
   actions: RowActions;
-  onSchedule: (row: HubLibraryRow) => void;
+  /** The signed-in creator, kept off their own private-share list. */
+  ownerId: string | null;
 }
 
 function SortHead({ label, k, sortKey, sortDir, onSort, className }: { label: string; k: LibrarySortKey; sortKey: LibrarySortKey; sortDir: SortDir; onSort: (k: LibrarySortKey) => void; className?: string }) {
@@ -99,8 +58,14 @@ function SortHead({ label, k, sortKey, sortDir, onSort, className }: { label: st
   );
 }
 
-export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, sortDir, onSort, actions, onSchedule }: LibraryTableProps) {
-  const setVisibility = useSetVisibility();
+function rowMeta(row: HubLibraryRow): string {
+  const desc = (row.description || row.text).split(/\r?\n/)[0];
+  if (desc) return desc;
+  if (row.processing_status && row.processing_status !== "ready" && row.processing_status !== "published") return row.processing_status;
+  return "No description";
+}
+
+export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, sortDir, onSort, actions, ownerId }: LibraryTableProps) {
   const allOn = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const someOn = rows.some((r) => selected.has(r.id));
   return (
@@ -126,16 +91,12 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
             <SortHead label="Published" k="published" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
             <SortHead label="Views" k="views" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
             <SortHead label="Comments" k="comments" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
-            <th style={{ width: 36 }}>
-              <span className="sr-only">Actions</span>
-            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => {
             const isSel = selected.has(row.id);
             const short = isShortType(row.content_type);
-            const pending = setVisibility.isPending && setVisibility.variables?.postId === row.id;
             return (
               <tr key={row.id} className={isSel ? "is-selected" : undefined}>
                 <td>
@@ -147,24 +108,21 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                       {row.thumbnail_url ? <img src={row.thumbnail_url} alt="" loading="lazy" /> : null}
                       {row.duration_seconds > 0 ? <span className="hub-thumb-dur">{formatDuration(row.duration_seconds)}</span> : null}
                     </span>
-                    <span style={{ minWidth: 0 }}>
+                    <span className="hub-row-text">
                       <Link href={watchHref(row)} title={row.title}>
                         {row.title}
                       </Link>
-                      <div className="hub-row-meta">{row.text ? row.text.split(/\r?\n/)[0] : row.processing_status && row.processing_status !== "ready" && row.processing_status !== "published" ? row.processing_status : "No description"}</div>
+                      <div className="hub-row-meta">{rowMeta(row)}</div>
+                      <RowHoverActions row={row} onEdit={actions.onEdit} onCopyLink={actions.onCopyLink} onDelete={actions.onDelete} />
                     </span>
                   </div>
                 </td>
                 <td>
                   <FlagPills flags={row.flags} />
+                  {row.age_restricted ? <span className="hub-tag hub-tag-warning" style={{ marginLeft: 3 }}>18+</span> : null}
                 </td>
                 <td>
-                  <VisibilityPill
-                    value={row.visibility}
-                    pending={pending}
-                    onChange={(v: Exclude<HubVisibility, "scheduled">) => setVisibility.mutate({ postId: row.id, visibility: v })}
-                    onSchedule={() => onSchedule(row)}
-                  />
+                  <VisibilityCell row={row} ownerId={ownerId} />
                 </td>
                 <td style={{ whiteSpace: "nowrap" }}>
                   {formatDateTime(rowDate(row)) || "—"}
@@ -175,9 +133,6 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                   <RowSparkline postId={row.id} />
                 </td>
                 <td className="num">{formatCount(row.comment_count)}</td>
-                <td>
-                  <RowMenu row={row} actions={actions} />
-                </td>
               </tr>
             );
           })}

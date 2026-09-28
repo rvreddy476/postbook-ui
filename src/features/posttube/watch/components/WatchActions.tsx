@@ -20,7 +20,8 @@ export const WATCH_ACTION_ORDER = ["love", "pass", "queue", "add", "more"] as co
 
 export interface WatchActionsProps {
   loved: boolean;
-  likeCount: number;
+  /** null = the creator hid the count: the button reads "Like" with no number. */
+  likeCount: number | null;
   passed: boolean;
   queued: boolean;
   onLove: () => void;
@@ -39,7 +40,7 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
       <div className="tube-actions__vote">
         <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
           <RailHeart size={16} />
-          <span className="tube-actions__count">{formatCount(likeCount)}</span>
+          {likeCount === null ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
         </button>
         <span className="tube-actions__divider" aria-hidden />
         <button type="button" className={`tube-actions__btn is-pass${passed ? " is-on" : ""}`} aria-pressed={passed} aria-label={passed ? "Remove dislike" : "Dislike"} title="Dislike" onClick={onPass} data-action="pass">

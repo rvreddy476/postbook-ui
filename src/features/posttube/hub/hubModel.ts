@@ -1,4 +1,16 @@
-import type { HubFlag, HubLibraryRow, HubVisibility } from "./hubApi";
+import type {
+  HubBulkOutcome,
+  HubBulkPatch,
+  HubCommentAccess,
+  HubCommentModeration,
+  HubCommentSort,
+  HubFlag,
+  HubLibraryRow,
+  HubLicense,
+  HubRemixSetting,
+  HubTagsMode,
+  HubVisibility,
+} from "./hubApi";
 
 /*
   Pure helpers for the Creator Hub: the SVG path builders behind the
@@ -82,23 +94,142 @@ export function axisTicks(length: number, count = 4): number[] {
 export type LibrarySortKey = "published" | "views" | "comments" | "title";
 export type SortDir = "asc" | "desc";
 
+export type TriState = "any" | "yes" | "no";
+
 export interface LibraryFilter {
   visibility: HubVisibility | "all";
+  /** The quick box: title, or the description. */
   title: string;
   flag?: HubFlag | "all";
+  /** Description only. */
+  description?: string;
+  madeForKids?: TriState;
+  ageRestricted?: TriState;
+  /** Inclusive; null / undefined = open ended. */
+  viewsMin?: number | null;
+  viewsMax?: number | null;
 }
 
-export const LIBRARY_FILTER_DEFAULT: LibraryFilter = { visibility: "all", title: "", flag: "all" };
+export const LIBRARY_FILTER_DEFAULT: LibraryFilter = {
+  visibility: "all",
+  title: "",
+  flag: "all",
+  description: "",
+  madeForKids: "any",
+  ageRestricted: "any",
+  viewsMin: null,
+  viewsMax: null,
+};
 
-/** Case-insensitive title contains + visibility + optional flag; pure over the loaded pages. */
+function triMatch(state: TriState | undefined, value: boolean): boolean {
+  if (!state || state === "any") return true;
+  return state === "yes" ? value : !value;
+}
+
+function rowDescription(r: HubLibraryRow): string {
+  return (r.description || r.text || "").toLowerCase();
+}
+
+/**
+  Pure over the loaded pages: the quick box (title or description), the
+  description filter, visibility, a flag, made for kids, age restriction
+  and a views range (inclusive at both ends).
+*/
 export function filterLibraryRows(rows: HubLibraryRow[], filter: LibraryFilter): HubLibraryRow[] {
   const needle = filter.title.trim().toLowerCase();
+  const descNeedle = (filter.description ?? "").trim().toLowerCase();
+  const min = typeof filter.viewsMin === "number" && Number.isFinite(filter.viewsMin) ? filter.viewsMin : null;
+  const max = typeof filter.viewsMax === "number" && Number.isFinite(filter.viewsMax) ? filter.viewsMax : null;
   return rows.filter((r) => {
     if (filter.visibility !== "all" && r.visibility !== filter.visibility) return false;
     if (filter.flag && filter.flag !== "all" && !r.flags.includes(filter.flag)) return false;
-    if (needle && !r.title.toLowerCase().includes(needle) && !r.text.toLowerCase().includes(needle)) return false;
+    if (needle && !r.title.toLowerCase().includes(needle) && !rowDescription(r).includes(needle)) return false;
+    if (descNeedle && !rowDescription(r).includes(descNeedle)) return false;
+    if (!triMatch(filter.madeForKids, r.made_for_kids || r.flags.includes("made_for_kids"))) return false;
+    if (!triMatch(filter.ageRestricted, r.age_restricted)) return false;
+    if (min !== null && r.view_count < min) return false;
+    if (max !== null && r.view_count > max) return false;
     return true;
   });
+}
+
+export type LibraryFilterKey = "title" | "description" | "visibility" | "madeForKids" | "ageRestricted" | "views";
+
+/** The filter menu, in ascending alphabetical order of its labels. */
+export const LIBRARY_FILTER_FIELDS: { key: LibraryFilterKey; label: string }[] = [
+  { key: "ageRestricted", label: "Age restriction" },
+  { key: "description", label: "Description" },
+  { key: "madeForKids", label: "Made for kids" },
+  { key: "title", label: "Title" },
+  { key: "views", label: "Views" },
+  { key: "visibility", label: "Visibility" },
+];
+
+export interface FilterChip {
+  key: LibraryFilterKey;
+  label: string;
+}
+
+function countWord(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+/** One chip per active filter, in the menu's order. */
+export function activeFilterChips(filter: LibraryFilter): FilterChip[] {
+  const chips: FilterChip[] = [];
+  const min = typeof filter.viewsMin === "number" ? filter.viewsMin : null;
+  const max = typeof filter.viewsMax === "number" ? filter.viewsMax : null;
+  for (const { key } of LIBRARY_FILTER_FIELDS) {
+    switch (key) {
+      case "ageRestricted":
+        if (filter.ageRestricted && filter.ageRestricted !== "any") chips.push({ key, label: filter.ageRestricted === "yes" ? "Age-restricted" : "Not age-restricted" });
+        break;
+      case "description":
+        if ((filter.description ?? "").trim()) chips.push({ key, label: `Description: ${filter.description!.trim()}` });
+        break;
+      case "madeForKids":
+        if (filter.madeForKids && filter.madeForKids !== "any") chips.push({ key, label: filter.madeForKids === "yes" ? "Made for kids" : "Not made for kids" });
+        break;
+      case "title":
+        if (filter.title.trim()) chips.push({ key, label: `Title: ${filter.title.trim()}` });
+        break;
+      case "views":
+        if (min !== null && max !== null) chips.push({ key, label: `Views ${countWord(min)}–${countWord(max)}` });
+        else if (min !== null) chips.push({ key, label: `Views ≥ ${countWord(min)}` });
+        else if (max !== null) chips.push({ key, label: `Views ≤ ${countWord(max)}` });
+        break;
+      case "visibility":
+        if (filter.visibility !== "all") chips.push({ key, label: `Visibility: ${VISIBILITY_LABEL[filter.visibility]}` });
+        break;
+    }
+  }
+  return chips;
+}
+
+/** The ✕ on a chip: that one filter back to its default. */
+export function clearFilterKey(filter: LibraryFilter, key: LibraryFilterKey): LibraryFilter {
+  switch (key) {
+    case "title":
+      return { ...filter, title: "" };
+    case "description":
+      return { ...filter, description: "" };
+    case "visibility":
+      return { ...filter, visibility: "all" };
+    case "madeForKids":
+      return { ...filter, madeForKids: "any" };
+    case "ageRestricted":
+      return { ...filter, ageRestricted: "any" };
+    case "views":
+      return { ...filter, viewsMin: null, viewsMax: null };
+  }
+}
+
+/** A views box → a whole number ≥ 0, or null when blank / not a number. */
+export function parseViewsInput(input: string): number | null {
+  const t = input.replace(/[,\s_]/g, "");
+  if (!t || !/^\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isSafeInteger(n) ? n : null;
 }
 
 export function rowDate(r: HubLibraryRow): string {
@@ -307,4 +438,219 @@ export function diffPatch<T extends Record<string, unknown>>(base: T, next: T): 
     if (!same) out[key] = b;
   }
   return out;
+}
+
+/* ── Setting labels (the sheet, the bulk editor) ────────── */
+
+export const LICENSE_LABEL: Record<HubLicense, string> = {
+  standard: "Standard",
+  creative_commons: "Creative Commons (reuse with credit)",
+};
+
+export const REMIX_LABEL: Record<HubRemixSetting, string> = {
+  allow: "Allow video and audio",
+  allow_audio_only: "Allow audio only",
+  disallow: "Don't allow",
+};
+
+export const COMMENT_MODERATION_LABEL: Record<HubCommentModeration, string> = {
+  none: "No moderation",
+  basic: "Basic: filter likely spam",
+  strict: "Strict: hold anything doubtful",
+  hold_all: "Hold all for review",
+};
+
+export const COMMENT_ACCESS_LABEL: Record<HubCommentAccess, string> = {
+  everyone: "Everyone",
+  followers: "Subscribers only",
+  nobody: "Nobody",
+};
+
+export const COMMENT_SORT_LABEL: Record<HubCommentSort, string> = {
+  top: "Top",
+  newest: "Newest",
+};
+
+/* ── Server codes → words ───────────────────────────────── */
+
+const HUB_ERROR_TEXT: Record<string, string> = {
+  INVALID_LICENSE: "That license is not one we offer.",
+  INVALID_RECORDING_DATE: "The recording date can't be in the future.",
+  INVALID_RECORDING_LOCATION: "The recording location is too long (100 characters at most).",
+  INVALID_REMIX_SETTING: "That remix setting is not one we offer.",
+  INVALID_COMMENT_MODERATION: "That comment moderation level is not one we offer.",
+  INVALID_COMMENT_ACCESS: "That choice of who can comment is not one we offer.",
+  INVALID_COMMENT_SORT: "Comments can open on Top or Newest only.",
+  RELATED_NOT_FOUND: "The related video must be one of your own videos that still exists.",
+  RELATED_SELF: "A video can't point at itself as its related video.",
+  INVALID_REQUEST: "Nothing to change. Pick a setting first.",
+  TOO_MANY_SHARES: "You can share a private video with 50 people at most.",
+  INVALID_USER: "One of those people can't be added (the account may be gone, or it is you).",
+  FORBIDDEN: "Only the creator can change this video.",
+  NOT_FOUND: "This video no longer exists.",
+  POST_NOT_FOUND: "This video no longer exists.",
+  FAILED: "It didn't go through.",
+};
+
+/** A server code → a sentence for people; an unknown code keeps the fallback. */
+export function readableHubError(code: string | null | undefined, fallback = "Something went wrong. Try again."): string {
+  if (!code) return fallback;
+  return HUB_ERROR_TEXT[code.toUpperCase()] ?? fallback;
+}
+
+/* ── Bulk edit: the contract C fields ───────────────────── */
+
+export type BulkFieldKey =
+  | "age_restricted"
+  | "altered_content"
+  | "category"
+  | "comment_access"
+  | "comment_moderation"
+  | "comments"
+  | "default_comment_sort"
+  | "allow_embedding"
+  | "hide_like_count"
+  | "language"
+  | "license"
+  | "made_for_kids"
+  | "paid_promotion"
+  | "recording_date"
+  | "remix_setting"
+  | "tags"
+  | "visibility";
+
+export type BulkFieldKind = "bool" | "choice" | "date" | "tags" | "topic" | "language";
+
+export interface BulkField {
+  key: BulkFieldKey;
+  label: string;
+  kind: BulkFieldKind;
+  /** "bool": the on / off words. "choice": the options. */
+  options?: { value: string; label: string }[];
+}
+
+const onOff = (on: string, off: string) => [
+  { value: "on", label: on },
+  { value: "off", label: off },
+];
+
+/** The Edit ▾ list, ascending alphabetical by label. Title and description are not bulk-editable. */
+export const BULK_FIELDS: BulkField[] = [
+  { key: "age_restricted", label: "Age restriction", kind: "bool", options: onOff("Age-restricted (18+)", "No restriction") },
+  { key: "altered_content", label: "Altered or AI content", kind: "bool", options: onOff("Yes, altered or made with AI", "No") },
+  { key: "comment_moderation", label: "Comment moderation", kind: "choice", options: (["none", "basic", "strict", "hold_all"] as const).map((v) => ({ value: v, label: COMMENT_MODERATION_LABEL[v] })) },
+  { key: "comments", label: "Comments", kind: "bool", options: onOff("On", "Off") },
+  { key: "default_comment_sort", label: "Default comment sort", kind: "choice", options: (["top", "newest"] as const).map((v) => ({ value: v, label: COMMENT_SORT_LABEL[v] })) },
+  { key: "allow_embedding", label: "Embedding", kind: "bool", options: onOff("Allow embedding", "Don't allow") },
+  { key: "hide_like_count", label: "Hide like count", kind: "bool", options: onOff("Hide the count", "Show the count") },
+  { key: "language", label: "Language", kind: "language" },
+  { key: "license", label: "License", kind: "choice", options: (["standard", "creative_commons"] as const).map((v) => ({ value: v, label: LICENSE_LABEL[v] })) },
+  { key: "made_for_kids", label: "Made for kids", kind: "bool", options: onOff("Yes, made for kids", "No, not made for kids") },
+  { key: "paid_promotion", label: "Paid promotion", kind: "bool", options: onOff("Yes, includes paid promotion", "No") },
+  { key: "recording_date", label: "Recording date", kind: "date" },
+  { key: "remix_setting", label: "Remix", kind: "choice", options: (["allow", "allow_audio_only", "disallow"] as const).map((v) => ({ value: v, label: REMIX_LABEL[v] })) },
+  { key: "tags", label: "Tags", kind: "tags" },
+  { key: "category", label: "Topic", kind: "topic" },
+  { key: "visibility", label: "Visibility", kind: "choice", options: (["private", "public", "unlisted"] as const).map((v) => ({ value: v, label: VISIBILITY_LABEL[v] })) },
+  { key: "comment_access", label: "Who can comment", kind: "choice", options: (["everyone", "followers", "nobody"] as const).map((v) => ({ value: v, label: COMMENT_ACCESS_LABEL[v] })) },
+];
+
+export const TAGS_MODE_LABEL: Record<HubTagsMode, string> = { add: "Add", replace: "Replace", remove: "Remove" };
+
+/**
+  One field + its chosen value → the bulk patch. `value` is the raw control
+  value ("on"/"off" for a switch, an option, a date, a topic slug, a
+  language code, or the tags box). null = nothing valid to send yet.
+*/
+export function buildBulkPatch(key: BulkFieldKey, value: string, tagsMode: HubTagsMode = "add"): HubBulkPatch | null {
+  const v = value.trim();
+  const on = v === "on";
+  switch (key) {
+    case "comments":
+      return v === "on" || v === "off" ? { no_comments: !on } : null;
+    case "age_restricted":
+    case "altered_content":
+    case "allow_embedding":
+    case "hide_like_count":
+    case "made_for_kids":
+    case "paid_promotion":
+      return v === "on" || v === "off" ? ({ [key]: on } as HubBulkPatch) : null;
+    case "tags": {
+      const tags = splitTags(v);
+      return tags.length > 0 ? { tags, tags_mode: tagsMode } : null;
+    }
+    case "recording_date":
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) || v === "" ? { recording_date: v } : null;
+    case "category":
+      return { category: v };
+    case "language":
+      return { language: v };
+    default: {
+      const field = BULK_FIELDS.find((f) => f.key === key);
+      if (!field?.options?.some((o) => o.value === v)) return null;
+      return { [key]: v } as HubBulkPatch;
+    }
+  }
+}
+
+/** Library-row fields a successful bulk patch can update in place (the rest come back on refetch). */
+export function rowPatchFromBulk(patch: HubBulkPatch): Partial<HubLibraryRow> {
+  const out: Partial<HubLibraryRow> = {};
+  if (patch.visibility) out.visibility = patch.visibility;
+  if (typeof patch.made_for_kids === "boolean") out.made_for_kids = patch.made_for_kids;
+  if (typeof patch.age_restricted === "boolean") out.age_restricted = patch.age_restricted;
+  if (typeof patch.hide_like_count === "boolean") out.hide_like_count = patch.hide_like_count;
+  if (patch.default_comment_sort) out.default_comment_sort = patch.default_comment_sort;
+  return out;
+}
+
+export interface BulkFailure {
+  id: string;
+  title: string;
+  message: string;
+}
+
+/** Failed outcomes → lines the bar lists ("<title>: <why>"). */
+export function bulkFailures(outcomes: HubBulkOutcome[], rows: Pick<HubLibraryRow, "id" | "title">[]): BulkFailure[] {
+  const titles = new Map(rows.map((r) => [r.id, r.title]));
+  return outcomes
+    .filter((o) => !o.ok)
+    .map((o) => ({ id: o.post_id, title: titles.get(o.post_id) ?? "A video", message: readableHubError(o.error, o.error ? `It didn't go through (${o.error}).` : "It didn't go through.") }));
+}
+
+/* ── Visibility popover ─────────────────────────────────── */
+
+export type VisibilityChoice = HubVisibility;
+
+export interface VisibilityPlan {
+  /** PATCH /schedule with no time first (leaving "scheduled" = publish now). */
+  publishNow: boolean;
+  /** Then PATCH /posts/:id { visibility }. */
+  visibility?: Exclude<HubVisibility, "scheduled">;
+  /** PATCH /schedule { publish_at }. */
+  scheduleAt?: string;
+}
+
+/**
+  What Save does — the same sequence the edit sheet uses: leaving
+  "scheduled" publishes now and then applies the state; choosing
+  "scheduled" writes the time. null = nothing to do, or not valid yet (a
+  schedule needs a time in the future).
+*/
+export function visibilityPlan(
+  current: { visibility: HubVisibility; scheduled_at: string | null },
+  choice: VisibilityChoice,
+  scheduleIso: string | null,
+  now = Date.now(),
+): VisibilityPlan | null {
+  if (choice === "scheduled") {
+    if (!scheduleIso) return null;
+    const t = Date.parse(scheduleIso);
+    if (!Number.isFinite(t) || t <= now) return null;
+    if (current.visibility === "scheduled" && current.scheduled_at && Date.parse(current.scheduled_at) === t) return null;
+    return { publishNow: false, scheduleAt: new Date(t).toISOString() };
+  }
+  if (current.visibility === "scheduled") return { publishNow: true, visibility: choice };
+  if (current.visibility === choice) return null;
+  return { publishNow: false, visibility: choice };
 }

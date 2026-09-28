@@ -17,7 +17,10 @@ import { upNextChipQuery, type UpNextChip } from "./upNext";
   file — a fixture difference is one edit here.
 
   Pinned contracts (plan §3, 27 Sep):
-    GET    /v1/posts/:id                       viewer_disliked, viewer_queued, chapters[], allow_download, source, like_count, tier_required_id
+    GET    /v1/posts/:id                       viewer_disliked, viewer_queued, chapters[], allow_download, source, like_count, tier_required_id,
+                                               age_restricted, hide_like_count (like_count: null for non-owners), default_comment_sort,
+                                               related_post_id, related_post {id,title,thumbnail_url,duration_seconds,channel_name} | null;
+                                               401 AGE_RESTRICTED_SIGN_IN / 403 AGE_RESTRICTED / 403 AGE_UNVERIFIED → ageGateFromError
     POST   /v1/posts/:id/like                  (hooks/usePostReaction — the toggle clears the dislike)
     POST|DELETE /v1/posts/:id/tune             Pass, the private dislike (clears the like)
     POST|DELETE /v1/comments/:id/heart         creator heart
@@ -63,6 +66,44 @@ export interface WatchPostRow extends HydratedPostRow {
   hide_share?: boolean | null;
   /** The topic slug (posts.category after the migration; free text before it). */
   category?: string | null;
+  /* Hub batch, contract B (every viewer) */
+  age_restricted?: boolean | null;
+  hide_like_count?: boolean | null;
+  default_comment_sort?: string | null;
+  related_post_id?: string | null;
+  related_post?: {
+    id?: string | null;
+    title?: string | null;
+    thumbnail_url?: string | null;
+    duration_seconds?: number | null;
+    channel_name?: string | null;
+  } | null;
+}
+
+/** The creator's pick shown in the about card; only present when the viewer may see it. */
+export interface WatchRelatedPost {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  durationSeconds: number;
+  channelName: string;
+}
+
+export function normalizeRelatedPost(raw: unknown): WatchRelatedPost | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === "string" ? r.id : "";
+  if (!id) return null;
+  const thumb = typeof r.thumbnail_url === "string" ? r.thumbnail_url : "";
+  const title = typeof r.title === "string" ? r.title.trim() : "";
+  const duration = typeof r.duration_seconds === "number" && Number.isFinite(r.duration_seconds) ? Math.max(0, r.duration_seconds) : 0;
+  return {
+    id,
+    title: title || "Untitled",
+    thumbnailUrl: thumb ? (thumb.startsWith("/v1/") ? mediaHref(thumb) : thumb) : "",
+    durationSeconds: duration,
+    channelName: typeof r.channel_name === "string" ? r.channel_name : "",
+  };
 }
 
 export interface WatchDetail {
@@ -79,6 +120,12 @@ export interface WatchDetail {
   shareHidden: boolean;
   topicSlug: string | null;
   mediaId: string | null;
+  /** The creator hid the count and this viewer is not the owner (the server sent like_count: null). */
+  likeCountHidden: boolean;
+  /** What the comments open on. */
+  defaultCommentSort: "top" | "newest";
+  relatedPost: WatchRelatedPost | null;
+  ageRestricted: boolean;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -100,7 +147,44 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     shareHidden: row.hide_share === true,
     topicSlug: slug && /^[a-z0-9-]{2,40}$/.test(slug) ? slug : null,
     mediaId: row.video_metadata?.media_asset_id || videoMedia?.media_id || null,
+    likeCountHidden: row.hide_like_count === true && typeof row.like_count !== "number",
+    defaultCommentSort: typeof row.default_comment_sort === "string" && row.default_comment_sort.toLowerCase() === "newest" ? "newest" : "top",
+    relatedPost: row.related_post_id === row.id ? null : normalizeRelatedPost(row.related_post),
+    ageRestricted: row.age_restricted === true,
   };
+}
+
+/* ── Age restriction (server-enforced; contract B) ──────── */
+
+export type AgeGate = "sign_in" | "restricted" | "unverified";
+
+/** The service envelope's code on an axios error (`{"error":{"code"}}`, or a bare `{code}`). */
+export function errorCode(err: unknown): string | null {
+  const data = (err as { response?: { data?: unknown } })?.response?.data as { error?: unknown; code?: unknown } | undefined;
+  if (!data || typeof data !== "object") return null;
+  const e = data.error;
+  if (e && typeof e === "object" && typeof (e as { code?: unknown }).code === "string") return (e as { code: string }).code || null;
+  if (typeof e === "string" && /^[A-Z0-9_]+$/.test(e)) return e;
+  return typeof data.code === "string" && data.code ? data.code : null;
+}
+
+/**
+  A failed detail read → the interstitial that replaces the player:
+  401 AGE_RESTRICTED_SIGN_IN (anonymous), 403 AGE_RESTRICTED (under 18),
+  403 AGE_UNVERIFIED (no date of birth, or the lookup failed). Anything
+  else is not an age gate (null).
+*/
+export function ageGateFromError(err: unknown): AgeGate | null {
+  switch (errorCode(err)) {
+    case "AGE_RESTRICTED_SIGN_IN":
+      return "sign_in";
+    case "AGE_RESTRICTED":
+      return "restricted";
+    case "AGE_UNVERIFIED":
+      return "unverified";
+    default:
+      return null;
+  }
 }
 
 /** GET /v1/posts/:id → the card plus the watch keys; null on 404. */

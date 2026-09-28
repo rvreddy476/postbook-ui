@@ -1,24 +1,43 @@
 "use client";
 
-import { Plus, Sparkles, Upload, X } from "lucide-react";
+import { ChevronDown, Plus, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
 import {
   HUB_CARD_TYPES,
+  HUB_COMMENT_ACCESSES,
+  HUB_COMMENT_MODERATIONS,
+  HUB_COMMENT_SORTS,
   HUB_END_SCREEN_MAX,
   HUB_END_SCREEN_TYPES,
+  HUB_LICENSES,
+  HUB_REMIX_SETTINGS,
   HUB_VISIBILITIES,
+  hubErrorCode,
   isShortType,
   type HubCard,
   type HubEndScreen,
   type HubLibraryRow,
   type HubPostDetail,
   type HubPostPatch,
-  type HubVisibility,
+  type HubRelatedPost,
 } from "../hubApi";
-import { VISIBILITY_LABEL, diffPatch, formatMs, fromLocalInput, parseClock, splitTags, toLocalInput } from "../hubModel";
+import {
+  COMMENT_ACCESS_LABEL,
+  COMMENT_MODERATION_LABEL,
+  COMMENT_SORT_LABEL,
+  LICENSE_LABEL,
+  REMIX_LABEL,
+  VISIBILITY_LABEL,
+  formatMs,
+  fromLocalInput,
+  parseClock,
+  readableHubError,
+  toLocalInput,
+} from "../hubModel";
+import { RECORDING_LOCATION_MAX, detailsPatch, detailsProblems, notYetPublished, toDetailsForm, type DetailsForm } from "../editForm";
 import {
   useCaptionTracks,
   useHubCards,
@@ -110,7 +129,7 @@ export function EditSheet({ postId, initialTab = "details", scheduleFirst = fals
             <HubError message="Could not load this video." />
           </div>
         ) : tab === "details" ? (
-          <DetailsTab post={post.data} scheduleFirst={scheduleFirst} onClose={onClose} />
+          <DetailsTab post={post.data} scheduleFirst={scheduleFirst} candidates={candidates} onClose={onClose} />
         ) : tab === "elements" ? (
           <ElementsTab post={post.data} candidates={candidates.filter((c) => c.id !== post.data?.id)} />
         ) : (
@@ -124,52 +143,9 @@ export function EditSheet({ postId, initialTab = "details", scheduleFirst = fals
 
 /* ── Details ────────────────────────────────────────────── */
 
-interface DetailsForm {
-  title: string;
-  text: string;
-  category: string;
-  tags: string;
-  hashtags: string;
-  language: string;
-  allow_download: boolean;
-  no_comments: boolean;
-  made_for_kids: boolean;
-  visibility: HubVisibility;
-  scheduled_local: string;
-}
+const toForm = toDetailsForm;
 
-function toForm(p: HubPostDetail): DetailsForm {
-  return {
-    title: p.title,
-    text: p.text,
-    category: p.category,
-    tags: p.tags.join(", "),
-    hashtags: p.hashtags.join(", "),
-    language: p.language,
-    allow_download: p.allow_download,
-    no_comments: p.no_comments,
-    made_for_kids: p.made_for_kids,
-    visibility: p.visibility,
-    scheduled_local: toLocalInput(p.scheduled_at),
-  };
-}
-
-function toPatchable(f: DetailsForm): Record<string, unknown> {
-  return {
-    title: f.title.trim(),
-    text: f.text,
-    category: f.category,
-    tags: splitTags(f.tags),
-    hashtags: splitTags(f.hashtags),
-    language: f.language,
-    allow_download: f.allow_download,
-    no_comments: f.no_comments,
-    made_for_kids: f.made_for_kids,
-    visibility: f.visibility === "scheduled" ? undefined : f.visibility,
-  };
-}
-
-function DetailsTab({ post, scheduleFirst, onClose }: { post: HubPostDetail; scheduleFirst: boolean; onClose: () => void }) {
+function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPostDetail; scheduleFirst: boolean; candidates: HubLibraryRow[]; onClose: () => void }) {
   const toast = useGlobalToast();
   const categories = useHubCategories();
   const update = useUpdatePost();
@@ -200,17 +176,27 @@ function DetailsTab({ post, scheduleFirst, onClose }: { post: HubPostDetail; sch
   const short = isShortType(post.content_type);
   const topicOptions = useMemo(() => (categories.data ?? []).filter((c) => c.kind === "all" || c.kind === (short ? "short" : "long")), [categories.data, short]);
 
-  const patch = useMemo(() => diffPatch(toPatchable(base), toPatchable(form)) as HubPostPatch, [base, form]);
+  const notifyEditable = notYetPublished(post) || form.visibility === "scheduled";
+  const patch = useMemo(() => detailsPatch(base, form, { notifyEditable }), [base, form, notifyEditable]);
   const scheduleIso = form.visibility === "scheduled" ? fromLocalInput(form.scheduled_local) : null;
   const scheduleChanged = form.visibility === "scheduled" ? scheduleIso !== null && (base.visibility !== "scheduled" || toLocalInput(post.scheduled_at) !== form.scheduled_local) : base.visibility === "scheduled";
   const scheduleInvalid = form.visibility === "scheduled" && (!scheduleIso || Date.parse(scheduleIso) <= Date.now());
+  const problems = detailsProblems(form, post.id);
   const dirty = Object.keys(patch).length > 0 || scheduleChanged;
   const busy = update.isPending || reschedule.isPending;
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  const set = <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const set = <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
+    setSaveError(null);
+    setForm((f) => ({ ...f, [k]: v }));
+  };
+
+  const relatedOptions = useMemo(() => candidates.filter((c) => c.id !== post.id && !isShortType(c.content_type)), [candidates, post.id]);
 
   const save = async () => {
-    if (!dirty || busy || scheduleInvalid) return;
+    if (!dirty || busy || scheduleInvalid || problems.length > 0) return;
+    setSaveError(null);
     try {
       const body: HubPostPatch = { ...patch };
       if (base.visibility === "scheduled" && form.visibility !== "scheduled") {
@@ -224,8 +210,10 @@ function DetailsTab({ post, scheduleFirst, onClose }: { post: HubPostDetail; sch
       }
       setBase(form);
       toast({ type: "success", title: "Saved" });
-    } catch {
-      toast({ type: "error", title: "Could not save", description: "Check the fields and try again." });
+    } catch (err) {
+      const message = readableHubError(hubErrorCode(err), "Check the fields and try again.");
+      setSaveError(message);
+      toast({ type: "error", title: "Could not save", description: message });
     }
   };
 
@@ -363,17 +351,190 @@ function DetailsTab({ post, scheduleFirst, onClose }: { post: HubPostDetail; sch
             </div>
           ) : null}
         </div>
+
+        <MoreSettings form={form} set={set} open={moreOpen} onToggle={() => setMoreOpen((o) => !o)} notifyEditable={notifyEditable} relatedOptions={relatedOptions} related={post.related_post} />
+
+        {problems.length > 0 || saveError ? (
+          <div className="hub-error" role="alert">
+            {[...problems, ...(saveError ? [saveError] : [])].map((p) => (
+              <div key={p}>{p}</div>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className="hub-sheet-foot">
         {dirty ? <span className="hub-hint" style={{ marginRight: "auto" }}>Unsaved changes</span> : null}
         <button type="button" className="hub-btn" onClick={onClose}>
           Close
         </button>
-        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid}>
+        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid || problems.length > 0}>
           {busy ? "Saving…" : "Save"}
         </button>
       </div>
     </>
+  );
+}
+
+/* ── More settings (contract A) ─────────────────────────── */
+
+function todayIso(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export interface MoreSettingsProps {
+  form: DetailsForm;
+  set: <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => void;
+  open: boolean;
+  onToggle: () => void;
+  /** Notify subscribers only means something before the video goes out. */
+  notifyEditable: boolean;
+  /** The creator's own long videos, for Related video. */
+  relatedOptions: HubLibraryRow[];
+  /** The saved related video (so a pick outside the loaded pages still has a name). */
+  related: HubRelatedPost | null;
+}
+
+/**
+  The fields the upload studio sets that were not editable after publish,
+  plus the part-6 ones. Collapsed by default under one "More settings"
+  heading; every control writes the same DetailsForm, so Save sends only
+  what moved.
+*/
+export function MoreSettings({ form, set, open, onToggle, notifyEditable, relatedOptions, related }: MoreSettingsProps) {
+  const relatedMissing = !!form.related_post_id && !relatedOptions.some((c) => c.id === form.related_post_id);
+  return (
+    <section className="hub-more-settings" data-open={open ? "" : undefined}>
+      <button type="button" className="hub-more-settings-head" aria-expanded={open} aria-controls="hub-more-settings" onClick={onToggle}>
+        <span>More settings</span>
+        <ChevronDown aria-hidden="true" />
+      </button>
+      {open ? (
+        <div id="hub-more-settings" className="hub-more-settings-body">
+          <div className="hub-card hub-card-pad" style={{ paddingTop: 2, paddingBottom: 2 }}>
+            <SwitchRow label="Age restriction (18+)" hint="Only signed-in viewers who are 18 or older can watch." checked={form.age_restricted} onChange={(v) => set("age_restricted", v)} />
+            <SwitchRow label="Allow embedding" hint="Other sites can show this video in their pages." checked={form.allow_embedding} onChange={(v) => set("allow_embedding", v)} />
+            <SwitchRow label="Altered or AI content" hint="Realistic scenes that were changed or made with AI." checked={form.altered_content} onChange={(v) => set("altered_content", v)} />
+            <SwitchRow label="Hide like count" hint="Viewers see Like without a number. You still see it." checked={form.hide_like_count} onChange={(v) => set("hide_like_count", v)} />
+            {notifyEditable ? <SwitchRow label="Notify subscribers" hint="Tell subscribers when it goes out." checked={form.notify_subscribers} onChange={(v) => set("notify_subscribers", v)} /> : null}
+            <SwitchRow label="Paid promotion" hint="The video includes a sponsorship or paid product placement." checked={form.paid_promotion} onChange={(v) => set("paid_promotion", v)} />
+          </div>
+
+          <div className="hub-grid hub-grid-2">
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-license">
+                License
+              </label>
+              <select id="hub-license" className="hub-select" value={form.license} onChange={(e) => set("license", e.target.value as DetailsForm["license"])}>
+                {HUB_LICENSES.map((v) => (
+                  <option key={v} value={v}>
+                    {LICENSE_LABEL[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-remix">
+                Remix
+              </label>
+              <select id="hub-remix" className="hub-select" value={form.remix_setting} onChange={(e) => set("remix_setting", e.target.value as DetailsForm["remix_setting"])}>
+                {HUB_REMIX_SETTINGS.map((v) => (
+                  <option key={v} value={v}>
+                    {REMIX_LABEL[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="hub-grid hub-grid-2">
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-rec-date">
+                Recording date
+              </label>
+              <div className="hub-row">
+                <input id="hub-rec-date" type="date" className="hub-input" max={todayIso()} value={form.recording_date} onChange={(e) => set("recording_date", e.target.value)} />
+                {form.recording_date ? (
+                  <button type="button" className="hub-icon-btn" aria-label="Clear the recording date" onClick={() => set("recording_date", "")}>
+                    <X />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-rec-loc">
+                Recording location
+              </label>
+              <input id="hub-rec-loc" className="hub-input" value={form.recording_location} maxLength={RECORDING_LOCATION_MAX} placeholder="City, place" onChange={(e) => set("recording_location", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="hub-grid hub-grid-2">
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-comment-access">
+                Who can comment
+              </label>
+              <select id="hub-comment-access" className="hub-select" value={form.comment_access} onChange={(e) => set("comment_access", e.target.value as DetailsForm["comment_access"])}>
+                {HUB_COMMENT_ACCESSES.map((v) => (
+                  <option key={v} value={v}>
+                    {COMMENT_ACCESS_LABEL[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="hub-field">
+              <label className="hub-label" htmlFor="hub-comment-mod">
+                Comment moderation
+              </label>
+              <select id="hub-comment-mod" className="hub-select" value={form.comment_moderation} onChange={(e) => set("comment_moderation", e.target.value as DetailsForm["comment_moderation"])}>
+                {HUB_COMMENT_MODERATIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {COMMENT_MODERATION_LABEL[v]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="hub-field">
+            <span className="hub-label" id="hub-comment-sort-label">
+              Comments open on
+            </span>
+            <div className="hub-pill-group" role="radiogroup" aria-labelledby="hub-comment-sort-label">
+              {HUB_COMMENT_SORTS.map((v) => (
+                <button key={v} type="button" role="radio" className="hub-pill" aria-checked={form.default_comment_sort === v} aria-pressed={form.default_comment_sort === v} onClick={() => set("default_comment_sort", v)}>
+                  {COMMENT_SORT_LABEL[v]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="hub-field">
+            <label className="hub-label" htmlFor="hub-related">
+              Related video
+            </label>
+            <div className="hub-row">
+              <select id="hub-related" className="hub-select" value={form.related_post_id} onChange={(e) => set("related_post_id", e.target.value)}>
+                <option value="">None</option>
+                {relatedOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+                {relatedMissing ? <option value={form.related_post_id}>{related && related.id === form.related_post_id ? related.title : "A video not loaded here"}</option> : null}
+              </select>
+              {form.related_post_id ? (
+                <button type="button" className="hub-icon-btn" aria-label="Clear the related video" onClick={() => set("related_post_id", "")}>
+                  <X />
+                </button>
+              ) : null}
+            </div>
+            <span className="hub-hint">One of your videos, shown as a card under this one.</span>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

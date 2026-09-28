@@ -2,12 +2,13 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { HandHeart, Lock, Radio } from "lucide-react";
+import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 
-import { formatCount, timeAgo } from "../../model";
+import { formatCount, formatDuration, timeAgo } from "../../model";
 import type { Chapter } from "../chapters";
+import type { AgeGate, WatchRelatedPost } from "../watchApi";
 import { descriptionSegments } from "../linkify";
 import { ChapterStrip } from "./ChapterStrip";
 
@@ -45,6 +46,8 @@ export interface WatchDetailsProps {
   onSeek: (ms: number) => void;
   description: string;
   hashtags: string[];
+  /** The creator's related video (contract B `related_post`), a small card in the about card. */
+  related?: WatchRelatedPost | null;
 }
 
 export function WatchDetails({
@@ -66,6 +69,7 @@ export function WatchDetails({
   onSeek,
   description,
   hashtags,
+  related = null,
 }: WatchDetailsProps) {
   const [expanded, setExpanded] = useState(false);
   const segments = descriptionSegments(description);
@@ -164,11 +168,62 @@ export function WatchDetails({
             ) : null}
           </p>
         ) : null}
+        {related ? <RelatedCard related={related} /> : null}
         <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
           {expanded ? "Collapse" : "Show more"}
         </button>
       </div>
     </section>
+  );
+}
+
+/** "Related video": the creator's pick, one small row linking to it. */
+export function RelatedCard({ related }: { related: WatchRelatedPost }) {
+  return (
+    <div className="tube-related" data-related>
+      <p className="tube-related__label">Related video</p>
+      <Link href={`/posttube/watch/${encodeURIComponent(related.id)}`} className="tube-related__link">
+        <span className="tube-related__thumb">
+          {related.thumbnailUrl ? <img src={related.thumbnailUrl} alt="" loading="lazy" /> : null}
+          {related.durationSeconds > 0 ? <span className="tube-related__dur">{formatDuration(related.durationSeconds)}</span> : null}
+        </span>
+        <span className="tube-related__text">
+          <span className="tube-related__title">{related.title}</span>
+          {related.channelName ? <span className="tube-related__channel">{related.channelName}</span> : null}
+        </span>
+      </Link>
+    </div>
+  );
+}
+
+/**
+  Where the player would be on an age-restricted video the viewer may not
+  watch (the detail read refused it): sign in, or a plain explanation.
+*/
+export function AgeGateCard({ gate, videoId }: { gate: AgeGate; videoId: string }) {
+  const next = `/posttube/watch/${videoId}`;
+  return (
+    <div className="tube-gate" data-age-gate={gate}>
+      <span className="tube-gate__icon">
+        <ShieldAlert size={20} />
+      </span>
+      <p className="tube-gate__title">Age-restricted video</p>
+      {gate === "sign_in" ? (
+        <>
+          <p className="tube-gate__hint">This video may not suit everyone. Sign in to confirm you are 18 or older.</p>
+          <Link href={`/login?next=${encodeURIComponent(next)}`} className="tube-gate__cta">
+            Sign in
+          </Link>
+        </>
+      ) : gate === "restricted" ? (
+        <p className="tube-gate__hint">The creator made this video for viewers 18 and older, so it can&apos;t be shown on your account.</p>
+      ) : (
+        <p className="tube-gate__hint">The creator made this video for viewers 18 and older. We don&apos;t have a date of birth for your account, so we can&apos;t show it yet.</p>
+      )}
+      <Link href="/posttube" className="tube-gate__back">
+        Back to Watch
+      </Link>
+    </div>
   );
 }
 

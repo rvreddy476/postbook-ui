@@ -143,7 +143,79 @@
 .hub-spark path { fill: none; stroke: rgb(var(--brand-accent)); stroke-width: 1.25; stroke-linejoin: round; stroke-linecap: round; }
 .hub-spark .area { fill: rgb(var(--brand-accent) / 0.14); stroke: none; }
 .hub-spark.is-empty path { stroke: rgb(var(--text-muted) / 0.5); }
-.hub-bulk { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 8px; border-radius: 10px; background: rgb(var(--brand-accent) / 0.1); font-size: 12px; }
+.hub-bulk { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; padding: 6px 10px; margin-bottom: 8px; border-radius: 10px; background: rgb(var(--brand-accent) / 0.1); font-size: 13px; }
+.hub-bulk-failures { margin: -2px 0 8px; }
+.hub-bulk-failures ul { margin: 4px 0 0; padding-left: 16px; }
+.hub-bulk-failures li { margin: 2px 0; }
+.hub-bulk-failure-title { font-weight: 650; }
+.hub-link-btn { border: 0; background: transparent; padding: 0; cursor: pointer; font: inherit; font-size: 12px; }
+
+/* ---- row hover actions: under the title, over the description line ---- */
+.hub-row-text { position: relative; min-width: 0; display: block; }
+.hub-row-actions { position: absolute; left: -4px; top: 16px; display: flex; align-items: center; gap: 1px; padding-right: 4px; border-radius: 7px; background: rgb(var(--brand-card)); opacity: 0; pointer-events: none; transition: opacity .12s; }
+.hub-row-title .hub-row-actions a.hub-icon-btn { display: inline-flex; max-width: none; color: rgb(var(--text-muted)); font-weight: 400; }
+.hub-row-title .hub-row-actions a.hub-icon-btn:hover { color: rgb(var(--brand-text)); }
+.hub-row-actions .hub-icon-btn { width: 24px; height: 24px; }
+.hub-table tbody tr:hover .hub-row-actions, .hub-table tbody tr:focus-within .hub-row-actions { opacity: 1; pointer-events: auto; }
+/* the ⋯ menu is open: stay visible while the pointer crosses other rows to reach it (Safari never focuses a clicked button) */
+.hub-row-actions.is-open { opacity: 1; pointer-events: auto; }
+.hub-table tbody tr:hover .hub-row-actions { background: rgb(var(--brand-card)); }
+.hub-table tbody tr:hover .hub-row-meta, .hub-table tbody tr:focus-within .hub-row-meta { visibility: hidden; }
+@media (hover: none), (max-width: 767px) {
+  .hub-row-actions { position: static; margin-left: -4px; opacity: 1; pointer-events: auto; background: transparent; }
+  .hub-row-text .hub-row-meta { display: none; }
+  .hub-table tbody tr:hover .hub-row-actions { background: transparent; }
+}
+
+/* ---- popover panels (filters, bulk edit, visibility) ------------------- */
+.hub-pop { position: fixed; z-index: 130; max-height: min(420px, calc(100dvh - 24px)); overflow-y: auto; padding: 4px; border-radius: 12px; border: 1px solid var(--brand-divider); background: rgb(var(--brand-card)); box-shadow: 0 8px 24px rgb(0 0 0 / .18); color: rgb(var(--brand-text)); font-size: 13px; }
+.hub-pop-list { display: flex; flex-direction: column; }
+.hub-pop-list .hub-menu-item, .hub-pop .hub-menu-item { font-size: 13px; min-height: 32px; }
+.hub-pop-body { display: flex; flex-direction: column; gap: 8px; padding: 4px; }
+.hub-pop-body > .hub-menu-item:first-child { font-weight: 650; margin: -4px -4px 0; width: calc(100% + 8px); }
+.hub-pop-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+.hub-pop .hub-btn, .hub-dialog .hub-btn:not(.hub-btn-sm) { height: 36px; padding: 0 14px; font-size: 13px; }
+.hub-pop .hub-input, .hub-pop .hub-select, .hub-dialog .hub-input { height: 36px; font-size: 13px; }
+.hub-radios { display: flex; flex-direction: column; gap: 2px; }
+.hub-radio { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 6px; border-radius: 7px; font-size: 13px; cursor: pointer; }
+.hub-radio:hover { background: rgb(var(--brand-secondary)); }
+.hub-radio input { width: 14px; height: 14px; flex: 0 0 auto; margin: 0; accent-color: rgb(var(--brand-accent)); }
+.hub-radio svg { width: 14px; height: 14px; flex: 0 0 auto; color: rgb(var(--text-muted)); }
+.hub-radio-rich { align-items: flex-start; }
+.hub-radio-rich input, .hub-radio-rich svg { margin-top: 2px; }
+.hub-radio-rich > span { display: flex; flex-direction: column; gap: 1px; }
+.hub-radio-title { font-weight: 600; }
+.hub-fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.hub-fieldset + .hub-fieldset { padding-top: 8px; border-top: 1px solid var(--brand-divider); }
+.hub-fieldset legend { padding: 0 6px; margin-bottom: 2px; }
+
+/* ---- filter chips ------------------------------------------------------ */
+.hub-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 8px; }
+.hub-chip { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; height: 26px; padding: 0 2px 0 10px; border-radius: 999px; background: rgb(var(--brand-secondary)); font-size: 12px; font-weight: 600; }
+.hub-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-chip button { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: 0 0 auto; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--text-muted)); cursor: pointer; }
+.hub-chip button:hover { background: rgb(var(--brand-text) / 0.1); color: rgb(var(--brand-text)); }
+.hub-chip svg { width: 12px; height: 12px; }
+
+/* ---- more settings (edit sheet) ---------------------------------------- */
+.hub-more-settings { border-top: 1px solid var(--brand-divider); padding-top: 4px; }
+.hub-more-settings-head { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 36px; padding: 0; border: 0; background: transparent; color: rgb(var(--brand-text)); font-size: 13px; font-weight: 700; cursor: pointer; }
+.hub-more-settings-head svg { width: 14px; height: 14px; color: rgb(var(--text-muted)); transition: transform .15s; }
+.hub-more-settings[data-open] .hub-more-settings-head svg { transform: rotate(180deg); }
+.hub-more-settings-body { display: flex; flex-direction: column; gap: 12px; padding-top: 6px; }
+
+/* ---- share privately dialog -------------------------------------------- */
+.hub-dialog { position: fixed; z-index: 131; min-height: 0; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; border-radius: 14px; border: 1px solid var(--brand-divider); background: rgb(var(--brand-card)); box-shadow: 0 16px 48px rgb(0 0 0 / .28); color: rgb(var(--brand-text)); font-size: 13px; }
+.hub-dialog-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.hub-search { position: relative; display: block; }
+.hub-search svg { position: absolute; left: 10px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: rgb(var(--text-muted)); pointer-events: none; }
+.hub-search .hub-input { padding-left: 30px; }
+.hub-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hub-people li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 4px 0; border-bottom: 1px solid var(--brand-divider); }
+.hub-people li:last-child { border-bottom: 0; }
+.hub-people-name { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.hub-people-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-avatar-sm { width: 28px; height: 28px; flex: 0 0 auto; font-size: 11px; }
 .hub-more { display: flex; justify-content: center; padding: 10px; }
 
 /* ---- empty and state --------------------------------------------------- */
