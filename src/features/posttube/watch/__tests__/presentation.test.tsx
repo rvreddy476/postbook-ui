@@ -6,7 +6,8 @@ import { resolve } from "node:path";
 
 import { ChapterStrip } from "../components/ChapterStrip";
 import { UpNext } from "../components/UpNext";
-import { WATCH_RAIL_ORDER, WatchRail } from "../components/WatchRail";
+import { WATCH_ACTION_ORDER, WatchActions } from "../components/WatchActions";
+import { WatchDetails } from "../components/WatchDetails";
 import { WatchMoreMenu } from "../components/WatchMoreMenu";
 import { TubeSettingsMenu } from "../../components/TubePlayer";
 import { DEFAULT_TUBE_PREFS } from "../../model";
@@ -16,63 +17,84 @@ const noop = () => undefined;
 const css = readFileSync(resolve(import.meta.dir, "../watch.css"), "utf8");
 const playerCss = readFileSync(resolve(import.meta.dir, "../../components/tube-player.css"), "utf8");
 
-const railBase = {
+const actionsBase = {
   loved: false,
   likeCount: 1200,
   passed: false,
-  keepHref: "/v1/media/m1/download",
   queued: false,
-  commentCount: 34,
   onLove: noop,
   onPass: noop,
-  onShare: noop,
-  onThanks: noop,
   onQueue: noop,
   onAdd: noop,
-  onComments: noop,
   onMore: noop,
 };
 
-describe("the rail", () => {
-  test("geometry is the Reels rail: 36px circles on a 56px pitch; the comments column is 380px", () => {
-    expect(css).toContain("--tube-rail-w: 36px");
-    expect(css).toContain("--tube-rail-pitch: 56px");
-    expect(css).toContain("--tube-comments-w: 380px");
-    expect(css).toMatch(/\.tube-rail__icon \{[^}]*width: 36px; height: 36px/);
-    expect(css).toMatch(/\.tube-rail__button \{[^}]*height: var\(--tube-rail-pitch\)/);
-    expect(css).toMatch(/\.tube-comments-column \{[^}]*position: fixed;[^}]*right: 0;[^}]*width: var\(--tube-comments-w, 380px\)/);
+const detailsBase = {
+  title: "Rain on a tin roof",
+  authorId: "u1",
+  channelName: "Ravi",
+  channelHref: "/posttube/channel/ravi",
+  followerCount: 2100,
+  topic: { slug: "music", label: "Music" },
+  viewCount: 272000,
+  publishedAt: "2026-09-01T00:00:00Z",
+  source: "upload" as const,
+  chapters: [],
+  currentChapter: -1,
+  onSeek: noop,
+  description: "Three hours of rain.\nSleep well.",
+  hashtags: [],
+};
+
+describe("the RUTUBE layout", () => {
+  test("two columns from 1100px (player + primary left, Up next right 402px); theater spans the player across both", () => {
+    expect(css).toContain("--tube-side-w: 402px");
+    expect(css).toMatch(/@media \(min-width: 1100px\) \{\s*\.tube-watch__grid \{[^}]*grid-template-columns: minmax\(0, 1fr\) var\(--tube-side-w\);[^}]*grid-template-areas: "player side" "primary side"/);
+    expect(css).toMatch(/\.tube-watch\[data-theater\] \.tube-watch__grid \{ grid-template-areas: "player player" "primary side"; \}/);
+    expect(css).toMatch(/\.tube-details__title \{[^}]*font-size: 20px/);
+    expect(css).not.toContain("tube-rail");
+    expect(css).not.toContain("tube-comments-column");
     // hover-only controls, 11px time, one seek bar
     expect(playerCss).toMatch(/\.tube-player__controls \{[^}]*opacity: 0/);
     expect(playerCss).toMatch(/\.tube-player__time \{[^}]*font-size: 11px/);
     expect(playerCss).toMatch(/\.tube-seek__track \{[^}]*height: 3px/);
   });
 
-  test("order: Love · Pass · Share · Thanks · Keep · Queue · Add · Comments · More; Keep is a new-tab link; counts under Love and Comments", () => {
-    const html = renderToStaticMarkup(<WatchRail {...railBase} />);
-    const at = WATCH_RAIL_ORDER.map((a) => html.indexOf(`data-action="${a}"`));
-    for (const [i, pos] of at.entries()) expect(pos, WATCH_RAIL_ORDER[i]).toBeGreaterThan(-1);
+  test("action row: Love (count) | Pass in one pill, then Queue, Add to collection, More", () => {
+    const html = renderToStaticMarkup(<WatchActions {...actionsBase} />);
+    const at = WATCH_ACTION_ORDER.map((a) => html.indexOf(`data-action="${a}"`));
+    for (const [i, pos] of at.entries()) expect(pos, WATCH_ACTION_ORDER[i]).toBeGreaterThan(-1);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
-    expect(html).toContain('href="/v1/media/m1/download" target="_blank" rel="noopener"');
-    expect(html).toContain('class="tube-rail__count">1.2K<');
-    expect(html).toContain('class="tube-rail__count">34<');
-    expect(html).not.toContain("Subscribe");
-    expect(html).not.toContain("Like");
-    expect(html).not.toContain("Watch later");
+    expect(html).toContain('class="tube-actions__count">1.2K<');
+    const vote = html.slice(html.indexOf("tube-actions__vote"), html.indexOf('data-action="queue"'));
+    expect(vote).toContain('data-action="love"');
+    expect(vote).toContain('data-action="pass"');
+    expect(html).toContain(">Queue<");
+    expect(html).toContain(">Add to collection<");
   });
 
-  test("loved and passed light their own button only; Keep hides without a href; comments hide when off", () => {
-    const loved = renderToStaticMarkup(<WatchRail {...railBase} loved keepHref={null} commentsOff />);
-    expect(loved).toContain('data-action="love" class="tube-rail__button is-loved"');
-    expect(loved).toContain('aria-pressed="false"');
-    expect(loved).not.toContain('data-action="keep"');
-    expect(loved).not.toContain('data-action="comments"');
-    const passed = renderToStaticMarkup(<WatchRail {...railBase} passed queued />);
-    expect(passed).toContain('data-action="pass" class="tube-rail__button is-passed"');
-    expect(passed).toContain('data-action="queue" class="tube-rail__button is-queued"');
-    expect(passed).not.toContain("is-loved");
-    const bar = renderToStaticMarkup(<WatchRail {...railBase} variant="bar" onLeaveTheater={noop} />);
-    expect(bar).toContain('class="tube-rail is-bar"');
-    expect(bar).toContain("Leave theater");
+  test("loved and passed light their own button only; queued reads In Queue", () => {
+    const loved = renderToStaticMarkup(<WatchActions {...actionsBase} loved />);
+    expect(loved).toContain('class="tube-actions__btn is-love is-on" aria-pressed="true"');
+    expect(loved).toContain('class="tube-actions__btn is-pass" aria-pressed="false"');
+    const passed = renderToStaticMarkup(<WatchActions {...actionsBase} passed queued />);
+    expect(passed).toContain('class="tube-actions__btn is-pass is-on" aria-pressed="true"');
+    expect(passed).not.toContain("is-love is-on");
+    expect(passed).toContain(">In Queue<");
+  });
+
+  test("details: title, the creator row with Follow and Thanks after the name, the actions, the about card", () => {
+    const html = renderToStaticMarkup(<WatchDetails {...detailsBase} follow={<button type="button">Follow</button>} onThanks={noop} actions={<div data-slot="actions" />} />);
+    const order = ['class="tube-details__title"', 'class="tube-creator__name"', ">Follow<", 'data-action="thanks"', 'data-slot="actions"', 'class="tube-about"'].map((m) => html.indexOf(m));
+    for (const pos of order) expect(pos).toBeGreaterThan(-1);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(html).toContain("2.1K followers");
+    expect(html).toContain("272K views");
+    // collapsed: no facts yet, the toggle reads Show more
+    expect(html).not.toContain("tube-about__facts");
+    expect(html).toContain(">Show more<");
+    const noThanks = renderToStaticMarkup(<WatchDetails {...detailsBase} />);
+    expect(noThanks).not.toContain('data-action="thanks"');
   });
 
   test("More: the choice-pane shell with our rows only", () => {
@@ -92,6 +114,14 @@ describe("the rail", () => {
     expect(owner).toContain('data-row="delete"');
     expect(owner).toContain('data-row="edit"');
     expect(owner).not.toContain('data-row="report"');
+    const withShareKeep = renderToStaticMarkup(
+      <WatchMoreMenu open onClose={noop} isOwner={false} channelName="Ravi" onShare={noop} onKeep={noop} onNotInterested={noop} onDontRecommend={noop} onReport={noop} onBlock={noop} onEdit={noop} onAudioTracks={noop} onDelete={noop} />,
+    );
+    const rows = ['data-row="block"', 'data-row="dont-recommend"', 'data-row="keep"', 'data-row="not-interested"', 'data-row="report"', 'data-row="share"'].map((m) => withShareKeep.indexOf(m));
+    for (const pos of rows) expect(pos).toBeGreaterThan(-1);
+    expect([...rows].sort((a, b) => a - b)).toEqual(rows);
+    expect(html).not.toContain('data-row="share"');
+    expect(html).not.toContain('data-row="keep"');
   });
 });
 
@@ -165,7 +195,7 @@ describe("chapters and up next", () => {
     viewer_has_subscribed: false,
   };
 
-  test("related mode: the pills and compact rows", () => {
+  test("related mode: the pills and the right-column rows", () => {
     const html = renderToStaticMarkup(
       <UpNext
         rows={[{ video, href: "/posttube/watch/v2" }]}
@@ -177,11 +207,12 @@ describe("chapters and up next", () => {
     expect(html).toContain('class="tube-upnext__pill" aria-pressed="true">Fresh<');
     expect(html).toContain('class="tube-upnext__pill" aria-pressed="false">Science<');
     expect(html).toContain('class="tube-upnext__name">Second video<');
-    expect(html).toContain("Ravi · 1.5K views");
+    expect(html).toContain('class="tube-upnext__meta">Ravi<');
+    expect(html).toContain("1.5K views · ");
     expect(html).toContain('class="tube-upnext__duration">2:05<');
-    expect(css).toMatch(/\.tube-upnext__thumb \{[^}]*width: 120px; height: 68px/);
-    expect(css).toMatch(/\.tube-upnext__name \{[^}]*font-size: 13px/);
-    expect(css).toMatch(/\.tube-upnext__meta \{[^}]*font-size: 11px/);
+    expect(css).toMatch(/\.tube-upnext__thumb \{[^}]*width: 168px; height: 94px/);
+    expect(css).toMatch(/\.tube-upnext__name \{[^}]*font-size: 14px/);
+    expect(css).toMatch(/\.tube-upnext__meta \{[^}]*font-size: 12px/);
   });
 
   test("collection mode: Playing from, the position, prev / next hrefs keep the list", () => {

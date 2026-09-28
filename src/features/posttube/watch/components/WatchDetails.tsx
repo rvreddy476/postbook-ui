@@ -2,21 +2,24 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Lock, Radio } from "lucide-react";
+import { HandHeart, Lock, Radio } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 
 import { formatCount, timeAgo } from "../../model";
 import type { Chapter } from "../chapters";
-import { descriptionNeedsMore, descriptionSegments } from "../linkify";
+import { descriptionSegments } from "../linkify";
 import { ChapterStrip } from "./ChapterStrip";
 
 /*
-  The details card under the player: the title (15/600), the creator row
-  (36px avatar, name, follower count, Follow + bell from the page), the
-  topic chip, views and date, the chapter strip, the description behind
-  "More" (links, #hashtags → /hashtag/<tag>, timestamps seek), the join
-  card when the video is gated. Small type: 13px body, 11px meta.
+  Under the player, the RUTUBE watch layout: the title (20/700), the
+  creator row (40px avatar, name, follower count, then Follow + bell and
+  Thanks right after the name), the action row (WatchActions, passed in),
+  the chapter strip, and the about card: views · date (and "From a live
+  stream") on top; collapsed it shows two lines of the description, and
+  "Show more" opens the facts (Title, Topic) under a divider and the whole
+  description with links, #hashtags (→ /hashtag/<tag>) and timestamps
+  that seek; "Collapse" folds it back.
 */
 
 export interface WatchDetailsProps {
@@ -28,6 +31,10 @@ export interface WatchDetailsProps {
   followerCount: number;
   /** The Follow + bell control, rendered by the page (SubscribeButton). */
   follow?: ReactNode;
+  /** Absent hides Thanks; the page passes it only when thanks.showThanks is true. */
+  onThanks?: () => void;
+  /** The action row (WatchActions), rendered by the page. */
+  actions?: ReactNode;
   topic?: { slug: string; label: string } | null;
   viewCount: number;
   publishedAt: string;
@@ -48,6 +55,8 @@ export function WatchDetails({
   channelHref,
   followerCount,
   follow,
+  onThanks,
+  actions,
   topic,
   viewCount,
   publishedAt,
@@ -59,28 +68,12 @@ export function WatchDetails({
   hashtags,
 }: WatchDetailsProps) {
   const [expanded, setExpanded] = useState(false);
-  const needsMore = descriptionNeedsMore(description) || hashtags.length > 0;
-  const collapsed = !expanded && needsMore;
   const segments = descriptionSegments(description);
   const tags = hashtags.map((h) => h.replace(/^#/, "")).filter((h) => h && !description.includes(`#${h}`));
 
   return (
     <section className="tube-details" aria-label="About this video">
       <h1 className="tube-details__title">{title}</h1>
-      <div className="tube-details__meta">
-        {topic ? (
-          <Link href={`/posttube/topics/${encodeURIComponent(topic.slug)}`} className="tube-details__topic">
-            {topic.label}
-          </Link>
-        ) : null}
-        {source === "live" ? (
-          <span className="tube-details__source">
-            <Radio size={12} /> From a live stream
-          </span>
-        ) : null}
-        <span>{formatCount(viewCount)} views</span>
-        {publishedAt ? <span>· {timeAgo(publishedAt)}</span> : null}
-      </div>
 
       <div className="tube-creator">
         <Link href={channelHref} className="tube-creator__link">
@@ -89,18 +82,52 @@ export function WatchDetails({
           </span>
           <span className="min-w-0">
             <p className="tube-creator__name">{channelName}</p>
-            <p className="tube-creator__followers">{formatCount(followerCount)} following</p>
+            <p className="tube-creator__followers">{formatCount(followerCount)} followers</p>
           </span>
         </Link>
-        <span className="tube-creator__spacer" />
-        {follow}
+        <span className="tube-creator__buttons">
+          {follow}
+          {onThanks ? (
+            <button type="button" className="tube-creator__thanks" onClick={onThanks} data-action="thanks">
+              <HandHeart size={16} /> Thanks
+            </button>
+          ) : null}
+        </span>
       </div>
+
+      {actions}
 
       <ChapterStrip chapters={chapters} currentIndex={currentChapter} onSeek={onSeek} />
 
-      {description || tags.length > 0 ? (
-        <div className="tube-description" data-collapsed={collapsed ? "" : undefined}>
-          <p className="tube-description__text">
+      <div className="tube-about" data-expanded={expanded ? "" : undefined}>
+        <p className="tube-about__meta">
+          <span>{formatCount(viewCount)} views</span>
+          {publishedAt ? <span>· {timeAgo(publishedAt)}</span> : null}
+          {source === "live" ? (
+            <span className="tube-about__live">
+              <Radio size={12} /> From a live stream
+            </span>
+          ) : null}
+        </p>
+        {expanded ? (
+          <>
+            <hr className="tube-about__rule" />
+            <dl className="tube-about__facts">
+              <dt>Title</dt>
+              <dd>{title}</dd>
+              {topic ? (
+                <>
+                  <dt>Topic</dt>
+                  <dd>
+                    <Link href={`/posttube/topics/${encodeURIComponent(topic.slug)}`}>{topic.label}</Link>
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+          </>
+        ) : null}
+        {description || (expanded && tags.length > 0) ? (
+          <p className="tube-about__text">
             {segments.map((s, i) => {
               switch (s.kind) {
                 case "url":
@@ -125,9 +152,9 @@ export function WatchDetails({
                   return <span key={i}>{s.text}</span>;
               }
             })}
-            {tags.length > 0 && !collapsed ? (
+            {tags.length > 0 && expanded ? (
               <>
-                {"\n"}
+                {description ? "\n" : null}
                 {tags.map((t) => (
                   <Link key={t} href={`/hashtag/${encodeURIComponent(t)}`}>
                     #{t}{" "}
@@ -136,13 +163,11 @@ export function WatchDetails({
               </>
             ) : null}
           </p>
-          {needsMore ? (
-            <button type="button" className="tube-description__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
-              {expanded ? "Less" : "More"}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+        ) : null}
+        <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
+          {expanded ? "Collapse" : "Show more"}
+        </button>
+      </div>
     </section>
   );
 }

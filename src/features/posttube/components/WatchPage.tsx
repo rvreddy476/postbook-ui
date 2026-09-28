@@ -49,7 +49,7 @@ import {
 import { ambientAllowed } from "../watch/ambient";
 import { chapterIndexAt } from "../watch/chapters";
 import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
-import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs, useWideLayout } from "../watch/hooks/useWatch";
+import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useWatchDetail, useWatchPrefs } from "../watch/hooks/useWatch";
 import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
@@ -60,16 +60,18 @@ import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { WatchComments } from "../watch/components/WatchComments";
 import { MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
 import { WatchMoreMenu } from "../watch/components/WatchMoreMenu";
-import { WatchRail } from "../watch/components/WatchRail";
+import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
 import "./tube.css";
 import "../watch/watch.css";
 
 /*
-  The watch page (W1): the player centred with the action rail on its
-  right, the details card under it, comments in a right column opened
-  from the rail, Up next under the column or the card. See watch.css for
-  the geometry and watchApi.ts for every request.
+  The watch page in the RUTUBE layout: on the left the player, the title,
+  the creator row (Follow + bell, Thanks), the action row (Love | Pass,
+  Queue, Add to collection, ⋯), the about card, the series and the
+  comments inline; on the right the Up next list. Theater widens the
+  player across both columns. See watch.css for the geometry and
+  watchApi.ts for every request.
 */
 
 const UP_NEXT_COUNTDOWN_SECONDS = 5;
@@ -145,7 +147,6 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const { prefs: watchPrefs, update: updateWatchPrefs } = useWatchPrefs();
   const { on: autoplayNextOn, update: setAutoplayNextOn } = useAutoplayNextPref();
   const reducedMotion = useReducedMotion();
-  const wide = useWideLayout();
 
   /* ── data ──────────────────────────────────────────── */
   const detailQuery = useWatchDetail(videoId);
@@ -396,7 +397,6 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
 
   const [theater, setTheater] = useState(false);
   const [miniOn, setMiniOn] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentSort, setCommentSort] = useState<CommentSort>("top");
   const [shareOpen, setShareOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -522,17 +522,16 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   if (videoId && detailQuery.isLoading) {
     return (
       <div className="tube-watch">
-        <div className="tube-watch__main">
-          <div className="tube-watch__stage-row">
-            <div className="tube-watch__player">
-              <div className="tube-stage flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-white/60" />
-              </div>
+        <div className="tube-watch__grid">
+          <div className="tube-watch__player">
+            <div className="tube-stage flex items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin text-white/60" />
             </div>
-            <div className="tube-watch__rail" />
           </div>
-          <div className="mt-3 h-5 w-2/3 animate-pulse rounded bg-brand-secondary" />
-          <div className="mt-3 h-10 w-full animate-pulse rounded bg-brand-secondary" />
+          <div className="tube-watch__primary">
+            <div className="h-6 w-2/3 animate-pulse rounded bg-brand-secondary" />
+            <div className="mt-3 h-10 w-full animate-pulse rounded bg-brand-secondary" />
+          </div>
         </div>
       </div>
     );
@@ -625,6 +624,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       onClose={() => setMoreOpen(false)}
       isOwner={isOwner}
       channelName={channelName}
+      onShare={detail.shareHidden ? undefined : () => setShareOpen(true)}
+      onKeep={keepHref ? () => window.open(keepHref, "_blank", "noopener") : undefined}
       onNotInterested={() => void notInterested()}
       onDontRecommend={() => void dontRecommend()}
       onReport={() => {
@@ -640,136 +641,127 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     />
   );
 
-  const railProps = {
-    loved: rail.loved,
-    likeCount: rail.likeCount,
-    passed: rail.passed,
-    shareHidden: detail.shareHidden,
-    keepHref,
-    queued,
-    commentCount: video.comment_count,
-    commentsOff: detail.commentsOff,
-    commentsOpen,
-    onLove: handleLove,
-    onPass: handlePass,
-    onShare: () => setShareOpen(true),
-    onThanks: thanksVisible ? () => requireUser() && setThanksOpen(true) : undefined,
-    onQueue: () => void handleQueue(),
-    onAdd: () => requireUser() && setPlaylistOpen(true),
-    onComments: () => setCommentsOpen((o) => !o),
-    onMore: () => setMoreOpen((o) => !o),
-    moreMenu,
-  };
+  const actions = (
+    <WatchActions
+      loved={rail.loved}
+      likeCount={rail.likeCount}
+      passed={rail.passed}
+      queued={queued}
+      onLove={handleLove}
+      onPass={handlePass}
+      onQueue={() => void handleQueue()}
+      onAdd={() => requireUser() && setPlaylistOpen(true)}
+      onMore={() => setMoreOpen((o) => !o)}
+      moreOpen={moreOpen}
+      moreMenu={moreMenu}
+    />
+  );
 
   return (
-    <div className="tube-watch" data-theater={theater ? "" : undefined} data-comments-open={commentsOpen && wide ? "" : undefined}>
-      <div className="tube-watch__main">
-        <div className="tube-watch__stage-row">
-          <div className="tube-watch__player">
-            {gated ? (
-              <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
-            ) : (
-              <TubeStage
-                miniplayerOn={miniOn}
-                returnHref={collectionWatchHref(video.id, listId)}
-                videoId={video.id}
-                hlsUrl={hlsUrl}
-                fileUrl={fileUrl}
-                poster={video.thumbnail_url || undefined}
-                captions={captions}
-                startPositionMs={startPositionMs}
-                startReady={startReady}
-                autoPlay={!dataSaver}
-                deferLoad={dataSaver}
-                trimStartMs={trimStartMs}
-                trimEndMs={trimEndMs}
-                prefs={prefs}
-                onPrefsChange={updatePrefs}
-                autoplayNext={{ on: autoplayNextOn, onChange: setAutoplayNextOn }}
-                onPlay={onPlay}
-                onPause={onPause}
-                onTimeUpdate={onTimeUpdate}
-                onEnded={onEnded}
-                endScreen={endScreen}
-                ended={ended}
-                onEndedChange={onEndedChange}
-                onTheater={toggleTheater}
-                theater={theater}
-                onMiniplayer={toggleMini}
-                miniplayer={miniOn}
-                onNext={nextTarget ? goNext : undefined}
-                chapters={detail.chapters}
-                storyboard={storyboardQuery.data ?? null}
-                ambient={ambient}
-                onAmbientChange={(on) => updateWatchPrefs({ ambient: on })}
-                stableVolume={watchPrefs.stableVolume}
-                onStableVolumeChange={(on) => updateWatchPrefs({ stableVolume: on })}
-                audioTracks={{
-                  options: audioOptions,
-                  current: activeAudioTrack?.id ?? ORIGINAL_TRACK_ID,
-                  onChange: (id) => updateWatchPrefs({ audioLanguage: languageForChoice(audioTracks, id) }),
-                  onManage: isOwner && mediaAssetId ? () => setAudioDialogOpen(true) : undefined,
-                }}
-                sourceOverride={sourceOverride}
-                onSleep={onSleep}
-                controller={playerRef}
-              />
-            )}
-          </div>
-          <div className="tube-watch__rail">
-            <WatchRail {...railProps} />
-          </div>
-        </div>
-        <div className="tube-watch__theater-bar">{theater ? <WatchRail {...railProps} variant="bar" onLeaveTheater={toggleTheater} /> : null}</div>
-
-        <WatchDetails
-          title={video.title}
-          authorId={video.author_id}
-          channelName={channelName}
-          channelAvatar={channelAvatar}
-          channelHref={channelHref}
-          followerCount={followerCount}
-          follow={
-            <SubscribeButton
-              channelRef={video.author_id}
-              initialSubscribed={channel?.is_subscribed ?? video.viewer_has_subscribed}
-              initialNotifyOn={channel?.notify_on ?? null}
-              hidden={isOwner || !user}
-              size="sm"
-              labels={{ off: "Follow", on: "Following" }}
-              onSubscribedChange={(s) => setFollowerCount((c) => Math.max(0, c + (s ? 1 : -1)))}
+    <div className="tube-watch" data-theater={theater ? "" : undefined}>
+      <div className="tube-watch__grid">
+        <div className="tube-watch__player">
+          {gated ? (
+            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
+          ) : (
+            <TubeStage
+              miniplayerOn={miniOn}
+              returnHref={collectionWatchHref(video.id, listId)}
+              videoId={video.id}
+              hlsUrl={hlsUrl}
+              fileUrl={fileUrl}
+              poster={video.thumbnail_url || undefined}
+              captions={captions}
+              startPositionMs={startPositionMs}
+              startReady={startReady}
+              autoPlay={!dataSaver}
+              deferLoad={dataSaver}
+              trimStartMs={trimStartMs}
+              trimEndMs={trimEndMs}
+              prefs={prefs}
+              onPrefsChange={updatePrefs}
+              autoplayNext={{ on: autoplayNextOn, onChange: setAutoplayNextOn }}
+              onPlay={onPlay}
+              onPause={onPause}
+              onTimeUpdate={onTimeUpdate}
+              onEnded={onEnded}
+              endScreen={endScreen}
+              ended={ended}
+              onEndedChange={onEndedChange}
+              onTheater={toggleTheater}
+              theater={theater}
+              onMiniplayer={toggleMini}
+              miniplayer={miniOn}
+              onNext={nextTarget ? goNext : undefined}
+              chapters={detail.chapters}
+              storyboard={storyboardQuery.data ?? null}
+              ambient={ambient}
+              onAmbientChange={(on) => updateWatchPrefs({ ambient: on })}
+              stableVolume={watchPrefs.stableVolume}
+              onStableVolumeChange={(on) => updateWatchPrefs({ stableVolume: on })}
+              audioTracks={{
+                options: audioOptions,
+                current: activeAudioTrack?.id ?? ORIGINAL_TRACK_ID,
+                onChange: (id) => updateWatchPrefs({ audioLanguage: languageForChoice(audioTracks, id) }),
+                onManage: isOwner && mediaAssetId ? () => setAudioDialogOpen(true) : undefined,
+              }}
+              sourceOverride={sourceOverride}
+              onSleep={onSleep}
+              controller={playerRef}
             />
-          }
-          topic={topic}
-          viewCount={video.view_count}
-          publishedAt={video.published_at}
-          source={detail.source}
-          resumedAtMs={startPositionMs}
-          chapters={detail.chapters}
-          currentChapter={chapterIndex}
-          onSeek={(ms) => playerRef.current?.seekTo(ms)}
-          description={video.description}
-          hashtags={video.hashtags}
-        />
+          )}
+        </div>
 
-        {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}
+        <div className="tube-watch__primary">
+          <WatchDetails
+            title={video.title}
+            authorId={video.author_id}
+            channelName={channelName}
+            channelAvatar={channelAvatar}
+            channelHref={channelHref}
+            followerCount={followerCount}
+            onThanks={thanksVisible ? () => requireUser() && setThanksOpen(true) : undefined}
+            actions={actions}
+            follow={
+              <SubscribeButton
+                channelRef={video.author_id}
+                initialSubscribed={channel?.is_subscribed ?? video.viewer_has_subscribed}
+                initialNotifyOn={channel?.notify_on ?? null}
+                hidden={isOwner || !user}
+                size="md"
+                labels={{ off: "Follow", on: "Following" }}
+                onSubscribedChange={(s) => setFollowerCount((c) => Math.max(0, c + (s ? 1 : -1)))}
+              />
+            }
+            topic={topic}
+            viewCount={video.view_count}
+            publishedAt={video.published_at}
+            source={detail.source}
+            resumedAtMs={startPositionMs}
+            chapters={detail.chapters}
+            currentChapter={chapterIndex}
+            onSeek={(ms) => playerRef.current?.seekTo(ms)}
+            description={video.description}
+            hashtags={video.hashtags}
+          />
 
-        {!(commentsOpen && wide) ? upNextNode : null}
+          {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}
+
+          <WatchComments
+            postId={video.id}
+            authorId={video.author_id}
+            count={video.comment_count}
+            commentsOff={detail.commentsOff}
+            sort={commentSort}
+            onSort={setCommentSort}
+            creatorTools={creatorTools}
+          />
+        </div>
+
+        <aside className="tube-watch__side" aria-label="Up next">
+          {upNextNode}
+        </aside>
       </div>
-
-      <WatchComments
-        open={commentsOpen}
-        onClose={() => setCommentsOpen(false)}
-        wide={wide}
-        postId={video.id}
-        authorId={video.author_id}
-        count={video.comment_count}
-        commentsOff={detail.commentsOff}
-        sort={commentSort}
-        onSort={setCommentSort}
-        creatorTools={creatorTools}
-        upNext={upNextNode}
-      />
 
       <ShareDialog postId={video.id} isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
       <SaveToPlaylistDialog open={playlistOpen} postId={video.id} onClose={() => setPlaylistOpen(false)} />

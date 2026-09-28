@@ -93,19 +93,6 @@ export function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** ≥1024px: the comments column; below it, the sheet. */
-export function useWideLayout(): boolean {
-  const [wide, setWide] = useState(true);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const apply = () => setWide(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-  return wide;
-}
-
 /** GET /v1/monetization/creators/:id/support; null (no Thanks) on any failure. */
 export function useCreatorSupport(creatorId: string | null | undefined) {
   return useQuery({

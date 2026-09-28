@@ -3,7 +3,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { ThanksSheet } from "../components/ThanksSheet";
-import { WatchRail } from "../components/WatchRail";
+import { WatchDetails } from "../components/WatchDetails";
 import { DEFAULT_MIN_TIP_PAISE, formatPaise, normalizeSupport, parseCustomAmount, showThanks, thanksAmountPills, type CreatorSupport } from "../thanks";
 import { thanksBody, thanksErrorMessage } from "../watchApi";
 
@@ -57,35 +57,36 @@ describe("rail presence: Thanks only when tips are on and the viewer is not the 
     expect(showThanks(on, "viewer", null)).toBe(false);
   });
 
-  test("the rail renders Thanks right after Share only when onThanks is passed", () => {
+  test("the creator row renders Thanks right after Follow only when onThanks is passed", () => {
     const base = {
-      loved: false,
-      likeCount: 0,
-      passed: false,
-      keepHref: null,
-      queued: false,
-      commentCount: 0,
-      onLove: noop,
-      onPass: noop,
-      onShare: noop,
-      onQueue: noop,
-      onAdd: noop,
-      onComments: noop,
-      onMore: noop,
+      title: "t",
+      authorId: "u1",
+      channelName: "Ravi",
+      channelHref: "/posttube/channel/ravi",
+      followerCount: 0,
+      viewCount: 0,
+      publishedAt: "",
+      source: "upload" as const,
+      chapters: [],
+      currentChapter: -1,
+      onSeek: noop,
+      description: "",
+      hashtags: [],
+      follow: (
+        <button type="button" data-follow>
+          Follow
+        </button>
+      ),
     };
-    const without = renderToStaticMarkup(<WatchRail {...base} />);
+    const without = renderToStaticMarkup(<WatchDetails {...base} />);
     expect(without).not.toContain('data-action="thanks"');
-    const withThanks = renderToStaticMarkup(<WatchRail {...base} onThanks={noop} />);
-    const share = withThanks.indexOf('data-action="share"');
+    const withThanks = renderToStaticMarkup(<WatchDetails {...base} onThanks={noop} />);
+    const follow = withThanks.indexOf("data-follow");
     const thanks = withThanks.indexOf('data-action="thanks"');
-    const queue = withThanks.indexOf('data-action="queue"');
-    expect(share).toBeGreaterThan(-1);
-    expect(thanks).toBeGreaterThan(share);
-    expect(queue).toBeGreaterThan(thanks);
-    expect(withThanks).toContain('aria-label="Thanks"');
+    expect(follow).toBeGreaterThan(-1);
+    expect(thanks).toBeGreaterThan(follow);
+    expect(withThanks).toContain("Thanks</button>");
     expect(withThanks).not.toContain("Tip");
-    // Share hidden by the creator: Thanks still shows.
-    expect(renderToStaticMarkup(<WatchRail {...base} shareHidden onThanks={noop} />)).toContain('data-action="thanks"');
   });
 });
 

@@ -9,8 +9,10 @@ import { collectionWatchHref } from "../collectionNav";
 import type { UpNextChip, UpNextPill } from "../upNext";
 
 /*
-  Up next: compact rows (120×68 thumb, 13px title, 11px meta) with the
-  pills All / <topic> / Fresh / Seen. When a collection is in play
+  Up next, the right column of the RUTUBE watch layout: rows with a
+  168×94 thumb (duration pill), a two-line 14px title, the channel and
+  "views · age" on two 12px lines, under the pills All / <topic> /
+  Fresh / Seen. When a collection is in play
   (?list=), the rows are the collection in its order with the playing one
   marked, and the pills are replaced by "Playing from <title>" with prev
   and next.
@@ -107,10 +109,9 @@ export function UpNext({ rows, loading = false, hasMore = false, fetchingMore = 
                 </span>
                 <span className="tube-upnext__text">
                   <p className="tube-upnext__name">{r.video.title}</p>
+                  <p className="tube-upnext__meta">{r.video.channel_name}</p>
                   <p className="tube-upnext__meta">
-                    {r.video.channel_name}
-                    {r.video.view_count > 0 ? ` · ${formatCount(r.video.view_count)} views` : ""}
-                    {r.video.published_at ? ` · ${timeAgo(r.video.published_at)}` : ""}
+                    {[r.video.view_count > 0 ? `${formatCount(r.video.view_count)} views` : "", r.video.published_at ? timeAgo(r.video.published_at) : ""].filter(Boolean).join(" · ")}
                   </p>
                 </span>
               </Link>
