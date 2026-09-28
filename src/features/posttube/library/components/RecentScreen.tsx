@@ -15,7 +15,7 @@ import { filterRecent } from "../recentSearch";
 import "./library.css";
 
 /*
-  /posttube/history — Recent. GET /v1/videos/history?limit&cursor, every
+  /posttube/history — History. GET /v1/videos/history?limit&cursor, every
   row. Remove = DELETE /v1/videos/:id/progress; Clear = DELETE
   /v1/videos/history. The search field filters the rows already loaded;
   "Pause recording" is a client preference (localStorage
@@ -56,7 +56,7 @@ function RecentRow({ entry, onRemove, removing }: { entry: WatchProgress; onRemo
         {meta ? <p className="tube-library__row-meta">{meta}</p> : null}
       </div>
       <div className="tube-library__row-actions">
-        <button type="button" className="tube-library__icon-button is-danger" aria-label={`Remove from Recent: ${title}`} disabled={removing} onClick={onRemove}>
+        <button type="button" className="tube-library__icon-button is-danger" aria-label={`Remove from History: ${title}`} disabled={removing} onClick={onRemove}>
           {removing ? <Loader2 className="animate-spin" /> : <X />}
         </button>
       </div>
@@ -92,7 +92,7 @@ export function RecentScreen() {
         </span>
         <div className="tube-library__titles">
           <h1 id="tube-recent-title" className="tube-library__title">
-            Recent
+            History
           </h1>
           <p className="tube-library__meta">
             <span>Videos you watched, with where you left off.</span>
@@ -101,7 +101,7 @@ export function RecentScreen() {
         <div className="tube-library__actions">
           <label className="tube-library__search">
             <Search aria-hidden />
-            <input type="search" placeholder="Search Recent" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search Recent" />
+            <input type="search" placeholder="Search History" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search History" />
           </label>
           <button
             type="button"
@@ -109,7 +109,7 @@ export function RecentScreen() {
             aria-checked={paused}
             className="tube-library__switch"
             onClick={() => setPaused(!paused)}
-            title="While paused, videos you watch are not added to Recent"
+            title="While paused, videos you watch are not added to History"
           >
             <span>Pause recording</span>
             <span className="tube-library__switch-track" aria-hidden>
@@ -117,7 +117,7 @@ export function RecentScreen() {
             </span>
           </button>
           {rows.length > 0 ? (
-            <button type="button" className="tube-library__icon-button is-danger" aria-label="Clear all of Recent" onClick={() => setConfirmClear(true)}>
+            <button type="button" className="tube-library__icon-button is-danger" aria-label="Clear all of History" onClick={() => setConfirmClear(true)}>
               <Trash2 />
             </button>
           ) : null}
@@ -139,7 +139,7 @@ export function RecentScreen() {
       ) : !signedIn ? (
         <div className="tube-library__empty">
           <LogIn size={26} />
-          <h2>Sign in to see Recent</h2>
+          <h2>Sign in to see your History</h2>
           <p>Your watch history is kept with your account.</p>
           <Link href={`/login?next=${encodeURIComponent("/posttube/history")}`} className="tube-library__cta">
             Sign in
@@ -147,7 +147,7 @@ export function RecentScreen() {
         </div>
       ) : history.isError ? (
         <div className="tube-library__empty" role="alert">
-          <h2>Couldn&apos;t load Recent</h2>
+          <h2>Couldn&apos;t load History</h2>
           <p>Check your connection and try again.</p>
           <button type="button" className="tube-library__cta" onClick={() => void history.refetch()}>
             <RefreshCw size={14} /> Retry
@@ -175,7 +175,7 @@ export function RecentScreen() {
         </div>
       ) : (
         <>
-          <ol className="tube-library__list" aria-label="Recent videos">
+          <ol className="tube-library__list" aria-label="Watched videos">
             {shown.map((e) => (
               <RecentRow
                 key={e.postId}
@@ -201,8 +201,8 @@ export function RecentScreen() {
 
       <ReelConfirmDialog
         open={confirmClear}
-        title="Clear all of Recent?"
-        description="Every video is removed from Recent and nothing will resume where you left off. This cannot be undone."
+        title="Clear all of History?"
+        description="Every video is removed from History and nothing will resume where you left off. This cannot be undone."
         confirmLabel="Clear"
         danger
         pending={clearAll.isPending}

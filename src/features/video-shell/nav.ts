@@ -37,7 +37,7 @@ import {
   The left menu of the two video apps, as data.
 
   PostTube's menu uses the RUTUBE words (founder, 28 Sep): Watch (home),
-  Reels, Subscriptions, Live, Trending, Topics; then You: Your channel, Recent,
+  Reels, Subscriptions, Live, Trending, Topics; then You: Your channel, History,
   Watch later, Liked videos, Collections, Your videos, Scheduled, Creator Hub. A route a
   later wave delivers is listed already but flagged `comingSoon`, so the
   sidebar draws it disabled with a small "soon" tag until the page exists —
@@ -107,7 +107,7 @@ export const VIDEO_NAV_TOP: readonly VideoNavItem[] = [
 /** The PostTube "You" group: the viewer's own library, then the creator's side. */
 export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
-  { key: "recent", label: "Recent", icon: History, href: "/posttube/history" },
+  { key: "recent", label: "History", icon: History, href: "/posttube/history" },
   { key: "queue", label: "Watch later", icon: ListPlus, href: "/posttube/queue" },
   { key: "loved", label: "Liked videos", icon: Heart, href: "/posttube/loved" },
   { key: "collections", label: "Collections", icon: ListVideo, href: "/posttube/playlists" },
