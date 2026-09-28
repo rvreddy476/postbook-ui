@@ -85,6 +85,8 @@ export function useAnchoredMenu(open: boolean, align: "left" | "right", size?: {
     // A tall panel opens upward when it would run past the bottom and there is more room above.
     const up = typeof height === "number" && r.bottom + 4 + height > vh && r.top > vh - r.bottom;
     const next: CSSProperties = up ? { position: "fixed", bottom: vh - r.top + 4 } : { position: "fixed", top: r.bottom + 4 };
+    // Never past the window's edge: a short window caps the panel, which then scrolls inside.
+    next.maxHeight = Math.max(160, (up ? r.top : vh - r.bottom) - 12);
     if (align === "right") next.right = Math.max(8, vw - r.right);
     else next.left = typeof width === "number" ? Math.max(8, Math.min(r.left, vw - width - 8)) : Math.max(8, r.left);
     if (typeof width === "number") next.maxWidth = vw - 16;
