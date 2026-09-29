@@ -246,15 +246,21 @@ describe("masthead", () => {
     expect(html).not.toContain("Creator Hub");
     expect(html).not.toContain("tube-chan-head__toggle"); // short about, no toggle
   });
-  test("owner: Branding and Creator Hub, no Subscribe, no More", () => {
+  test("owner: Branding and Creator Hub, no Subscribe, and More (it holds the RSS feed row)", () => {
     const html = wrap(<ChannelMasthead channel={fixture} isOwner signedIn followerCount={1} />);
     expect(html).toContain('href="/settings/channel"');
     expect(html).toContain('href="/posttube/hub"');
     expect(html).toContain(">Branding<");
     expect(html).toContain(">Creator Hub<");
     expect(html).not.toContain(">Subscribe");
-    expect(html).not.toContain('aria-label="More"');
+    expect(html).toContain('aria-label="More"');
+    expect(html.indexOf(">Creator Hub<")).toBeLessThan(html.indexOf('aria-label="More"'));
     expect(textOf(html)).toContain("1 subscriber ·");
+  });
+  test("an owner's page drawn without a channel row has no feed, so no More", () => {
+    const html = wrap(<ChannelMasthead channel={thinChannel("u-1", "Someone")} isOwner signedIn followerCount={0} />);
+    expect(html).toContain(">Creator Hub<");
+    expect(html).not.toContain('aria-label="More"');
   });
   test("long description gets the more toggle; signed-out visitor gets no Subscribe; old shape has no banner", () => {
     const long = { ...fixture, about: "x".repeat(200) };
@@ -273,9 +279,20 @@ describe("masthead", () => {
     expect(html).not.toContain("subscriber");
     expect(html).not.toContain(">Subscribe<");
   });
-  test("More rows are alphabetical; Report only when signed in", () => {
-    expect(channelMoreRows(true).map((r) => r.label)).toEqual(["Report", "Share channel"]);
-    expect(channelMoreRows(false).map((r) => r.label)).toEqual(["Share channel"]);
+  test("More rows are alphabetical; Report only when signed in; RSS feed for everyone", () => {
+    expect(channelMoreRows(true).map((r) => r.label)).toEqual(["Report", "RSS feed", "Share channel"]);
+    expect(channelMoreRows(false).map((r) => r.label)).toEqual(["RSS feed", "Share channel"]);
+    expect(channelMoreRows(true, false).map((r) => r.key)).toEqual(["report", "rss", "share"]);
+  });
+  test("the owner's More is the RSS feed row alone", () => {
+    expect(channelMoreRows(true, true)).toEqual([{ key: "rss", label: "RSS feed" }]);
+    // Signed-in state does not add Report or Share to the owner's menu.
+    expect(channelMoreRows(false, true).map((r) => r.key)).toEqual(["rss"]);
+  });
+  test("no channel row, no feed: the RSS row is left out", () => {
+    expect(channelMoreRows(true, false, false).map((r) => r.label)).toEqual(["Report", "Share channel"]);
+    expect(channelMoreRows(false, false, false).map((r) => r.label)).toEqual(["Share channel"]);
+    expect(channelMoreRows(true, true, false)).toEqual([]);
   });
 });
 

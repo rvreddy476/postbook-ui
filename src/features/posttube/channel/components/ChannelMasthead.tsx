@@ -17,7 +17,8 @@ import { ChannelMoreMenu } from "./ChannelMoreMenu";
   then one row — the 72px avatar; the 18px name, a 12px meta line
   (@handle · followers · videos), the description clamped to two lines
   with a "more" toggle and the link pills; on the right Follow + bell for
-  a visitor, Branding and Creator Hub for the owner, and More.
+  a visitor, Branding and Creator Hub for the owner, and More for both
+  (the owner's More holds the RSS feed row only).
 */
 
 export interface ChannelMastheadProps {
@@ -28,9 +29,11 @@ export interface ChannelMastheadProps {
   onFollowChange?: (following: boolean) => void;
   onShare?: () => void;
   onReport?: () => void;
+  /** Opens the RSS feed address (the More menu's "RSS feed" row). */
+  onFeed?: () => void;
 }
 
-export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onFollowChange, onShare, onReport }: ChannelMastheadProps) {
+export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onFollowChange, onShare, onReport, onFeed }: ChannelMastheadProps) {
   const [expanded, setExpanded] = useState(false);
   const meta: string[] = [];
   if (channel.handle) meta.push(`@${channel.handle}`);
@@ -85,6 +88,7 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
                 <LayoutDashboard aria-hidden />
                 <span>Creator Hub</span>
               </Link>
+              <ChannelMoreMenu signedIn={signedIn} isOwner hasFeed={!channel.thin} onShare={() => onShare?.()} onReport={() => onReport?.()} onFeed={() => onFeed?.()} />
             </>
           ) : (
             <>
@@ -97,7 +101,7 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
                 labels={{ off: "Subscribe", on: "Subscribed" }}
                 onSubscribedChange={onFollowChange}
               />
-              <ChannelMoreMenu signedIn={signedIn} onShare={() => onShare?.()} onReport={() => onReport?.()} />
+              <ChannelMoreMenu signedIn={signedIn} hasFeed={!channel.thin} onShare={() => onShare?.()} onReport={() => onReport?.()} onFeed={() => onFeed?.()} />
             </>
           )}
         </div>

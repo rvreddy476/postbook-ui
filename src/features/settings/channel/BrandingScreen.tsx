@@ -5,12 +5,13 @@ import { HANDLE_MAX, NAME_MAX } from "./model";
 import { IdentitySection } from "./IdentitySection";
 import { LinksSection } from "./LinksSection";
 import { FeaturedSection } from "./FeaturedSection";
+import { FeedSection } from "./FeedSection";
 import { Field, inputClass, inputErrorClass, primaryButtonClass } from "./ui";
 import { SECTIONS, type BrandingScreenProps, type HandleAvailability, type NoChannelProps, type SaveBarProps, type SectionId } from "./view";
 
 /*
-  Branding — the presentational page. One scrolling column of three
-  sections (Identity, Links, Featured) with a small sticky section nav on
+  Branding — the presentational page. One scrolling column of four
+  sections (Identity, Links, Featured, RSS feed) with a small sticky section nav on
   the left at ≥1024px, a Monetization link card at the end, and one sticky
   Save bar at the bottom. No hooks here: the container feeds it data.
 */
@@ -205,6 +206,7 @@ export function BrandingScreen(props: BrandingScreenProps) {
             <IdentitySection {...props.identity} />
             <LinksSection {...props.links} />
             <FeaturedSection {...props.featured} />
+            <FeedSection {...props.feed} />
             <MonetizationCard />
           </div>
           <SaveBar {...props.save} />

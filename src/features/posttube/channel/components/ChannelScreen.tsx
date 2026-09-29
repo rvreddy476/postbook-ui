@@ -8,6 +8,7 @@ import { useAuthUser } from "@/store/auth";
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { VideoCard } from "../../components/VideoCard";
 import { EmptyState, ErrorState, LoadingState } from "../../discovery/components/DiscoveryState";
+import { channelFeedPath, channelPath } from "../../feed/feedUrl";
 import type { PostTubeVideo } from "../../types";
 import { thinChannel, type ChannelView } from "../channelApi";
 import { filterByText, liveOnly, resolveTab, sortVideos, visibleTabs, type ChannelTab, type VideoSort } from "../channelModel";
@@ -125,13 +126,14 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
   const setQuery = (q: string) => setSearch({ tab: active, q });
   const [sort, setSort] = useState<VideoSort>("latest");
 
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  // One sheet for both addresses: the channel page ("Share") and its feed ("RSS feed").
+  const [sheet, setSheet] = useState<{ url: string; heading: string } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const closeReport = useCallback(() => setReportOpen(false), []);
-  const share = () => {
-    const path = `/posttube/channel/${encodeURIComponent(channel.handle || channel.userId)}`;
-    setShareUrl(typeof window !== "undefined" ? `${window.location.origin}${path}` : path);
-  };
+  const channelRef = channel.handle || channel.userId;
+  const absolute = (path: string) => (typeof window !== "undefined" ? `${window.location.origin}${path}` : path);
+  const share = () => setSheet({ url: absolute(channelPath(channelRef)), heading: "Share" });
+  const feed = () => setSheet({ url: absolute(channelFeedPath(channelRef)), heading: "RSS feed" });
 
   const featured = useFeaturedVideo(channel.featuredPostId);
 
@@ -145,6 +147,7 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
         onFollowChange={onFollowChange}
         onShare={share}
         onReport={() => setReportOpen(true)}
+        onFeed={feed}
       />
 
       {featured.data ? <FeaturedVideo video={featured.data} /> : null}
@@ -158,7 +161,7 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
         <EmptyState icon={<Tv size={20} strokeWidth={1.75} />} title="Nothing here yet" body="This channel has not posted anything public." />
       )}
 
-      <ShareSheet open={!!shareUrl} onClose={() => setShareUrl(null)} url={shareUrl ?? ""} title={channel.name} />
+      <ShareSheet open={!!sheet} onClose={() => setSheet(null)} url={sheet?.url ?? ""} title={channel.name} heading={sheet?.heading} />
       {!isOwner && signedIn ? <ReportChannelDialog open={reportOpen} onClose={closeReport} ownerId={channel.userId} channelName={channel.name} /> : null}
     </div>
   );

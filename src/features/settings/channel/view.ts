@@ -4,12 +4,13 @@ import type { ChannelBranding, ChannelLink, FieldErrors } from "./model";
    presentational screen (BrandingScreen + sections). Everything here is
    plain data and callbacks so the screen renders without providers. */
 
-export type SectionId = "identity" | "links" | "featured";
+export type SectionId = "identity" | "links" | "featured" | "feed";
 
 export const SECTIONS: { id: SectionId; label: string }[] = [
   { id: "identity", label: "Identity" },
   { id: "links", label: "Links" },
   { id: "featured", label: "Featured" },
+  { id: "feed", label: "RSS feed" },
 ];
 
 export interface VideoRow {
@@ -67,6 +68,19 @@ export interface FeaturedProps {
   error?: string;
 }
 
+export type FeedCopyTarget = "feed" | "podcasts";
+
+/** The channel's RSS feed: read-only addresses, built from the saved handle (the user id until one is set). */
+export interface FeedProps {
+  feedUrl: string;
+  /** The same feed narrowed to the Podcasts topic (`?category=podcasts`). */
+  podcastsUrl: string;
+  hasHandle: boolean;
+  /** Which address was just copied; null when neither. */
+  copied: FeedCopyTarget | null;
+  onCopy: (target: FeedCopyTarget) => void;
+}
+
 export interface SaveBarProps {
   dirty: boolean;
   saving: boolean;
@@ -99,5 +113,6 @@ export type BrandingScreenProps =
       identity: IdentityProps;
       links: LinksProps;
       featured: FeaturedProps;
+      feed: FeedProps;
       save: SaveBarProps;
     };

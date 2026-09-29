@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { BrandingScreen } from "../BrandingScreen";
 import type { ChannelBranding } from "../model";
@@ -70,6 +72,13 @@ function loaded(overrides: Partial<Extract<BrandingScreenProps, { kind: "loaded"
       hasMore: false,
       onMore: noop,
       onSelect: noop,
+    },
+    feed: {
+      feedUrl: "https://cleestudio.com/posttube/channel/raghu.makes/feed.xml",
+      podcastsUrl: "https://cleestudio.com/posttube/channel/raghu.makes/feed.xml?category=podcasts",
+      hasHandle: true,
+      copied: null,
+      onCopy: noop,
     },
     save: { dirty: false, saving: false, changeCount: 0, errorCount: 0, onSave: noop, onReset: noop },
     ...overrides,
@@ -188,5 +197,70 @@ describe("Branding page, loaded", () => {
     const html = renderToStaticMarkup(<BrandingScreen {...props} />);
     expect(html).toContain("Links must start with https://");
     expect(html).not.toContain("Fix the links marked below.");
+  });
+});
+
+describe("Branding page, RSS feed", () => {
+  const section = (html: string) => html.match(/<section id="feed"[\s\S]*?<\/section>/)?.[0] ?? "";
+
+  test("a fourth section after Featured, in the nav, with both addresses read-only", () => {
+    const html = renderToStaticMarkup(<BrandingScreen {...loaded()} />);
+    expect(html).toContain('href="#feed"');
+    expect(html.indexOf('id="featured"')).toBeLessThan(html.indexOf('id="feed"'));
+    expect(html.indexOf('id="feed"')).toBeLessThan(html.indexOf("data-monetization-card"));
+
+    const feed = section(html);
+    expect(feed).toContain(">RSS feed</h2>");
+    expect(feed).toMatch(/<input[^>]*readOnly=""[^>]*value="https:\/\/cleestudio\.com\/posttube\/channel\/raghu\.makes\/feed\.xml"/);
+    expect(feed).toMatch(/<input[^>]*readOnly=""[^>]*value="https:\/\/cleestudio\.com\/posttube\/channel\/raghu\.makes\/feed\.xml\?category=podcasts"/);
+    expect(feed.match(/>Copy</g)?.length).toBe(2);
+    expect(feed).toContain("Podcasts only");
+  });
+
+  test("the artwork hint is always there; the handle hint only without a handle", () => {
+    const withHandle = section(renderToStaticMarkup(<BrandingScreen {...loaded()} />));
+    expect(withHandle).toContain("Podcast apps use your channel picture as artwork. Upload a square picture at least 1400×1400 for the best result.");
+    expect(withHandle).not.toContain("Set a handle");
+
+    const props = loaded();
+    if (props.kind === "loaded") {
+      props.feed = {
+        ...props.feed,
+        hasHandle: false,
+        feedUrl: "https://cleestudio.com/posttube/channel/22222222-2222-4222-8222-222222222222/feed.xml",
+        podcastsUrl: "https://cleestudio.com/posttube/channel/22222222-2222-4222-8222-222222222222/feed.xml?category=podcasts",
+      };
+    }
+    const without = section(renderToStaticMarkup(<BrandingScreen {...props} />));
+    expect(without).toContain("Set a handle to get a stable feed address");
+    expect(without).toContain("data-feed-artwork-hint");
+    expect(without).toContain("22222222-2222-4222-8222-222222222222/feed.xml");
+  });
+
+  test("the copied address says so, the other does not", () => {
+    const props = loaded();
+    if (props.kind === "loaded") props.feed = { ...props.feed, copied: "podcasts" };
+    const feed = section(renderToStaticMarkup(<BrandingScreen {...props} />));
+    expect(feed.match(/>Copied</g)?.length).toBe(1);
+    expect(feed.match(/>Copy</g)?.length).toBe(1);
+    expect(feed.indexOf(">Copy<")).toBeLessThan(feed.indexOf(">Copied<"));
+  });
+
+  test("the section is not offered before there is a channel", () => {
+    const html = renderToStaticMarkup(
+      <BrandingScreen kind="no-channel" create={{ name: "N", handle: "n.one", availability: { state: "idle" }, errors: {}, creating: false, onChange: noop, onCreate: noop }} />,
+    );
+    expect(html).not.toContain('id="feed"');
+  });
+
+  test("our words and our tokens: small type, no hex, Collections never Playlists", () => {
+    const src = readFileSync(resolve(import.meta.dir, "../FeedSection.tsx"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(src).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(src).not.toMatch(/rgba?\(|hsla?\(/);
+    expect(src).not.toMatch(/[Pp]laylist/);
+    // Nothing larger than the section's own 14px title (which the shared Card draws).
+    for (const m of src.matchAll(/text-\[(\d+)px\]/g)) expect(Number(m[1])).toBeLessThanOrEqual(13);
+    const feed = section(renderToStaticMarkup(<BrandingScreen {...loaded()} />));
+    expect(feed).not.toMatch(/[Pp]laylist|Studio|Dashboard/);
   });
 });

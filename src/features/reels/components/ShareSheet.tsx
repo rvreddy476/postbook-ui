@@ -9,6 +9,8 @@ interface ShareSheetProps {
   onClose: () => void;
   url: string;
   title?: string;
+  /** What the sheet is called ("Share" unless the address is something else, like an RSS feed). */
+  heading?: string;
 }
 
 interface ShareTarget {
@@ -19,7 +21,7 @@ interface ShareTarget {
   action?: () => void;
 }
 
-export function ShareSheet({ open, onClose, url, title = "Check this out on VChat" }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, url, title = "Check this out on VChat", heading = "Share" }: ShareSheetProps) {
   const [copied, setCopied] = useState(false);
 
   const enc = encodeURIComponent(url);
@@ -71,7 +73,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
 
           <motion.div
             role="dialog"
-            aria-label="Share"
+            aria-label={heading}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -81,7 +83,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-brand-text/20" />
 
             <div className="flex items-center justify-between px-5 pb-1">
-              <h3 className="text-[15px] font-bold text-brand-text">Share</h3>
+              <h3 className="text-[15px] font-bold text-brand-text">{heading}</h3>
               <button
                 type="button"
                 onClick={onClose}

@@ -76,6 +76,13 @@ const PUBLIC_PREFIXES = [
     // Content permalinks people paste into other apps.
     "/post/",
     "/posttube/watch",
+    // A public channel and its RSS feed
+    // (/posttube/channel/<handle>/feed.xml): podcast apps and feed readers
+    // fetch it with no session at all. The ".xml" static-file rule already
+    // lets the feed through; naming the prefix keeps it open if that list
+    // ever changes, and lets a signed-out visitor open the channel the feed
+    // links back to. The page draws only what the API gives a stranger.
+    "/posttube/channel/",
     // The /tube alias only redirects to /posttube/* (app/tube/[[...path]]);
     // it must be reachable signed out so a push's /tube/watch/{id} reaches
     // the public watch page. The destination is gated on its own path.

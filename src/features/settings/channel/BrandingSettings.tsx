@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { channelAvatarUrl, channelBannerUrl, type ChannelInfo } from "@/features/posttube/data/posttubeApi";
+import { channelFeedUrl, PODCASTS_CATEGORY } from "@/features/posttube/feed/feedUrl";
 import { mediaServeUrl } from "@/features/posttube/model";
 import { useCreateChannel, useMyChannel, useMyChannels, useUpdateChannel } from "@/hooks/useChannels";
 import { useMyProfile } from "@/hooks/useEditProfile";
@@ -31,7 +32,7 @@ import {
   type ChannelPatch,
   type FieldErrors,
 } from "./model";
-import { SECTIONS, type SectionId } from "./view";
+import { SECTIONS, type FeedCopyTarget, type SectionId } from "./view";
 
 /*
   Branding — the container. Reads the channel from GET /v1/channels/me,
@@ -205,6 +206,29 @@ export function BrandingSettings() {
     setPageMessage(undefined);
   };
 
+  /* ── RSS feed (read-only) ──────────────────────────────── */
+  // Built from the saved handle, never the one being typed: the address
+  // only changes once a new handle is saved.
+  const [copied, setCopied] = useState<FeedCopyTarget | null>(null);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (copiedTimer.current && clearTimeout(copiedTimer.current)), []);
+  const feedRef = baseline.handle || channel?.user_id || user?.id || "";
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const feedUrls: Record<FeedCopyTarget, string> = {
+    feed: feedRef ? channelFeedUrl(origin, feedRef) : "",
+    podcasts: feedRef ? channelFeedUrl(origin, feedRef, PODCASTS_CATEGORY) : "",
+  };
+  const onCopyFeed = async (target: FeedCopyTarget) => {
+    try {
+      await navigator.clipboard.writeText(feedUrls[target]);
+      setCopied(target);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(null), 1800);
+    } catch {
+      toast({ type: "error", title: "Could not copy the address" });
+    }
+  };
+
   /* ── No channel yet ────────────────────────────────────── */
   const noChannel = !channelQuery.isPending && !channelQuery.isError && channel === null;
   const createForm = useCreateChannelForm(noChannel);
@@ -258,6 +282,13 @@ export function BrandingSettings() {
         onMore: featured.loadMore,
         onSelect: (id) => patchDraft("featured_post_id", (cur) => ({ ...cur, featured_post_id: id })),
         error: featured.error,
+      }}
+      feed={{
+        feedUrl: feedUrls.feed,
+        podcastsUrl: feedUrls.podcasts,
+        hasHandle: !!baseline.handle,
+        copied,
+        onCopy: (target) => void onCopyFeed(target),
       }}
       save={{
         dirty,
