@@ -221,7 +221,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     const ms = parseClock(frameClock);
     if (ms === null || !post.media_id) return;
     try {
-      await pickFrame.mutateAsync({ postId: post.id, mediaId: post.media_id, timestampMs: Math.min(ms, Math.max(0, post.duration_seconds * 1000 - 1)) });
+      await pickFrame.mutateAsync({ postId: post.id, mediaId: post.media_id, timestampMs: ms, durationSeconds: post.duration_seconds });
       toast({ type: "success", title: "Cover updated" });
     } catch {
       toast({ type: "error", title: "Could not pick that frame" });

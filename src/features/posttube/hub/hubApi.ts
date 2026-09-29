@@ -1,8 +1,8 @@
 import api from "@/lib/api";
 import { mediaHref } from "@/features/reels/model";
-import { extractCoverFrame } from "@/features/reels/data/reelsApi";
 import { uploadMedia } from "@/lib/mediaUpload";
-import { addPlaylistItem, createSubtitleTrack, getPlaylistItems, getSubtitleTracks, setCoverFrame, updateSchedule } from "@/features/posttube/data/posttubeApi";
+import { addPlaylistItem, createSubtitleTrack, getPlaylistItems, getSubtitleTracks, updateSchedule } from "@/features/posttube/data/posttubeApi";
+import { captureCoverFrame } from "./coverFrame";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import { fetchCreatorCollections } from "@/features/posttube/library/libraryApi";
 import { readEndScreenPosition } from "@/features/posttube/watch/watchApi";
@@ -46,7 +46,7 @@ import type { CommentItem } from "@/types/profile";
     GET    /v1/subtitles/:mediaId                (posttubeApi.getSubtitleTracks)
     GET    /v1/analytics/creator/me?period
     GET    /v1/analytics/content/:id?period
-    POST   /v1/media/:mediaId/frames?count=1     (reelsApi.extractCoverFrame) + POST /v1/videos/:id/cover-frame
+    GET    /v1/media/:mediaId/serve[/720p|/480p] (coverFrame.captureCoverFrame: the frame is drawn in the browser, then uploaded as an image)
     POST   /v1/media/init + PUT upload + POST /v1/media/confirm (lib/mediaUpload.uploadMedia)
     GET    /v1/media/:id/download                (link only, when allow_download)
 */
@@ -607,11 +607,13 @@ export async function reschedule(postId: string, publishAt?: string): Promise<vo
 
 /* ── Cover: frame pick or custom image ──────────────────── */
 
-/** Picks the frame at `timestampMs` (media-service frames) and records it as the video's cover. */
-export async function pickCoverFrame(postId: string, mediaId: string, timestampMs: number): Promise<string> {
-  const frame = await extractCoverFrame({ mediaId, timestampMs });
-  await setCoverFrame(postId, { cover_media_id: frame.cover_media_id, thumbnail_url: frame.preview_url, timestamp_ms: timestampMs });
-  return frame.preview_url;
+/**
+ * Picks the frame at `timestampMs`: drawn in the browser, uploaded as the creator's own image and
+ * set through the owner patch, exactly as an uploaded cover is. Returns the new cover's media id.
+ */
+export async function pickCoverFrame(postId: string, mediaId: string, timestampMs: number, durationSeconds: number): Promise<string> {
+  const file = await captureCoverFrame(postId, mediaId, timestampMs, durationSeconds);
+  return uploadCoverImage(postId, file);
 }
 
 /** Uploads an image as a cover asset and sets it through the owner patch. */

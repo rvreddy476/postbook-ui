@@ -4,7 +4,6 @@ import type { PostDetail } from "@/types/profile";
 import type {
   Reel,
   ReelDraft,
-  CoverFrameResult,
   ProcessingStatusResult,
   ReelVisibility,
   LicenseType,
@@ -251,29 +250,6 @@ export async function getProcessingStatus(mediaId: string): Promise<ProcessingSt
   // stuck on "Video processing must finish" forever).
   const res = await api.get<ApiResponse<ProcessingStatusResult>>(`/v1/media/${mediaId}/renditions`);
   return res.data.data;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   COVER FRAME EXTRACTION
-   ═══════════════════════════════════════════════════════════ */
-
-export async function extractCoverFrame(params: {
-  mediaId: string;
-  timestampMs: number;
-}): Promise<CoverFrameResult> {
-  // Backend endpoint: POST /v1/media/:mediaId/frames?count=1
-  // Returns { media_id, frames: [{ index, object_key, url }] }
-  const res = await api.post<ApiResponse<{ media_id: string; frames: { index: number; object_key: string; url: string }[] }>>(
-    `/v1/media/${params.mediaId}/frames`,
-    null,
-    { params: { count: 1 } }
-  );
-  const frame = res.data.data.frames?.[0];
-  return {
-    cover_media_id: res.data.data.media_id ?? params.mediaId,
-    object_key: frame?.object_key ?? "",
-    preview_url: frame?.url ?? "",
-  };
 }
 
 /* ═══════════════════════════════════════════════════════════

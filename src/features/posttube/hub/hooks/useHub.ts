@@ -332,9 +332,9 @@ export function useReschedule() {
 export function usePickCoverFrame() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ postId, mediaId, timestampMs }: { postId: string; mediaId: string; timestampMs: number }) => pickCoverFrame(postId, mediaId, timestampMs),
-    onSuccess: (previewUrl, { postId }) => {
-      if (previewUrl) patchLibraryRow(qc, postId, { thumbnail_url: previewUrl });
+    mutationFn: ({ postId, mediaId, timestampMs, durationSeconds }: { postId: string; mediaId: string; timestampMs: number; durationSeconds: number }) =>
+      pickCoverFrame(postId, mediaId, timestampMs, durationSeconds),
+    onSuccess: (_coverMediaId, { postId }) => {
       void qc.invalidateQueries({ queryKey: HUB_KEYS.post(postId) });
       void qc.invalidateQueries({ queryKey: ["hub", "library"] });
     },
