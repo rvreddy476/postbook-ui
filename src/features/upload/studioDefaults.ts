@@ -2,6 +2,7 @@ import type { PublishDefaults } from "@/features/posttube/hub/publishDefaults";
 import type { LicenseType } from "@/features/reels/types";
 
 import type { ContentType } from "./tokens";
+import { keepChosenSound } from "./studioSound";
 import { INITIAL_FORM_STATE, type StudioFormState } from "./types";
 
 /*
@@ -43,9 +44,19 @@ export function mergePublishDefaults(form: StudioFormState, defaults: PublishDef
   return patch;
 }
 
-/** A fresh form for a studio, with the preferences applied when they belong to it. */
-export function freshStudioForm(contentType: ContentType, currentStep: StudioFormState["currentStep"], defaults: PublishDefaults | null): StudioFormState {
-  const base: StudioFormState = { ...INITIAL_FORM_STATE, contentType, currentStep };
+/**
+ * A fresh form for a studio, with the preferences applied when they belong
+ * to it. `previous` is the form being replaced: its chosen sound is carried
+ * over (keepChosenSound), because a sound is chosen before the file and must
+ * survive selecting and clearing one.
+ */
+export function freshStudioForm(
+  contentType: ContentType,
+  currentStep: StudioFormState["currentStep"],
+  defaults: PublishDefaults | null,
+  previous?: Pick<StudioFormState, "audioTrack" | "audioStartMs" | "overlayAudioVolume"> | null,
+): StudioFormState {
+  const base: StudioFormState = { ...INITIAL_FORM_STATE, contentType, currentStep, ...(previous ? keepChosenSound(previous) : {}) };
   if (!defaults || !takesPublishDefaults(contentType)) return base;
   return { ...base, ...mergePublishDefaults(base, defaults) };
 }

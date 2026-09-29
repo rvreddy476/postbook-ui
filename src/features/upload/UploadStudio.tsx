@@ -23,10 +23,12 @@ export type { ContentType };
 
 interface UploadStudioProps {
   contentType: ContentType;
+  /** A sound to start with (/reels/create?sound=<id>); the Audio section shows it. */
+  soundId?: string | null;
 }
 
-export function UploadStudio({ contentType }: UploadStudioProps) {
-  const studio = useUploadStudio(contentType);
+export function UploadStudio({ contentType, soundId = null }: UploadStudioProps) {
+  const studio = useUploadStudio(contentType, { soundId });
   const { form, patch, steps, currentStepIndex, goToStep, nextStep, prevStep, isFirstStep, isLastStep } = studio;
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [attemptedNext, setAttemptedNext] = useState(false);
@@ -113,6 +115,8 @@ export function UploadStudio({ contentType }: UploadStudioProps) {
             extractCoverPreview={studio.extractCoverPreview}
             selectCustomCover={studio.selectCustomCover}
             contentType={contentType}
+            soundNotice={studio.sound.notice}
+            onRemoveSound={studio.removeSound}
           />
         );
       case "audience":

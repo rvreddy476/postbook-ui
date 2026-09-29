@@ -14,6 +14,8 @@ import type Hls from "hls.js";
 
 import type { ReelItem } from "@/features/reels/model";
 import { pickHlsLevel, type PlayerPrefs } from "@/features/reels/playback/playerPrefs";
+import { onSoundError, onSoundPlayRefused, planSoundSync, SOUND_LOAD_TIMEOUT_MS, soundDurationS, type SoundLoad, type SyncReason } from "@/features/reels/playback/soundSync";
+import { soundServeHref } from "@/features/reels/sounds";
 import { useSubtitleTrack } from "@/features/reels/playback/useSubtitleTrack";
 import { useWatchTelemetry } from "@/features/reels/playback/useWatchTelemetry";
 import { ReelScrubber } from "@/features/reels/components/ReelScrubber";
@@ -27,6 +29,15 @@ import { ReelScrubber } from "@/features/reels/components/ReelScrubber";
   Autoplay policy: the browser may refuse an unmuted autoplay. When that
   happens the reel starts muted and a "Tap to unmute" pill appears; the tap
   is the gesture that lets sound through, and it also records the choice.
+
+  An added sound (reel.sound) is a second file played by a hidden <audio>
+  beside the video — nothing is mixed on the server. The video is the
+  clock: every event that moves or stops it (play, pause, seek, rate,
+  loop, a source switch, the tab coming back) asks soundSync.ts what the
+  sound should be set to, and that answer is copied onto the element. Only
+  media events drive it, never an animation frame, so it holds in a hidden
+  tab. A sound that cannot be loaded is no sound: the reel plays alone at
+  the viewer's full volume and nothing is said about it.
 */
 
 export interface ReelVideoHandle {
@@ -92,6 +103,161 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   const [heartKey, setHeartKey] = useState(0);
   const [clock, setClock] = useState({ currentMs: 0, durationMs: reel.media.durationMs, bufferedMs: 0 });
   const [scrubbing, setScrubbing] = useState(false);
+
+  /* ── the added sound ───────────────────────────────────── */
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const soundId = reel.sound?.id ?? null;
+  const soundRef = useRef(reel.sound ?? null);
+  soundRef.current = reel.sound ?? null;
+  const mixRef = useRef({ original: 1, overlay: 1 });
+  mixRef.current = { original: reel.originalVolume ?? 1, overlay: reel.overlayVolume ?? 1 };
+  const soundLoadRef = useRef<SoundLoad>(soundId ? "loading" : "none");
+  const viewerVolumeRef = useRef(prefs.volume);
+  // The video is waiting for data: its clock stands still though it is not paused.
+  const stalledRef = useRef(false);
+
+  const playSound = useCallback(() => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    if (!video || !audio) return;
+    void audio.play().catch((err: unknown) => {
+      if (onSoundPlayRefused((err as { name?: string })?.name, audio.muted) !== "mute-both") return;
+      // The browser refused sound: both sides go quiet together and the pill asks for the tap.
+      video.muted = true;
+      audio.muted = true;
+      isMutedRef.current = true;
+      setForcedMuted(true);
+      void audio.play().catch(() => undefined);
+    });
+  }, []);
+
+  /** Copies what soundSync decides onto the two elements. */
+  const syncSound = useCallback(
+    (reason: SyncReason = "tick") => {
+      const video = videoRef.current;
+      if (!video) return;
+      const audio = audioRef.current;
+      const sound = soundRef.current;
+      const plan = planSoundSync({
+        videoTime: video.currentTime,
+        videoPlaying: !video.paused && !video.ended && !video.seeking && !stalledRef.current,
+        rate: video.playbackRate,
+        viewerVolume: viewerVolumeRef.current,
+        muted: video.muted,
+        originalVolume: mixRef.current.original,
+        overlayVolume: mixRef.current.overlay,
+        startOffsetS: (sound?.startMs ?? 0) / 1000,
+        soundDurationS: soundDurationS(audio?.duration, sound?.durationMs),
+        load: audio && sound ? soundLoadRef.current : "none",
+        soundTime: audio?.currentTime ?? 0,
+        soundSeeking: audio?.seeking ?? false,
+        reason,
+      });
+      if (video.volume !== plan.videoVolume) video.volume = plan.videoVolume;
+      if (!audio) return;
+      const next = plan.sound;
+      if (!next) {
+        if (!audio.paused) audio.pause();
+        return;
+      }
+      if (audio.volume !== next.volume) audio.volume = next.volume;
+      if (audio.muted !== next.muted) audio.muted = next.muted;
+      if (audio.playbackRate !== next.rate) audio.playbackRate = next.rate;
+      if (next.seekTo !== null) {
+        try {
+          audio.currentTime = next.seekTo;
+        } catch {
+          /* not seekable yet: the next event tries again */
+        }
+      }
+      if (next.play) {
+        if (audio.paused) playSound();
+      } else if (!audio.paused) {
+        audio.pause();
+      }
+    },
+    [playSound],
+  );
+
+  // The sound's source, and whether it could be loaded.
+  useEffect(() => {
+    const audio = audioRef.current;
+    stalledRef.current = false;
+    soundLoadRef.current = soundId && audio ? "loading" : "none";
+    syncSound("jump");
+    if (!audio || !soundId) return;
+    const settle = (load: SoundLoad) => {
+      soundLoadRef.current = load;
+      syncSound("jump");
+    };
+    let loadedAt = Date.now();
+    const onReady = () => settle("ready");
+    const onFailed = () => {
+      // A link that expired under a long pause: ask /serve again (soundSync.onSoundError).
+      if (onSoundError(soundLoadRef.current, Date.now() - loadedAt) === "reload") {
+        loadedAt = Date.now();
+        soundLoadRef.current = "loading";
+        audio.src = soundServeHref(soundId);
+        audio.load();
+        syncSound("jump");
+        return;
+      }
+      settle("failed");
+    };
+    audio.addEventListener("loadedmetadata", onReady);
+    audio.addEventListener("canplay", onReady);
+    audio.addEventListener("error", onFailed);
+    audio.src = soundServeHref(soundId);
+    audio.load();
+    const timer = setTimeout(() => {
+      if (soundLoadRef.current === "loading") onFailed();
+    }, SOUND_LOAD_TIMEOUT_MS);
+    return () => {
+      clearTimeout(timer);
+      audio.removeEventListener("loadedmetadata", onReady);
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("error", onFailed);
+      // A detached element keeps playing: stop it and drop the download.
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    };
+  }, [soundId, syncSound]);
+
+  // The video is the clock; these are the events that move or stop it.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onTick = () => {
+      if (!video.paused && video.readyState >= 3) stalledRef.current = false;
+      syncSound("tick");
+    };
+    const onJump = () => syncSound("jump");
+    const onWaiting = () => {
+      stalledRef.current = true;
+      syncSound("tick");
+    };
+    const onResumed = () => {
+      stalledRef.current = false;
+      syncSound("jump");
+    };
+    const onVisibility = () => {
+      if (!document.hidden) syncSound("jump");
+    };
+    const jumps = ["play", "pause", "seeking", "seeked", "ratechange", "volumechange", "ended", "emptied", "loadedmetadata"] as const;
+    video.addEventListener("timeupdate", onTick);
+    for (const name of jumps) video.addEventListener(name, onJump);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onResumed);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      video.removeEventListener("timeupdate", onTick);
+      for (const name of jumps) video.removeEventListener(name, onJump);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onResumed);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [syncSound]);
 
   const captions = useSubtitleTrack(reel.media.mediaId, prefs.captions && active);
   const onCaptionsAvailableRef = useRef(onCaptionsAvailable);
@@ -220,13 +386,15 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     const video = videoRef.current;
     if (!video) return;
     video.playbackRate = prefs.speed;
-    video.volume = prefs.volume;
+    viewerVolumeRef.current = prefs.volume;
     video.loop = prefs.onEnd === "loop";
     if (!forcedMuted) {
       video.muted = !prefs.sound;
       isMutedRef.current = !prefs.sound;
     }
-  }, [prefs.speed, prefs.volume, prefs.onEnd, prefs.sound, forcedMuted, sourceOverride, reel.media.hlsUrl, reel.media.fileUrl]);
+    // The volume itself: the viewer's level times the creator's, and the sound follows.
+    syncSound("jump");
+  }, [prefs.speed, prefs.volume, prefs.onEnd, prefs.sound, forcedMuted, sourceOverride, reel.media.hlsUrl, reel.media.fileUrl, reel.originalVolume, reel.overlayVolume, syncSound]);
 
   useEffect(() => {
     const hls = hlsRef.current;
@@ -247,7 +415,10 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     const video = videoRef.current;
     if (!video) return;
     try {
-      await video.play();
+      const started = video.play();
+      // Inside the viewer's tap when there is one: the sound starts in the same gesture.
+      syncSound("jump");
+      await started;
       setPaused(false);
     } catch (err) {
       const name = (err as { name?: string })?.name;
@@ -266,7 +437,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         setPaused(true);
       }
     }
-  }, []);
+  }, [syncSound]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -371,10 +542,11 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         const video = videoRef.current;
         if (!video) return;
         const level = Math.max(0, Math.min(1, volume));
-        video.volume = level;
+        viewerVolumeRef.current = level;
         video.muted = level === 0;
         isMutedRef.current = level === 0;
         setForcedMuted(false);
+        syncSound("jump");
       },
       seekBy: (seconds) => {
         const video = videoRef.current;
@@ -388,7 +560,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       },
       isPaused: () => videoRef.current?.paused ?? true,
     }),
-    [togglePlay],
+    [togglePlay, syncSound],
   );
 
   /* ── gestures ──────────────────────────────────────────── */
@@ -412,6 +584,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     if (video) {
       video.muted = false;
       isMutedRef.current = false;
+      syncSound("jump");
     }
     onPrefsChange({ sound: true });
   };
@@ -445,6 +618,9 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
           <track kind="subtitles" src={captions.source.src} srcLang={captions.source.lang} default />
         ) : null}
       </video>
+
+      {/* The added sound. No src here: the effect above owns it, as the video's is owned. */}
+      {soundId ? <audio ref={audioRef} preload="auto" loop hidden aria-hidden data-reel-sound={soundId} /> : null}
 
       {/* paused glyph */}
       <AnimatePresence>

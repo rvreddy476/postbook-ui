@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
 
+import { ReelSoundLabel } from "@/features/reels/components/ReelSoundLabel";
 import type { ReelItem } from "@/features/reels/model";
 
 interface ReelOverlayProps {
@@ -11,20 +12,26 @@ interface ReelOverlayProps {
   volume: number;
   onVolumeChange: (volume: number) => void;
   onToggleSound: () => void;
+  /** The viewer's own reel: its audio may always be reused. */
+  isOwn?: boolean;
+  /** "Use this sound" for a reel that plays only its own audio; absent = no such line. */
+  onUseOriginalSound?: () => void;
+  useSoundPending?: boolean;
 }
 
 /*
   What sits on top of the video: the sound control at the top-left (8px
   in, 40px square, the slider on hover), and at the bottom-left over a
   soft gradient — always — the author's name (18/700, a plain link), the
-  title (if any) and the hashtags (14/700). Nothing else: the description
+  title (if any), the hashtags (14/700) and, under them, the sound line
+  (12/600: a note and the sound's name). Nothing else: the description
   is read through More → Description, never drawn over the video. TikTok's
   block: 12px from the left, 16px from the bottom, at most 381px wide. No
   Follow here: following is the badge on the rail avatar. The More circle
   at the top-right is the screen's. Clicks on any of it stop before
   reaching the stage.
 */
-export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound }: ReelOverlayProps) {
+export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound, isOwn = false, onUseOriginalSound, useSoundPending }: ReelOverlayProps) {
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
 
   return (
@@ -68,6 +75,7 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
             </p>
           ) : null}
 
+          <ReelSoundLabel reel={reel} isOwn={isOwn} onUseOriginal={onUseOriginalSound} pending={useSoundPending} />
         </div>
       </div>
     </>

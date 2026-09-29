@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
@@ -25,6 +25,8 @@ import { ReelTheaterPanel } from "@/features/reels/components/ReelTheaterPanel";
 import { ReelGapSearch } from "@/features/reels/components/ReelGapSearch";
 import { ReelAudioTracksDialog } from "@/features/reels/components/ReelAudioTracksDialog";
 import { useAudioTracks } from "@/features/reels/hooks/useAudioTracks";
+import { useUseSound } from "@/features/reels/hooks/useSounds";
+import { apiErrorCode } from "@/features/reels/data/audioTracksApi";
 import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
 import { fetchReel } from "@/features/reels/data/reelFeedApi";
 import { feedFromSearch } from "@/features/reels/feed";
@@ -47,6 +49,7 @@ import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
+import { nextSoundStep, reelStageHref, signInHref, soundDestination, soundRefusalMessage, type SoundIntent } from "@/features/reels/sounds";
 import { COMMENTS_TRACK_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
 import { useBatchRelationships } from "@/hooks/useConnections";
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile";
@@ -94,6 +97,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 
 export function ReelsScreen() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const reduceMotion = useReducedMotion();
   const qc = useQueryClient();
   const toast = useGlobalToast();
@@ -349,6 +353,35 @@ export function ReelsScreen() {
     );
   };
 
+  /* ── sounds ────────────────────────────────────────────── */
+  const soundRequest = useUseSound();
+  /**
+   * "Use this sound": to the studio with the sound chosen ("create", the More
+   * row) or to the sound's own page ("page", the sound line). A reel that
+   * plays only its own audio asks the server for its sound first. A signed-out
+   * viewer is sent to sign in.
+   */
+  const startUseSound = (intent: SoundIntent) => {
+    if (!active || soundRequest.isPending) return;
+    const target = active;
+    const step = nextSoundStep({ reel: target, signedIn: Boolean(viewerId), intent });
+    if (step.kind !== "resolve") {
+      router.push(step.href);
+      return;
+    }
+    soundRequest.mutate(step.postId, {
+      onSuccess: (sound) => router.push(soundDestination(intent, sound.id)),
+      onError: (err) => {
+        const code = apiErrorCode(err);
+        if (code === "401" || code === "UNAUTHORIZED") {
+          router.push(signInHref(reelStageHref(target.id)));
+          return;
+        }
+        toast({ type: "error", title: "Could not use this sound", description: soundRefusalMessage(code) });
+      },
+    });
+  };
+
   /* ── clear screen (not in theater: the bar is the UI there) ── */
   useEffect(() => {
     if (!clear.hint) return;
@@ -567,6 +600,8 @@ export function ReelsScreen() {
       onNotInterested={onNotInterested}
       onDontRecommend={onDontRecommend}
       onReport={() => setReportOpen(true)}
+      onUseSound={() => startUseSound("create")}
+      useSoundPending={soundRequest.isPending}
     />
   ) : null;
 
@@ -591,7 +626,7 @@ export function ReelsScreen() {
     onToggleSubscribe: () => void toggleSubscribe(),
   };
   // The author card (comments column and theater panel): the same relationship plus the live toggles.
-  const authorCard = { ...railFollow, onLike, onSave, onShare };
+  const authorCard = { ...railFollow, onLike, onSave, onShare, onUseOriginalSound: () => startUseSound("page"), useSoundPending: soundRequest.isPending };
 
   return (
     <VideoShell app="reels" chrome="sidebar" immersive compactSearch={showComments && desktop && !theater}>
@@ -711,6 +746,9 @@ export function ReelsScreen() {
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
                             onToggleSound={onToggleSound}
+                            isOwn={isOwn}
+                            onUseOriginalSound={() => startUseSound("page")}
+                            useSoundPending={soundRequest.isPending}
                           />
                         )}
                         {/* phone / tablet rail: floats over the stage */}

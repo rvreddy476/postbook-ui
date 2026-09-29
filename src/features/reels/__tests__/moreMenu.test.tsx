@@ -19,12 +19,12 @@ const base = {
   open: true, onClose: noop, reel: { ...other, downloadAllowed: true, reasonText: 'Popular' }, isOwn: false, following: false as const,
   prefs: DEFAULT_PREFS, onPrefsChange: noop, qualityHeights: [720, 1080], captionsAvailable: 'unknown' as const,
   onCopyLink: noop, onDescription: noop, onInterested: noop, onToggleFollow: noop, onBlock: noop, onDelete: noop,
-  onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop,
+  onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop, onUseSound: noop,
 };
 
-test("ascending alphabetical, always: Audio track, Auto scroll, Captions, Description, Don't recommend, Not interested, Playback speed, Quality, Report", () => {
+test("ascending alphabetical, always: Audio track, Auto scroll, Captions, Description, Don't recommend, Not interested, Playback speed, Quality, Report, Use this sound", () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
-  const marks = ['data-row="audio"', 'data-row="auto-scroll"', 'data-row="captions"', 'data-row="description"', 'data-row="dont-recommend"', 'data-row="not-interested"', 'data-row="speed"', 'data-row="quality"', 'data-row="report"'];
+  const marks = ['data-row="audio"', 'data-row="auto-scroll"', 'data-row="captions"', 'data-row="description"', 'data-row="dont-recommend"', 'data-row="not-interested"', 'data-row="speed"', 'data-row="quality"', 'data-row="report"', 'data-row="use-sound"'];
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
@@ -86,6 +86,23 @@ test("the card in CSS: the theme surface, radius 12, 4px padding, 40px rows 12px
   const block = css.slice(css.indexOf('.reel-more-menu[role="menu"]'), css.indexOf('.reel-speed-panel__normal'));
   expect(block.match(/#[0-9a-f]{3,8}\b/gi)).toBeNull();
   expect(block.match(/rgba?\((?!var\()[^)]*\)/g)).toEqual(['rgb(0 0 0 / .28)']);
+});
+
+test('Use this sound: last in the list, one row, gone when the creator turned reuse off, waiting while the request runs', () => {
+  const html = renderToStaticMarkup(<ReelMoreMenu {...base} />);
+  expect((html.match(/data-row="use-sound"/g) ?? []).length).toBe(1);
+  expect(html).toContain('<span class="reel-more-menu__title">Use this sound</span>');
+  expect(html.indexOf('data-row="use-sound"')).toBeGreaterThan(html.indexOf('data-row="report"'));
+  // The labels as drawn, top to bottom, are in ascending order.
+  const labels = html.split('<span class="reel-more-menu__title">').slice(1).map((part) => part.slice(0, part.indexOf('<')).split('&#x27;').join("'"));
+  expect(labels.length).toBeGreaterThan(8);
+  expect([...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))).toEqual(labels);
+  const locked = renderToStaticMarkup(<ReelMoreMenu {...base} reel={{ ...base.reel, soundReuseAllowed: false }} />);
+  expect(locked).not.toContain('data-row="use-sound"');
+  const own = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} reel={{ ...base.reel, soundReuseAllowed: false }} />);
+  expect(own).toContain('data-row="use-sound"');
+  const pending = renderToStaticMarkup(<ReelMoreMenu {...base} useSoundPending />);
+  expect(pending).toContain('disabled="" data-row="use-sound"');
 });
 
 test('own reel: no Report or Not interested; the playback rows stay; Theater is not a row', () => {

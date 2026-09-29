@@ -37,6 +37,23 @@ export interface FeedAuthor {
   avatar_url?: string | null;
 }
 
+/**
+  The added sound a post plays, as post-service answers it (and feed-service
+  passes it through). Every field is optional on the wire: Go sends zero
+  values ("" and 0) where a value is unset, and the object itself is left
+  out when the post plays no added sound or this viewer may not hear it.
+*/
+export interface FeedSound {
+  id?: string | null;
+  title?: string | null;
+  artist?: string | null;
+  duration_ms?: number | null;
+  start_ms?: number | null;
+  use_count?: number | null;
+  source_post_id?: string | null;
+  creator_user_id?: string | null;
+}
+
 /** The subset of HydratedPost the reels page consumes. */
 export interface FeedReelPost {
   id: string;
@@ -62,6 +79,27 @@ export interface FeedReelPost {
   channel?: { user_id: string; name?: string; handle?: string; avatar_url?: string | null } | null;
   reason?: string | null;
   reason_text?: string | null;
+  /** The added sound's id; stays on the wire even when `sound` is withheld from this viewer. */
+  audio_track_id?: string | null;
+  audio_start_ms?: number | null;
+  sound?: FeedSound | null;
+  remix_setting?: string | null;
+  original_audio_volume?: number | null;
+  overlay_audio_volume?: number | null;
+}
+
+/** The added sound a reel plays, normalised. */
+export interface ReelSound {
+  id: string;
+  title: string;
+  artist: string;
+  /** Where in the sound playback starts. */
+  startMs: number;
+  /** 0 when the server did not say; the player then reads it from the file. */
+  durationMs: number;
+  useCount: number;
+  /** The reel the sound was taken from, when there is one. */
+  sourcePostId: string | null;
 }
 
 export interface ReelItem {
@@ -88,6 +126,18 @@ export interface ReelItem {
   downloadAllowed: boolean;
   isProcessing: boolean;
   reasonText: string | null;
+  /** The added sound this viewer may hear; null when the reel plays only its own audio. */
+  sound: ReelSound | null;
+  /** The creator's level for the reel's own audio, 0..1 (0 is a real choice: muted). */
+  originalVolume: number;
+  /** The creator's level for the added sound, 0..1. */
+  overlayVolume: number;
+  /**
+   * The creator lets others reuse this reel's audio (`remix_setting` is not
+   * "disallow"). The author may always reuse their own: canUseSound in
+   * sounds.ts adds that, because the model does not know the viewer.
+   */
+  soundReuseAllowed: boolean;
   media: {
     mediaId: string;
     width: number;
@@ -136,6 +186,47 @@ export function isShortForm(post: FeedReelPost): boolean {
   return true;
 }
 
+/** The title a sound shows when the server sent none. */
+export const ORIGINAL_SOUND_TITLE = "Original sound";
+
+function wholeMs(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+}
+
+/**
+  A sound object off the wire → ReelSound, or null when it is no sound at
+  all. Go zero values fall through like absent ones: an empty id is no
+  sound, an empty title reads "Original sound", a start of 0 falls back to
+  the post's own `audio_start_ms`. media-service's spelling of the same
+  row (usage_count, source_reel_id) is read too.
+*/
+export function toReelSound(raw: unknown, postStartMs?: unknown): ReelSound | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const id = text(o.id);
+  if (!id) return null;
+  return {
+    id,
+    title: text(o.title) || ORIGINAL_SOUND_TITLE,
+    artist: text(o.artist),
+    startMs: wholeMs(o.start_ms) || wholeMs(postStartMs),
+    durationMs: wholeMs(o.duration_ms),
+    useCount: wholeMs(o.use_count) || wholeMs(o.usage_count),
+    sourcePostId: text(o.source_post_id) || text(o.source_reel_id) || null,
+  };
+}
+
+/**
+  A creator volume off the wire. Absent (or not a number) is 1; a present 0
+  is a real 0 — the creator muted that side of the mix — so this is the one
+  field where a Go zero value must NOT fall through.
+*/
+export function wireVolume(raw: unknown): number {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return 1;
+  return Math.max(0, Math.min(1, raw));
+}
+
 const RUNG = /^(\d{3,4})p$/;
 
 export function toReelItem(post: FeedReelPost): ReelItem | null {
@@ -173,6 +264,10 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     downloadAllowed: post.allow_download === true,
     isProcessing: post.is_processing === true || video.status === "processing",
     reasonText: post.reason_text || null,
+    sound: toReelSound(post.sound, post.audio_start_ms),
+    originalVolume: wireVolume(post.original_audio_volume),
+    overlayVolume: wireVolume(post.overlay_audio_volume),
+    soundReuseAllowed: (post.remix_setting || "").toLowerCase() !== "disallow",
     media: {
       mediaId: video.media_id,
       width: video.width ?? 1080,

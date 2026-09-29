@@ -2,6 +2,7 @@ import api from "@/lib/api";
 
 import { saveChapters } from "@/features/posttube/hub/hubApi";
 
+import { studioSoundFields } from "./studioSound";
 import type { StudioFormState } from "./types";
 
 /**
@@ -9,7 +10,8 @@ import type { StudioFormState } from "./types";
  * publish path that creates the post directly (no draft was saved). Before
  * this the direct create sent only the caption, so a long video was refused
  * with TITLE_REQUIRED and its topic, settings and schedule were dropped.
- * Field names are post-service CreatePostRequest's.
+ * Field names are post-service CreatePostRequest's. A chosen sound adds
+ * audio_track_id and audio_start_ms; with none chosen neither is sent.
  */
 export function studioCreateFields(form: StudioFormState): Record<string, unknown> {
   const out: Record<string, unknown> = {
@@ -26,6 +28,7 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
     comment_access: form.commentAccess,
     original_audio_volume: form.originalAudioVolume,
     overlay_audio_volume: form.overlayAudioVolume,
+    ...studioSoundFields(form),
   };
   if (form.category) out.category = form.category;
   if (form.language) out.language = form.language;

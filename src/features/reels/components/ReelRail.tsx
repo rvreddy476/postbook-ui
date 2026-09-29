@@ -9,6 +9,7 @@ import { RailBookmark, RailBubble, RailHeart, RailShare } from "@/features/reels
 import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
+import { soundPageHref } from "@/features/reels/sounds";
 
 interface ReelRailProps {
   reel: ReelItem;
@@ -125,7 +126,14 @@ export function ReelRail({
       ) : null}
       {desktop ? (
         // TikTok's sound disc: 44px in a 52px slot at the very bottom, turning while the reel plays.
-        <Link href={profileHref} className="reel-rail-disc" aria-label={`More from ${reel.authorName}`} data-playing={playing ? "" : undefined}>
+        // With an added sound it opens that sound's page; otherwise it is the author's profile.
+        <Link
+          href={reel.sound ? soundPageHref(reel.sound.id) : profileHref}
+          className="reel-rail-disc"
+          aria-label={reel.sound ? `Sound: ${reel.sound.title}` : `More from ${reel.authorName}`}
+          data-sound={reel.sound ? "" : undefined}
+          data-playing={playing ? "" : undefined}
+        >
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
         </Link>
       ) : null}

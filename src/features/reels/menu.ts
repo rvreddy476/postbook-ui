@@ -1,4 +1,5 @@
 import type { ReelItem } from "@/features/reels/model";
+import { canUseSound } from "@/features/reels/sounds";
 
 /*
   What the "More" menu and the overlay's author row offer for a given reel,
@@ -8,6 +9,9 @@ import type { ReelItem } from "@/features/reels/model";
   - suggested     → Interested (the reel carries a reason_text)
   - relationship  → Follow / Unfollow only once it is known; unknown = no row
   - channel reel  → Subscribe on the author row, otherwise Follow
+  - sound         → Use this sound, when the reel plays an added sound or its
+                    own audio may be reused (canUseSound: the creator allows
+                    it, or the reel is the viewer's own)
 */
 
 export type MoreMenuItemKey =
@@ -23,7 +27,8 @@ export type MoreMenuItemKey =
   | "clear-screen"
   | "not-interested"
   | "dont-recommend"
-  | "report";
+  | "report"
+  | "use-sound";
 
 export interface MoreMenuContext {
   isOwn: boolean;
@@ -46,7 +51,9 @@ export const MENU_SPEEDS = [0.25, 1, 1.25, 1.5, 2] as const;
 /**
  * The mapped rows in display order, around the playback rows. The founder's
  * cut (2026-09-27, YouTube Shorts' list): Description, then Not interested,
- * Don't recommend this channel, Report. The other actions (copy link, download, follow, block, delete,
+ * Don't recommend this channel, Report; and Use this sound (2026-09-29,
+ * original sounds) on any reel whose sound may be reused, the viewer's own
+ * included. The other actions (copy link, download, follow, block, delete,
  * clear screen, don't recommend, why) keep their renderers and handlers
  * but are not offered until asked for again. Separators are the
  * renderer's business.
@@ -55,6 +62,7 @@ export function moreMenuItems(reel: ReelItem, ctx: MoreMenuContext): MoreMenuIte
   const items: MoreMenuItemKey[] = [];
   if (reel.caption || reel.hashtags.length) items.push("description");
   if (!ctx.isOwn) items.push("not-interested", "dont-recommend", "report");
+  if (canUseSound(reel, ctx.isOwn)) items.push("use-sound");
   return items;
 }
 

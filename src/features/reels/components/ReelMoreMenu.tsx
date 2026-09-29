@@ -14,6 +14,7 @@ import {
   Gauge,
   Info,
   Link2,
+  Music2,
   SlidersHorizontal,
   Sparkles,
   Trash2,
@@ -73,6 +74,10 @@ interface ReelMoreMenuProps {
   onNotInterested: () => void;
   onDontRecommend: () => void;
   onReport: () => void;
+  /** "Use this sound": takes the reel's sound to the studio. */
+  onUseSound: () => void;
+  /** That request is in flight: the row waits. */
+  useSoundPending?: boolean;
   /**
    * "beside" (default): the card opens to the left of its trigger, growing
    * upward — the theater bar and the phone rail. "below": right-aligned
@@ -92,7 +97,7 @@ export function speedValueLabel(speed: number): string {
   YouTube Shorts' More card with our rows, always in ascending alphabetical
   order (the founder's rule): Audio track · Auto scroll · Captions ·
   Description · Don't recommend this channel · Not interested · Playback
-  speed · Quality · Report. Rows that hold a choice show the current value
+  speed · Quality · Report · Use this sound. Rows that hold a choice show the current value
   and a chevron and open a pane inside the same card (speed is YouTube's
   slider panel: the readout, − / + in 0.05 steps, preset chips). Audio
   track is always offered; with no alternate the pane says so, and the
@@ -125,6 +130,8 @@ export function ReelMoreMenu({
   onNotInterested,
   onDontRecommend,
   onReport,
+  onUseSound,
+  useSoundPending,
   anchor = "beside",
 }: ReelMoreMenuProps) {
   const [pane, setPane] = useState<Pane>("root");
@@ -184,6 +191,8 @@ export function ReelMoreMenu({
         return <Row key={key} icon={<UserX />} label="Don't recommend this channel" hint={handle} dataRow="dont-recommend" onClick={run(onDontRecommend)} />;
       case "report":
         return <Row key={key} icon={<Flag />} label="Report" dataRow="report" danger onClick={run(onReport)} />;
+      case "use-sound":
+        return <Row key={key} icon={<Music2 />} label="Use this sound" dataRow="use-sound" disabled={useSoundPending} onClick={run(onUseSound)} />;
       default:
         return null;
     }
@@ -195,6 +204,7 @@ export function ReelMoreMenu({
       case "not-interested": return "Not interested";
       case "dont-recommend": return "Don't recommend this channel";
       case "report": return "Report";
+      case "use-sound": return "Use this sound";
       case "copy-link": return "Copy link";
       case "download": return "Download";
       case "why": return "Why you're seeing this";

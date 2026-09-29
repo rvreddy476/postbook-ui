@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bookmark, Heart, MessageCircle, Send } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
+import { ReelSoundLabel } from "@/features/reels/components/ReelSoundLabel";
 import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 
@@ -21,6 +22,9 @@ export interface ReelAuthorCardProps {
   onLike: () => void;
   onSave: () => void;
   onShare: () => void;
+  /** "Use this sound" for a reel that plays only its own audio; absent = no such line. */
+  onUseOriginalSound?: () => void;
+  useSoundPending?: boolean;
 }
 
 /*
@@ -28,7 +32,9 @@ export interface ReelAuthorCardProps {
   theater panel — TikTok's card above the thread. Avatar 40, the display
   name (18/700, a link) and handle (14/500 muted) with the Follow pill at
   the right (Following outlined; Subscribe for a channel reel; nothing on
-  an own reel); the full description and hashtags; then the counts row —
+  an own reel); the full description and hashtags; the sound line (the
+  overlay is hidden in theater, so this is where it is read there); then
+  the counts row —
   Like, Comments, Save, Share with 16px icons and 12px/700 counts. Like
   and Save are the real toggles, Share opens the sheet. Card colours
   through the tokens, so it is white in the light theme and dark in dark.
@@ -45,6 +51,8 @@ export function ReelAuthorCard({
   onLike,
   onSave,
   onShare,
+  onUseOriginalSound,
+  useSoundPending,
 }: ReelAuthorCardProps) {
   const action = authorAction(reel, isOwn);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
@@ -82,6 +90,8 @@ export function ReelAuthorCard({
           ))}
         </p>
       ) : null}
+
+      <ReelSoundLabel reel={reel} isOwn={isOwn} onUseOriginal={onUseOriginalSound} pending={useSoundPending} tone="card" />
 
       <div className="reel-author-card__counts" role="group" aria-label="Engagement">
         <button type="button" aria-label={reel.viewerLiked ? "Unlike" : "Like"} aria-pressed={reel.viewerLiked} onClick={onLike} className={`reel-panel-count ${reel.viewerLiked ? "is-liked" : ""}`}>

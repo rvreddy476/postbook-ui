@@ -29,6 +29,8 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
 import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
+import { soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
+import { useSoundInfo } from "@/features/reels/hooks/useSounds";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -112,7 +114,8 @@ function extractFrameClientSide(videoUrl: string, timestampMs: number): Promise<
 
 /* ── Hook ──────────────────────────────────────────────── */
 
-export function useUploadStudio(contentType: ContentType) {
+export function useUploadStudio(contentType: ContentType, options: { soundId?: string | null } = {}) {
+  const soundId = options.soundId ?? null;
   const queryClient = useQueryClient();
   const [form, setForm] = useState<StudioFormState>({ ...INITIAL_FORM_STATE, contentType, currentStep: "video" });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -140,6 +143,31 @@ export function useUploadStudio(contentType: ContentType) {
     });
   }, [contentType]);
 
+  /* ── The preselected sound (/reels/create?sound=<id>) ──
+   * Looked up once and put in the form. It is applied once per sound id, so
+   * a sound the creator removed does not come back when the lookup
+   * refreshes. A sound that cannot be used leaves the form as it is: the
+   * studio works as if none was asked for, and the Audio section says why.
+   */
+  const soundLookup = useSoundInfo(soundId);
+  const soundStatus = studioSoundStatus({
+    soundId,
+    isPending: soundLookup.isPending,
+    isError: soundLookup.isError,
+    found: Boolean(soundLookup.data),
+  });
+  const appliedSoundRef = useRef<string | null>(null);
+  useEffect(() => {
+    const found = soundLookup.data;
+    if (!soundId || !found || appliedSoundRef.current === soundId) return;
+    appliedSoundRef.current = soundId;
+    patch({ audioTrack: soundToAudioTrack(found), audioStartMs: 0 });
+  }, [soundId, soundLookup.data, patch]);
+
+  const removeSound = useCallback(() => {
+    patch({ audioTrack: null, audioStartMs: 0, overlayAudioVolume: INITIAL_FORM_STATE.overlayAudioVolume });
+  }, [patch]);
+
   /* ── File selection ──────────────────────────────── */
 
   const selectFile = useCallback(
@@ -158,7 +186,7 @@ export function useUploadStudio(contentType: ContentType) {
 
       setForm((prev) => {
         if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
-        return freshStudioForm(contentType, prev.currentStep, getPublishDefaults());
+        return freshStudioForm(contentType, prev.currentStep, getPublishDefaults(), prev);
       });
 
       const previewUrl = URL.createObjectURL(file);
@@ -224,7 +252,7 @@ export function useUploadStudio(contentType: ContentType) {
     uploadTriggeredRef.current = null;
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
-      return freshStudioForm(contentType, "video", getPublishDefaults());
+      return freshStudioForm(contentType, "video", getPublishDefaults(), prev);
     });
   }, [contentType]);
 
@@ -497,6 +525,7 @@ export function useUploadStudio(contentType: ContentType) {
         content_type: classified,
         original_audio_volume: form.originalAudioVolume,
         overlay_audio_volume: form.overlayAudioVolume,
+        ...studioDraftSoundFields(form),
         cover_media_id: coverMediaIdOverride ?? form.coverResult?.cover_media_id,
         cross_post_postbook: form.crossPostPostbook,
         cross_post_posttube: form.crossPostPosttube,
@@ -729,6 +758,8 @@ export function useUploadStudio(contentType: ContentType) {
     currentStepIndex,
     selectFile,
     clearFile,
+    sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
+    removeSound,
     uploadMutation,
     extractCoverPreview,
     selectCustomCover,

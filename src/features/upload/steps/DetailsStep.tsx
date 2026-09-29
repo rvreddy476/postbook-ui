@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { Image as ImageIcon, Loader2, Music, Volume2, Film, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Image as ImageIcon, Loader2, Film, AlertCircle } from "lucide-react";
 import { SectionHeader, FieldLabel, TagChip, StudioInput, Collapsible } from "../primitives";
 import type { StudioFormState } from "../types";
 import type { ContentType } from "../tokens";
 import { TrimControls } from "@/features/posttube/components/TrimControls";
 import { CategoryOverride } from "@/features/posttube/components/CategoryOverride";
+import { StudioSoundSection } from "../components/StudioSoundSection";
 
 interface DetailsStepProps {
   form: StudioFormState;
@@ -15,6 +16,10 @@ interface DetailsStepProps {
   selectCustomCover: (f: File) => void;
   contentType: ContentType;
   showErrors?: boolean;
+  /** One line when the sound asked for in the address cannot be used. */
+  soundNotice?: string | null;
+  /** Takes the chosen sound off the reel. */
+  onRemoveSound?: () => void;
 }
 
 function fmtMs(ms: number) {
@@ -22,8 +27,15 @@ function fmtMs(ms: number) {
   return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, "0")}`;
 }
 
-export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors }: DetailsStepProps) {
+export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors, soundNotice = null, onRemoveSound }: DetailsStepProps) {
   const coverFileRef = useRef<HTMLInputElement>(null);
+  // The Audio section opens by itself once there is a sound (or a word about one) to show,
+  // and stays as the creator left it afterwards: removing the sound does not fold it away.
+  const audioWorthOpening = Boolean(form.audioTrack) || Boolean(soundNotice);
+  const [audioOpened, setAudioOpened] = useState(audioWorthOpening);
+  useEffect(() => {
+    if (audioWorthOpening) setAudioOpened(true);
+  }, [audioWorthOpening]);
   const isLongStudio = contentType === "long" || contentType === "podcast";
   const isVertical = contentType === "reel" || contentType === "short";
   const totalDurationMs = Math.floor((form.videoDurationSec ?? 0) * 1000);
@@ -353,43 +365,13 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
       )}
 
       {/* ── Audio ── */}
-      <Collapsible title="Audio" defaultOpen={false}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-xl bg-brand-secondary border border-brand-text/10 px-4 py-3">
-            <Music className="h-4 w-4 text-brand-text/50" />
-            <p className="text-[12px] text-brand-text/50">
-              {form.audioTrack ? form.audioTrack.title : "Original audio will be used"}
-            </p>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
-              <span className="text-[12px] text-brand-text/60">Original Audio</span>
-              <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.originalAudioVolume * 100)}%</span>
-            </div>
-            <input
-              type="range" min={0} max={1} step={0.05}
-              value={form.originalAudioVolume}
-              onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
-              className="w-full accent-brand-text"
-            />
-          </div>
-          {form.audioTrack && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
-                <span className="text-[12px] text-brand-text/60">Overlay Audio</span>
-                <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.overlayAudioVolume * 100)}%</span>
-              </div>
-              <input
-                type="range" min={0} max={1} step={0.05}
-                value={form.overlayAudioVolume}
-                onChange={(e) => patch({ overlayAudioVolume: Number(e.target.value) })}
-                className="w-full accent-brand-text"
-              />
-            </div>
-          )}
-        </div>
+      <Collapsible key={audioOpened ? "audio-open" : "audio"} title="Audio" defaultOpen={audioOpened}>
+        <StudioSoundSection
+          form={form}
+          patch={patch}
+          notice={soundNotice}
+          onRemove={onRemoveSound ?? (() => patch({ audioTrack: null, audioStartMs: 0 }))}
+        />
       </Collapsible>
 
       {/* ── Tags ── */}
