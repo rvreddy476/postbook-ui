@@ -4,29 +4,68 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKe
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Clapperboard, ImagePlus, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, Clapperboard, ImagePlus, ListPlus, Mic, PenLine, Plus, Radio, Sparkles, Upload } from "lucide-react";
 import "./app-bar.css";
 
+export type CreateMenuRowKey = "photos" | "videos" | "post" | "live" | "collection" | "podcast" | "upload";
+
 export interface CreateMenuItem {
-  key: "photos" | "videos";
+  key: CreateMenuRowKey;
   label: string;
   hint: string;
   href: string;
 }
 
+export type CreateMenuContext = "reels" | "posttube" | "default";
+
 /**
- * The two things a person can create, as data. Videos goes to the reel
- * composer inside Reels and to the PostTube upload everywhere else.
+ * Where the header lives: Reels, PostTube (`/posttube/*`, and `/tube/*`,
+ * which app/tube redirects there), or anywhere else.
+ */
+export function createMenuContext(pathname: string | null | undefined): CreateMenuContext {
+  if (!pathname) return "default";
+  if (pathname.startsWith("/reels")) return "reels";
+  if (pathname === "/posttube" || pathname.startsWith("/posttube/") || pathname === "/tube" || pathname.startsWith("/tube/")) return "posttube";
+  return "default";
+}
+
+/**
+ * The rows of the Create menu, as data. Reels and the default keep the two
+ * rows (Videos goes to the reel composer inside Reels, to the PostTube
+ * upload elsewhere). Inside PostTube the menu offers what a creator can
+ * make there, in alphabetical order: Create post → the feed composer (the
+ * channel Posts tab reads ordinary posts; there is no channel-only
+ * composer), Go live → /live/new (the form the PostTube Live page links),
+ * New collection → the Collections page with its create sheet open,
+ * New podcast → the podcast upload studio, Upload video → the long-video
+ * upload studio.
  */
 export function createMenuItems(pathname: string | null | undefined): CreateMenuItem[] {
-  const inReels = Boolean(pathname && pathname.startsWith("/reels"));
+  const context = createMenuContext(pathname);
+  if (context === "posttube") {
+    return [
+      { key: "post", label: "Create post", hint: "A text or photo post", href: "/create/post" },
+      { key: "live", label: "Go live", hint: "Start a live stream", href: "/live/new" },
+      { key: "collection", label: "New collection", hint: "Group videos into a list", href: "/posttube/playlists?new=1" },
+      { key: "podcast", label: "New podcast", hint: "Upload an episode", href: "/posttube/upload?type=podcast" },
+      { key: "upload", label: "Upload video", hint: "Publish a long video", href: "/posttube/upload?type=long" },
+    ];
+  }
   return [
     { key: "photos", label: "Photos", hint: "Post photos", href: "/create/post" },
-    { key: "videos", label: "Videos", hint: "Upload a video or reel", href: inReels ? "/reels/create" : "/posttube/upload?type=long" },
+    { key: "videos", label: "Videos", hint: "Upload a video or reel", href: context === "reels" ? "/reels/create" : "/posttube/upload?type=long" },
   ];
 }
 
-const ROW_ICON = { photos: ImagePlus, videos: Clapperboard } as const;
+const ROW_ICON: Record<CreateMenuRowKey, typeof ImagePlus> = {
+  photos: ImagePlus,
+  videos: Clapperboard,
+  post: PenLine,
+  live: Radio,
+  collection: ListPlus,
+  podcast: Mic,
+  upload: Upload,
+};
 
 export interface CreateButtonProps {
   /**
@@ -40,9 +79,10 @@ export interface CreateButtonProps {
 }
 
 /*
-  Create: a dropdown with exactly two rows, Photos and Videos. Escape and
-  an outside click close it; arrows move between the rows; every row is a
-  real link. Style through app-bar.css (.create-menu).
+  Create: a dropdown of the rows createMenuItems() gives for the current
+  pathname (two everywhere, five inside PostTube). Escape and an outside
+  click close it; arrows move between the rows; every row is a real link.
+  Style through app-bar.css (.create-menu).
 */
 export function CreateButton({ variant = "icon", defaultOpen = false }: CreateButtonProps) {
   const pathname = usePathname();

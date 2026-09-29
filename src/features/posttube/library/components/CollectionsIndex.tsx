@@ -15,8 +15,21 @@ import "./library.css";
 /*
   /posttube/playlists — Collections: the two system lists as fixed links,
   then the viewer's own collections, and a create sheet (title,
-  description, visibility) on the existing useCreatePlaylist.
+  description, visibility) on the existing useCreatePlaylist. `?new=1`
+  (the header Create menu's "New collection") opens the sheet on arrival.
 */
+
+/** True when the query asks for the create sheet open: `?new=1`. */
+export function wantsNewCollection(search: string | URLSearchParams | null | undefined): boolean {
+  if (!search) return false;
+  const params = typeof search === "string" ? new URLSearchParams(search.startsWith("?") ? search.slice(1) : search) : search;
+  return params.get("new") === "1";
+}
+
+export interface CollectionsIndexProps {
+  /** Arrive with the create sheet already open (`/posttube/playlists?new=1`). */
+  openNew?: boolean;
+}
 
 const VIS_ICON: Record<CollectionVisibility, typeof Globe> = { public: Globe, unlisted: Link2, private: Lock };
 const VIS_LABEL: Record<CollectionVisibility, string> = { public: "Public", unlisted: "Unlisted", private: "Private" };
@@ -41,7 +54,7 @@ function CollectionCard({ c, onDelete }: { c: Collection; onDelete: () => void }
   );
 }
 
-export function CollectionsIndex() {
+export function CollectionsIndex({ openNew = false }: CollectionsIndexProps = {}) {
   const user = useAuthUser();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -52,7 +65,7 @@ export function CollectionsIndex() {
   const create = useCreatePlaylist();
   const del = useDeletePlaylist();
 
-  const [showNew, setShowNew] = useState(false);
+  const [showNew, setShowNew] = useState(openNew);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [visibility, setVisibility] = useState<CollectionVisibility>("private");

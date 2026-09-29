@@ -8,6 +8,7 @@ import { resolve } from "node:path";
 
 import { CollectionView, type CollectionViewProps } from "../components/CollectionView";
 import { CollectionScreen } from "../components/CollectionScreen";
+import { CollectionsIndex, wantsNewCollection } from "../components/CollectionsIndex";
 import { LIBRARY_KEYS } from "../hooks/useCollection";
 import { normalizeItems, normalizePlaylist, type Collection, type CollectionItem } from "../libraryApi";
 
@@ -127,6 +128,30 @@ describe("CollectionScreen", () => {
     expect(html).toContain("← Collections");
     expect(html).toContain('href="/posttube/playlists"');
     expect(html).toContain("Late night builds");
+  });
+});
+
+describe("Collections index: ?new=1 opens the create sheet on arrival", () => {
+  test("wantsNewCollection reads new=1 from a string or URLSearchParams and nothing else", () => {
+    expect(wantsNewCollection("?new=1")).toBe(true);
+    expect(wantsNewCollection("new=1")).toBe(true);
+    expect(wantsNewCollection(new URLSearchParams("sort=recent&new=1"))).toBe(true);
+    expect(wantsNewCollection("?new=0")).toBe(false);
+    expect(wantsNewCollection("?new=")).toBe(false);
+    expect(wantsNewCollection("?open=1")).toBe(false);
+    expect(wantsNewCollection("")).toBe(false);
+    expect(wantsNewCollection(null)).toBe(false);
+    expect(wantsNewCollection(undefined)).toBe(false);
+  });
+
+  test("openNew renders the New collection sheet in the first paint; without it only the heading", () => {
+    const opened = wrap(<CollectionsIndex openNew />);
+    expect(opened).toContain('id="tube-collections-title" class="tube-library__title">Collections<');
+    expect(opened).toContain('class="tube-library__sheet" aria-label="New collection"');
+    expect(opened).toContain(">Create<");
+    const plain = wrap(<CollectionsIndex />);
+    expect(plain).toContain(">Collections<");
+    expect(plain).not.toContain('aria-label="New collection"');
   });
 });
 

@@ -57,5 +57,6 @@ export type { CollectionScreenProps } from "./components/CollectionScreen";
 export { CollectionView } from "./components/CollectionView";
 export type { CollectionViewProps } from "./components/CollectionView";
 export { CollectionRow } from "./components/CollectionRow";
-export { CollectionsIndex } from "./components/CollectionsIndex";
+export { CollectionsIndex, wantsNewCollection } from "./components/CollectionsIndex";
+export type { CollectionsIndexProps } from "./components/CollectionsIndex";
 export { RecentScreen } from "./components/RecentScreen";
