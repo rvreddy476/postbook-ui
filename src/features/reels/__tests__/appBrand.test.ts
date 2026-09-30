@@ -19,7 +19,8 @@ describe("resolveAppBrand", () => {
     expect(resolveAppBrand("/reels/3f860f61").key).toBe("reels");
     expect(resolveAppBrand("/posttube/watch/abc").name).toBe("PostTube");
     expect(resolveAppBrand("/groups/9c80/settings").name).toBe("Groups");
-    expect(resolveAppBrand("/commerce").name).toBe("Shop");
+    expect(resolveAppBrand("/shop/products/1").name).toBe("MStore");
+    expect(resolveAppBrand("/commerce").key).toBe("shop");
   });
 
   test("the root and unknown routes fall back to the product name", () => {

@@ -124,7 +124,7 @@ export default function PagesDiscoveryPage() {
 
                 {/* Sell on AtPost CTA */}
                 <Link
-                    href="/commerce"
+                    href="/shop"
                     className="flex items-center justify-between mb-6 px-5 py-4 bg-[#1A1A1A] rounded-2xl text-white hover:bg-foreground transition"
                 >
                     <div>

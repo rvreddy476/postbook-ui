@@ -92,7 +92,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
       return;
     }
     if (tab === 'Shop') {
-      router.push('/commerce');
+      router.push('/shop');
       return;
     }
     if (tab === 'Ask') {

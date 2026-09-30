@@ -28,7 +28,7 @@ export function LandingHero() {
 
         {/* Commerce CTA */}
         <Link
-          href="/commerce"
+          href="/shop"
           className="inline-flex items-center gap-3 px-5 py-3 bg-brand-card border border-brand-divider rounded-2xl text-brand-text text-xs font-black tracking-widest hover:border-brand-accent transition-all group"
         >
           <span className="text-lg">🛍️</span>

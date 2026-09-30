@@ -18,7 +18,7 @@ describe("APP_LAUNCHER", () => {
     for (const [key, href] of [
       ["home", "/"], ["reels", "/reels"], ["tube", "/posttube"], ["groups", "/groups"],
       ["communities", "/communities"], ["connections", "/connections"], ["messenger", "/messenger"],
-      ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/commerce"], ["match", "/postmatch"],
+      ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/shop"], ["match", "/postmatch"],
       ["trending", "/trending"], ["memories", "/memories"], ["saved", "/saved"], ["notifications", "/notifications"],
     ] as const) {
       expect(byKey.get(key)?.href).toBe(href);
@@ -32,7 +32,7 @@ describe("APP_LAUNCHER", () => {
 describe("filterAppLauncher", () => {
   test("filtering by 'shop' returns the Shop tile", () => {
     const hits = filterAppLauncher("shop");
-    expect(hits.some((t) => t.key === "shop" && t.name === "Shop")).toBe(true);
+    expect(hits.some((t) => t.key === "shop" && t.name === "MStore")).toBe(true);
     expect(hits.every((t) => t.key !== "reels")).toBe(true);
   });
 

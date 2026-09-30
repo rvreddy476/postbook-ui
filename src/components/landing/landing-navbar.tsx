@@ -15,7 +15,7 @@ export function LandingNavbar() {
         
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/commerce" className="text-xs font-bold tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
+          <Link href="/shop" className="text-xs font-bold tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
             Sell on VChat
           </Link>
           <Link href="/login" className="text-xs font-bold tracking-[0.25em] text-brand-text/60 transition-all hover:text-brand-text">
@@ -46,7 +46,7 @@ export function LandingNavbar() {
         <div className="absolute left-0 top-20 w-full border-b border-brand-divider bg-brand-bg/95 p-6 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-6">
             <Link
-              href="/commerce"
+              href="/shop"
               onClick={() => setIsOpen(false)}
               className="text-sm font-bold tracking-[0.2em] text-brand-text"
             >

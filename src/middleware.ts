@@ -53,6 +53,13 @@ const PUBLIC_EXACT = new Set([
     // the seller pitch and links to /login?redirect=/seller/onboarding itself;
     // /grievance is the grievance-officer contact page.
     "/commerce",
+    // The MStore storefront works signed out: the home page and the browse
+    // page are exact entries here, and product pages are a prefix below.
+    // Listed one by one on purpose — a "/shop/" prefix would also open
+    // /shop/bag, /shop/favourites, /shop/addresses, /shop/checkout and
+    // /shop/orders, which stay gated.
+    "/shop",
+    "/shop/browse",
     "/grievance",
     "/apps",
     "/posts-demo",
@@ -87,8 +94,10 @@ const PUBLIC_PREFIXES = [
     // it must be reachable signed out so a push's /tube/watch/{id} reaches
     // the public watch page. The destination is gated on its own path.
     "/tube/",
-    // Storefront product detail — a shared product link should open.
+    // Storefront product detail — a shared product link should open. The old
+    // /products/:id path only redirects to the new one.
     "/products/",
+    "/shop/products/",
 ]
 
 /**

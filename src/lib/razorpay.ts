@@ -17,11 +17,14 @@ export interface RazorpayHandlerResponse {
 }
 
 export interface RazorpayCheckoutOptions {
-  // From NEXT_PUBLIC_RAZORPAY_KEY_ID.
+  // The publishable key, from the payment intent's `client_session.key_id`
+  // (POST /v1/commerce/orders/:id/payment/intent). Never from an env var:
+  // only the server that minted the order knows which key that order
+  // belongs to, and a key compiled into the bundle can disagree with it.
   key: string
-  // Razorpay order_id returned by payments-service as `provider_ref`.
+  // Razorpay order_id from the same `client_session.order_id`.
   order_id: string
-  // Amount is in paise (smallest currency unit). For INR, multiply rupees by 100.
+  // Amount in paise, as the intent's `amount_minor`; never computed here.
   amount: number
   currency: string
   name?: string
