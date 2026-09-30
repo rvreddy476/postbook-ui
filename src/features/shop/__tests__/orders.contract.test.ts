@@ -21,8 +21,8 @@ import { hasFixture, readBackendFixture, readFixture, readLocalFixtureText } fro
   orders/ fixtures (lane C1):
     orders_list_200, order_get_200_confirmed, order_get_200_delivered,
     order_get_200_payment_failed, order_items_get_200, order_shipments_get_200,
-    order_invoice_get_200, order_cancel_post_200
-  reviews/ fixtures: review_post_201, review_post_403_not_delivered
+    order_invoice_get_200, order_cancel_post_204
+  reviews/ fixtures: review_post_201, review_post_400_not_delivered
 */
 const AREA = "orders"
 const only = (area: string, name: string) => (hasFixture(area, name) ? test : test.skip)
@@ -83,8 +83,8 @@ describe("order fixtures parse through the mappers", () => {
     expect(toInvoiceLink(data)?.url).toBe(data.download_url!)
   })
 
-  only("reviews", "review_post_403_not_delivered")("review_post_403_not_delivered: the pinned refusal code becomes the one sentence", () => {
-    const { error } = readFixture("reviews", "review_post_403_not_delivered")
+  only("reviews", "review_post_400_not_delivered")("review_post_400_not_delivered: the pinned refusal code becomes the one sentence", () => {
+    const { error } = readFixture("reviews", "review_post_400_not_delivered")
     expect(error?.code).toBeTruthy()
     expect(reviewRefusalMessage(error!.code)).toBe("You can review this once it is delivered.")
   })
@@ -99,9 +99,9 @@ describe("order and review fixtures are byte-identical to the backend's", () => 
     [AREA, "order_items_get_200"],
     [AREA, "order_shipments_get_200"],
     [AREA, "order_invoice_get_200"],
-    [AREA, "order_cancel_post_200"],
+    [AREA, "order_cancel_post_204"],
     ["reviews", "review_post_201"],
-    ["reviews", "review_post_403_not_delivered"],
+    ["reviews", "review_post_400_not_delivered"],
   ]
   for (const [area, name] of files) {
     const backend = hasFixture(area, name) ? readBackendFixture(area, name) : null

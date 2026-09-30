@@ -27,7 +27,9 @@ function fixtures(): { name: string; body: unknown; raw: Buffer }[] {
     .sort()
     .map((name) => {
       const raw = readFileSync(join(LOCAL, name))
-      return { name, raw, body: JSON.parse(raw.toString("utf8")) }
+      // A 204 golden is an empty file: there is no body to parse.
+      const text = raw.toString("utf8").trim()
+      return { name, raw, body: text ? JSON.parse(text) : null }
     })
 }
 

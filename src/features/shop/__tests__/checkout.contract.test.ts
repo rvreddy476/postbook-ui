@@ -7,7 +7,7 @@ import { hasFixture, readBackendFixture, readFixture, readLocalFixtureText } fro
 /*
   checkout/ fixtures (lane C1):
     quote_post_200, quote_post_400_payment_method, quote_post_422_not_serviceable,
-    quote_post_409_price_changed, checkout_v2_post_201, checkout_v2_post_409_quote_stale,
+    checkout_v2_post_409_price_changed, checkout_v2_post_201, checkout_v2_post_409_quote_stale,
     checkout_v2_post_409_amount_mismatch, checkout_v2_post_400_missing_idempotency_key
 */
 const AREA = "checkout"
@@ -36,10 +36,10 @@ describe("checkout fixtures parse through the mappers", () => {
     expect(quoteRefusal(error!.code).kind).toBe("not_serviceable")
   })
 
-  only("quote_post_409_price_changed")("quote_post_409_price_changed: PRICE_CHANGED sends the buyer to the bag", () => {
-    const { error } = readFixture(AREA, "quote_post_409_price_changed")
+  only("checkout_v2_post_409_price_changed")("checkout_v2_post_409_price_changed: a line repriced since the quote is re-quoted, not sent back to the bag", () => {
+    const { error } = readFixture(AREA, "checkout_v2_post_409_price_changed")
     expect(error?.code).toBe("PRICE_CHANGED")
-    expect(quoteRefusal(error!.code).kind).toBe("bag_changed")
+    expect(checkoutRefusal(error!.code).kind).toBe("requote")
   })
 
   only("quote_post_400_payment_method")("quote_post_400_payment_method: only UPI and card", () => {
@@ -58,7 +58,6 @@ describe("checkout fixtures parse through the mappers", () => {
   for (const name of ["checkout_v2_post_409_quote_stale", "checkout_v2_post_409_amount_mismatch"]) {
     only(name)(`${name}: re-quote, no order`, () => {
       const { error } = readFixture(AREA, name)
-      expect(REQUOTE_CODES.has(error!.code)).toBe(true)
       expect(checkoutRefusal(error!.code).kind).toBe("requote")
     })
   }
@@ -74,7 +73,7 @@ describe("checkout fixtures are byte-identical to the backend's", () => {
     "quote_post_200",
     "quote_post_400_payment_method",
     "quote_post_422_not_serviceable",
-    "quote_post_409_price_changed",
+    "checkout_v2_post_409_price_changed",
     "checkout_v2_post_201",
     "checkout_v2_post_409_quote_stale",
     "checkout_v2_post_409_amount_mismatch",

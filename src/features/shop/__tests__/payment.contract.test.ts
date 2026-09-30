@@ -17,7 +17,7 @@ import { hasFixture, readBackendFixture, readFixture, readLocalFixtureText } fro
 
 /*
   payment/ fixtures (lane C1):
-    payment_intent_post_201_razorpay, payment_intent_post_201_stub,
+    payment_intent_post_200_razorpay, payment_intent_post_200_stub,
     order_payment_get_200_confirming, order_payment_get_200_paid,
     order_payment_get_200_paid_refund_pending, order_payment_get_200_failed,
     payment_status_get_200
@@ -27,8 +27,8 @@ const AREA = "payment"
 const only = (name: string) => (hasFixture(AREA, name) ? test : test.skip)
 
 describe("payment fixtures parse through the mappers", () => {
-  only("payment_intent_post_201_razorpay")("payment_intent_post_201_razorpay: Razorpay opens from client_session alone", () => {
-    const { data } = readFixture<WirePaymentIntent>(AREA, "payment_intent_post_201_razorpay")
+  only("payment_intent_post_200_razorpay")("payment_intent_post_200_razorpay: Razorpay opens from client_session alone", () => {
+    const { data } = readFixture<WirePaymentIntent>(AREA, "payment_intent_post_200_razorpay")
     expect(data.client_session?.provider).toBe("razorpay")
     const intent = toPaymentIntent(data)
     expect(intent.provider).toBe("razorpay")
@@ -40,8 +40,8 @@ describe("payment fixtures parse through the mappers", () => {
     expect(options.name).toBe(data.client_session!.merchant_display_name!)
   })
 
-  only("payment_intent_post_201_stub")("payment_intent_post_201_stub: the stub button, and the confirm body", () => {
-    const { data } = readFixture<WirePaymentIntent>(AREA, "payment_intent_post_201_stub")
+  only("payment_intent_post_200_stub")("payment_intent_post_200_stub: the stub button, and the confirm body", () => {
+    const { data } = readFixture<WirePaymentIntent>(AREA, "payment_intent_post_200_stub")
     const intent = toPaymentIntent(data)
     expect(intent.provider).toBe("stub")
     expect(showsStubButton(intent)).toBe(true)
@@ -81,8 +81,8 @@ describe("the poll reducer, table-tested against order_payment_get_200_*", () =>
 
 describe("payment fixtures are byte-identical to the backend's", () => {
   for (const name of [
-    "payment_intent_post_201_razorpay",
-    "payment_intent_post_201_stub",
+    "payment_intent_post_200_razorpay",
+    "payment_intent_post_200_stub",
     "order_payment_get_200_confirming",
     "order_payment_get_200_paid",
     "order_payment_get_200_paid_refund_pending",

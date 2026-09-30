@@ -245,6 +245,12 @@ export function checkoutRefusal(code: string): CheckoutRefusal {
     return { kind: "requote", message: "The total changed. Check the new total and pay again." }
   }
   switch (code) {
+    // At checkout, a total that no longer matches the quote comes back as
+    // 409 PRICE_CHANGED with the new total (the golden
+    // checkout_v2_post_409_amount_mismatch). The bag is unchanged, so the
+    // answer is a fresh quote, not a trip back to the bag.
+    case "PRICE_CHANGED":
+      return { kind: "requote", message: "The total changed. Check the new total and pay again." }
     case "IDEMPOTENCY_CONFLICT":
       return { kind: "requote", message: "That attempt is out of date. Check the total and pay again." }
     default:
