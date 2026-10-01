@@ -648,3 +648,46 @@ select.shop-input { appearance: auto; }
 .shop-sell-gallery__img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: rgb(var(--brand-text) / 0.06); }
 .shop-sell-gallery__meta { display: flex; flex-direction: column; gap: 4px; }
 .shop-sell-gallery__btns { display: flex; align-items: center; gap: 4px; }
+
+/* == Engagement: delivery date, like / dislike, share, review votes (1 Oct 2026) == */
+.shop-delivery { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--brand-divider); border-radius: 12px; background: rgb(var(--brand-card)); }
+.shop-delivery__icon { flex: none; margin-top: 2px; color: rgb(var(--text-muted)); }
+.shop-delivery__body { flex: 1 1 auto; min-width: 0; }
+.shop-delivery__headline { margin: 0; font-size: 13px; font-weight: 500; color: rgb(var(--brand-text)); }
+.shop-delivery__headline--warn { color: rgb(var(--warning)); }
+.shop-delivery__to { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 12px; color: rgb(var(--text-muted)); }
+.shop-delivery__change { padding: 0; border: 0; background: none; font: inherit; font-weight: 500; color: rgb(var(--brand-ink)); cursor: pointer; }
+.shop-delivery__change:hover { text-decoration: underline; }
+.shop-delivery__form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.shop-delivery__input { width: 120px; flex: 0 0 120px; letter-spacing: .04em; }
+.shop-delivery__error { width: 100%; margin: 0; }
+
+.shop-pdp__engage { display: flex; flex: none; align-items: center; gap: 2px; margin-left: auto; }
+/* On a phone the four icons drop under a long title instead of squeezing it. */
+.shop-pdp__title-row:has(> .shop-pdp__engage) { flex-wrap: wrap; row-gap: 4px; }
+.shop-pdp__title-row:has(> .shop-pdp__engage) > .shop-pdp__title { flex: 1 1 220px; min-width: 0; }
+.shop-react { display: inline-flex; align-items: center; gap: 2px; }
+.shop-react__btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 34px; height: 34px; padding: 0 8px; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--brand-text)); font-size: 12px; text-decoration: none; cursor: pointer; transition: background .15s; }
+.shop-react__btn:hover { background: rgb(var(--brand-text) / .06); }
+.shop-react__btn:disabled { cursor: progress; }
+.shop-react__btn--on { color: rgb(var(--brand-ink)); }
+.shop-react__count { font-variant-numeric: tabular-nums; color: rgb(var(--text-muted)); }
+.shop-react__btn--on .shop-react__count { color: inherit; }
+.shop-share { display: inline-flex; }
+.shop-share__panel { min-width: 180px; }
+.shop-share__item { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+
+.shop-card__likes { display: inline-flex; align-items: center; gap: 3px; }
+.shop-card__meta .shop-card__likes svg { color: rgb(var(--text-muted)); }
+
+.shop-reviews__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.shop-reviews__sort { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: rgb(var(--text-muted)); }
+.shop-reviews__sort select { width: auto; }
+.shop-review__votes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.shop-review__vote { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px; border: 1px solid var(--brand-divider); border-radius: 999px; background: transparent; color: rgb(var(--text-muted)); font-size: 11px; text-decoration: none; cursor: pointer; }
+.shop-review__vote:hover { background: rgb(var(--brand-text) / .04); }
+.shop-review__vote--on { border-color: rgb(var(--brand-outline)); background: rgb(var(--brand-tint)); color: rgb(var(--brand-ink)); }
+.shop-review__vote:disabled { cursor: progress; }
+
+.shop-checkout__arrives { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; font-weight: 500; color: rgb(var(--success)); }
+@media (prefers-reduced-motion: reduce) { .shop-react__btn { transition: none; } }

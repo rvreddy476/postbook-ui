@@ -6,13 +6,14 @@
   the price expires) are decided in model/checkout.ts.
 */
 
-import { Clock, MapPin, Plus } from "lucide-react"
+import { Clock, MapPin, Plus, Truck } from "lucide-react"
 import Link from "next/link"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { inrMinor } from "@/features/shop/money"
 
 import { ADDRESS_TYPE_LABELS } from "../../model/addresses"
+import { arrivesByLine } from "../../model/delivery"
 import { addressOneLine, formatCountdown, PAYMENT_METHODS, type Address, type BagSummary, type PaymentMethod, type Quote } from "../../model/checkout"
 
 /* ── the bag ─────────────────────────────────────────────────────── */
@@ -125,8 +126,15 @@ export function QuoteBreakdown({ quote, secondsLeft, quoting }: { quote: Quote |
       </dl>
     )
   }
+  const arrives = arrivesByLine(quote.deliverBy)
   return (
     <div aria-busy={quoting}>
+      {arrives ? (
+        <p className="shop-checkout__arrives">
+          <Truck size={14} aria-hidden="true" />
+          <time dateTime={quote.deliverBy}>{arrives}</time>
+        </p>
+      ) : null}
       <dl className="shop-checkout__totals">
         <div className="shop-checkout__total-row">
           <dt>Items</dt>

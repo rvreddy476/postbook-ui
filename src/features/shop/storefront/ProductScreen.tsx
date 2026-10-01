@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react"
 import { ArrowRight, PackageX, ShoppingBag, Store } from "lucide-react"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { useAddToBag } from "../hooks/bag"
+import { useDeliveryEstimate, usePincode } from "../hooks/delivery"
+import { useProductReaction, useReviewVote } from "../hooks/reactions"
 import { useLegacyAttributes, useProductDetail, useProductMedia } from "../hooks/catalogue"
 import { useProductReviews } from "../hooks/reviews"
 import { useCategories, useShopSession } from "../hooks/storefront"
@@ -27,10 +29,16 @@ import {
   variantAxes,
   type Selection,
 } from "../model/catalogue"
+import { deliveryView } from "../model/delivery"
+import { DEFAULT_REVIEW_SORT, readProductReaction, voteFailureMessage, type ReviewSort } from "../model/reactions"
 import { ratingSummary } from "../model/reviews"
-import { browseHref, SHOP_BASE, signInHref, toProductCard } from "../model/storefront"
+import { productPath } from "../model/share"
+import { browseHref, isSignedOut, SHOP_BASE, signInHref, toProductCard } from "../model/storefront"
+import { DeliveryBlock } from "../components/catalogue/DeliveryBlock"
 import { Gallery } from "../components/catalogue/Gallery"
 import { QuantityStepper } from "../components/catalogue/QuantityStepper"
+import { ReactionButtons } from "../components/catalogue/ReactionButtons"
+import { ShareButton } from "../components/catalogue/ShareButton"
 import { Specifications } from "../components/catalogue/Specifications"
 import { VariantPicker } from "../components/catalogue/VariantPicker"
 import { FavouriteButton } from "../components/favourites/FavouriteButton"
@@ -60,7 +68,7 @@ function ProductSkeleton() {
 export function ProductScreen({ productId }: { productId: string }) {
   const router = useRouter()
   const toast = useGlobalToast()
-  const { signedIn, known } = useShopSession()
+  const { signedIn, known, user } = useShopSession()
   const detail = useProductDetail(productId)
   const body = detail.data
   const product = body?.product ?? null
@@ -68,7 +76,12 @@ export function ProductScreen({ productId }: { productId: string }) {
   // routes are asked only when the body did not answer.
   const media = useProductMedia(productId, !!body && !Array.isArray(body.media))
   const legacy = useLegacyAttributes(productId, !!body && (!Array.isArray(body.attributes) || body.attributes.length === 0))
-  const reviews = useProductReviews(productId)
+  const [reviewSort, setReviewSort] = useState<ReviewSort>(DEFAULT_REVIEW_SORT)
+  const reviews = useProductReviews(productId, reviewSort)
+  const { pincode, ready: pincodeReady, setPincode } = usePincode()
+  const estimate = useDeliveryEstimate(productId, pincode, pincodeReady)
+  const reaction = useProductReaction(productId)
+  const vote = useReviewVote(productId)
   const categories = useCategories()
   const addToBag = useAddToBag()
 
@@ -95,6 +108,20 @@ export function ProductScreen({ productId }: { productId: string }) {
   const category = product?.category_id ? categories.data?.find((c) => c.id === product.category_id) : undefined
   const categoryName = category?.name ?? product?.category_name ?? null
   const canBuy = !!selected && available > 0 && !addToBag.isPending
+  const signedOut = known && !signedIn
+  const signInBack = signInHref(productPath(productId))
+  const reactionState = readProductReaction(body)
+  const delivery = deliveryView({
+    pincode,
+    asked: estimate.asked,
+    isLoading: estimate.isLoading,
+    estimate: estimate.data ?? null,
+    error: estimate.error,
+  })
+  // A refusal other than "signed out" (which goes to sign in) is said once.
+  const voteFailed = (error: unknown) => {
+    if (!isSignedOut(error)) toast({ type: "error", title: voteFailureMessage(error) })
+  }
 
   const add = async (thenCheckout: boolean) => {
     if (!selected) return
@@ -154,7 +181,16 @@ export function ProductScreen({ productId }: { productId: string }) {
           ) : null}
           <div className="shop-pdp__title-row">
             <h1 className="shop-pdp__title">{product.title}</h1>
-            <FavouriteButton product={{ ...card, isFavourite: product.is_favourite === true }} size={20} inline />
+            <div className="shop-pdp__engage">
+              <ReactionButtons
+                state={reactionState}
+                signInUrl={signedOut ? signInBack : null}
+                pending={reaction.isPending}
+                onPress={(pressed) => reaction.mutate({ before: reactionState, pressed }, { onError: voteFailed })}
+              />
+              <ShareButton productId={product.id || productId} title={product.title || ""} priceMinor={price ? selected?.priceMinor ?? null : card.priceMinor} />
+              <FavouriteButton product={{ ...card, isFavourite: product.is_favourite === true }} size={20} inline />
+            </div>
           </div>
           <div className="shop-pdp__rating">
             <span>{card.rating !== null ? "★ " : ""}{ratingSummary(card.rating, card.reviewCount)}</span>
@@ -168,11 +204,13 @@ export function ProductScreen({ productId }: { productId: string }) {
               <span className="shop-pdp__amount">{price.price}</span>
               {price.was ? <s className="shop-pdp__was">{price.was}</s> : null}
               {price.off ? <span className="shop-pdp__off">{price.off}% off</span> : null}
-              <span className="shop-pdp__tax">Inclusive of all taxes · Delivery calculated at checkout</span>
+              <span className="shop-pdp__tax">Inclusive of all taxes · Delivery charge at checkout</span>
             </div>
           ) : (
             <div className="shop-pdp__price"><span className="shop-pdp__tax">{axes.length ? "Choose the options to see the price." : "Price not available."}</span></div>
           )}
+
+          <DeliveryBlock view={delivery} onPincode={setPincode} />
 
           {hasVariantPicker(variants) ? (
             <VariantPicker
@@ -221,6 +259,15 @@ export function ProductScreen({ productId }: { productId: string }) {
         total={reviews.data?.total ?? card.reviewCount}
         average={reviews.data?.average ?? null}
         isLoading={reviews.isLoading}
+        sort={reviewSort}
+        onSort={setReviewSort}
+        voting={{
+          viewerId: user?.id || null,
+          known,
+          signInUrl: signedOut ? signInBack : null,
+          pendingReviewId: vote.isPending ? vote.variables?.reviewId ?? null : null,
+          onVote: (reviewId, pressed, before) => vote.mutate({ reviewId, before, pressed }, { onError: voteFailed }),
+        }}
       />
     </div>
   )

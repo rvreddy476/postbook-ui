@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Star } from "lucide-react"
+import { Star, ThumbsUp } from "lucide-react"
+import { compactCount } from "../../model/reactions"
 import { SHOP_BASE, type ProductCard as ProductCardData } from "../../model/storefront"
 import { FavouriteButton } from "../favourites/FavouriteButton"
 import { ProductPhoto } from "./ProductPhoto"
@@ -21,11 +22,21 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <div className="shop-card__body">
           {product.seller ? <span className="shop-card__seller">{product.seller}</span> : null}
           <h3 className="shop-card__title">{product.title}</h3>
-          {product.rating !== null ? (
+          {product.rating !== null || product.likeCount > 0 ? (
             <span className="shop-card__meta">
-              <Star size={12} aria-hidden="true" fill="currentColor" />
-              <span>{product.rating.toFixed(1)}</span>
-              <span>({product.reviewCount})</span>
+              {product.rating !== null ? (
+                <>
+                  <Star size={12} aria-hidden="true" fill="currentColor" />
+                  <span>{product.rating.toFixed(1)}</span>
+                  <span>({product.reviewCount})</span>
+                </>
+              ) : null}
+              {product.likeCount > 0 ? (
+                <span className="shop-card__likes" aria-label={`${product.likeCount} ${product.likeCount === 1 ? "like" : "likes"}`}>
+                  <ThumbsUp size={11} aria-hidden="true" />
+                  {compactCount(product.likeCount)}
+                </span>
+              ) : null}
             </span>
           ) : null}
           <div className="shop-card__price">

@@ -39,6 +39,9 @@ export interface WireQuote {
   expires_at: string
   serviceable: boolean
   reason?: string
+  /** "YYYY-MM-DD" in Asia/Kolkata (shop-engagement contract §1); additive, absent from older servers. */
+  deliver_by?: string | null
+  max_days?: number
 }
 
 export interface Quote {
@@ -52,6 +55,8 @@ export interface Quote {
   courierCode: string
   /** Epoch ms; 0 when the server sent nothing readable. */
   expiresAtMs: number
+  /** The quote's raw delivery date, "" when it sent none. */
+  deliverBy: string
 }
 
 export function toQuote(wire: WireQuote): Quote {
@@ -66,6 +71,7 @@ export function toQuote(wire: WireQuote): Quote {
     currency: wire.currency || "INR",
     courierCode: wire.courier_code || "",
     expiresAtMs: Number.isFinite(expires) ? expires : 0,
+    deliverBy: wire.deliver_by || "",
   }
 }
 

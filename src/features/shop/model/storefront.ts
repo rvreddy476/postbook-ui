@@ -51,6 +51,8 @@ export interface WireProductSummary {
   default_variant_id?: string | null
   /** Absent when nobody is signed in; false and absent are different answers. */
   is_favourite?: boolean | null
+  /** Public like count (shop-engagement contract §2); absent for 0. A dislike count is never sent. */
+  like_count?: number
   try_on?: unknown
 }
 
@@ -79,6 +81,8 @@ export interface ProductCard {
   defaultVariantId: string | null
   /** Tri-state read honestly: only `true` draws a filled heart. */
   isFavourite: boolean
+  /** Public likes; 0 when none or not sent. */
+  likeCount: number
 }
 
 /**
@@ -144,6 +148,7 @@ export function toProductCard(p: WireProductSummary): ProductCard | null {
     reviewCount: typeof p.review_count === "number" ? p.review_count : 0,
     defaultVariantId: p.default_variant_id || null,
     isFavourite: p.is_favourite === true,
+    likeCount: typeof p.like_count === "number" && p.like_count > 0 ? Math.floor(p.like_count) : 0,
   }
 }
 

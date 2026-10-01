@@ -67,6 +67,9 @@ export interface WireProductDetail extends WireProductSummary {
   return_policy_type?: string
   return_policy_days?: number
   country_of_origin?: string | null
+  /** The signed-in viewer's own reaction (shop-engagement contract §2); absent or null for none. */
+  viewer_reaction?: "like" | "dislike" | null
+  share_count?: number
 }
 
 export interface WireProductDetailBody {

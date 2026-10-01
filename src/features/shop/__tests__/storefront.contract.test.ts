@@ -30,7 +30,10 @@ const fixtures = (area: string): Array<[string, unknown]> => {
   return readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
     .sort()
-    .map((name) => [name, JSON.parse(readFileSync(resolve(dir, name), "utf8")) as unknown])
+    // A 204 fixture is an empty file (product_share_post_204): nothing to map.
+    .map((name) => [name, readFileSync(resolve(dir, name), "utf8")] as const)
+    .filter(([, text]) => text.trim() !== "")
+    .map(([name, text]) => [name, JSON.parse(text) as unknown])
 }
 
 const sha1 = (path: string) => createHash("sha1").update(readFileSync(path)).digest("hex")

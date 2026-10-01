@@ -2,6 +2,7 @@
 // of `postgres.Review`. Writing one is W2's (it needs a delivered order),
 // so this side only reads and links to the orders page.
 
+import { isReviewVote, type ReviewVote } from "./reactions"
 import { SHOP_BASE } from "./storefront"
 
 export interface WireReview {
@@ -15,7 +16,10 @@ export interface WireReview {
   body?: string | null
   is_verified_purchase?: boolean
   is_published?: boolean
+  /** Public: only the helpful side of a review has a count. */
   helpful_count?: number
+  /** The signed-in viewer's own vote; absent or null for none. */
+  viewer_vote?: ReviewVote | null
   seller_response?: string | null
   seller_responded_at?: string
   created_at?: string
@@ -37,6 +41,10 @@ export interface Review {
   date: string
   createdAt: string
   sellerResponse: string | null
+  /** Who wrote it ("" when the wire sent no id): the vote buttons are hidden on the viewer's own. */
+  reviewerId: string
+  helpfulCount: number
+  viewerVote: ReviewVote | null
 }
 
 export interface ReviewsPage {
@@ -67,6 +75,9 @@ export function toReview(r: WireReview): Review | null {
     date: formatReviewDate(r.created_at),
     createdAt: r.created_at || "",
     sellerResponse: r.seller_response || null,
+    reviewerId: r.reviewer_id || "",
+    helpfulCount: typeof r.helpful_count === "number" && r.helpful_count > 0 ? Math.floor(r.helpful_count) : 0,
+    viewerVote: isReviewVote(r.viewer_vote) ? r.viewer_vote : null,
   }
 }
 
@@ -92,3 +103,20 @@ export function ratingSummary(avgRating: number | null, count: number): string {
 
 /** "Write a review" is W2's; it lives on the order, so the link goes there. */
 export const WRITE_REVIEW_HREF = `${SHOP_BASE}/orders`
+
+/**
+ * A reviews page with one review's vote replaced: what the Helpful buttons
+ * draw before the server answers, and what the answer is written back as.
+ * The SAME page when the review is not on it, so a cache is not dirtied.
+ */
+export function withReviewVote(
+  page: ReviewsPage | null | undefined,
+  reviewId: string,
+  vote: { viewerVote: Review["viewerVote"]; helpfulCount: number },
+): ReviewsPage | null | undefined {
+  if (!page || !page.reviews.some((r) => r.id === reviewId)) return page
+  return {
+    ...page,
+    reviews: page.reviews.map((r) => (r.id === reviewId ? { ...r, viewerVote: vote.viewerVote, helpfulCount: vote.helpfulCount } : r)),
+  }
+}
