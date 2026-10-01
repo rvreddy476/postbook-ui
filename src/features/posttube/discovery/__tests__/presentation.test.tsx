@@ -8,6 +8,7 @@ import { TrendingView } from "../components/TrendingPage";
 import { TopicsView } from "../components/TopicsPage";
 import { TopicView } from "../components/TopicPage";
 import { SearchView } from "../components/SearchPage";
+import { parseStream, type StreamRow } from "@/features/live/discovery";
 import { LiveView } from "../components/LivePage";
 import { TopicStripView } from "../TopicStrip";
 import { DEFAULT_SEARCH_FILTERS } from "../discoveryApi";
@@ -145,7 +146,7 @@ describe("Search", () => {
 });
 
 describe("Live", () => {
-  const base = { creatorNames: {}, ...paging, onRetry: noop };
+  const base = { signedIn: true, filter: "all" as const, onFilter: noop, hero: null, ...paging, onRetry: noop };
 
   test("loading, empty with Go live, error with Retry", () => {
     expect(renderToStaticMarkup(<LiveView {...base} status="loading" live={[]} upcoming={[]} />)).toContain("disco-skeleton__thumb");
@@ -155,33 +156,29 @@ describe("Live", () => {
     expect(renderToStaticMarkup(<LiveView {...base} status="error" live={[]} upcoming={[]} />)).toContain("Could not load live streams");
   });
 
-  test("with rows: Live now and Upcoming sections, each with its count and a card per stream", () => {
-    const stream = {
+  test("with rows: the All / Following filter, Live now with its count and a card per stream", () => {
+    const stream = parseStream({
       id: "s1",
       creator_user_id: "u1",
-      livekit_room: "r",
       title: "Morning show",
-      description: "",
-      cover_media_id: null,
-      status: "live" as const,
-      visibility: "public" as const,
-      scheduled_at: null,
+      status: "live",
+      visibility: "public",
       started_at: "2026-09-27T09:00:00Z",
-      ended_at: null,
       viewer_peak: 42,
-      recording_url: null,
-      recording_duration_seconds: null,
+      viewer_count: 7,
+      creator: { user_id: "u1", name: "Bee" },
       created_at: "2026-09-27T09:00:00Z",
-      updated_at: "2026-09-27T09:00:00Z",
-    };
-    const html = renderToStaticMarkup(<LiveView {...base} creatorNames={{ u1: "Bee" }} status="ready" live={[stream]} upcoming={[]} />);
+    }) as StreamRow;
+    const html = renderToStaticMarkup(<LiveView {...base} status="ready" live={[stream]} upcoming={[]} />);
+    expect(html).toMatch(/role="radiogroup" aria-label="Show"/);
+    expect(html).toMatch(/aria-checked="true"[^>]*>All</);
     expect(html).toContain(">Live now<");
-    expect(html).toContain(">Upcoming<");
-    expect(html).toContain("Nothing scheduled yet.");
-    expect(html).toContain('href="/live/s1"');
+    expect(html).toContain('href="/posttube/live/s1"');
     expect(html).toContain('data-status="live"');
     expect(html).toContain("Morning show");
     expect(html).toContain("Bee");
+    // Nothing scheduled and no recordings: those sections are not drawn at all.
+    expect(html).not.toContain("Upcoming events");
     expect(html).not.toContain("Past streams");
   });
 });

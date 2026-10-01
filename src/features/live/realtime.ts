@@ -1,5 +1,6 @@
 import type { LiveChatMessage, LiveEndedReason, LiveStream, LiveStreamStatus } from "./model"
 import { num, str } from "./model"
+import { parseHeartsFrame } from "./hearts"
 
 // Real-time side of a live stream.
 //
@@ -17,7 +18,7 @@ import { num, str } from "./model"
 // Either one switches this client to polling the authorized HTTP chat list.
 //
 // Types read here: status.changed, chat.message, chat.removed, viewer.count,
-// moderation.ban, moderation.unban, moderation.moderators. The other
+// moderation.ban, moderation.unban, moderation.moderators, hearts. The other
 // moderation.* types (mute, unmute, word_filter_*, pin, unpin) are not
 // shown on the web and parse to null.
 
@@ -38,6 +39,8 @@ export type LiveFrame =
   | { kind: "unban"; stream_id: string; user_id: string }
   | { kind: "moderators"; stream_id: string; user_ids: string[] }
   | { kind: "refused"; stream_id: string }
+  /** Free hearts since the last frame (aggregated, no user ids) and the stream total (0 when absent). */
+  | { kind: "hearts"; stream_id: string; count: number; heart_count: number }
 
 type Obj = Record<string, unknown>
 
@@ -107,6 +110,10 @@ export function parseLiveFrame(raw: unknown): LiveFrame | null {
       const userId = str(field("user_id"))
       if (!userId) return null
       return { kind: type === "moderation.ban" ? "ban" : "unban", stream_id: streamId, user_id: userId }
+    }
+    case "hearts": {
+      const hearts = parseHeartsFrame(field)
+      return hearts ? { kind: "hearts", stream_id: streamId, ...hearts } : null
     }
   }
   return null

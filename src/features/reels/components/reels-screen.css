@@ -434,3 +434,10 @@ button.reel-panel-count:hover { opacity: .75; }
 .sound-page__more .liked-reels__link:disabled { opacity: .6; cursor: progress; }
 @media (max-width: 767px) { .sound-page__disc { width: 52px; height: 52px; border-radius: 12px; } .sound-page__title { font-size: 18px; } }
 @media (prefers-reduced-motion: reduce) { .sound-page__preview { transition: none; } }
+
+/* ── LIVE ring: the author is live right now (live/liveRing.ts); the avatar opens their stream ── */
+.reel-rail-avatar.is-live { overflow: visible; box-shadow: 0 0 0 2px rgb(var(--canvas)), 0 0 0 4px rgb(var(--danger)); }
+.reel-rail-avatar.is-live > * { border-radius: 50%; }
+.reel-action-rail.is-phone .reel-rail-avatar.is-live { box-shadow: 0 0 0 2px rgb(var(--brand-card)), 0 0 0 4px rgb(var(--danger)); }
+.reel-live-tag { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); padding: 0 5px; border-radius: 999px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); font-size: 9px; font-weight: 700; letter-spacing: .06em; line-height: 14px; white-space: nowrap; pointer-events: none; box-shadow: 0 0 0 2px rgb(var(--canvas)); }
+.reel-author-card__avatar.is-live { border-radius: 50%; box-shadow: 0 0 0 2px rgb(var(--brand-card)), 0 0 0 4px rgb(var(--danger)); }

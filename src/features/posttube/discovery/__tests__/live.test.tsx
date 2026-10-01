@@ -4,7 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import api from "@/lib/api";
 import type { LiveStream } from "@/hooks/useLiveV2";
-import { LiveView } from "../components/LivePage";
+import { formatLocalDateTime, parseStream, type StreamRow } from "@/features/live/discovery";
+import { LiveView, TopicRailView } from "../components/LivePage";
 import { buildLiveListParams, buildPastStreamsParams, getLiveStreamsPage, getPastStreams } from "../discoveryApi";
 import { calendarDaysFrom, formatClock, formatScheduled, groupUpcomingByDay, scheduledDayLabel } from "../discoveryModel";
 import type { PostTubeVideo } from "../../types";
@@ -150,14 +151,59 @@ describe("the Live adapter", () => {
   });
 });
 
-describe("LiveView: Upcoming by day and Past streams", () => {
-  const base = { creatorNames: { u1: "Bee" }, hasMore: false, loadingMore: false, onLoadMore: () => {}, now: NOW };
+/** A parsed row of the live surfaces contract (features/live/discovery.ts parseStream). */
+const row = (id: string, extra: Record<string, unknown> = {}): StreamRow =>
+  parseStream({
+    id,
+    creator_user_id: "u1",
+    title: `Show ${id}`,
+    status: "live",
+    visibility: "public",
+    orientation: "landscape",
+    viewer_count: 12,
+    viewer_peak: 90,
+    creator: { user_id: "u1", name: "Bee", handle: "bee" },
+    created_at: iso(NOW),
+    ...extra,
+  }) as StreamRow;
+const upcomingRow = (id: string, t: number, extra: Record<string, unknown> = {}) => row(id, { status: "scheduled", scheduled_at: iso(t), viewer_count: 0, ...extra });
 
-  test("Upcoming groups under day headings with the 'Today · time' badge; no TODO marker left", () => {
+describe("LiveView: hero, Live now, Upcoming events, rails, Past streams", () => {
+  const base = { signedIn: true, filter: "all" as const, onFilter: () => {}, hero: null, hasMore: false, loadingMore: false, onLoadMore: () => {}, now: NOW };
+
+  test("Live now: tiles link to the PostTube watch page, show the CURRENT audience and the creator's name", () => {
+    const html = renderToStaticMarkup(<LiveView {...base} status="ready" live={[row("a"), row("b", { viewer_count: 3 })]} upcoming={[]} />);
+    expect(html).toContain('href="/posttube/live/a"');
+    expect(html).toContain('aria-label="12 watching"');
+    expect(html).not.toContain(">90<"); // never the peak
+    expect(html).toContain(">Bee<");
+    expect(html).toContain('class="disco-section__count">2<');
+    expect(html).not.toContain('href="/live/a"'); // not the old /live/<id> page
+  });
+
+  test("the hero is drawn once, above the grid, and counts as live", () => {
+    const hero = row("h", { viewer_count: 500 });
+    const html = renderToStaticMarkup(<LiveView {...base} status="ready" hero={hero} renderHero={(r) => <div data-hero={r.id} />} live={[row("a")]} upcoming={[]} />);
+    expect(html.indexOf('data-hero="h"')).toBeGreaterThan(-1);
+    expect(html.indexOf('data-hero="h"')).toBeLessThan(html.indexOf('data-section="live"'));
+    expect(html.split('data-stream="h"').length).toBe(1); // not repeated in the grid
+    expect(html).toContain('class="disco-section__count">2<');
+  });
+
+  test("Upcoming events group under day headings, with the time in the viewer's zone and the reminder action", () => {
     const html = renderToStaticMarkup(
-      <LiveView {...base} status="ready" live={[]} upcoming={[stream("t1", at(0, 18, 30)), stream("m1", at(1, 9))]} upcomingHasMore onUpcomingMore={() => {}} />,
+      <LiveView
+        {...base}
+        status="ready"
+        live={[]}
+        upcoming={[upcomingRow("t1", at(0, 18, 30), { reminder_count: 4 }), upcomingRow("m1", at(1, 9))]}
+        upcomingHasMore
+        onUpcomingMore={() => {}}
+        renderReminder={(r) => <button data-remind={r.id}>Notify me</button>}
+      />,
     );
     expect(html).toContain('data-section="upcoming"');
+    expect(html).toContain(">Upcoming events<");
     const today = html.indexOf('data-day="2026-09-27"');
     const tomorrow = html.indexOf('data-day="2026-09-28"');
     expect(today).toBeGreaterThan(-1);
@@ -165,9 +211,22 @@ describe("LiveView: Upcoming by day and Past streams", () => {
     expect(html).toContain('<h3 class="disco-day__title">Today</h3>');
     expect(html).toContain('<h3 class="disco-day__title">Tomorrow</h3>');
     expect(html).toContain(`Today · ${formatClock(at(0, 18, 30))}`);
-    expect(html).toContain('class="disco-section__count">2<');
+    expect(html).toContain(formatLocalDateTime(iso(at(0, 18, 30))));
+    expect(html).toContain('data-remind="t1"');
+    expect(html).toContain("4 reminders set");
     expect(html).toContain("Show more");
-    expect(html).not.toContain("TODO");
+    // A scheduled tile is never badged Live and shows no audience.
+    expect(html).not.toContain("disco-live__dot");
+    expect(html).not.toContain("watching");
+  });
+
+  test("a row that is not status \"live\" never gets the Live badge, wherever it is listed", () => {
+    for (const status of ["scheduled", "starting", "reconnecting", "ended", "failed"]) {
+      const html = renderToStaticMarkup(<LiveView {...base} status="ready" live={[row("x", { status })]} upcoming={[]} />);
+      expect(html).not.toContain("disco-live__dot");
+      expect(html).not.toContain("watching");
+    }
+    expect(renderToStaticMarkup(<LiveView {...base} status="ready" live={[row("x")]} upcoming={[]} />)).toContain("disco-live__dot");
   });
 
   test("Past streams: tube tiles with Show more; loading shows the tile skeleton; error offers Retry", () => {
@@ -184,9 +243,45 @@ describe("LiveView: Upcoming by day and Past streams", () => {
     expect(failed).toContain("Could not load past streams");
   });
 
-  test("everything empty is the one empty state", () => {
-    const html = renderToStaticMarkup(<LiveView {...base} status="ready" live={[]} upcoming={[]} past={[]} />);
-    expect(html).toContain("Nobody is live right now");
+  test("Upcoming failing leaves Live now standing", () => {
+    const html = renderToStaticMarkup(<LiveView {...base} status="ready" live={[row("a")]} upcoming={[]} upcomingStatus="error" onUpcomingRetry={() => {}} />);
+    expect(html).toContain('href="/posttube/live/a"');
+    expect(html).toContain("Could not load upcoming streams");
+  });
+
+  test("everything empty: a signed-in viewer is invited to go live, a signed-out one is only told", () => {
+    const signedIn = renderToStaticMarkup(<LiveView {...base} status="ready" live={[]} upcoming={[]} past={[]} />);
+    expect(signedIn).toContain("Nobody is live right now");
+    expect(signedIn).toContain('href="/live/new"');
+    expect(signedIn).not.toContain("Past streams");
+    const signedOut = renderToStaticMarkup(<LiveView {...base} signedIn={false} status="ready" live={[]} upcoming={[]} past={[]} />);
+    expect(signedOut).toContain("Nobody is live right now");
+    expect(signedOut).not.toContain('href="/live/new"');
+  });
+
+  test("Following: the pill is checked, rails and past streams are hidden, and signed out it asks for sign-in", () => {
+    const video = { id: "v1", author_id: "a1", title: "Last night", duration_seconds: 60, view_count: 3, published_at: "2026-09-26T10:00:00Z" } as unknown as PostTubeVideo;
+    const html = renderToStaticMarkup(<LiveView {...base} filter="following" status="ready" live={[row("a")]} upcoming={[]} past={[video]} rails={<div data-rails />} />);
+    expect(html).toMatch(/aria-checked="true"[^>]*>Following</);
+    expect(html).not.toContain("data-rails");
     expect(html).not.toContain("Past streams");
+    const all = renderToStaticMarkup(<LiveView {...base} status="ready" live={[row("a")]} upcoming={[]} rails={<div data-rails />} />);
+    expect(all).toContain("data-rails");
+    const out = renderToStaticMarkup(<LiveView {...base} filter="following" signedIn={false} status="ready" live={[]} upcoming={[]} />);
+    expect(out).toContain("Sign in to see who you follow");
+    expect(out).toContain('href="/login?next=%2Fposttube%2Flive"');
+    const none = renderToStaticMarkup(<LiveView {...base} filter="following" status="ready" live={[]} upcoming={[]} />);
+    expect(none).toContain("Nobody you follow is live right now");
+  });
+
+  test("a topic rail names the topic, its counts, and lists its streams; an empty rail draws nothing", () => {
+    const category = { slug: "gaming", label: "Gaming", live_count: 2, viewer_count: 1500 };
+    const html = renderToStaticMarkup(<TopicRailView category={category} rows={[row("g1", { category: "gaming" })]} />);
+    expect(html).toContain('data-topic="gaming"');
+    expect(html).toContain(">Gaming<");
+    expect(html).toContain("2 live · 1.5K watching");
+    expect(html).toContain('href="/posttube/topics/gaming"');
+    expect(html).toContain('href="/posttube/live/g1"');
+    expect(renderToStaticMarkup(<TopicRailView category={category} rows={[]} />)).toBe("");
   });
 });

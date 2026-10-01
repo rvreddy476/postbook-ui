@@ -1,0 +1,134 @@
+/*
+  The Reels Live tab. It stands in the reels stage (reels-screen.css owns
+  the frame, the cluster, the rail, the arrows and the side column); this
+  file owns only what is drawn inside the frame and inside the side column.
+  Over the video everything uses the on-video pair (--reel-stage /
+  --reel-on-stage), so it reads the same in the light and the dark theme;
+  the side column uses the card tokens. Colour only through the tokens in
+  src/ui/theme.css.
+
+  Stacking is by source order, with no z-index on the overlay pieces: a
+  dialog opened from inside the frame (top supporters) must not be trapped
+  under a sibling. The actions strip is last, so its menu is above the rest.
+*/
+
+/* ---- the frame ---------------------------------------------------------- */
+.reel-live-frame { color: rgb(var(--reel-on-stage)); }
+/* The shared player fills the tall frame instead of its own 16:9 box. */
+.reel-live-frame .live-stage { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+.reel-live-frame .live-hearts { right: 8px; bottom: 58px; }
+.reel-live-frame[data-overlay-chat="false"] .live-hearts { bottom: 12px; }
+.reel-live-enter { animation: reel-live-in 220ms ease-out backwards; }
+.reel-live-frame[data-direction="-1"] .reel-live-enter { animation-name: reel-live-in-back; }
+@keyframes reel-live-in { from { opacity: 0; transform: translateY(30px); } }
+@keyframes reel-live-in-back { from { opacity: 0; transform: translateY(-30px); } }
+.reel-live-preload { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
+.reel-live-loading { display: flex; height: 100%; align-items: center; justify-content: center; margin: 0; font-size: 13px; color: rgb(var(--reel-on-stage) / .7); }
+
+/* ---- tabs: For you / Following ----------------------------------------- */
+.reel-live-tabs { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; height: 36px; white-space: nowrap; }
+.reel-live-tab { padding: 4px 0; border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600; line-height: 1.2; color: rgb(var(--reel-on-stage) / .7); text-decoration: none; text-shadow: 0 1px 2px rgb(var(--reel-stage) / .6); }
+.reel-live-tab:hover { color: rgb(var(--reel-on-stage)); }
+.reel-live-tab[aria-current="page"] { color: rgb(var(--reel-on-stage)); border-bottom-color: rgb(var(--reel-on-stage)); font-weight: 700; }
+
+/* ---- header: creator, status row ---------------------------------------- */
+.reel-live-header { position: absolute; top: 48px; left: 8px; right: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; pointer-events: none; }
+.reel-live-header > * { pointer-events: auto; }
+.reel-live-creator { display: inline-flex; max-width: 100%; min-width: 0; align-items: center; gap: 8px; padding: 3px 4px 3px 3px; border-radius: 999px; background: rgb(var(--reel-stage) / .5); }
+.reel-live-creator__avatar { display: block; flex: none; border-radius: 50%; }
+.reel-live-creator__name { display: inline-flex; min-width: 0; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; line-height: 1.2; }
+.reel-live-creator__name a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit; text-decoration: none; }
+.reel-live-creator__name a:hover { text-decoration: underline; }
+.reel-live-creator__name:last-child { padding-right: 8px; }
+.reel-live-creator .live-founding { background: rgb(var(--reel-on-stage) / .16); color: rgb(var(--reel-on-stage)); }
+.reel-live-follow { display: inline-flex; flex: none; height: 26px; align-items: center; padding: 0 12px; border: 0; border-radius: 999px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); font-size: 12px; font-weight: 700; line-height: 1; text-decoration: none; cursor: pointer; }
+.reel-live-follow.is-on { background: rgb(var(--reel-on-stage) / .2); }
+.reel-live-follow:disabled { opacity: .6; cursor: default; }
+.reel-live-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.reel-live-badge { display: inline-flex; height: 20px; align-items: center; gap: 5px; padding: 0 8px; border-radius: 6px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); font-size: 11px; font-weight: 700; letter-spacing: .04em; line-height: 1; }
+.reel-live-badge.is-quiet { background: rgb(var(--reel-stage) / .6); letter-spacing: 0; font-weight: 600; }
+.reel-live-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: live-pulse 1.6s ease-in-out infinite; }
+.reel-live-stat, .reel-live-header .live-heart-count { display: inline-flex; height: 20px; align-items: center; gap: 4px; padding: 0 8px; border-radius: 6px; background: rgb(var(--reel-stage) / .5); color: rgb(var(--reel-on-stage)); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.reel-live-stat svg { width: 12px; height: 12px; }
+.reel-live-frame .live-supporters-btn { height: 24px; background: rgb(var(--reel-stage) / .5); color: rgb(var(--reel-on-stage)); }
+.reel-live-frame .live-supporters-btn:hover { background: rgb(var(--reel-stage) / .7); }
+.reel-live-frame .live-supporters-btn__stack > * { box-shadow: 0 0 0 2px rgb(var(--reel-stage)); }
+.reel-live-pill { display: inline-flex; height: 28px; align-items: center; gap: 6px; padding: 0 12px; border-radius: 999px; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); font-size: 12px; font-weight: 700; text-decoration: none; }
+.reel-live-pill svg { width: 14px; height: 14px; }
+.reel-live-pill:hover { opacity: .92; }
+
+/* ---- top-right: mute, More (the reels More card hangs under the strip) -- */
+.reel-live-actions { position: absolute; top: 8px; right: 0; left: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 8px; pointer-events: none; container-type: inline-size; }
+.reel-live-actions > * { pointer-events: auto; }
+.reel-live-action-wrap { position: static; }
+.reel-live-actions .reel-frame-popover[role="menu"] { left: 0; right: 0; width: 100%; max-width: 100%; }
+.reel-live-action { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--reel-stage) / .4); color: rgb(var(--reel-on-stage)); cursor: pointer; transition: background-color 120ms ease; }
+.reel-live-action:hover { background: rgb(var(--reel-stage) / .65); }
+
+/* ---- bottom: title, the last few messages, the composer ----------------- */
+.reel-live-bottom { position: absolute; inset: auto 0 0 0; padding: 56px 8px 10px; background: linear-gradient(to top, rgb(var(--reel-stage) / .78), rgb(var(--reel-stage) / .3) 60%, transparent); pointer-events: none; }
+.reel-live-title { max-width: calc(100% - 88px); margin: 0 0 6px 4px; font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.reel-live-chat { display: flex; flex-direction: column; gap: 6px; }
+.reel-live-chat__list { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; max-height: 132px; margin: 0; padding: 0 88px 0 0; overflow: hidden; list-style: none; -webkit-mask-image: linear-gradient(to top, rgb(var(--reel-stage)) 55%, transparent); mask-image: linear-gradient(to top, rgb(var(--reel-stage)) 55%, transparent); }
+.reel-live-chat__row { width: fit-content; max-width: 100%; padding: 3px 8px; border-radius: 10px; background: rgb(var(--reel-stage) / .4); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; animation: reel-live-msg 180ms ease-out backwards; }
+.reel-live-chat__name { margin-right: 6px; font-weight: 700; color: rgb(var(--reel-on-stage) / .75); }
+@keyframes reel-live-msg { from { opacity: 0; transform: translateY(6px); } }
+.reel-live-chat__form { display: flex; gap: 6px; pointer-events: auto; }
+.reel-live-chat__input { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid rgb(var(--reel-on-stage) / .25); border-radius: 999px; background: rgb(var(--reel-stage) / .55); color: rgb(var(--reel-on-stage)); font-size: 13px; }
+.reel-live-chat__input::placeholder { color: rgb(var(--reel-on-stage) / .6); }
+.reel-live-chat__input:focus { outline: none; border-color: rgb(var(--reel-on-stage) / .7); }
+.reel-live-chat__send { display: flex; flex: 0 0 36px; width: 36px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); cursor: pointer; }
+.reel-live-chat__send svg { width: 16px; height: 16px; }
+.reel-live-chat__send:disabled { opacity: .5; cursor: default; }
+.reel-live-chat__note { display: inline-flex; width: fit-content; max-width: 100%; height: 36px; align-items: center; margin: 0; padding: 0 12px; border-radius: 999px; background: rgb(var(--reel-stage) / .55); color: rgb(var(--reel-on-stage) / .85); font-size: 12px; pointer-events: auto; }
+a.reel-live-chat__note { font-weight: 600; color: rgb(var(--reel-on-stage)); text-decoration: underline; }
+.reel-live-chat__error { width: fit-content; max-width: 100%; margin: 0; padding: 4px 10px; border-left: 3px solid rgb(var(--danger)); border-radius: 6px; background: rgb(var(--reel-stage) / .75); font-size: 12px; }
+
+/* ---- cards: waiting, ended, refused, unavailable ------------------------ */
+.reel-live-card { position: absolute; inset: 0; overflow: hidden; }
+.reel-live-card__cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .3; }
+.reel-live-card__body { position: relative; display: flex; height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 132px 24px 24px; overflow-y: auto; text-align: center; }
+.reel-live-card__icon { width: 32px; height: 32px; flex: none; opacity: .7; }
+.reel-live-card__label { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--reel-on-stage) / .7); }
+.reel-live-card__count { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.reel-live-card__title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.reel-live-card__hint { max-width: 280px; margin: 0; font-size: 12px; line-height: 1.45; color: rgb(var(--reel-on-stage) / .75); }
+.reel-live-card__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
+
+/* ---- nothing live: the reason and the upcoming streams ------------------ */
+.reel-live-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 72px 16px 16px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; text-align: center; }
+.reel-live-upcoming { width: 100%; margin-top: 16px; text-align: left; }
+.reel-live-upcoming__title { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--reel-on-stage) / .7); }
+.reel-live-upcoming__list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.reel-live-upcoming__row { display: flex; min-width: 0; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: 12px; background: rgb(var(--reel-on-stage) / .08); }
+.reel-live-upcoming__text { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
+.reel-live-upcoming__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.reel-live-upcoming__meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: rgb(var(--reel-on-stage) / .7); }
+
+/* ---- desktop side column: live creators, then the full chat -------------- */
+.reel-live-side__note { margin: 0; padding: 16px; font-size: 13px; color: rgb(var(--text-muted)); }
+.reel-live-side__pad { min-height: 0; padding: 12px 16px; overflow-y: auto; }
+.reel-live-creators { flex: 0 1 auto; max-height: 34%; padding: 12px 8px 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; border-bottom: 1px solid var(--brand-divider); }
+.reel-live-creators__title { margin: 0 8px 6px; font-size: 12px; font-weight: 700; color: rgb(var(--text-muted)); }
+.reel-live-creators__list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.reel-live-creators__row { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 10px; color: inherit; text-decoration: none; }
+.reel-live-creators__row:hover { background: rgb(var(--brand-text) / .06); }
+.reel-live-creators__row[aria-current="true"] { background: rgb(var(--brand-text) / .08); }
+.reel-live-creators__name { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.reel-live-creators__name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reel-live-creators__viewers { display: inline-flex; flex: none; align-items: center; gap: 4px; font-size: 11px; font-variant-numeric: tabular-nums; color: rgb(var(--text-muted)); }
+.reel-live-creators__viewers svg { width: 12px; height: 12px; }
+.reel-live-ring { display: inline-flex; flex: none; border-radius: 999px; }
+.reel-live-ring.is-live { box-shadow: 0 0 0 2px rgb(var(--brand-card)), 0 0 0 4px rgb(var(--danger)); }
+/* The shared chat fills what the column leaves, flush with it. */
+.reel-live-side .live-chat-column { flex: 1 1 auto; min-height: 0; gap: 0; overflow-y: auto; }
+.reel-live-side .live-chat { flex: 1 1 auto; height: auto; min-height: 260px; border: 0; border-radius: 0; box-shadow: none; }
+.reel-live-side .live-chat__head { padding: 12px; font-size: 14px; }
+
+.reel-live :is(button, a, input):focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
+.reel-live-frame :is(button, a):focus-visible { outline-color: rgb(var(--reel-on-stage)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-live-enter, .reel-live-chat__row, .reel-live-badge__dot { animation: none; }
+  .reel-live-action { transition: none; }
+}

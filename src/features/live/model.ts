@@ -28,6 +28,19 @@ export type LiveEndedReason =
 
 export type LiveVisibility = "public" | "followers" | "paid"
 
+/** Wide (PostTube) or vertical (Reels). Absent on rows from before 2 Oct 2026: read as landscape. */
+export type LiveOrientation = "landscape" | "portrait"
+
+/** The host card on every row (contract 2 Oct 2026). A failed lookup leaves only `user_id`. */
+export interface LiveCreator {
+  user_id: string
+  name?: string
+  handle?: string
+  avatar_url?: string
+  /** e.g. ["founding_creator"]; omitted when none. */
+  badges?: string[]
+}
+
 export interface LiveStream {
   id: string
   creator_user_id: string
@@ -55,6 +68,19 @@ export interface LiveStream {
   recording_duration_seconds: number | null
   created_at: string
   updated_at: string
+  // Live surfaces contract (2 Oct 2026). All optional on the wire (Go omits
+  // zero values); read them through features/live/discovery.ts parseStream.
+  orientation?: LiveOrientation
+  /** A slug from post-service's taxonomy (GET /v1/posts/categories). */
+  category?: string
+  creator?: LiveCreator | null
+  /** Upcoming rows, signed-in caller. */
+  reminder_set?: boolean
+  reminder_count?: number
+  /** Past rows: the video the recording became. */
+  recording_post_id?: string | null
+  /** Free hearts sent to the stream. */
+  heart_count?: number
 }
 
 export interface CreateStreamInput {
@@ -65,6 +91,8 @@ export interface CreateStreamInput {
   scheduled_at?: string | null
   /** "encoder" = go live from streaming software; anything else is this device. */
   source?: "device" | "encoder"
+  orientation?: LiveOrientation
+  category?: string
 }
 
 export interface StartStreamResult {

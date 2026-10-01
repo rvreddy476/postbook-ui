@@ -54,6 +54,10 @@ import { COMMENTS_TRACK_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/featu
 import { useBatchRelationships } from "@/hooks/useConnections";
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile";
 import { useGlobalToast } from "@/contexts/ToastContext";
+import { useLiveCreators } from "@/hooks/useLiveV2";
+import { liveByCreator } from "@/features/live/discovery";
+import { LIVE_CREATORS_LIMIT } from "@/features/reels/live/liveStage";
+import { reelLiveHref } from "@/features/reels/live/liveRing";
 
 /*
   The reels stage — TikTok's desktop page, to the pixel (stage.ts holds
@@ -219,6 +223,11 @@ export function ReelsScreen() {
     }
   };
   const subscription = useReelSubscription(active?.channelHandle, Boolean(active?.channelHandle) && !isOwn);
+  // The LIVE ring: a creator who is live right now gets a ringed avatar that opens their stream.
+  // Live streams themselves never enter this feed; they play in the Live tab (/reels/live).
+  const liveCreators = useLiveCreators(LIVE_CREATORS_LIMIT);
+  const liveMap = useMemo(() => liveByCreator(liveCreators.data ?? []), [liveCreators.data]);
+  const liveHref = reelLiveHref(active?.authorId, liveMap);
   // Alternate audio: the viewer's preferred language, satisfied per reel or falling back to the original.
   const audioTracks = useAudioTracks(active?.media.mediaId);
   const audioOptions = audioTrackOptions(audioTracks.data ?? []);
@@ -624,6 +633,7 @@ export function ReelsScreen() {
     subscribed: subscription.subscribed,
     subscribePending: subscription.pending,
     onToggleSubscribe: () => void toggleSubscribe(),
+    liveHref,
   };
   // The author card (comments column and theater panel): the same relationship plus the live toggles.
   const authorCard = { ...railFollow, onLike, onSave, onShare, onUseOriginalSound: () => startUseSound("page"), useSoundPending: soundRequest.isPending };

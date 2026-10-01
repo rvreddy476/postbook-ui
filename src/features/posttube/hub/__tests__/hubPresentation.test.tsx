@@ -56,7 +56,7 @@ describe("charts", () => {
 
 describe("hub nav", () => {
   test("the sections and their words are ours; Branding leaves to the channel settings", () => {
-    expect(HUB_NAV.map((i) => i.label)).toEqual(["Overview", "Library", "Insights", "Conversations", "Captions", "Branding", "Preferences"]);
+    expect(HUB_NAV.map((i) => i.label)).toEqual(["Overview", "Library", "Insights", "Conversations", "Captions", "Live", "Branding", "Preferences"]);
     expect(HUB_NAV.find((i) => i.key === "branding")?.href).toBe("/settings/channel");
     expect(HUB_NAV.find((i) => i.key === "branding")?.external).toBe(true);
   });

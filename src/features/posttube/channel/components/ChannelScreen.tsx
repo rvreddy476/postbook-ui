@@ -28,6 +28,9 @@ import {
   type PanelStatus,
 } from "./ChannelPanels";
 import { ReportChannelDialog } from "./ReportChannelDialog";
+import { liveWatchHref } from "@/features/live/discovery";
+import { UserFoundingBadge } from "@/features/live/components/FoundingBadge";
+import { ChannelLiveSections, useChannelLiveNow } from "../../live/ChannelLive";
 
 import "@/features/reels/components/reels-screen.css";
 import "../../components/tube.css";
@@ -111,7 +114,9 @@ export function NoChannelCard() {
 function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isOwner: boolean; signedIn: boolean }) {
   const pathname = usePathname() || "/posttube/channel";
   const params = useSearchParams();
-  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner), [channel.counts, isOwner]);
+  // Live right now (status "live"): the LIVE ring on the avatar, and the Live tab even before any recording exists.
+  const { live: liveNow } = useChannelLiveNow(channel.thin ? undefined : channel.userId);
+  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner, !!liveNow), [channel.counts, isOwner, liveNow]);
   const active = resolveTab(params?.get("tab"), tabs);
 
   // Follow / unfollow moves the count locally; a fresh count from the server replaces the local step.
@@ -148,6 +153,8 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
         onShare={share}
         onReport={() => setReportOpen(true)}
         onFeed={feed}
+        liveHref={liveNow ? liveWatchHref(liveNow) : undefined}
+        badge={channel.thin ? null : <> <UserFoundingBadge userId={channel.userId} /></>}
       />
 
       {featured.data ? <FeaturedVideo video={featured.data} /> : null}
@@ -214,7 +221,7 @@ function LongVideosTab({ tab, ownerId, isOwner, query, sort, onSort }: TabPanelP
   const live = tab === "live";
   const base = live ? liveOnly(all) : all;
   const rows = filterByText(live ? base : sortVideos(base, sort), query, (v) => v.title);
-  return (
+  const panel = (
     <PanelFrame
       status={statusOf(q)}
       count={rows.length}
@@ -230,6 +237,19 @@ function LongVideosTab({ tab, ownerId, isOwner, query, sort, onSort }: TabPanelP
     >
       <VideoGrid videos={rows} />
     </PanelFrame>
+  );
+  if (!live) return panel;
+  // Live tab: live now and upcoming (live-service), then the recordings that became videos.
+  return (
+    <div className="tube-live-stack">
+      <ChannelLiveSections ownerId={ownerId} isOwner={isOwner} query={query} />
+      <section className="disco-section" aria-labelledby="tube-chan-live-past" data-section="past">
+        <h2 id="tube-chan-live-past" className="disco-section__title">
+          Past streams
+        </h2>
+        {panel}
+      </section>
+    </div>
   );
 }
 

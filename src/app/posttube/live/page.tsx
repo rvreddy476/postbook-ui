@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Broadcasts happening now on PostTube, and what is coming up.",
 };
 
-/** Live now + Upcoming from live-service-v2 (`GET /v1/livestream/streams`). Past streams wait on the VOD route. */
+/** Hero, Live now, Upcoming events, topic rails and Past streams (live-service-v2 discovery routes; see features/live/discovery.ts). */
 export default function PostTubeLiveRoute() {
   return <LivePage />;
 }

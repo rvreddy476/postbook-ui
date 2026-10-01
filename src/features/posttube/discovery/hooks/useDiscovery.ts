@@ -2,10 +2,10 @@
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useLiveStreams } from "@/hooks/useLiveV2";
-import { useBatchProfiles } from "@/hooks/useProfile";
+import { upcomingOnly } from "@/features/live/discovery";
+import { useLiveCategories, useLiveNow, useUpcomingStreams } from "@/hooks/useLiveV2";
+import { LIVE_PAGE_ORIENTATION, splitHero, type LiveFilter } from "../../live/liveModel";
 import {
-  getLiveStreamsPage,
   getPastStreams,
   getStripFeed,
   getTopicFeed,
@@ -18,7 +18,6 @@ import {
   type SearchFilters,
   type TopicSort,
 } from "../discoveryApi";
-import { splitLiveStreams } from "../discoveryModel";
 
 const KEY = ["posttube", "discovery"] as const;
 
@@ -100,43 +99,36 @@ export function useTubeSearch(filters: SearchFilters) {
   return { videos, channels, collections };
 }
 
+
 /**
- * The Live page's three lists: Live now (useLiveStreams, shared with the
- * live screens), Upcoming (`?status=scheduled`) and Past streams
- * (`GET /v1/posts/live-recordings`), each paged on its own, plus the
- * creators' names for the stream cards. Upcoming and Past failing leave
- * Live now standing: each section reads its own query state.
+ * The Live page's lists, each paged and failing on its own:
+ *   Live now      GET /v1/livestream/streams?status=live&orientation=landscape&sort=viewers[&following=true]
+ *   Upcoming      GET /v1/livestream/streams/upcoming?orientation=landscape[&following=true]
+ *   Topic rails   GET /v1/livestream/categories/live (the rails fetch their own rows)
+ *   Past streams  GET /v1/posts/live-recordings (recordings that became videos)
+ * The hero is the most-watched live row and is taken out of the grid.
+ * Following needs an account: signed out, nothing is requested for it.
  */
-export function useLiveDiscovery(limit = 24) {
-  const streams = useLiveStreams(limit);
-  const scheduled = useInfiniteQuery({
-    queryKey: [...KEY, "live", "scheduled", limit],
-    queryFn: ({ pageParam }) => getLiveStreamsPage({ status: "scheduled", limit, cursor: pageParam || undefined }),
-    initialPageParam: "" as string,
-    getNextPageParam: (last) => last.next_cursor,
-    staleTime: 60 * 1000,
-  });
+export function useLiveDiscovery({ filter, signedIn, limit = 24 }: { filter: LiveFilter; signedIn: boolean; limit?: number }) {
+  const following = filter === "following";
+  const enabled = !following || signedIn;
+  const streams = useLiveNow({ orientation: LIVE_PAGE_ORIENTATION, following, sort: "viewers", limit }, { enabled, refetchMs: 60_000 });
+  const scheduled = useUpcomingStreams({ orientation: LIVE_PAGE_ORIENTATION, following, limit: 12 }, { enabled });
+  const liveCategories = useLiveCategories(!following);
   const past = useInfiniteQuery({
     queryKey: [...KEY, "live", "past"],
     queryFn: ({ pageParam }) => getPastStreams({ limit: 12, cursor: pageParam || undefined }),
     initialPageParam: "" as string,
     getNextPageParam: (last) => last.next_cursor,
     staleTime: 2 * 60 * 1000,
+    enabled: !following,
   });
-  const liveRows = useMemo(() => streams.data?.pages.flatMap((p) => p.items) ?? [], [streams.data]);
-  const upcoming = useMemo(() => (scheduled.data?.pages.flatMap((p) => p.items) ?? []).filter((s) => s.status === "scheduled"), [scheduled.data]);
+  const topicsQuery = useTopics();
+  const { hero, rest } = useMemo(() => splitHero(streams.data?.pages.flatMap((p) => p.items) ?? []), [streams.data]);
+  const upcoming = useMemo(() => upcomingOnly(scheduled.data?.pages.flatMap((p) => p.items) ?? []), [scheduled.data]);
   const pastVideos = useMemo(() => {
     const seen = new Set<string>();
     return (past.data?.pages.flatMap((p) => p.items) ?? []).filter((v) => (seen.has(v.id) ? false : (seen.add(v.id), true)));
   }, [past.data]);
-  const { live } = useMemo(() => splitLiveStreams(liveRows), [liveRows]);
-  const creatorIds = useMemo(() => Array.from(new Set([...liveRows, ...upcoming].map((s) => s.creator_user_id))), [liveRows, upcoming]);
-  const profiles = useBatchProfiles(creatorIds);
-  const creatorNames = useMemo(() => {
-    const out: Record<string, string> = {};
-    const map = profiles.data instanceof Map ? profiles.data : null;
-    if (map) for (const [id, p] of map) out[id] = p.display_name || p.username || "";
-    return out;
-  }, [profiles.data]);
-  return { streams, scheduled, past, live, upcoming, pastVideos, creatorNames };
+  return { streams, scheduled, past, hero, live: rest, upcoming, pastVideos, categories: liveCategories.data ?? [], topics: topicsQuery.data ?? [] };
 }

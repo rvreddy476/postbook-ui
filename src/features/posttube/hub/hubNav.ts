@@ -1,9 +1,9 @@
-import { BarChart3, Captions, LayoutDashboard, Library, MessageSquareText, Palette, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { BarChart3, Captions, LayoutDashboard, Library, MessageSquareText, Palette, Radio, SlidersHorizontal, type LucideIcon } from "lucide-react";
 
 /*
   The hub's own section rail (inside the PostTube shell, not the shell's
   nav). Vocabulary is ours: Overview, Library, Insights, Conversations,
-  Captions, Branding, Preferences. Branding is a link into the channel
+  Captions, Live, Branding, Preferences. Branding is a link into the channel
   settings another lane builds at /settings/channel.
 */
 export interface HubNavItem {
@@ -25,6 +25,7 @@ export const HUB_NAV: readonly HubNavItem[] = [
   { key: "insights", label: "Insights", href: `${HUB_ROOT}/insights`, icon: BarChart3 },
   { key: "conversations", label: "Conversations", href: `${HUB_ROOT}/conversations`, icon: MessageSquareText },
   { key: "captions", label: "Captions", href: `${HUB_ROOT}/captions`, icon: Captions },
+  { key: "live", label: "Live", href: `${HUB_ROOT}/live`, icon: Radio },
   { key: "branding", label: "Branding", href: "/settings/channel", icon: Palette, external: true },
   { key: "preferences", label: "Preferences", href: `${HUB_ROOT}/preferences`, icon: SlidersHorizontal },
 ];

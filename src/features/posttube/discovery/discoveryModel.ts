@@ -143,11 +143,18 @@ export function formatScheduled(iso: string | null | undefined, now = Date.now()
   return `${scheduledDayLabel(t, now)} · ${formatClock(t)}`;
 }
 
-export interface UpcomingDay {
+/** What the day grouping reads: a raw LiveStream and a parsed StreamRow both fit. */
+export interface UpcomingLike {
+  id: string;
+  status: string;
+  scheduled_at?: string | null;
+}
+
+export interface UpcomingDay<T extends UpcomingLike = LiveStream> {
   /** Local `YYYY-MM-DD`; stable across renders, the React key. */
   key: string;
   label: string;
-  streams: LiveStream[];
+  streams: T[];
 }
 
 function localDayKey(t: number): string {
@@ -156,15 +163,15 @@ function localDayKey(t: number): string {
 }
 
 /**
- * `GET /v1/livestream/streams?status=scheduled` rows → one group per local
+ * Upcoming rows (`GET /v1/livestream/streams/upcoming`) → one group per local
  * day, soonest first, each day's streams by time. Only status "scheduled"
  * with a parsable scheduled_at is kept (a stream that has gone live shows
  * under Live now); a late one joins Today; ids are deduped (pages can
  * overlap while the list moves).
  */
-export function groupUpcomingByDay(streams: readonly LiveStream[], now = Date.now()): UpcomingDay[] {
+export function groupUpcomingByDay<T extends UpcomingLike>(streams: readonly T[], now = Date.now()): UpcomingDay<T>[] {
   const seen = new Set<string>();
-  const timed: { s: LiveStream; t: number }[] = [];
+  const timed: { s: T; t: number }[] = [];
   for (const s of streams) {
     if (s.status !== "scheduled" || seen.has(s.id)) continue;
     const t = Date.parse(s.scheduled_at ?? "");
@@ -174,7 +181,7 @@ export function groupUpcomingByDay(streams: readonly LiveStream[], now = Date.no
   }
   timed.sort((a, b) => a.t - b.t);
   const today = startOfLocalDay(now);
-  const days: UpcomingDay[] = [];
+  const days: UpcomingDay<T>[] = [];
   for (const { s, t } of timed) {
     const dayT = Math.max(t, today);
     const key = localDayKey(dayT);

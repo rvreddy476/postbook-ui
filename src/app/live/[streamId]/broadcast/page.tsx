@@ -21,7 +21,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { goLiveErrorCopy, isPilotRefusal, watchErrorCopy } from "@/features/live/errors"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
 import { StudioForSource } from "@/features/live/components/EncoderStudio"
+import { FoundingBadge, FoundingEarnedNote } from "@/features/live/components/FoundingBadge"
 import { LiveChat } from "@/features/live/components/LiveChat"
+import { HeartCount, StageHearts } from "@/features/live/components/LiveHearts"
 import { LivePageHeading } from "@/features/live/components/LivePageHeading"
 import { LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
 import { PilotNotice } from "@/features/live/components/PilotNotice"
@@ -175,6 +177,7 @@ function Studio({ streamId }: { streamId: string }) {
     <div className="live-page">
       <div className="live-page__inner">
         <LivePageHeading title={stream.title} view={shownView} studio>
+          <FoundingBadge badges={stream.creator?.badges} />
           {stream.description && <p className="live-page__meta">{stream.description}</p>}
         </LivePageHeading>
 
@@ -202,7 +205,10 @@ function Studio({ streamId }: { streamId: string }) {
                       </button>
                     </div>
                   ) : (
-                    <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Go to the stream page</Link>
+                    <>
+                      <FoundingEarnedNote stream={stream} />
+                      <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Go to the stream page</Link>
+                    </>
                   )
                 }
               />
@@ -214,7 +220,9 @@ function Studio({ streamId }: { streamId: string }) {
                   <div className="live-stage__hud">
                     <Users className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>{viewerCountLabel(viewers)}</span>
+                    <HeartCount streamId={stream.id} heartCount={stream.heart_count} />
                   </div>
+                  <StageHearts streamId={stream.id} heartCount={stream.heart_count} status={stream.status} signedIn={!!meId} />
                   {phase === "starting" && (
                     <div className="live-stage__overlay">{view.body || "Starting your stream…"}</div>
                   )}

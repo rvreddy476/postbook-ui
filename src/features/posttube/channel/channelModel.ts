@@ -37,11 +37,13 @@ export function tabCount(tab: ChannelTab, counts: ChannelCounts): number | undef
 /**
  * The owner sees every tab. A visitor does not see a tab the channel says
  * is empty (count exactly 0); a tab whose count the response did not carry
- * (older rows, Posts) stays, and its empty state answers.
+ * (older rows, Posts) stays, and its empty state answers. `liveNow` (the
+ * creator is live this minute) keeps the Live tab even when the channel
+ * has no recordings yet: the count only knows recordings.
  */
-export function visibleTabs(counts: ChannelCounts, isOwner: boolean): ChannelTab[] {
+export function visibleTabs(counts: ChannelCounts, isOwner: boolean, liveNow = false): ChannelTab[] {
   if (isOwner) return [...CHANNEL_TABS];
-  return CHANNEL_TABS.filter((t) => tabCount(t, counts) !== 0);
+  return CHANNEL_TABS.filter((t) => (t === "live" && liveNow) || tabCount(t, counts) !== 0);
 }
 
 /** `?tab=` when it names a visible tab, else the first visible one. */

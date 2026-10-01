@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Globe, ImagePlus, Radio, Users, X } from "lucide-react"
+import { Globe, ImagePlus, Radio, RectangleHorizontal, RectangleVertical, Users, X } from "lucide-react"
 
 import { useCreateStream, type LiveVisibility } from "@/hooks/useLiveV2"
 import { uploadMedia } from "@/lib/mediaUpload"
@@ -10,6 +10,9 @@ import { goLiveErrorCopy, isPilotRefusal } from "@/features/live/errors"
 import { PilotNotice } from "@/features/live/components/PilotNotice"
 import { SourcePicker } from "@/features/live/components/SourcePicker"
 import type { LiveSource } from "@/features/live/encoder"
+import { scheduleErrorCopy, validateStreamForm } from "@/features/live/discovery"
+import { errorCode, type LiveOrientation } from "@/features/live/model"
+import { useTopics } from "@/features/posttube/discovery/hooks/useDiscovery"
 import "@/features/live/live.css"
 
 // Go live form (live-service-v2).
@@ -18,12 +21,21 @@ import "@/features/live/live.css"
 //      403 LIVE_BANNED for a platform live ban.
 //   3. /live/{id}/broadcast mints the publisher token and opens the room
 //      (this device), or shows the server URL and stream key (streaming software).
+// Topic (post-service's categories), orientation and an optional start time
+// ride on the same POST; a stream with a start time is scheduled and listed
+// in Creator Hub → Live instead of opening the studio.
 
 // No "paid": live-service-v2 accepts the value on create but its viewer gate
 // refuses a paid stream to everyone, the creator included (ErrPaidNotSupported).
 const VISIBILITY_CHOICES: Array<{ value: LiveVisibility; label: string; sub: string; icon: React.ReactNode }> = [
   { value: "followers", label: "Followers only", sub: "Only your followers can watch", icon: <Users className="h-4 w-4" aria-hidden="true" /> },
   { value: "public", label: "Public", sub: "Anyone can watch", icon: <Globe className="h-4 w-4" aria-hidden="true" /> },
+]
+
+// Alphabetical, like every choice group here; wide stays the default.
+const ORIENTATION_CHOICES: Array<{ value: LiveOrientation; label: string; sub: string; icon: React.ReactNode }> = [
+  { value: "portrait", label: "Vertical for Reels", sub: "A tall stream, watched like a short", icon: <RectangleVertical className="h-4 w-4" aria-hidden="true" /> },
+  { value: "landscape", label: "Wide for PostTube", sub: "A 16:9 stream with chat beside it", icon: <RectangleHorizontal className="h-4 w-4" aria-hidden="true" /> },
 ]
 
 export default function NewLiveStreamPage() {
@@ -34,6 +46,13 @@ export default function NewLiveStreamPage() {
   const [description, setDescription] = useState("")
   const [visibility, setVisibility] = useState<LiveVisibility>("public")
   const [source, setSource] = useState<LiveSource>("device")
+  const [orientation, setOrientation] = useState<LiveOrientation>("landscape")
+  const [category, setCategory] = useState("")
+  const [scheduledLocal, setScheduledLocal] = useState("")
+  const [timeError, setTimeError] = useState<string | null>(null)
+  const allTopics = useTopics().data ?? []
+  // Wide streams take long-video topics, vertical ones the shorts topics; "all" fits both.
+  const topics = allTopics.filter((t) => t.kind !== (orientation === "portrait" ? "long" : "short"))
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -52,6 +71,9 @@ export default function NewLiveStreamPage() {
     e.preventDefault()
     if (!canSubmit) return
     setError(null)
+    const check = validateStreamForm({ title, scheduledLocal })
+    setTimeError(check.errors.scheduled_at ?? null)
+    if (!check.ok) return
     let coverMediaID: string | null = null
     try {
       if (coverFile) {
@@ -65,15 +87,18 @@ export default function NewLiveStreamPage() {
         visibility,
         cover_media_id: coverMediaID,
         source,
+        orientation,
+        category: category || undefined,
+        scheduled_at: check.scheduled_at,
       })
-      router.push(`/live/${stream.id}/broadcast`)
+      router.push(check.scheduled_at ? "/posttube/hub/live" : `/live/${stream.id}/broadcast`)
     } catch (err: unknown) {
       setUploading(false)
       if (isPilotRefusal(err)) {
         setPilotRefused(true)
         return
       }
-      setError(goLiveErrorCopy(err))
+      setError(errorCode(err) === "INVALID_CATEGORY" ? scheduleErrorCopy(err) : goLiveErrorCopy(err))
     }
   }
 
@@ -120,6 +145,58 @@ export default function NewLiveStreamPage() {
             </div>
 
             <SourcePicker value={source} onChange={setSource} />
+
+            <div>
+              <span className="live-label" id="live-orientation-label">Orientation</span>
+              <div className="live-choices" role="radiogroup" aria-labelledby="live-orientation-label">
+                {ORIENTATION_CHOICES.map((choice) => (
+                  <label key={choice.value} className="live-choice" data-active={orientation === choice.value}>
+                    <input
+                      type="radio"
+                      name="orientation"
+                      value={choice.value}
+                      checked={orientation === choice.value}
+                      onChange={() => {
+                        setOrientation(choice.value)
+                        // A topic that only fits the other shape is dropped with it.
+                        const other = choice.value === "portrait" ? "long" : "short"
+                        if (allTopics.some((t) => t.slug === category && t.kind === other)) setCategory("")
+                      }}
+                    />
+                    {choice.icon}
+                    <span className="flex flex-col">
+                      <span>{choice.label}</span>
+                      <span className="text-xs text-muted-foreground">{choice.sub}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="live-label" htmlFor="live-topic">Topic</label>
+              <select id="live-topic" value={category} onChange={(e) => setCategory(e.target.value)} className="live-field">
+                <option value="">No topic</option>
+                {topics.map((t) => (
+                  <option key={t.slug} value={t.slug}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="live-label" htmlFor="live-schedule">Start time (optional)</label>
+              <input
+                id="live-schedule"
+                type="datetime-local"
+                value={scheduledLocal}
+                onChange={(e) => { setScheduledLocal(e.target.value); setTimeError(null) }}
+                aria-invalid={!!timeError}
+                className="live-field"
+              />
+              <p className={`mt-1 text-xs ${timeError ? "text-danger" : "text-muted-foreground"}`} role={timeError ? "alert" : undefined}>
+                {timeError ?? "Leave it empty to go live now. With a time, viewers can set a reminder."}
+              </p>
+            </div>
 
             <div>
               <span className="live-label">Who can watch</span>
@@ -180,7 +257,7 @@ export default function NewLiveStreamPage() {
                 Cancel
               </button>
               <button type="submit" disabled={!canSubmit} className="live-btn live-btn--primary">
-                {uploading ? "Uploading cover…" : createStream.isPending ? "Creating…" : "Continue"}
+                {uploading ? "Uploading cover…" : createStream.isPending ? "Creating…" : scheduledLocal ? "Schedule" : "Continue"}
               </button>
             </div>
           </form>

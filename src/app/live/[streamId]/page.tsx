@@ -21,10 +21,13 @@ import { chatRole, streamTools } from "@/features/live/chat"
 import { isHostIdentity } from "@/features/live/encoder"
 import { isStreamNotLive, watchErrorCopy } from "@/features/live/errors"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
+import { FoundingBadge } from "@/features/live/components/FoundingBadge"
 import { LiveChat } from "@/features/live/components/LiveChat"
+import { HeartCount, StageHearts } from "@/features/live/components/LiveHearts"
 import { LivePageHeading } from "@/features/live/components/LivePageHeading"
 import { LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
 import { ReportSheet } from "@/features/live/components/ReportSheet"
+import { SupportersCard } from "@/features/live/components/TopSupporters"
 import "@/features/live/live.css"
 
 export default function LiveViewerPage() {
@@ -139,6 +142,8 @@ function LiveViewer({ streamId }: { streamId: string }) {
               {creator?.display_name || creator?.username || "Creator"}
               {showCount ? ` · ${viewerCountLabel(viewers)}` : ""}
             </p>
+            <FoundingBadge badges={stream.creator?.badges} />
+            {showCount && <HeartCount streamId={stream.id} heartCount={stream.heart_count} />}
             {role === "host" && (
               <Link href={`/live/${stream.id}/broadcast`} className="live-btn live-btn--ghost">Open your studio</Link>
             )}
@@ -165,6 +170,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
                 <div className="live-stage">
                   <video ref={videoElRef} autoPlay playsInline controls className="live-stage__video" />
                   <audio ref={audioElRef} autoPlay />
+                  <StageHearts streamId={stream.id} heartCount={stream.heart_count} status={stream.status} signedIn={!!meId} banned={!!meId && room.chat.banned.includes(meId)} />
                   {view.kind === "reconnecting" ? (
                     <div className="live-stage__overlay">Waiting for the host to reconnect…</div>
                   ) : tokenQuery.isError ? (
@@ -193,6 +199,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
             ) : (
               <LiveStatusPanel view={view} />
             )}
+            {view.kind === "ended" && <SupportersCard streamId={stream.id} status={stream.status} />}
             {stream.description ? <section className="live-section"><h2 className="live-section__title">About this broadcast</h2><p className="live-description">{stream.description}</p></section> : null}
           </div>
           {view.showChat && !watchError && (

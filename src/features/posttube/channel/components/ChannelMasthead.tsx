@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { LayoutDashboard, Palette } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { SubscribeButton } from "../../components/SubscribeButton";
+import { LiveRing } from "../../live/ChannelLive";
 import { formatCount } from "../../model";
 import type { ChannelView } from "../channelApi";
 import { aboutNeedsToggle, plural } from "../channelModel";
@@ -31,9 +32,13 @@ export interface ChannelMastheadProps {
   onReport?: () => void;
   /** Opens the RSS feed address (the More menu's "RSS feed" row). */
   onFeed?: () => void;
+  /** The creator's stream when they are live (status "live"): the avatar gets the LIVE ring and opens it. */
+  liveHref?: string;
+  /** Sits beside the name (the Founding creator badge); nothing when absent. */
+  badge?: ReactNode;
 }
 
-export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onFollowChange, onShare, onReport, onFeed }: ChannelMastheadProps) {
+export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onFollowChange, onShare, onReport, onFeed, liveHref, badge }: ChannelMastheadProps) {
   const [expanded, setExpanded] = useState(false);
   const meta: string[] = [];
   if (channel.handle) meta.push(`@${channel.handle}`);
@@ -50,9 +55,14 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
         </div>
       ) : null}
       <div className="tube-chan-head__row">
-        <Avatar src={channel.avatarUrl} name={channel.name} seed={channel.userId} size="xl" className="tube-chan-head__avatar" />
+        <LiveRing href={liveHref} name={channel.name}>
+          <Avatar src={channel.avatarUrl} name={channel.name} seed={channel.userId} size="xl" className="tube-chan-head__avatar" />
+        </LiveRing>
         <div className="tube-chan-head__id">
-          <h1 className="tube-chan-head__name">{channel.name}</h1>
+          <h1 className="tube-chan-head__name">
+            {channel.name}
+            {badge}
+          </h1>
           {meta.length > 0 ? (
             <p className="tube-chan-head__meta">
               {meta.map((m, i) => (

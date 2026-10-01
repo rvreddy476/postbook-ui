@@ -35,7 +35,37 @@ import {
   type ChatTransport,
 } from "@/features/live/realtime"
 import type { LiveReportBody } from "@/features/live/report"
-import { createStreamBody, requestIngress, resetIngress, type StreamIngress } from "@/features/live/encoder"
+import { requestIngress, resetIngress, type StreamIngress } from "@/features/live/encoder"
+import {
+  LIVE_ROUTES,
+  liveNowParams,
+  parseLiveCategories,
+  parseLiveCreators,
+  parseStream,
+  parseStreamPage,
+  parseUserBadges,
+  patchReminder,
+  streamCreateBody,
+  toggleReminder,
+  upcomingParams,
+  userStreamsParams,
+  type LiveCategory,
+  type LiveCreatorRow,
+  type LiveListFilters,
+  type ReminderState,
+  type StreamPage,
+  type StreamRow,
+  type UserStreamsStatus,
+} from "@/features/live/discovery"
+import {
+  HeartsController,
+  heartsPath,
+  parseSupporters,
+  supportersPath,
+  supportersRefetchMs,
+  type HeartsSnapshot,
+  type Supporter,
+} from "@/features/live/hearts"
 
 // live-service-v2 (LiveKit) is the only live stack. Routes (handler.go,
 // moderation_routes.go, 1 Oct 2026):
@@ -134,7 +164,7 @@ export function useCreateStream() {
   const qc = useQueryClient()
   return useMutation<LiveStream, AxiosError, CreateStreamInput>({
     mutationFn: async (input) => {
-      const res = await api.post("/v1/livestream/streams", createStreamBody(input))
+      const res = await api.post("/v1/livestream/streams", streamCreateBody(input))
       return unwrap<LiveStream>(res.data, {} as LiveStream)
     },
     onSuccess: () => {
@@ -365,6 +395,260 @@ export function useReportLive(streamId: string) {
     mutationFn: async (body) => {
       await api.post(`/v1/livestream/streams/${streamId}/reports`, body)
     },
+  })
+}
+
+// ── Live surfaces: discovery, scheduling, reminders ───────────────────
+//
+// Contract 2 Oct 2026. Every wire name is read in features/live/discovery.ts
+// (routes, params, parsers); these hooks only fetch and cache. Shared by
+// PostTube live and the Reels Live tab.
+//   GET   /v1/livestream/streams?status=live&orientation=&category=&following=true&sort=
+//   GET   /v1/livestream/streams/upcoming?orientation=&category=&following=
+//   GET   /v1/livestream/categories/live
+//   GET   /v1/livestream/creators/live?limit=
+//   GET   /v1/livestream/users/:userId/streams?status=live|upcoming|past
+//   GET   /v1/livestream/users/:userId/badges
+//   PATCH /v1/livestream/streams/:id                 host, only while scheduled
+//   PUT | DELETE /v1/livestream/streams/:id/reminder
+//   POST  /v1/livestream/streams/:id/hearts          {count}
+//   GET   /v1/livestream/streams/:id/supporters?limit=
+
+export type { LiveCategory, LiveCreatorRow, LiveListFilters, ReminderState, StreamPage, StreamRow, UserStreamsStatus }
+
+const filterKey = (f: LiveListFilters) => [f.orientation ?? "", f.category ?? "", !!f.following, f.sort ?? "", f.limit ?? 0] as const
+
+export const liveDiscoveryKeys = {
+  // Under liveV2Keys.list() so create / start / end refresh it too.
+  liveNow: (f: LiveListFilters) => [...liveV2Keys.list(), "now", ...filterKey(f)] as const,
+  upcoming: (f: LiveListFilters) => [...liveV2Keys.all, "upcoming", ...filterKey(f)] as const,
+  categories: () => [...liveV2Keys.all, "categories"] as const,
+  creators: (limit: number) => [...liveV2Keys.all, "creators", limit] as const,
+  userStreams: (userId: string, status: UserStreamsStatus) => [...liveV2Keys.all, "user", userId, status] as const,
+  badges: (userId: string) => [...liveV2Keys.all, "badges", userId] as const,
+  supporters: (streamId: string) => [...liveV2Keys.all, "supporters", streamId] as const,
+}
+
+interface ListOptions {
+  enabled?: boolean
+  /** Re-read on this interval (viewer counts move); off by default. */
+  refetchMs?: number | false
+}
+
+/** Live now, most watched first unless `sort` says otherwise. */
+export function useLiveNow(filters: LiveListFilters = {}, opts: ListOptions = {}) {
+  return useInfiniteQuery<StreamPage>({
+    queryKey: liveDiscoveryKeys.liveNow(filters),
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(LIVE_ROUTES.streams, { params: liveNowParams({ ...filters, cursor: pageParam ? String(pageParam) : undefined }) })
+      return parseStreamPage(res.data)
+    },
+    initialPageParam: "",
+    getNextPageParam: (last) => last.next_cursor || undefined,
+    enabled: opts.enabled ?? true,
+    staleTime: 30_000,
+    refetchInterval: opts.refetchMs ?? false,
+  })
+}
+
+/** Scheduled streams still ahead, soonest first; rows carry reminder_set and reminder_count. */
+export function useUpcomingStreams(filters: LiveListFilters = {}, opts: ListOptions = {}) {
+  return useInfiniteQuery<StreamPage>({
+    queryKey: liveDiscoveryKeys.upcoming(filters),
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(LIVE_ROUTES.upcoming, { params: upcomingParams({ ...filters, cursor: pageParam ? String(pageParam) : undefined }) })
+      return parseStreamPage(res.data)
+    },
+    initialPageParam: "",
+    getNextPageParam: (last) => last.next_cursor || undefined,
+    enabled: opts.enabled ?? true,
+    staleTime: 60_000,
+  })
+}
+
+/** Topics with at least one stream live, most watched first. */
+export function useLiveCategories(enabled = true) {
+  return useQuery<LiveCategory[]>({
+    queryKey: liveDiscoveryKeys.categories(),
+    queryFn: async () => parseLiveCategories((await api.get(LIVE_ROUTES.categories)).data),
+    enabled,
+    staleTime: 60_000,
+  })
+}
+
+/** Creators who are live right now, by viewers (suggested creators; the LIVE ring through liveByCreator). */
+export function useLiveCreators(limit = 12, enabled = true) {
+  return useQuery<LiveCreatorRow[]>({
+    queryKey: liveDiscoveryKeys.creators(limit),
+    queryFn: async () => parseLiveCreators((await api.get(LIVE_ROUTES.creators, { params: { limit } })).data),
+    enabled,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+}
+
+/** One creator's streams: live, upcoming or past (the channel Live tab, the Creator Hub). */
+export function useUserStreams(userId: string | null | undefined, status: UserStreamsStatus, opts: ListOptions & { limit?: number } = {}) {
+  return useInfiniteQuery<StreamPage>({
+    queryKey: liveDiscoveryKeys.userStreams(userId ?? "", status),
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(LIVE_ROUTES.userStreams(userId as string), {
+        params: userStreamsParams(status, { limit: opts.limit, cursor: pageParam ? String(pageParam) : undefined }),
+      })
+      return parseStreamPage(res.data)
+    },
+    initialPageParam: "",
+    getNextPageParam: (last) => last.next_cursor || undefined,
+    enabled: !!userId && (opts.enabled ?? true),
+    staleTime: 30_000,
+    refetchInterval: opts.refetchMs ?? false,
+    retry: false,
+  })
+}
+
+/** The detail row, parsed (orientation, category, creator card, reminder, recording, hearts). */
+export function useLiveStreamRow(streamId: string | null | undefined, pollMs: number | false = 10_000) {
+  const query = useLiveStream(streamId, pollMs)
+  const row = React.useMemo(() => parseStream(query.data), [query.data])
+  return { ...query, row }
+}
+
+/** A creator's badge keys. Absent or failed reads as none: a badge is never a reason to show an error. */
+export function useUserBadges(userId: string | null | undefined) {
+  return useQuery<string[]>({
+    queryKey: liveDiscoveryKeys.badges(userId ?? ""),
+    queryFn: async () => parseUserBadges((await api.get(LIVE_ROUTES.userBadges(userId as string))).data),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+}
+
+/** PATCH a scheduled stream. `body` comes from streamPatchBody (only what changed). */
+export function useUpdateStream() {
+  const qc = useQueryClient()
+  return useMutation<StreamRow | null, AxiosError, { streamId: string; body: Record<string, unknown> }>({
+    mutationFn: async ({ streamId, body }) => {
+      const res = await api.patch(LIVE_ROUTES.stream(streamId), body)
+      return parseStream(unwrap<unknown>(res.data, null))
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: liveV2Keys.all })
+    },
+  })
+}
+
+/**
+ * Notify me / Reminder set. Every cached list and row that holds the
+ * stream changes at once; the server's answer replaces the guess and a
+ * failure puts the caches back (features/live/discovery.ts toggleReminder).
+ */
+export function useStreamReminder() {
+  const qc = useQueryClient()
+  return useMutation<ReminderState, AxiosError, { streamId: string; on: boolean; current: ReminderState }>({
+    mutationFn: async ({ streamId, on, current }) => {
+      await qc.cancelQueries({ queryKey: [...liveV2Keys.all, "upcoming"] })
+      return toggleReminder(api, {
+        read: () => current,
+        write: (id, state) => { qc.setQueriesData({ queryKey: liveV2Keys.all }, (data: unknown) => patchReminder(data, id, state)) },
+        snapshot: () => qc.getQueriesData({ queryKey: liveV2Keys.all }),
+        restore: (snapshot) => { for (const [key, data] of snapshot) qc.setQueryData(key, data) },
+      }, streamId, on)
+    },
+  })
+}
+
+// ── Free hearts and top supporters ────────────────────────────────────
+//
+// One HeartsController per stream on the page, shared by every component
+// that shows the count or the button (features/live/hearts.ts). It keeps
+// the stream's room subscription too, so hearts arrive without the chat.
+
+interface HeartsEntry { controller: HeartsController; refs: number; stop: () => void }
+const heartsRegistry = new Map<string, HeartsEntry>()
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+function acquireHearts(streamId: string): HeartsController {
+  const existing = heartsRegistry.get(streamId)
+  if (existing) {
+    existing.refs += 1
+    return existing.controller
+  }
+  const controller = new HeartsController({
+    send: async (count) => (await api.post(heartsPath(streamId), { count })).data,
+    schedule: (fn, ms) => setTimeout(fn, ms),
+    cancel: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+    now: () => Date.now(),
+    reducedMotion: prefersReducedMotion,
+  })
+  subscribeToLiveStream(streamId)
+  const offFrames = subscribeToLiveEvents((frame) => {
+    if (frame.kind === "hearts" && frame.stream_id === streamId) controller.frame(frame)
+  })
+  heartsRegistry.set(streamId, {
+    controller,
+    refs: 1,
+    stop: () => {
+      offFrames()
+      unsubscribeFromLiveStream(streamId)
+      controller.dispose()
+    },
+  })
+  return controller
+}
+
+function releaseHearts(streamId: string) {
+  const entry = heartsRegistry.get(streamId)
+  if (!entry) return
+  entry.refs -= 1
+  if (entry.refs > 0) return
+  heartsRegistry.delete(streamId)
+  entry.stop()
+}
+
+const NO_HEARTS: HeartsSnapshot = { count: 0, floating: [], blocked: null }
+const noSubscribe = () => () => {}
+const noHearts = () => NO_HEARTS
+
+export interface LiveHearts extends HeartsSnapshot {
+  /** One tap; false when hearts are blocked. */
+  tap: () => boolean
+  /** Clears a server refusal once its cause is gone (the stream is on air again). */
+  unblock: () => void
+}
+
+/** `heartCount` is the stream row's heart_count: it seeds the total and never lowers it. */
+export function useLiveHearts(streamId: string, heartCount?: number | null): LiveHearts {
+  const [controller, setController] = React.useState<HeartsController | null>(null)
+  React.useEffect(() => {
+    if (!streamId) return
+    setController(acquireHearts(streamId))
+    return () => {
+      setController(null)
+      releaseHearts(streamId)
+    }
+  }, [streamId])
+  React.useEffect(() => {
+    controller?.seed(heartCount)
+  }, [controller, heartCount])
+  const snapshot = React.useSyncExternalStore(controller ? controller.subscribe : noSubscribe, controller ? controller.getSnapshot : noHearts, noHearts)
+  const tap = React.useCallback(() => controller?.tap() ?? false, [controller])
+  const unblock = React.useCallback(() => controller?.unblock(), [controller])
+  return { ...snapshot, tap, unblock }
+}
+
+/** Top supporters: refreshed every 15 s while the stream is on air, read once after it ended. */
+export function useSupporters(streamId: string | null | undefined, status: unknown, limit = 10) {
+  return useQuery<Supporter[]>({
+    queryKey: liveDiscoveryKeys.supporters(streamId ?? ""),
+    queryFn: async () => parseSupporters((await api.get(supportersPath(streamId as string), { params: { limit } })).data),
+    enabled: !!streamId,
+    staleTime: 10_000,
+    refetchInterval: supportersRefetchMs(status),
+    retry: false,
   })
 }
 

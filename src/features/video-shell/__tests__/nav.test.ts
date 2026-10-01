@@ -25,7 +25,7 @@ describe("videoNav (tube)", () => {
   test("top group reads Watch, Reels, Subscriptions, Live, Trending, Topics — the RUTUBE words, no app highlight", () => {
     const tube = videoNav("tube").find((s) => s.key === "top")!;
     expect(tube.items.map((i) => i.label)).toEqual(["Watch", "Reels", "Subscriptions", "Live", "Trending", "Topics"]);
-    expect(tube.items.map((i) => i.href)).toEqual(["/posttube", "/reels", "/posttube/subscriptions", "/live", "/posttube/trending", "/posttube/topics"]);
+    expect(tube.items.map((i) => i.href)).toEqual(["/posttube", "/reels", "/posttube/subscriptions", "/posttube/live", "/posttube/trending", "/posttube/topics"]);
     for (const i of tube.items) expect(Boolean(i.active)).toBe(false);
     expect(tube.items.find((i) => i.key === "watch")!.exact).toBe(true);
   });
@@ -137,7 +137,7 @@ describe("videoNav (reels, header chrome)", () => {
     const top = sections[0];
     expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile"]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/live", "/messenger", "/notifications", "/reels/create", "/profile",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile",
     ]);
     expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"]]);
     expect(sections[2].items).toEqual([...VIDEO_NAV_FOOTER]);
@@ -163,7 +163,7 @@ describe("videoNav (reels, sidebar chrome)", () => {
       "For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile", "More",
     ]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/live", "/messenger", "/notifications", "/reels/create", "/profile", "more",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile", "more",
     ]);
   });
 

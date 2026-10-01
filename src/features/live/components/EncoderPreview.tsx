@@ -29,11 +29,14 @@ export function EncoderPreview({
   creatorId,
   view,
   viewersLabel,
+  children,
 }: {
   streamId: string
   creatorId: string
   view: LiveStatusView
   viewersLabel: string
+  /** Laid over the stage (hearts). */
+  children?: React.ReactNode
 }) {
   const tokenQuery = useViewerToken(streamId, view.connectPlayer)
   const token = tokenQuery.data?.token
@@ -132,6 +135,7 @@ export function EncoderPreview({
           {phase === "error" ? "We couldn't load the preview. Your stream is not affected." : "Loading the preview…"}
         </div>
       ) : null}
+      {children}
     </div>
   )
 }

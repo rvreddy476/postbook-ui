@@ -7,6 +7,7 @@ import { Avatar } from "@/components/LetterAvatar";
 import { ReelSoundLabel } from "@/features/reels/components/ReelSoundLabel";
 import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
+import { liveRingLabel } from "@/features/reels/live/liveRing";
 
 export interface ReelAuthorCardProps {
   reel: ReelItem;
@@ -25,6 +26,8 @@ export interface ReelAuthorCardProps {
   /** "Use this sound" for a reel that plays only its own audio; absent = no such line. */
   onUseOriginalSound?: () => void;
   useSoundPending?: boolean;
+  /** The author is live right now: the avatar wears the LIVE ring and opens their stream. "" or absent = no ring. */
+  liveHref?: string;
 }
 
 /*
@@ -53,13 +56,19 @@ export function ReelAuthorCard({
   onShare,
   onUseOriginalSound,
   useSoundPending,
+  liveHref = "",
 }: ReelAuthorCardProps) {
   const action = authorAction(reel, isOwn);
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
   return (
     <div className="reel-author-card">
       <div className="reel-author-card__author">
-        <Link href={profileHref} aria-label={`${reel.authorName}'s profile`} className="reel-author-card__avatar">
+        <Link
+          href={liveHref || profileHref}
+          aria-label={liveHref ? liveRingLabel(reel.authorName) : `${reel.authorName}'s profile`}
+          className={`reel-author-card__avatar${liveHref ? " is-live" : ""}`}
+          data-live={liveHref ? "" : undefined}
+        >
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
         </Link>
         <div className="min-w-0 flex-1">

@@ -10,6 +10,7 @@ import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 import { soundPageHref } from "@/features/reels/sounds";
+import { liveRingLabel } from "@/features/reels/live/liveRing";
 
 interface ReelRailProps {
   reel: ReelItem;
@@ -42,6 +43,11 @@ interface ReelRailProps {
    * over the video and keeps its More button.
    */
   variant?: "desktop" | "phone";
+  /**
+   * The author is live right now (live/liveRing.ts reelLiveHref): the avatar
+   * wears the LIVE ring and opens their stream. "" or absent = no ring.
+   */
+  liveHref?: string;
 }
 
 /** Top to bottom; the rail reads Share, Save, Comments, Like, Avatar from the bottom, as TikTok's. */
@@ -72,6 +78,7 @@ export function ReelRail({
   onMore,
   moreMenu,
   variant = "desktop",
+  liveHref = "",
 }: ReelRailProps) {
   const profileHref = `/u/${reel.authorUsername || reel.authorId}`;
   const action = authorAction(reel, isOwn);
@@ -87,9 +94,15 @@ export function ReelRail({
   return (
     <div className={`reel-action-rail is-${variant}`} onClick={(e) => e.stopPropagation()}>
       <div className="reel-rail-avatar-wrap">
-        <Link href={profileHref} className="reel-rail-avatar" aria-label={`${reel.authorName}'s profile`}>
+        <Link
+          href={liveHref || profileHref}
+          className={`reel-rail-avatar${liveHref ? " is-live" : ""}`}
+          aria-label={liveHref ? liveRingLabel(reel.authorName) : `${reel.authorName}'s profile`}
+          data-live={liveHref ? "" : undefined}
+        >
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={desktop ? "lg" : "md"} />
         </Link>
+        {liveHref && !badge ? <span className="reel-live-tag" aria-hidden="true">LIVE</span> : null}
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
             Follow

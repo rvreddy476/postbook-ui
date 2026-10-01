@@ -13,7 +13,9 @@ import { encoderHostView, encoderPanel, ingressErrorCopy, studioFor } from "../e
 import { currentViewerCount, viewerCountLabel } from "../status"
 import { EncoderPreview } from "./EncoderPreview"
 import { EncoderSetup } from "./EncoderSetup"
+import { FoundingBadge, FoundingEarnedNote } from "./FoundingBadge"
 import { LiveChat } from "./LiveChat"
+import { HeartCount, StageHearts } from "./LiveHearts"
 import { LivePageHeading } from "./LivePageHeading"
 import { LiveStatusPanel, ReconnectingNotice } from "./LiveStatus"
 import { PilotNotice } from "./PilotNotice"
@@ -114,6 +116,7 @@ function EncoderStudio({ streamId }: { streamId: string }) {
     <div className="live-page">
       <div className="live-page__inner">
         <LivePageHeading title={stream.title} view={view} studio>
+          <FoundingBadge badges={stream.creator?.badges} />
           {stream.description && <p className="live-page__meta">{stream.description}</p>}
         </LivePageHeading>
 
@@ -125,6 +128,7 @@ function EncoderStudio({ streamId }: { streamId: string }) {
                 action={
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {startError && <p className="live-error w-full" role="alert">{startError}</p>}
+                    <FoundingEarnedNote stream={stream} />
                     <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Go to the stream page</Link>
                     {/* live-service-v2 lets a failed stream start again; it gets a new stream key. */}
                     {view.kind === "failed" && (
@@ -140,7 +144,9 @@ function EncoderStudio({ streamId }: { streamId: string }) {
                 {panel.panel === "preview" ? (
                   <>
                     <ReconnectingNotice view={view} />
-                    <EncoderPreview streamId={stream.id} creatorId={stream.creator_user_id} view={view} viewersLabel={viewers} />
+                    <EncoderPreview streamId={stream.id} creatorId={stream.creator_user_id} view={view} viewersLabel={viewers}>
+                      <StageHearts streamId={stream.id} heartCount={stream.heart_count} status={stream.status} signedIn={!!meId} />
+                    </EncoderPreview>
                   </>
                 ) : (
                   <EncoderSetup
@@ -157,6 +163,7 @@ function EncoderStudio({ streamId }: { streamId: string }) {
                 <div className="live-section live-studio-controls">
                   <span className="live-page__meta">
                     {view.kind === "live" ? `You're live. ${viewers}.` : view.kind === "starting" ? view.title : view.label}
+                    {view.kind === "live" && <> <HeartCount streamId={stream.id} heartCount={stream.heart_count} /></>}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
                     {panel.canStart && (

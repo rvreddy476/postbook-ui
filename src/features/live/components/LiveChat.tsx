@@ -24,6 +24,7 @@ import { chatSendErrorCopy, isChatBan, moderationErrorCopy } from "../errors"
 import { ChatMessageRow } from "./ChatMessageRow"
 import { ModerationPanel } from "./ModerationPanel"
 import { ReportSheet } from "./ReportSheet"
+import { TopSupporters } from "./TopSupporters"
 
 const MAX_SEND_CHARS = 500
 
@@ -185,6 +186,7 @@ export function LiveChat({
         <div className="live-chat__head">
           <span className="live-chat__heading"><MessageCircle size={17} aria-hidden="true" />Live chat</span>
           {room.polling && <span className="live-chat__mode">Updating every few seconds</span>}
+          <TopSupporters streamId={streamId} status={view.kind} />
         </div>
         <div ref={scrollerRef} className="live-chat__list" role="log" aria-label="Live messages" aria-live="polite" aria-relevant="additions text" onScroll={(event) => {
           const el = event.currentTarget

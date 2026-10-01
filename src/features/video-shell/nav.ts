@@ -99,7 +99,7 @@ export const VIDEO_NAV_TOP: readonly VideoNavItem[] = [
   { key: "watch", label: "Watch", icon: Tv, href: "/posttube", exact: true },
   { key: "reels", label: "Reels", icon: Clapperboard, href: "/reels" },
   { key: "following", label: "Subscriptions", icon: UserRoundCheck, href: "/posttube/subscriptions" },
-  { key: "live", label: "Live", icon: Radio, href: "/live" },
+  { key: "live", label: "Live", icon: Radio, href: "/posttube/live" },
   { key: "trending", label: "Trending", icon: Flame, href: "/posttube/trending" },
   { key: "topics", label: "Topics", icon: Shapes, href: "/posttube/topics" },
 ];
@@ -129,7 +129,7 @@ export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "explore", label: "Explore", icon: Compass, action: "explore" },
   { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
   { key: "friends", label: "Friends", icon: Users, href: "/connections" },
-  { key: "live", label: "LIVE", icon: Radio, href: "/live" },
+  { key: "live", label: "LIVE", icon: Radio, href: "/reels/live" },
   { key: "messages", label: "Messages", icon: MessageSquare, href: "/messenger" },
   { key: "activity", label: "Activity", icon: Bell, href: "/notifications" },
   { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
