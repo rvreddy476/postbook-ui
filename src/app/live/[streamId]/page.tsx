@@ -18,10 +18,12 @@ import { useBatchProfiles } from "@/hooks/useProfile"
 import { getCurrentUserId } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { chatRole, streamTools } from "@/features/live/chat"
+import { isHostIdentity } from "@/features/live/encoder"
 import { isStreamNotLive, watchErrorCopy } from "@/features/live/errors"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
 import { LiveChat } from "@/features/live/components/LiveChat"
-import { LiveStatusBadge, LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
+import { LivePageHeading } from "@/features/live/components/LivePageHeading"
+import { LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
 import { ReportSheet } from "@/features/live/components/ReportSheet"
 import "@/features/live/live.css"
 
@@ -57,6 +59,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
   const token = tokenQuery.data?.token
   const serverUrl = tokenQuery.data?.server_url
   const connect = view.connectPlayer && !!token && !!serverUrl
+  const creatorId = stream?.creator_user_id
 
   // 409 STREAM_NOT_LIVE after the retries: our row says on air but the
   // server no longer does. Re-read the row so the panel tells the truth.
@@ -73,6 +76,8 @@ function LiveViewer({ streamId }: { streamId: string }) {
     const lkRoom = new Room({ adaptiveStream: true, dynacast: true })
     roomRef.current = lkRoom
     const attach = (track: RemoteTrack, _pub?: RemoteTrackPublication, _p?: RemoteParticipant) => {
+      // Host media only: the creator's identity or this stream's encoder.
+      if (!isHostIdentity(_p?.identity, { id: streamId, creator_user_id: creatorId ?? "" })) return
       if (track.kind === Track.Kind.Video && videoElRef.current) track.attach(videoElRef.current)
       if (track.kind === Track.Kind.Audio && audioElRef.current) track.attach(audioElRef.current)
     }
@@ -85,7 +90,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
         if (cancelled) return
         for (const participant of lkRoom.remoteParticipants.values()) {
           for (const pub of participant.trackPublications.values()) {
-            if (pub.track) attach(pub.track as RemoteTrack)
+            if (pub.track) attach(pub.track as RemoteTrack, pub, participant)
           }
         }
         setPhase("connected")
@@ -97,7 +102,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
       roomRef.current = null
       setPhase("idle")
     }
-  }, [connect, token, serverUrl])
+  }, [connect, token, serverUrl, streamId, creatorId])
 
   if (!stream) {
     const copy = streamError ? watchErrorCopy(streamError) : null
@@ -128,11 +133,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
   return (
     <div className="live-page">
       <div className="live-page__inner">
-        <header className="mb-4 flex flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <LiveStatusBadge view={view} />
-            <h1 className="live-page__title">{stream.title}</h1>
-          </div>
+        <LivePageHeading title={stream.title} view={view}>
           <div className="flex flex-wrap items-center gap-3">
             <p className="live-page__meta">
               {creator?.display_name || creator?.username || "Creator"}
@@ -152,8 +153,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
               </button>
             )}
           </div>
-          {stream.description && <p className="text-sm text-brand-text">{stream.description}</p>}
-        </header>
+        </LivePageHeading>
 
         <div className="live-layout">
           <div className="flex flex-col gap-3">
@@ -193,6 +193,7 @@ function LiveViewer({ streamId }: { streamId: string }) {
             ) : (
               <LiveStatusPanel view={view} />
             )}
+            {stream.description ? <section className="live-section"><h2 className="live-section__title">About this broadcast</h2><p className="live-description">{stream.description}</p></section> : null}
           </div>
           {view.showChat && !watchError && (
             <LiveChat streamId={stream.id} hostId={stream.creator_user_id} meId={meId} room={room} view={view} />

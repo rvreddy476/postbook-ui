@@ -20,8 +20,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { goLiveErrorCopy, isPilotRefusal, watchErrorCopy } from "@/features/live/errors"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
+import { StudioForSource } from "@/features/live/components/EncoderStudio"
 import { LiveChat } from "@/features/live/components/LiveChat"
-import { LiveStatusBadge, LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
+import { LivePageHeading } from "@/features/live/components/LivePageHeading"
+import { LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
 import { PilotNotice } from "@/features/live/components/PilotNotice"
 import "@/features/live/live.css"
 
@@ -34,7 +36,9 @@ export default function BroadcastPage() {
   const params = useParams<{ streamId: string }>()
   const streamId = params?.streamId
   if (!streamId) return null
-  return <Studio key={streamId} streamId={streamId} />
+  // Streaming-software streams get the encoder studio; the camera studio
+  // below mounts only for a stream that publishes from this device.
+  return <StudioForSource key={streamId} streamId={streamId} device={<Studio key={streamId} streamId={streamId} />} />
 }
 
 type PublishPhase = "idle" | "starting" | "publishing" | "error" | "pilot" | "stopped"
@@ -170,13 +174,9 @@ function Studio({ streamId }: { streamId: string }) {
   return (
     <div className="live-page">
       <div className="live-page__inner">
-        <header className="mb-4 flex flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <LiveStatusBadge view={shownView} />
-            <h1 className="live-page__title">{stream.title || "Live stream"}</h1>
-          </div>
+        <LivePageHeading title={stream.title} view={shownView} studio>
           {stream.description && <p className="live-page__meta">{stream.description}</p>}
-        </header>
+        </LivePageHeading>
 
         <div className="live-layout">
           <div className="flex flex-col gap-3">
@@ -237,7 +237,7 @@ function Studio({ streamId }: { streamId: string }) {
                     <div className="live-stage__overlay">Ending your stream…</div>
                   )}
                 </div>
-                <div className="live-section flex items-center justify-between gap-3">
+                <div className="live-section live-studio-controls">
                   <span className="live-page__meta">
                     {view.kind === "live" ? "You're live." : view.label}
                   </span>

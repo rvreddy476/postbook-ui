@@ -35,6 +35,7 @@ import {
   type ChatTransport,
 } from "@/features/live/realtime"
 import type { LiveReportBody } from "@/features/live/report"
+import { createStreamBody, requestIngress, resetIngress, type StreamIngress } from "@/features/live/encoder"
 
 // live-service-v2 (LiveKit) is the only live stack. Routes (handler.go,
 // moderation_routes.go, 1 Oct 2026):
@@ -53,6 +54,8 @@ import type { LiveReportBody } from "@/features/live/report"
 //   PUT    /v1/livestream/streams/:id/moderators       {user_ids} (host, max 5)
 //   GET    /v1/livestream/streams/:id/moderators       anyone who can see the stream
 //   POST   /v1/livestream/streams/:id/reports          {reason, message_id?, note?} → 201
+//   POST   /v1/livestream/streams/:id/ingress          host, encoder streams: {server_url, stream_key, ingress_id}
+//   DELETE /v1/livestream/streams/:id/ingress          host; the next POST issues a new key
 // Real-time: ws `subscribe_live_stream` (see features/live/realtime.ts).
 
 export type {
@@ -131,13 +134,7 @@ export function useCreateStream() {
   const qc = useQueryClient()
   return useMutation<LiveStream, AxiosError, CreateStreamInput>({
     mutationFn: async (input) => {
-      const res = await api.post("/v1/livestream/streams", {
-        title: input.title,
-        description: input.description ?? "",
-        visibility: input.visibility,
-        cover_media_id: input.cover_media_id ?? null,
-        scheduled_at: input.scheduled_at ?? null,
-      })
+      const res = await api.post("/v1/livestream/streams", createStreamBody(input))
       return unwrap<LiveStream>(res.data, {} as LiveStream)
     },
     onSuccess: () => {
@@ -369,4 +366,75 @@ export function useReportLive(streamId: string) {
       await api.post(`/v1/livestream/streams/${streamId}/reports`, body)
     },
   })
+}
+
+// ── Streaming software (encoder streams) ──────────────────────────────
+//
+// The server URL and stream key for the host's streaming software. The key
+// is a secret: it lives in this component's state only, never in the query
+// cache, a URL, storage or a log, and it is dropped as soon as `enabled`
+// goes false (the stream is live or over).
+
+export interface StreamIngressState {
+  ingress: StreamIngress | null
+  loading: boolean
+  resetting: boolean
+  error: unknown
+  /** Ask again after a failure. */
+  retry: () => void
+  /** "Reset key": DELETE then POST. The old key stops working. */
+  reset: () => Promise<void>
+}
+
+export function useStreamIngress(streamId: string, enabled: boolean): StreamIngressState {
+  const [ingress, setIngress] = React.useState<StreamIngress | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [resetting, setResetting] = React.useState(false)
+  const [error, setError] = React.useState<unknown>(null)
+  const [attempt, setAttempt] = React.useState(0)
+  // One POST per (stream, attempt): StrictMode runs the effect twice, and
+  // the answer of a superseded request is ignored.
+  const askedRef = React.useRef("")
+  const seqRef = React.useRef(0)
+
+  React.useEffect(() => {
+    if (!enabled || !streamId) {
+      askedRef.current = ""
+      seqRef.current += 1
+      setIngress(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+    const key = `${streamId}:${attempt}`
+    if (askedRef.current === key) return
+    askedRef.current = key
+    const seq = ++seqRef.current
+    setLoading(true)
+    setError(null)
+    requestIngress(api, streamId)
+      .then((row) => { if (seqRef.current === seq) setIngress(row) })
+      .catch((err: unknown) => { if (seqRef.current === seq) setError(err) })
+      .finally(() => { if (seqRef.current === seq) setLoading(false) })
+  }, [streamId, enabled, attempt])
+
+  const retry = React.useCallback(() => setAttempt((n) => n + 1), [])
+
+  const reset = React.useCallback(async () => {
+    const seq = ++seqRef.current
+    setResetting(true)
+    setError(null)
+    // The old key is dead from the DELETE on: never leave it on screen.
+    setIngress(null)
+    try {
+      const row = await resetIngress(api, streamId)
+      if (seqRef.current === seq) setIngress(row)
+    } catch (err) {
+      if (seqRef.current === seq) setError(err)
+    } finally {
+      setResetting(false)
+    }
+  }, [streamId])
+
+  return { ingress, loading, resetting, error, retry, reset }
 }

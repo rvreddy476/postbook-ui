@@ -47,6 +47,10 @@ export interface LiveStream {
   status_changed_at?: string | null
   /** Stream moderators (host-chosen, max 5) when the backend sends them. */
   moderator_user_ids?: string[] | null
+  /** How the host publishes: this device's camera (absent or "device") or streaming software. */
+  source?: "device" | "encoder"
+  /** Host and moderators only: an ingress (server URL + stream key) exists. */
+  has_ingress?: boolean
   recording_url: string | null
   recording_duration_seconds: number | null
   created_at: string
@@ -59,6 +63,8 @@ export interface CreateStreamInput {
   visibility: LiveVisibility
   cover_media_id?: string | null
   scheduled_at?: string | null
+  /** "encoder" = go live from streaming software; anything else is this device. */
+  source?: "device" | "encoder"
 }
 
 export interface StartStreamResult {

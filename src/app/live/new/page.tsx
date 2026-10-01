@@ -8,13 +8,16 @@ import { useCreateStream, type LiveVisibility } from "@/hooks/useLiveV2"
 import { uploadMedia } from "@/lib/mediaUpload"
 import { goLiveErrorCopy, isPilotRefusal } from "@/features/live/errors"
 import { PilotNotice } from "@/features/live/components/PilotNotice"
+import { SourcePicker } from "@/features/live/components/SourcePicker"
+import type { LiveSource } from "@/features/live/encoder"
 import "@/features/live/live.css"
 
 // Go live form (live-service-v2).
 //   1. (optional) cover image via the standard media upload.
 //   2. POST /v1/livestream/streams — 403 LIVE_NOT_ENABLED outside the pilot,
 //      403 LIVE_BANNED for a platform live ban.
-//   3. /live/{id}/broadcast mints the publisher token and opens the room.
+//   3. /live/{id}/broadcast mints the publisher token and opens the room
+//      (this device), or shows the server URL and stream key (streaming software).
 
 // No "paid": live-service-v2 accepts the value on create but its viewer gate
 // refuses a paid stream to everyone, the creator included (ErrPaidNotSupported).
@@ -30,6 +33,7 @@ export default function NewLiveStreamPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [visibility, setVisibility] = useState<LiveVisibility>("public")
+  const [source, setSource] = useState<LiveSource>("device")
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -60,6 +64,7 @@ export default function NewLiveStreamPage() {
         description: description.trim(),
         visibility,
         cover_media_id: coverMediaID,
+        source,
       })
       router.push(`/live/${stream.id}/broadcast`)
     } catch (err: unknown) {
@@ -113,6 +118,8 @@ export default function NewLiveStreamPage() {
                 className="live-field resize-none"
               />
             </div>
+
+            <SourcePicker value={source} onChange={setSource} />
 
             <div>
               <span className="live-label">Who can watch</span>
