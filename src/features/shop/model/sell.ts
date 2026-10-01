@@ -54,6 +54,7 @@ export interface RailEntry {
 
 /** Alphabetical by label (the founder's rule for anything read as a list). */
 export const SELLER_RAIL: readonly RailEntry[] = [
+  { label: "Coupons", href: "/shop/sell/coupons" },
   { label: "Dashboard", href: "/shop/sell" },
   { label: "Orders", href: "/shop/sell/orders" },
   { label: "Products", href: "/shop/sell/products" },

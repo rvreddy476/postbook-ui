@@ -9,6 +9,7 @@ import { useAddToBag } from "../hooks/bag"
 import { useDeliveryEstimate, usePincode } from "../hooks/delivery"
 import { useProductReaction, useReviewVote } from "../hooks/reactions"
 import { useLegacyAttributes, useProductDetail, useProductMedia } from "../hooks/catalogue"
+import { usePaymentOffers } from "../hooks/offers"
 import { useProductReviews } from "../hooks/reviews"
 import { useCategories, useShopSession } from "../hooks/storefront"
 import {
@@ -29,11 +30,14 @@ import {
   variantAxes,
   type Selection,
 } from "../model/catalogue"
+import { bestCoupon } from "../model/coupons"
 import { deliveryView } from "../model/delivery"
 import { DEFAULT_REVIEW_SORT, readProductReaction, voteFailureMessage, type ReviewSort } from "../model/reactions"
 import { ratingSummary } from "../model/reviews"
 import { productPath } from "../model/share"
 import { browseHref, isSignedOut, SHOP_BASE, signInHref, toProductCard } from "../model/storefront"
+import { CouponChip } from "../components/coupons/CouponChip"
+import { BankOffers } from "../components/offers/BankOffers"
 import { DeliveryBlock } from "../components/catalogue/DeliveryBlock"
 import { Gallery } from "../components/catalogue/Gallery"
 import { QuantityStepper } from "../components/catalogue/QuantityStepper"
@@ -103,6 +107,11 @@ export function ProductScreen({ productId }: { productId: string }) {
   const price = priceLine(selected)
   const available = selected?.availableQty ?? 0
   const stock = stockLine(selected ? available : 0)
+  // Coupons and bank offers: the chip is the server's best_coupon, the
+  // offers are asked for at the price on screen (the selected variant's,
+  // else the listing's), and both only ever list — no total moves here.
+  const coupon = bestCoupon(product, body)
+  const offers = usePaymentOffers(selected?.priceMinor ?? card?.priceMinor ?? null)
   const cap = maxQuantity(available)
   useEffect(() => setQuantity((q) => (cap <= 0 ? 1 : Math.min(Math.max(1, q), cap))), [cap])
   const category = product?.category_id ? categories.data?.find((c) => c.id === product.category_id) : undefined
@@ -209,6 +218,9 @@ export function ProductScreen({ productId }: { productId: string }) {
           ) : (
             <div className="shop-pdp__price"><span className="shop-pdp__tax">{axes.length ? "Choose the options to see the price." : "Price not available."}</span></div>
           )}
+
+          <CouponChip coupon={coupon} />
+          <BankOffers offers={offers.data ?? []} title="Bank offers" />
 
           <DeliveryBlock view={delivery} onPincode={setPincode} />
 

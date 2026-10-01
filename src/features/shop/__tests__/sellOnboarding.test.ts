@@ -39,8 +39,8 @@ import {
 // ── The rail ────────────────────────────────────────────────────
 
 describe("the rail", () => {
-  it("is Dashboard, Orders, Products, Stock — alphabetical, nothing fenced", () => {
-    expect(SELLER_RAIL.map((e) => e.label)).toEqual(["Dashboard", "Orders", "Products", "Stock"])
+  it("is Coupons, Dashboard, Orders, Products, Stock — alphabetical, nothing fenced", () => {
+    expect(SELLER_RAIL.map((e) => e.label)).toEqual(["Coupons", "Dashboard", "Orders", "Products", "Stock"])
     expect(railIsAlphabetical()).toBe(true)
     expect(railIsAlphabetical([{ label: "Stock", href: "/b" }, { label: "Orders", href: "/a" }])).toBe(false)
     for (const word of ["Earnings", "Payouts", "Returns", "RFQs", "Bulk import"]) expect(SELLER_RAIL.some((e) => e.label === word)).toBe(false)

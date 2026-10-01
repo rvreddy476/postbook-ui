@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { inrMinor } from "@/features/shop/money"
 
 import { ADDRESS_TYPE_LABELS } from "../../model/addresses"
+import { discountRow } from "../../model/coupons"
 import { arrivesByLine } from "../../model/delivery"
 import { addressOneLine, formatCountdown, PAYMENT_METHODS, type Address, type BagSummary, type PaymentMethod, type Quote } from "../../model/checkout"
 
@@ -113,7 +114,18 @@ export function PaymentMethodPicker({ value, onChange, disabled }: { value: Paym
 
 /* ── the quote ───────────────────────────────────────────────────── */
 
-export function QuoteBreakdown({ quote, secondsLeft, quoting }: { quote: Quote | null; secondsLeft: number; quoting: boolean }) {
+export function QuoteBreakdown({
+  quote,
+  secondsLeft,
+  quoting,
+  couponCode = "",
+}: {
+  quote: Quote | null
+  secondsLeft: number
+  quoting: boolean
+  /** The code the quote was taken with; names the discount row. */
+  couponCode?: string
+}) {
   if (!quote) {
     return (
       <dl className="shop-checkout__totals" aria-busy={quoting}>
@@ -127,6 +139,8 @@ export function QuoteBreakdown({ quote, secondsLeft, quoting }: { quote: Quote |
     )
   }
   const arrives = arrivesByLine(quote.deliverBy)
+  // The discount is the quote's figure; the row only names the code.
+  const discount = discountRow(quote, couponCode)
   return (
     <div aria-busy={quoting}>
       {arrives ? (
@@ -144,10 +158,10 @@ export function QuoteBreakdown({ quote, secondsLeft, quoting }: { quote: Quote |
           <dt>Delivery</dt>
           <dd>{quote.shippingMinor === 0 ? "Free" : inrMinor(quote.shippingMinor)}</dd>
         </div>
-        {quote.discountMinor > 0 ? (
+        {discount ? (
           <div className="shop-checkout__total-row">
-            <dt>Discount</dt>
-            <dd>−{inrMinor(quote.discountMinor)}</dd>
+            <dt>{discount.label}</dt>
+            <dd>−{inrMinor(discount.minor)}</dd>
           </div>
         ) : null}
         <div className="shop-checkout__total-row is-tax">

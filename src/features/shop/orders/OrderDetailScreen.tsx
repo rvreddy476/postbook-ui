@@ -25,10 +25,12 @@ import { inrMinor } from "@/features/shop/money"
 import "../shop.css"
 
 import { startPayment } from "../checkout/startPayment"
+import { OrderOfferLine } from "../components/offers/BankOffers"
 import { OrderItems, OrderTimeline, StatusPill, TrackingLine } from "../components/orders/OrderParts"
 import { orderDetailKey, ORDERS_LIST_KEY, useCancelOrder, useInvoiceLink, useOrder, useShipments } from "../hooks/orders"
 import { useConfirmStubPayment, useOpenPaymentIntent, usePaymentPoll } from "../hooks/payments"
 import { errorCode } from "../model/checkout"
+import { orderOfferLine } from "../model/offers"
 import { canShowInvoice, formatOrderDate, retryPaymentLabel } from "../model/orders"
 import { forgetIntent, recallIntent, rememberIntent, showsStubButton, stubConfirmBody, toPaymentIntent, type PaymentIntent } from "../model/payments"
 import { buildTimeline, trackingSummary } from "./timeline"
@@ -307,6 +309,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
                 <dd>{inrMinor(order.totalMinor)}</dd>
               </div>
             </dl>
+            {order.paymentOffer ? <OrderOfferLine line={orderOfferLine(order.paymentOffer, inrMinor)} title={order.paymentOffer.title} /> : null}
             {order.paymentMethod ? <p className="shop-order__paid-with">Paid with {order.paymentMethod.toUpperCase()}</p> : null}
             <div className="shop-order__actions">
               {canShowInvoice(order) ? (

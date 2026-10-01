@@ -9,6 +9,8 @@
   on empty (`x || fallback`), never on absent alone.
 */
 
+import { orderPaymentOffer, type OrderPaymentOffer, type WireOrderPaymentOffer } from "./offers"
+
 /* ── status vocabulary ───────────────────────────────────────────── */
 
 export const ORDER_STATUSES = [
@@ -205,6 +207,10 @@ export interface WireOrderDetail {
   tracking_url?: string | null
   created_at: string
   created_at_epoch: number
+  /** Coupons-offers contract §A: the bank offer applied inside the Razorpay sheet, or null. */
+  payment_offer?: WireOrderPaymentOffer | null
+  /** What the buyer was actually charged (captured), in paise. */
+  amount_paid_minor?: number | null
 }
 
 export interface OrderItem {
@@ -250,6 +256,8 @@ export interface OrderDetail {
   canRetryPayment: boolean
   trackingUrl: string
   createdAtMs: number
+  /** The bank offer and what was actually paid, or null when no offer applied. */
+  paymentOffer: OrderPaymentOffer | null
 }
 
 export function toOrderItem(wire: WireOrderItem): OrderItem {
@@ -314,6 +322,7 @@ export function toOrderDetail(wire: WireOrderDetail): OrderDetail {
     canRetryPayment: canRetryPayment(wire),
     trackingUrl: wire.tracking_url || "",
     createdAtMs: epochMs(wire.created_at_epoch, wire.created_at),
+    paymentOffer: orderPaymentOffer(wire),
   }
 }
 

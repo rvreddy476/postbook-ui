@@ -16,7 +16,7 @@
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -24,10 +24,15 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { inrMinor } from "@/features/shop/money"
 
 import "../shop.css"
+import "../shop-offers.css"
 
 import { AddressForm } from "../components/addresses/AddressForm"
 import { AddressPicker, BagLines, PaymentMethodPicker, QuoteBreakdown } from "../components/checkout/CheckoutParts"
+import { CouponBox } from "../components/coupons/CouponBox"
+import { BankOffers } from "../components/offers/BankOffers"
 import { useCheckoutAddresses, useCheckoutBag, useCreateAddress, usePlaceOrder, useQuote } from "../hooks/checkout"
+import { useCartCoupons } from "../hooks/coupons"
+import { usePaymentOffers } from "../hooks/offers"
 import { useOpenPaymentIntent } from "../hooks/payments"
 import {
   BAG_HREF,
@@ -45,10 +50,27 @@ import {
   type PaymentMethod,
   type Quote,
 } from "../model/checkout"
+import {
+  checkoutCouponLine,
+  couponReducer,
+  isCouponError,
+  looksLikeCouponCode,
+  minOrderFromError,
+  NO_COUPON,
+  normaliseCouponCode,
+  recallAppliedCoupon,
+  rememberAppliedCoupon,
+  withCouponCode,
+  type CouponBoxState,
+  type CouponEvent,
+} from "../model/coupons"
+import { offersSheetNote } from "../model/offers"
 import { rememberIntent } from "../model/payments"
 import { startPayment } from "./startPayment"
 
 const QUOTE_DEBOUNCE_MS = 350
+
+const couponStep = (state: CouponBoxState, event: CouponEvent) => couponReducer(state, event, inrMinor)
 
 function sessionStore(): Storage | null {
   try {
@@ -94,9 +116,20 @@ export function CheckoutScreen() {
   const [paying, setPaying] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const quoteSeq = useRef(0)
+  // The coupon: `code` is what the next quote asks with, `quotedCode` what
+  // the current quote was taken with (and what Pay sends).
+  const [coupon, dispatchCoupon] = useReducer(couponStep, NO_COUPON)
 
   const bag = bagQuery.data
   const addresses = addressesQuery.data || []
+  const cartCoupons = useCartCoupons(bag && bag.lines.length ? `${bag.subtotalMinor}:${bag.itemCount}` : "")
+  const offers = usePaymentOffers(quote?.totalMinor ?? null)
+
+  // The code applied in the bag, once.
+  useEffect(() => {
+    const carried = recallAppliedCoupon(sessionStore())
+    if (looksLikeCouponCode(carried)) dispatchCoupon({ type: "apply", code: carried })
+  }, [])
 
   // An empty bag has nothing to pay for.
   useEffect(() => {
@@ -120,32 +153,52 @@ export function CheckoutScreen() {
     const seq = ++quoteSeq.current
     setQuoteRefused(null)
     setPayRefused(null)
+    const code = coupon.code
     quoteMutation.mutate(
-      { address_id: addressId, payment_method: method },
+      withCouponCode({ address_id: addressId, payment_method: method }, code),
       {
         onSuccess: (q) => {
           if (seq !== quoteSeq.current) return
           setQuote(q)
+          dispatchCoupon({ type: "quoted", code })
           setNow(Date.now())
         },
         onError: (error) => {
           if (seq !== quoteSeq.current) return
           setQuote(null)
-          setQuoteRefused(quoteRefusal(errorCode(error)))
+          const refused = errorCode(error)
+          if (code && isCouponError(refused)) {
+            // The code is dropped and said once; the next quote goes
+            // without it, so the buyer still has a price.
+            dispatchCoupon({ type: "refused", errorCode: refused, minOrderMinor: minOrderFromError(error) })
+            rememberAppliedCoupon(sessionStore(), "")
+            return
+          }
+          setQuoteRefused(quoteRefusal(refused))
         },
       },
     )
     // quoteMutation is stable per mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addressId, method])
+  }, [addressId, method, coupon.code])
 
-  // A quote on every address or method change, debounced.
+  // A quote on every address, method or coupon change, debounced.
   useEffect(() => {
     if (!addressId) return
     setQuote(null)
     const id = setTimeout(runQuote, QUOTE_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [addressId, method, runQuote])
+  }, [addressId, method, coupon.code, runQuote])
+
+  const onApplyCoupon = (code: string) => {
+    dispatchCoupon({ type: "apply", code })
+    if (looksLikeCouponCode(normaliseCouponCode(code))) rememberAppliedCoupon(sessionStore(), code)
+  }
+
+  const onRemoveCoupon = () => {
+    dispatchCoupon({ type: "remove" })
+    rememberAppliedCoupon(sessionStore(), "")
+  }
 
   const onAddAddress = (values: AddressFormValues) => {
     createAddress.mutate(values, {
@@ -164,7 +217,8 @@ export function CheckoutScreen() {
     setPaying(true)
     setPayRefused(null)
     const key = checkoutAttemptKey(store, quote.quoteId)
-    const body = buildCheckoutBody({ quote, addressId, paymentMethod: method })
+    // The code the quote was taken with: the server binds a quote to it.
+    const body = buildCheckoutBody({ quote, addressId, paymentMethod: method, couponCode: coupon.quotedCode })
     try {
       const result = await placeOrder.mutateAsync({ body, idempotencyKey: key })
       forgetCheckoutAttempt(store, quote.quoteId)
@@ -184,7 +238,19 @@ export function CheckoutScreen() {
       }
       router.push(`/shop/orders/${result.order_id}?confirming=1`)
     } catch (error) {
-      const refusal = checkoutRefusal(errorCode(error))
+      const refusedCode = errorCode(error)
+      if (coupon.quotedCode && isCouponError(refusedCode)) {
+        // The coupon ran out (or stopped applying) between the quote and
+        // Pay. No order was made: drop the code, say why, re-quote.
+        forgetCheckoutAttempt(store, quote.quoteId)
+        dispatchCoupon({ type: "refused", errorCode: refusedCode, minOrderMinor: minOrderFromError(error) })
+        rememberAppliedCoupon(sessionStore(), "")
+        setPayRefused({ kind: "requote", message: "Your coupon couldn't be used. Check the new total and pay again." })
+        setQuote(null)
+        setPaying(false)
+        return
+      }
+      const refusal = checkoutRefusal(refusedCode)
       setPayRefused(refusal)
       if (refusal.kind === "requote") {
         // No order was made. The new quote brings a new key.
@@ -251,6 +317,22 @@ export function CheckoutScreen() {
           <section className="shop-w2-sec">
             <h2 className="shop-w2-sec__title">Pay with</h2>
             <PaymentMethodPicker value={method} onChange={setMethod} disabled={paying} />
+            {quote ? (
+              <BankOffers offers={offers.data ?? []} title="Bank offers available" note={offersSheetNote(quote.totalMinor, inrMinor)} flush />
+            ) : null}
+          </section>
+
+          <section className="shop-w2-sec">
+            <CouponBox
+              coupons={cartCoupons.data ?? []}
+              loadingCoupons={cartCoupons.isLoading}
+              applied={coupon.code}
+              appliedLine={checkoutCouponLine({ applied: coupon.code, quotedCode: coupon.quotedCode, quote, quoting: quoteMutation.isPending, formatMinor: inrMinor })}
+              error={coupon.error}
+              busy={paying || quoteMutation.isPending}
+              onApply={onApplyCoupon}
+              onRemove={onRemoveCoupon}
+            />
           </section>
 
           <section className="shop-w2-sec">
@@ -265,7 +347,7 @@ export function CheckoutScreen() {
         <aside className="shop-checkout__aside">
           <section className="shop-w2-sec is-sticky">
             <h2 className="shop-w2-sec__title">Price</h2>
-            <QuoteBreakdown quote={quote} secondsLeft={secondsLeft} quoting={quoteMutation.isPending} />
+            <QuoteBreakdown quote={quote} secondsLeft={secondsLeft} quoting={quoteMutation.isPending} couponCode={coupon.quotedCode} />
             {quoteRefused ? <RefusalLine refusal={quoteRefused} /> : null}
             {payRefused ? <RefusalLine refusal={payRefused} /> : null}
             {quote && secondsLeft === 0 ? (

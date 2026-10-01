@@ -1,0 +1,71 @@
+/*
+  Coupons and bank offers (buyer and MSeller). Tokens only, through
+  rgb(var(--…)); no hex. Kept apart from shop.css while that file has
+  another session's restyling in flight.
+  TODO(lead): merge into shop.css once the restyle lands.
+*/
+
+/* == the product page chip == */
+.shop-coupon-chip { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 6px 10px; border: 1px solid rgb(var(--success) / .35); border-radius: 8px; background: rgb(var(--success) / .08); color: rgb(var(--success)); font-size: 13px; line-height: 1.35; }
+.shop-coupon-chip svg { flex: none; }
+.shop-coupon-chip__price { font-weight: 700; }
+.shop-coupon-chip__code { padding: 0 4px; border: 1px dashed rgb(var(--success) / .6); border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .04em; }
+
+/* == bank offers (product page, checkout) == */
+.shop-offers { display: flex; flex-direction: column; gap: 6px; margin: 14px 0 0; }
+.shop-offers--flush { margin: 0; }
+.shop-offers__title { margin: 0; font-size: 13px; font-weight: 600; color: rgb(var(--brand-text)); }
+.shop-offers__list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.shop-offers__item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--brand-divider); }
+.shop-offers__item:first-child { border-top: 0; padding-top: 2px; }
+.shop-offers__icon { flex: none; margin-top: 2px; color: rgb(var(--text-muted)); }
+.shop-offers__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.shop-offers__name { font-size: 13px; color: rgb(var(--brand-text)); overflow-wrap: anywhere; }
+.shop-offers__save { font-size: 12px; color: rgb(var(--success)); }
+.shop-offers__meta { font-size: 11px; color: rgb(var(--text-muted)); overflow-wrap: anywhere; }
+.shop-offers__note { margin: 0; font-size: 11px; color: rgb(var(--text-muted)); }
+
+/* == the coupon box (bag, checkout) == */
+.shop-coupons { display: flex; flex-direction: column; gap: 8px; }
+.shop-coupons__title { margin: 0; font-size: 13px; font-weight: 600; }
+.shop-coupons__form { display: flex; gap: 8px; }
+.shop-coupons__input { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--brand-divider); border-radius: 8px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); font: inherit; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.shop-coupons__input::placeholder { text-transform: none; letter-spacing: 0; color: rgb(var(--text-muted)); }
+.shop-coupons__input:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 1px; }
+.shop-coupons__error { margin: 0; font-size: 12px; color: rgb(var(--danger)); }
+.shop-coupons__applied { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid rgb(var(--success) / .35); border-radius: 8px; background: rgb(var(--success) / .08); }
+.shop-coupons__applied svg { flex: none; color: rgb(var(--success)); }
+.shop-coupons__applied-body { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.shop-coupons__applied-line { font-size: 11px; color: rgb(var(--text-muted)); }
+.shop-coupons__list-title { margin: 4px 0 0; font-size: 11px; color: rgb(var(--text-muted)); }
+.shop-coupons__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.shop-coupons__item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--brand-divider); border-radius: 8px; }
+.shop-coupons__item-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
+.shop-coupons__code { align-self: flex-start; padding: 0 6px; border: 1px dashed rgb(var(--brand-outline)); border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .04em; color: rgb(var(--brand-ink)); }
+.shop-coupons__text { font-size: 11px; color: rgb(var(--text-muted)); overflow-wrap: anywhere; }
+.shop-coupons__save { font-size: 12px; color: rgb(var(--success)); }
+.shop-coupons__link { flex: none; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 600; color: rgb(var(--brand-ink)); cursor: pointer; }
+.shop-coupons__link:hover { text-decoration: underline; }
+.shop-coupons__link:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
+.shop-coupons__tag { flex: none; font-size: 11px; color: rgb(var(--success)); }
+.shop-coupons__item.is-unavailable .shop-coupons__code { border-color: var(--brand-divider); color: rgb(var(--text-muted)); }
+.shop-coupons__why { font-size: 11px; color: rgb(var(--warning)); }
+
+/* == order detail: the bank offer line == */
+.shop-order-offer { display: flex; flex-direction: column; gap: 2px; margin: 0; font-size: 12px; color: rgb(var(--success)); }
+.shop-order-offer__title { font-size: 11px; color: rgb(var(--text-muted)); }
+
+/* == MSeller coupons == */
+.shop-sell-coupons { display: flex; flex-direction: column; gap: 16px; }
+.shop-sell-coupons__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 768px) { .shop-sell-coupons__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.shop-sell-coupons__wide { grid-column: 1 / -1; }
+.shop-sell-coupons__checks { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; }
+.shop-sell-coupons__checks label { display: inline-flex; align-items: center; gap: 6px; }
+.shop-sell-coupons__products { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding: 8px 10px; border: 1px solid var(--brand-divider); border-radius: 10px; font-size: 13px; }
+.shop-sell-coupons__products label { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.shop-sell-coupons__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.shop-sell-coupons__table-wrap { overflow-x: auto; }
+.shop-sell-coupons__code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; letter-spacing: .04em; }
+.shop-sell-coupons__row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.shop-sell-coupons__fixed { margin: 0; font-size: 12px; color: rgb(var(--text-muted)); }

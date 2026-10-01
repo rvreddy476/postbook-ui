@@ -1,16 +1,27 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AlertTriangle, ArrowRight, ShoppingBag, Store } from "lucide-react"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { inrMinor } from "../money"
 import { useBag, useRemoveBagLine, useUpdateBagLine } from "../hooks/bag"
+import { useCartCoupons } from "../hooks/coupons"
 import { useShopSession } from "../hooks/storefront"
 import { canCheckout, cartBlockReason, isMixedSellerCart, itemCountLabel } from "../model/bag"
+import { bagCouponLine, listedSaving, looksLikeCouponCode, normaliseCouponCode, recallAppliedCoupon, rememberAppliedCoupon } from "../model/coupons"
 import { isSignedOut, SHOP_BASE, signInHref } from "../model/storefront"
 import { BagLine } from "../components/bag/BagLine"
+import { CouponBox } from "../components/coupons/CouponBox"
 import { StateBlock } from "../components/storefront/StateBlock"
+
+function sessionStore(): Storage | null {
+  try {
+    return typeof window !== "undefined" ? window.sessionStorage : null
+  } catch {
+    return null
+  }
+}
 
 function BagSkeleton() {
   return (
@@ -27,8 +38,10 @@ function BagSkeleton() {
 /**
  * `/shop/bag`: the lines, the badges the service's signals earn, the
  * subtotal, and "Proceed to checkout", which is disabled while anything
- * blocks the bag (model/bag.ts cartBlockReason). No coupon: none can be
- * created today.
+ * blocks the bag (model/bag.ts cartBlockReason). "Apply coupon" lists the
+ * codes that apply (GET /cart/coupons) and carries the chosen one to
+ * checkout, where the quote prices it and any refusal is said; the bag
+ * never takes a discount off a total itself.
  */
 export function BagScreen() {
   const { signedIn, known } = useShopSession()
@@ -38,6 +51,26 @@ export function BagScreen() {
   const toast = useGlobalToast()
   const [pendingVariant, setPendingVariant] = useState<string | null>(null)
   const busy = update.isPending || remove.isPending
+  const [coupon, setCoupon] = useState("")
+  const [couponError, setCouponError] = useState("")
+  useEffect(() => setCoupon(recallAppliedCoupon(sessionStore())), [])
+  const bagSignature = bag.data && bag.data.items.length ? `${bag.data.subtotal_minor}:${bag.data.item_count}` : ""
+  const coupons = useCartCoupons(bagSignature)
+  const applyCoupon = (raw: string) => {
+    const code = normaliseCouponCode(raw)
+    if (!looksLikeCouponCode(code)) {
+      setCouponError("Enter a code of 4 to 20 letters and numbers.")
+      return
+    }
+    setCouponError("")
+    setCoupon(code)
+    rememberAppliedCoupon(sessionStore(), code)
+  }
+  const removeCoupon = () => {
+    setCouponError("")
+    setCoupon("")
+    rememberAppliedCoupon(sessionStore(), "")
+  }
 
   if (known && !signedIn) {
     return (
@@ -123,6 +156,16 @@ export function BagScreen() {
             <strong>{inrMinor(cart.subtotal_minor)}</strong>
           </div>
           <p className="shop-bag__note">Taxes and delivery are calculated at checkout.</p>
+          <CouponBox
+            coupons={coupons.data ?? []}
+            loadingCoupons={coupons.isLoading}
+            applied={coupon}
+            appliedLine={bagCouponLine(listedSaving(coupons.data ?? [], coupon), inrMinor)}
+            error={couponError}
+            busy={false}
+            onApply={applyCoupon}
+            onRemove={removeCoupon}
+          />
           {reason ? <p className="shop-notice shop-notice--danger" role="alert">{reason}</p> : null}
           <Link
             href={`${SHOP_BASE}/checkout`}

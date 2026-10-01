@@ -97,6 +97,8 @@ describe("bag fixtures", () => {
   it.skipIf(files.length === 0)("every cart parses with an items array and paise totals", () => {
     byteIdentical("bag")
     for (const [name, raw] of files) {
+      // The available-coupons list lives in bag/ too; it is not a cart.
+      if (/coupons/.test(name)) continue
       const cart = toCartView(body(raw) as Partial<CartView>)
       expect(Array.isArray(cart.items), name).toBe(true)
       expect(Number.isInteger(cart.subtotal_minor), name).toBe(true)
