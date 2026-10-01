@@ -8,6 +8,7 @@ import { ChatMessageRow } from "../components/ChatMessageRow"
 import { ModerationPanel } from "../components/ModerationPanel"
 import { LiveStatusBadge, LiveStatusPanel, ReconnectingNotice } from "../components/LiveStatus"
 import { PilotNotice } from "../components/PilotNotice"
+import { LivePageHeading } from "../components/LivePageHeading"
 
 const HOST = "host"
 const message = { id: "m1", stream_id: "s", user_id: "u1", text: "hello", created_at: "2026-10-01T10:00:00Z" }
@@ -38,6 +39,20 @@ describe("host-only tools are hidden from viewers", () => {
 })
 
 describe("status components", () => {
+  it("keeps the stream name, real status and return navigation in the header", () => {
+    const html = renderToStaticMarkup(<LivePageHeading title="Weekend conversation" view={liveStatusView({ status: "reconnecting" })} studio />)
+    expect(html).toContain("Weekend conversation")
+    expect(html).toContain("Reconnecting")
+    expect(html).toContain("Your broadcast studio")
+    expect(html).toContain('aria-label="Back to live streams"')
+  })
+  it("shows a message's real avatar, time and body separately", () => {
+    const html = renderToStaticMarkup(<ChatMessageRow message={message} name="Asha" avatarUrl="/avatar.png" roleTag="Host" actions={[]} onAction={() => {}} />)
+    expect(html).toContain('src="/avatar.png"')
+    expect(html).toContain('dateTime="2026-10-01T10:00:00Z"')
+    expect(html).toContain('data-role="host"')
+    expect(html).toContain('class="live-chat__message">hello')
+  })
   it("badge shows the server status", () => {
     expect(renderToStaticMarkup(<LiveStatusBadge view={liveStatusView({ status: "starting" })} />)).toContain("Starting")
     expect(renderToStaticMarkup(<LiveStatusBadge view={liveStatusView({ status: "live" })} />)).toContain("live-badge--live")

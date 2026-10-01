@@ -1,23 +1,17 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Grid2X2, Store } from "lucide-react"
+import { ArrowRight, Store } from "lucide-react"
 import { flattenProducts, useCategories, useHome, useInfiniteProducts } from "../hooks/storefront"
 import { browseHref } from "../model/storefront"
-import { BannerCarousel } from "../components/storefront/BannerCarousel"
-import { CategoryStrip, CategoryTiles } from "../components/storefront/CategoryStrip"
+import { CategoryStrip } from "../components/storefront/CategoryStrip"
+import { LiveSpotlight, StoreHero } from "../components/storefront/StoreHero"
 import { InfiniteSentinel } from "../components/storefront/InfiniteSentinel"
 import { ProductGrid } from "../components/storefront/ProductGrid"
 import { ProductShelf } from "../components/storefront/ProductShelf"
 import { StateBlock } from "../components/storefront/StateBlock"
 
-/**
- * The landing, in the founder's order: search (in the header), the
- * category strip, the offers carousel, Deals of the day, Best sellers,
- * New arrivals, Shop by category, then everything in the shop as a paged
- * grid. Every section with nothing in it is absent rather than empty.
- * Works signed out.
- */
+/** Editorial hero, scrollable departments, server highlights, then catalogue. */
 export function HomeScreen() {
   const home = useHome()
   const categories = useCategories()
@@ -29,10 +23,8 @@ export function HomeScreen() {
 
   return (
     <div className="shop-home">
-      <div className="shop-home__heading">
-        <div><span className="shop-home__eyebrow">MStore / Discover</span><h1>Explore the shop</h1></div>
-        <Link href={browseHref({})} className="shop-btn shop-btn--outline"><Grid2X2 size={16} aria-hidden="true" />All products<ArrowRight size={16} aria-hidden="true" /></Link>
-      </div>
+      {banners.length > 0 ? <h1 className="shop-sr">Discover MStore</h1> : null}
+      <StoreHero categories={cats} banners={banners} />
 
       {cats.length > 0 ? (
         <section className="shop-departments" aria-label="Categories">
@@ -41,12 +33,6 @@ export function HomeScreen() {
       ) : null}
 
       {categories.isError ? <StateBlock text="Categories could not be loaded." action={{ label: "Try again", onClick: () => void categories.refetch() }} /> : null}
-
-      {banners.length > 0 ? (
-        <section className="shop-section shop-section--first">
-          <BannerCarousel banners={banners} />
-        </section>
-      ) : null}
 
       {home.isLoading ? (
         <section className="shop-section" aria-busy="true" aria-label="Loading offers">
@@ -57,24 +43,18 @@ export function HomeScreen() {
 
       {home.isError ? <StateBlock text="Shop highlights could not be loaded. You can still browse products below." action={{ label: "Try again", onClick: () => void home.refetch() }} /> : null}
 
-      {sections.map((section) => (
-        <section key={section.key} className="shop-section" aria-labelledby={`shop-rail-${section.key}`}>
+      {sections.map((section, index) => (
+        <div key={section.key} className={index === 0 ? "shop-featured-row" : undefined}>
+        <section className="shop-section" aria-labelledby={`shop-rail-${section.key}`}>
           <div className="shop-section__head">
             <h2 id={`shop-rail-${section.key}`} className="shop-section__title">{section.title}</h2>
             <Link href={browseHref({ inStock: true })} className="shop-link">See all <ArrowRight size={14} aria-hidden="true" /></Link>
           </div>
           <ProductShelf products={section.products} />
         </section>
+        {index === 0 ? <LiveSpotlight /> : null}
+        </div>
       ))}
-
-      {cats.length > 0 ? (
-        <section className="shop-section" aria-labelledby="shop-by-category">
-          <div className="shop-section__head">
-            <h2 id="shop-by-category" className="shop-section__title">Shop by category</h2>
-          </div>
-          <CategoryTiles categories={cats} />
-        </section>
-      ) : null}
 
       <section className="shop-section" aria-labelledby="shop-everything">
         <div className="shop-section__head">

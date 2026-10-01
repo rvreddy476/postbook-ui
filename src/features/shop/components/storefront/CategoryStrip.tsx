@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useId, useState } from "react"
-import { Tag, Headphones, Sparkles, BookOpen, Shirt, House, Dumbbell, Coffee, Palette, HeartPulse, Baby, Watch, Car, ChevronDown } from "lucide-react"
+import { useEffect, useId, useRef, useState } from "react"
+import { Tag, Headphones, Sparkles, BookOpen, Shirt, House, Dumbbell, Coffee, Palette, HeartPulse, Baby, Watch, Car, ChevronLeft, ChevronRight } from "lucide-react"
+import { usePrefersReducedMotion } from "../../hooks/storefront"
+import { categoryScrollEdges, categoryScrollStep } from "../../model/categoryScroll"
 import { browseHref, categoryCountLabel, type CategoryCard } from "../../model/storefront"
 
 const categoryIcon = (name: string) => {
@@ -40,12 +42,38 @@ function Art({ src, size, name }: { src: string | null; size: number; name: stri
  * table of contents — and still opens onto a page that says so.
  */
 export function CategoryStrip({ categories, active }: { categories: CategoryCard[]; active?: string }) {
-  const [expanded, setExpanded] = useState(false)
+  const track = useRef<HTMLUListElement>(null)
+  const [edges, setEdges] = useState({ previous: false, next: false })
+  const reducedMotion = usePrefersReducedMotion()
   const id = useId()
+  useEffect(() => {
+    const el = track.current
+    if (!el) return
+    const update = () => setEdges(categoryScrollEdges(el.scrollLeft, el.clientWidth, el.scrollWidth))
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    update()
+    el.addEventListener("scroll", update, { passive: true })
+    return () => { observer.disconnect(); el.removeEventListener("scroll", update) }
+  }, [categories.length])
+  const move = (direction: number) => {
+    const el = track.current
+    if (el) el.scrollBy({ left: direction * categoryScrollStep(el.clientWidth), behavior: reducedMotion ? "auto" : "smooth" })
+  }
   if (categories.length === 0) return null
   return (
-    <nav aria-label="Shop by category">
-      <ul id={id} className={`shop-cats${expanded ? " is-expanded" : ""}`}>
+    <nav className="shop-category-nav" aria-label="Shop by category">
+      <div className="shop-category-nav__head">
+        <h2 className="shop-section__title">Shop by category</h2>
+        <div className="shop-category-nav__controls">
+          <button type="button" aria-label="Previous categories" aria-controls={id} disabled={!edges.previous} onClick={() => move(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
+          <button type="button" aria-label="Next categories" aria-controls={id} disabled={!edges.next} onClick={() => move(1)}><ChevronRight size={18} aria-hidden="true" /></button>
+        </div>
+      </div>
+      <ul ref={track} id={id} className="shop-cats" tabIndex={0} aria-label="Categories; use arrow keys to scroll" onKeyDown={(event) => {
+        if (event.target !== event.currentTarget || event.altKey || event.ctrlKey || event.metaKey) return
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); move(event.key === "ArrowLeft" ? -1 : 1) }
+      }}>
         {categories.map((c) => (
           <li key={c.id}>
             <Link
@@ -54,14 +82,13 @@ export function CategoryStrip({ categories, active }: { categories: CategoryCard
               aria-current={active === c.id ? "page" : undefined}
               aria-label={`${c.name}, ${categoryCountLabel(c.count).toLowerCase()}`}
             >
-              <span className="shop-cat-chip__art"><Art src={c.image} size={19} name={c.name} /></span>
+              <span className="shop-cat-chip__art"><Art src={c.image} size={26} name={c.name} /></span>
               <span className="shop-cat-chip__name">{c.name}</span>
               <span className="shop-cat-chip__count">{categoryCountLabel(c.count)}</span>
             </Link>
           </li>
         ))}
       </ul>
-      {categories.length > 6 ? <button className="shop-cats__more" type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(!expanded)}>{expanded ? "Fewer categories" : "More categories"}<ChevronDown size={15} aria-hidden="true" /></button> : null}
     </nav>
   )
 }

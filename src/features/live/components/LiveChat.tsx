@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { ArrowDown, MessageCircle, Send } from "lucide-react"
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useGlobalToast } from "@/contexts/ToastContext"
@@ -26,7 +27,7 @@ import { ReportSheet } from "./ReportSheet"
 
 const MAX_SEND_CHARS = 500
 
-type ProfileLite = { display_name?: string; first_name?: string; username?: string }
+type ProfileLite = { display_name?: string; first_name?: string; username?: string; avatar_url?: string; avatar_media_id?: string }
 
 export function LiveChat({
   streamId,
@@ -64,6 +65,8 @@ export function LiveChat({
   const [banTarget, setBanTarget] = useState<string | null>(null)
   const [reportMessageId, setReportMessageId] = useState<string | null>(null)
   const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const nearBottom = useRef(true)
+  const [unseen, setUnseen] = useState(false)
 
   const userIds = useMemo(
     () => Array.from(new Set([...chat.messages.map((m) => m.user_id), ...chat.banned, ...chat.moderators])),
@@ -74,10 +77,16 @@ export function LiveChat({
     const p = (profiles instanceof Map ? profiles.get(id) : undefined) as ProfileLite | undefined
     return p?.display_name || p?.first_name || p?.username || "Someone"
   }
+  const avatarOf = (id: string) => {
+    const p = (profiles instanceof Map ? profiles.get(id) : undefined) as ProfileLite | undefined
+    return p?.avatar_url || (p?.avatar_media_id ? `/v1/media/${encodeURIComponent(p.avatar_media_id)}/serve` : null)
+  }
 
   useEffect(() => {
     const el = scrollerRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!el) return
+    if (nearBottom.current) el.scrollTop = el.scrollHeight
+    else setUnseen(true)
   }, [chat.messages.length])
 
   const mayType = canSendChat({ role, meId, banned: chat.banned, chatOpen: view.chatOpen })
@@ -171,13 +180,17 @@ export function LiveChat({
   const roleTag = (id: string) => (id === hostId ? "Host" : chat.moderators.includes(id) ? "Moderator" : undefined)
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="live-chat-column">
       <div className="live-chat">
         <div className="live-chat__head">
-          <span>Live chat</span>
+          <span className="live-chat__heading"><MessageCircle size={17} aria-hidden="true" />Live chat</span>
           {room.polling && <span className="live-chat__mode">Updating every few seconds</span>}
         </div>
-        <div ref={scrollerRef} className="live-chat__list" aria-live="polite">
+        <div ref={scrollerRef} className="live-chat__list" role="log" aria-label="Live messages" aria-live="polite" aria-relevant="additions text" onScroll={(event) => {
+          const el = event.currentTarget
+          nearBottom.current = el.scrollHeight - el.clientHeight - el.scrollTop < 60
+          if (nearBottom.current) setUnseen(false)
+        }}>
           {room.chatLoading && chat.messages.length === 0 ? (
             <p className="live-chat__empty">Loading chat…</p>
           ) : chat.messages.length === 0 ? (
@@ -188,6 +201,7 @@ export function LiveChat({
                 key={m.id}
                 message={m}
                 name={nameOf(m.user_id)}
+                avatarUrl={avatarOf(m.user_id)}
                 roleTag={roleTag(m.user_id)}
                 actions={messageActions({
                   role, meId, hostId, authorId: m.user_id, moderators: chat.moderators, banned: chat.banned,
@@ -197,6 +211,12 @@ export function LiveChat({
             ))
           )}
         </div>
+        {unseen ? <button type="button" className="live-chat__latest" onClick={() => {
+          const el = scrollerRef.current
+          if (el) el.scrollTop = el.scrollHeight
+          nearBottom.current = true
+          setUnseen(false)
+        }}><ArrowDown size={14} aria-hidden="true" />Latest messages</button> : null}
         {role === "guest" ? (
           <p className="live-chat__note">Sign in to chat.</p>
         ) : amBanned ? (
@@ -214,8 +234,8 @@ export function LiveChat({
               className="live-chat__input"
               maxLength={MAX_SEND_CHARS}
             />
-            <button type="submit" className="live-btn live-btn--primary" disabled={send.isPending || !draft.trim()}>
-              Send
+            <button type="submit" className="live-btn live-btn--primary live-chat__send" aria-label={send.isPending ? "Sending message" : "Send message"} disabled={send.isPending || !draft.trim()}>
+              <Send size={18} aria-hidden="true" />
             </button>
           </form>
         )}

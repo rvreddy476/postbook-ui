@@ -14,18 +14,23 @@ import type { MessageAction, MessageActionKey } from "../chat"
 export function ChatMessageRow({
   message,
   name,
+  avatarUrl,
   roleTag,
   actions,
   onAction,
 }: {
   message: LiveChatMessage
   name: string
+  avatarUrl?: string | null
   roleTag?: string
   actions: MessageAction[]
   onAction: (key: MessageActionKey, message: LiveChatMessage) => void
 }) {
   const [open, setOpen] = useState(false)
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement | null>(null)
+  const created = new Date(message.created_at)
+  const time = Number.isFinite(created.getTime()) ? created.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""
 
   useEffect(() => {
     if (!open) return
@@ -42,11 +47,19 @@ export function ChatMessageRow({
   }, [open])
 
   return (
-    <div className="live-chat__row" ref={ref} data-message-id={message.id}>
+    <div className="live-chat__row" ref={ref} data-message-id={message.id} data-role={roleTag?.toLowerCase()}>
+      <span className="live-chat__avatar" aria-hidden="true">
+        {avatarUrl && avatarUrl !== failedAvatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt="" loading="lazy" onError={() => setFailedAvatar(avatarUrl)} />
+        ) : name.trim().charAt(0).toUpperCase() || "?"}
+      </span>
       <div className="live-chat__text">
-        <span className="live-chat__name">{name}</span>
-        {roleTag && <span className="live-chat__role">{roleTag}</span>}
-        <span>{message.text}</span>
+        <div className="live-chat__byline"><span className="live-chat__name">{name}</span>
+          {roleTag && <span className="live-chat__role">{roleTag}</span>}
+          {time ? <time dateTime={message.created_at} className="live-chat__time">{time}</time> : null}
+        </div>
+        <p className="live-chat__message">{message.text}</p>
       </div>
       {actions.length > 0 && (
         <>

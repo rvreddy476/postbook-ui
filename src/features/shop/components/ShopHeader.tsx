@@ -3,12 +3,12 @@
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useId, useRef, useState, type RefObject } from "react"
-import { ChevronDown, CreditCard, Heart, MapPin, Menu, MessageCircle, Package, Search, ShoppingBag, Store, User } from "lucide-react"
+import { ChevronDown, CreditCard, Heart, MapPin, Menu, MessageCircle, Package, Radio, Search, ShoppingBag, Store, User } from "lucide-react"
 import { useBagCount } from "../hooks/bag"
 import { useFavourites } from "../hooks/favourites"
-import { useShopSession } from "../hooks/storefront"
+import { useCategories, useShopSession } from "../hooks/storefront"
 import { favouriteCount, favouritesLabel } from "../model/favourites"
-import { ACCOUNT_MENU, SHOP_BASE, STORE_NAME, avatarInitial, bagLabel, browseHref, signInHref } from "../model/storefront"
+import { ACCOUNT_MENU, SHOP_BASE, STORE_NAME, avatarInitial, bagLabel, browseHref, signInHref, type CategoryCard } from "../model/storefront"
 import { Wordmark } from "./storefront/Wordmark"
 
 const MENU_ICONS: Record<string, React.ComponentType<{ size?: number; "aria-hidden"?: boolean | "true" }>> = {
@@ -24,15 +24,18 @@ const MENU_ICONS: Record<string, React.ComponentType<{ size?: number; "aria-hidd
  * `useSearchParams` opts its tree out of prerendering, so it is isolated
  * behind Suspense: the fallback emits the same markup with an empty box.
  */
-function SearchForm({ initialQuery, onSubmit }: { initialQuery: string; onSubmit?: (query: string) => void }) {
+function SearchForm({ initialQuery, initialCategory = "", categories = [], onSubmit }: { initialQuery: string; initialCategory?: string; categories?: CategoryCard[]; onSubmit?: (query: string, category: string) => void }) {
   const [q, setQ] = useState(initialQuery)
+  const [category, setCategory] = useState(initialCategory)
   useEffect(() => setQ(initialQuery), [initialQuery])
+  useEffect(() => setCategory(initialCategory), [initialCategory])
   const id = useId()
   return (
-    <form className="shop-search" role="search" onSubmit={(event) => { event.preventDefault(); onSubmit?.(q) }}>
+    <form className="shop-search" role="search" onSubmit={(event) => { event.preventDefault(); onSubmit?.(q, category) }}>
       <label className="shop-sr" htmlFor={id}>Search {STORE_NAME}</label>
       <Search size={16} aria-hidden="true" />
       <input id={id} type="search" className="shop-search__input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, brands and more" autoComplete="off" enterKeyHint="search" />
+      {categories.length > 0 ? <select className="shop-search__category" aria-label="Search category" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">All categories</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select> : null}
       <button type="submit" className="shop-search__submit" aria-label="Search"><Search size={15} aria-hidden="true" /></button>
     </form>
   )
@@ -41,10 +44,13 @@ function SearchForm({ initialQuery, onSubmit }: { initialQuery: string; onSubmit
 function LiveSearchForm() {
   const router = useRouter()
   const params = useSearchParams()
+  const categories = useCategories()
   return (
     <SearchForm
       initialQuery={params.get("q") ?? ""}
-      onSubmit={(q) => router.push(browseHref({ q: q.trim() }))}
+      initialCategory={params.get("category") ?? ""}
+      categories={categories.data ?? []}
+      onSubmit={(q, category) => router.push(browseHref({ q: q.trim(), category }))}
     />
   )
 }
@@ -110,7 +116,7 @@ function AccountMenu({ initial }: { initial: string }) {
  * and the avatar menu. Signed out, the three go to sign in with a way back
  * to the page the shopper is on.
  */
-export function ShopHeader({ onMenu, menuOpen, menuRef }: { onMenu?: () => void; menuOpen?: boolean; menuRef?: RefObject<HTMLButtonElement | null> }) {
+export function ShopHeader({ onMenu, menuOpen, menuRef, context = "shop" }: { onMenu?: () => void; menuOpen?: boolean; menuRef?: RefObject<HTMLButtonElement | null>; context?: "shop" | "live" }) {
   const { signedIn, known, user } = useShopSession()
   const pathname = usePathname()
   const bagCount = useBagCount()
@@ -126,7 +132,7 @@ export function ShopHeader({ onMenu, menuOpen, menuRef }: { onMenu?: () => void;
           {onMenu ? <button ref={menuRef} type="button" className="shop-icon-btn shop-header__menu" aria-label="Shop menu" aria-controls="shop-navigation" aria-expanded={menuOpen} onClick={onMenu}><Menu size={21} strokeWidth={1.75} aria-hidden="true" /></button> : null}
           <Link href="/" className="shop-header__home" aria-label="VChat home">VC</Link>
           <span className="shop-header__divider" aria-hidden="true" />
-          <Link href={SHOP_BASE} className="shop-header__store" aria-label={`${STORE_NAME} home`}><Store size={21} strokeWidth={1.75} aria-hidden="true" /><Wordmark /></Link>
+          <Link href={context === "live" ? "/live" : SHOP_BASE} className="shop-header__store" aria-label={context === "live" ? "Live streams home" : `${STORE_NAME} home`}>{context === "live" ? <><Radio size={23} aria-hidden="true" /><span className="shop-wordmark">Live</span></> : <><ShoppingBag size={24} strokeWidth={1.75} aria-hidden="true" /><Wordmark /></>}</Link>
         </div>
         <Suspense fallback={<SearchForm initialQuery="" />}>
           <LiveSearchForm />

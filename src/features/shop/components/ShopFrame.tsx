@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { Compass, CreditCard, Heart, MapPin, Monitor, Moon, Package, ShoppingBag, Store, Sun, X } from "lucide-react"
+import { Compass, CreditCard, Heart, MapPin, Monitor, Moon, Package, Radio, ShoppingBag, Store, Sun, X } from "lucide-react"
 import { chooseTheme, readThemeChoice, type ThemeChoice } from "@/features/video-shell/themeChoice"
 import { useShopSession } from "../hooks/storefront"
 import { SHOP_BASE, STORE_NAME, signInHref } from "../model/storefront"
@@ -16,6 +16,7 @@ const LINKS = [
   { label: "Bag", href: `${SHOP_BASE}/bag`, icon: ShoppingBag },
   { label: "Orders", href: `${SHOP_BASE}/orders`, icon: Package },
   { label: "Addresses", href: `${SHOP_BASE}/addresses`, icon: MapPin },
+  { label: "Live streams", href: "/live", icon: Radio, public: true },
   { label: "Payments", href: `${SHOP_BASE}/payments`, icon: CreditCard },
 ] as const
 
@@ -36,7 +37,7 @@ function Appearance() {
 }
 
 /** Commerce-specific navigation, with the same compact icon/label treatment as Reels. */
-export function ShopFrame({ children }: { children: React.ReactNode }) {
+export function ShopFrame({ children, context = "shop" }: { children: React.ReactNode; context?: "shop" | "live" }) {
   const pathname = usePathname()
   const { signedIn, known } = useShopSession()
   const [open, setOpen] = useState(false)
@@ -77,8 +78,8 @@ export function ShopFrame({ children }: { children: React.ReactNode }) {
   const gated = (href: string) => known && !signedIn ? signInHref(href) : href
   return (
     <div className={`shop-zone${compact ? " shop-zone--compact" : ""}${open ? " shop-zone--menu-open" : ""}`}>
-      <a href="#shop-content" className="shop-skip">Skip to products</a>
-      <ShopHeader menuRef={menu} menuOpen={drawer ? open : !compact} onMenu={() => {
+      <a href="#shop-content" className="shop-skip">{context === "live" ? "Skip to live content" : "Skip to products"}</a>
+      <ShopHeader context={context} menuRef={menu} menuOpen={drawer ? open : !compact} onMenu={() => {
         if (drawer) setOpen(!open)
         else setCompact(!compact)
       }} />
@@ -98,7 +99,7 @@ export function ShopFrame({ children }: { children: React.ReactNode }) {
             <Appearance />
           </div>
         </aside>
-        <main id="shop-content" className="shop-main" tabIndex={-1}>{children}</main>
+        <main id="shop-content" className={`shop-main${context === "live" ? " shop-main--live" : ""}`} tabIndex={-1}>{children}</main>
       </div>
     </div>
   )

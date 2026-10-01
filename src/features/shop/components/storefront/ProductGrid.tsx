@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Star, ThumbsUp } from "lucide-react"
+import { ShoppingBag, Star, ThumbsUp } from "lucide-react"
 import { compactCount } from "../../model/reactions"
 import { SHOP_BASE, type ProductCard as ProductCardData } from "../../model/storefront"
 import { FavouriteButton } from "../favourites/FavouriteButton"
@@ -42,6 +42,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <div className="shop-card__price">
             <span className="shop-card__amount">{product.price}</span>
             {product.was ? <s className="shop-card__was">{product.was}</s> : null}
+            <span className="shop-card__shop" aria-hidden="true"><ShoppingBag size={18} strokeWidth={1.75} /></span>
           </div>
           {!product.inStock ? (
             <span className="shop-card__stock shop-card__stock--out">Out of stock</span>

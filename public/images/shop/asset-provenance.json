@@ -1,0 +1,14 @@
+{
+  "generator": "Built-in image_gen tool",
+  "purpose": "Decorative category photography only; not seller product imagery or an offer",
+  "assets": [
+    {
+      "file": "style-hero.webp",
+      "prompt": "Use case: photorealistic-natural. Asset type: decorative e-commerce storefront hero photography, not a product listing. Create a polished wide editorial lifestyle photograph of a smiling adult Indian woman in casual light linen clothes and a straw sun hat, holding simple unbranded paper shopping bags on a bright airy day. Composition: landscape 3:1 panoramic banner, subject on the right half with open pale sky-blue negative space on the left for HTML headline and button; leave safe margins around her face so the image works cropped to a very wide banner. Natural fabric and skin texture, soft warm sunlight, elegant contemporary retail campaign. No text, logos, watermark, UI, sale labels, brand names or identifiable merchandise. This is aspirational shopping lifestyle artwork."
+    },
+    {
+      "file": "home-hero.webp",
+      "prompt": "Use case: photorealistic-natural. Asset type: decorative home-and-kitchen e-commerce category banner photography, not a product listing. A calm contemporary living room corner with a neutral cream upholstered chair, small round wooden side table, leafy potted plant, soft daylight through sheer curtains and a pendant light. Landscape wide composition, furniture on right half, soft uncluttered pale warm wall negative space on left for HTML text. Premium real interior photography with linen, wood and ceramic texture. No text, logos, watermark, UI, sale labels or brand-specific products."
+    }
+  ]
+}

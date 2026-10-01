@@ -30,7 +30,9 @@ export function ModerationPanel({
   if (!tools.moderationPanel) return null
   const byName = (a: string, b: string) => nameOf(a).localeCompare(nameOf(b))
   return (
-    <div className="live-section" data-testid="live-moderation">
+    <details className="live-section live-moderation" data-testid="live-moderation">
+      <summary>Moderation tools <span className="live-page__meta">{banned.length} banned · {moderators.length} moderators</span></summary>
+      <div className="live-moderation__body">
       <div className="live-section__title">Banned from this stream</div>
       {banned.length === 0 ? (
         <p className="live-page__meta">No one is banned.</p>
@@ -67,6 +69,7 @@ export function ModerationPanel({
           )}
         </>
       )}
-    </div>
+      </div>
+    </details>
   )
 }
