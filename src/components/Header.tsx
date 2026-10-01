@@ -63,6 +63,8 @@ function describeNotification(type: string): string {
       return 'uploaded a new video'
     case 'creator_uploaded_flick':
       return 'uploaded a new flick'
+    case 'creator_went_live':
+      return 'is live now'
     case 'incoming_call':
       return 'called you'
     case 'incoming_video_call':
