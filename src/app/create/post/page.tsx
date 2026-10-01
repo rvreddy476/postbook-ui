@@ -1071,7 +1071,7 @@ export default function CreatePostPage() {
                   {/* Host livestream route link */}
                   <button
                     type="button"
-                    onClick={() => router.push("/live/start")}
+                    onClick={() => router.push("/live/new")}
                     aria-label="Go Live"
                     title="Go Live"
                     className="flex h-9 w-9 items-center justify-center rounded-xl text-red-500 hover:bg-red-500/10 hover:scale-105 transition-all"

@@ -9,64 +9,65 @@ import {
 } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import api from "@/lib/api"
-import { getSharedNotificationSocket } from "@/lib/notificationSocket"
+import {
+  isHubOpen,
+  subscribeToHubConnected,
+  subscribeToLiveEvents,
+  subscribeToLiveStream,
+  unsubscribeFromLiveStream,
+} from "@/services/messageService"
+import type {
+  CreateStreamInput,
+  LiveChatMessage,
+  LiveStream,
+  LiveStreamListPage,
+  StartStreamResult,
+  ViewerTokenResult,
+} from "@/features/live/model"
+import { parseBanList, parseModeratorList, parseStreamList } from "@/features/live/model"
+import { chatReducer, initialChatState, type ChatState, type ChatAction } from "@/features/live/chat"
+import { viewerTokenRetry } from "@/features/live/errors"
+import {
+  applyStreamFrame,
+  chatPollInterval,
+  nextTransport,
+  shouldPollChat,
+  type ChatTransport,
+} from "@/features/live/realtime"
+import type { LiveReportBody } from "@/features/live/report"
 
-// ── Types ─────────────────────────────────────────────────────────────
-//
-// Mirrors the Go `LiveStream` row from
-// Architecture/services/live-service-v2/internal/store/postgres/store.go.
-export type LiveStreamStatus = "scheduled" | "live" | "ended" | "failed"
-export type LiveVisibility = "public" | "followers" | "paid"
+// live-service-v2 (LiveKit) is the only live stack. Routes (handler.go,
+// moderation_routes.go, 1 Oct 2026):
+//   GET    /v1/livestream/streams                      live now (data[], meta.next_cursor)
+//   POST   /v1/livestream/streams                      create   (403 LIVE_NOT_ENABLED | LIVE_BANNED)
+//   GET    /v1/livestream/streams/:id                  detail
+//   POST   /v1/livestream/streams/:id/start            data.stream.status "starting" + publisher token
+//   POST   /v1/livestream/streams/:id/end              data = the stream row
+//   GET    /v1/livestream/streams/:id/viewer-token     409 STREAM_NOT_LIVE unless starting|live|reconnecting
+//   GET    /v1/livestream/streams/:id/chat?limit=N     replay (newest first)
+//   POST   /v1/livestream/streams/:id/chat             {text}
+//   DELETE /v1/livestream/streams/:id/chat/:messageId  host, moderators
+//   POST   /v1/livestream/streams/:id/bans             {user_id, reason?}  host, moderators
+//   DELETE /v1/livestream/streams/:id/bans/:userId     host, moderators
+//   GET    /v1/livestream/streams/:id/bans             host, moderators
+//   PUT    /v1/livestream/streams/:id/moderators       {user_ids} (host, max 5)
+//   GET    /v1/livestream/streams/:id/moderators       anyone who can see the stream
+//   POST   /v1/livestream/streams/:id/reports          {reason, message_id?, note?} → 201
+// Real-time: ws `subscribe_live_stream` (see features/live/realtime.ts).
 
-export interface LiveStream {
-  id: string
-  creator_user_id: string
-  livekit_room: string
-  title: string
-  description: string
-  cover_media_id: string | null
-  status: LiveStreamStatus
-  visibility: LiveVisibility
-  scheduled_at: string | null
-  started_at: string | null
-  ended_at: string | null
-  viewer_peak: number
-  recording_url: string | null
-  recording_duration_seconds: number | null
-  created_at: string
-  updated_at: string
-}
-
-export interface CreateStreamInput {
-  title: string
-  description?: string
-  visibility: LiveVisibility
-  cover_media_id?: string | null
-  scheduled_at?: string | null
-}
-
-export interface StartStreamResult {
-  stream: LiveStream
-  publisher_token: string
-  room: string
-  server_url: string
-}
-
-export interface ViewerTokenResult {
-  token: string
-  room: string
-  server_url: string
-}
-
-export interface LiveStreamListPage {
-  items: LiveStream[]
-  next_cursor: string
-}
+export type {
+  CreateStreamInput,
+  LiveChatMessage,
+  LiveEndedReason,
+  LiveStream,
+  LiveStreamListPage,
+  LiveStreamStatus,
+  LiveVisibility,
+  StartStreamResult,
+  ViewerTokenResult,
+} from "@/features/live/model"
 
 // ── Envelope helpers ──────────────────────────────────────────────────
-//
-// Backend wraps responses as `{ data, error, meta }` but we tolerate the
-// raw form too — same defensive pattern used in usePresence.ts.
 
 function unwrap<T>(body: unknown, fallback: T): T {
   if (body && typeof body === "object" && "data" in body) {
@@ -76,22 +77,6 @@ function unwrap<T>(body: unknown, fallback: T): T {
   return (body ?? fallback) as T
 }
 
-function unwrapList(body: unknown): { items: LiveStream[]; next_cursor: string } {
-  // The list endpoint serialises the stream array directly into `data`
-  // and the cursor into `meta.next_cursor` (see api.JSON in handler.go).
-  if (body && typeof body === "object") {
-    const obj = body as { data?: unknown; meta?: { next_cursor?: string } }
-    const items = Array.isArray(obj.data)
-      ? (obj.data as LiveStream[])
-      : Array.isArray((obj as { items?: LiveStream[] }).items)
-        ? ((obj as { items: LiveStream[] }).items)
-        : []
-    const next_cursor = obj.meta?.next_cursor ?? ""
-    return { items, next_cursor }
-  }
-  return { items: [], next_cursor: "" }
-}
-
 // ── Query keys ────────────────────────────────────────────────────────
 
 export const liveV2Keys = {
@@ -99,6 +84,9 @@ export const liveV2Keys = {
   list: () => [...liveV2Keys.all, "list"] as const,
   stream: (id: string) => [...liveV2Keys.all, "stream", id] as const,
   viewerToken: (id: string) => [...liveV2Keys.all, "viewerToken", id] as const,
+  chat: (id: string) => [...liveV2Keys.all, "chat", id] as const,
+  bans: (id: string) => [...liveV2Keys.all, "bans", id] as const,
+  moderators: (id: string) => [...liveV2Keys.all, "moderators", id] as const,
 }
 
 // ── List currently-live streams (infinite scroll) ─────────────────────
@@ -110,7 +98,7 @@ export function useLiveStreams(limit = 20) {
       const params: Record<string, string | number> = { limit }
       if (pageParam) params.cursor = String(pageParam)
       const res = await api.get("/v1/livestream/streams", { params })
-      return unwrapList(res.data)
+      return parseStreamList(res.data)
     },
     initialPageParam: "",
     getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
@@ -118,9 +106,13 @@ export function useLiveStreams(limit = 20) {
   })
 }
 
-// ── Single-stream detail (polls so the viewer counter stays live) ────
+// ── Single-stream detail ──────────────────────────────────────────────
+//
+// Polled as a backstop: status.changed frames update it immediately, the
+// poll catches anything a lost frame missed (the server sweeper is the
+// truth for timeouts).
 
-export function useLiveStream(streamId: string | null | undefined, pollMs = 5000) {
+export function useLiveStream(streamId: string | null | undefined, pollMs: number | false = 10_000) {
   return useQuery<LiveStream>({
     queryKey: streamId ? liveV2Keys.stream(streamId) : ["liveV2", "stream", "none"],
     queryFn: async () => {
@@ -162,6 +154,9 @@ export function useStartStream() {
       return unwrap<StartStreamResult>(res.data, {} as StartStreamResult)
     },
     onSuccess: (data, streamId) => {
+      // data.stream.status is "starting" (or the current status on a rejoin);
+      // only the host's published track makes it "live", server-side.
+      if (data?.stream?.id) qc.setQueryData(liveV2Keys.stream(streamId), data.stream)
       qc.invalidateQueries({ queryKey: liveV2Keys.stream(streamId) })
       qc.invalidateQueries({ queryKey: liveV2Keys.list() })
     },
@@ -170,11 +165,14 @@ export function useStartStream() {
 
 export function useEndStream() {
   const qc = useQueryClient()
-  return useMutation<void, AxiosError, string>({
+  return useMutation<LiveStream, AxiosError, string>({
     mutationFn: async (streamId) => {
-      await api.post(`/v1/livestream/streams/${streamId}/end`)
+      const res = await api.post(`/v1/livestream/streams/${streamId}/end`)
+      return unwrap<LiveStream>(res.data, {} as LiveStream)
     },
-    onSuccess: (_, streamId) => {
+    onSuccess: (row, streamId) => {
+      // The answer is the stream row: status ended (host_ended) or failed.
+      if (row?.id) qc.setQueryData(liveV2Keys.stream(streamId), row)
       qc.invalidateQueries({ queryKey: liveV2Keys.stream(streamId) })
       qc.invalidateQueries({ queryKey: liveV2Keys.list() })
     },
@@ -183,8 +181,8 @@ export function useEndStream() {
 
 // ── Viewer token ──────────────────────────────────────────────────────
 //
-// Backend returns 403 for non-followers and 402 for paid streams — both
-// surface as AxiosErrors here so the caller can show the right fallback.
+// Final refusals and the brief STREAM_NOT_LIVE retry: viewerTokenRetry and
+// watchErrorCopy in features/live/errors.ts.
 
 export function useViewerToken(
   streamId: string | null | undefined,
@@ -197,143 +195,178 @@ export function useViewerToken(
       return unwrap<ViewerTokenResult>(res.data, {} as ViewerTokenResult)
     },
     enabled: !!streamId && enabled,
-    // Tokens are good for 4h — no need to retry on 403/402.
-    retry: (failureCount, error) => {
-      const status = error?.response?.status
-      if (status === 401 || status === 402 || status === 403 || status === 404) return false
-      return failureCount < 2
-    },
+    retry: viewerTokenRetry,
+    retryDelay: 2000,
     staleTime: 30 * 60_000,
   })
 }
 
-// ── Visibility-error helper ───────────────────────────────────────────
-//
-// Turns an AxiosError into a user-facing reason string. Used by both the
-// viewer page and the broadcaster studio when the gate trips.
+// ── Live room: chat + real-time frames ────────────────────────────────
 
-export function visibilityErrorReason(err: unknown): {
-  code: "forbidden_follower" | "payment_required" | "not_found" | "unauthorized" | "unknown"
-  message: string
-} | null {
-  if (!err || typeof err !== "object") return null
-  const ax = err as AxiosError<{ error?: { code?: string; message?: string } }>
-  const status = ax.response?.status
-  const code = ax.response?.data?.error?.code
-  switch (status) {
-    case 401:
-      return { code: "unauthorized", message: "Sign in to watch this stream." }
-    case 402:
-      return {
-        code: "payment_required",
-        message: "Subscribe to watch this paid stream.",
-      }
-    case 403:
-      if (code === "NOT_FOLLOWER") {
-        return {
-          code: "forbidden_follower",
-          message: "Only the creator's followers can watch this stream.",
-        }
-      }
-      return { code: "forbidden_follower", message: "You don't have access to this stream." }
-    case 404:
-      return { code: "not_found", message: "This stream no longer exists." }
-    default:
-      return null
-  }
+export interface LiveRoom {
+  chat: ChatState
+  dispatch: React.Dispatch<ChatAction>
+  transport: ChatTransport
+  /** True while chat is read over HTTP because frames can't arrive. */
+  polling: boolean
+  chatLoading: boolean
 }
 
-// ── Chat overlay (Phase A) ────────────────────────────────────────────
-//
-// REST surface from live-service-v2:
-//   GET  /v1/livestream/streams/:id/chat?limit=N  — replay buffer
-//   POST /v1/livestream/streams/:id/chat          — append
-// Live tail arrives via the shared notification socket using the
-// existing `subscribe_live_stream` message + `live_chat_message`
-// pub/sub event type.
-
-export interface LiveChatMessage {
-  id: string
-  stream_id: string
-  user_id: string
-  text: string
-  created_at: string
-}
-
-const chatKeys = {
-  list: (streamId: string) => [...liveV2Keys.all, "chat", streamId] as const,
-}
-
-// useLiveChatList — initial replay buffer + live-merge subscription.
-// Returns messages oldest-first so the UI just appends as new arrives.
-export function useLiveChatList(streamId: string | null | undefined, limit = 50) {
+/**
+ * One owner per page: the page component that renders the stream. Key the
+ * component by stream id so the reducer starts fresh per stream.
+ */
+export function useLiveRoom(streamId: string, limit = 50): LiveRoom {
   const qc = useQueryClient()
-  const query = useQuery<LiveChatMessage[]>({
-    queryKey: streamId ? chatKeys.list(streamId) : ["liveV2", "chat", "none"],
+  const [chat, dispatch] = React.useReducer(chatReducer, streamId, (id) => initialChatState(id))
+  const [transport, setTransport] = React.useState<ChatTransport>("subscribing")
+  const [socketOpen, setSocketOpen] = React.useState<boolean>(() => isHubOpen())
+
+  const polling = shouldPollChat(transport, socketOpen)
+
+  const chatQuery = useQuery<LiveChatMessage[]>({
+    queryKey: liveV2Keys.chat(streamId),
     queryFn: async () => {
-      const res = await api.get(`/v1/livestream/streams/${streamId}/chat`, {
-        params: { limit },
-      })
+      const res = await api.get(`/v1/livestream/streams/${streamId}/chat`, { params: { limit } })
       const items = unwrap<LiveChatMessage[]>(res.data, [])
-      // Backend returns newest-first; we keep oldest-first locally so
-      // append-on-event is natural.
-      return [...items].reverse()
+      return Array.isArray(items) ? items : []
     },
     enabled: !!streamId,
     staleTime: 0,
+    refetchInterval: chatPollInterval(transport, socketOpen),
   })
 
-  // Live-tail subscription. Subscribes to the ws-gateway's
-  // live:stream:{streamID} pub/sub channel via the existing
-  // subscribe_live_stream message and merges new messages into the
-  // query cache.
+  React.useEffect(() => {
+    if (chatQuery.data) dispatch({ type: "replay", messages: chatQuery.data })
+  }, [chatQuery.data])
+
+  // Moderators for everyone (chat badges, the moderator's own tools); the
+  // stream row's moderator_user_ids only reaches the host and moderators.
+  const moderatorsQuery = useQuery<string[]>({
+    queryKey: liveV2Keys.moderators(streamId),
+    queryFn: async () => parseModeratorList((await api.get(`/v1/livestream/streams/${streamId}/moderators`)).data),
+    enabled: !!streamId,
+    staleTime: 60_000,
+  })
+  React.useEffect(() => {
+    if (moderatorsQuery.data) dispatch({ type: "moderators_seed", user_ids: moderatorsQuery.data })
+  }, [moderatorsQuery.data])
+
   React.useEffect(() => {
     if (!streamId) return
-    const sock = getSharedNotificationSocket()
-    if (!sock) return
-    // Tell the gateway to attach our connection to this stream's
-    // pub/sub channel.
-    sock.send({ type: "subscribe_live_stream", stream_id: streamId })
-    const unsub = sock.on("live_chat_message", (raw: unknown) => {
-      const env = raw as { payload?: LiveChatMessage } | LiveChatMessage
-      const msg =
-        typeof env === "object" && env && "payload" in env
-          ? (env as { payload?: LiveChatMessage }).payload
-          : (env as LiveChatMessage)
-      if (!msg || msg.stream_id !== streamId) return
-      qc.setQueryData<LiveChatMessage[]>(chatKeys.list(streamId), (prev) => {
-        const list = prev ?? []
-        // Dedup on id — the broadcaster's own send echoes back via
-        // pub/sub and we don't want the double-render.
-        if (list.some((m) => m.id === msg.id)) return list
-        return [...list, msg]
-      })
+    subscribeToLiveStream(streamId)
+    const offFrames = subscribeToLiveEvents((frame) => {
+      if (frame.stream_id !== streamId) return
+      switch (frame.kind) {
+        case "refused":
+          setTransport((t) => nextTransport(t, streamId, { type: "refused", stream_id: frame.stream_id }))
+          return
+        case "status":
+          qc.setQueryData<LiveStream>(liveV2Keys.stream(streamId), (prev) => applyStreamFrame(prev, frame))
+          void qc.invalidateQueries({ queryKey: liveV2Keys.stream(streamId) })
+          return
+        case "viewers":
+          qc.setQueryData<LiveStream>(liveV2Keys.stream(streamId), (prev) => applyStreamFrame(prev, frame))
+          return
+        default:
+          dispatch({ type: "frame", frame })
+      }
     })
+    const offOpen = subscribeToHubConnected(() => {
+      setSocketOpen(true)
+      setTransport((t) => nextTransport(t, streamId, { type: "socket_open" }))
+    })
+    // The hub has no close event for listeners; sample it so a dead socket
+    // falls back to polling instead of a silent chat.
+    const sample = setInterval(() => setSocketOpen(isHubOpen()), 2000)
     return () => {
-      unsub()
-      sock.send({ type: "unsubscribe_live_stream", stream_id: streamId })
+      clearInterval(sample)
+      offOpen()
+      offFrames()
+      unsubscribeFromLiveStream(streamId)
     }
   }, [streamId, qc])
 
-  return query
+  return { chat, dispatch, transport, polling, chatLoading: chatQuery.isLoading }
 }
 
-// useSendLiveChat — appends a chat message. The broadcaster's own
-// message also arrives via the pub/sub echo; useLiveChatList's
-// id-dedup prevents the double-render.
 export function useSendLiveChat(streamId: string) {
-  const qc = useQueryClient()
   return useMutation<LiveChatMessage, AxiosError, { text: string }>({
     mutationFn: async ({ text }) => {
       const res = await api.post(`/v1/livestream/streams/${streamId}/chat`, { text })
       return unwrap<LiveChatMessage>(res.data, {} as LiveChatMessage)
     },
-    onSuccess: (msg) => {
-      qc.setQueryData<LiveChatMessage[]>(chatKeys.list(streamId), (prev) => {
-        const list = prev ?? []
-        if (list.some((m) => m.id === msg.id)) return list
-        return [...list, msg]
-      })
+  })
+}
+
+// ── Moderation (host, stream moderators) ──────────────────────────────
+
+export function useRemoveChatMessage(streamId: string) {
+  return useMutation<void, AxiosError, string>({
+    mutationFn: async (messageId) => {
+      await api.delete(`/v1/livestream/streams/${streamId}/chat/${messageId}`)
+    },
+  })
+}
+
+/** GET /bans — host and moderators only (403 for anyone else). */
+export function useStreamBans(streamId: string, enabled: boolean) {
+  return useQuery<string[]>({
+    queryKey: liveV2Keys.bans(streamId),
+    queryFn: async () => parseBanList((await api.get(`/v1/livestream/streams/${streamId}/bans`)).data),
+    enabled: !!streamId && enabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+export const BAN_REASON = "Banned from the live stream"
+
+export function useBanUser(streamId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, AxiosError, string>({
+    mutationFn: async (userId) => {
+      await api.post(`/v1/livestream/streams/${streamId}/bans`, { user_id: userId, reason: BAN_REASON })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: liveV2Keys.bans(streamId) })
+    },
+  })
+}
+
+export function useUnbanUser(streamId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, AxiosError, string>({
+    mutationFn: async (userId) => {
+      await api.delete(`/v1/livestream/streams/${streamId}/bans/${userId}`)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: liveV2Keys.bans(streamId) })
+    },
+  })
+}
+
+/** PUT /moderators answers {"data":{"user_ids":[...]}}: the list as stored. */
+export function useSetModerators(streamId: string) {
+  const qc = useQueryClient()
+  return useMutation<string[], AxiosError, string[]>({
+    mutationFn: async (userIds) => {
+      const res = await api.put(`/v1/livestream/streams/${streamId}/moderators`, { user_ids: userIds })
+      return parseModeratorList(res.data)
+    },
+    onSuccess: (ids) => {
+      qc.setQueryData(liveV2Keys.moderators(streamId), ids)
+      void qc.invalidateQueries({ queryKey: liveV2Keys.stream(streamId) })
+    },
+  })
+}
+
+// ── Viewer report ─────────────────────────────────────────────────────
+
+export function useReportLive(streamId: string) {
+  return useMutation<void, AxiosError, LiveReportBody>({
+    mutationFn: async (body) => {
+      await api.post(`/v1/livestream/streams/${streamId}/reports`, body)
     },
   })
 }

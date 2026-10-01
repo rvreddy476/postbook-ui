@@ -1,16 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { useParams } from "next/navigation"
-import {
-  AlertCircle,
-  Calendar,
-  Lock,
-  Radio,
-  Users,
-  Video,
-} from "lucide-react"
-
+import { Flag, Video } from "lucide-react"
 import {
   RemoteParticipant,
   RemoteTrack,
@@ -20,306 +13,193 @@ import {
   Track,
 } from "livekit-client"
 
-import {
-  useLiveStream,
-  useViewerToken,
-  visibilityErrorReason,
-} from "@/hooks/useLiveV2"
+import { useLiveRoom, useLiveStream, useViewerToken } from "@/hooks/useLiveV2"
 import { useBatchProfiles } from "@/hooks/useProfile"
-import LiveChatOverlay from "@/components/live/LiveChatOverlay"
+import { getCurrentUserId } from "@/lib/api"
+import { Skeleton } from "@/components/ui/skeleton"
+import { chatRole, streamTools } from "@/features/live/chat"
+import { isStreamNotLive, watchErrorCopy } from "@/features/live/errors"
+import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
+import { LiveChat } from "@/features/live/components/LiveChat"
+import { LiveStatusBadge, LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
+import { ReportSheet } from "@/features/live/components/ReportSheet"
+import "@/features/live/live.css"
 
 export default function LiveViewerPage() {
   const params = useParams<{ streamId: string }>()
   const streamId = params?.streamId
+  if (!streamId) return null
+  return <LiveViewer key={streamId} streamId={streamId} />
+}
 
-  const { data: stream, error: streamError } = useLiveStream(streamId, 5000)
-  const isLive = stream?.status === "live"
-  const tokenQuery = useViewerToken(streamId, !!streamId && isLive)
+type PlayerPhase = "idle" | "connecting" | "connected" | "error"
+
+function LiveViewer({ streamId }: { streamId: string }) {
+  const { data: stream, error: streamError, refetch } = useLiveStream(streamId)
+  const [meId, setMeId] = useState<string | null>(null)
+  useEffect(() => setMeId(getCurrentUserId()), [])
+
+  const view = liveStatusView(stream ?? { status: "starting" }, "viewer")
+  const tokenQuery = useViewerToken(streamId, !!stream && view.connectPlayer)
+  const room = useLiveRoom(streamId)
 
   const roomRef = useRef<Room | null>(null)
   const videoElRef = useRef<HTMLVideoElement | null>(null)
   const audioElRef = useRef<HTMLAudioElement | null>(null)
-  const connectedRef = useRef(false)
-
-  const [phase, setPhase] = useState<
-    "idle" | "connecting" | "connected" | "error" | "denied"
-  >("idle")
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [viewerCount, setViewerCount] = useState(0)
+  const [phase, setPhase] = useState<PlayerPhase>("idle")
+  const [reportOpen, setReportOpen] = useState(false)
 
   const creatorProfiles = useBatchProfiles(stream ? [stream.creator_user_id] : [])
-  // useBatchProfiles returns a Map<string, UserProfile>; pull the first entry.
-  const creator = (stream && creatorProfiles.data instanceof Map)
-    ? (creatorProfiles.data as Map<string, { id: string; display_name?: string }>).get(stream.creator_user_id)
+  const creator = stream && creatorProfiles.data instanceof Map
+    ? (creatorProfiles.data as Map<string, { display_name?: string; username?: string }>).get(stream.creator_user_id)
     : null
 
-  // Stream visibility gate — surfaces a clean fallback if the token call
-  // returned 403/402.
+  const token = tokenQuery.data?.token
+  const serverUrl = tokenQuery.data?.server_url
+  const connect = view.connectPlayer && !!token && !!serverUrl
+
+  // 409 STREAM_NOT_LIVE after the retries: our row says on air but the
+  // server no longer does. Re-read the row so the panel tells the truth.
+  const tokenNotLive = isStreamNotLive(tokenQuery.error)
   useEffect(() => {
-    if (!tokenQuery.error) return
-    const reason = visibilityErrorReason(tokenQuery.error)
-    if (reason) {
-      setErrorMessage(reason.message)
-      setPhase("denied")
-    } else {
-      setErrorMessage("Couldn't load the stream.")
-      setPhase("error")
-    }
-  }, [tokenQuery.error])
+    if (tokenNotLive) void refetch()
+  }, [tokenNotLive, refetch])
 
-  // Connect the viewer to LiveKit as a subscriber once the token + room
-  // are known. We only run this when the stream is in 'live' state — if
-  // the host hasn't pressed Start yet we wait.
+  // Join the LiveKit room only while the server says media can flow
+  // (live or reconnecting); leave the moment it ends or fails.
   useEffect(() => {
-    if (!isLive) return
-    if (!tokenQuery.data || connectedRef.current) return
-    connectedRef.current = true
-    void connectViewer(tokenQuery.data.server_url, tokenQuery.data.token)
-
-    return () => {
-      const room = roomRef.current
-      if (room) {
-        try {
-          room.disconnect()
-        } catch {
-          // ignore
-        }
-        roomRef.current = null
-      }
-      connectedRef.current = false
+    if (!connect || !token || !serverUrl) return
+    let cancelled = false
+    const lkRoom = new Room({ adaptiveStream: true, dynacast: true })
+    roomRef.current = lkRoom
+    const attach = (track: RemoteTrack, _pub?: RemoteTrackPublication, _p?: RemoteParticipant) => {
+      if (track.kind === Track.Kind.Video && videoElRef.current) track.attach(videoElRef.current)
+      if (track.kind === Track.Kind.Audio && audioElRef.current) track.attach(audioElRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLive, tokenQuery.data?.token])
-
-  async function connectViewer(serverURL: string, token: string) {
+    lkRoom.on(RoomEvent.TrackSubscribed, attach)
+    lkRoom.on(RoomEvent.Disconnected, () => { if (!cancelled) setPhase("idle") })
     setPhase("connecting")
-    try {
-      const room = new Room({ adaptiveStream: true, dynacast: true })
-      roomRef.current = room
-
-      const onTrackSubscribed = (
-        track: RemoteTrack,
-        _pub: RemoteTrackPublication,
-        _participant: RemoteParticipant,
-      ) => {
-        if (track.kind === Track.Kind.Video && videoElRef.current) {
-          track.attach(videoElRef.current)
-        }
-        if (track.kind === Track.Kind.Audio && audioElRef.current) {
-          track.attach(audioElRef.current)
-        }
-      }
-
-      room.on(RoomEvent.TrackSubscribed, onTrackSubscribed)
-      room.on(RoomEvent.ParticipantConnected, () => setViewerCount(room.numParticipants))
-      room.on(RoomEvent.ParticipantDisconnected, () => setViewerCount(room.numParticipants))
-      room.on(RoomEvent.Disconnected, () => {
-        setPhase("idle")
-      })
-
-      await room.connect(serverURL, token)
-      setViewerCount(room.numParticipants)
-
-      // Catch any tracks already published before we joined.
-      for (const participant of room.remoteParticipants.values()) {
-        for (const pub of participant.trackPublications.values()) {
-          if (pub.track) {
-            onTrackSubscribed(pub.track, pub, participant)
+    lkRoom
+      .connect(serverUrl, token)
+      .then(() => {
+        if (cancelled) return
+        for (const participant of lkRoom.remoteParticipants.values()) {
+          for (const pub of participant.trackPublications.values()) {
+            if (pub.track) attach(pub.track as RemoteTrack)
           }
         }
-      }
-      setPhase("connected")
-    } catch (err) {
-      setErrorMessage(humanizeError(err))
-      setPhase("error")
+        setPhase("connected")
+      })
+      .catch(() => { if (!cancelled) setPhase("error") })
+    return () => {
+      cancelled = true
+      try { void lkRoom.disconnect() } catch { /* already gone */ }
+      roomRef.current = null
+      setPhase("idle")
     }
-  }
+  }, [connect, token, serverUrl])
 
   if (!stream) {
+    const copy = streamError ? watchErrorCopy(streamError) : null
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
-        {streamError ? (
-          <div className="text-sm text-brand-text/60">Couldn't load this stream.</div>
-        ) : (
-          <div className="text-sm text-brand-text/60">Loading…</div>
-        )}
+      <div className="live-page">
+        <div className="live-page__inner">
+          {streamError ? (
+            <div className="live-panel">
+              <div className="live-panel__title">{copy ?? "Couldn't load this stream."}</div>
+              {!copy && (
+                <button type="button" className="live-btn live-btn--ghost" onClick={() => refetch()}>Try again</button>
+              )}
+            </div>
+          ) : (
+            <Skeleton className="aspect-video w-full" />
+          )}
+        </div>
       </div>
     )
   }
 
-  // Visibility gate hit before we even tried to connect (e.g. 403/402
-  // returned from the GET /v1/live/streams/:id call itself).
-  const detailErrReason = streamError ? visibilityErrorReason(streamError) : null
+  const role = chatRole(meId, stream.creator_user_id, room.chat.moderators)
+  const tools = streamTools(role)
+  const watchError = watchErrorCopy(tokenQuery.error)
+  const viewers = currentViewerCount(stream, null)
+  const showCount = view.kind === "live" || view.kind === "reconnecting"
 
   return (
-    <div className="min-h-screen bg-brand-bg py-6 px-4">
-      <div className="mx-auto w-full max-w-6xl">
+    <div className="live-page">
+      <div className="live-page__inner">
         <header className="mb-4 flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
-            {stream.status === "live" && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black tracking-widest text-rose-500">
-                <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />
-                Live
-              </span>
-            )}
-            <h1 className="text-xl font-bold text-brand-text">{stream.title}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <LiveStatusBadge view={view} />
+            <h1 className="live-page__title">{stream.title}</h1>
           </div>
-          <p className="text-xs text-brand-text/60">
-            {creator?.display_name ?? "Creator"} · {viewerLabel(stream.status, viewerCount, stream.viewer_peak)}
-          </p>
-          {stream.description && (
-            <p className="text-sm text-brand-text/80">{stream.description}</p>
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="live-page__meta">
+              {creator?.display_name || creator?.username || "Creator"}
+              {showCount ? ` · ${viewerCountLabel(viewers)}` : ""}
+            </p>
+            {role === "host" && (
+              <Link href={`/live/${stream.id}/broadcast`} className="live-btn live-btn--ghost">Open your studio</Link>
+            )}
+            {tools.reportStream && (
+              <button
+                type="button"
+                className="live-btn live-btn--ghost"
+                onClick={() => setReportOpen(true)}
+                aria-label="Report stream"
+              >
+                <Flag className="h-4 w-4" aria-hidden="true" /> Report
+              </button>
+            )}
+          </div>
+          {stream.description && <p className="text-sm text-brand-text">{stream.description}</p>}
         </header>
 
-        {/* Two-column on desktop: video left, chat right. On mobile
-            the chat stacks below the player. */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            {detailErrReason ? (
-              <VisibilityFallback message={detailErrReason.message} />
-            ) : phase === "denied" ? (
-              <VisibilityFallback message={errorMessage ?? "Access denied"} />
-            ) : stream.status === "scheduled" ? (
-              <ScheduledPanel scheduledAt={stream.scheduled_at} />
-            ) : stream.status === "ended" && stream.recording_url ? (
-              <VODPlayer url={stream.recording_url} />
-            ) : stream.status === "ended" ? (
-              <EndedPanel />
-            ) : stream.status === "failed" ? (
-              <FailedPanel />
+        <div className="live-layout">
+          <div className="flex flex-col gap-3">
+            {watchError ? (
+              <LiveStatusPanel view={{ ...view, title: watchError, body: "" }} />
+            ) : view.connectPlayer ? (
+              <>
+                <ReconnectingNotice view={view} />
+                <div className="live-stage">
+                  <video ref={videoElRef} autoPlay playsInline controls className="live-stage__video" />
+                  <audio ref={audioElRef} autoPlay />
+                  {view.kind === "reconnecting" ? (
+                    <div className="live-stage__overlay">Waiting for the host to reconnect…</div>
+                  ) : tokenQuery.isError ? (
+                    <div className="live-stage__overlay flex-col gap-3">
+                      <span>We couldn&apos;t connect to the stream.</span>
+                      <button type="button" className="live-btn live-btn--primary" onClick={() => tokenQuery.refetch()}>
+                        Try again
+                      </button>
+                    </div>
+                  ) : phase !== "connected" ? (
+                    <div className="live-stage__overlay">
+                      {phase === "error" ? "We couldn't connect to the stream. Refresh to try again." : "Connecting…"}
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : view.kind === "ended" && stream.recording_url ? (
+              <>
+                <div className="live-stage">
+                  <video src={stream.recording_url} controls className="live-stage__video" />
+                </div>
+                <p className="live-page__meta flex items-center gap-1">
+                  <Video className="h-3 w-3" aria-hidden="true" /> {view.body} This is the recording.
+                </p>
+              </>
             ) : (
-              <LivePlayer
-                videoRef={videoElRef}
-                audioRef={audioElRef}
-                phase={phase}
-                errorMessage={errorMessage}
-              />
+              <LiveStatusPanel view={view} />
             )}
           </div>
-          {/* Chat overlay — visible whenever the stream is currently
-              live AND the viewer has access (no denied / failed /
-              visibility-error panels). Hidden for scheduled / ended
-              states since there's nothing to talk about live. */}
-          {stream.status === "live" && phase !== "denied" && !detailErrReason && (
-            <LiveChatOverlay
-              streamId={stream.id}
-              className="h-[480px] lg:h-auto"
-            />
+          {view.showChat && !watchError && (
+            <LiveChat streamId={stream.id} hostId={stream.creator_user_id} meId={meId} room={room} view={view} />
           )}
         </div>
       </div>
+      <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} streamId={stream.id} />
     </div>
   )
-}
-
-// ── Helper sub-views ──────────────────────────────────────────────────
-
-function viewerLabel(status: string, current: number, peak: number) {
-  if (status === "live") {
-    return `${current.toLocaleString()} watching`
-  }
-  if (status === "ended") {
-    return `Peak: ${peak.toLocaleString()} viewers`
-  }
-  return ""
-}
-
-function LivePlayer({
-  videoRef,
-  audioRef,
-  phase,
-  errorMessage,
-}: {
-  videoRef: React.RefObject<HTMLVideoElement | null>
-  audioRef: React.RefObject<HTMLAudioElement | null>
-  phase: "idle" | "connecting" | "connected" | "error" | "denied"
-  errorMessage: string | null
-}) {
-  return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-xs">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        controls
-        className="absolute inset-0 h-full w-full object-contain"
-      />
-      <audio ref={audioRef} autoPlay />
-      {phase !== "connected" && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-sm">
-          {phase === "connecting" || phase === "idle" ? (
-            <span>Connecting to the live stream…</span>
-          ) : phase === "error" ? (
-            <div className="flex flex-col items-center gap-2 text-center">
-              <AlertCircle className="h-6 w-6 text-rose-400" />
-              <span>{errorMessage ?? "Stream connection failed"}</span>
-            </div>
-          ) : null}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function VODPlayer({ url }: { url: string }) {
-  return (
-    <div className="overflow-hidden rounded-2xl bg-black">
-      <video src={url} controls className="w-full" />
-      <div className="bg-brand-card px-3 py-2 text-[11px] text-brand-text/60">
-        <Video className="mr-1 inline h-3 w-3" /> Recording from a past live stream.
-      </div>
-    </div>
-  )
-}
-
-function ScheduledPanel({ scheduledAt }: { scheduledAt: string | null }) {
-  const when = scheduledAt ? new Date(scheduledAt).toLocaleString() : "soon"
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-6 py-12 text-center">
-      <Calendar className="h-10 w-10 text-brand-text/40" />
-      <div className="text-sm font-semibold text-brand-text">This stream hasn't started yet</div>
-      <div className="text-xs text-brand-text/60">Starts at {when}</div>
-    </div>
-  )
-}
-
-function EndedPanel() {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-6 py-12 text-center">
-      <Radio className="h-10 w-10 text-brand-text/40" />
-      <div className="text-sm font-semibold text-brand-text">Stream ended</div>
-      <div className="text-xs text-brand-text/60">
-        The recording is processing — check back shortly.
-      </div>
-    </div>
-  )
-}
-
-function FailedPanel() {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/40 px-6 py-12 text-center">
-      <AlertCircle className="h-10 w-10 text-rose-400" />
-      <div className="text-sm font-semibold text-brand-text">This stream couldn't be played</div>
-      <div className="text-xs text-brand-text/60">Something went wrong on the broadcaster's side.</div>
-    </div>
-  )
-}
-
-function VisibilityFallback({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-brand-divider bg-brand-card px-6 py-12 text-center">
-      <Lock className="h-10 w-10 text-brand-text/40" />
-      <div className="text-sm font-semibold text-brand-text">{message}</div>
-      <div className="text-xs text-brand-text/60">
-        Reach out to the creator if you think this is a mistake.
-      </div>
-    </div>
-  )
-}
-
-function humanizeError(err: unknown): string {
-  if (!err) return "Unknown error"
-  if (err instanceof Error) return err.message
-  return String(err)
 }

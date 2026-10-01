@@ -1,16 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { StopCircle, Users } from "lucide-react"
 import {
-  Loader2,
-  Radio,
-  StopCircle,
-  Users,
-  AlertCircle,
-} from "lucide-react"
-
-import {
+  LocalAudioTrack,
   LocalVideoTrack,
   Room,
   RoomEvent,
@@ -19,242 +14,260 @@ import {
   createLocalVideoTrack,
 } from "livekit-client"
 
-import {
-  useEndStream,
-  useLiveStream,
-  useStartStream,
-  visibilityErrorReason,
-} from "@/hooks/useLiveV2"
-import LiveChatOverlay from "@/components/live/LiveChatOverlay"
+import { useEndStream, useLiveRoom, useLiveStream, useStartStream } from "@/hooks/useLiveV2"
+import { getCurrentUserId } from "@/lib/api"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { goLiveErrorCopy, isPilotRefusal, watchErrorCopy } from "@/features/live/errors"
+import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
+import { LiveChat } from "@/features/live/components/LiveChat"
+import { LiveStatusBadge, LiveStatusPanel, ReconnectingNotice } from "@/features/live/components/LiveStatus"
+import { PilotNotice } from "@/features/live/components/PilotNotice"
+import "@/features/live/live.css"
 
-// Broadcaster studio.
-//
-// On mount we call POST /v1/live/streams/:id/start to obtain a publisher
-// token, then connect to the LiveKit Room as a publisher and attach the
-// local camera + microphone tracks. The Room handle is kept on a ref so
-// the End button can disconnect cleanly.
+// Host studio. POST /start mints the publisher token and puts the stream in
+// `starting`; it becomes `live` only when LiveKit reports this host's track
+// (server-side). The badge always shows the server's status, never a local
+// guess, and the viewer number is the server's count without the host.
 
 export default function BroadcastPage() {
   const params = useParams<{ streamId: string }>()
-  const router = useRouter()
   const streamId = params?.streamId
+  if (!streamId) return null
+  return <Studio key={streamId} streamId={streamId} />
+}
 
+type PublishPhase = "idle" | "starting" | "publishing" | "error" | "pilot" | "stopped"
+
+function Studio({ streamId }: { streamId: string }) {
   const { data: stream, error: streamError } = useLiveStream(streamId, 5000)
   const startStream = useStartStream()
   const endStream = useEndStream()
+  const room = useLiveRoom(streamId)
+  const [meId, setMeId] = useState<string | null>(null)
+  useEffect(() => setMeId(getCurrentUserId()), [])
 
   const roomRef = useRef<Room | null>(null)
+  const tracksRef = useRef<Array<LocalVideoTrack | LocalAudioTrack>>([])
   const videoElRef = useRef<HTMLVideoElement | null>(null)
-  const localVideoTrackRef = useRef<LocalVideoTrack | null>(null)
   const startedRef = useRef(false)
-
-  const [phase, setPhase] = useState<
-    "idle" | "starting" | "publishing" | "ending" | "ended" | "error"
-  >("idle")
+  const [phase, setPhase] = useState<PublishPhase>("idle")
+  const [localReconnecting, setLocalReconnecting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [participantCount, setParticipantCount] = useState(0)
+  const [confirmEnd, setConfirmEnd] = useState(false)
 
-  // Kick the start flow once the stream id is known. The ref guard
-  // matters under React StrictMode: useEffect runs twice in dev and we
-  // don't want to mint two publisher tokens / open two cameras.
-  useEffect(() => {
-    if (!streamId || startedRef.current) return
-    startedRef.current = true
-    void runStart(streamId)
-    return () => {
-      // Best-effort teardown on unmount — covers tab close + soft navigation.
-      const room = roomRef.current
-      if (room) {
-        try {
-          room.disconnect()
-        } catch {
-          // ignore
-        }
-        roomRef.current = null
-      }
-      if (localVideoTrackRef.current) {
-        localVideoTrackRef.current.stop()
-        localVideoTrackRef.current = null
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamId])
+  const view = liveStatusView(stream ?? { status: "starting" }, "host")
+  const hostReconnecting = localReconnecting && !view.terminal
+  const shownView = hostReconnecting && view.kind === "live" ? liveStatusView({ status: "reconnecting" }, "host") : view
+
+  const teardown = () => {
+    const r = roomRef.current
+    roomRef.current = null
+    if (r) { try { void r.disconnect() } catch { /* already gone */ } }
+    for (const t of tracksRef.current) { try { t.stop() } catch { /* already stopped */ } }
+    tracksRef.current = []
+  }
 
   async function runStart(id: string) {
     setPhase("starting")
     setErrorMessage(null)
     try {
       const res = await startStream.mutateAsync(id)
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-      })
-      roomRef.current = room
-
-      room.on(RoomEvent.ParticipantConnected, () => {
-        setParticipantCount(room.numParticipants)
-      })
-      room.on(RoomEvent.ParticipantDisconnected, () => {
-        setParticipantCount(room.numParticipants)
-      })
-      room.on(RoomEvent.Disconnected, () => {
-        setPhase((p) => (p === "ending" || p === "ended" ? p : "ended"))
-      })
-
-      await room.connect(res.server_url, res.publisher_token)
-
-      const audioTrack = await createLocalAudioTrack()
-      const videoTrack = await createLocalVideoTrack({
-        resolution: { width: 1280, height: 720, frameRate: 30 },
-      })
-      localVideoTrackRef.current = videoTrack
-
-      await room.localParticipant.publishTrack(audioTrack, { source: Track.Source.Microphone })
-      await room.localParticipant.publishTrack(videoTrack, { source: Track.Source.Camera })
-
-      if (videoElRef.current) {
-        videoTrack.attach(videoElRef.current)
-      }
-      setParticipantCount(room.numParticipants)
+      const lkRoom = new Room({ adaptiveStream: true, dynacast: true })
+      roomRef.current = lkRoom
+      lkRoom.on(RoomEvent.Reconnecting, () => setLocalReconnecting(true))
+      lkRoom.on(RoomEvent.Reconnected, () => setLocalReconnecting(false))
+      lkRoom.on(RoomEvent.Disconnected, () => setPhase((p) => (p === "publishing" ? "stopped" : p)))
+      await lkRoom.connect(res.server_url, res.publisher_token)
+      const audio = await createLocalAudioTrack()
+      const video = await createLocalVideoTrack({ resolution: { width: 1280, height: 720, frameRate: 30 } })
+      tracksRef.current = [audio, video]
+      await lkRoom.localParticipant.publishTrack(audio, { source: Track.Source.Microphone })
+      await lkRoom.localParticipant.publishTrack(video, { source: Track.Source.Camera })
+      if (videoElRef.current) video.attach(videoElRef.current)
       setPhase("publishing")
     } catch (err) {
-      const reason = visibilityErrorReason(err)
-      setErrorMessage(reason?.message ?? humanizeError(err))
+      teardown()
+      if (isPilotRefusal(err)) {
+        setPhase("pilot")
+        return
+      }
+      setErrorMessage(err && typeof err === "object" && "response" in err ? goLiveErrorCopy(err) : "We couldn't reach your camera or the live server. Check permissions and try again.")
       setPhase("error")
     }
   }
 
+  // Start once the stream is known and not already over. The ref guard
+  // matters under StrictMode: never mint two tokens or open two cameras.
+  useEffect(() => {
+    if (!stream || startedRef.current || view.terminal) return
+    startedRef.current = true
+    void runStart(streamId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stream?.id, view.terminal])
+
+  // Server says it's over (host_lost, admin_stopped, no_media, …): release
+  // the camera at once.
+  useEffect(() => {
+    if (view.terminal) teardown()
+  }, [view.terminal])
+
+  useEffect(() => () => teardown(), [])
+
   async function handleEnd() {
-    if (!streamId) return
-    setPhase("ending")
+    setConfirmEnd(false)
     try {
-      // Try the server-side end first so the recording flushes cleanly.
       await endStream.mutateAsync(streamId)
-    } catch (err) {
-      // Even if the server call fails, we still want to release the camera.
-      // The Mediums-deferred TODO covers retrying the End call from a worker.
-      // eslint-disable-next-line no-console
-      console.warn("end stream failed", err)
+    } catch {
+      // The server sweeper ends a stream whose host has gone; releasing the
+      // camera below is what matters here.
     } finally {
-      if (roomRef.current) {
-        await roomRef.current.disconnect()
-        roomRef.current = null
-      }
-      if (localVideoTrackRef.current) {
-        localVideoTrackRef.current.stop()
-        localVideoTrackRef.current = null
-      }
-      setPhase("ended")
-      router.push(`/live/${streamId}`)
+      teardown()
+      setPhase("stopped")
     }
   }
 
-  const isLive = phase === "publishing"
-  const viewerCount = Math.max(0, (stream?.viewer_peak ?? 0))
+  if (!stream) {
+    return (
+      <div className="live-page">
+        <div className="live-page__inner">
+          {streamError ? (
+            <div className="live-panel">
+              <div className="live-panel__title">{watchErrorCopy(streamError) ?? "Couldn't load your stream."}</div>
+            </div>
+          ) : (
+            <Skeleton className="aspect-video w-full" />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (meId && stream.creator_user_id !== meId) {
+    return (
+      <div className="live-page">
+        <div className="live-page__inner">
+          <div className="live-panel">
+            <div className="live-panel__title">This isn&apos;t your stream.</div>
+            <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Watch it instead</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "pilot") {
+    return (
+      <div className="live-page">
+        <div className="live-form"><PilotNotice /></div>
+      </div>
+    )
+  }
+
+  const viewers = currentViewerCount(stream, null)
+  const onAir = !view.terminal && (phase === "publishing" || phase === "starting")
 
   return (
-    <div className="min-h-screen bg-brand-bg py-8 px-4">
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="mb-5 flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-            {isLive && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black tracking-widest text-rose-500">
-                <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />
-                Live
-              </span>
-            )}
-            <h1 className="text-xl font-bold text-brand-text">
-              {stream?.title || "Live stream"}
-            </h1>
+    <div className="live-page">
+      <div className="live-page__inner">
+        <header className="mb-4 flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <LiveStatusBadge view={shownView} />
+            <h1 className="live-page__title">{stream.title || "Live stream"}</h1>
           </div>
-          {stream?.description && (
-            <p className="text-sm text-brand-text/60">{stream.description}</p>
-          )}
-        </div>
+          {stream.description && <p className="live-page__meta">{stream.description}</p>}
+        </header>
 
-        <div className="relative overflow-hidden rounded-2xl bg-black aspect-video shadow-md">
-          <video
-            ref={videoElRef}
-            autoPlay
-            muted
-            playsInline
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          {phase === "starting" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="text-sm font-medium">Connecting to the broadcast server…</p>
-              </div>
-            </div>
-          )}
-          {phase === "error" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white p-6">
-              <div className="flex max-w-md flex-col items-center gap-3 text-center">
-                <AlertCircle className="h-8 w-8 text-rose-400" />
-                <p className="text-sm font-semibold">Couldn't start the broadcast.</p>
-                {errorMessage && (
-                  <p className="text-xs text-white/70">{errorMessage}</p>
-                )}
-                <button
-                  onClick={() => streamId && runStart(streamId)}
-                  className="mt-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-black"
-                >
-                  Try again
-                </button>
-              </div>
-            </div>
-          )}
-          {/* Live HUD */}
-          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-white">
-            <Users className="h-3.5 w-3.5" />
-            <span className="text-xs font-bold">{participantCount}</span>
-            <span className="text-[10px] tracking-widest text-white/70">in-room</span>
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-brand-divider bg-brand-card p-4">
-          <div className="text-xs text-brand-text/70">
-            Peak viewers (server-tracked): <span className="font-bold text-brand-text">{viewerCount}</span>
-          </div>
-          <button
-            onClick={handleEnd}
-            disabled={phase === "ending" || phase === "ended" || phase === "idle"}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-50"
-          >
-            {phase === "ending" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="live-layout">
+          <div className="flex flex-col gap-3">
+            {view.terminal ? (
+              <LiveStatusPanel
+                view={view}
+                action={
+                  // live-service-v2 lets a failed stream start again
+                  // (failed → starting); an ended one is over for good.
+                  view.kind === "failed" ? (
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {phase === "error" && errorMessage && (
+                        <p className="live-error w-full" role="alert">{errorMessage}</p>
+                      )}
+                      <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Go to the stream page</Link>
+                      <button
+                        type="button"
+                        className="live-btn live-btn--primary"
+                        disabled={startStream.isPending}
+                        onClick={() => runStart(streamId)}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  ) : (
+                    <Link href={`/live/${stream.id}`} className="live-btn live-btn--ghost">Go to the stream page</Link>
+                  )
+                }
+              />
             ) : (
-              <StopCircle className="h-4 w-4" />
+              <>
+                <ReconnectingNotice view={shownView} />
+                <div className="live-stage">
+                  <video ref={videoElRef} autoPlay muted playsInline className="live-stage__video" />
+                  <div className="live-stage__hud">
+                    <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>{viewerCountLabel(viewers)}</span>
+                  </div>
+                  {phase === "starting" && (
+                    <div className="live-stage__overlay">{view.body || "Starting your stream…"}</div>
+                  )}
+                  {phase === "publishing" && view.kind === "starting" && (
+                    <div className="live-stage__overlay">{view.body}</div>
+                  )}
+                  {phase === "error" && (
+                    <div className="live-stage__overlay flex-col gap-3">
+                      <span>{errorMessage}</span>
+                      <button
+                        type="button"
+                        className="live-btn live-btn--primary"
+                        onClick={() => runStart(streamId)}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+                  {phase === "stopped" && (
+                    <div className="live-stage__overlay">Ending your stream…</div>
+                  )}
+                </div>
+                <div className="live-section flex items-center justify-between gap-3">
+                  <span className="live-page__meta">
+                    {view.kind === "live" ? "You're live." : view.label}
+                  </span>
+                  <button
+                    type="button"
+                    className="live-btn live-btn--danger"
+                    onClick={() => setConfirmEnd(true)}
+                    disabled={!onAir || endStream.isPending}
+                  >
+                    <StopCircle className="h-4 w-4" aria-hidden="true" />
+                    {endStream.isPending ? "Ending…" : "End stream"}
+                  </button>
+                </div>
+              </>
             )}
-            {phase === "ending" ? "Ending…" : "End stream"}
-          </button>
-        </div>
-
-        {streamError && (
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500">
-            <Radio className="h-3 w-3" /> Couldn't refresh stream metadata.
-          </p>
-        )}
-
-        {/* Live chat overlay — visible during the actual broadcast.
-            Hidden during connect / error / ended states. */}
-        {isLive && streamId && (
-          <div className="mt-5">
-            <LiveChatOverlay streamId={streamId} className="h-[420px]" />
           </div>
-        )}
+          {view.showChat && (
+            <LiveChat streamId={stream.id} hostId={stream.creator_user_id} meId={meId} room={room} view={view} />
+          )}
+        </div>
       </div>
+      <ConfirmDialog
+        open={confirmEnd}
+        onClose={() => setConfirmEnd(false)}
+        onConfirm={handleEnd}
+        title="End your stream?"
+        description="Viewers will see that you ended the stream. This can't be undone."
+        confirmLabel="End stream"
+        loading={endStream.isPending}
+      />
     </div>
   )
-}
-
-function humanizeError(err: unknown): string {
-  if (!err) return "Unknown error"
-  if (err instanceof Error) return err.message
-  if (typeof err === "object" && err && "response" in err) {
-    const ax = err as { response?: { data?: { error?: { message?: string } } } }
-    return ax.response?.data?.error?.message ?? "Server error"
-  }
-  return String(err)
 }

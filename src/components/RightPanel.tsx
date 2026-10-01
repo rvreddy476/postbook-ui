@@ -13,6 +13,7 @@ import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
 import { useLiveStreams } from '@/hooks/useLiveV2';
+import { currentViewerCount, viewerCountLabel } from '@/features/live/status';
 import Avatar from '@/components/ui/Avatar';
 import { User } from '../types';
 
@@ -209,7 +210,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       {s.title || 'Live'}
                     </span>
                     <span className="block truncate text-[11px] text-muted-foreground tabular-nums">
-                      {s.viewer_peak > 0 ? `${s.viewer_peak} watching` : 'Just started'}
+                      {viewerCountLabel(currentViewerCount(s, null))}
                     </span>
                   </span>
                 </button>

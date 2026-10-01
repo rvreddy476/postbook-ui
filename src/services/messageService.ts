@@ -1,19 +1,7 @@
 import { ensureAccessToken } from '@/lib/accessToken';
 import { CommentChangeGate, PostRoomSubscriptions, groupTypingSignal, type CommentChange } from '@/lib/postThreadLive';
 import { User } from '@/types';
-import {
-  isLiveRealtimeEventType,
-  type LiveChatMessageEvent,
-  type LiveMessagePinnedEvent,
-  type LiveRealtimeEvent,
-  type LiveStreamEndedEvent,
-  type LiveStreamLikesEvent,
-  type LiveStreamViewersEvent,
-  type LiveUserMutedEvent,
-  type LiveUserUnmutedEvent,
-  type LiveWordFilterAddedEvent,
-  type LiveWordFilterRemovedEvent,
-} from '@/features/live/types';
+import { LiveRoomSubscriptions, parseLiveFrame, type LiveFrame } from '@/features/live/realtime';
 
 export interface Message {
   id: string;
@@ -154,106 +142,16 @@ const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
 const presenceListeners = new Set<(e: { user_id: string; online: boolean }) => void>();
-const liveEventListeners = new Set<(event: LiveRealtimeEvent) => void>();
+const liveEventListeners = new Set<(event: LiveFrame) => void>();
+// Live rooms are desired state like post rooms: re-sent on every open so the
+// gateway re-asks live-service-v2 after a reconnect (features/live/realtime).
+const liveRooms = new LiveRoomSubscriptions(frame => {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
+});
 
 // Track active room subscriptions so they can be re-sent on WS reconnect
 const activeRoomSubscriptions = new Set<string>();
 const pendingSignals: object[] = [];
-
-const normalizeLiveEvent = (data: Record<string, any>): LiveRealtimeEvent | null => {
-  if (!isLiveRealtimeEventType(data.type)) {
-    return null;
-  }
-
-  const payload =
-    data.payload && typeof data.payload === 'object'
-      ? data.payload as Record<string, any>
-      : {};
-  const streamId = String(payload.stream_id || data.stream_id || '');
-  if (!streamId) return null;
-
-  switch (data.type) {
-    case 'live_chat_message':
-      return {
-        type: 'live_chat_message',
-        stream_id: streamId,
-        message_id: String(payload.message_id || payload.id || ''),
-        user_id: String(payload.user_id || ''),
-        message: String(payload.message || ''),
-        is_pinned: Boolean(payload.is_pinned),
-        created_at: String(payload.created_at || new Date().toISOString()),
-      } satisfies LiveChatMessageEvent;
-    case 'live_stream_viewers':
-      return {
-        type: 'live_stream_viewers',
-        stream_id: streamId,
-        viewer_count: Number(payload.viewer_count ?? 0),
-        peak_viewers: payload.peak_viewers == null ? undefined : Number(payload.peak_viewers),
-        total_viewers: payload.total_viewers == null ? undefined : Number(payload.total_viewers),
-        reason: typeof payload.reason === 'string' ? payload.reason : undefined,
-        actor_id: typeof payload.actor_id === 'string' ? payload.actor_id : undefined,
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveStreamViewersEvent;
-    case 'live_stream_likes':
-      return {
-        type: 'live_stream_likes',
-        stream_id: streamId,
-        like_count: Number(payload.like_count ?? 0),
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveStreamLikesEvent;
-    case 'live_message_pinned':
-      return {
-        type: 'live_message_pinned',
-        stream_id: streamId,
-        message_id: String(payload.message_id || ''),
-        pinned_by: typeof payload.pinned_by === 'string' ? payload.pinned_by : undefined,
-        pinned_at: typeof payload.pinned_at === 'string' ? payload.pinned_at : undefined,
-      } satisfies LiveMessagePinnedEvent;
-    case 'live_stream_ended':
-      return {
-        type: 'live_stream_ended',
-        stream_id: streamId,
-        host_id: typeof payload.host_id === 'string' ? payload.host_id : undefined,
-        duration_secs: payload.duration_secs == null ? undefined : Number(payload.duration_secs),
-        peak_viewers: payload.peak_viewers == null ? undefined : Number(payload.peak_viewers),
-        total_viewers: payload.total_viewers == null ? undefined : Number(payload.total_viewers),
-        ended_at: typeof payload.ended_at === 'string' ? payload.ended_at : undefined,
-      } satisfies LiveStreamEndedEvent;
-    case 'live_user_muted':
-      return {
-        type: 'live_user_muted',
-        stream_id: streamId,
-        user_id: String(payload.user_id || ''),
-        muted_by: typeof payload.muted_by === 'string' ? payload.muted_by : undefined,
-        muted_at: typeof payload.muted_at === 'string' ? payload.muted_at : undefined,
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveUserMutedEvent;
-    case 'live_user_unmuted':
-      return {
-        type: 'live_user_unmuted',
-        stream_id: streamId,
-        user_id: String(payload.user_id || ''),
-        unmuted_by: typeof payload.unmuted_by === 'string' ? payload.unmuted_by : undefined,
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveUserUnmutedEvent;
-    case 'live_word_filter_added':
-      return {
-        type: 'live_word_filter_added',
-        stream_id: streamId,
-        word: String(payload.word || ''),
-        added_by: typeof payload.added_by === 'string' ? payload.added_by : undefined,
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveWordFilterAddedEvent;
-    case 'live_word_filter_removed':
-      return {
-        type: 'live_word_filter_removed',
-        stream_id: streamId,
-        word: String(payload.word || ''),
-        removed_by: typeof payload.removed_by === 'string' ? payload.removed_by : undefined,
-        updated_at: typeof payload.updated_at === 'string' ? payload.updated_at : undefined,
-      } satisfies LiveWordFilterRemovedEvent;
-  }
-};
 
 export interface CallSignal {
   type: 'call_offer' | 'call_answer' | 'ice_candidate' | 'call_end' | 'call_decline' | 'call_busy'
@@ -364,6 +262,7 @@ const closeChatSocket = (reason?: string) => {
 
   wsRetryCount = 0;
   postRooms.onClose();
+  liveRooms.onClose();
   commentChangeGate.clear();
 
   if (socket) {
@@ -587,7 +486,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         const evt = { user_id: data.user_id as string, online: data.online as boolean };
         presenceListeners.forEach(cb => cb(evt));
       } else {
-        const liveEvent = normalizeLiveEvent(data as Record<string, any>);
+        const liveEvent = parseLiveFrame(data);
         if (liveEvent) {
           liveEventListeners.forEach(cb => cb(liveEvent));
         }
@@ -597,6 +496,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
     socket.onopen = () => {
       wsRetryCount = 0; // reset on successful connection
       postRooms.onOpen();
+      liveRooms.onOpen();
       hubConnectedListeners.forEach(cb => cb());
       // Flush any signals that were queued while socket was connecting
       while (pendingSignals.length > 0) {
@@ -615,6 +515,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
 
     socket.onclose = () => {
       postRooms.onClose();
+      liveRooms.onClose();
       socket = null;
 
       if (!getSessionUser()) {
@@ -992,19 +893,20 @@ export const subscribeToCommentUpdates = (cb: (u: ChannelCommentUpdate) => void)
   return () => { commentUpdateListeners.delete(cb); };
 };
 
+// Live stream room — owner-checked by the gateway against live-service-v2;
+// a refusal arrives as a LiveFrame of kind "refused".
 export const subscribeToLiveStream = (streamId: string) => {
-  const msg = { type: 'subscribe_live_stream', stream_id: streamId };
-  activeRoomSubscriptions.add(JSON.stringify(msg));
-  sendSignaling(msg);
+  liveRooms.subscribe(streamId);
 };
 
 export const unsubscribeFromLiveStream = (streamId: string) => {
-  const subMsg = JSON.stringify({ type: 'subscribe_live_stream', stream_id: streamId });
-  activeRoomSubscriptions.delete(subMsg);
-  sendSignaling({ type: 'unsubscribe_live_stream', stream_id: streamId });
+  liveRooms.unsubscribe(streamId);
 };
 
-export const subscribeToLiveEvents = (cb: (event: LiveRealtimeEvent) => void) => {
+/** Whether the realtime socket is open right now (frames can arrive). */
+export const isHubOpen = () => liveRooms.isConnected();
+
+export const subscribeToLiveEvents = (cb: (event: LiveFrame) => void) => {
   liveEventListeners.add(cb);
   return () => { liveEventListeners.delete(cb); };
 };
