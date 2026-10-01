@@ -7,7 +7,7 @@ import { SHOP_BASE, type ProductCard as ProductCardData } from "../../model/stor
 import { FavouriteButton } from "../favourites/FavouriteButton"
 import { ProductPhoto } from "./ProductPhoto"
 
-/** One card: photo, seller, title, rating, price. The price is the only bold thing. */
+/** One card shared by discovery, catalogue and favourites. */
 export function ProductCard({ product }: { product: ProductCardData }) {
   const lowStock = product.inStock && product.stock !== null && product.stock > 0 && product.stock <= 5
   const badge = !product.inStock
@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   return (
     <article className="shop-card">
       <Link href={`${SHOP_BASE}/products/${encodeURIComponent(product.id)}`} className="shop-card__link">
-        <ProductPhoto src={product.image} alt={product.title} badge={badge} />
+        <ProductPhoto src={product.image} alt={product.title} badge={badge} contain />
         <div className="shop-card__body">
           {product.seller ? <span className="shop-card__seller">{product.seller}</span> : null}
           <h3 className="shop-card__title">{product.title}</h3>
@@ -42,7 +42,6 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <div className="shop-card__price">
             <span className="shop-card__amount">{product.price}</span>
             {product.was ? <s className="shop-card__was">{product.was}</s> : null}
-            {product.discountPct && product.was ? <span className="shop-card__off">{product.discountPct}% off</span> : null}
           </div>
           {!product.inStock ? (
             <span className="shop-card__stock shop-card__stock--out">Out of stock</span>

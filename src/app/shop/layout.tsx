@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { ShopHeader } from "@/features/shop/components/ShopHeader"
+import { ShopFrame } from "@/features/shop/components/ShopFrame"
 import "@/features/shop/shop.css"
 
 /*
@@ -19,10 +19,9 @@ export const metadata: Metadata = {
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="shop-zone">
+    <ShopFrame>
       <style>{`body > div:first-child > .pointer-events-none.fixed { display: none !important; }`}</style>
-      <ShopHeader />
-      <main className="shop-main">{children}</main>
-    </div>
+      {children}
+    </ShopFrame>
   )
 }

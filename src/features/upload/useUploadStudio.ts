@@ -27,6 +27,7 @@ import { getPublishDefaults } from "@/features/posttube/hub";
 import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
+import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
 import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
 import { soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
@@ -36,8 +37,6 @@ import { useSoundInfo } from "@/features/reels/hooks/useSounds";
 
 const MAX_CAPTION = 2200;
 const MAX_HASHTAGS = 30;
-const ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const MAX_FILE_SIZE_DEFAULT = 500 * 1024 * 1024;
 
 /* ── Helpers ───────────────────────────────────────────── */
 
@@ -170,88 +169,77 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
 
   /* ── File selection ──────────────────────────────── */
 
-  const selectFile = useCallback(
-    (file: File) => {
-      if (!ACCEPTED_TYPES.includes(file.type) && !file.type.startsWith("audio/")) {
-        patch({ uploadError: "Unsupported format. Use MP4, WebM, or MOV." });
-        return;
-      }
-      if (file.size > MAX_FILE_SIZE_DEFAULT) {
-        patch({ uploadError: `File too large. Maximum ${MAX_FILE_SIZE_DEFAULT / (1024 * 1024)} MB.` });
-        return;
-      }
+  const [checkingFile, setCheckingFile] = useState(false);
+  const pendingFileCheck = useRef<(() => void) | null>(null);
+  useEffect(() => () => pendingFileCheck.current?.(), []);
 
+  const selectFile = useCallback((file: File) => {
+    pendingFileCheck.current?.();
+    pendingFileCheck.current = null;
+    setCheckingFile(false);
+    const fileError = validateSelectedFile(file, contentType);
+    if (fileError) { patch({ uploadError: fileError }); return; }
+    setCheckingFile(true);
+    patch({ uploadError: null });
+
+    const previewUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    let cancelled = false;
+    const cleanup = (revoke: boolean) => {
+      cancelled = true;
+      clearTimeout(timeout);
+      video.onloadedmetadata = null;
+      video.onerror = null;
+      video.removeAttribute("src");
+      video.load();
+      if (revoke) URL.revokeObjectURL(previewUrl);
+      pendingFileCheck.current = null;
+    };
+    const fail = (message: string) => {
+      if (cancelled) return;
+      cleanup(true);
+      setCheckingFile(false);
+      patch({ uploadError: message });
+    };
+    const timeout = setTimeout(() => fail("This file is taking too long to read. Choose it again or try another file."), 20000);
+    pendingFileCheck.current = () => cleanup(true);
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      if (cancelled) return;
+      const duration = video.duration;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      const durationError = validateMediaDuration(duration, contentType);
+      if (durationError) { fail(durationError); return; }
+      const computedCategory = classifyVideo(Math.round(duration), width || null, height || null);
+      cleanup(false);
       subtitleUploadKeyRef.current = null;
       uploadTriggeredRef.current = null;
-
-      setForm((prev) => {
-        if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
-        return freshStudioForm(contentType, prev.currentStep, getPublishDefaults(), prev);
+      setForm((previous) => {
+        if (previous.videoPreviewUrl) URL.revokeObjectURL(previous.videoPreviewUrl);
+        if (previous.customCoverPreviewUrl) URL.revokeObjectURL(previous.customCoverPreviewUrl);
+        return {
+          ...freshStudioForm(contentType, previous.currentStep, getPublishDefaults(), previous),
+          videoFile: file, videoPreviewUrl: previewUrl, videoDurationSec: Math.round(duration),
+          videoWidth: width || null, videoHeight: height || null,
+          coverTimestampMs: Math.round(duration * 500),
+          computedVideoCategory: computedCategory, finalVideoCategory: computedCategory,
+        };
       });
-
-      const previewUrl = URL.createObjectURL(file);
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.src = previewUrl;
-      video.onloadedmetadata = () => {
-        const dur = video.duration;
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        video.removeAttribute("src");
-        video.load();
-
-        // Enforce max duration (12 hours for long, 3 min for flicks)
-        const meta = CONTENT_TYPE_META[contentType];
-        const maxDur = meta.maxDuration;
-
-        if (Math.round(dur) > maxDur) {
-          URL.revokeObjectURL(previewUrl);
-          const maxMin = Math.floor(maxDur / 60);
-          const isFlick = contentType === "reel" || contentType === "short";
-          patch({
-            uploadError: isFlick
-              ? `Reels must be ${maxMin} minutes or less. This video is ${Math.ceil(dur / 60)} minutes. Upload it as a Video instead.`
-              : `Maximum duration is ${maxMin} minutes for ${meta.label}.`,
-          });
-          return;
-        }
-
-        const computedCategory = classifyVideo(Math.round(dur), vw || null, vh || null);
-
-        patch({
-          videoFile: file,
-          videoPreviewUrl: previewUrl,
-          videoDurationSec: Math.round(dur),
-          videoWidth: vw || null,
-          videoHeight: vh || null,
-          uploadError: null,
-          coverTimestampMs: Math.round((dur / 2) * 1000),
-          trimStartMs: 0,
-          trimEndMs: null,
-          computedVideoCategory: computedCategory,
-          finalVideoCategory: computedCategory,
-          subtitleTracks: [],
-          subtitleUploadState: "idle",
-          subtitleUploadError: null,
-          processingReady: false,
-          processingStatus: "idle",
-          processingError: null,
-          publishWarning: null,
-        });
-      };
-      video.onerror = () => {
-        URL.revokeObjectURL(previewUrl);
-        patch({ uploadError: "Could not read video file." });
-      };
-    },
-    [contentType, patch],
-  );
+      setCheckingFile(false);
+    };
+    video.onerror = () => fail("This file couldn't be played. Try another video, or export it again as MP4.");
+    video.src = previewUrl;
+  }, [contentType, patch]);
 
   const clearFile = useCallback(() => {
+    pendingFileCheck.current?.();
+    setCheckingFile(false);
     subtitleUploadKeyRef.current = null;
     uploadTriggeredRef.current = null;
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
+      if (prev.customCoverPreviewUrl) URL.revokeObjectURL(prev.customCoverPreviewUrl);
       return freshStudioForm(contentType, "video", getPublishDefaults(), prev);
     });
   }, [contentType]);
@@ -513,8 +501,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     const hashtags = mergeHashtags(form.hashtags, form.caption);
     patch({ hashtags });
     const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
-    try {
-      await updateDraft(draftId, {
+    await updateDraft(draftId, {
         title: form.title || undefined,
         caption: form.caption,
         hashtags,
@@ -547,7 +534,6 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         recording_location: form.recordingLocation || undefined,
         schedule_at: form.scheduleAt ?? undefined,
       });
-    } catch { /* silently continue */ }
   }, [form, patch]);
 
   const saveDraftMutation = useMutation({
@@ -571,6 +557,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       }
       await saveDraftWithCover(undefined, draftId);
     },
+    onError: () => patch({ uploadPhase: "idle" }),
   });
 
   /* ── Publish ─────────────────────────────────────── */
@@ -720,7 +707,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   const goToStep = useCallback(
     (step: StepId) => {
       if (form.currentStep === "details" && form.draftId) {
-        void saveDraftMutation.mutateAsync();
+        void saveDraftMutation.mutateAsync().catch(() => { /* shown in the draft error state */ });
       }
       patch({ currentStep: step });
     },
@@ -757,6 +744,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     steps,
     currentStepIndex,
     selectFile,
+    checkingFile,
     clearFile,
     sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
     removeSound,

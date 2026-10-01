@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, CheckCircle2, Copy, ExternalLink, AlertTriangle, Check, LayoutPanelTop } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Copy, ExternalLink, AlertTriangle, Check, LayoutPanelTop, ArrowLeft, Save, CloudUpload } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGlobalToast } from "@/contexts/ToastContext";
@@ -17,7 +17,9 @@ import { AudienceStep } from "./steps/AudienceStep";
 import { EngageStep } from "./steps/EngageStep";
 import { EnrichStep } from "./steps/EnrichStep";
 import { PublishStep } from "./steps/PublishStep";
-import { getStepErrors, isStepComplete, canPublish, getAllErrors } from "./validation";
+import { getStepErrors, canPublish, getAllErrors } from "./validation";
+
+import "./upload.css";
 
 export type { ContentType };
 
@@ -50,7 +52,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
       customContent: (
         <div className="px-4 py-3 pr-10" data-toast="upload-follow-up">
           <p className="text-[13px] font-semibold text-brand-text">{notice.title}</p>
-          <p className="mt-0.5 text-[12px] text-brand-text/70">{notice.description}</p>
+          <p className="mt-0.5 text-[12px] text-muted">{notice.description}</p>
           <Link href={hubEditHref(postId, notice.sheet)} className="mt-1.5 inline-block text-[12px] font-semibold text-brand-text underline underline-offset-2">
             Open in Creator Hub
           </Link>
@@ -60,13 +62,27 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   }, [form.publishSuccess, form.publishedPostId, form.followUpFailures, toast]);
 
   const checksPass = canPublish(form, steps);
-  const draftSaved = studio.saveDraftMutation.isSuccess && !studio.saveDraftMutation.isPending;
+  const busy = studio.publishMutation.isPending || studio.saveDraftMutation.isPending;
+  const navigationLocked = busy || studio.checkingFile;
+  const validationRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previousStep = useRef(form.currentStep);
+  useEffect(() => {
+    if (previousStep.current === form.currentStep) return;
+    previousStep.current = form.currentStep;
+    headingRef.current?.focus({ preventScroll: true });
+    headingRef.current?.scrollIntoView({ block: "start" });
+  }, [form.currentStep]);
+  const focusErrors = () => requestAnimationFrame(() => validationRef.current?.focus());
+  const saveError = studio.saveDraftMutation.error instanceof Error ? studio.saveDraftMutation.error.message : null;
   const currentStepErrors = getStepErrors(form.currentStep, form);
   const allErrors = getAllErrors(form, steps);
 
   const handleNext = () => {
+    if (navigationLocked) return;
     setAttemptedNext(true);
     if (currentStepErrors.length > 0) {
+      focusErrors();
       return; // Block navigation — errors shown inline
     }
     setAttemptedNext(false);
@@ -77,9 +93,11 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
     // Re-entry guard: ignore clicks while a publish is in flight or already done.
     // Without this, the (now longer) upload-on-publish window let users fire
     // multiple publishes / create duplicate posts.
-    if (studio.publishMutation.isPending || form.publishSuccess) return;
+    if (navigationLocked || form.publishSuccess) return;
     if (!checksPass) {
       setShowValidationErrors(true);
+      setAttemptedNext(true);
+      focusErrors();
       return;
     }
     setShowValidationErrors(false);
@@ -97,12 +115,14 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
     : "";
 
   const renderStep = () => {
-    const props = { form, patch, showErrors: attemptedNext };
+    const props = { form, patch, showErrors: attemptedNext || showValidationErrors };
     switch (form.currentStep) {
       case "video":
         return (
           <VideoStep
             {...props}
+            checking={studio.checkingFile}
+            disabled={busy}
             onFileSelected={studio.selectFile}
             clearFile={studio.clearFile}
             contentType={contentType}
@@ -154,34 +174,34 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="mx-auto max-w-[480px] text-center px-6"
           >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-emerald-500/20 to-emerald-500/5 ring-8 ring-emerald-500/5">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-success/20 to-success/5 ring-8 ring-success/5">
+              <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
             <h2 className="mt-6 text-[22px] font-bold text-brand-text">
               {config.label} published!
             </h2>
-            <p className="mt-2 text-[14px] text-brand-text/60 leading-relaxed max-w-sm mx-auto">
+            <p className="mt-2 text-[14px] text-muted leading-relaxed max-w-sm mx-auto">
               Your video is being processed and will be available to viewers shortly.
               This usually takes a few minutes.
             </p>
             {form.publishedEpisodeNum !== null && form.seriesChoice.kind !== "none" && (
-              <p className="mt-2 text-[13px] text-brand-text/70" data-series-result>
+              <p className="mt-2 text-[13px] text-muted" data-series-result>
                 Added to {form.seriesChoice.title.trim() || "your series"} as episode {form.publishedEpisodeNum}.
               </p>
             )}
             {form.publishWarning && (
-              <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-[12px] text-amber-600 dark:text-amber-400">
+              <p className="mt-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 text-[12px] text-warning dark:text-warning">
                 {form.publishWarning}
               </p>
             )}
 
             {postUrl && (
               <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-xs">
-                <span className="flex-1 truncate text-left text-[13px] text-brand-text/60 font-mono">{postUrl}</span>
+                <span className="flex-1 truncate text-left text-[13px] text-muted font-mono">{postUrl}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(postUrl)}
-                  className="shrink-0 rounded-lg p-1.5 text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text/60 transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-brand-secondary hover:text-muted transition-colors"
                   title="Copy link"
                 >
                   <Copy className="h-4 w-4" />
@@ -195,10 +215,10 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
                 className="mt-4 flex items-center gap-3 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 text-left shadow-xs transition-colors hover:bg-brand-secondary"
                 data-link="hub-elements"
               >
-                <LayoutPanelTop className="h-4 w-4 shrink-0 text-brand-text/60" />
+                <LayoutPanelTop className="h-4 w-4 shrink-0 text-muted" />
                 <span className="min-w-0">
                   <span className="block text-[13px] font-semibold text-brand-text">Add an end screen and cards</span>
-                  <span className="block text-[11px] text-brand-text/60">In Creator Hub, next to chapters</span>
+                  <span className="block text-[11px] text-muted">In Creator Hub, next to chapters</span>
                 </span>
               </Link>
             )}
@@ -206,7 +226,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-xs"
+                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-muted hover:bg-brand-secondary transition-colors shadow-xs"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Go to {isLongVideo ? "Posttube" : "Reels"}
@@ -214,7 +234,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               <button
                 type="button"
                 onClick={studio.clearFile}
-                className="rounded-xl bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-primary-ink transition-colors shadow-xs"
+                className="rounded-xl bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-on-primary hover:bg-primary-ink transition-colors shadow-xs"
               >
                 Upload Another
               </button>
@@ -226,173 +246,67 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   }
 
 
-  return (
-    <AppShell sectionLabel="Upload">
-      <div className="flex h-full flex-col bg-brand-secondary">
-        <StudioToolbar
-          contentType={contentType}
-          steps={steps}
-          currentStep={form.currentStep}
-          currentStepIndex={currentStepIndex}
-          onStepClick={(step) => {
-            setAttemptedNext(false);
-            goToStep(step);
-          }}
-          form={form}
-          showPublish={isLastStep}
-          onPublish={handlePublish}
-          isPublishing={studio.publishMutation.isPending}
-          checksPass={checksPass}
-          onSaveDraft={() => studio.saveDraftMutation.mutate()}
-          isSaving={studio.saveDraftMutation.isPending}
-          hasDraft={!!form.draftId}
-          draftSaved={draftSaved}
-        />
+  const stepIntro = {
+    video: ["Select a video", "Start with a file from your device. You'll review everything before publishing."],
+    details: ["Give your video some context", "A title is required. A description, cover and tags are optional."],
+    audience: ["Choose your audience", "Review who this content is for and any disclosures that apply."],
+    engage: ["Set up the conversation", "Choose how viewers can comment, react and remix."],
+    enrich: ["Add the finishing touches", "Optional captions, chapters and metadata help viewers explore your video."],
+    publish: ["Review and publish", "Choose a topic, check visibility and decide when your video goes live."],
+  }[form.currentStep];
+  const validationGroups = showValidationErrors && isLastStep ? allErrors : attemptedNext && currentStepErrors.length ? [{ step: form.currentStep, errors: currentStepErrors }] : [];
 
-        <div className="flex flex-1 min-h-0">
-          {/* Form panel */}
-          <div className="flex-1 min-w-0 overflow-y-auto">
-            <div className="mx-auto max-w-[640px] px-4 py-6 sm:px-8 sm:py-8">
-              {/* Step content */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={form.currentStep}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {renderStep()}
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Validation errors (shown when trying to proceed with errors) */}
-              {attemptedNext && currentStepErrors.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-rose-500" />
-                    <p className="text-[13px] font-semibold text-rose-500">Please fix the following:</p>
-                  </div>
-                  <ul className="space-y-1">
-                    {currentStepErrors.map((err) => (
-                      <li key={err.field} className="text-[12px] text-rose-500 pl-6 font-semibold">
-                        {err.message}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
-
-              {/* Publish validation summary */}
-              {isLastStep && showValidationErrors && allErrors.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="h-4 w-4 text-rose-500" />
-                    <p className="text-[13px] font-semibold text-rose-500">Cannot publish yet</p>
-                  </div>
-                  {allErrors.map(({ step, errors }) => (
-                    <div key={step} className="mb-2 last:mb-0">
-                      <p className="text-[11px] font-bold text-rose-500/70 tracking-wide mb-1">
-                        {STEP_META[step].label}
-                      </p>
-                      <ul className="space-y-0.5">
-                        {errors.map((err) => (
-                          <li key={err.field} className="text-[12px] text-rose-500 pl-3 flex items-start gap-1.5 font-semibold">
-                            <span className="mt-1.5 h-1 w-1 rounded-full bg-rose-500 shrink-0" />
-                            {err.message}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-
-              {/* Publish readiness checklist (on last step, when all good) */}
-              {isLastStep && checksPass && !showValidationErrors && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <p className="text-[13px] font-semibold text-emerald-500">Ready to publish</p>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {steps.map((step) => (
-                      <li key={step} className="flex items-center gap-2 text-[12px] text-brand-text/60 font-semibold">
-                        <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
-                        {STEP_META[step].label}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
-
-              {/* Navigation */}
-              <div className="mt-8 flex items-center justify-between pb-4">
-                {!isFirstStep ? (
-                  <button
-                    type="button"
-                    onClick={() => { setAttemptedNext(false); prevStep(); }}
-                    className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-brand-text/60 hover:bg-brand-secondary transition-colors shadow-xs"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Back
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                {!isLastStep && (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className={`flex items-center gap-1.5 rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-all shadow-xs ${
-                      currentStepErrors.length > 0 && attemptedNext
-                        ? "bg-rose-600 hover:bg-rose-700 text-white"
-                        : "bg-brand-text text-brand-bg hover:opacity-90"
-                    }`}
-                  >
-                    Continue
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                )}
-
-                {isLastStep && (
-                  <button
-                    type="button"
-                    onClick={handlePublish}
-                    disabled={studio.publishMutation.isPending}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary-ink px-6 py-2.5 text-[13px] font-bold text-white hover:bg-primary-hover disabled:opacity-50 transition-all shadow-xs shadow-brand-text/20"
-                  >
-                    {studio.publishMutation.isPending ? (
-                      <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-bg/30 border-t-brand-bg" />
-                        Publishing...
-                      </>
-                    ) : (
-                      "Publish Now"
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Preview panel */}
-          <PreviewPanel form={form} patch={patch} contentType={contentType} steps={steps} />
+  return <AppShell sectionLabel="Upload">
+    <div className="upload-studio">
+      <header className="upload-page-head">
+        <div>
+          <Link href={contentType === "reel" || contentType === "short" ? "/reels" : "/posttube/hub"} className="upload-back"><ArrowLeft aria-hidden="true" />{contentType === "reel" || contentType === "short" ? "Reels" : "Creator Hub"}</Link>
+          <h1>{contentType === "podcast" ? "Upload a podcast" : contentType === "reel" || contentType === "short" ? "Create a reel" : "Upload a video"}</h1>
+          <p>Add details, choose your audience and publish.</p>
         </div>
+        <span className="upload-session-status"><CloudUpload aria-hidden="true" />{form.draftId ? "Draft created" : "Not published"}</span>
+      </header>
+      <StudioToolbar steps={steps} currentStep={form.currentStep} currentStepIndex={currentStepIndex} form={form} disabled={navigationLocked}
+        onStepClick={(step) => { setAttemptedNext(false); setShowValidationErrors(false); goToStep(step); }} />
+      <div className="upload-workspace">
+        <section className="upload-form-card" aria-labelledby="upload-step-title">
+          <div className="upload-step-heading">
+            <div><span className="upload-eyebrow">Step {currentStepIndex + 1} of {steps.length}</span>
+              <h2 id="upload-step-title" ref={headingRef} tabIndex={-1}>{stepIntro[0]}</h2>
+              <p>{stepIntro[1]}</p></div>
+            <span className="upload-required-note">* Required</span>
+          </div>
+          {validationGroups.length ? <div ref={validationRef} tabIndex={-1} className="upload-validation" role="alert" aria-labelledby="upload-validation-title">
+            <strong id="upload-validation-title"><AlertTriangle aria-hidden="true" />{isLastStep ? "A few things need attention before publishing" : "Let's finish this step"}</strong>
+            <ul>{validationGroups.flatMap(({ step, errors }) => errors.map((error) => <li key={step + error.field}>
+              <button type="button" onClick={() => {
+                if (step !== form.currentStep) { goToStep(step); setAttemptedNext(true); }
+                else { (document.getElementById("upload-" + error.field) ?? headingRef.current)?.focus(); }
+              }}>{error.message}{step !== form.currentStep ? <span> — {STEP_META[step].label}</span> : null}</button>
+            </li>))}</ul>
+          </div> : null}
+          <fieldset className="upload-step-fields" disabled={navigationLocked} aria-busy={navigationLocked || undefined}>{renderStep()}</fieldset>
+          {busy ? <div className="upload-transfer-status" role="status">
+            <CloudUpload aria-hidden="true" /><div><strong>{studio.saveDraftMutation.isPending ? "Saving your draft…" : form.uploadPhase === "uploading" ? "Uploading your video…" : "Finishing publication…"}</strong>
+            <span>Keep this page open. Your progress will appear here.</span>
+            {form.uploadPhase === "uploading" ? <progress max={100} value={form.uploadProgress} aria-label="Video upload progress" /> : null}
+            </div>{form.uploadPhase === "uploading" ? <b>{form.uploadProgress}%</b> : null}
+          </div> : null}
+          {saveError ? <p className="upload-field-error" role="alert"><AlertTriangle aria-hidden="true" />Your draft couldn't be saved. {saveError} Your form is still here; try saving again.</p> : null}
+          {studio.saveDraftMutation.isSuccess && !busy ? <p className="upload-save-note" role="status"><Check aria-hidden="true" />Draft saved. Save again after making changes.</p> : null}
+          <footer className="upload-form-footer">
+            <div className="upload-footer-secondary">
+              {!isFirstStep ? <button type="button" className="upload-button" disabled={navigationLocked} onClick={() => { setAttemptedNext(false); setShowValidationErrors(false); prevStep(); }}><ChevronLeft aria-hidden="true" />Back</button> : !form.videoFile ? <span className="upload-muted">Choose a file to continue</span> : null}
+              {form.videoFile ? <button type="button" className="upload-button upload-save" disabled={navigationLocked} onClick={() => studio.saveDraftMutation.mutate()}><Save aria-hidden="true" />Save draft</button> : null}
+            </div>
+            <button type="button" className="upload-button upload-button-primary" disabled={navigationLocked}
+              onClick={isLastStep ? handlePublish : handleNext}>
+              {busy ? "Please wait…" : isLastStep ? form.scheduleAt !== null ? "Schedule video" : "Publish video" : "Continue"}{!isLastStep ? <ChevronRight aria-hidden="true" /> : null}
+            </button>
+          </footer>
+        </section>
+        <PreviewPanel form={form} patch={patch} contentType={contentType} steps={steps} />
       </div>
-    </AppShell>
-  );
+    </div>
+  </AppShell>;
 }

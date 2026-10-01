@@ -125,7 +125,8 @@ describe("the chosen sound survives a new file", () => {
 
   test("selecting a file and clearing it both pass the form being replaced", () => {
     const hook = readFileSync(resolve(import.meta.dir, "../useUploadStudio.ts"), "utf8");
-    expect(hook).toContain("return freshStudioForm(contentType, prev.currentStep, getPublishDefaults(), prev);");
+    // Selection now resets the form only after the replacement file passes metadata checks.
+    expect(hook).toContain("...freshStudioForm(contentType, previous.currentStep, getPublishDefaults(), previous),");
     expect(hook).toContain('return freshStudioForm(contentType, "video", getPublishDefaults(), prev);');
     expect(hook).not.toContain("getPublishDefaults());");
   });

@@ -21,6 +21,13 @@ import "./video-shell.css";
 
 export type { VideoApp, VideoChrome };
 
+export interface VideoNavigationProps {
+  expanded: boolean;
+  drawer?: boolean;
+  id: string;
+  onNavigate?: () => void;
+}
+
 export interface VideoShellProps {
   app: VideoApp;
   /**
@@ -36,6 +43,8 @@ export interface VideoShellProps {
   immersive?: boolean;
   /** Sidebar chrome only: collapse the corner search to its icon (the reels page sets it while comments are open). */
   compactSearch?: boolean;
+  /** A workspace can replace the app menu without adding a second sidebar. */
+  navigation?: (props: VideoNavigationProps) => ReactNode;
   children: ReactNode;
 }
 
@@ -51,7 +60,7 @@ const SIDEBAR_ID = "video-shell-sidebar";
   the client from localStorage and the viewport — a deterministic first
   render, then a preference, rather than a hydration mismatch.
 */
-export function VideoShell({ app, chrome = "header", aside, immersive = false, compactSearch = false, children }: VideoShellProps) {
+export function VideoShell({ app, chrome = "header", aside, immersive = false, compactSearch = false, navigation, children }: VideoShellProps) {
   const [sidebar, dispatch] = useReducer(sidebarReducer, SIDEBAR_INITIAL);
   const [panel, dispatchPanel] = useReducer(sidebarPanelReducer, SIDEBAR_PANEL_INITIAL);
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -153,14 +162,14 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
                     exit={{ x: reduceMotion ? 0 : -24, opacity: 0 }}
                     transition={{ duration: reduceMotion ? 0 : 0.2, ease: "circOut" }}
                   >
-                    <VideoSidebar app={app} chrome={chrome} expanded drawer id={SIDEBAR_ID} onNavigate={closeDrawer} />
+                    {navigation ? navigation({ expanded: true, drawer: true, id: SIDEBAR_ID, onNavigate: closeDrawer }) : <VideoSidebar app={app} chrome={chrome} expanded drawer id={SIDEBAR_ID} onNavigate={closeDrawer} />}
                   </motion.div>
                 </>
               ) : null}
             </AnimatePresence>
           ) : (
             <div className="video-shell__sidebar">
-              <VideoSidebar app={app} chrome={chrome} expanded={sidebar.open} id={SIDEBAR_ID} />
+              {navigation ? navigation({ expanded: sidebar.open, id: SIDEBAR_ID }) : <VideoSidebar app={app} chrome={chrome} expanded={sidebar.open} id={SIDEBAR_ID} />}
             </div>
           )}
 

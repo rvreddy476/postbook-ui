@@ -48,8 +48,8 @@ export function getSeriesErrors(form: StudioFormState): FieldError[] {
 
 function getVideoErrors(form: StudioFormState): FieldError[] {
   const errors: FieldError[] = [];
-  if (!form.videoFile) {
-    errors.push({ field: "videoFile", message: "Please select a video file to upload" });
+  if (!form.videoFile && !form.mediaId) {
+    errors.push({ field: "videoFile", message: "Choose a video file before continuing to Details." });
   }
   if (form.uploadPhase === "error") {
     errors.push({ field: "upload", message: form.uploadError || "Upload failed" });
@@ -60,7 +60,7 @@ function getVideoErrors(form: StudioFormState): FieldError[] {
 function getDetailsErrors(form: StudioFormState): FieldError[] {
   const errors: FieldError[] = [];
   if (!form.title.trim()) {
-    errors.push({ field: "title", message: "Title is required" });
+    errors.push({ field: "title", message: "Add a title so viewers know what your video is about." });
   } else if (form.title.length > 100) {
     errors.push({ field: "title", message: "Title must be 100 characters or less" });
   }
@@ -78,16 +78,16 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
   if (!form.videoFile && !form.mediaId) {
     errors.push({ field: "videoFile", message: "Please select a video to publish" });
   }
-  if (!form.category) {
-    errors.push({ field: "category", message: "Please select a topic" });
+  if (!form.category.trim()) {
+    errors.push({ field: "category", message: "Choose a topic to help viewers find your video." });
   }
   // NOTE: the video is uploaded and transcoded on Publish (not on selection),
   // so we no longer block publishing on processing being "ready". The post
   // becomes visible to viewers once server-side processing finishes.
-  if (form.scheduleAt) {
+  if (form.scheduleAt !== null) {
     const scheduleDate = new Date(form.scheduleAt);
-    if (scheduleDate <= new Date()) {
-      errors.push({ field: "scheduleAt", message: "Schedule date must be in the future" });
+    if (!Number.isFinite(scheduleDate.getTime()) || scheduleDate <= new Date()) {
+      errors.push({ field: "scheduleAt", message: "Choose a valid date and time in the future, or turn scheduling off." });
     }
   }
   errors.push(...getSeriesErrors(form));

@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Upload, FileVideo, X, CheckCircle2, AlertCircle, Film, Clock, HardDrive } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import type { StudioFormState } from "../types";
-import { CONTENT_TYPE_META, type ContentType } from "../tokens";
+import { type ContentType } from "../tokens";
+import { uploadLimits } from "../fileRules";
 
 interface VideoStepProps {
   form: StudioFormState;
@@ -13,303 +13,53 @@ interface VideoStepProps {
   clearFile: () => void;
   contentType: ContentType;
   showErrors?: boolean;
+  checking?: boolean;
+  disabled?: boolean;
 }
 
-function fmtDuration(sec: number) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function fmtSize(bytes: number) {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / 1024).toFixed(0)} KB`;
-}
-
-/* ── Circular progress ring ── */
-function CircleProgress({ progress, size = 120, stroke = 5 }: { progress: number; size?: number; stroke?: number }) {
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (progress / 100) * circ;
-  return (
-    <svg width={size} height={size} className="-rotate-90">
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="rgba(255,255,255,0.15)" strokeWidth={stroke}
-      />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="white" strokeWidth={stroke} strokeLinecap="round"
-        strokeDasharray={circ} strokeDashoffset={offset}
-        className="transition-[stroke-dashoffset] duration-500 ease-out"
-      />
-    </svg>
-  );
-}
-
-/* ── Full overlay for upload states ── */
-function UploadOverlay({ phase, progress, error }: { phase: string; progress: number; error: string | null }) {
-  const [showDone, setShowDone] = useState(false);
-
-  useEffect(() => {
-    if (phase === "done") {
-      setShowDone(true);
-      const t = setTimeout(() => setShowDone(false), 2500);
-      return () => clearTimeout(t);
-    }
-    setShowDone(false);
-  }, [phase]);
-
-  const isActive = phase === "uploading" || phase === "confirming" || phase === "creating_draft";
-  const isError = phase === "error";
-  const visible = isActive || isError || showDone;
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl"
-        >
-          {/* Blurred backdrop */}
-          <div className="absolute inset-0 rounded-2xl bg-black/75 backdrop-blur-md" />
-
-          {/* Content */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative flex flex-col items-center"
-          >
-            {/* Uploading — progress ring with percentage */}
-            {phase === "uploading" && (
-              <>
-                <div className="relative">
-                  <CircleProgress progress={progress} />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[28px] font-bold text-white">{progress}</span>
-                    <span className="text-[14px] font-medium text-white/60 mt-1">%</span>
-                  </div>
-                </div>
-                <p className="mt-4 text-[13px] font-medium text-white/80">Uploading your video...</p>
-              </>
-            )}
-
-            {/* Processing — pulsing ring */}
-            {(phase === "confirming" || phase === "creating_draft") && (
-              <>
-                <div className="relative h-[120px] w-[120px]">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                    className="absolute inset-0"
-                  >
-                    <CircleProgress progress={75} />
-                  </motion.div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div
-                      animate={{ scale: [1, 1.15, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                    >
-                      <FileVideo className="h-8 w-8 text-white" />
-                    </motion.div>
-                  </div>
-                </div>
-                <p className="mt-4 text-[13px] font-medium text-white/80">Processing...</p>
-              </>
-            )}
-
-            {/* Done — checkmark burst */}
-            {showDone && phase === "done" && (
-              <>
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                >
-                  <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-emerald-500/20 ring-4 ring-emerald-500/10">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.15, type: "spring", stiffness: 500, damping: 20 }}
-                    >
-                      <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-                    </motion.div>
-                  </div>
-                </motion.div>
-                <motion.p
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="mt-4 text-[14px] font-semibold text-white"
-                >
-                  Upload complete
-                </motion.p>
-              </>
-            )}
-
-            {/* Error */}
-            {isError && (
-              <>
-                <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-rose-500/20 ring-4 ring-rose-500/10">
-                  <AlertCircle className="h-12 w-12 text-rose-500" />
-                </div>
-                <p className="mt-4 text-[14px] font-semibold text-white">Upload failed</p>
-                {error && <p className="mt-1 text-[12px] text-white/60 max-w-[240px] text-center">{error}</p>}
-              </>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-export function VideoStep({ form, patch, onFileSelected, clearFile, contentType, showErrors }: VideoStepProps) {
+export function VideoStep({ form, onFileSelected, clearFile, contentType, showErrors, checking, disabled }: VideoStepProps) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const config = CONTENT_TYPE_META[contentType];
-
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const f = e.dataTransfer.files[0];
-      if (f) onFileSelected(f);
-    },
-    [onFileSelected],
-  );
-
-  const onFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0];
-      if (f) onFileSelected(f);
-    },
-    [onFileSelected],
-  );
-
-  /* ── No file: dropzone ── */
-  if (!form.videoFile) {
-    return (
-      <div className="space-y-4">
-        <div
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={onDrop}
-          onClick={() => fileRef.current?.click()}
-          className={`group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed py-20 transition-all ${
-            showErrors && !form.videoFile
-              ? "border-rose-500/40 bg-rose-500/5 hover:border-rose-500/60"
-              : "border-brand-divider bg-brand-secondary hover:border-brand-text/40 hover:bg-brand-secondary/20"
-          }`}
-        >
-          <div className={`flex h-18 w-18 items-center justify-center rounded-2xl transition-colors ${
-            showErrors && !form.videoFile
-              ? "bg-rose-500/10"
-              : "bg-brand-secondary group-hover:bg-brand-secondary"
-          }`}>
-            <Upload className={`h-8 w-8 transition-colors ${
-              showErrors && !form.videoFile
-                ? "text-rose-500"
-                : "text-brand-text/50 group-hover:text-brand-text"
-            }`} />
-          </div>
-          <p className="mt-5 text-[15px] font-semibold text-brand-text">
-            Drag & drop your {config.label.toLowerCase()} here
-          </p>
-          <p className="mt-1.5 text-[13px] text-brand-text/50">
-            or <span className="text-brand-text font-medium">click to browse</span>
-          </p>
-
-          <div className="mt-6 flex items-center gap-4 text-[11px] text-brand-text/30">
-            <span className="flex items-center gap-1">
-              <Film className="h-3 w-3" />
-              MP4, WebM, MOV
-            </span>
-            <span className="flex items-center gap-1">
-              <HardDrive className="h-3 w-3" />
-              Max {config.maxSize >= 1024 * 1024 * 1024 ? `${config.maxSize / (1024 * 1024 * 1024)} GB` : `${config.maxSize / (1024 * 1024)} MB`}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Max {config.maxDuration >= 3600 ? `${Math.floor(config.maxDuration / 3600)}h` : `${Math.floor(config.maxDuration / 60)}min`}
-            </span>
-          </div>
-
-          <input ref={fileRef} type="file" accept="video/*,audio/*" onChange={onFileChange} className="hidden" />
-        </div>
-
-        {showErrors && !form.videoFile && (
-          <div className="flex items-center gap-2 text-[12px] text-rose-500 font-semibold">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Please select a video file to continue
-          </div>
-        )}
-
-        {form.uploadError && (
-          <div className="flex items-center gap-2 rounded-xl bg-rose-500/5 border border-rose-500/20 px-4 py-3">
-            <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
-            <p className="text-[12px] text-rose-500 font-semibold">{form.uploadError}</p>
-          </div>
-        )}
+  const [dragging, setDragging] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const limits = uploadLimits(contentType);
+  const error = dropError || form.uploadError || (showErrors && !form.videoFile ? "Choose a video file before continuing to Details." : null);
+  const busy = disabled || checking;
+  const select = (files: FileList | null) => {
+    if (busy || !files?.length) return;
+    if (files.length !== 1) { setDropError("Choose one file at a time. You can upload another after this one."); return; }
+    setDropError(null);
+    onFileSelected(files[0]);
+  };
+  return <div className="upload-video-step">
+    <input ref={fileRef} type="file" aria-label="Select video file" className="upload-file-input" tabIndex={-1}
+      accept={contentType === "podcast" ? "video/mp4,video/webm,video/quicktime,audio/*" : "video/mp4,video/webm,video/quicktime"}
+      disabled={busy} onChange={(e) => { select(e.target.files); e.target.value = ""; }} />
+    {!form.videoFile ? <div className="upload-dropzone" data-dragging={dragging || undefined} data-error={!!error || undefined}
+      onDragOver={(e) => { e.preventDefault(); if (!busy) setDragging(true); }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+      onDrop={(e) => { e.preventDefault(); setDragging(false); select(e.dataTransfer.files); }}>
+      <span className="upload-drop-icon"><Upload aria-hidden="true" /></span>
+      <h3>{checking ? "Checking your file…" : "Choose your video"}</h3>
+      <p>Drag a file here, or browse from your device.</p>
+      <button type="button" id="upload-videoFile" className="upload-button upload-button-primary" disabled={busy}
+        aria-invalid={!!error} aria-describedby={error ? "upload-file-error upload-file-limits" : "upload-file-limits"}
+        onClick={() => fileRef.current?.click()}><Upload aria-hidden="true" />{checking ? "Checking file…" : "Select file"}</button>
+      <span className="upload-local-note">Selecting a file does not upload or publish it.</span>
+    </div> : <div className="upload-selected-file">
+      {form.videoPreviewUrl ? <video src={form.videoPreviewUrl} controls muted playsInline preload="metadata" aria-label="Selected video preview" /> : null}
+      <div className="upload-file-row">
+        <FileVideo aria-hidden="true" />
+        <div><strong title={form.videoFile.name}>{form.videoFile.name}</strong><span>{(form.videoFile.size / (1024 * 1024)).toFixed(1)} MB{form.videoDurationSec != null ? ` · ${Math.floor(form.videoDurationSec / 60)}m ${form.videoDurationSec % 60}s` : ""}</span></div>
+        <button id="upload-videoFile" type="button" className="upload-button" disabled={busy} onClick={() => fileRef.current?.click()}>Change</button>
+        <button type="button" className="upload-icon-button" aria-label="Remove selected file" disabled={busy} onClick={clearFile}><X aria-hidden="true" /></button>
       </div>
-    );
-  }
-
-  /* ── File selected — video preview with overlay status ── */
-  return (
-    <div className="relative">
-      {/* Video preview / placeholder */}
-      <div className="overflow-hidden rounded-2xl border border-brand-text/10 bg-brand-text shadow-xs">
-        {form.videoPreviewUrl ? (
-          <video
-            src={form.videoPreviewUrl}
-            className="mx-auto max-h-[400px] w-full"
-            controls
-            muted
-            playsInline
-            preload="metadata"
-          />
-        ) : (
-          <div className="flex items-center justify-center py-32">
-            <FileVideo className="h-12 w-12 text-white/20" />
-          </div>
-        )}
-
-        {/* Upload overlay — blurred circle progress on top of video */}
-        <UploadOverlay phase={form.uploadPhase} progress={form.uploadProgress} error={form.uploadError} />
-      </div>
-
-      {/* Minimal file info bar below video */}
-      <div className="mt-3 flex items-center gap-3 px-1">
-        <p className="truncate text-[12px] font-medium text-brand-text/60 flex-1">
-          {form.videoFile.name}
-          <span className="text-brand-text/30 ml-2">
-            {fmtSize(form.videoFile.size)}
-            {form.videoDurationSec != null && ` · ${fmtDuration(form.videoDurationSec)}`}
-            {form.videoWidth && form.videoHeight && ` · ${form.videoWidth}×${form.videoHeight}`}
-          </span>
-        </p>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          className="text-[11px] font-semibold text-brand-text hover:text-brand-text transition-colors"
-        >
-          Change
-        </button>
-        <button
-          type="button"
-          onClick={clearFile}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text transition-colors"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-        <input ref={fileRef} type="file" accept="video/*,audio/*" onChange={onFileChange} className="hidden" />
-      </div>
-    </div>
-  );
+      <p className="upload-file-ready" role="status"><CheckCircle2 aria-hidden="true" />{checking ? "Checking replacement file…" : "File selected. Continue to add a title and details."}</p>
+    </div>}
+    <ul id="upload-file-limits" className="upload-file-limits">
+      <li><Film aria-hidden="true" />MP4, WebM, MOV{contentType === "podcast" ? " or audio" : ""}</li>
+      <li><HardDrive aria-hidden="true" />Up to {limits.maxSize / (1024 * 1024)} MB</li>
+      <li><Clock aria-hidden="true" />Up to {limits.maxDuration >= 3600 ? `${limits.maxDuration / 3600} hours` : `${limits.maxDuration / 60} minutes`}</li>
+    </ul>
+    {error ? <p id="upload-file-error" className="upload-field-error" role="alert"><AlertCircle aria-hidden="true" />{error}</p> : null}
+  </div>;
 }

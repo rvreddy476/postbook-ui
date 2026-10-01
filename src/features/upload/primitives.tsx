@@ -9,7 +9,7 @@ export function SectionHeader({ title, subtitle }: { title: string; subtitle?: s
   return (
     <div className="mb-4">
       <h3 className="text-[14px] font-bold text-brand-text">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-[12px] text-brand-text/50">{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-[12px] text-muted">{subtitle}</p>}
     </div>
   );
 }
@@ -21,20 +21,22 @@ export function FieldLabel({
   required,
   hint,
   counter,
+  htmlFor,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
   counter?: string;
+  htmlFor?: string;
 }) {
   return (
-    <label className="mb-1.5 flex items-center justify-between">
-      <span className="text-[12px] font-semibold text-brand-text/60">
+    <label htmlFor={htmlFor} className="mb-1.5 flex items-center justify-between gap-2">
+      <span className="text-[12px] font-semibold text-muted">
         {label}
-        {required && <span className="ml-0.5 text-rose-500">*</span>}
+        {required && <span className="ml-0.5 text-danger" aria-label="required">*</span>}
       </span>
-      {counter && <span className="text-[11px] text-brand-text/30">{counter}</span>}
-      {hint && !counter && <span className="text-[11px] text-brand-text/50">{hint}</span>}
+      {counter && <span className="text-[11px] text-muted">{counter}</span>}
+      {hint && !counter && <span className="text-[11px] text-muted">{hint}</span>}
     </label>
   );
 }
@@ -45,15 +47,18 @@ export function ToggleSwitch({
   checked,
   onChange,
   disabled,
+  label,
 }: {
   checked: boolean;
   onChange: (val: boolean) => void;
   disabled?: boolean;
+  label?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
+      aria-label={label}
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
@@ -89,9 +94,9 @@ export function ToggleRow({
     <div className="flex items-center justify-between gap-4 py-2.5">
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
       </div>
-      <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
+      <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} label={label} />
     </div>
   );
 }
@@ -122,7 +127,7 @@ export function RadioOption({
       />
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
       </div>
     </label>
   );
@@ -151,7 +156,7 @@ export function CheckOption({
       />
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-brand-text/50">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
       </div>
     </label>
   );
@@ -167,9 +172,9 @@ export function InfoBanner({
   variant?: "info" | "warning" | "error";
 }) {
   const colors = {
-    info: "bg-brand-secondary border-brand-divider text-brand-text/60",
-    warning: "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-400",
-    error: "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30 text-rose-700 dark:text-rose-400",
+    info: "bg-brand-secondary border-brand-divider text-muted",
+    warning: "bg-warning/5 border-warning/20 text-warning",
+    error: "bg-danger/5 border-danger/20 text-danger",
   };
   return (
     <div className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[12px] ${colors[variant]}`}>
@@ -189,10 +194,10 @@ export function TagChip({
   onRemove?: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-brand-text/60">
+    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-muted">
       {label}
       {onRemove && (
-        <button type="button" onClick={onRemove} className="hover:text-rose-500 transition-colors">
+        <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="hover:text-danger transition-colors">
           <X className="h-3 w-3" />
         </button>
       )}
@@ -217,10 +222,11 @@ export function Collapsible({
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary rounded-xl transition-colors"
       >
         {title}
-        <ChevronDown className={`h-4 w-4 text-brand-text/50 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && <div className="border-t border-brand-text/10 px-4 py-3">{children}</div>}
     </div>
@@ -235,20 +241,32 @@ export function StudioInput({
   placeholder,
   maxLength,
   autoFocus,
+  id,
+  required,
+  invalid,
+  describedBy,
 }: {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
   maxLength?: number;
   autoFocus?: boolean;
+  id?: string;
+  required?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   return (
     <input
+      id={id}
+      required={required}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       placeholder={placeholder}
     />
   );
@@ -275,7 +293,7 @@ export function StudioTextarea({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       rows={rows}
-      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-brand-text/30 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
+      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
       placeholder={placeholder}
     />
   );
@@ -288,15 +306,30 @@ export function StudioSelect({
   onChange,
   options,
   placeholder,
+  id,
+  required,
+  invalid,
+  describedBy,
+  label,
 }: {
   value: string;
   onChange: (val: string) => void;
   options: { value: string; label: string }[];
   placeholder?: string;
+  id?: string;
+  required?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
+  label?: string;
 }) {
   return (
     <div className="relative">
       <select
+        id={id}
+        required={required}
+        aria-label={label}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-11 w-full appearance-none rounded-xl border border-brand-text/10 bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
@@ -306,7 +339,7 @@ export function StudioSelect({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/50" />
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
     </div>
   );
 }

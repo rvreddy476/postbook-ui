@@ -81,7 +81,7 @@ export function SeriesPicker({ form, patch, showErrors }: SeriesPickerProps) {
         {mySeries.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-brand-text/50" aria-label="Loading your series" /> : null}
       </div>
       <div className="space-y-3 rounded-xl border border-brand-divider bg-brand-card p-4 shadow-xs">
-        <StudioSelect value={seriesSelectValue(choice)} onChange={(v) => patch({ seriesChoice: seriesChoiceFor(v, series, choice), seriesEpisodeNum: null })} options={options} />
+        <StudioSelect label="Series (optional)" value={seriesSelectValue(choice)} onChange={(v) => patch({ seriesChoice: seriesChoiceFor(v, series, choice), seriesEpisodeNum: null })} options={options} />
         {mySeries.isError ? (
           <p className="flex items-center gap-1.5 text-[12px] text-brand-text/60">
             <AlertCircle className="h-3.5 w-3.5" />
@@ -93,9 +93,9 @@ export function SeriesPicker({ form, patch, showErrors }: SeriesPickerProps) {
         ) : null}
         {choice.kind === "new" ? (
           <div>
-            <p className="mb-1.5 text-[12px] font-semibold text-brand-text/60">Series name</p>
-            <StudioInput value={choice.title} onChange={(v) => patch({ seriesChoice: { kind: "new", title: v } })} placeholder="e.g. Weekend builds" maxLength={120} autoFocus />
-            {titleError ? <p className="mt-1.5 text-[12px] font-semibold text-rose-500">Name the new series</p> : null}
+            <label htmlFor="upload-seriesTitle" className="mb-1.5 block text-[12px] font-semibold text-brand-text/60">Series name <span className="text-danger">*</span></label>
+            <StudioInput id="upload-seriesTitle" required invalid={!!titleError} describedBy={titleError ? "upload-series-error" : undefined} value={choice.title} onChange={(v) => patch({ seriesChoice: { kind: "new", title: v } })} placeholder="e.g. Weekend builds" maxLength={120} autoFocus />
+            {titleError ? <p id="upload-series-error" className="upload-field-error" role="alert">Add a name for this new series, or choose No series.</p> : null}
           </div>
         ) : null}
         {choice.kind !== "none" ? (
@@ -103,6 +103,7 @@ export function SeriesPicker({ form, patch, showErrors }: SeriesPickerProps) {
             <p className="mb-1.5 text-[12px] font-semibold text-brand-text/60">Episode number</p>
             <input
               type="number"
+              id="upload-seriesEpisode"
               min={1}
               step={1}
               inputMode="numeric"

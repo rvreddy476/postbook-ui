@@ -1,4 +1,7 @@
-import { ImageOff } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { PackageOpen } from "lucide-react"
 
 export interface ProductPhotoProps {
   src: string | null
@@ -18,17 +21,18 @@ export interface ProductPhotoProps {
  * same plate with a mark rather than a hole in the layout.
  */
 export function ProductPhoto({ src, alt, badge, priority, contain, className }: ProductPhotoProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
   const classes = ["shop-photo", contain ? "shop-photo--contain" : "", className ?? ""].filter(Boolean).join(" ")
   return (
     <div className={classes}>
       {badge}
-      {src ? (
+      {src && src !== failedSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} loading={priority ? "eager" : "lazy"} decoding="async" />
+        <img src={src} alt={alt} loading={priority ? "eager" : "lazy"} decoding="async" onError={() => setFailedSrc(src)} />
       ) : (
-        <span className="shop-photo__empty">
-          <ImageOff size={20} aria-hidden="true" />
-          No image
+        <span className="shop-photo__empty" role="img" aria-label={`${alt}: image unavailable`}>
+          <PackageOpen size={28} strokeWidth={1.5} aria-hidden="true" />
+          Image unavailable
         </span>
       )}
     </div>

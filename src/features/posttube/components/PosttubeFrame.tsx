@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { VideoShell } from "@/features/video-shell";
+import { HubNavigation } from "../hub/components/HubNavigation";
 
 /*
   Every PostTube route sits inside the shared VideoShell (header with
@@ -17,6 +18,6 @@ export function PosttubeFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   if (pathname?.startsWith("/posttube/upload")) return <>{children}</>;
   return (
-    <VideoShell app="tube">{children}</VideoShell>
+    <VideoShell app="tube" navigation={pathname === "/posttube/hub" || pathname?.startsWith("/posttube/hub/") ? (props) => <HubNavigation {...props} /> : undefined}>{children}</VideoShell>
   );
 }

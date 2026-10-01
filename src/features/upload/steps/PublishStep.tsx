@@ -7,6 +7,8 @@ import { categoryOptions } from "../categories";
 import { SeriesPicker } from "../components/SeriesPicker";
 import type { ContentType } from "../tokens";
 import type { StudioFormState } from "../types";
+import { getStepErrors } from "../validation";
+import { tomorrowLocalInput } from "../fileRules";
 
 interface PublishStepProps {
   form: StudioFormState;
@@ -20,8 +22,8 @@ interface PublishStepProps {
 }
 
 export function PublishStep({ form, patch, showErrors, publishError, contentType = "long" }: PublishStepProps) {
-  const categoryError = showErrors && !form.category;
-  const scheduleError = showErrors && form.scheduleAt && new Date(form.scheduleAt) <= new Date();
+  const categoryError = !!showErrors && !form.category.trim();
+  const scheduleError = !!showErrors && getStepErrors("publish", form).some((error) => error.field === "scheduleAt");
   // One taxonomy for all video: GET /v1/posts/categories, the same list the
   // home strip reads. The select stores the slug and shows the label.
   const categories = useVideoCategories();
@@ -32,14 +34,14 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
   return (
     <div className="space-y-7">
       <div className="rounded-xl border border-brand-divider bg-brand-secondary p-4 shadow-xs">
-        <p className="text-[13px] font-semibold text-brand-text">Ready to publish</p>
-        <p className="mt-1 text-[12px] text-brand-text/60">
+        <p className="text-[13px] font-semibold text-brand-text">One final review</p>
+        <p className="mt-1 text-[12px] text-muted">
           Your video uploads and starts processing when you hit Publish — it becomes
-          available to viewers automatically once processing finishes. Nothing is stored
-          until you publish.
+          available according to your visibility and schedule after processing finishes.
+          Saving a draft also uploads the file, but does not publish it.
         </p>
         {publishError && (
-          <p className="mt-2 text-[12px] text-rose-500 font-semibold">{publishError}</p>
+          <p className="upload-field-error" role="alert">We couldn’t publish your video. {publishError} Your details are still here; you can try again.</p>
         )}
       </div>
       {/* ── Visibility ── */}
@@ -50,7 +52,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Visibility</h3>
-            <p className="text-[11px] text-brand-text/50">Who can see this content</p>
+            <p className="text-[11px] text-muted">Who can see this content</p>
           </div>
         </div>
         <div className="space-y-1 rounded-xl border border-brand-text/10 bg-brand-card p-2 shadow-xs">
@@ -92,22 +94,27 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
       <div>
         <div className="flex items-center gap-2.5 mb-4">
           <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            categoryError ? "bg-rose-500/10" : "bg-brand-text/10"
+            categoryError ? "bg-danger/10" : "bg-brand-text/10"
           }`}>
-            <Tag className={`h-4 w-4 ${categoryError ? "text-rose-500" : "text-brand-text"}`} />
+            <Tag className={`h-4 w-4 ${categoryError ? "text-danger" : "text-brand-text"}`} />
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">
-              Topic <span className="text-rose-500 font-semibold">*</span>
+              Topic <span className="text-danger font-semibold">*</span>
             </h3>
-            <p className="text-[11px] text-brand-text/50">Where viewers find it — the same topics as the Watch page</p>
+            <p className="text-[11px] text-muted">Where viewers find it — the same topics as the Watch page</p>
           </div>
-          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-brand-text/50" aria-label="Loading topics" /> : null}
+          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted" aria-label="Loading topics" /> : null}
         </div>
         <div className={`rounded-xl border bg-brand-card shadow-xs transition-colors ${
-          categoryError ? "border-rose-500/40" : "border-brand-divider"
+          categoryError ? "border-danger/40" : "border-brand-divider"
         }`}>
           <StudioSelect
+            id="upload-category"
+            label="Topic"
+            required
+            invalid={categoryError}
+            describedBy={categoryError ? "upload-category-error" : undefined}
             value={form.category}
             onChange={(v) => patch({ category: v })}
             options={topicOptions}
@@ -115,7 +122,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           />
         </div>
         {topicsUnavailable && (
-          <div className="mt-2 flex items-center gap-2 text-[12px] text-brand-text/60">
+          <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
             <AlertCircle className="h-3.5 w-3.5" />
             <span>Topics could not be loaded.</span>
             <button type="button" onClick={() => void categories.refetch()} className="font-semibold text-brand-text underline-offset-2 hover:underline">
@@ -124,9 +131,9 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
         )}
         {categoryError && (
-          <div className="mt-2 flex items-center gap-1.5 text-[12px] text-rose-500 font-semibold">
+          <div id="upload-category-error" className="upload-field-error" role="alert">
             <AlertCircle className="h-3.5 w-3.5" />
-            Please select a topic before publishing
+            Choose a topic to help viewers find your video.
           </div>
         )}
       </div>
@@ -138,44 +145,50 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
       <div>
         <div className="flex items-center gap-2.5 mb-4">
           <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            scheduleError ? "bg-rose-500/10" : "bg-brand-text/10"
+            scheduleError ? "bg-danger/10" : "bg-brand-text/10"
           }`}>
-            <Calendar className={`h-4 w-4 ${scheduleError ? "text-rose-500" : "text-brand-text"}`} />
+            <Calendar className={`h-4 w-4 ${scheduleError ? "text-danger" : "text-brand-text"}`} />
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Schedule</h3>
-            <p className="text-[11px] text-brand-text/50">Publish now or schedule for later</p>
+            <p className="text-[11px] text-muted">Publish now or schedule for later</p>
           </div>
         </div>
         <div className={`rounded-xl border bg-brand-card p-4 shadow-xs transition-colors ${
-          scheduleError ? "border-rose-500/40" : "border-brand-divider"
+          scheduleError ? "border-danger/40" : "border-brand-divider"
         }`}>
           <ToggleRow
             label="Schedule publish"
             description="Auto-publish at a specific time"
-            checked={!!form.scheduleAt}
+            checked={form.scheduleAt !== null}
             onChange={(v) =>
-              patch({ scheduleAt: v ? new Date(Date.now() + 86400000).toISOString().slice(0, 16) : null })
+              patch({ scheduleAt: v ? tomorrowLocalInput() : null })
             }
           />
-          {form.scheduleAt && (
+          {form.scheduleAt !== null && (
             <div className={`mt-3 flex items-center gap-2 rounded-xl border bg-brand-secondary p-3 ${
-              scheduleError ? "border-rose-500/40" : "border-brand-divider"
+              scheduleError ? "border-danger/40" : "border-brand-divider"
             }`}>
-              <Calendar className="h-4 w-4 text-brand-text/50" />
+              <Calendar className="h-4 w-4 text-muted" />
               <input
                 type="datetime-local"
+                id="upload-scheduleAt"
+                aria-label="Publish date and time (your local time)"
+                required
+                aria-invalid={scheduleError}
+                aria-describedby={scheduleError ? "upload-schedule-error" : "upload-schedule-hint"}
                 value={form.scheduleAt}
                 onChange={(e) => patch({ scheduleAt: e.target.value })}
-                className="flex-1 bg-transparent text-[13px] text-brand-text outline-hidden"
+                className="min-w-0 w-full flex-1 bg-transparent text-[13px] text-brand-text outline-hidden"
               />
             </div>
           )}
         </div>
+        {form.scheduleAt !== null ? <p id="upload-schedule-hint" className="upload-input-hint">Date and time use your device's local time zone.</p> : null}
         {scheduleError && (
-          <div className="mt-2 flex items-center gap-1.5 text-[12px] text-rose-500 font-semibold">
+          <div id="upload-schedule-error" className="upload-field-error" role="alert">
             <AlertCircle className="h-3.5 w-3.5" />
-            Scheduled time must be in the future
+            Choose a valid date and time in the future, or turn scheduling off.
           </div>
         )}
       </div>
@@ -188,18 +201,19 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Cross-post</h3>
-            <p className="text-[11px] text-brand-text/50">Also share to your Feed</p>
+            <p className="text-[11px] text-muted">Also share to your Feed</p>
           </div>
         </div>
         <div className="rounded-xl border border-brand-text/10 bg-brand-card p-4 shadow-xs">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-brand-text">Publish to Feed</p>
-              <p className="mt-0.5 text-[11px] text-brand-text/50">Share as a post on your Feed</p>
+              <p className="mt-0.5 text-[11px] text-muted">Share as a post on your Feed</p>
             </div>
             <button
               type="button"
               role="switch"
+              aria-label="Publish to Feed"
               aria-checked={form.crossPostPostbook}
               onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
               className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent/20 ${

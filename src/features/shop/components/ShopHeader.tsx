@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react"
-import { ChevronDown, CreditCard, Heart, MapPin, Package, Search, ShoppingBag, Store, User } from "lucide-react"
+import { Suspense, useCallback, useEffect, useId, useRef, useState, type RefObject } from "react"
+import { ChevronDown, CreditCard, Heart, MapPin, Menu, MessageCircle, Package, Search, ShoppingBag, Store, User } from "lucide-react"
 import { useBagCount } from "../hooks/bag"
 import { useFavourites } from "../hooks/favourites"
 import { useShopSession } from "../hooks/storefront"
@@ -32,7 +32,7 @@ function SearchForm({ initialQuery, onSubmit }: { initialQuery: string; onSubmit
     <form className="shop-search" role="search" onSubmit={(event) => { event.preventDefault(); onSubmit?.(q) }}>
       <label className="shop-sr" htmlFor={id}>Search {STORE_NAME}</label>
       <Search size={16} aria-hidden="true" />
-      <input id={id} className="shop-search__input" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${STORE_NAME}`} autoComplete="off" />
+      <input id={id} type="search" className="shop-search__input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products, brands and more" autoComplete="off" enterKeyHint="search" />
       <button type="submit" className="shop-search__submit" aria-label="Search"><Search size={15} aria-hidden="true" /></button>
     </form>
   )
@@ -110,7 +110,7 @@ function AccountMenu({ initial }: { initial: string }) {
  * and the avatar menu. Signed out, the three go to sign in with a way back
  * to the page the shopper is on.
  */
-export function ShopHeader() {
+export function ShopHeader({ onMenu, menuOpen, menuRef }: { onMenu?: () => void; menuOpen?: boolean; menuRef?: RefObject<HTMLButtonElement | null> }) {
   const { signedIn, known, user } = useShopSession()
   const pathname = usePathname()
   const bagCount = useBagCount()
@@ -122,13 +122,17 @@ export function ShopHeader() {
   return (
     <header className="shop-header">
       <div className="shop-header__bar">
-        <Link href={SHOP_BASE} className="shop-header__brand" aria-label={`${STORE_NAME} home`}>
-          <Wordmark />
-        </Link>
+        <div className="shop-header__brand">
+          {onMenu ? <button ref={menuRef} type="button" className="shop-icon-btn shop-header__menu" aria-label="Shop menu" aria-controls="shop-navigation" aria-expanded={menuOpen} onClick={onMenu}><Menu size={21} strokeWidth={1.75} aria-hidden="true" /></button> : null}
+          <Link href="/" className="shop-header__home" aria-label="VChat home">VC</Link>
+          <span className="shop-header__divider" aria-hidden="true" />
+          <Link href={SHOP_BASE} className="shop-header__store" aria-label={`${STORE_NAME} home`}><Store size={21} strokeWidth={1.75} aria-hidden="true" /><Wordmark /></Link>
+        </div>
         <Suspense fallback={<SearchForm initialQuery="" />}>
           <LiveSearchForm />
         </Suspense>
         <nav className="shop-header__actions" aria-label="Account and shopping">
+          <Link href="/messenger" className="shop-icon-btn shop-header__messenger" aria-label="Messenger"><MessageCircle size={20} strokeWidth={1.75} aria-hidden="true" /></Link>
           <Link href={gated(`${SHOP_BASE}/favourites`)} className="shop-icon-btn" aria-label={favouritesLabel(saved)}>
             <Heart size={20} aria-hidden="true" />
             {saved > 0 ? <span className="shop-icon-btn__count" aria-hidden="true">{saved}</span> : null}

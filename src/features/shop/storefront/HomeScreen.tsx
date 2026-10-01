@@ -1,13 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Store } from "lucide-react"
+import { ArrowRight, Grid2X2, Store } from "lucide-react"
 import { flattenProducts, useCategories, useHome, useInfiniteProducts } from "../hooks/storefront"
 import { browseHref } from "../model/storefront"
 import { BannerCarousel } from "../components/storefront/BannerCarousel"
 import { CategoryStrip, CategoryTiles } from "../components/storefront/CategoryStrip"
 import { InfiniteSentinel } from "../components/storefront/InfiniteSentinel"
 import { ProductGrid } from "../components/storefront/ProductGrid"
+import { ProductShelf } from "../components/storefront/ProductShelf"
 import { StateBlock } from "../components/storefront/StateBlock"
 
 /**
@@ -27,14 +28,19 @@ export function HomeScreen() {
   const items = flattenProducts(products.data)
 
   return (
-    <div>
-      <h1 className="shop-sr">Shop</h1>
+    <div className="shop-home">
+      <div className="shop-home__heading">
+        <div><span className="shop-home__eyebrow">MStore / Discover</span><h1>Explore the shop</h1></div>
+        <Link href={browseHref({})} className="shop-btn shop-btn--outline"><Grid2X2 size={16} aria-hidden="true" />All products<ArrowRight size={16} aria-hidden="true" /></Link>
+      </div>
 
       {cats.length > 0 ? (
-        <section className="shop-section shop-section--first" aria-label="Categories">
+        <section className="shop-departments" aria-label="Categories">
           <CategoryStrip categories={cats} />
         </section>
       ) : null}
+
+      {categories.isError ? <StateBlock text="Categories could not be loaded." action={{ label: "Try again", onClick: () => void categories.refetch() }} /> : null}
 
       {banners.length > 0 ? (
         <section className="shop-section shop-section--first">
@@ -45,9 +51,11 @@ export function HomeScreen() {
       {home.isLoading ? (
         <section className="shop-section" aria-busy="true" aria-label="Loading offers">
           <div className="shop-section__head"><div className="shop-skeleton" style={{ height: 16, width: 140 }} /></div>
-          <ProductGrid products={[]} isLoading layout="rail" />
+          <ProductShelf products={[]} loading />
         </section>
       ) : null}
+
+      {home.isError ? <StateBlock text="Shop highlights could not be loaded. You can still browse products below." action={{ label: "Try again", onClick: () => void home.refetch() }} /> : null}
 
       {sections.map((section) => (
         <section key={section.key} className="shop-section" aria-labelledby={`shop-rail-${section.key}`}>
@@ -55,7 +63,7 @@ export function HomeScreen() {
             <h2 id={`shop-rail-${section.key}`} className="shop-section__title">{section.title}</h2>
             <Link href={browseHref({ inStock: true })} className="shop-link">See all <ArrowRight size={14} aria-hidden="true" /></Link>
           </div>
-          <ProductGrid products={section.products} layout="rail" />
+          <ProductShelf products={section.products} />
         </section>
       ))}
 
