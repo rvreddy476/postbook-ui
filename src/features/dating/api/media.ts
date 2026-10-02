@@ -14,12 +14,14 @@
   (`/v1/dating/photos/:id/full|blurred`) need the bearer token, and the
   browser's media cookie is scoped to /v1/media only, so an <img src> to
   them arrives anonymous. They are fetched with the token and shown from a
-  blob URL instead.
+  blob URL instead. A locked liked-you card's image
+  (`/v1/dating/liked-you/:sparkId/photo`, always server-blurred) is read the
+  same way.
 */
 
 import api from "@/lib/api"
 
-import { photoPath } from "../model/people"
+import { viewablePhotoPath } from "../model/people"
 
 interface Init {
   media_id: string
@@ -109,7 +111,7 @@ export async function uploadSelfieClip(clip: Blob, mime: string, opts: UploadOpt
 
 /** The image behind a server-named dating photo path, as a blob. Refuses any other path. */
 export async function fetchPhotoBlob(serverPath: string, signal?: AbortSignal): Promise<Blob> {
-  const path = photoPath(serverPath)
+  const path = viewablePhotoPath(serverPath)
   if (!path) throw new Error("not_a_dating_photo")
   const res = await api.get(path, { responseType: "blob", signal })
   return res.data as Blob

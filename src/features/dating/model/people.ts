@@ -19,6 +19,24 @@ export function photoPath(value: unknown): string {
   return PHOTO_PATH.test(s) ? s : ""
 }
 
+/*
+  Who liked you (M4): a locked card's one image is GET
+  /v1/dating/liked-you/:sparkId/photo, which only ever redirects to the
+  server-blurred image. It is never a person's photo, so toPerson never takes it.
+*/
+const LIKED_YOU_PHOTO_PATH = /^\/v1\/dating\/liked-you\/[^/?#]+\/photo$/
+
+/** The server's path if it is a locked liked-you card's image route, else "". */
+export function likedYouPhotoPath(value: unknown): string {
+  const s = str(value)
+  return LIKED_YOU_PHOTO_PATH.test(s) ? s : ""
+}
+
+/** Any image route this client may load with the token: a dating photo or a locked liked-you card. */
+export function viewablePhotoPath(value: unknown): string {
+  return photoPath(value) || likedYouPhotoPath(value)
+}
+
 /** Whether a server path is the blurred variant (from the path itself, so it cannot disagree). */
 export function isBlurredPath(path: string): boolean {
   return path.endsWith("/blurred")

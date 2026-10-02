@@ -2,14 +2,15 @@
 
 /* The deck, sparks, the stash, people, matches, and the photo loader. */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useState } from "react"
 
-import { acceptSpark, addStash, closeMatch, createSpark, declineSpark, extendMatch, fetchAllowances, fetchDeck, fetchIncomingSparks, fetchMatch, fetchMatches, fetchPerson, passCandidate, rewindLastPass } from "../api/discovery"
+import { acceptSpark, addStash, closeMatch, createSpark, declineSpark, extendMatch, fetchAllowances, fetchDeck, fetchIncomingSparks, fetchLikedYou, fetchMatch, fetchMatches, fetchPerson, passCandidate, rewindLastPass } from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
 import type { Allowances } from "../model/allowances"
+import { isLikedYouLocked, lockLikedYou, type LikedYou } from "../model/likedYou"
 import type { Match } from "../model/matches"
-import { photoPath, type Person } from "../model/people"
+import { viewablePhotoPath, type Person } from "../model/people"
 import type { Deck, RewindResult } from "../model/pulse"
 import type { IncomingSpark, SparkOutcome } from "../model/sparks"
 import { errorStatus } from "../model/wire"
@@ -110,14 +111,34 @@ export function useIncomingSparks(enabled = true) {
   return useQuery<IncomingSpark[]>({ queryKey: KEYS.sparks, queryFn: fetchIncomingSparks, retry, enabled })
 }
 
+/** Who liked you (M4). Read again after any spark answer and after a pass is bought. */
+export function useLikedYou(enabled = true) {
+  return useQuery<LikedYou>({ queryKey: KEYS.likedYou, queryFn: fetchLikedYou, retry, enabled })
+}
+
+/**
+  After a refused accept. 403 LIKED_YOU_LOCKED means the grid on screen is out
+  of date (a pass ran out, or the gate turned on): it switches to locked at
+  once — no person, note or unblurred photo left — and is read again.
+  Returns whether it was that refusal.
+*/
+export function applyAcceptRefusal(qc: QueryClient, error: unknown): boolean {
+  if (!isLikedYouLocked(error)) return false
+  qc.setQueryData<LikedYou>(KEYS.likedYou, (data) => (data ? lockLikedYou(data) : data))
+  void qc.invalidateQueries({ queryKey: KEYS.sparks })
+  return true
+}
+
 export function useAcceptSpark() {
   const qc = useQueryClient()
   return useMutation<SparkOutcome, unknown, string>({
     mutationFn: acceptSpark,
     onSuccess: () => {
+      // KEYS.sparks covers the liked-you grid too.
       void qc.invalidateQueries({ queryKey: KEYS.sparks })
       void qc.invalidateQueries({ queryKey: KEYS.matches })
     },
+    onError: (error) => void applyAcceptRefusal(qc, error),
   })
 }
 
@@ -170,7 +191,7 @@ export type PhotoLoad = { state: "loading" | "ready" | "failed" | "none"; src: s
   blob. The object URL is revoked when the path changes or the image unmounts.
 */
 export function usePhoto(serverPath: string): PhotoLoad {
-  const path = photoPath(serverPath)
+  const path = viewablePhotoPath(serverPath)
   const [load, setLoad] = useState<PhotoLoad>({ state: path ? "loading" : "none", src: "" })
 
   useEffect(() => {

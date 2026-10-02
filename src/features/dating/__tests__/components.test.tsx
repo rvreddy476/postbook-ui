@@ -13,8 +13,7 @@ import { SwipeDeck, cardKeysLabel, deckHint } from "../components/SwipeDeck"
 import { CLOSED_TITLE } from "../model/errors"
 import { toPerson } from "../model/people"
 import { toDeck } from "../model/pulse"
-import { toIncomingSparks } from "../model/sparks"
-import { DeckEmpty, MatchList, OutOfRewinds, OutOfSparks, OutOfSuperSparks, SparkRows } from "../screens/HomeScreen"
+import { DeckEmpty, MatchList, OutOfRewinds, OutOfSparks, OutOfSuperSparks } from "../screens/HomeScreen"
 import { CountdownNotice } from "../screens/MatchScreen"
 import { AgeRefusal, PhotoTile, StepHeader } from "../screens/OnboardingScreens"
 import { PersonDetails } from "../screens/PersonScreen"
@@ -40,10 +39,10 @@ const asha = deck.cards[0].person
 
 describe("navigation", () => {
   test("the tabs and the More menu are alphabetical", () => {
-    expect(PRIMARY_NAV.map((e) => e.label)).toEqual(["Deck", "Matches", "Sparks"])
+    expect(PRIMARY_NAV.map((e) => e.label)).toEqual(["Deck", "Liked you", "Matches"])
     expect(MORE_NAV.map((e) => e.label)).toEqual(["Premium", "Safety", "Settings"])
     const out = html(<DatingNav pathname="/dating/matches" />)
-    expect(ascending(out, [">Deck<", ">Matches<", ">Sparks<", ">More<", ">Premium<", ">Safety<", ">Settings<"])).toBe(true)
+    expect(ascending(out, [">Deck<", ">Liked you<", ">Matches<",">More<", ">Premium<", ">Safety<", ">Settings<"])).toBe(true)
     expect(out).toContain('<a class="pulse-nav__link" aria-current="page" href="/dating/matches">')
     expect((out.match(/aria-current="page"/g) ?? []).length).toBe(1)
   })
@@ -198,17 +197,6 @@ describe("the deck: Super Spark", () => {
     expect(out).toMatch(/More arrive (at|\w+day at) /)
     expect(out).toContain('href="/dating/premium#super-spark-packs"')
     expect(out).toContain(">Get a Super Spark pack<")
-  })
-
-  test("incoming: a Super Spark is marked with a star and our own words; an ordinary one is not", () => {
-    const sparks = toIncomingSparks(readFixture("sparks_incoming_get_200_super_first").data)
-    const out = html(<SparkRows sparks={sparks} acting="" accepting={false} onAccept={noop} onDecline={noop} />)
-    expect((out.match(/Sent you a Super Spark/g) ?? []).length).toBe(1)
-    expect((out.match(/pulse-rowcard--super/g) ?? []).length).toBe(1)
-    expect(out).toContain("lucide-star")
-    // The marked one comes first, in the server's order.
-    expect(out.indexOf("Sent you a Super Spark")).toBeLessThan(out.indexOf("pulse-rowcard\""))
-    expect(out).not.toMatch(/super like/i)
   })
 })
 

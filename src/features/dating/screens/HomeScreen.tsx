@@ -1,6 +1,6 @@
 "use client"
 
-/* Home: the deck, incoming sparks, matches. One section per route; the tabs are in the frame. */
+/* Home: the deck, who liked you, matches. One section per route; the tabs are in the frame. */
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,18 +12,20 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { DatingPhoto } from "../components/DatingPhoto"
 import { ErrorState } from "../components/Guard"
 import { Button, Field, LinkButton, Loading, PageHead, StatePanel } from "../components/kit"
+import { LikedYouGrid, PREMIUM_HREF } from "../components/LikedYouGrid"
 import { MatchCelebration } from "../components/MatchCelebration"
 import { SwipeDeck } from "../components/SwipeDeck"
-import { useAcceptSpark, useAllowances, useDeck, useDeclineSpark, useIncomingSparks, useMatch, useMatches, usePass, useRewind, useSessionFlag, useSpark, useStash } from "../hooks/discovery"
+import { useAcceptSpark, useAllowances, useDeck, useDeclineSpark, useLikedYou, useMatch, useMatches, usePass, useRewind, useSessionFlag, useSpark, useStash } from "../hooks/discovery"
 import { leftToday, moreArrive, NO_ALLOWANCES, rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toUsageLimit, type LastDeckAction, type UsageLimit } from "../model/allowances"
 import { datingErrorCopy } from "../model/errors"
 import { SPARK_NOTE_MAX } from "../model/labels"
+import { isLikedYouLocked, likedYouHeadline, type LikedYouCard } from "../model/likedYou"
 import { countdown, isOpen, matchHref, type Match } from "../model/matches"
 import { metaLine, nameLine, personHref, type Person } from "../model/people"
 import { SUPER_SPARK_PACKS_ANCHOR } from "../model/premium"
 import { DATING_BASE } from "../model/profile"
 import { deckEmptyKind, resetLine, type Deck, type DeckCard, type DeckEmptyKind, type SwipeAction } from "../model/pulse"
-import { noteProblem, sparkLimitLine, toSparkLimit, verdictFor, type IncomingSpark, type SparkLimit } from "../model/sparks"
+import { noteProblem, sparkLimitLine, toSparkLimit, verdictFor, type SparkLimit } from "../model/sparks"
 import { toDatingError } from "../model/wire"
 
 export type HomeSection = "deck" | "sparks" | "matches"
@@ -47,7 +49,7 @@ export function DeckEmpty({ kind, deck, onLookAgain }: { kind: DeckEmptyKind; de
         title="You're out of cards for today"
         body={when ? `You've seen today's cards. New ones arrive ${when}.` : "You've seen today's cards. New ones arrive tomorrow."}
       >
-        <LinkButton href={`${DATING_BASE}/sparks`}>See your sparks</LinkButton>
+        <LinkButton href={`${DATING_BASE}/sparks`}>See who liked you</LinkButton>
       </StatePanel>
     )
   }
@@ -344,80 +346,61 @@ export function PersonRow({
   )
 }
 
-/* ── sparks ──────────────────────────────────────────────────────── */
+/* ── liked you (mechanic M4) ─────────────────────────────────────── */
 
-/** The mark on a Super Spark: a star and our own words. */
-export function SuperSparkMarker() {
+export function NoSparksYet() {
   return (
-    <p className="pulse-super">
-      <Star size={12} aria-hidden="true" />
-      <span>Sent you a Super Spark</span>
-    </p>
+    <StatePanel icon={Sparkles} title="No sparks waiting" body="When someone sparks you, they'll show up here.">
+      <LinkButton href={DATING_BASE} variant="primary">
+        Open the deck
+      </LinkButton>
+    </StatePanel>
   )
 }
 
-/** Incoming sparks in the server's order (Super Sparks first), each with its two answers. */
-export function SparkRows({
-  sparks,
-  acting,
-  accepting,
-  onAccept,
-  onDecline,
-}: {
-  sparks: IncomingSpark[]
-  acting: string
-  accepting: boolean
-  onAccept: (s: IncomingSpark) => void
-  onDecline: (s: IncomingSpark) => void
-}) {
-  return (
-    <ul className="pulse-list">
-      {sparks.map((s) => (
-        <PersonRow
-          key={s.id}
-          person={s.person}
-          href={s.person ? personHref(s.person.userId) : undefined}
-          note={s.note}
-          marker={s.isSuper ? <SuperSparkMarker /> : undefined}
-          highlight={s.isSuper}
-        >
-          <Button variant="quiet" disabled={acting === s.id} onClick={() => onDecline(s)}>
-            Decline
-          </Button>
-          <Button variant="primary" icon={Sparkles} busy={acting === s.id && accepting} disabled={acting === s.id} onClick={() => onAccept(s)}>
-            Spark back
-          </Button>
-        </PersonRow>
-      ))}
-    </ul>
-  )
-}
-
-function SparksSection() {
+/**
+  The people who sparked you, as a grid. Locked, the server sends only the
+  count and blurred cards, and every tile leads to a pass. If an accept comes
+  back 403 LIKED_YOU_LOCKED, the hook has already switched the grid to locked
+  and asked again; this only says why.
+*/
+function LikedYouSection() {
+  const router = useRouter()
   const toast = useGlobalToast()
-  const sparks = useIncomingSparks()
+  const likes = useLikedYou()
   const accept = useAcceptSpark()
   const decline = useDeclineSpark()
   const [acting, setActing] = useState("")
   const [celebrate, setCelebrate] = useState<{ matchId: string; person: Person | null } | null>(null)
 
-  if (sparks.isPending) return <Loading />
-  if (sparks.isError) return <ErrorState error={sparks.error} onRetry={() => void sparks.refetch()} />
+  const head = <PageHead title="Liked you" sub={likes.data ? likedYouHeadline(likes.data.total) : "People who'd like to meet you."} />
+  if (likes.isPending || likes.isError) {
+    return (
+      <>
+        {head}
+        {likes.isPending ? <Loading /> : <ErrorState error={likes.error} onRetry={() => void likes.refetch()} />}
+      </>
+    )
+  }
 
-  const onAccept = (s: IncomingSpark) => {
-    setActing(s.id)
-    accept.mutate(s.id, {
+  const onOpen = (card: LikedYouCard) => {
+    if (card.person) router.push(personHref(card.person.userId))
+  }
+  const onUpsell = () => router.push(PREMIUM_HREF)
+  const onAccept = (card: LikedYouCard) => {
+    setActing(card.sparkId)
+    accept.mutate(card.sparkId, {
       onSuccess: (outcome) => {
-        if (outcome.matched) setCelebrate({ matchId: outcome.matchId, person: s.person })
+        if (outcome.matched) setCelebrate({ matchId: outcome.matchId, person: card.person })
         else toast({ type: "success", title: "Spark returned" })
       },
-      onError: (e) => toast({ type: "error", title: datingErrorCopy(e) }),
+      onError: (e) => toast({ type: isLikedYouLocked(e) ? "info" : "error", title: datingErrorCopy(e) }),
       onSettled: () => setActing(""),
     })
   }
-  const onDecline = (s: IncomingSpark) => {
-    setActing(s.id)
-    decline.mutate(s.id, {
+  const onDecline = (card: LikedYouCard) => {
+    setActing(card.sparkId)
+    decline.mutate(card.sparkId, {
       onError: (e) => toast({ type: "error", title: datingErrorCopy(e) }),
       onSettled: () => setActing(""),
     })
@@ -425,14 +408,11 @@ function SparksSection() {
 
   return (
     <>
-      {sparks.data.length === 0 ? (
-        <StatePanel icon={Sparkles} title="No sparks waiting" body="When someone sparks you, they'll show up here.">
-          <LinkButton href={DATING_BASE} variant="primary">
-            Open the deck
-          </LinkButton>
-        </StatePanel>
+      {head}
+      {likes.data.cards.length === 0 ? (
+        <NoSparksYet />
       ) : (
-        <SparkRows sparks={sparks.data} acting={acting} accepting={accept.isPending} onAccept={onAccept} onDecline={onDecline} />
+        <LikedYouGrid data={likes.data} acting={acting} accepting={accept.isPending} onOpen={onOpen} onUpsell={onUpsell} onAccept={onAccept} onDecline={onDecline} />
       )}
       {celebrate ? <Celebration matchId={celebrate.matchId} person={celebrate.person} onClose={() => setCelebrate(null)} /> : null}
     </>
@@ -469,18 +449,25 @@ function MatchesSection() {
   return <MatchList matches={open} />
 }
 
-const TITLES: Record<HomeSection, { title: string; sub: string }> = {
+const TITLES: Record<Exclude<HomeSection, "sparks">, { title: string; sub: string }> = {
   deck: { title: "Deck", sub: "Adults only. Spark the people you'd like to meet." },
   matches: { title: "Matches", sub: "People who sparked you back." },
-  sparks: { title: "Sparks", sub: "People who'd like to meet you." },
 }
 
 export function HomeScreen({ section }: { section: HomeSection }) {
+  // Liked you is a grid: the wide page, and its own header with the count.
+  if (section === "sparks") {
+    return (
+      <div className="pulse-page">
+        <LikedYouSection />
+      </div>
+    )
+  }
   const head = TITLES[section]
   return (
     <div className="pulse-page pulse-page--narrow">
       <PageHead title={head.title} sub={head.sub} />
-      {section === "deck" ? <DeckSection /> : section === "sparks" ? <SparksSection /> : <MatchesSection />}
+      {section === "deck" ? <DeckSection /> : <MatchesSection />}
     </div>
   )
 }

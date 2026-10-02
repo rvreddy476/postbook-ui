@@ -28,6 +28,8 @@ export const KEYS = {
   deck: ["dating", "deck"] as const,
   allowances: ["dating", "allowances"] as const,
   sparks: ["dating", "sparks"] as const,
+  /** Under `sparks`, so anything that refreshes sparks refreshes the grid too. */
+  likedYou: ["dating", "sparks", "liked-you"] as const,
   matches: ["dating", "matches"] as const,
   match: (id: string) => ["dating", "matches", id] as const,
   person: (id: string) => ["dating", "people", id] as const,

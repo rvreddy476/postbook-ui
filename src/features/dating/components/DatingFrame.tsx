@@ -15,8 +15,8 @@ export interface NavEntry {
 /** The three sections of home, alphabetical. */
 export const PRIMARY_NAV: readonly NavEntry[] = [
   { label: "Deck", href: DATING_BASE, icon: Layers },
+  { label: "Liked you", href: `${DATING_BASE}/sparks`, icon: Sparkles },
   { label: "Matches", href: `${DATING_BASE}/matches`, icon: MessagesSquare },
-  { label: "Sparks", href: `${DATING_BASE}/sparks`, icon: Sparkles },
 ]
 
 /** Everything else, alphabetical. */

@@ -3,6 +3,7 @@
 import { toCloseResult, toExtendResult, toMatch, toMatches, type Match } from "../model/matches"
 import { toPerson, type Person } from "../model/people"
 import { toAllowances, type Allowances } from "../model/allowances"
+import { LIKED_YOU_PAGE, toLikedYou, type LikedYou } from "../model/likedYou"
 import { toDeck, toPassResult, toRewindResult, type Deck, type PassResult, type RewindResult } from "../model/pulse"
 import { sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
 import { del, get, getBody, post, seg } from "./client"
@@ -35,6 +36,12 @@ export async function fetchIncomingSparks(): Promise<IncomingSpark[]> {
   return toIncomingSparks(await get("/sparks/incoming", { limit: 50 }))
 }
 
+/** GET /liked-you — mechanic M4: the total and the grid, Super Sparks first; locked cards name no one. */
+export async function fetchLikedYou(): Promise<LikedYou> {
+  return toLikedYou(await get("/liked-you", { limit: LIKED_YOU_PAGE, offset: 0 }))
+}
+
+/** A locked spark is refused with 403 LIKED_YOU_LOCKED (a match would reveal the sender). */
 export async function acceptSpark(sparkId: string): Promise<SparkOutcome> {
   return toSparkOutcome(await post(`/sparks/${seg(sparkId)}/accept`))
 }
