@@ -111,7 +111,7 @@ export function toExplain(wire: unknown): Explain {
 
 /* ── swipe ───────────────────────────────────────────────────────── */
 
-export type SwipeAction = "spark" | "pass" | "stash" | "open" | "super_spark"
+export type SwipeAction = "spark" | "pass" | "stash" | "open" | "super_spark" | "rewind"
 
 export const SWIPE_THRESHOLD_PX = 96
 
@@ -122,9 +122,16 @@ export function actionForDrag(dx: number, threshold = SWIPE_THRESHOLD_PX): "spar
   return null
 }
 
-/** The deck's keys. ArrowUp is reserved for Super Spark and does nothing until it is enabled. */
-export function actionForKey(key: string, superSparkEnabled = false): SwipeAction | null {
+/**
+  The deck's keys. ArrowUp sends a Super Spark only while that mechanic is on;
+  Backspace and Z undo the last pass only while the Undo control is showing.
+*/
+export function actionForKey(key: string, superSparkEnabled = false, rewindEnabled = false): SwipeAction | null {
   switch (key) {
+    case "Backspace":
+    case "z":
+    case "Z":
+      return rewindEnabled ? "rewind" : null
     case "ArrowRight":
       return "spark"
     case "ArrowLeft":
@@ -140,7 +147,7 @@ export function actionForKey(key: string, superSparkEnabled = false): SwipeActio
   }
 }
 
-/* ── rewind (mechanic M2; parsed for the contract, no screen yet) ── */
+/* ── rewind (mechanic M2) ────────────────────────────────────────── */
 
 export interface RewindResult {
   rewound: boolean
@@ -149,6 +156,8 @@ export interface RewindResult {
   card: DeckCard | null
   unlimited: boolean
   dailyLimit: number
+  /** Absent on the wire means 0. */
+  remainingToday: number
   resetsAt: string
 }
 
@@ -162,6 +171,7 @@ export function toRewindResult(wire: unknown): RewindResult {
     card: toDeckCard(w.card),
     unlimited: bool(allowance.unlimited),
     dailyLimit: num(allowance.daily_limit),
+    remainingToday: num(allowance.remaining_today),
     resetsAt: time(allowance.resets_at),
   }
 }

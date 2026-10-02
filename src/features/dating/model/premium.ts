@@ -4,7 +4,7 @@
     GET  /premium/catalogue               what is sold, priced by the server
     POST /premium/purchases               {product, idempotency_key} → purchase + client_session
     GET  /premium/purchases/:id/payment   confirming | paid | failed
-    GET  /premium/me                      the pass, entitlements, boost balance
+    GET  /premium/me                      the pass, entitlements, boost and Super Spark balances
 
   Rules held here and tested:
     * the request never carries a price (the server refuses one);
@@ -253,3 +253,13 @@ export function passLine(me: MyPremium, locale?: string): string {
 export function boostLine(me: Pick<MyPremium, "boostBalance">): string {
   return me.boostBalance === 1 ? "1 Boost to use" : `${me.boostBalance} Boosts to use`
 }
+
+export function superSparkBalanceLine(me: Pick<MyPremium, "superSparkBalance">): string {
+  return me.superSparkBalance === 1 ? "1 bought Super Spark to use" : `${me.superSparkBalance} bought Super Sparks to use`
+}
+
+/** Super Spark packs on sale: the server lists them only while the mechanic is on. */
+export const sellsSuperSparks = (products: Pick<Product, "kind">[]): boolean => products.some((p) => p.kind === "super_spark")
+
+/** The anchor the out-of-Super-Sparks state links to. */
+export const SUPER_SPARK_PACKS_ANCHOR = "super-spark-packs"

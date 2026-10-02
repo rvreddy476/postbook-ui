@@ -26,6 +26,7 @@ export const KEYS = {
   prompts: ["dating", "prompts", "mine"] as const,
   verification: ["dating", "verification"] as const,
   deck: ["dating", "deck"] as const,
+  allowances: ["dating", "allowances"] as const,
   sparks: ["dating", "sparks"] as const,
   matches: ["dating", "matches"] as const,
   match: (id: string) => ["dating", "matches", id] as const,

@@ -147,6 +147,7 @@ textarea.pulse-input { resize: vertical; }
 .pulse-card[data-pending="spark"] { transform: translateX(46%) rotate(9deg); opacity: .55; }
 .pulse-card[data-pending="pass"] { transform: translateX(-46%) rotate(-9deg); opacity: .55; }
 .pulse-card[data-pending="stash"] { transform: translateY(8%) scale(.95); opacity: .55; }
+.pulse-card[data-pending="super_spark"] { transform: translateY(-10%) scale(.97); opacity: .55; }
 .pulse-deck__actions { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .pulse-act { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); cursor: pointer; transition: transform .12s, border-color .15s; }
 .pulse-act:hover:not(:disabled) { border-color: rgb(var(--brand-outline)); transform: translateY(-1px); }
@@ -154,8 +155,14 @@ textarea.pulse-input { resize: vertical; }
 .pulse-act--small { width: 36px; height: 36px; }
 .pulse-act--pass { width: 56px; height: 56px; color: rgb(var(--danger)); }
 .pulse-act--spark { width: 56px; height: 56px; border-color: rgb(var(--brand-ink)); background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); }
+.pulse-act--super { color: rgb(var(--brand-accent)); }
 .pulse-deck__hint { margin: 0; color: rgb(var(--text-muted)); font-size: 11px; text-align: center; }
+.pulse-deck__meta { margin: 0; color: rgb(var(--text-muted)); font-size: 12px; text-align: center; }
 .pulse-deck__note { width: 100%; max-width: 380px; margin: 0 auto; }
+.pulse-deck__undo { display: flex; justify-content: center; }
+/* The Super Spark marker: icon in the accent, words in ink (the accent is too light for text). */
+.pulse-super { display: inline-flex; align-items: center; gap: 4px; margin: 2px 0; padding: 2px 8px; border-radius: 999px; background: rgb(var(--brand-tint)); color: rgb(var(--brand-ink)); font-size: 11px; font-weight: 700; }
+.pulse-super svg { color: rgb(var(--brand-accent)); fill: currentColor; }
 
 /* ── lists of people ── */
 .pulse-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -168,6 +175,7 @@ textarea.pulse-input { resize: vertical; }
 .pulse-rowcard__meta { margin: 0; color: rgb(var(--text-muted)); font-size: 12px; }
 .pulse-rowcard__note { margin: 4px 0 0; font-size: 13px; overflow-wrap: anywhere; }
 .pulse-rowcard__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.pulse-rowcard--super { border-color: rgb(var(--brand-accent) / .6); }
 
 /* ── full profile ── */
 .pulse-gallery { display: flex; flex-direction: column; gap: 8px; }
@@ -197,7 +205,7 @@ textarea.pulse-input { resize: vertical; }
 
 /* ── premium ── */
 .pulse-products { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.pulse-product { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--brand-divider); border-radius: 16px; background: rgb(var(--brand-card)); }
+.pulse-product { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; scroll-margin-top: 104px; padding: 14px; border: 1px solid var(--brand-divider); border-radius: 16px; background: rgb(var(--brand-card)); }
 .pulse-product__name { margin: 0; font-size: 14px; font-weight: 700; }
 .pulse-product__blurb { margin: 2px 0 0; color: rgb(var(--text-muted)); font-size: 12px; }
 .pulse-product__features { margin: 6px 0 0; padding-left: 16px; font-size: 12px; }

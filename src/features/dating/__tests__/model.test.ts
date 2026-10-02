@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 
+import { leftToday, moreArrive, NO_ALLOWANCES, rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toAllowances, toUsageLimit } from "../model/allowances"
 import { datingErrorCopy, GENERIC_COPY, NETWORK_COPY, AGE_REQUIRED_COPY } from "../model/errors"
 import { distanceLabel, GENDER_OPTIONS, INTENT_OPTIONS, INTERESTED_IN_OPTIONS, intentLabel, PHOTO_VISIBILITY_OPTIONS } from "../model/labels"
 import { chatHref, countdown, MESSENGER_OPENS_CONVERSATION_BY_ID } from "../model/matches"
@@ -245,6 +246,85 @@ describe("the deck", () => {
     expect(actionForKey("ArrowUp", true)).toBe("super_spark")
     expect(actionForKey("a")).toBeNull()
   })
+
+  test("keys: Backspace and Z undo only while the Undo control shows", () => {
+    for (const key of ["Backspace", "z", "Z"]) {
+      expect(actionForKey(key)).toBeNull()
+      expect(actionForKey(key, true, false)).toBeNull()
+      expect(actionForKey(key, false, true)).toBe("rewind")
+    }
+  })
+})
+
+describe("allowances", () => {
+  const iso = "2026-10-03T00:30:00Z"
+
+  test("a mechanic that is absent is off; sparks are always there", () => {
+    const a = toAllowances({ sparks: { unlimited: false, daily_limit: 50, remaining_today: 50 } })
+    expect(a.deck).toBeNull()
+    expect(a.rewind).toBeNull()
+    expect(a.superSpark).toBeNull()
+    // null and a non-object are off too.
+    const b = toAllowances({ sparks: {}, rewind: null, super_spark: "yes" })
+    expect(b.rewind).toBeNull()
+    expect(b.superSpark).toBeNull()
+    expect(toAllowances(undefined)).toEqual(NO_ALLOWANCES)
+  })
+
+  test("remaining_today omitted means 0, and the reset time is read", () => {
+    const a = toAllowances({ sparks: {}, rewind: { unlimited: false, daily_limit: 1, resets_at: iso } })
+    expect(a.rewind).toEqual({ unlimited: false, dailyLimit: 1, remainingToday: 0, resetsAt: iso })
+    expect(leftToday(a.rewind!)).toBe("None left today")
+  })
+
+  test("a pass holder is unlimited and carries no counts", () => {
+    const a = toAllowances({ sparks: { unlimited: true }, rewind: { unlimited: true }, super_spark: { unlimited: true, purchased_balance: 3 } })
+    expect(a.sparks).toEqual({ unlimited: true, dailyLimit: 0, remainingToday: 0, resetsAt: "" })
+    expect(leftToday(a.rewind!)).toBe("Unlimited today")
+    expect(a.superSpark!.purchasedBalance).toBe(3)
+    expect(superSparkNote(a.superSpark!)).toBe("Super Sparks: unlimited today · 3 bought")
+  })
+
+  test("the Super Spark line: today's count, then what was bought", () => {
+    const s = (over: object) => superSparkNote({ unlimited: false, dailyLimit: 1, remainingToday: 0, resetsAt: "", purchasedBalance: 0, ...over })
+    expect(s({ remainingToday: 1 })).toBe("Super Sparks: 1 left today")
+    expect(s({})).toBe("Super Sparks: none left today")
+    expect(s({ purchasedBalance: 4 })).toBe("Super Sparks: none left today · 4 bought")
+  })
+
+  test("Undo shows only with the mechanic on, not hidden this session, right after an accepted pass", () => {
+    const rewind = { unlimited: false, dailyLimit: 1, remainingToday: 1, resetsAt: "" }
+    expect(showRewind({ rewind, off: false, last: "pass" })).toBe(true)
+    expect(showRewind({ rewind, off: false, last: "other" })).toBe(false)
+    expect(showRewind({ rewind, off: false, last: null })).toBe(false)
+    expect(showRewind({ rewind, off: true, last: "pass" })).toBe(false)
+    expect(showRewind({ rewind: null, off: false, last: "pass" })).toBe(false)
+    // Out of rewinds still shows the control: the server answers with the reset time.
+    expect(showRewind({ rewind: { ...rewind, remainingToday: 0 }, off: false, last: "pass" })).toBe(true)
+  })
+
+  test("a refused rewind: nothing and gone hide the control, off hides it for the session, out shows the state", () => {
+    const e = (code: string) => toDatingError(axiosError(code === "REWIND_LIMIT_REACHED" ? 429 : 409, code))
+    expect(rewindRefusal(e("REWIND_NOTHING_TO_UNDO"))).toBe("nothing")
+    expect(rewindRefusal(e("REWIND_LIMIT_REACHED"))).toBe("out")
+    expect(rewindRefusal(e("MECHANIC_NOT_ENABLED"))).toBe("off")
+    expect(rewindRefusal(e("CANDIDATE_UNAVAILABLE"))).toBe("gone")
+    expect(rewindRefusal(e("SOMETHING_NEW"))).toBe("other")
+  })
+
+  test("limits: the three limit refusals read alike, the reset time is local", () => {
+    const err = (code: string) => toDatingError(axiosError(429, code, { limit: 1, window_hours: 24, resets_at: iso }))
+    for (const code of ["SPARK_RATE_LIMITED", "REWIND_LIMIT_REACHED", "SUPER_SPARK_LIMIT_REACHED"]) {
+      expect(toUsageLimit(err(code))).toEqual({ limit: 1, windowHours: 24, resetsAt: iso })
+    }
+    expect(toUsageLimit(err("CANDIDATE_UNAVAILABLE"))).toBeNull()
+    const now = new Date(2026, 9, 2, 10, 0)
+    expect(moreArrive("", now)).toBe(" Try again later.")
+    expect(moreArrive(new Date(2026, 9, 2, 23, 30).toISOString(), now, "en-GB")).toBe(" More arrive at 23:30.")
+    expect(rewindLimitLine({ limit: 3, windowHours: 24, resetsAt: "" })).toBe("You can undo 3 passes every 24 hours.")
+    expect(rewindLimitLine({ limit: 0, windowHours: 0, resetsAt: "" })).toBe("You've used your undos for now.")
+    expect(superSparkLimitLine({ limit: 5, windowHours: 24, resetsAt: "" })).toContain("5 free Super Sparks every 24 hours")
+  })
 })
 
 describe("sparks", () => {
@@ -252,6 +332,13 @@ describe("sparks", () => {
     expect(sparkBody("u2")).toEqual({ to_user_id: "u2", target_kind: "photo", target_ref: "0" })
     expect(sparkBody("u2", "  hi  ")).toEqual({ to_user_id: "u2", target_kind: "photo", target_ref: "0", note: "hi" })
     expect(sparkBody("u2", "   ")).toEqual({ to_user_id: "u2", target_kind: "photo", target_ref: "0" })
+  })
+
+  test("a Super Spark adds super: true; an ordinary spark's body never carries the field", () => {
+    expect(sparkBody("u2", "hi", true)).toEqual({ to_user_id: "u2", target_kind: "photo", target_ref: "0", note: "hi", super: true })
+    expect("super" in sparkBody("u2", "hi", false)).toBe(false)
+    expect(verdictFor(toDatingError(axiosError(429, "SUPER_SPARK_LIMIT_REACHED")))).toBe("super_limit")
+    expect(verdictFor(toDatingError(axiosError(404, "MECHANIC_NOT_ENABLED")))).toBe("keep")
   })
 
   test("matched needs a match id", () => {

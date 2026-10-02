@@ -93,6 +93,7 @@ const COPY: Record<string, string> = {
   SELFIE_REVIEW_PENDING: "Your selfie is being reviewed.",
   SHARE_RECIPIENT_NOT_ALLOWED: "You can share your location only with a match or a trusted contact.",
   SPARK_NOTE_REFUSED: "Notes can't include phone numbers, emails or links.",
+  LIKED_YOU_LOCKED: "See who sparked you with a pass, or find them in your deck.",
   SPARK_RATE_LIMITED: "You're out of sparks for now. Try again later.",
   SUPER_SPARK_LIMIT_REACHED: "You're out of Super Sparks for now. Get a pack, or try again later.",
   TRUSTED_CONTACT_LIMIT: "You already have the most trusted contacts allowed. Remove one to add another.",

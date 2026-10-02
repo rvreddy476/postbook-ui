@@ -1,21 +1,23 @@
 "use client"
 
 /*
-  /dating/premium — one-off passes and Boost. A purchase shows as paid only
+  /dating/premium — one-off passes, Boost and (while the server sells them)
+  Super Spark packs. A purchase shows as paid only
   after the server's payment read says so; the checkout dialog closing is not
   a verdict.
 */
 
-import { BadgeCheck, CircleAlert, Clock, Crown, Hourglass, Zap } from "lucide-react"
+import { BadgeCheck, CircleAlert, Clock, Crown, Hourglass, Star, Zap } from "lucide-react"
 
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Loading, Notice, PageHead, Panel, StatePanel } from "../components/kit"
 import { useCatalogue, useCheckout, useMyPremium, type CheckoutState } from "../hooks/premium"
 import { PASSES_UNAVAILABLE_COPY, isPremiumUnavailable } from "../model/errors"
-import { boostLine, featureLabels, formatAmount, passLine, productBlurb, productTitle, type MyPremium, type Product } from "../model/premium"
+import { boostLine, featureLabels, formatAmount, passLine, productBlurb, productTitle, sellsSuperSparks, SUPER_SPARK_PACKS_ANCHOR, superSparkBalanceLine, type MyPremium, type Product } from "../model/premium"
 import { DATING_BASE } from "../model/profile"
 
-export function Holding({ me }: { me: MyPremium }) {
+/** `superSparks`: draw the Super Spark balance (packs are on sale, or some are left from one). */
+export function Holding({ me, superSparks = false }: { me: MyPremium; superSparks?: boolean }) {
   return (
     <Panel title="What you have">
       <ul className="pulse-plain">
@@ -29,18 +31,26 @@ export function Holding({ me }: { me: MyPremium }) {
             <Zap size={14} aria-hidden="true" /> {boostLine(me)}
           </span>
         </li>
+        {superSparks || me.superSparkBalance > 0 ? (
+          <li className="pulse-plain__row">
+            <span>
+              <Star size={14} aria-hidden="true" /> {superSparkBalanceLine(me)}
+            </span>
+          </li>
+        ) : null}
       </ul>
     </Panel>
   )
 }
 
 export function ProductList({ products, buyingId, disabled, onBuy }: { products: Product[]; buyingId: string; disabled: boolean; onBuy: (p: Product) => void }) {
+  const firstPack = products.find((p) => p.kind === "super_spark")?.id ?? ""
   return (
     <ul className="pulse-products">
       {products.map((p) => {
         const features = featureLabels(p.features)
         return (
-          <li key={p.id} className="pulse-product">
+          <li key={p.id} className="pulse-product" id={p.id === firstPack ? SUPER_SPARK_PACKS_ANCHOR : undefined}>
             <div>
               <h3 className="pulse-product__name">{productTitle(p)}</h3>
               <p className="pulse-product__blurb">{productBlurb(p)}</p>
@@ -129,7 +139,7 @@ function PremiumBody() {
   const buyingId = state.kind === "starting" || state.kind === "dialog" ? state.productId : ""
   return (
     <>
-      {me.data ? <Holding me={me.data} /> : null}
+      {me.data ? <Holding me={me.data} superSparks={sellsSuperSparks(catalogue.data)} /> : null}
       {state.kind === "idle" && state.notice ? <Notice tone="danger">{state.notice}</Notice> : null}
       {catalogue.data.length === 0 ? <PassesUnavailable /> : <ProductList products={catalogue.data} buyingId={buyingId} disabled={buyingId !== ""} onBuy={(p) => void checkout.buy(p)} />}
       <p className="pulse-field__help">Each one is a single payment. A pass ends by itself on its last day; nothing is charged again.</p>
@@ -141,7 +151,7 @@ export function PremiumScreen() {
   return (
     <Guard need="access">
       <div className="pulse-page pulse-page--narrow">
-        <PageHead title="Premium" sub="One-off passes and Boost." back={{ href: DATING_BASE, label: "Pulse" }} />
+        <PageHead title="Premium" sub="One-off passes and extras." back={{ href: DATING_BASE, label: "Pulse" }} />
         <PremiumBody />
       </div>
     </Guard>

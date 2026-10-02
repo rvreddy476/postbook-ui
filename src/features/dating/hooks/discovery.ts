@@ -3,13 +3,14 @@
 /* The deck, sparks, the stash, people, matches, and the photo loader. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-import { acceptSpark, addStash, closeMatch, createSpark, declineSpark, extendMatch, fetchDeck, fetchIncomingSparks, fetchMatch, fetchMatches, fetchPerson, passCandidate } from "../api/discovery"
+import { acceptSpark, addStash, closeMatch, createSpark, declineSpark, extendMatch, fetchAllowances, fetchDeck, fetchIncomingSparks, fetchMatch, fetchMatches, fetchPerson, passCandidate, rewindLastPass } from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
+import type { Allowances } from "../model/allowances"
 import type { Match } from "../model/matches"
 import { photoPath, type Person } from "../model/people"
-import type { Deck } from "../model/pulse"
+import type { Deck, RewindResult } from "../model/pulse"
 import type { IncomingSpark, SparkOutcome } from "../model/sparks"
 import { errorStatus } from "../model/wire"
 import { KEYS } from "./profile"
@@ -24,19 +25,81 @@ export function useDeck(enabled = true) {
   return useQuery<Deck>({ queryKey: KEYS.deck, queryFn: fetchDeck, retry, enabled, staleTime: 60_000, refetchOnWindowFocus: false })
 }
 
+/**
+  Every daily allowance, and which optional mechanics are on. Read again after
+  every spark, Super Spark, pass, rewind and completed purchase. A failed read
+  leaves `data` undefined, which the screens treat as "every mechanic off".
+*/
+export function useAllowances(enabled = true) {
+  return useQuery<Allowances>({ queryKey: KEYS.allowances, queryFn: fetchAllowances, retry, enabled, staleTime: 30_000 })
+}
+
 /** No optimistic update anywhere here: a card leaves the deck only after the server accepts. */
 export function useSpark() {
   const qc = useQueryClient()
-  return useMutation<SparkOutcome, unknown, { toUserId: string; note?: string }>({
-    mutationFn: ({ toUserId, note }) => createSpark(toUserId, note),
+  return useMutation<SparkOutcome, unknown, { toUserId: string; note?: string; superSpark?: boolean }>({
+    mutationFn: ({ toUserId, note, superSpark }) => createSpark(toUserId, note, superSpark),
     onSuccess: (outcome) => {
       if (outcome.matched) void qc.invalidateQueries({ queryKey: KEYS.matches })
     },
+    // Accepted or refused, the counts may have moved (a refusal means the read was stale).
+    onSettled: () => void qc.invalidateQueries({ queryKey: KEYS.allowances }),
   })
 }
 
 export function usePass() {
-  return useMutation<unknown, unknown, string>({ mutationFn: passCandidate })
+  const qc = useQueryClient()
+  return useMutation<unknown, unknown, string>({
+    mutationFn: passCandidate,
+    onSettled: () => void qc.invalidateQueries({ queryKey: KEYS.allowances }),
+  })
+}
+
+/** Undo the last pass. With no card in the answer the deck is read again so the person comes back from the server. */
+export function useRewind() {
+  const qc = useQueryClient()
+  return useMutation<RewindResult, unknown, void>({
+    mutationFn: () => rewindLastPass(),
+    onSuccess: (result) => {
+      if (!result.card) void qc.invalidateQueries({ queryKey: KEYS.deck })
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: KEYS.allowances }),
+  })
+}
+
+/* ── a flag for the rest of the browser session ──────────────────── */
+
+const sessionFlags = new Set<string>()
+
+function readSessionFlag(name: string): boolean {
+  if (sessionFlags.has(name)) return true
+  try {
+    return window.sessionStorage.getItem(`pulse.${name}`) === "1"
+  } catch {
+    return false
+  }
+}
+
+/**
+  A one-way switch that lasts the browser session (MECHANIC_NOT_ENABLED hides
+  a control until the tab is closed). Read after mount, so the server render
+  and the first client render agree.
+*/
+export function useSessionFlag(name: string): [boolean, () => void] {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    if (readSessionFlag(name)) setOn(true)
+  }, [name])
+  const raise = useCallback(() => {
+    sessionFlags.add(name)
+    try {
+      window.sessionStorage.setItem(`pulse.${name}`, "1")
+    } catch {
+      // Storage refused: the in-memory flag still lasts this page's life.
+    }
+    setOn(true)
+  }, [name])
+  return [on, raise]
 }
 
 export function useStash() {

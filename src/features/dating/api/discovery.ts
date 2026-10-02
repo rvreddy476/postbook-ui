@@ -2,7 +2,8 @@
 
 import { toCloseResult, toExtendResult, toMatch, toMatches, type Match } from "../model/matches"
 import { toPerson, type Person } from "../model/people"
-import { toDeck, toPassResult, type Deck, type PassResult } from "../model/pulse"
+import { toAllowances, type Allowances } from "../model/allowances"
+import { toDeck, toPassResult, toRewindResult, type Deck, type PassResult, type RewindResult } from "../model/pulse"
 import { sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
 import { del, get, getBody, post, seg } from "./client"
 
@@ -15,8 +16,19 @@ export async function passCandidate(candidateId: string): Promise<PassResult> {
   return toPassResult(await post(`/pulse/${seg(candidateId)}/pass`, {}))
 }
 
-export async function createSpark(toUserId: string, note?: string): Promise<SparkOutcome> {
-  return toSparkOutcome(await post("/sparks", sparkBody(toUserId, note)))
+/** POST /pulse/rewind — undo the most recent pass, one step. The route reads no body. */
+export async function rewindLastPass(): Promise<RewindResult> {
+  return toRewindResult(await post("/pulse/rewind"))
+}
+
+/** GET /allowances — a mechanic whose flag is off is absent. */
+export async function fetchAllowances(): Promise<Allowances> {
+  return toAllowances(await get("/allowances"))
+}
+
+/** `superSpark` sends it as a Super Spark (mechanic M3). */
+export async function createSpark(toUserId: string, note?: string, superSpark = false): Promise<SparkOutcome> {
+  return toSparkOutcome(await post("/sparks", sparkBody(toUserId, note, superSpark)))
 }
 
 export async function fetchIncomingSparks(): Promise<IncomingSpark[]> {

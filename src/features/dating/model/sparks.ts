@@ -12,13 +12,16 @@ export interface SparkBody {
   target_kind: "photo"
   target_ref: "0"
   note?: string
+  /** Mechanic M3: sent only when true, so an ordinary spark's body is unchanged. */
+  super?: true
 }
 
 /** A spark on someone's primary photo (handler_sparks.go createSparkRequest; Android DatingRepository.spark). */
-export function sparkBody(toUserId: string, note?: string): SparkBody {
+export function sparkBody(toUserId: string, note?: string, superSpark = false): SparkBody {
   const body: SparkBody = { to_user_id: toUserId, target_kind: "photo", target_ref: "0" }
   const n = (note ?? "").trim()
   if (n) body.note = n
+  if (superSpark) body.super = true
   return body
 }
 
@@ -102,18 +105,20 @@ export function sparkLimitLine(limit: SparkLimit): string {
 
 /* ── what a refused deck action does to the card ─────────────────── */
 
-export type CardVerdict = "drop" | "keep" | "limit" | "onboarding"
+export type CardVerdict = "drop" | "keep" | "limit" | "super_limit" | "onboarding"
 
 /**
-  After the server refuses a spark, pass or stash:
-    CANDIDATE_UNAVAILABLE → the card goes (the person is gone for this viewer);
-    SPARK_RATE_LIMITED    → the card stays and the out-of-sparks state shows;
-    ONBOARDING_INCOMPLETE → back through the gate;
-    anything else         → the card rolls back where it was.
+  After the server refuses a spark, Super Spark, pass or stash:
+    CANDIDATE_UNAVAILABLE     → the card goes (the person is gone for this viewer);
+    SPARK_RATE_LIMITED        → the card stays and the out-of-sparks state shows;
+    SUPER_SPARK_LIMIT_REACHED → the card stays and the out-of-Super-Sparks state shows;
+    ONBOARDING_INCOMPLETE     → back through the gate;
+    anything else             → the card rolls back where it was.
 */
 export function verdictFor(error: DatingError): CardVerdict {
   if (error.code === "CANDIDATE_UNAVAILABLE") return "drop"
   if (error.code === "SPARK_RATE_LIMITED") return "limit"
+  if (error.code === "SUPER_SPARK_LIMIT_REACHED") return "super_limit"
   if (error.code === "ONBOARDING_INCOMPLETE") return "onboarding"
   return "keep"
 }

@@ -102,6 +102,8 @@ export function useCheckout() {
         key.current.reset()
         setState({ kind: "paid", productName: poll.productName, refunding: s.refundStatus !== "" })
         void qc.invalidateQueries({ queryKey: KEYS.premiumMe })
+        // A pass lifts allowances and a pack adds Super Sparks.
+        void qc.invalidateQueries({ queryKey: KEYS.allowances })
       } else if (s.phase === "failed" || s.phase === "stopped") {
         key.current.reset()
         setState({ kind: "failed", productId: "", productName: poll.productName, reason: "" })

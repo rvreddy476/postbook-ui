@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 
+import { rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toAllowances, toUsageLimit } from "../model/allowances"
 import { isGranted, toConsents } from "../model/consents"
 import { exportView, hasPendingExport, toDataExport, toDataExports } from "../model/dataExport"
 import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, isAgeRefusal, isPremiumUnavailable, PASSES_UNAVAILABLE_COPY } from "../model/errors"
@@ -11,6 +12,7 @@ import { toPromptAnswer, toPromptAnswers } from "../model/prompts"
 import { deckEmptyKind, toDeck, toExplain, toPassResult, toRewindResult } from "../model/pulse"
 import { razorpayOptions, toCatalogue, toMyPremium, toPaymentReading, toPurchase } from "../model/premium"
 import { toBlockResult, toBlocks, toLocationShare, toLocationShares, toPanicResult, toReportResult, toTrustedContact, toTrustedContacts } from "../model/safety"
+import { toLikedYou } from "../model/likedYou"
 import { sparkLimitLine, toDeclineResult, toIncomingSparks, toSparkLimit, toSparkOutcome, toStash, toStashEntry, verdictFor } from "../model/sparks"
 import { toSelfieChallenge, toSelfieResult, toVerificationStatus, viewFromRefusal, viewFromResult, viewFromStatus, recordMillis } from "../model/verification"
 import { errorFromEnvelope } from "../model/wire"
@@ -142,6 +144,25 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   },
   selfie_post_409_media_not_ready: refusal("MEDIA_NOT_READY"),
 
+  /* allowances (mechanic M10) */
+  allowances_get_200: (f) => {
+    const a = toAllowances(f.data)
+    expect(a.sparks).toEqual({ unlimited: false, dailyLimit: 50, remainingToday: 49, resetsAt: "" })
+    expect(a.deck).toEqual({ unlimited: false, dailyLimit: 25, remainingToday: 23, resetsAt: "" })
+    expect(a.rewind).toEqual({ unlimited: false, dailyLimit: 1, remainingToday: 1, resetsAt: "" })
+    expect(a.superSpark).toEqual({ unlimited: false, dailyLimit: 1, remainingToday: 1, resetsAt: "", purchasedBalance: 0 })
+    expect(superSparkNote(a.superSpark!)).toBe("Super Sparks: 1 left today")
+  },
+  allowances_get_200_mechanics_off: (f) => {
+    const a = toAllowances(f.data)
+    expect(a.sparks.remainingToday).toBe(50)
+    // Absent mechanics are off: no Undo, no Super Spark.
+    expect(a.deck).toBeNull()
+    expect(a.rewind).toBeNull()
+    expect(a.superSpark).toBeNull()
+    expect(showRewind({ rewind: a.rewind, off: false, last: "pass" })).toBe(false)
+  },
+
   /* people, the deck */
   person_get_200: (f) => {
     const p = person(f.data)
@@ -186,7 +207,7 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     // Cards gone locally but some remain today: not "out for today".
     expect(deckEmptyKind(deck, 0)).toBe("none_left")
   },
-  // Mechanic M2 (undo the last pass). Parsed for the contract; no screen calls it yet.
+  // Mechanic M2: undo the last pass; the card comes back on top of the deck.
   pulse_rewind_post_200: (f) => {
     const r = toRewindResult(f.data)
     expect(r.rewound).toBe(true)
@@ -194,10 +215,23 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(r.card?.person.firstName).toBe("Asha")
     expect(r.unlimited).toBe(false)
     expect(r.dailyLimit).toBe(1)
+    // The one rewind is spent: remaining_today is omitted, so 0.
+    expect(r.remainingToday).toBe(0)
   },
-  pulse_rewind_404_not_enabled: refusal("MECHANIC_NOT_ENABLED"),
-  pulse_rewind_409_nothing_to_undo: refusal("REWIND_NOTHING_TO_UNDO"),
-  pulse_rewind_429_limit_reached: refusal("REWIND_LIMIT_REACHED"),
+  pulse_rewind_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(rewindRefusal(errorFromEnvelope(f))).toBe("off")
+  }),
+  pulse_rewind_409_nothing_to_undo: refusal("REWIND_NOTHING_TO_UNDO", (f) => {
+    expect(rewindRefusal(errorFromEnvelope(f))).toBe("nothing")
+  }),
+  pulse_rewind_429_limit_reached: refusal("REWIND_LIMIT_REACHED", (f) => {
+    const e = errorFromEnvelope(f)
+    expect(rewindRefusal(e)).toBe("out")
+    expect(e.details.resets_at).toBe("<timestamp>")
+    // The placeholder timestamp does not parse, so no reset time is drawn.
+    expect(toUsageLimit(e)).toEqual({ limit: 1, windowHours: 24, resetsAt: "" })
+    expect(rewindLimitLine(toUsageLimit(e)!)).toBe("You can undo one pass every 24 hours.")
+  }),
   pulse_pass_post_200: (f) => expect(toPassResult(f.data).passed).toBe(true),
   pulse_pass_400_reason_too_long: refusal("PASS_REASON_TOO_LONG"),
   pulse_explain_get_200: (f) => {
@@ -216,12 +250,43 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(o.matchId).not.toBe("")
   },
   spark_accept_post_201: (f) => expect(toSparkOutcome(f.data).matched).toBe(true),
+  spark_accept_403_liked_you_locked: refusal("LIKED_YOU_LOCKED"),
+  liked_you_get_200_locked: (f) => {
+    const l = toLikedYou(f.data)
+    expect(l.unlocked).toBe(false)
+    expect(l.total).toBe(2)
+    expect(l.cards.map((c) => c.isSuper)).toEqual([true, false])
+    for (const c of l.cards) {
+      expect(c.person).toBeNull()
+      expect(c.note).toBe("")
+      expect(c.photoUrl).toBe("/v1/dating/liked-you/<uuid>/photo")
+    }
+  },
+  liked_you_get_200_unlocked: (f) => {
+    const l = toLikedYou(f.data)
+    expect(l.unlocked).toBe(true)
+    expect(l.cards).toHaveLength(2)
+    expect(l.cards[0].isSuper).toBe(true)
+    expect(l.cards[0].person?.firstName).toBe("Asha")
+    expect(l.cards[0].note).toBe("Loved your answer")
+  },
+  sparks_incoming_get_200_locked: (f) => {
+    const sparks = toIncomingSparks(f.data)
+    expect(sparks).toHaveLength(2)
+    expect(sparks.map((s) => s.isSuper)).toEqual([true, false])
+    expect(sparks.every((s) => s.person === null && s.fromUserId === "" && s.note === "")).toBe(true)
+  },
   spark_create_post_201_super: (f) => {
     const o = toSparkOutcome(f.data)
     expect(o.isSuper).toBe(true)
     expect(o.matched).toBe(false)
   },
-  spark_create_429_super_limit_reached: refusal("SUPER_SPARK_LIMIT_REACHED"),
+  spark_create_429_super_limit_reached: refusal("SUPER_SPARK_LIMIT_REACHED", (f) => {
+    const e = errorFromEnvelope(f)
+    expect(verdictFor(e)).toBe("super_limit")
+    expect(toUsageLimit(e)).toEqual({ limit: 1, windowHours: 24, resetsAt: "" })
+    expect(superSparkLimitLine(toUsageLimit(e)!)).toContain("one free Super Spark every 24 hours")
+  }),
   spark_create_404_candidate_unavailable: refusal("CANDIDATE_UNAVAILABLE", (f) => {
     expect(verdictFor(errorFromEnvelope(f))).toBe("drop")
   }),
@@ -231,8 +296,11 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   spark_create_429_rate_limited: refusal("SPARK_RATE_LIMITED", (f) => {
     const e = errorFromEnvelope(f)
     expect(verdictFor(e)).toBe("limit")
+    // resets_at is always sent now; the fixture's placeholder does not parse, so it reads as "".
+    expect(e.details.resets_at).toBe("<timestamp>")
     const limit = toSparkLimit(e)!
     expect(limit).toEqual({ limit: 50, windowHours: 24, resetsAt: "" })
+    expect(toUsageLimit(e)).toEqual(limit)
     expect(sparkLimitLine(limit)).toBe("You can send 50 sparks every 24 hours.")
   }),
   spark_decline_post_200: (f) => expect(toDeclineResult(f.data)).toEqual({ declined: true, sparkId: "<spark>" }),
@@ -368,7 +436,7 @@ describe("dating contract fixtures", () => {
   const names = fixtureNames()
 
   test("the fixtures are on disk", () => {
-    expect(names.length).toBeGreaterThanOrEqual(81)
+    expect(names.length).toBeGreaterThanOrEqual(83)
   })
 
   test("every fixture has a parser, and every parser has a fixture", () => {

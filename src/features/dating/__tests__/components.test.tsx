@@ -9,11 +9,12 @@ import { PhotoFrame } from "../components/DatingPhoto"
 import { ClosedState } from "../components/Guard"
 import { MatchCelebration } from "../components/MatchCelebration"
 import { ReportForm } from "../components/SafetyActions"
-import { SwipeDeck } from "../components/SwipeDeck"
+import { SwipeDeck, cardKeysLabel, deckHint } from "../components/SwipeDeck"
 import { CLOSED_TITLE } from "../model/errors"
 import { toPerson } from "../model/people"
 import { toDeck } from "../model/pulse"
-import { DeckEmpty, MatchList, OutOfSparks } from "../screens/HomeScreen"
+import { toIncomingSparks } from "../model/sparks"
+import { DeckEmpty, MatchList, OutOfRewinds, OutOfSparks, OutOfSuperSparks, SparkRows } from "../screens/HomeScreen"
 import { CountdownNotice } from "../screens/MatchScreen"
 import { AgeRefusal, PhotoTile, StepHeader } from "../screens/OnboardingScreens"
 import { PersonDetails } from "../screens/PersonScreen"
@@ -22,7 +23,7 @@ import { WaitingState } from "../screens/RootScreen"
 import { BlockList, MOBILE_SAFETY_LINE, contactCandidates } from "../screens/SafetyScreen"
 import { ConsentAsk, MobileOnlyNotice, SelfieOutcome } from "../screens/SelfieScreen"
 import { ConsentToggles, ExportList, PrivacyToggles } from "../screens/SettingsScreen"
-import { toCatalogue, toMyPremium } from "../model/premium"
+import { sellsSuperSparks, toCatalogue, toMyPremium } from "../model/premium"
 import { toMatches } from "../model/matches"
 import { toConsents } from "../model/consents"
 
@@ -131,6 +132,83 @@ describe("the deck", () => {
     const out = html(<OutOfSparks limit={{ limit: 50, windowHours: 24, resetsAt: "" }} onClose={noop} />)
     expect(out).toContain("out of sparks for now")
     expect(out).toContain("You can send 50 sparks every 24 hours.")
+    expect(out).toContain("Try again later.")
+  })
+
+  test("out of sparks shows the local reset time from resets_at", () => {
+    const resetsAt = new Date(Date.now() + 3600_000).toISOString()
+    const out = html(<OutOfSparks limit={{ limit: 50, windowHours: 24, resetsAt }} onClose={noop} />)
+    expect(out).toMatch(/More arrive (at|\w+day at) /)
+    expect(out).not.toContain("Try again later.")
+  })
+})
+
+describe("the deck: Undo", () => {
+  test("no Undo control unless the screen says one is allowed; the hint names the keys only while rewind is on", () => {
+    const off = html(<SwipeDeck cards={deck.cards} onAction={noop} />)
+    expect(off).not.toContain("Undo last pass")
+    expect(off).not.toContain("Backspace")
+    const available = html(<SwipeDeck cards={deck.cards} onAction={noop} rewindAvailable />)
+    expect(available).not.toContain('aria-label="Undo last pass"')
+    expect(available).toContain("Backspace or Z undoes your last pass.")
+  })
+
+  test("after an accepted pass: the Undo control, its count, and the key on the card", () => {
+    const out = html(<SwipeDeck cards={deck.cards} onAction={noop} rewindAvailable canRewind rewindNote="1 left today" />)
+    expect(out).toMatch(/<button[^>]*aria-label="Undo last pass"[^>]*title="Undo last pass · 1 left today"/)
+    expect(out).toContain("Backspace to undo your last pass")
+    // Undo is one more control, and it waits with the rest while the server decides.
+    const busy = html(<SwipeDeck cards={deck.cards} pending="rewind" onAction={noop} rewindAvailable canRewind />)
+    expect((busy.match(/<button[^>]*disabled=""/g) ?? []).length).toBe(5)
+  })
+
+  test("the keyboard words with both mechanics off are unchanged", () => {
+    expect(cardKeysLabel(false, false)).toBe("Arrow right to spark, arrow left to pass, Enter to open the profile.")
+    expect(cardKeysLabel(true, true)).toBe("Arrow right to spark, arrow left to pass, arrow up to send a Super Spark, Backspace to undo your last pass, Enter to open the profile.")
+    expect(deckHint(false, false)).toBe("Drag the card, or use the arrow keys. Enter opens the full profile.")
+    expect(deckHint(true, false)).toContain("Arrow up sends a Super Spark.")
+  })
+
+  test("out of undos: the limit, the local reset time, and a way to Premium", () => {
+    const resetsAt = new Date(Date.now() + 3600_000).toISOString()
+    const out = html(<OutOfRewinds limit={{ limit: 1, windowHours: 24, resetsAt }} onClose={noop} />)
+    expect(out).toContain("No undos left for now")
+    expect(out).toContain("You can undo one pass every 24 hours.")
+    expect(out).toMatch(/More arrive (at|\w+day at) /)
+    expect(out).toContain('href="/dating/premium"')
+    expect(out).toContain(">Keep browsing<")
+    expect(html(<OutOfRewinds limit={{ limit: 0, windowHours: 0, resetsAt: "" }} onClose={noop} />)).toContain("Try again later.")
+  })
+})
+
+describe("the deck: Super Spark", () => {
+  test("enabled: the control, the arrow-up hint and what is left", () => {
+    const out = html(<SwipeDeck cards={deck.cards} onAction={noop} superSparkEnabled superSparkNote="Super Sparks: 1 left today · 4 bought" />)
+    expect(out).toMatch(/<button[^>]*aria-label="Super Spark"/)
+    expect(out).toContain("Super Sparks: 1 left today · 4 bought")
+    expect(out).toContain("Arrow up sends a Super Spark.")
+    // Off, the count is not drawn even if given.
+    expect(html(<SwipeDeck cards={deck.cards} onAction={noop} superSparkNote="Super Sparks: 1 left today" />)).not.toContain("1 left today")
+  })
+
+  test("out of Super Sparks: the reset time and a link to the packs", () => {
+    const resetsAt = new Date(Date.now() + 3600_000).toISOString()
+    const out = html(<OutOfSuperSparks limit={{ limit: 1, windowHours: 24, resetsAt }} onClose={noop} />)
+    expect(out).toContain("out of Super Sparks for now")
+    expect(out).toMatch(/More arrive (at|\w+day at) /)
+    expect(out).toContain('href="/dating/premium#super-spark-packs"')
+    expect(out).toContain(">Get a Super Spark pack<")
+  })
+
+  test("incoming: a Super Spark is marked with a star and our own words; an ordinary one is not", () => {
+    const sparks = toIncomingSparks(readFixture("sparks_incoming_get_200_super_first").data)
+    const out = html(<SparkRows sparks={sparks} acting="" accepting={false} onAccept={noop} onDecline={noop} />)
+    expect((out.match(/Sent you a Super Spark/g) ?? []).length).toBe(1)
+    expect((out.match(/pulse-rowcard--super/g) ?? []).length).toBe(1)
+    expect(out).toContain("lucide-star")
+    // The marked one comes first, in the server's order.
+    expect(out.indexOf("Sent you a Super Spark")).toBeLessThan(out.indexOf("pulse-rowcard\""))
+    expect(out).not.toMatch(/super like/i)
   })
 })
 
@@ -310,6 +388,24 @@ describe("premium", () => {
     // Confirming is not paid.
     expect(all[3]).not.toContain("Payment received")
     expect(html(<CheckoutOutcome state={{ kind: "idle", notice: "" }} onDone={noop} onCheckAgain={noop} />)).toBe("")
+  })
+
+  test("Super Spark packs show their quantity, and the bought balance sits next to Boost", () => {
+    const withPacks = toCatalogue(readFixture("premium_catalogue_get_200_super_spark").data)
+    const list = html(<ProductList products={withPacks} buyingId="" disabled={false} onBuy={noop} />)
+    expect(list).toContain(">5 Super Sparks<")
+    expect(list).toContain(">15 Super Sparks<")
+    expect(list).toContain('id="super-spark-packs"')
+    expect((list.match(/id="super-spark-packs"/g) ?? []).length).toBe(1)
+    expect(sellsSuperSparks(withPacks)).toBe(true)
+    expect(sellsSuperSparks(products)).toBe(false)
+
+    const held = html(<Holding me={{ ...me, superSparkBalance: 4 }} superSparks />)
+    expect(ascending(held, ["1 Boost to use", "4 bought Super Sparks to use"])).toBe(true)
+    expect(html(<Holding me={{ ...me, superSparkBalance: 1 }} />)).toContain("1 bought Super Spark to use")
+    // Nothing on sale and nothing held: no Super Spark line at all.
+    expect(html(<Holding me={me} />)).not.toContain("Super Spark")
+    expect(html(<Holding me={me} superSparks />)).toContain("0 bought Super Sparks to use")
   })
 
   test("one-off passes only: no screen says subscription or renews", () => {
