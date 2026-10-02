@@ -39,10 +39,10 @@ const asha = deck.cards[0].person
 
 describe("navigation", () => {
   test("the tabs and the More menu are alphabetical", () => {
-    expect(PRIMARY_NAV.map((e) => e.label)).toEqual(["Deck", "Liked you", "Matches"])
+    expect(PRIMARY_NAV.map((e) => e.label)).toEqual(["Deck", "Liked you", "Matches", "Picks"])
     expect(MORE_NAV.map((e) => e.label)).toEqual(["Premium", "Safety", "Settings"])
     const out = html(<DatingNav pathname="/dating/matches" />)
-    expect(ascending(out, [">Deck<", ">Liked you<", ">Matches<",">More<", ">Premium<", ">Safety<", ">Settings<"])).toBe(true)
+    expect(ascending(out, [">Deck<", ">Liked you<", ">Matches<", ">Picks<", ">More<", ">Premium<", ">Safety<", ">Settings<"])).toBe(true)
     expect(out).toContain('<a class="pulse-nav__link" aria-current="page" href="/dating/matches">')
     expect((out.match(/aria-current="page"/g) ?? []).length).toBe(1)
   })

@@ -11,6 +11,7 @@ import {
   closeMatch,
   createSpark,
   declineSpark,
+  endTravel,
   extendMatch,
   fetchAllowances,
   fetchDeck,
@@ -20,13 +21,20 @@ import {
   fetchMatch,
   fetchMatches,
   fetchPerson,
+  fetchPicks,
+  fetchTravel,
   passCandidate,
   rewindLastPass,
   saveFirstMove,
   sendOpeningAnswer,
+  startTravel,
 } from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
 import type { Allowances } from "../model/allowances"
+import { isMechanicOff, isTravelRequiresPass } from "../model/errors"
+import type { Picks } from "../model/picks"
+import type { ActionSource } from "../model/sparks"
+import type { TravelForm, TravelState } from "../model/travel"
 import type { FirstMoveSettings, OpeningAnswerResult } from "../model/firstMove"
 import { isLikedYouLocked, lockLikedYou, type LikedYou } from "../model/likedYou"
 import type { ExtendResult, Match } from "../model/matches"
@@ -55,11 +63,14 @@ export function useAllowances(enabled = true) {
   return useQuery<Allowances>({ queryKey: KEYS.allowances, queryFn: fetchAllowances, retry, enabled, staleTime: 30_000 })
 }
 
-/** No optimistic update anywhere here: a card leaves the deck only after the server accepts. */
+/**
+  No optimistic update anywhere here: a card leaves the deck only after the
+  server accepts. `source` (M7) is the deck unless said otherwise.
+*/
 export function useSpark() {
   const qc = useQueryClient()
-  return useMutation<SparkOutcome, unknown, { toUserId: string; note?: string; superSpark?: boolean }>({
-    mutationFn: ({ toUserId, note, superSpark }) => createSpark(toUserId, note, superSpark),
+  return useMutation<SparkOutcome, unknown, { toUserId: string; note?: string; superSpark?: boolean; source?: ActionSource }>({
+    mutationFn: ({ toUserId, note, superSpark, source }) => createSpark(toUserId, note, superSpark, source),
     onSuccess: (outcome) => {
       if (outcome.matched) void qc.invalidateQueries({ queryKey: KEYS.matches })
     },
@@ -70,9 +81,76 @@ export function useSpark() {
 
 export function usePass() {
   const qc = useQueryClient()
-  return useMutation<unknown, unknown, string>({
-    mutationFn: passCandidate,
+  return useMutation<unknown, unknown, { candidateId: string; source?: ActionSource }>({
+    mutationFn: ({ candidateId, source }) => passCandidate(candidateId, source),
     onSettled: () => void qc.invalidateQueries({ queryKey: KEYS.allowances }),
+  })
+}
+
+/* ── daily picks (mechanic M7) ───────────────────────────────────── */
+
+/** The session flag that hides Picks once the server has said the mechanic is off. */
+export const PICKS_OFF_FLAG = "picks-off"
+
+/**
+  Today's picks. They stay the same all day, so they are not read again on
+  focus; the screen asks again when `resetsAt` passes. A 404
+  MECHANIC_NOT_ENABLED hides Picks for the rest of the session.
+*/
+export function usePicks(enabled = true) {
+  const query = useQuery<Picks>({ queryKey: KEYS.picks, queryFn: () => fetchPicks(), retry, enabled, staleTime: 5 * 60_000, refetchOnWindowFocus: false })
+  const [, raiseOff] = useSessionFlag(PICKS_OFF_FLAG)
+  const off = query.isError && isMechanicOff(query.error)
+  useEffect(() => {
+    if (off) raiseOff()
+  }, [off, raiseOff])
+  return query
+}
+
+/**
+  For the tabs: true once picks are known to be off, from this session's
+  flag or from a read already in the cache. It never asks the server itself
+  (the picks are made on the first read of the day, so only a ready profile
+  reads them).
+*/
+export function usePicksKnownOff(): boolean {
+  const cached = useQuery<Picks>({ queryKey: KEYS.picks, queryFn: () => fetchPicks(), retry, enabled: false })
+  const [flag] = useSessionFlag(PICKS_OFF_FLAG)
+  return flag || (cached.isError && isMechanicOff(cached.error))
+}
+
+/* ── travel mode (mechanic M8) ───────────────────────────────────── */
+
+/** The trip, the cities and whether the viewer may travel. A 404 MECHANIC_NOT_ENABLED means travel is hidden. */
+export function useTravel(enabled = true) {
+  return useQuery<TravelState>({ queryKey: KEYS.travel, queryFn: fetchTravel, retry, enabled, staleTime: 60_000 })
+}
+
+/** Everything the trip moves: the deck and the picks are now another city's. */
+function afterTrip(qc: QueryClient, state?: TravelState) {
+  if (state) qc.setQueryData(KEYS.travel, state)
+  else void qc.invalidateQueries({ queryKey: KEYS.travel })
+  void qc.invalidateQueries({ queryKey: KEYS.deck })
+  void qc.invalidateQueries({ queryKey: KEYS.picks })
+}
+
+export function useStartTravel() {
+  const qc = useQueryClient()
+  return useMutation<TravelState, unknown, TravelForm>({
+    mutationFn: startTravel,
+    onSuccess: (state) => afterTrip(qc, state),
+    // A 403 means `available` on screen was stale: read it again.
+    onError: (error) => {
+      if (isTravelRequiresPass(error)) void qc.invalidateQueries({ queryKey: KEYS.travel })
+    },
+  })
+}
+
+export function useEndTravel() {
+  const qc = useQueryClient()
+  return useMutation<TravelState, unknown, void>({
+    mutationFn: () => endTravel(),
+    onSuccess: (state) => afterTrip(qc, state),
   })
 }
 

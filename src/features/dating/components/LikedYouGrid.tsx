@@ -16,7 +16,7 @@ import { LIKED_YOU_CTA, lockedTileLabel, moreThanShown, unlockedTileLabel, type 
 import { nameLine } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { DatingPhoto } from "./DatingPhoto"
-import { Button, LinkButton } from "./kit"
+import { Button, LinkButton, TravelPill } from "./kit"
 
 export const PREMIUM_HREF = `${DATING_BASE}/premium`
 
@@ -92,6 +92,11 @@ export function UnlockedTile({
       <button type="button" className="pulse-like__tile" aria-label={unlockedTileLabel(card)} disabled={!person} onClick={() => onOpen(card)}>
         <DatingPhoto path={card.photoUrl} alt="" className="pulse-like__photo" />
         {card.isSuper ? <SuperStar /> : null}
+        {person?.travelling ? (
+          <span className="pulse-like__travel" aria-hidden="true">
+            <TravelPill person={person} />
+          </span>
+        ) : null}
         <span className="pulse-like__caption" aria-hidden="true">
           <span className="pulse-like__name">{person ? nameLine(person) : "Someone who has left Pulse"}</span>
           {person?.verified ? <BadgeCheck size={14} className="pulse-like__verified" /> : null}

@@ -7,7 +7,7 @@
   was a Super Spark. Unlocked: each card carries the person.
 */
 
-import { likedYouPhotoPath, nameLine, photoPath, toPerson, type Person } from "./people"
+import { likedYouPhotoPath, nameLine, photoPath, toPerson, travelMarker, type Person } from "./people"
 import { arr, bool, num, obj, str, time, toDatingError } from "./wire"
 
 export interface LikedYouCard {
@@ -69,7 +69,8 @@ export function lockedTileLabel(card: Pick<LikedYouCard, "isSuper">): string {
 /** An unlocked tile's label: the person, then what opening it does. */
 export function unlockedTileLabel(card: Pick<LikedYouCard, "isSuper" | "person">): string {
   const who = card.person ? nameLine(card.person) : "Someone who has left Pulse"
-  return `${who}${card.isSuper ? ", sent you a Super Spark" : ""}. Open profile.`
+  const marker = card.person ? travelMarker(card.person) : ""
+  return `${who}${card.isSuper ? ", sent you a Super Spark" : ""}.${marker ? ` ${marker}.` : ""} Open profile.`
 }
 
 /** How many sparks the grid does not show (past the first page). */

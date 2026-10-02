@@ -6,7 +6,9 @@ import { toPerson, type Person } from "../model/people"
 import { toAllowances, type Allowances } from "../model/allowances"
 import { LIKED_YOU_PAGE, toLikedYou, type LikedYou } from "../model/likedYou"
 import { toDeck, toPassResult, toRewindResult, type Deck, type PassResult, type RewindResult } from "../model/pulse"
-import { sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
+import { browserTimeZone, loadPicksWithZone, toPicks, type Picks } from "../model/picks"
+import { passBody, sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type ActionSource, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
+import { toTravelState, travelBody, type TravelForm, type TravelState } from "../model/travel"
 import { del, get, getBody, post, put, seg } from "./client"
 
 /** GET /pulse/today — `{data: [cards], meta}`; the mapper takes the whole body. */
@@ -14,8 +16,33 @@ export async function fetchDeck(): Promise<Deck> {
   return toDeck(await getBody("/pulse/today"))
 }
 
-export async function passCandidate(candidateId: string): Promise<PassResult> {
-  return toPassResult(await post(`/pulse/${seg(candidateId)}/pass`, {}))
+/** `source` other than the deck spends no deck card (mechanic M7); the deck sends `{}` as before. */
+export async function passCandidate(candidateId: string, source: ActionSource = "deck"): Promise<PassResult> {
+  return toPassResult(await post(`/pulse/${seg(candidateId)}/pass`, passBody(source)))
+}
+
+/* ── daily picks (mechanic M7) ───────────────────────────────────── */
+
+/** GET /picks?tz= — the whole body; an unknown zone is asked again once without one. 404 MECHANIC_NOT_ENABLED while off. */
+export async function fetchPicks(tz: string = browserTimeZone()): Promise<Picks> {
+  return toPicks(await loadPicksWithZone((zone) => getBody("/picks", zone ? { tz: zone } : undefined), tz))
+}
+
+/* ── travel mode (mechanic M8) ───────────────────────────────────── */
+
+/** GET /travel — 404 MECHANIC_NOT_ENABLED while off. */
+export async function fetchTravel(): Promise<TravelState> {
+  return toTravelState(await get("/travel"))
+}
+
+/** PUT /travel {city, days} — starts or replaces the trip. 403 TRAVEL_REQUIRES_PASS without a pass. */
+export async function startTravel(form: TravelForm): Promise<TravelState> {
+  return toTravelState(await put("/travel", travelBody(form)))
+}
+
+/** DELETE /travel — back home. */
+export async function endTravel(): Promise<TravelState> {
+  return toTravelState(await del("/travel"))
 }
 
 /** POST /pulse/rewind — undo the most recent pass, one step. The route reads no body. */
@@ -28,9 +55,9 @@ export async function fetchAllowances(): Promise<Allowances> {
   return toAllowances(await get("/allowances"))
 }
 
-/** `superSpark` sends it as a Super Spark (mechanic M3). */
-export async function createSpark(toUserId: string, note?: string, superSpark = false): Promise<SparkOutcome> {
-  return toSparkOutcome(await post("/sparks", sparkBody(toUserId, note, superSpark)))
+/** `superSpark` sends it as a Super Spark (mechanic M3); `source` names where it came from (M7). */
+export async function createSpark(toUserId: string, note?: string, superSpark = false, source: ActionSource = "deck"): Promise<SparkOutcome> {
+  return toSparkOutcome(await post("/sparks", sparkBody(toUserId, note, superSpark, source)))
 }
 
 export async function fetchIncomingSparks(): Promise<IncomingSpark[]> {

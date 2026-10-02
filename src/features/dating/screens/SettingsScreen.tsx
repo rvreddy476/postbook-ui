@@ -13,7 +13,7 @@ import { FIRST_MOVE_TITLE, FirstMoveEditor } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, Loading, PageHead, Panel, Pill, Toggle } from "../components/kit"
 import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePreferences, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
-import { useFirstMove, useSaveFirstMove } from "../hooks/discovery"
+import { useFirstMove, useSaveFirstMove, useTravel } from "../hooks/discovery"
 import { useDataExports, useDownloadDataExport, useRequestDataExport } from "../hooks/safety"
 import { CONSENT_COPY, isGranted, type Consents, type ConsentType } from "../model/consents"
 import { exportView, hasPendingExport, type DataExport } from "../model/dataExport"
@@ -21,6 +21,7 @@ import { datingErrorCopy } from "../model/errors"
 import { isFirstMoveOff, questionsProblem } from "../model/firstMove"
 import { DATING_BASE, PRIVACY_TOGGLES, STATUS, filtersEnabled, privacyPatch, visiblePrivacyToggles, type Privacy, type PrivacyKey } from "../model/profile"
 import { FILTERS_HREF } from "../components/Filters"
+import { TRAVEL_HREF } from "../components/Travel"
 import { ABOUT_HREF } from "./OnboardingScreens"
 
 const EDIT_LINKS: readonly { label: string; href: string }[] = [
@@ -34,8 +35,10 @@ const EDIT_LINKS: readonly { label: string; href: string }[] = [
 ]
 
 /** Alphabetical; Filters only while the server's filters flag is on. */
-export function editLinks(withFilters: boolean): { label: string; href: string }[] {
-  const links = withFilters ? [...EDIT_LINKS, { label: "Filters", href: FILTERS_HREF }] : [...EDIT_LINKS]
+export function editLinks(withFilters: boolean, withTravel = false): { label: string; href: string }[] {
+  const links = [...EDIT_LINKS]
+  if (withFilters) links.push({ label: "Filters", href: FILTERS_HREF })
+  if (withTravel) links.push({ label: "Travel", href: TRAVEL_HREF })
   return links.sort((a, b) => a.label.localeCompare(b.label))
 }
 
@@ -179,6 +182,8 @@ function SettingsBody() {
   const privacy = usePrivacy()
   const patch = usePatchPrivacy()
   const preferences = usePreferences(gate.kind === "open" && gate.profile !== null)
+  // Travel (M8) is linked only while the server has it on; a 404 or a failed read leaves the link out.
+  const travel = useTravel(gate.kind === "open" && gate.profile !== null)
   const consents = useConsents()
   const setConsent = useSetConsent()
   const pause = useSetPaused()
@@ -203,7 +208,7 @@ function SettingsBody() {
     <>
       <Panel title="Your profile">
         <ul className="pulse-links">
-          {editLinks(filtersEnabled(preferences.data)).map((l) => (
+          {editLinks(filtersEnabled(preferences.data), travel.isSuccess).map((l) => (
             <li key={l.href}>
               <Link href={l.href}>{l.label}</Link>
             </li>

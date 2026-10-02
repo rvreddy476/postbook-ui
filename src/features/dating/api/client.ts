@@ -33,9 +33,9 @@ export async function del<T = unknown>(path: string, body?: unknown): Promise<T>
   return res.data?.data as T
 }
 
-/** The whole body, for the one route whose envelope carries its own meta (pulse/today). */
-export async function getBody(path: string): Promise<unknown> {
-  const res = await api.get(`${BASE}${path}`)
+/** The whole body, for the routes whose envelope carries its own meta (pulse/today, picks). */
+export async function getBody(path: string, params?: Record<string, string | number>): Promise<unknown> {
+  const res = await api.get(`${BASE}${path}`, params ? { params } : undefined)
   return res.data
 }
 

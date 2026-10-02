@@ -17,10 +17,10 @@ import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import { BadgeCheck, Bookmark, Sparkles, Star, Undo2, X } from "lucide-react"
 
 import { cardChips, type ProfileOptions } from "../model/options"
-import { metaLine, nameLine } from "../model/people"
+import { metaLine, nameLine, travelMarker } from "../model/people"
 import { actionForDrag, actionForKey, type DeckCard, type SwipeAction } from "../model/pulse"
 import { DatingPhoto } from "./DatingPhoto"
-import { Pill } from "./kit"
+import { Pill, TravelPill } from "./kit"
 
 const TAP_SLOP_PX = 6
 
@@ -127,7 +127,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
           role="group"
           tabIndex={0}
           aria-roledescription="profile card"
-          aria-label={`${nameLine(person)}. ${cardKeysLabel(superSparkEnabled, canRewind)}`}
+          aria-label={`${nameLine(person)}.${travelMarker(person) ? ` ${travelMarker(person)}.` : ""} ${cardKeysLabel(superSparkEnabled, canRewind)}`}
           aria-busy={busy || undefined}
           data-lean={leaning || undefined}
           data-pending={pending || undefined}
@@ -155,6 +155,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
                 </span>
               ) : null}
             </p>
+            <TravelPill person={person} />
             {facts.length ? <p className="pulse-card__meta">{facts.join(" · ")}</p> : null}
             {top.reasons.length ? <p className="pulse-card__meta">{top.reasons.join(" · ")}</p> : null}
             {chips.chips.length ? (

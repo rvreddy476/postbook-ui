@@ -5,9 +5,11 @@
 
 import Link from "next/link"
 import type { ButtonHTMLAttributes, ReactNode } from "react"
-import { Loader2, type LucideIcon } from "lucide-react"
+import { Loader2, Plane, type LucideIcon } from "lucide-react"
 
 import { Dialog } from "@/components/ui/dialog"
+
+import { travelMarker, type Person } from "../model/people"
 
 export type Tone = "muted" | "info" | "success" | "warning" | "danger"
 
@@ -52,6 +54,18 @@ export function Notice({ tone = "info", children, role }: { tone?: Tone; childre
 
 export function Pill({ tone = "muted", children }: { tone?: Tone; children: ReactNode }) {
   return <span className={cx("pulse-pill", `pulse-tone--${tone}`)}>{children}</span>
+}
+
+/** Travel mode (M8): "Visiting Hyderabad" on anyone who is on a trip; nothing otherwise. */
+export function TravelPill({ person }: { person: Pick<Person, "travelling" | "city"> }) {
+  const text = travelMarker(person)
+  if (!text) return null
+  return (
+    <span className="pulse-pill pulse-tone--info pulse-travel">
+      <Plane size={12} aria-hidden="true" />
+      <span>{text}</span>
+    </span>
+  )
 }
 
 export function Panel({ title, sub, children, actions }: { title?: string; sub?: ReactNode; children: ReactNode; actions?: ReactNode }) {

@@ -5,7 +5,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
-import { BadgeCheck, CalendarClock, Crown, Hourglass, Layers, MessagesSquare, SlidersHorizontal, Sparkles, Star, Undo2, Users } from "lucide-react"
+import { BadgeCheck, CalendarClock, Crown, Hourglass, Layers, MessagesSquare, Plane, SlidersHorizontal, Sparkles, Star, Undo2, Users } from "lucide-react"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
@@ -13,11 +13,13 @@ import { DatingPhoto } from "../components/DatingPhoto"
 import { FILTERS_HREF } from "../components/Filters"
 import { usePreferences, useProfileOptions } from "../hooks/profile"
 import { ErrorState } from "../components/Guard"
-import { Button, Field, LinkButton, Loading, PageHead, StatePanel } from "../components/kit"
+import { Button, Field, LinkButton, Loading, PageHead, StatePanel, TravelPill } from "../components/kit"
 import { LikedYouGrid, PREMIUM_HREF } from "../components/LikedYouGrid"
 import { MatchCelebration } from "../components/MatchCelebration"
 import { SwipeDeck } from "../components/SwipeDeck"
-import { useAcceptSpark, useAllowances, useDeck, useDeclineSpark, useLikedYou, useMatch, useMatches, usePass, useRewind, useSessionFlag, useSpark, useStash } from "../hooks/discovery"
+import { TRAVEL_HREF, TripBanner } from "../components/Travel"
+import { useAcceptSpark, useAllowances, useDeck, useDeclineSpark, useLikedYou, useMatch, useMatches, usePass, usePicks, useRewind, useSessionFlag, useSpark, useStash, useTravel } from "../hooks/discovery"
+import { activeTrip, type TravelTrip } from "../model/travel"
 import { leftToday, moreArrive, NO_ALLOWANCES, rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toUsageLimit, type LastDeckAction, type UsageLimit } from "../model/allowances"
 import { datingErrorCopy } from "../model/errors"
 import { SPARK_NOTE_MAX } from "../model/labels"
@@ -35,7 +37,7 @@ export type HomeSection = "deck" | "sparks" | "matches"
 
 /* ── the celebration, with the match's conversation ──────────────── */
 
-function Celebration({ matchId, person, onClose }: { matchId: string; person: Person | null; onClose: () => void }) {
+export function Celebration({ matchId, person, onClose }: { matchId: string; person: Person | null; onClose: () => void }) {
   // The conversation is allocated right after the match forms; read it so "Say hello" can name it.
   const match = useMatch(matchId)
   return <MatchCelebration person={person ?? match.data?.person ?? null} conversationId={match.data?.conversationId ?? ""} onClose={onClose} />
@@ -218,7 +220,7 @@ function DeckSection() {
         if (outcome.matched) setCelebrate({ matchId: outcome.matchId, person: card.person })
         else if (action === "super_spark") toast({ type: "success", title: "Super Spark sent" })
       } else if (action === "pass") {
-        await pass.mutateAsync(card.candidateId)
+        await pass.mutateAsync({ candidateId: card.candidateId })
         remove(card.candidateId)
         setLast("pass")
         setRewindLimit(null)
@@ -332,6 +334,7 @@ export function PersonRow({
           ) : null}
         </p>
         {marker}
+        {person ? <TravelPill person={person} /> : null}
         {facts.length ? <p className="pulse-rowcard__meta">{facts.join(" · ")}</p> : null}
         {meta ? <p className="pulse-rowcard__meta">{meta}</p> : null}
         {note ? <p className="pulse-rowcard__note">“{note}”</p> : null}
@@ -485,23 +488,43 @@ export function HomeScreen({ section }: { section: HomeSection }) {
   )
 }
 
-/** The deck's header, with the way to Filters (M6) while the server's filters flag is on. */
-export function DeckTitle({ showFilters }: { showFilters: boolean }) {
+/**
+  The deck's header: the way to Filters (M6) while the server's filters flag
+  is on, the way to Travel (M8) while travel is on, and the trip in effect.
+*/
+export function DeckTitle({ showFilters, showTravel = false, trip = null }: { showFilters: boolean; showTravel?: boolean; trip?: TravelTrip | null }) {
   const head = TITLES.deck
   return (
-    <div className="pulse-deckhead">
-      <PageHead title={head.title} sub={head.sub} />
-      {showFilters ? (
-        <LinkButton href={FILTERS_HREF} icon={SlidersHorizontal} className="pulse-deckhead__filters">
-          Filters
-        </LinkButton>
-      ) : null}
-    </div>
+    <>
+      <div className="pulse-deckhead">
+        <PageHead title={head.title} sub={head.sub} />
+        {showFilters || showTravel ? (
+          <div className="pulse-deckhead__tools">
+            {showFilters ? (
+              <LinkButton href={FILTERS_HREF} icon={SlidersHorizontal} className="pulse-deckhead__filters">
+                Filters
+              </LinkButton>
+            ) : null}
+            {showTravel ? (
+              <LinkButton href={TRAVEL_HREF} icon={Plane} className="pulse-deckhead__filters">
+                Travel
+              </LinkButton>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      {trip ? <TripBanner trip={trip} /> : null}
+    </>
   )
 }
 
 function DeckHead() {
   // Already read by the gate, so this is the cached copy.
   const preferences = usePreferences()
-  return <DeckTitle showFilters={filtersEnabled(preferences.data)} />
+  // A 404 MECHANIC_NOT_ENABLED (or any failed read) leaves travel out.
+  const travel = useTravel()
+  // Picks are read only once the deck is in, so today's picks are chosen apart from it; the read also tells the tabs whether picks are on.
+  const deck = useDeck()
+  usePicks(deck.isSuccess)
+  return <DeckTitle showFilters={filtersEnabled(preferences.data)} showTravel={travel.isSuccess} trip={activeTrip(travel.data)} />
 }

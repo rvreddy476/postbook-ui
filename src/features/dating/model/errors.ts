@@ -82,9 +82,29 @@ export function refusedField(error: unknown): string {
   return str(toDatingError(error).details.field)
 }
 
+/* Travel mode (M8): the day range the server sends in details. */
+function travelDaysInvalid(e: DatingError): string {
+  const min = num(e.details.min)
+  const max = num(e.details.max)
+  return min > 0 && max > 0 ? `Choose a trip of ${min} to ${max} days.` : "Choose a shorter trip."
+}
+
+export const TRAVEL_PASS_COPY = "Travel mode comes with a pass."
+
+/** A trip was refused because the caller holds no pass. */
+export function isTravelRequiresPass(error: unknown): boolean {
+  return toDatingError(error).code === "TRAVEL_REQUIRES_PASS"
+}
+
+/** A mechanic whose server flag is off (404 MECHANIC_NOT_ENABLED). */
+export function isMechanicOff(error: unknown): boolean {
+  return toDatingError(error).code === "MECHANIC_NOT_ENABLED"
+}
+
 /** Codes whose words depend on the details the server sent. */
 const DYNAMIC: Record<string, (e: DatingError) => string> = {
   INVALID_HEIGHT: heightInvalid,
+  INVALID_TRAVEL_DAYS: travelDaysInvalid,
   TOO_MANY_INTEREST: tooMany("interests"),
   TOO_MANY_LANGUAGE: tooMany("languages"),
   LOCATION_CHANGE_RATE_LIMITED: locationLimited,
@@ -110,6 +130,7 @@ const COPY: Record<string, string> = {
   IDEMPOTENCY_KEY_REUSED: "That purchase changed. Start again.",
   IDENTITY_UNAVAILABLE: "We couldn't confirm your details right now. Try again in a moment.",
   INVALID_AGE_RANGE: "Choose an age range between 18 and 120, with the lower age first.",
+  INVALID_CITY: "That city isn't on the list any more. Pick another.",
   INVALID_CONSENT_TYPE: "That choice isn't available any more.",
   INVALID_DISTANCE_BUCKET: "That distance isn't available any more. Pick another.",
   INVALID_DISTANCE_KM: "Choose a distance between 1 and 500 km.",
@@ -124,6 +145,8 @@ const COPY: Record<string, string> = {
   INVALID_PRODUCT: "That pass isn't sold any more. Reload and pick again.",
   INVALID_REPORT_EVIDENCE: "That report couldn't be sent. Check the details and try again.",
   INVALID_REPORT_REASON: "That report couldn't be sent. Check the details and try again.",
+  INVALID_SOURCE: "That couldn't be sent from here. Reload and try again.",
+  INVALID_TIMEZONE: "We couldn't read your time zone. Reload and try again.",
   INVALID_VISIBILITY: "That choice isn't available any more.",
   MECHANIC_NOT_ENABLED: "That isn't available yet.",
   MEDIA_NOT_READY: "Your video is still processing. Try again in a moment.",
@@ -162,6 +185,7 @@ const COPY: Record<string, string> = {
   LIKED_YOU_LOCKED: "See who sparked you with a pass, or find them in your deck.",
   SPARK_RATE_LIMITED: "You're out of sparks for now. Try again later.",
   SUPER_SPARK_LIMIT_REACHED: "You're out of Super Sparks for now. Get a pack, or try again later.",
+  TRAVEL_REQUIRES_PASS: TRAVEL_PASS_COPY,
   TRUSTED_CONTACT_LIMIT: "You already have the most trusted contacts allowed. Remove one to add another.",
   TRUSTED_CONTACT_NOT_ELIGIBLE: "A trusted contact must be one of your matches or connections.",
   UNKNOWN_PROMPT: "That prompt isn't available any more. Pick another.",

@@ -76,6 +76,8 @@ export interface Person {
   photos: PersonPhoto[]
   /** Interests, height and the lifestyle basics (M6), as codes; empty when not given. */
   basics: Basics
+  /** On a trip (M8): `city` and the distance bucket are then the destination's. */
+  travelling: boolean
 }
 
 function verifiedTier(tier: string): boolean {
@@ -127,6 +129,7 @@ export function toPerson(wire: unknown): Person | null {
     intentLabel: intentLabel(w.intent),
     distanceLabel: distanceLabel(w.distance_bucket),
     lastActiveLabel: lastActiveLabel(w.last_active_bucket),
+    travelling: bool(w.travelling),
     ...detail,
     photos: detail.photos.length ? detail.photos : photoUrl ? [{ id: str(w.primary_photo_id), url: photoUrl, blurred: isBlurredPath(photoUrl) }] : [],
   }
@@ -138,9 +141,19 @@ export function nameLine(person: Pick<Person, "firstName" | "age">): string {
   return person.age > 0 ? `${name}, ${person.age}` : name
 }
 
-/** The meta facts under a name, in a fixed order, empty ones dropped. */
+/**
+  The meta facts under a name, in a fixed order, empty ones dropped. A
+  traveller's city is the destination and already sits in the travel marker,
+  so it is not repeated here.
+*/
 export function metaLine(person: Person): string[] {
-  return [person.distanceLabel, person.city, person.intentLabel, person.lastActiveLabel].filter(Boolean)
+  return [person.distanceLabel, person.travelling ? "" : person.city, person.intentLabel, person.lastActiveLabel].filter(Boolean)
+}
+
+/** Travel mode (M8): "Visiting Hyderabad" while someone is on a trip; "" otherwise. */
+export function travelMarker(person: Pick<Person, "travelling" | "city">): string {
+  if (!person.travelling) return ""
+  return person.city ? `Visiting ${person.city}` : "Visiting from out of town"
 }
 
 export const personHref = (userId: string) => `/dating/people/${encodeURIComponent(userId)}`

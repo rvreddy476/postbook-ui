@@ -7,6 +7,17 @@ import { SPARK_NOTE_MAX } from "./labels"
 import { toPerson, type Person } from "./people"
 import { arr, bool, num, obj, str, time, type DatingError } from "./wire"
 
+/**
+  Where a spark or a pass was made (mechanic M7). Only a deck action spends a
+  deck card, so picks, liked-you and a profile opened from elsewhere name
+  themselves. The deck is the server's default and is never sent, so a deck
+  body stays exactly as it was before sources existed. Anything else is
+  refused with 400 INVALID_SOURCE.
+*/
+export type ActionSource = "deck" | "picks" | "liked_you" | "profile"
+
+export const ACTION_SOURCES: readonly ActionSource[] = ["deck", "liked_you", "picks", "profile"]
+
 export interface SparkBody {
   to_user_id: string
   target_kind: "photo"
@@ -14,15 +25,23 @@ export interface SparkBody {
   note?: string
   /** Mechanic M3: sent only when true, so an ordinary spark's body is unchanged. */
   super?: true
+  /** Mechanic M7: sent only when it is not the deck. */
+  source?: Exclude<ActionSource, "deck">
 }
 
 /** A spark on someone's primary photo (handler_sparks.go createSparkRequest; Android DatingRepository.spark). */
-export function sparkBody(toUserId: string, note?: string, superSpark = false): SparkBody {
+export function sparkBody(toUserId: string, note?: string, superSpark = false, source: ActionSource = "deck"): SparkBody {
   const body: SparkBody = { to_user_id: toUserId, target_kind: "photo", target_ref: "0" }
   const n = (note ?? "").trim()
   if (n) body.note = n
   if (superSpark) body.super = true
+  if (source !== "deck") body.source = source
   return body
+}
+
+/** POST /pulse/:id/pass — `{}` from the deck, `{source}` from anywhere else. */
+export function passBody(source: ActionSource = "deck"): { source?: Exclude<ActionSource, "deck"> } {
+  return source === "deck" ? {} : { source }
 }
 
 export function noteProblem(note: string): string {

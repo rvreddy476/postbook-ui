@@ -8,13 +8,13 @@ import { BadgeCheck, ChevronLeft, ChevronRight, UserX } from "lucide-react"
 
 import { DatingPhoto } from "../components/DatingPhoto"
 import { ErrorState, Guard } from "../components/Guard"
-import { LinkButton, Loading, PageHead, Panel, Pill, StatePanel } from "../components/kit"
+import { LinkButton, Loading, PageHead, Panel, Pill, StatePanel, TravelPill } from "../components/kit"
 import { SafetyActions } from "../components/SafetyActions"
 import { usePerson } from "../hooks/discovery"
 import { useProfileOptions } from "../hooks/profile"
 import { languageLabel } from "../model/labels"
 import { basicsLabels, interestLabels, languageLabels, type ProfileOptions } from "../model/options"
-import { nameLine, type Person } from "../model/people"
+import { metaLine, nameLine, type Person } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { errorStatus } from "../model/wire"
 
@@ -45,7 +45,7 @@ export function Gallery({ person }: { person: Person }) {
 
 /** Everything about the person except the actions; what the tests render. Without `options`, interests and basics aren't drawn. */
 export function PersonDetails({ person, options = null }: { person: Person; options?: ProfileOptions | null }) {
-  const facts = [person.distanceLabel, person.city, person.intentLabel, person.lastActiveLabel].filter(Boolean)
+  const facts = metaLine(person)
   const interests = interestLabels(person.basics, options)
   const basics = basicsLabels(person.basics, options)
   // With the options list the codes get their labels; without it, the old capitalised words.
@@ -59,6 +59,7 @@ export function PersonDetails({ person, options = null }: { person: Person; opti
             <BadgeCheck size={12} aria-hidden="true" /> Verified
           </Pill>
         ) : null}
+        <TravelPill person={person} />
       </div>
       {facts.length ? (
         <ul className="pulse-facts">

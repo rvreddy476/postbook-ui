@@ -221,6 +221,20 @@ textarea.pulse-input { resize: vertical; }
 .pulse-likes__upsell-body { margin: 2px 0 0; color: rgb(var(--text-muted)); font-size: 13px; }
 .pulse-likes__upsell-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* ── daily picks (M7) and travel (M8) ── */
+.pulse-pick__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.pulse-pick__actions > .pulse-btn { padding: 0 8px; }
+.pulse-travel { max-width: 100%; }
+.pulse-travel > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pulse-card__info .pulse-travel { margin-top: 4px; }
+.pulse-rowcard__text .pulse-travel { margin: 2px 0; }
+.pulse-like__travel { position: absolute; left: 8px; top: 8px; display: flex; max-width: calc(100% - 44px); }
+.pulse-like__travel .pulse-pill { background: rgb(var(--brand-card) / .92); }
+.pulse-deckhead__tools { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 50%; }
+.pulse-trip { align-items: center; }
+.pulse-trip__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pulse-trip__link { flex: none; font-weight: 600; }
+
 /* ── full profile ── */
 .pulse-gallery { display: flex; flex-direction: column; gap: 8px; }
 .pulse-gallery__photo { width: 100%; aspect-ratio: 3 / 4; border: 1px solid var(--brand-divider); border-radius: 20px; }
@@ -265,6 +279,13 @@ textarea.pulse-input { resize: vertical; }
 .pulse-match__body { margin: 0; color: rgb(var(--text-muted)); font-size: 14px; }
 .pulse-match__photo { width: 200px; max-width: 60vw; aspect-ratio: 3 / 4; border: 1px solid var(--brand-divider); border-radius: 20px; }
 .pulse-match__actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; }
+
+/* Four tabs and More fit a 375px screen: words only, a little closer together. */
+@media (max-width: 419px) {
+  .pulse-nav { padding: 0 4px; }
+  .pulse-nav__link { padding: 8px 7px; }
+  .pulse-nav__link > svg:first-child { display: none; }
+}
 
 @media (min-width: 560px) {
   .pulse-rowcard { flex-direction: row; align-items: center; justify-content: space-between; }

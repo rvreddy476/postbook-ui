@@ -3,10 +3,12 @@ import { describe, expect, test } from "bun:test"
 import { rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toAllowances, toUsageLimit } from "../model/allowances"
 import { isGranted, toConsents } from "../model/consents"
 import { exportView, hasPendingExport, toDataExport, toDataExports } from "../model/dataExport"
-import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, FILTERS_PASS_COPY, isAgeRefusal, isFiltersRequirePass, isPremiumUnavailable, PASSES_UNAVAILABLE_COPY, refusedField } from "../model/errors"
+import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, FILTERS_PASS_COPY, isAgeRefusal, isFiltersRequirePass, isMechanicOff, isPremiumUnavailable, isTravelRequiresPass, PASSES_UNAVAILABLE_COPY, refusedField, TRAVEL_PASS_COPY } from "../model/errors"
+import { picksResetLine, toPicks } from "../model/picks"
+import { activeTrip, toTravelState, travelView, tripBanner } from "../model/travel"
 import { answerRefusalRefetches, firstMoveListLine, firstMoveState, isFirstMoveOff, questionsChanged, toFirstMoveSettings, toOpeningAnswerResult } from "../model/firstMove"
 import { chatHref, countdown, extendedLine, extendLimitLine, isOpen, toCloseResult, toExtendLimit, toExtendResult, toMatch, toMatches } from "../model/matches"
-import { photoPath, toPerson } from "../model/people"
+import { metaLine, photoPath, toPerson, travelMarker } from "../model/people"
 import { moderationView, toMyPhoto, toMyPhotos } from "../model/photos"
 import { filtersBody, filtersEnabled, filtersForm, hasPassFilters, toPreferences, toPrivacy, toProfile, stepFor, visiblePrivacyToggles } from "../model/profile"
 import { basicsLabels, interestLabels, languageLabels, toProfileOptions } from "../model/options"
@@ -311,6 +313,69 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(e.promoted).toBe(false)
   },
   pulse_explain_404_candidate_unavailable: refusal("CANDIDATE_UNAVAILABLE"),
+  // Mechanic M8: someone on a trip shows up with the marker and their destination.
+  pulse_today_get_200_travelling: (f) => {
+    const p = toDeck(f).cards[0].person
+    expect(p.travelling).toBe(true)
+    expect(p.city).toBe("Hyderabad")
+    expect(travelMarker(p)).toBe("Visiting Hyderabad")
+    // The city lives in the marker, so the meta line does not repeat it.
+    expect(metaLine(p)).not.toContain("Hyderabad")
+  },
+
+  /* daily picks (mechanic M7) */
+  picks_get_200: (f) => {
+    const picks = toPicks(f)
+    expect(picks.cards).toHaveLength(1)
+    expect(picks.cards[0].candidateId).toBe("<candidate>")
+    // The deck's card shape: the same mapper, the same person.
+    expect(picks.cards[0]).toEqual(toDeck({ data: f.data }).cards[0])
+    expect(picks.cards[0].person.travelling).toBe(false)
+    expect(picks.timezone).toBe("UTC")
+    expect(picks.size).toBe(1)
+    // Placeholders do not parse: no date drawn, no reset time drawn.
+    expect(picks.resetsAt).toBe("")
+    expect(picksResetLine(picks.resetsAt)).toBe("New picks arrive every day at midnight.")
+  },
+  picks_get_400_invalid_timezone: refusal("INVALID_TIMEZONE"),
+  picks_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
+
+  /* travel mode (mechanic M8) */
+  travel_get_200: (f) => {
+    const t = toTravelState(f.data)
+    expect(t.active).toBeNull()
+    expect(t.available).toBe(false)
+    expect(t.maxDays).toBe(7)
+    expect(t.cities).toHaveLength(22)
+    expect(t.cities[0]).toEqual({ code: "ahmedabad", label: "Ahmedabad" })
+    const labels = t.cities.map((c) => c.label)
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)))
+    expect(travelView(t)).toBe("locked")
+    expect(activeTrip(t)).toBeNull()
+  },
+  travel_put_200: (f) => {
+    const t = toTravelState(f.data)
+    expect(t.available).toBe(true)
+    expect(t.active?.city).toEqual({ code: "mumbai", label: "Mumbai" })
+    // Placeholder timestamps: the trip has no known end, so it reads as in effect.
+    expect(t.active?.endsAt).toBe("")
+    expect(travelView(t)).toBe("active")
+    expect(activeTrip(t)?.city.label).toBe("Mumbai")
+    expect(tripBanner(activeTrip(t)!)).toBe("Browsing Mumbai")
+  },
+  travel_put_403_requires_pass: refusal("TRAVEL_REQUIRES_PASS", (f) => {
+    const e = { response: { status: 403, data: f } }
+    expect(isTravelRequiresPass(e)).toBe(true)
+    expect(copyFor(errorFromEnvelope(f))).toBe(TRAVEL_PASS_COPY)
+  }),
+  travel_put_400_invalid_city: refusal("INVALID_CITY", (f) => {
+    expect((errorFromEnvelope(f).details.allowed as string[]).length).toBe(22)
+  }),
+  travel_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
 
   /* sparks, stash */
   spark_create_post_201_matched: (f) => {
