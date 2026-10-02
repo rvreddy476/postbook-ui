@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
@@ -48,6 +48,8 @@ export interface WatchDetailsProps {
   hashtags: string[];
   /** The creator's related video (contract B `related_post`), a small card in the about card. */
   related?: WatchRelatedPost | null;
+  /** The More menu's Description row: each new value above 0 opens the about card and scrolls to it. */
+  revealAbout?: number;
 }
 
 export function WatchDetails({
@@ -70,8 +72,15 @@ export function WatchDetails({
   description,
   hashtags,
   related = null,
+  revealAbout = 0,
 }: WatchDetailsProps) {
   const [expanded, setExpanded] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (revealAbout <= 0) return;
+    setExpanded(true);
+    aboutRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [revealAbout]);
   const segments = descriptionSegments(description);
   const tags = hashtags.map((h) => h.replace(/^#/, "")).filter((h) => h && !description.includes(`#${h}`));
 
@@ -103,7 +112,7 @@ export function WatchDetails({
 
       <ChapterStrip chapters={chapters} currentIndex={currentChapter} onSeek={onSeek} />
 
-      <div className="tube-about" data-expanded={expanded ? "" : undefined}>
+      <div ref={aboutRef} className="tube-about" data-expanded={expanded ? "" : undefined}>
         <p className="tube-about__meta">
           <span>{formatCount(viewCount)} views</span>
           {publishedAt ? <span>· {timeAgo(publishedAt)}</span> : null}

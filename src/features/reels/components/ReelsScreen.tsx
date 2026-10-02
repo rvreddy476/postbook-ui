@@ -16,7 +16,7 @@ import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { ReelVideo, type ReelVideoHandle } from "@/features/reels/components/ReelVideo";
 import { ReelRail } from "@/features/reels/components/ReelRail";
 import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
-import { ReelMoreMenu } from "@/features/reels/components/ReelMoreMenu";
+import { ReelMoreMenu, reelChannelName } from "@/features/reels/components/ReelMoreMenu";
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog";
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 import { ReelCommentsDrawer } from "@/features/reels/components/ReelCommentsDrawer";
@@ -28,7 +28,9 @@ import { useAudioTracks } from "@/features/reels/hooks/useAudioTracks";
 import { useUseSound } from "@/features/reels/hooks/useSounds";
 import { apiErrorCode } from "@/features/reels/data/audioTracksApi";
 import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
-import { fetchReel } from "@/features/reels/data/reelFeedApi";
+import { fetchReel, fetchSubtitles } from "@/features/reels/data/reelFeedApi";
+import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack";
+import { downloadHref } from "@/features/posttube/watch/watchApi";
 import { feedFromSearch } from "@/features/reels/feed";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -36,7 +38,6 @@ import {
   useDeleteReel,
   useDontRecommendAuthor,
   useShowAuthorAgainFromStage,
-  useInterested,
   useLikeReel,
   useNotInterested,
   useRestoreReel,
@@ -234,6 +235,16 @@ export function ReelsScreen() {
   const activeAudioTrack = pickAudioTrack(audioTracks.data ?? [], prefs.audioLanguage);
   const currentAudioTrack = activeAudioTrack?.id ?? ORIGINAL_TRACK_ID;
   const onAudioTrack = (id: string) => updatePrefs({ audioLanguage: languageForChoice(audioTracks.data ?? [], id) });
+  // Whether the reel has captions at all, asked once per reel whatever the viewer's captions switch says:
+  // the More menu offers Captions only for a reel that has them (the player's own answer wins once it has one).
+  const captionsMediaId = active?.media.mediaId;
+  const captionsProbe = useQuery({
+    queryKey: ["reels", "captions-available", captionsMediaId],
+    queryFn: async () => hasPlayableSubtitle(await fetchSubtitles(captionsMediaId!)),
+    enabled: Boolean(captionsMediaId),
+    staleTime: 60_000,
+  });
+  const hasCaptions = captionsAvailable === "unknown" ? captionsProbe.data === true : captionsAvailable === "yes";
   const toggleSubscribe = async () => {
     try {
       await subscription.toggle();
@@ -249,7 +260,6 @@ export function ReelsScreen() {
   const notInterested = useNotInterested();
   const dontRecommend = useDontRecommendAuthor();
   const showAuthorAgain = useShowAuthorAgainFromStage();
-  const interested = useInterested();
   const block = useBlockAuthor();
   const remove = useDeleteReel();
   const restore = useRestoreReel();
@@ -308,13 +318,6 @@ export function ReelsScreen() {
       onError: () => toast({ type: "error", title: "Could not save that preference" }),
     });
   };
-  const onInterested = () => {
-    if (!active) return;
-    interested.mutate(active, {
-      onSuccess: () => toast({ type: "success", title: "We'll show more like this" }),
-      onError: () => toast({ type: "error", title: "Could not save that preference" }),
-    });
-  };
 
   /** Blocked: every reel by the author leaves the cache; the next one takes the slot. */
   const confirmBlock = async () => {
@@ -325,7 +328,7 @@ export function ReelsScreen() {
       if (pinned.data?.authorId === target.authorId) qc.setQueryData(["reels", "pinned", deepLinkId], null);
       setBlockOpen(false);
       setDirection(1);
-      toast({ type: "success", title: `${target.authorUsername ? `@${target.authorUsername}` : target.authorName} blocked` });
+      toast({ type: "success", title: `${reelChannelName(target)} blocked` });
     } catch {
       toast({ type: "error", title: "Could not block", description: "Please try again." });
     }
@@ -581,7 +584,7 @@ export function ReelsScreen() {
   const empty = !loading && !errored && reels.length === 0;
 
   // One menu, one open state; where it is drawn depends on which trigger holds it.
-  // The playback rows (speed, quality, auto scroll, captions) live in it too.
+  // The rows are the shared video More model (video-shell/moreRows.ts), the same as the long-video watch page.
   const moreMenuFor = (anchor: "beside" | "below") => active ? (
     <ReelMoreMenu
       anchor={anchor}
@@ -589,23 +592,20 @@ export function ReelsScreen() {
       onClose={() => setMoreOpen(false)}
       reel={active}
       isOwn={isOwn}
-      following={following}
-      followPending={followPending}
       prefs={prefs}
       onPrefsChange={updatePrefs}
       qualityHeights={qualityHeights}
-      captionsAvailable={captionsAvailable}
+      hasCaptions={hasCaptions}
       audioTracks={audioOptions}
       currentAudioTrack={currentAudioTrack}
       onAudioTrack={onAudioTrack}
       onManageAudio={isOwn ? () => setAudioOpen(true) : undefined}
-      onCopyLink={onCopyLink}
+      onKeep={active.media.mediaId ? () => window.open(downloadHref(active.media.mediaId), "_blank", "noopener") : undefined}
+      onCopyLink={() => void onCopyLink()}
       onDescription={() => setDescriptionOpen(true)}
-      onInterested={onInterested}
-      onToggleFollow={() => void toggleFollow()}
+      onShare={onShare}
       onBlock={() => setBlockOpen(true)}
       onDelete={() => setDeleteOpen(true)}
-      onClearScreen={enterClearScreen}
       onNotInterested={onNotInterested}
       onDontRecommend={onDontRecommend}
       onReport={() => setReportOpen(true)}
@@ -869,7 +869,7 @@ export function ReelsScreen() {
             {active ? <ReelAudioTracksDialog open={audioOpen} mediaId={active.media.mediaId} onClose={() => setAudioOpen(false)} /> : null}
             <ReelConfirmDialog
               open={blockOpen}
-              title={`Block ${active.authorUsername ? `@${active.authorUsername}` : active.authorName}?`}
+              title={`Block ${reelChannelName(active)}?`}
               description="They won't be able to see your posts, follow you or message you, and their reels will stop appearing here. They are not told."
               confirmLabel="Block"
               danger

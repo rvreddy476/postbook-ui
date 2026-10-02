@@ -15,32 +15,58 @@ const other = toReelItem({
   media: [{ media_id: 'm', kind: 'video' }],
 })!;
 const noop = () => {};
+const TRACKS = [{ id: 'original', label: 'Original' }, { id: 't1', label: 'Hindi' }, { id: 't2', label: 'Tamil' }];
+/* A reel with everything: three audio tracks, captions, two renditions, downloads allowed. */
 const base = {
-  open: true, onClose: noop, reel: { ...other, downloadAllowed: true, reasonText: 'Popular' }, isOwn: false, following: false as const,
-  prefs: DEFAULT_PREFS, onPrefsChange: noop, qualityHeights: [720, 1080], captionsAvailable: 'unknown' as const,
-  onCopyLink: noop, onDescription: noop, onInterested: noop, onToggleFollow: noop, onBlock: noop, onDelete: noop,
-  onClearScreen: noop, onNotInterested: noop, onDontRecommend: noop, onReport: noop, onUseSound: noop,
+  open: true, onClose: noop, reel: { ...other, downloadAllowed: true, reasonText: 'Popular' }, isOwn: false,
+  prefs: DEFAULT_PREFS, onPrefsChange: noop, qualityHeights: [720, 1080], hasCaptions: true,
+  audioTracks: TRACKS, currentAudioTrack: 'original', onAudioTrack: noop, onKeep: noop,
+  onCopyLink: noop, onDescription: noop, onShare: noop, onBlock: noop, onDelete: noop,
+  onNotInterested: noop, onDontRecommend: noop, onReport: noop, onUseSound: noop,
 };
 
-test("ascending alphabetical, always: Audio track, Auto scroll, Captions, Description, Don't recommend, Not interested, Playback speed, Quality, Report, Use this sound", () => {
+const drawnLabels = (html: string) =>
+  html.split('<span class="reel-more-menu__title">').slice(1).map((part) => part.slice(0, part.indexOf('<')).split('&#x27;').join("'"));
+
+test("ascending alphabetical, always: the shared rows (the same as long video) plus Auto scroll and Use this sound", () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
-  const marks = ['data-row="audio"', 'data-row="auto-scroll"', 'data-row="captions"', 'data-row="description"', 'data-row="dont-recommend"', 'data-row="not-interested"', 'data-row="speed"', 'data-row="quality"', 'data-row="report"', 'data-row="use-sound"'];
+  expect(drawnLabels(html)).toEqual([
+    'Audio track', 'Auto scroll', 'Block Bee', 'Captions', 'Copy link', 'Description', "Don't recommend this channel",
+    'Keep a copy', 'Not interested', 'Playback speed', 'Quality', 'Report', 'Share', 'Use this sound',
+  ]);
+  const marks = ['audio', 'auto-scroll', 'block', 'captions', 'copy-link', 'description', 'dont-recommend', 'keep', 'not-interested', 'speed', 'quality', 'report', 'share', 'use-sound'].map((k) => `data-row="${k}"`);
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
-  // Audio track is offered even with nothing but the original; the value is the current track.
   expect(html).toContain('class="reel-more-menu__value">Original<svg');
   expect(html).toContain('class="reel-more-menu__value">Off<svg');
   expect(html).toContain('class="reel-more-menu__value">Normal<svg');
   expect(html).toContain('class="reel-more-menu__value">Auto<svg');
   expect(html).toContain('role="menuitemcheckbox" aria-checked="false" data-row="auto-scroll"');
   expect(html).toContain("Don&#x27;t recommend this channel");
-  expect(html).toContain('class="reel-more-menu__row is-danger"');
+  // Block, Report: the danger rows.
+  expect((html.match(/class="reel-more-menu__row is-danger"/g) ?? []).length).toBe(2);
   expect(html).not.toContain('role="radiogroup"');
-  // One audio row only, never a second "Audio tracks" row.
   expect((html.match(/data-row="audio"/g) ?? []).length).toBe(1);
   expect(html).not.toContain('data-row="manage-audio"');
   expect(html).toContain('reel-frame-popover');
+});
+
+test('a row appears only when it can work: one audio track, no captions, one rendition, sharing off, downloads off', () => {
+  const single = renderToStaticMarkup(<ReelMoreMenu {...base} audioTracks={[TRACKS[0]]} />);
+  expect(single).not.toContain('data-row="audio"');
+  const noCaptions = renderToStaticMarkup(<ReelMoreMenu {...base} hasCaptions={false} />);
+  expect(noCaptions).not.toContain('data-row="captions"');
+  const oneRung = renderToStaticMarkup(<ReelMoreMenu {...base} qualityHeights={[720]} />);
+  expect(oneRung).not.toContain('data-row="quality"');
+  const noShare = renderToStaticMarkup(<ReelMoreMenu {...base} reel={{ ...base.reel, shareHidden: true }} />);
+  expect(noShare).not.toContain('data-row="share"');
+  expect(noShare).toContain('data-row="copy-link"');
+  const noDownload = renderToStaticMarkup(<ReelMoreMenu {...base} reel={{ ...base.reel, downloadAllowed: false }} />);
+  expect(noDownload).not.toContain('data-row="keep"');
+  // No download link at all: the row is left out rather than drawn dead.
+  const noLink = renderToStaticMarkup(<ReelMoreMenu {...base} onKeep={undefined} />);
+  expect(noLink).not.toContain('data-row="keep"');
 });
 
 test('the speed value reads Normal at 1× and the chip labels are 0.25 · 1.0 · 1.25 · 1.5 · 2.0', () => {
@@ -52,24 +78,28 @@ test('the speed value reads Normal at 1× and the chip labels are 0.25 · 1.0 ·
   expect(html).toContain('class="reel-more-menu__value">1.5x<svg');
 });
 
-test('quality and captions show their current value; captions is disabled with None when the reel has none', () => {
+test('quality, captions and audio show their current value; Auto scroll is a switch', () => {
   const p720 = renderToStaticMarkup(<ReelMoreMenu {...base} prefs={{ ...DEFAULT_PREFS, quality: '720p' }} />);
   expect(p720).toContain('class="reel-more-menu__value">720p<svg');
-  const none = renderToStaticMarkup(<ReelMoreMenu {...base} captionsAvailable="no" />);
-  expect(none).toContain('disabled="" data-row="captions"');
-  expect(none).toContain('class="reel-more-menu__value">None<svg');
   const on = renderToStaticMarkup(<ReelMoreMenu {...base} prefs={{ ...DEFAULT_PREFS, captions: true, onEnd: 'next' }} />);
   expect(on).toContain('class="reel-more-menu__value">On<svg');
   expect(on).toContain('aria-checked="true" data-row="auto-scroll"');
   expect((on.match(/reel-more-menu__switch" data-on=""/g) ?? []).length).toBe(1);
+  const hindi = renderToStaticMarkup(<ReelMoreMenu {...base} currentAudioTrack="t1" />);
+  expect(hindi).toContain('class="reel-more-menu__value">Hindi<svg');
 });
 
-test('the owner sees one Audio track row (manage lives inside its pane) and no feedback rows', () => {
-  const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} onManageAudio={() => {}} audioTracks={[{ id: 'original', label: 'Original' }, { id: 't1', label: 'Hindi' }, { id: 't2', label: 'Tamil' }]} currentAudioTrack="t1" />);
+test('own reel: Audio tracks and Delete, no Edit, no feedback rows; the playback rows stay; Theater is not a row', () => {
+  const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn onManageAudio={noop} currentAudioTrack="t1" />);
+  expect(drawnLabels(html)).toEqual([
+    'Audio track', 'Audio tracks', 'Auto scroll', 'Captions', 'Copy link', 'Delete', 'Description', 'Keep a copy', 'Playback speed', 'Quality', 'Share', 'Use this sound',
+  ]);
   expect((html.match(/data-row="audio"/g) ?? []).length).toBe(1);
-  expect(html).toContain('class="reel-more-menu__value">Hindi<svg');
-  expect(html).not.toContain('data-row="manage-audio"');
-  for (const gone of ['data-row="report"', 'data-row="not-interested"', 'data-row="dont-recommend"']) expect(html).not.toContain(gone);
+  expect((html.match(/data-row="manage-audio"/g) ?? []).length).toBe(1);
+  for (const gone of ['block', 'report', 'not-interested', 'dont-recommend', 'edit', 'theater']) expect(html).not.toContain(`data-row="${gone}"`);
+  // Without the audio dialog there is no Audio tracks row.
+  const noDialog = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn />);
+  expect(noDialog).not.toContain('data-row="manage-audio"');
 });
 
 test("the card in CSS: the theme surface, radius 12, 4px padding, 40px rows 12px in with a 20px icon and 14/500 labels, 12px values; the speed pane; no literal colours but the shadow", () => {
@@ -92,22 +122,14 @@ test('Use this sound: last in the list, one row, gone when the creator turned re
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} />);
   expect((html.match(/data-row="use-sound"/g) ?? []).length).toBe(1);
   expect(html).toContain('<span class="reel-more-menu__title">Use this sound</span>');
-  expect(html.indexOf('data-row="use-sound"')).toBeGreaterThan(html.indexOf('data-row="report"'));
-  // The labels as drawn, top to bottom, are in ascending order.
-  const labels = html.split('<span class="reel-more-menu__title">').slice(1).map((part) => part.slice(0, part.indexOf('<')).split('&#x27;').join("'"));
+  expect(html.indexOf('data-row="use-sound"')).toBeGreaterThan(html.indexOf('data-row="share"'));
+  const labels = drawnLabels(html);
   expect(labels.length).toBeGreaterThan(8);
   expect([...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))).toEqual(labels);
   const locked = renderToStaticMarkup(<ReelMoreMenu {...base} reel={{ ...base.reel, soundReuseAllowed: false }} />);
   expect(locked).not.toContain('data-row="use-sound"');
-  const own = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} reel={{ ...base.reel, soundReuseAllowed: false }} />);
+  const own = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn reel={{ ...base.reel, soundReuseAllowed: false }} />);
   expect(own).toContain('data-row="use-sound"');
   const pending = renderToStaticMarkup(<ReelMoreMenu {...base} useSoundPending />);
   expect(pending).toContain('disabled="" data-row="use-sound"');
-});
-
-test('own reel: no Report or Not interested; the playback rows stay; Theater is not a row', () => {
-  const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn following={undefined} />);
-  for (const gone of ['Block', 'Follow', 'Report', 'Not interested', 'Delete reel', 'Theater mode', 'Copy link']) expect(html).not.toContain(`>${gone}`);
-  for (const key of ['audio', 'speed', 'quality', 'auto-scroll', 'captions']) expect(html).toContain(`data-row="${key}"`);
-  expect(html).not.toContain('data-row="theater"');
 });

@@ -8,7 +8,7 @@ import { ChapterStrip } from "../components/ChapterStrip";
 import { UpNext } from "../components/UpNext";
 import { WATCH_ACTION_ORDER, WatchActions } from "../components/WatchActions";
 import { WatchDetails } from "../components/WatchDetails";
-import { WatchMoreMenu } from "../components/WatchMoreMenu";
+import { WatchMoreMenu, watchMoreRows, type WatchMoreInput } from "../components/WatchMoreMenu";
 import { TubeSettingsMenu } from "../../components/TubePlayer";
 import { DEFAULT_TUBE_PREFS } from "../../model";
 import type { PostTubeVideo } from "../../types";
@@ -100,31 +100,46 @@ describe("the RUTUBE layout", () => {
     expect(noThanks).not.toContain('data-action="thanks"');
   });
 
-  test("More: the choice-pane shell with our rows only", () => {
-    const html = renderToStaticMarkup(
-      <WatchMoreMenu open onClose={noop} isOwner={false} channelName="Ravi" onNotInterested={noop} onDontRecommend={noop} onReport={noop} onBlock={noop} onEdit={noop} onAudioTracks={noop} onDelete={noop} />,
-    );
+  test("More: the shared video menu (the same rows as the reels stage) in the choice-pane shell", () => {
+    const bare: WatchMoreInput = {
+      channelName: "Ravi", isOwner: false, hasDescription: false, shareHidden: true, downloadAllowed: false,
+      audioTrackCount: 1, hasCaptions: false, levels: [720], canKeep: true, canManageAudio: true,
+    };
+    const playback = {
+      speed: 1.5, onSpeed: noop, quality: "720p", qualityHeights: [720, 1080], onQuality: noop,
+      captions: { on: true, tracks: [{ lang: "en", label: "EN" }], lang: "en", onChange: noop },
+      audio: { options: [{ id: "original", label: "Original" }, { id: "t1", label: "Hindi" }], current: "t1", onChange: noop },
+    };
+    const actions = {
+      block: noop, "copy-link": noop, delete: noop, description: noop, "dont-recommend": noop, edit: noop,
+      keep: noop, "manage-audio": noop, "not-interested": noop, report: noop, share: noop,
+    };
+    const draw = (extra: Partial<WatchMoreInput> = {}) =>
+      renderToStaticMarkup(<WatchMoreMenu open onClose={noop} rows={watchMoreRows({ ...bare, ...extra })} channelName="Ravi" playback={playback} actions={actions} />);
+    const inOrder = (html: string, keys: string[]) => {
+      const at = keys.map((k) => html.indexOf(`data-row="${k}"`));
+      for (const [i, pos] of at.entries()) expect(pos, keys[i]).toBeGreaterThan(-1);
+      expect([...at].sort((a, b) => a - b)).toEqual(at);
+    };
+
+    const html = draw();
     expect(html).toContain("reel-more-menu tube-more-menu");
-    const marks = ['data-row="block"', 'data-row="dont-recommend"', 'data-row="not-interested"', 'data-row="report"'];
-    const at = marks.map((m) => html.indexOf(m));
-    for (const pos of at) expect(pos).toBeGreaterThan(-1);
-    expect([...at].sort((a, b) => a - b)).toEqual(at);
-    expect(html).not.toContain('data-row="edit"');
-    const owner = renderToStaticMarkup(
-      <WatchMoreMenu open onClose={noop} isOwner channelName="Ravi" onNotInterested={noop} onDontRecommend={noop} onReport={noop} onBlock={noop} onEdit={noop} onAudioTracks={noop} onDelete={noop} />,
-    );
-    expect(owner).toContain('data-row="audio"');
-    expect(owner).toContain('data-row="delete"');
-    expect(owner).toContain('data-row="edit"');
-    expect(owner).not.toContain('data-row="report"');
-    const withShareKeep = renderToStaticMarkup(
-      <WatchMoreMenu open onClose={noop} isOwner={false} channelName="Ravi" onShare={noop} onKeep={noop} onNotInterested={noop} onDontRecommend={noop} onReport={noop} onBlock={noop} onEdit={noop} onAudioTracks={noop} onDelete={noop} />,
-    );
-    const rows = ['data-row="block"', 'data-row="dont-recommend"', 'data-row="keep"', 'data-row="not-interested"', 'data-row="report"', 'data-row="share"'].map((m) => withShareKeep.indexOf(m));
-    for (const pos of rows) expect(pos).toBeGreaterThan(-1);
-    expect([...rows].sort((a, b) => a - b)).toEqual(rows);
-    expect(html).not.toContain('data-row="share"');
-    expect(html).not.toContain('data-row="keep"');
+    inOrder(html, ["block", "copy-link", "dont-recommend", "not-interested", "speed", "report"]);
+    for (const gone of ["edit", "delete", "manage-audio", "share", "keep", "audio", "captions", "quality", "description", "auto-scroll", "use-sound"]) {
+      expect(html).not.toContain(`data-row="${gone}"`);
+    }
+    expect(html).toContain('class="reel-more-menu__value">1.5x<svg');
+
+    const owner = draw({ isOwner: true });
+    inOrder(owner, ["manage-audio", "copy-link", "delete", "edit", "keep", "speed"]);
+    for (const gone of ["report", "block", "not-interested", "dont-recommend"]) expect(owner).not.toContain(`data-row="${gone}"`);
+
+    const full = draw({ hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [720, 1080] });
+    inOrder(full, ["audio", "block", "captions", "copy-link", "description", "dont-recommend", "keep", "not-interested", "speed", "quality", "report", "share"]);
+    // The choice rows read the player's own state: the track, the caption language, the rung.
+    expect(full).toContain('class="reel-more-menu__value">Hindi<svg');
+    expect(full).toContain('class="reel-more-menu__value">EN<svg');
+    expect(full).toContain('class="reel-more-menu__value">720p<svg');
   });
 });
 

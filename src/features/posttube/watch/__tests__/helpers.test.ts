@@ -9,7 +9,7 @@ import { scheduleSleep, sleepDue, sleepRemainingMs, sleepValueLabel } from "../s
 import { parseStoryboardVtt, parseVttTimestamp, storyboardCueAt } from "../storyboard";
 import { upNextChipQuery, upNextPills } from "../upNext";
 import { parseWatchPrefs } from "../watchPrefs";
-import { watchMoreMenuRows } from "../components/WatchMoreMenu";
+import { watchMoreRows, type WatchMoreInput } from "../components/WatchMoreMenu";
 
 /* ── chapters ─────────────────────────────────────────── */
 
@@ -232,10 +232,36 @@ describe("keys pane from the key map", () => {
   });
 });
 
-describe("the rail's More rows, ascending", () => {
-  test("viewer and owner", () => {
-    expect(watchMoreMenuRows(false, "Ravi").map((r) => r.label)).toEqual(["Block Ravi", "Don't recommend this channel", "Not interested", "Report"]);
-    expect(watchMoreMenuRows(true, "Ravi").map((r) => r.label)).toEqual(["Audio tracks", "Delete", "Edit"]);
+describe("the rail's More rows: the shared video model, ascending", () => {
+  /* A bare video: one audio track, no captions, one rendition, no description, sharing off, downloads off. */
+  const bare: WatchMoreInput = {
+    channelName: "Ravi", isOwner: false, hasDescription: false, shareHidden: true, downloadAllowed: false,
+    audioTrackCount: 1, hasCaptions: false, levels: [720], canKeep: true, canManageAudio: true,
+  };
+  const labels = (extra: Partial<WatchMoreInput> = {}) => watchMoreRows({ ...bare, ...extra }).map((r) => r.label);
+
+  test("a bare video: viewer and owner", () => {
+    expect(labels()).toEqual(["Block Ravi", "Copy link", "Don't recommend this channel", "Not interested", "Playback speed", "Report"]);
+    expect(labels({ isOwner: true })).toEqual(["Audio tracks", "Copy link", "Delete", "Edit", "Keep a copy", "Playback speed"]);
+  });
+
+  test("a full video: every shared row, and Keep a copy when downloads are allowed", () => {
+    const full = { hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720, 1080] };
+    expect(labels(full)).toEqual([
+      "Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
+      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share",
+    ]);
+    expect(labels({ ...full, isOwner: true })).toEqual([
+      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Keep a copy", "Playback speed", "Quality", "Share",
+    ]);
+  });
+
+  test("never the reels rows; no Keep or Audio tracks without the media id", () => {
+    const full = labels({ hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720] });
+    expect(full).not.toContain("Auto scroll");
+    expect(full).not.toContain("Use this sound");
+    const noMedia = labels({ isOwner: true, canKeep: false, canManageAudio: false });
+    expect(noMedia).toEqual(["Copy link", "Delete", "Edit", "Playback speed"]);
   });
 });
 

@@ -86,7 +86,7 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
   expect(screen).not.toContain('aria-label="Playback settings"');
   expect(screen).toContain('onPrefsChange={updatePrefs}');
   expect(screen).toContain('qualityHeights={qualityHeights}');
-  expect(screen).toContain('captionsAvailable={captionsAvailable}');
+  expect(screen).toContain('hasCaptions={hasCaptions}');
   expect(screen).toContain('moreMenuFor("below")');
   // The desktop rail no longer carries More; the phone rail keeps its own.
   expect(css).toContain('.reel-frame-action-wrap.is-more { display: none; }');

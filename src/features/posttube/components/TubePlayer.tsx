@@ -154,6 +154,11 @@ export interface TubePlayerProps {
   sourceOverride?: string | null;
   /** The sleep timer fired (paused by the clock, or the video ended under "End of video"). */
   onSleep?: () => void;
+  /** The manifest's rung heights, whenever they change: the page's More menu offers Quality from them. */
+  onLevels?: (heights: number[]) => void;
+  /** The chosen caption language when the page owns it (its More menu drives it too); absent = the player keeps its own. */
+  captionLang?: string | null;
+  onCaptionLang?: (lang: string | null) => void;
   controller?: MutableRefObject<TubePlayerHandle | null>;
 }
 
@@ -206,6 +211,9 @@ export function TubePlayer({
   audioTracks = null,
   sourceOverride = null,
   onSleep,
+  onLevels,
+  captionLang: captionLangProp,
+  onCaptionLang,
   controller,
 }: TubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -235,7 +243,19 @@ export function TubePlayer({
   const [controlsVisible, setControlsVisible] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [captionLang, setCaptionLang] = useState<string | null>(captions[0]?.lang ?? null);
+  const [ownCaptionLang, setOwnCaptionLang] = useState<string | null>(captions[0]?.lang ?? null);
+  const captionLang = captionLangProp !== undefined ? captionLangProp : ownCaptionLang;
+  const onCaptionLangRef = useRef(onCaptionLang);
+  onCaptionLangRef.current = onCaptionLang;
+  const setCaptionLang = useCallback((lang: string | null) => {
+    setOwnCaptionLang(lang);
+    onCaptionLangRef.current?.(lang);
+  }, []);
+  const onLevelsRef = useRef(onLevels);
+  onLevelsRef.current = onLevels;
+  useEffect(() => {
+    onLevelsRef.current?.(levels);
+  }, [levels]);
   const [hoverMs, setHoverMs] = useState<number | null>(null);
   const [hoverX, setHoverX] = useState(0);
   const [sleepChoice, setSleepChoice] = useState<SleepChoice>("off");
@@ -262,7 +282,7 @@ export function TubePlayer({
     if (!captionLang || !captions.some((c) => c.lang === captionLang)) {
       setCaptionLang(captions[0]?.lang ?? null);
     }
-  }, [captions, captionLang]);
+  }, [captions, captionLang, setCaptionLang]);
 
   /* ── source attach ─────────────────────────────────────── */
   useEffect(() => {

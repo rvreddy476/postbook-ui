@@ -23,6 +23,7 @@ import { ReelAudioTracksDialog } from "@/features/reels/components/ReelAudioTrac
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 import { useAudioTracks } from "@/features/reels/hooks/useAudioTracks";
 import { mediaHref } from "@/features/reels/model";
+import { clampSpeed } from "@/features/reels/playback/playerPrefs";
 import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
 import { isHistoryPaused, useLovedIds, useQueue } from "@/features/posttube/library";
 
@@ -61,7 +62,7 @@ import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
 import { WatchComments } from "../watch/components/WatchComments";
 import { AgeGateCard, MembershipCard, WatchDetails } from "../watch/components/WatchDetails";
-import { WatchMoreMenu } from "../watch/components/WatchMoreMenu";
+import { WatchMoreMenu, watchMoreRows } from "../watch/components/WatchMoreMenu";
 import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
 import "./tube.css";
@@ -430,6 +431,10 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const [reportReason, setReportReason] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const playerRef = useRef<TubePlayerHandle | null>(null);
+  /* What the player reports, and the caption language it shares with the More menu: both menus drive one state. */
+  const [levels, setLevels] = useState<number[]>([]);
+  const [captionLang, setCaptionLang] = useState<string | null>(null);
+  const [revealAbout, setRevealAbout] = useState(0);
 
   const toggleTheater = useCallback(() => setTheater((t) => !t), []);
   const toggleMini = useCallback(() => setMiniOn((m) => !m), []);
@@ -677,26 +682,72 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     />
   );
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl ?? window.location.href);
+      toast({ type: "success", title: "Link copied" });
+    } catch {
+      toast({ type: "error", title: "Could not copy the link" });
+    }
+  };
+  /* The More rows: the shared model (video-shell/moreRows.ts), the same as the reels stage. A gated video has no player, so nothing to choose. */
+  const moreRowList = watchMoreRows({
+    channelName,
+    isOwner,
+    hasDescription: video.description.trim().length > 0 || video.hashtags.length > 0,
+    shareHidden: detail.shareHidden,
+    downloadAllowed: detail.allowDownload,
+    audioTrackCount: gated ? 0 : audioOptions.length,
+    hasCaptions: !gated && captions.length > 0,
+    levels: gated ? [] : levels,
+    canKeep: !!mediaAssetId,
+    canManageAudio: !!mediaAssetId,
+  });
   const moreMenu = (
     <WatchMoreMenu
       open={moreOpen}
       onClose={() => setMoreOpen(false)}
-      isOwner={isOwner}
+      rows={moreRowList}
       channelName={channelName}
-      onShare={detail.shareHidden ? undefined : () => setShareOpen(true)}
-      onKeep={keepHref ? () => window.open(keepHref, "_blank", "noopener") : undefined}
-      onNotInterested={() => void notInterested()}
-      onDontRecommend={() => void dontRecommend()}
-      onReport={() => {
-        if (!requireUser()) return;
-        setReportOpen(true);
-        setReportSubmitted(false);
-        setReportReason("");
+      playback={{
+        speed: prefs.speed,
+        onSpeed: (speed) => updatePrefs({ speed: clampSpeed(speed) }),
+        quality: prefs.quality,
+        qualityHeights: levels,
+        onQuality: (quality) => updatePrefs({ quality }),
+        captions: {
+          on: prefs.captions,
+          tracks: captions,
+          lang: captionLang,
+          onChange: (on, lang) => {
+            if (lang) setCaptionLang(lang);
+            updatePrefs({ captions: on });
+          },
+        },
+        audio: {
+          options: audioOptions,
+          current: activeAudioTrack?.id ?? ORIGINAL_TRACK_ID,
+          onChange: (id) => updateWatchPrefs({ audioLanguage: languageForChoice(audioTracks, id) }),
+        },
       }}
-      onBlock={() => requireUser() && setBlockOpen(true)}
-      onEdit={() => router.push(`/posttube/hub/library?edit=${encodeURIComponent(video.id)}`)}
-      onAudioTracks={() => setAudioDialogOpen(true)}
-      onDelete={() => setDeleteOpen(true)}
+      actions={{
+        block: () => requireUser() && setBlockOpen(true),
+        "copy-link": () => void copyLink(),
+        delete: () => setDeleteOpen(true),
+        description: () => setRevealAbout((n) => n + 1),
+        "dont-recommend": () => void dontRecommend(),
+        edit: () => router.push(`/posttube/hub/library?edit=${encodeURIComponent(video.id)}`),
+        keep: keepHref ? () => window.open(keepHref, "_blank", "noopener") : undefined,
+        "manage-audio": mediaAssetId ? () => setAudioDialogOpen(true) : undefined,
+        "not-interested": () => void notInterested(),
+        report: () => {
+          if (!requireUser()) return;
+          setReportOpen(true);
+          setReportSubmitted(false);
+          setReportReason("");
+        },
+        share: () => setShareOpen(true),
+      }}
     />
   );
 
@@ -788,6 +839,9 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
               }}
               sourceOverride={sourceOverride}
               onSleep={onSleep}
+              onLevels={setLevels}
+              captionLang={captionLang}
+              onCaptionLang={setCaptionLang}
               controller={playerRef}
             />
           )}
@@ -825,6 +879,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
             description={video.description}
             hashtags={video.hashtags}
             related={detail.relatedPost}
+            revealAbout={revealAbout}
           />
 
           {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}

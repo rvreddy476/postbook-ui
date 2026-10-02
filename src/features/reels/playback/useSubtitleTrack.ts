@@ -36,6 +36,11 @@ function toSource(track: SubtitleTrack): CaptionSource | null {
   return null;
 }
 
+/** Whether any of these rows can be played as captions (the same test toSource applies, without building a Blob). */
+export function hasPlayableSubtitle(tracks: readonly SubtitleTrack[]): boolean {
+  return tracks.some((t) => Boolean(t.content) || (Boolean(t.content_url) && (t.format || "").toLowerCase() !== "srt"));
+}
+
 export function useSubtitleTrack(mediaId: string, enabled: boolean) {
   const [source, setSource] = useState<CaptionSource | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "none">("idle");
