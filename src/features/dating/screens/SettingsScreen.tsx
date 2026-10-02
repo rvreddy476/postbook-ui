@@ -1,6 +1,6 @@
 "use client"
 
-/* /dating/settings — privacy, pausing, consents, the data export, deleting the profile. */
+/* /dating/settings — privacy, first move, pausing, consents, the data export, deleting the profile. */
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -9,13 +9,16 @@ import { Download, FileDown, PauseCircle, PlayCircle, Trash2 } from "lucide-reac
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
+import { FIRST_MOVE_TITLE, FirstMoveEditor } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, Loading, PageHead, Panel, Pill, Toggle } from "../components/kit"
 import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
+import { useFirstMove, useSaveFirstMove } from "../hooks/discovery"
 import { useDataExports, useDownloadDataExport, useRequestDataExport } from "../hooks/safety"
 import { CONSENT_COPY, isGranted, type Consents, type ConsentType } from "../model/consents"
 import { exportView, hasPendingExport, type DataExport } from "../model/dataExport"
 import { datingErrorCopy } from "../model/errors"
+import { isFirstMoveOff, questionsProblem } from "../model/firstMove"
 import { DATING_BASE, PRIVACY_TOGGLES, STATUS, privacyPatch, type Privacy, type PrivacyKey } from "../model/profile"
 
 /** Alphabetical. */
@@ -72,6 +75,84 @@ export function ExportList({ exports, busyId, onDownload }: { exports: DataExpor
   )
 }
 
+/**
+  First move (M5). Hidden while the read is in flight and when the server
+  says the mechanic is off (404 MECHANIC_NOT_ENABLED). The switch saves at
+  once; the questions save with their own button.
+*/
+function FirstMoveSection() {
+  const toast = useGlobalToast()
+  const firstMove = useFirstMove()
+  const save = useSaveFirstMove()
+  /** null: nothing edited, so the saved questions are shown. */
+  const [drafts, setDrafts] = useState<string[] | null>(null)
+  const [error, setError] = useState("")
+
+  if (firstMove.isPending) return null
+  if (firstMove.isError) {
+    if (isFirstMoveOff(firstMove.error)) return null
+    return (
+      <Panel title={FIRST_MOVE_TITLE}>
+        <ErrorState error={firstMove.error} onRetry={() => void firstMove.refetch()} />
+      </Panel>
+    )
+  }
+
+  const settings = firstMove.data
+  const current = drafts ?? settings.questions.map((q) => q.text)
+  const refused = (e: unknown) => {
+    // Switched off since the page loaded: read again, and the section goes.
+    if (isFirstMoveOff(e)) void firstMove.refetch()
+    return datingErrorCopy(e)
+  }
+  const edit = (next: string[]) => {
+    setDrafts(next)
+    setError("")
+  }
+
+  return (
+    <Panel title={FIRST_MOVE_TITLE}>
+      <FirstMoveEditor
+        settings={settings}
+        drafts={current}
+        toggleBusy={save.isPending && save.variables?.enabled !== undefined}
+        saveBusy={save.isPending && save.variables?.questions !== undefined}
+        error={error}
+        onToggle={(enabled) =>
+          save.mutate(
+            { enabled },
+            {
+              onSuccess: () => toast({ type: "success", title: enabled ? "You'll say hello first in new matches" : "First move is off" }),
+              onError: (e) => toast({ type: "error", title: refused(e) }),
+            },
+          )
+        }
+        onDraft={(index, text) => edit(current.map((q, i) => (i === index ? text : q)))}
+        onAdd={() => edit([...current, ""])}
+        onRemove={(index) => edit(current.filter((_, i) => i !== index))}
+        onSave={() => {
+          const problem = questionsProblem(current, settings.maxQuestions, settings.maxLength)
+          if (problem) {
+            setError(problem)
+            return
+          }
+          save.mutate(
+            { questions: current },
+            {
+              onSuccess: () => {
+                setDrafts(null)
+                setError("")
+                toast({ type: "success", title: "Questions saved" })
+              },
+              onError: (e) => setError(refused(e)),
+            },
+          )
+        }}
+      />
+    </Panel>
+  )
+}
+
 function SettingsBody() {
   const router = useRouter()
   const toast = useGlobalToast()
@@ -114,7 +195,9 @@ function SettingsBody() {
         {privacy.isPending ? <Loading /> : privacy.isError ? <ErrorState error={privacy.error} onRetry={() => void privacy.refetch()} /> : <PrivacyToggles privacy={privacy.data} busy={patch.isPending} onChange={(key, value) => patch.mutate(privacyPatch(key, value), { onError: fail })} />}
       </Panel>
 
-      <Panel title={paused ? "Your profile is paused" : "Pause your profile"} sub="While paused, nobody sees you in their deck. Your matches stay.">
+      <FirstMoveSection />
+
+      <Panel title={paused ? "Your profile is paused": "Pause your profile"} sub="While paused, nobody sees you in their deck. Your matches stay.">
         <Button
           icon={paused ? PlayCircle : PauseCircle}
           busy={pause.isPending}

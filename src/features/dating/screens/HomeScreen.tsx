@@ -20,6 +20,7 @@ import { leftToday, moreArrive, NO_ALLOWANCES, rewindLimitLine, rewindRefusal, s
 import { datingErrorCopy } from "../model/errors"
 import { SPARK_NOTE_MAX } from "../model/labels"
 import { isLikedYouLocked, likedYouHeadline, type LikedYouCard } from "../model/likedYou"
+import { firstMoveListLine, firstMoveState } from "../model/firstMove"
 import { countdown, isOpen, matchHref, type Match } from "../model/matches"
 import { metaLine, nameLine, personHref, type Person } from "../model/people"
 import { SUPER_SPARK_PACKS_ANCHOR } from "../model/premium"
@@ -421,13 +422,20 @@ function LikedYouSection() {
 
 /* ── matches ─────────────────────────────────────────────────────── */
 
+/** A first-move match says who starts and the time left (M5); any other match keeps its countdown. */
+export function matchListLine(m: Match, nowMs?: number): string {
+  const fm = firstMoveListLine(firstMoveState(m, nowMs))
+  if (fm) return fm
+  const c = countdown(m, nowMs)
+  return c.kind === "none" ? "" : c.text
+}
+
 export function MatchList({ matches, nowMs }: { matches: Match[]; nowMs?: number }) {
   return (
     <ul className="pulse-list">
-      {matches.map((m) => {
-        const c = countdown(m, nowMs)
-        return <PersonRow key={m.id} person={m.person} href={matchHref(m.id)} meta={c.kind === "none" ? "" : c.text} />
-      })}
+      {matches.map((m) => (
+        <PersonRow key={m.id} person={m.person} href={matchHref(m.id)} meta={matchListLine(m, nowMs)} />
+      ))}
     </ul>
   )
 }

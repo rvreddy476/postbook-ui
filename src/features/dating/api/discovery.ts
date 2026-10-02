@@ -1,12 +1,13 @@
 /* The deck, sparks, the stash, people and matches. */
 
-import { toCloseResult, toExtendResult, toMatch, toMatches, type Match } from "../model/matches"
+import { firstMoveBody, openingAnswerBody, toFirstMoveSettings, toOpeningAnswerResult, type FirstMoveSettings, type OpeningAnswerResult } from "../model/firstMove"
+import { toCloseResult, toExtendResult, toMatch, toMatches, type ExtendResult, type Match } from "../model/matches"
 import { toPerson, type Person } from "../model/people"
 import { toAllowances, type Allowances } from "../model/allowances"
 import { LIKED_YOU_PAGE, toLikedYou, type LikedYou } from "../model/likedYou"
 import { toDeck, toPassResult, toRewindResult, type Deck, type PassResult, type RewindResult } from "../model/pulse"
 import { sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
-import { del, get, getBody, post, seg } from "./client"
+import { del, get, getBody, post, put, seg } from "./client"
 
 /** GET /pulse/today — `{data: [cards], meta}`; the mapper takes the whole body. */
 export async function fetchDeck(): Promise<Deck> {
@@ -79,6 +80,24 @@ export async function closeMatch(id: string): Promise<{ closed: boolean }> {
   return toCloseResult(await post(`/matches/${seg(id)}/close`))
 }
 
-export async function extendMatch(id: string): Promise<{ extended: boolean; extraDays: number }> {
+/** The free 24 hours for the person waiting on a first-move match, otherwise a pass holder's 7 days. */
+export async function extendMatch(id: string): Promise<ExtendResult> {
   return toExtendResult(await post(`/matches/${seg(id)}/extend`))
+}
+
+/* ── first move (mechanic M5) ────────────────────────────────────── */
+
+/** GET /first-move — 404 MECHANIC_NOT_ENABLED while the mechanic is off. */
+export async function fetchFirstMove(): Promise<FirstMoveSettings> {
+  return toFirstMoveSettings(await get("/first-move"))
+}
+
+/** PUT /first-move — an absent field is unchanged; `questions: []` removes them all. */
+export async function saveFirstMove(change: { enabled?: boolean; questions?: string[] }): Promise<FirstMoveSettings> {
+  return toFirstMoveSettings(await put("/first-move", firstMoveBody(change)))
+}
+
+/** POST /matches/:id/opening-answer — the answer becomes the match's first message. */
+export async function sendOpeningAnswer(matchId: string, questionId: string, answer: string): Promise<OpeningAnswerResult> {
+  return toOpeningAnswerResult(await post(`/matches/${seg(matchId)}/opening-answer`, openingAnswerBody(questionId, answer)))
 }

@@ -39,13 +39,41 @@ function locationLimited(e: DatingError): string {
   return "You've changed your location a lot recently. Try again later."
 }
 
+/* First move (M5): the limits the server sends in details. */
+function questionsTooMany(e: DatingError): string {
+  const max = num(e.details.max)
+  return max > 0 ? `You can have up to ${max} questions.` : "That's too many questions. Remove one and save."
+}
+
+function questionInvalid(e: DatingError): string {
+  const max = num(e.details.max_length)
+  return max > 0 ? `Each question needs 1 to ${max} characters.` : "Each question needs a few words, and not too many."
+}
+
+function answerInvalid(e: DatingError): string {
+  const max = num(e.details.max_length)
+  return max > 0 ? `Write an answer of up to ${max} characters.` : "Write a shorter answer."
+}
+
+/** Codes whose words depend on the details the server sent. */
+const DYNAMIC: Record<string, (e: DatingError) => string> = {
+  LOCATION_CHANGE_RATE_LIMITED: locationLimited,
+  OPENING_ANSWER_INVALID: answerInvalid,
+  OPENING_QUESTION_INVALID: questionInvalid,
+  OPENING_QUESTIONS_TOO_MANY: questionsTooMany,
+}
+
 const COPY: Record<string, string> = {
   AGE_REQUIRED: AGE_REQUIRED_COPY,
   CANDIDATE_UNAVAILABLE: "This person isn't available any more.",
+  CHAT_UNAVAILABLE: "Chat is busy right now. Try again in a moment.",
   CLIENT_PRICE_REFUSED: "That purchase couldn't be started. Try again.",
   CONNECTION_CHECK_UNAVAILABLE: "We couldn't check that right now. Try again in a moment.",
   CONSENT_REQUIRED: "We need your consent before saving that.",
   EXPLAIN_RATE_LIMITED: "Try again later.",
+  EXTEND_LIMIT_REACHED: "You've used your free extra time for now. Try again later.",
+  FIRST_MOVE_NOT_PENDING: "This match isn't waiting for your answer any more.",
+  FIRST_MOVE_PENDING: "Your match starts this chat. Answer one of their questions from the match page, or wait for their hello.",
   FACE_COMPARE_UNAVAILABLE: "Verification is unavailable right now. Try again in a few minutes.",
   FORBIDDEN: "You can't do that right now.",
   IDEMPOTENCY_KEY_REUSED: "That purchase changed. Start again.",
@@ -64,6 +92,9 @@ const COPY: Record<string, string> = {
   INVALID_VISIBILITY: "That choice isn't available any more.",
   MECHANIC_NOT_ENABLED: "That isn't available yet.",
   MEDIA_NOT_READY: "Your video is still processing. Try again in a moment.",
+  OPENING_ANSWER_REFUSED: "Answers can't include phone numbers, emails or links.",
+  OPENING_QUESTION_REFUSED: "Questions can't include phone numbers, emails or links.",
+  OPENING_QUESTION_UNKNOWN: "That question was changed or removed. Pick another.",
   ONBOARDING_INCOMPLETE: "Finish setting up your profile first.",
   PASS_REASON_TOO_LONG: "That note is too long.",
   PAYMENT_METHOD_INVALID: "That way to pay isn't available. Try again.",
@@ -102,7 +133,7 @@ const COPY: Record<string, string> = {
 }
 
 /** Every code this client has words for, for the contract test. */
-export const KNOWN_ERROR_CODES: readonly string[] = Object.keys(COPY).concat("LOCATION_CHANGE_RATE_LIMITED").sort()
+export const KNOWN_ERROR_CODES: readonly string[] = Object.keys(COPY).concat(Object.keys(DYNAMIC)).sort()
 
 export function datingErrorCopy(error: unknown): string {
   const e = toDatingError(error)
@@ -110,7 +141,7 @@ export function datingErrorCopy(error: unknown): string {
 }
 
 export function copyFor(e: DatingError): string {
-  if (e.code === "LOCATION_CHANGE_RATE_LIMITED") return locationLimited(e)
+  if (DYNAMIC[e.code]) return DYNAMIC[e.code](e)
   if (COPY[e.code]) return COPY[e.code]
   if (e.status === 0) return NETWORK_COPY
   if (e.status === 401) return "Your session ended. Sign in again."

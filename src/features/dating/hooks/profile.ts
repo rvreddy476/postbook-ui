@@ -38,6 +38,7 @@ export const KEYS = {
   exports: ["dating", "exports"] as const,
   catalogue: ["dating", "premium", "catalogue"] as const,
   premiumMe: ["dating", "premium", "me"] as const,
+  firstMove: ["dating", "first-move"] as const,
 }
 
 /** A 4xx will not change by asking again; anything else gets two more tries. */

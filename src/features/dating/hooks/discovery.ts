@@ -5,11 +5,31 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useState } from "react"
 
-import { acceptSpark, addStash, closeMatch, createSpark, declineSpark, extendMatch, fetchAllowances, fetchDeck, fetchIncomingSparks, fetchLikedYou, fetchMatch, fetchMatches, fetchPerson, passCandidate, rewindLastPass } from "../api/discovery"
+import {
+  acceptSpark,
+  addStash,
+  closeMatch,
+  createSpark,
+  declineSpark,
+  extendMatch,
+  fetchAllowances,
+  fetchDeck,
+  fetchFirstMove,
+  fetchIncomingSparks,
+  fetchLikedYou,
+  fetchMatch,
+  fetchMatches,
+  fetchPerson,
+  passCandidate,
+  rewindLastPass,
+  saveFirstMove,
+  sendOpeningAnswer,
+} from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
 import type { Allowances } from "../model/allowances"
+import type { FirstMoveSettings, OpeningAnswerResult } from "../model/firstMove"
 import { isLikedYouLocked, lockLikedYou, type LikedYou } from "../model/likedYou"
-import type { Match } from "../model/matches"
+import type { ExtendResult, Match } from "../model/matches"
 import { viewablePhotoPath, type Person } from "../model/people"
 import type { Deck, RewindResult } from "../model/pulse"
 import type { IncomingSpark, SparkOutcome } from "../model/sparks"
@@ -170,12 +190,40 @@ export function useCloseMatch() {
   })
 }
 
+/** Accepted or refused, the match is read again: a 429 means `can_extend` on screen was stale. */
 export function useExtendMatch() {
   const qc = useQueryClient()
-  return useMutation<{ extended: boolean; extraDays: number }, unknown, string>({
+  return useMutation<ExtendResult, unknown, string>({
     mutationFn: extendMatch,
-    onSuccess: (_, id) => {
+    onSettled: (_, __, id) => {
       void qc.invalidateQueries({ queryKey: KEYS.match(id) })
+      void qc.invalidateQueries({ queryKey: KEYS.matches })
+    },
+  })
+}
+
+/* ── first move (mechanic M5) ────────────────────────────────────── */
+
+/** The viewer's opt-in and opening questions. A 404 MECHANIC_NOT_ENABLED means the feature is hidden. */
+export function useFirstMove(enabled = true) {
+  return useQuery<FirstMoveSettings>({ queryKey: KEYS.firstMove, queryFn: fetchFirstMove, retry, enabled, staleTime: 60_000 })
+}
+
+export function useSaveFirstMove() {
+  const qc = useQueryClient()
+  return useMutation<FirstMoveSettings, unknown, { enabled?: boolean; questions?: string[] }>({
+    mutationFn: saveFirstMove,
+    onSuccess: (settings) => qc.setQueryData(KEYS.firstMove, settings),
+  })
+}
+
+/** The answer becomes the first message; the match is read again either way. */
+export function useAnswerOpening() {
+  const qc = useQueryClient()
+  return useMutation<OpeningAnswerResult, unknown, { matchId: string; questionId: string; answer: string }>({
+    mutationFn: ({ matchId, questionId, answer }) => sendOpeningAnswer(matchId, questionId, answer),
+    onSettled: (_, __, { matchId }) => {
+      void qc.invalidateQueries({ queryKey: KEYS.match(matchId) })
       void qc.invalidateQueries({ queryKey: KEYS.matches })
     },
   })

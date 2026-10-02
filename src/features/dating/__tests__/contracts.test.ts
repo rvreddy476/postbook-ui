@@ -4,7 +4,8 @@ import { rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superS
 import { isGranted, toConsents } from "../model/consents"
 import { exportView, hasPendingExport, toDataExport, toDataExports } from "../model/dataExport"
 import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, isAgeRefusal, isPremiumUnavailable, PASSES_UNAVAILABLE_COPY } from "../model/errors"
-import { chatHref, countdown, isOpen, toCloseResult, toMatch, toMatches } from "../model/matches"
+import { answerRefusalRefetches, firstMoveListLine, firstMoveState, isFirstMoveOff, questionsChanged, toFirstMoveSettings, toOpeningAnswerResult } from "../model/firstMove"
+import { chatHref, countdown, extendedLine, extendLimitLine, isOpen, toCloseResult, toExtendLimit, toExtendResult, toMatch, toMatches } from "../model/matches"
 import { photoPath, toPerson } from "../model/people"
 import { moderationView, toMyPhoto, toMyPhotos } from "../model/photos"
 import { toPreferences, toPrivacy, toProfile, stepFor } from "../model/profile"
@@ -332,8 +333,66 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(chatHref(m.conversationId).startsWith("/messenger")).toBe(true)
     // The fixture's timestamps are placeholders: an unparseable expiry is no countdown, not NaN.
     expect(countdown(m).kind).toBe("none")
+    // No first_move member: a normal match.
+    expect(m.firstMove).toBeNull()
+    expect(firstMoveState(m)).toEqual({ kind: "none" })
   },
   match_close_post_200: (f) => expect(toCloseResult(f.data).closed).toBe(true),
+
+  /* first move (mechanic M5) */
+  first_move_get_200: (f) => {
+    const s = toFirstMoveSettings(f.data)
+    expect(s.enabled).toBe(true)
+    expect(s.questions.map((q) => q.text)).toEqual(["What does your perfect Sunday look like?", "Tea or coffee, and why?"])
+    expect(s.maxQuestions).toBe(3)
+    expect(s.maxLength).toBe(140)
+    expect(questionsChanged(s.questions, s.questions.map((q) => q.text))).toBe(false)
+  },
+  first_move_put_200: (f) => expect(toFirstMoveSettings(f.data)).toEqual(toFirstMoveSettings(readFixture("first_move_get_200").data)),
+  first_move_put_400_too_many_questions: refusal("OPENING_QUESTIONS_TOO_MANY", (f) => {
+    expect(copyFor(errorFromEnvelope(f))).toBe("You can have up to 3 questions.")
+  }),
+  first_move_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isFirstMoveOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
+  match_get_200_first_move_waiting: (f) => {
+    const m = toMatch(f.data)!
+    expect(m.firstMove).toEqual({
+      youMoveFirst: false,
+      deadline: "", // the placeholder timestamp does not parse
+      openingQuestions: [
+        { id: "<uuid>", text: "What does your perfect Sunday look like?" },
+        { id: "<uuid>", text: "Tea or coffee, and why?" },
+      ],
+      canExtend: true,
+    })
+    const state = firstMoveState(m)
+    expect(state.kind).toBe("waiting")
+    expect(firstMoveListLine(state)).toBe("Waiting for them")
+    person((f.data as { person: unknown }).person)
+  },
+  match_get_200_first_move_yours: (f) => {
+    const m = toMatch(f.data)!
+    // opening_questions is omitted for the first mover: [] not undefined.
+    expect(m.firstMove).toEqual({ youMoveFirst: true, deadline: "", openingQuestions: [], canExtend: false })
+    const state = firstMoveState(m)
+    expect(state.kind).toBe("yours")
+    expect(firstMoveListLine(state)).toBe("You start")
+  },
+  match_opening_answer_post_201: (f) => expect(toOpeningAnswerResult(f.data)).toEqual({ sent: true, conversationId: "<uuid>" }),
+  match_opening_answer_409_not_pending: refusal("FIRST_MOVE_NOT_PENDING", (f) => {
+    expect(answerRefusalRefetches(errorFromEnvelope(f))).toBe(true)
+  }),
+  match_extend_post_200_free: (f) => {
+    const r = toExtendResult(f.data)
+    expect(r).toEqual({ extended: true, extraDays: 0, extraHours: 24, expiresAt: "", free: true })
+    expect(extendedLine(r)).toBe("24 more hours added")
+  },
+  match_extend_429_limit_reached: refusal("EXTEND_LIMIT_REACHED", (f) => {
+    const l = toExtendLimit(errorFromEnvelope(f))!
+    expect(l).toEqual({ limit: 1, windowHours: 24, resetsAt: "" })
+    expect(extendLimitLine(l)).toBe("You can give more time once every 24 hours. Try again later.")
+  }),
 
   /* safety */
   block_post_200: (f) => expect(toBlockResult(f.data).blocked).toBe(true),
@@ -436,7 +495,7 @@ describe("dating contract fixtures", () => {
   const names = fixtureNames()
 
   test("the fixtures are on disk", () => {
-    expect(names.length).toBeGreaterThanOrEqual(83)
+    expect(names.length).toBeGreaterThanOrEqual(93)
   })
 
   test("every fixture has a parser, and every parser has a fixture", () => {

@@ -174,6 +174,11 @@ textarea.pulse-input { resize: vertical; }
 .pulse-rowcard__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .pulse-rowcard--super { border-color: rgb(var(--brand-accent) / .6); }
 
+/* ── first move (M5): a question field with its Remove button beside it ── */
+.pulse-fm-question { flex-wrap: nowrap; align-items: flex-start; }
+.pulse-fm-question > .pulse-field { flex: 1; }
+.pulse-fm-question > .pulse-btn { flex: none; margin-top: 24px; }
+
 /* ── liked you: a grid, two across at 375px ── */
 .pulse-likes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .pulse-like { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
