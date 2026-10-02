@@ -15,6 +15,8 @@ import { errorCode, num, str } from "./model"
 // `met` null means "could not be checked right now"; an unknown count is
 // OMITTED (no `current`), and a requirement that is switched off is not
 // listed at all. The server always decides: this file only words the answer.
+// Verification is by EMAIL (2 Oct 2026): `email_verified` is listed first and
+// `phone_verified` is normally no longer sent; it keeps its words if it is.
 // No React and no network here; hooks/useLiveV2.ts fetches.
 
 type Obj = Record<string, unknown>
@@ -26,6 +28,14 @@ function asObj(v: unknown): Obj | null {
 export const ELIGIBILITY_PATH = "/v1/livestream/eligibility"
 /** Where "Create a post" leads (the existing composer). */
 export const CREATE_POST_HREF = "/create/post"
+/**
+ * Where "Verify email" leads. The web has no screen or call that lets a
+ * SIGNED-IN user verify their email: /auth/verify-email and
+ * /v1/auth/resend-verification both need the token registration issued,
+ * which a signed-in session does not hold. Until one exists this is the
+ * account's security settings; point it at the real screen when it ships.
+ */
+export const VERIFY_EMAIL_HREF = "/settings/security"
 
 export interface RequirementProgress {
   /** null: the server could not count it (the field was omitted). */
@@ -215,6 +225,11 @@ const SIMPLE: Record<string, Record<RequirementState, string>> = {
     todo: "Your account isn't in good standing right now",
     unknown: "Your account must be in good standing",
   },
+  email_verified: {
+    met: "Email verified",
+    todo: "Verify your email address",
+    unknown: "Your email address must be verified",
+  },
   phone_verified: {
     met: "Your phone number is verified",
     todo: "Verify your phone number",
@@ -256,6 +271,7 @@ export const RECHECK_LABEL = "Check again"
 
 /** Requirements the web can help with directly; every other one is waited out or fixed elsewhere. */
 const ACTIONS: Record<string, { label: string; href: string }> = {
+  email_verified: { label: "Verify email", href: VERIFY_EMAIL_HREF },
   activity: { label: "Create a post", href: CREATE_POST_HREF },
 }
 

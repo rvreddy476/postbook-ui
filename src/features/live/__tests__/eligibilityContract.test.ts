@@ -22,7 +22,7 @@ describe("live eligibility and chat authors: the backend's golden answers", () =
     expect(e.viewer_cap).toBe(200)
     expect(goLiveGate({ loading: false, eligibility: e })).toBe("nearly")
     expect(e.requirements.map(requirementView)).toEqual([
-      { key: "phone_verified", state: "met", text: "Your phone number is verified" },
+      { key: "email_verified", state: "met", text: "Email verified" },
       { key: "adult", state: "met", text: "You're 18 or over" },
       { key: "account_age", state: "todo", text: "Your account must be 7 days old (5 days to go)" },
       { key: "activity", state: "todo", text: "Publish 3 posts or reach 10 followers (1 of 3 posts, 4 of 10 followers)" },

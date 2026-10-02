@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test"
 import {
   CREATE_POST_HREF,
   OTHER_REQUIREMENT_COPY,
+  VERIFY_EMAIL_HREF,
   gateRequirements,
   goLiveGate,
   isNotEligible,
@@ -30,7 +31,16 @@ const axiosErr = (status: number, code: string, details?: unknown) => ({
 })
 
 describe("requirement wording: every key in every state", () => {
-  it("phone_verified", () => {
+  it("email_verified", () => {
+    expect(text({ key: "email_verified", met: true })).toBe("Email verified")
+    expect(text({ key: "email_verified", met: false })).toBe("Verify your email address")
+    expect(text({ key: "email_verified", met: null })).toBe("Your email address must be verified")
+    expect(state({ key: "email_verified", met: true })).toBe("met")
+    expect(state({ key: "email_verified", met: false })).toBe("todo")
+    expect(state({ key: "email_verified", met: null })).toBe("unknown")
+    expect(state({ key: "email_verified" })).toBe("unknown")
+  })
+  it("phone_verified (no longer sent normally; still worded if it appears)", () => {
     expect(text({ key: "phone_verified", met: true })).toBe("Your phone number is verified")
     expect(text({ key: "phone_verified", met: false })).toBe("Verify your phone number")
     expect(text({ key: "phone_verified", met: null })).toBe("Your phone number must be verified")
@@ -109,6 +119,26 @@ describe("the one primary button", () => {
     })
     expect(CREATE_POST_HREF).toBe("/create/post")
   })
+  it("email not verified → Verify email", () => {
+    expect(primaryAction(rows({ key: "email_verified", met: false }, { key: "adult", met: true }))).toEqual({
+      kind: "link", key: "email_verified", label: "Verify email", href: VERIFY_EMAIL_HREF,
+    })
+    expect(VERIFY_EMAIL_HREF).toBe("/settings/security")
+  })
+  it("email and activity both unmet → whichever the server lists first (email)", () => {
+    const email = { key: "email_verified", met: false }
+    const activity = { key: "activity", met: false, posts: { current: 1, needed: 3 } }
+    expect(primaryAction(rows(email, { key: "account_age", met: false }, activity))).toMatchObject({ key: "email_verified", label: "Verify email" })
+    // The order is the server's, not a ranking in this file.
+    expect(primaryAction(rows(activity, email))).toMatchObject({ key: "activity", label: "Create a post" })
+  })
+  it("email that is verified, or that could not be checked, never offers Verify email", () => {
+    const activity = { key: "activity", met: false }
+    expect(primaryAction(rows({ key: "email_verified", met: true }, activity))).toMatchObject({ key: "activity" })
+    expect(primaryAction(rows({ key: "email_verified", met: null }, activity))).toMatchObject({ key: "activity" })
+    expect(primaryAction(rows({ key: "email_verified", met: true })).kind).toBe("recheck")
+    expect(primaryAction(rows({ key: "email_verified", met: null })).kind).toBe("recheck")
+  })
   it("the first unmet requirement WITH an action wins over earlier ones without", () => {
     const action = primaryAction(rows({ key: "account_age", met: false, current: 2, needed: 7, unit: "days" }, { key: "activity", met: false }))
     expect(action.kind).toBe("link")
@@ -159,6 +189,38 @@ describe("which screen a go-live entry shows", () => {
     expect(gateRequirements(null, answer).map((r) => r.key)).toEqual(["phone_verified", "adult"])
     expect(gateRequirements([], answer).map((r) => r.key)).toEqual(["phone_verified", "adult"])
     expect(gateRequirements(null, null)).toEqual([])
+  })
+})
+
+// Inline until the backend's golden files carry the row (contract 2 Oct 2026:
+// `email_verified` listed first, `phone_verified` normally not sent).
+describe("the email row, as the server sends it", () => {
+  const body = {
+    data: {
+      mode: "open",
+      eligible: false,
+      requirements: [
+        { key: "email_verified", met: false },
+        { key: "adult", met: true },
+        { key: "account_age", met: false, current: 2, needed: 7, unit: "days" },
+        { key: "activity", met: false, posts: { current: 1, needed: 3 }, followers: { current: 4, needed: 10 } },
+        { key: "good_standing", met: true },
+      ],
+    },
+  }
+  it("GET /eligibility: listed first, worded, and the button is Verify email", () => {
+    const e = parseEligibility(body)!
+    expect(goLiveGate({ loading: false, eligibility: e })).toBe("nearly")
+    expect(e.requirements.map(requirementView).slice(0, 2)).toEqual([
+      { key: "email_verified", state: "todo", text: "Verify your email address" },
+      { key: "adult", state: "met", text: "You're 18 or over" },
+    ])
+    expect(primaryAction(e.requirements)).toEqual({ kind: "link", key: "email_verified", label: "Verify email", href: VERIFY_EMAIL_HREF })
+  })
+  it("403 LIVE_NOT_ELIGIBLE: an email row that could not be checked is listed, without the button", () => {
+    const rows = requirementsFromError(axiosErr(403, "LIVE_NOT_ELIGIBLE", { requirements: [{ key: "email_verified", met: null }, { key: "activity", met: false }] }))!
+    expect(requirementView(rows[0]!)).toEqual({ key: "email_verified", state: "unknown", text: "Your email address must be verified" })
+    expect(primaryAction(rows)).toMatchObject({ key: "activity" })
   })
 })
 
@@ -227,5 +289,8 @@ describe("small print", () => {
     expect(learnMoreLines(known).join(" ")).not.toContain("couldn't complete")
     expect(learnMoreLines(unknown).join(" ")).toContain("couldn't complete")
     expect(learnMoreLines(known, 200).at(-1)).toBe("Your first streams are limited to 200 viewers.")
+    // Verification is by email now: the small print never asks for a phone.
+    const all = learnMoreLines(parseRequirements([{ key: "email_verified", met: false }, { key: "adult", met: null }]), 200).join(" ")
+    expect(all.toLowerCase()).not.toContain("phone")
   })
 })
