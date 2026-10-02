@@ -3,10 +3,15 @@ import { DEFAULT_RECHECK_SECONDS, type OfflineCheckRow, type OfflineInvalidReaso
 /*
   When a copy ends and when the server is asked again. Pure.
 
-  A copy is good until `expiresAt` (30 days from the grant; saving again
-  refreshes it, a check never extends it). The server is asked on start,
-  whenever the tab regains the network, and again `recheckAfterSeconds`
-  after the last answer while the tab stays open.
+  A copy is good until `expiresAt` (30 days from the grant; a check never
+  extends it). The server is asked on start, whenever the tab regains the
+  network, and again `recheckAfterSeconds` after the last answer while the
+  tab stays open.
+
+  After an answered check, every copy it called valid is renewed — the
+  grant asked for again, 30 more days — at most once a day per copy, and
+  not at all when the answer says `renewable: false`. A device that keeps
+  coming online therefore never sees its copies run out.
 
   What a check deletes:
     - a copy past its own expiry, with or without an answer ("expired");
@@ -66,6 +71,20 @@ export function applyCheck(copies: readonly ScheduledCopy[], rows: readonly Offl
     else out.update.push({ postId: copy.postId, expiresAt, lastCheckedAt: now });
   }
   return out;
+}
+
+export const RENEW_EVERY_MS = 24 * 60 * 60 * 1000;
+/** The pause between two renewals of one sweep: they go one at a time, never as a burst. */
+export const RENEW_GAP_MS = 1_500;
+
+/** A day has passed since the copy was saved and since the server last answered a renewal for it. */
+export function renewDue(copy: { savedAt: number; renewTriedAt?: number }, now: number): boolean {
+  return now - Math.max(copy.savedAt, copy.renewTriedAt ?? 0) >= RENEW_EVERY_MS;
+}
+
+/** The copies of an answered check to renew: the valid ones the server did not mark `renewable: false`. */
+export function idsToRenew(rows: readonly OfflineCheckRow[] | null): string[] {
+  return (rows ?? []).filter((r) => r.valid && r.renewable !== false).map((r) => r.postId);
 }
 
 export const MIN_WAKE_MS = 60_000;

@@ -6,6 +6,7 @@ import { mediaHref } from "@/features/reels/model";
 import { browserDeviceId } from "./deviceId";
 import { OfflineManager } from "./manager";
 import { indexedDbMetaStore, indexedDbWorks } from "./metaStore";
+import { browserSignInMarks, browserSignOutMarks } from "./signOut";
 import { detectFileStore, type CachesLike, type DirHandle, type StorageKind } from "./storage";
 import { createOfflineApi } from "./wire";
 
@@ -64,6 +65,8 @@ async function build(): Promise<OfflineManager | null> {
     createObjectUrl: (blob) => URL.createObjectURL(blob),
     revokeObjectUrl: (url) => URL.revokeObjectURL(url),
     broadcast: channel ? () => channel!.postMessage("changed") : undefined,
+    signOutMarks: browserSignOutMarks,
+    signInMarks: browserSignInMarks,
   });
   if (channel) channel.onmessage = () => void manager.reload().catch(() => undefined);
   kind = files.kind;

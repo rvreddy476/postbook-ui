@@ -3,6 +3,7 @@ import { AuthRepository } from '@/services/auth/AuthRepository';
 import { AuthSessionStore } from '@/services/auth/AuthSessionStore';
 import { ApiGender } from '@/services/auth/types';
 import { createAuthStrategy } from '@/services/auth/strategyFactory';
+import { noteOfflineSignOut } from '@/features/offline/signOut';
 import { HttpClientError } from '@/services/core/httpClient';
 import { TERMS_VERSION } from '@/lib/legal';
 
@@ -279,6 +280,8 @@ export const updateUser = (updatedUser: User) => {
 };
 
 export const logoutUser = () => {
+  // Before the session goes: offline copies keep for 48 hours from this moment.
+  noteOfflineSignOut(authRepository.getSessionUser()?.id);
   authRepository.logout();
 };
 

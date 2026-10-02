@@ -2,7 +2,7 @@
   Offline copies: every wire shape and every request, in this one file — a
   late contract change is one edit here (contract pinned 2 Oct 2026).
 
-    POST   /v1/posts/:id/offline          {device_id}            → the grant card
+    POST   /v1/posts/:id/offline          {device_id}            → the grant card (repeated = a renewal: 30 more days)
     POST   /v1/posts/offline/check        {device_id, post_ids}  → valid / invalid rows (≤100 ids a call)
     GET    /v1/posts/offline?device_id=                          → the device's active copies (cards without media.path)
     DELETE /v1/posts/:id/offline          {device_id} (+ query)  → idempotent
@@ -73,7 +73,7 @@ export type OfflineInvalidReason = "deleted" | "private" | "not_allowed" | "expi
 const REASONS: ReadonlySet<string> = new Set(["deleted", "private", "not_allowed", "expired", "blocked", "revoked", "unknown"]);
 
 export type OfflineCheckRow =
-  | { postId: string; valid: true; expiresAt: number | null }
+  | { postId: string; valid: true; expiresAt: number | null; /** false = the server will not renew this copy; absent = try. */ renewable?: boolean }
   | { postId: string; valid: false; reason: OfflineInvalidReason };
 
 /* ── readers ────────────────────────────────────────────── */
@@ -212,7 +212,7 @@ export function parseCheck(raw: unknown): OfflineCheckRow[] {
     const o = obj(r);
     const postId = o ? str(o.post_id) : null;
     if (!o || !postId) continue;
-    if (o.valid === true) out.push({ postId, valid: true, expiresAt: wireTime(o.expires_at) });
+    if (o.valid === true) out.push({ postId, valid: true, expiresAt: wireTime(o.expires_at), renewable: o.renewable !== false });
     else if (o.valid === false) {
       const reason = (str(o.reason) ?? "unknown").toLowerCase();
       out.push({ postId, valid: false, reason: (REASONS.has(reason) ? reason : "unknown") as OfflineInvalidReason });

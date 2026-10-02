@@ -300,7 +300,7 @@ export function OfflinePage() {
       </header>
 
       <p className="offline-page__note">
-        Offline copies play only here in the app, on this device. A copy is removed when it expires, or when its video is deleted, made private, or its creator turns offline copies off.
+        Offline copies play only here in the app, on this device. Copies renew themselves while this device keeps coming online. A copy is removed when it expires, when its video is deleted, made private, or its creator turns offline copies off, and 48 hours after you sign out.
       </p>
 
       {count > 0 ? (

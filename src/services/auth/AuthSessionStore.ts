@@ -6,6 +6,7 @@ import {
   purgeLegacyTokenStorage,
   setAccessToken,
 } from '@/lib/accessToken';
+import { noteOfflineSignIn } from '@/features/offline/signOut';
 
 const SESSION_KEY = 'postbook_session';
 const SESSION_CHANGE_EVENT = 'postbook:session-changed';
@@ -71,6 +72,8 @@ export class AuthSessionStore {
     }
 
     localStorage.setItem(SESSION_KEY, JSON.stringify(result.user));
+    // Offline copies: an account back within 48 hours of signing out keeps them.
+    noteOfflineSignIn(result.user?.id);
 
     // Neither token is written to storage. The access token goes to memory;
     // the refresh token goes to the httpOnly cookie via adoptRefreshToken and

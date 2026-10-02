@@ -153,7 +153,7 @@ describe("only our own serve paths are ever fetched", () => {
 describe("the check answer", () => {
   test("reads valid and invalid rows", () => {
     expect(parseCheck(CHECK)).toEqual([
-      { postId: "p1", valid: true, expiresAt: Date.parse("2026-11-01T10:00:00Z") },
+      { postId: "p1", valid: true, expiresAt: Date.parse("2026-11-01T10:00:00Z"), renewable: true },
       { postId: "p2", valid: false, reason: "deleted" },
       { postId: "p3", valid: false, reason: "private" },
       { postId: "p4", valid: false, reason: "not_allowed" },
@@ -164,8 +164,13 @@ describe("the check answer", () => {
     expect(parseCheck({ data: [{ post_id: "p1", valid: false, reason: "" }, { post_id: "p2", valid: false, reason: "brand_new" }, { post_id: "p3", valid: true, expires_at: "0001-01-01T00:00:00Z" }] })).toEqual([
       { postId: "p1", valid: false, reason: "unknown" },
       { postId: "p2", valid: false, reason: "unknown" },
-      { postId: "p3", valid: true, expiresAt: null },
+      { postId: "p3", valid: true, expiresAt: null, renewable: true },
     ]);
+  });
+
+  test("a valid row is renewable unless it says `renewable: false` — absent, null and Go's zero-less true all mean try", () => {
+    const rows = parseCheck({ data: [{ post_id: "a", valid: true }, { post_id: "b", valid: true, renewable: true }, { post_id: "c", valid: true, renewable: false }, { post_id: "d", valid: true, renewable: null }] });
+    expect(rows.map((r) => [r.postId, r.valid && r.renewable])).toEqual([["a", true], ["b", true], ["c", false], ["d", true]]);
   });
 
   test("a row without `valid`, or without a post id, is dropped — nothing is deleted on a guess", () => {

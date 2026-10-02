@@ -34,6 +34,10 @@ export interface OfflineRecord {
   savedAt: number;
   /** Epoch ms of the last answered check; 0 = never. */
   lastCheckedAt: number;
+  /** Epoch ms of the last renewal the server answered (granted or refused); absent = never asked. */
+  renewTriedAt?: number;
+  /** Epoch ms the owning account signed out of this browser; absent while it is signed in. See signOut.ts. */
+  signedOutAt?: number;
 }
 
 export interface MetaStore {

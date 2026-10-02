@@ -1,7 +1,8 @@
 import { COPY_IDLE, copyReducer, type CopyEvent, type CopyState } from "./copyState";
 import { downloadToStore, isAbort, OfflineDownloadError, type FetchLike } from "./transfer";
 import type { MetaStore, OfflineRecord } from "./metaStore";
-import { applyCheck, idsToCheck, isExpired, nextWakeDelay } from "./schedule";
+import { applyCheck, idsToCheck, idsToRenew, isExpired, nextWakeDelay, RENEW_GAP_MS, renewDue } from "./schedule";
+import { signedBackInTime, signOutOver, signOutStamp, type SignOutMarks } from "./signOut";
 import { fileNames, isQuotaError, OfflineQuotaError, type FileStore } from "./storage";
 import { OfflineGrantError, REFUSAL_MESSAGES, type OfflineApi, type OfflineCheckRow, type OfflineGrant, type OfflineInvalidReason, type OfflineSurface } from "./wire";
 
@@ -9,7 +10,9 @@ import { OfflineGrantError, REFUSAL_MESSAGES, type OfflineApi, type OfflineCheck
   The one object that owns offline copies in a tab: it asks the server for
   a grant, streams the granted rendition into the private store, records
   the copy, hands players an object URL of the stored file, and deletes
-  copies that expire or that the server no longer allows.
+  copies that expire or that the server no longer allows. It renews the
+  copies the server still allows, and it retires the copies of an account
+  that signed out 48 hours ago (signOut.ts).
 
   Everything it touches is injected (store, metadata, API, fetch, clock),
   so the tests drive it with fakes.
@@ -65,6 +68,12 @@ export interface ManagerDeps {
   revokeObjectUrl: (url: string) => void;
   /** Tells this site's other tabs that the records changed. */
   broadcast?: () => void;
+  /** Sign-outs not yet moved onto the records. Absent = only the records' own stamps count. */
+  signOutMarks?: SignOutMarks;
+  /** The latest sign-in of each account on this browser: the owner back inside the 48 hours keeps its copies. */
+  signInMarks?: SignOutMarks;
+  /** The pause between two renewals; a timer by default. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 const EMPTY: OfflineSnapshot = { ready: false, copies: [], byId: {}, usedBytes: 0 };
@@ -78,6 +87,7 @@ export class OfflineManager {
   private snapshot: OfflineSnapshot = EMPTY;
   private ready: Promise<void> | null = null;
   private syncing: Promise<RemovedCopy[]> | null = null;
+  private renewing: Promise<void> | null = null;
   private persistAsked = false;
 
   constructor(private readonly deps: ManagerDeps) {}
@@ -91,9 +101,9 @@ export class OfflineManager {
 
   getSnapshot = (): OfflineSnapshot => this.snapshot;
 
-  /** Reads the records once; every other call waits for it. */
+  /** Reads the records once, and settles who is signed out; every other call waits for it. */
   init(): Promise<void> {
-    this.ready ??= this.reload();
+    this.ready ??= this.reload().then(() => this.settleSignOuts());
     return this.ready;
   }
 
@@ -346,13 +356,84 @@ export class OfflineManager {
     for (const r of mine) await this.remove(r.postId);
   }
 
+  /* ── sign-out ─────────────────────────────────────────── */
+
+  /**
+    Who is signed out, and for how long. Runs on start and at the head of
+    every sweep, for every copy on the device whoever is signed in:
+
+      - signed out 48 hours ago or more: the copy is deleted, bytes and
+        record. The server is told only when its owner is the one signed in
+        (nobody else may speak for the copy; its row expires there otherwise);
+      - its owner is signed in again, inside the 48 hours: the stamp is lifted.
+        So it is when the owner signed in inside them and this runs later
+        (the sign-in left a mark). Only the owner's own sign-in counts, and
+        only while the owner is the one signed in;
+      - its owner is not signed in: it carries the sign-out time — the mark
+        the sign-out left, or, where there is none (another tab, an expired
+        session), now.
+
+    Another account never sees these copies at any point: the snapshot,
+    open() and the check only ever take the signed-in account's own.
+  */
+  private async settleSignOuts(): Promise<void> {
+    const { api, meta, signOutMarks, signInMarks } = this.deps;
+    const now = this.deps.now();
+    const user = this.deps.userId();
+    const marks = signOutMarks?.read() ?? {};
+    const signedInAt = user ? signInMarks?.read()[user] : undefined;
+    let changed = false;
+    let kept = true;
+
+    for (const r of Array.from(this.records.values())) {
+      if (this.active.has(r.postId)) continue;
+      const stamp = signOutStamp(r.signedOutAt, marks[r.userId]);
+
+      const back = stamp !== null && r.userId === user && signedBackInTime(stamp, signedInAt);
+
+      if (stamp !== null && signOutOver(stamp, now) && !back) {
+        await this.deleteFiles(r);
+        this.states.delete(r.postId);
+        this.records.delete(r.postId);
+        changed = true;
+        const told = r.userId !== user || (await api.remove(r.postId).then(() => true, () => false));
+        if (told) await meta.delete(r.postId).catch(() => undefined);
+        else {
+          // The owner is here and the server could not be told: the usual tombstone, for the next sweep.
+          const tombstone: OfflineRecord = { ...r, state: "removed", bytes: 0 };
+          delete tombstone.signedOutAt;
+          this.records.set(r.postId, tombstone);
+          await meta.put(tombstone).catch(() => undefined);
+        }
+        continue;
+      }
+
+      const next = r.userId === user ? undefined : (stamp ?? now);
+      if (r.signedOutAt === next) continue;
+      if (next === undefined) delete r.signedOutAt;
+      else r.signedOutAt = next;
+      changed = true;
+      await meta.put(r).catch(() => {
+        kept = false;
+      });
+    }
+
+    // A mark is spent once it is on the records (or its account is back, or its copies are gone).
+    if (kept) signOutMarks?.clear(Object.keys(marks));
+    // The sign-in has done its work once the owner's stamps are lifted.
+    if (kept && user && signedInAt !== undefined) signInMarks?.clear([user]);
+    if (changed) this.changed();
+  }
+
   /* ── check ────────────────────────────────────────────── */
 
   /**
     Deletes expired copies, asks the server about the rest, deletes what it
     no longer allows, and returns what went (for the quiet notice). With no
     network only the expired ones go. `force` asks about every copy; without
-    it only those whose recheck time has come. `reconcile` (the Offline page)
+    it only those whose recheck time has come. After an answered check the
+    copies it called valid are renewed, in the background (whenRenewed()).
+    `reconcile` (the Offline page)
     also releases copies the server still counts for this device that are
     no longer on it. With nothing stored and no reconcile, nothing is sent.
   */
@@ -365,6 +446,7 @@ export class OfflineManager {
 
   private async runSync(force: boolean, reconcile: boolean): Promise<RemovedCopy[]> {
     await this.init();
+    await this.settleSignOuts();
     const { api, meta } = this.deps;
     const now = this.deps.now();
     const user = this.deps.userId();
@@ -438,7 +520,77 @@ export class OfflineManager {
     }
 
     this.changed();
+    this.startRenewals(idsToRenew(rows), user);
     return removed;
+  }
+
+  /* ── renew ────────────────────────────────────────────── */
+
+  /** Settles when the renewals the last sweep started are over (at once when none are running). */
+  whenRenewed(): Promise<void> {
+    return this.renewing ?? Promise.resolve();
+  }
+
+  private startRenewals(postIds: readonly string[], user: string): void {
+    if (this.renewing || postIds.length === 0) return;
+    this.renewing = this.runRenewals(postIds, user)
+      .catch(() => undefined)
+      .finally(() => {
+        this.renewing = null;
+      });
+  }
+
+  /** A stored copy of the account that is still signed in, not renewed (or refused) in the last day. */
+  private renewable(postId: string, user: string): OfflineRecord | null {
+    const r = this.records.get(postId);
+    if (!r || r.state !== "stored" || r.userId !== user || this.deps.userId() !== user || this.active.has(postId)) return null;
+    return renewDue(r, this.deps.now()) ? r : null;
+  }
+
+  /**
+    Asks for each copy's grant again — 30 more days — one at a time with a
+    pause between. The answer only ever moves the expiry: a refusal deletes
+    nothing (the check decides what is still allowed), it just is not asked
+    again for a day. No answer at all stops the round until the next sweep.
+  */
+  private async runRenewals(postIds: readonly string[], user: string): Promise<void> {
+    const { api, meta } = this.deps;
+    const sleep = this.deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    let asked = false;
+    let moved = false;
+    for (const postId of postIds) {
+      if (!this.renewable(postId, user)) continue;
+      if (asked) {
+        await sleep(RENEW_GAP_MS);
+        if (!this.renewable(postId, user)) continue;
+      }
+      asked = true;
+
+      let grant: OfflineGrant | null = null;
+      try {
+        grant = await api.grant(postId);
+      } catch (err) {
+        const refusal = err instanceof OfflineGrantError ? err.refusal : "failed";
+        // No network, no session, or a server that is not answering properly: the rest would go the same way.
+        if (refusal === "network" || refusal === "sign_in" || refusal === "failed") break;
+      }
+
+      const record = this.records.get(postId);
+      if (!record || record.userId !== user) {
+        // Removed while the answer was on its way: the grant must not count for a copy that is not here.
+        if (grant && !record && !this.active.has(postId)) await api.remove(postId).catch(() => undefined);
+        continue;
+      }
+      if (record.state !== "stored") continue;
+      if (grant) {
+        record.expiresAt = grant.expiresAt;
+        record.recheckAfterSeconds = grant.recheckAfterSeconds;
+        moved = true;
+      }
+      record.renewTriedAt = this.deps.now();
+      await meta.put(record).catch(() => undefined);
+    }
+    if (moved) this.changed();
   }
 
   /** ms until the next expiry or due check for this account's copies; null when there is nothing stored. */
