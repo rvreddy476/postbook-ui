@@ -13,29 +13,74 @@
 
   Dealbreakers (mechanic M12), while the server sends `dealbreakers`: next
   to each preference that is set, a "Dealbreaker" switch. The pass ones sit
-  in the pass section and are off with it while there is no pass.
+  in the pass section and are off with it while there is no pass, except
+  the ones saved earlier: removing never needs a pass, so those are listed
+  under "Dealbreakers you kept", outside the locked section, where they can
+  be switched off.
 */
 
 import { Crown, Eraser, Lock, ShieldCheck, SlidersHorizontal } from "lucide-react"
 
-import { DEALBREAKER_HELP, DEALBREAKER_SUBJECT, dealbreakerSetInForm, toggleDealbreaker, type DealbreakerCode, type FreeDealbreakerRow } from "../model/dealbreakers"
+import {
+  DEALBREAKER_HELP,
+  DEALBREAKER_SUBJECT,
+  dealbreakerSetInForm,
+  dealbreakerSwitchState,
+  dealbreakerTitle,
+  KEPT_DEALBREAKERS_HELP,
+  KEPT_DEALBREAKERS_TITLE,
+  keptPassDealbreakers,
+  toggleDealbreaker,
+  type DealbreakerCode,
+  type FreeDealbreakerRow,
+  type PassDealbreaker,
+} from "../model/dealbreakers"
 import { INTENT_OPTIONS, PREFERENCE_LIMITS } from "../model/labels"
 import { heightChoices, LIFESTYLE_FIELDS, LIFESTYLE_TITLES, toggleCode, type ProfileOptions } from "../model/options"
 import { DATING_BASE, type AboutProblem, type FiltersForm } from "../model/profile"
 import { Button, Choices, Field, LinkButton, Notice, Panel, StatePanel, Toggle } from "./kit"
 
-/** One "Dealbreaker" switch; its accessible name says which preference it is for. */
-export function DealbreakerSwitch({ code, checked, disabled = false, onChange }: { code: DealbreakerCode; checked: boolean; disabled?: boolean; onChange: (next: boolean) => void }) {
+/** One "Dealbreaker" switch; its accessible name says which preference it is for. `kept`: away from its preference, so the name leads. */
+export function DealbreakerSwitch({ code, checked, disabled = false, kept = false, onChange }: { code: DealbreakerCode; checked: boolean; disabled?: boolean; kept?: boolean; onChange: (next: boolean) => void }) {
   const id = `pulse-dealbreaker-${code}`
   return (
     <div className="pulse-toggle pulse-dealbreaker">
       <div>
         <label htmlFor={id} className="pulse-toggle__label">
-          Dealbreaker<span className="pulse-sr"> for {DEALBREAKER_SUBJECT[code]}</span>
+          {kept ? (
+            <>
+              {dealbreakerTitle(code)}
+              <span className="pulse-sr"> dealbreaker</span>
+            </>
+          ) : (
+            <>
+              Dealbreaker<span className="pulse-sr"> for {DEALBREAKER_SUBJECT[code]}</span>
+            </>
+          )}
         </label>
-        <p className="pulse-field__help">{DEALBREAKER_HELP}</p>
+        {kept ? null : <p className="pulse-field__help">{DEALBREAKER_HELP}</p>}
       </div>
       <input id={id} type="checkbox" role="switch" className="pulse-switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+    </div>
+  )
+}
+
+/**
+  The pass dealbreakers saved earlier, for someone without a pass: each can
+  be switched off (removing never needs a pass). Drawn outside the locked
+  section, whose disabled fieldset would switch them off too.
+*/
+export function KeptDealbreakers({ codes, selected, onChange }: { codes: readonly PassDealbreaker[]; selected: readonly string[]; onChange: (next: string[]) => void }) {
+  if (codes.length === 0) return null
+  return (
+    <div className="pulse-kept" role="group" aria-labelledby="pulse-kept-title">
+      <p id="pulse-kept-title" className="pulse-toggle__label">
+        {KEPT_DEALBREAKERS_TITLE}
+      </p>
+      <p className="pulse-field__help">{KEPT_DEALBREAKERS_HELP}</p>
+      {codes.map((code) => (
+        <DealbreakerSwitch key={code} code={code} kept checked={selected.includes(code)} onChange={(on) => onChange(toggleDealbreaker(selected, code, on))} />
+      ))}
     </div>
   )
 }
@@ -91,6 +136,7 @@ export function FiltersPanel({
   onClear,
   dealbreakers = false,
   dealbreakerError = "",
+  savedDealbreakers = [],
 }: {
   options: ProfileOptions
   form: FiltersForm
@@ -109,16 +155,25 @@ export function FiltersPanel({
   dealbreakers?: boolean
   /** A refused dealbreaker list (400 INVALID_DEALBREAKER), drawn by the save button. */
   dealbreakerError?: string
+  /** The list the server holds: without a pass, its pass codes can still be switched off. */
+  savedDealbreakers?: readonly string[]
 }) {
   const L = PREFERENCE_LIMITS
   const errorFor = (...fields: string[]) => (fieldError && fields.includes(fieldError.field) ? fieldError.message : undefined)
   const set = <K extends keyof FiltersForm>(key: K, value: FiltersForm[K]) => onChange({ ...form, [key]: value })
   const heights = heightChoices(options)
-  /** The switch beside a preference: only while the flag is on and the preference is set. */
-  const breaker = (code: DealbreakerCode, disabled = false) =>
-    dealbreakers && dealbreakerSetInForm(form, code) ? (
-      <DealbreakerSwitch code={code} checked={form.dealbreakers.includes(code)} disabled={disabled} onChange={(on) => set("dealbreakers", toggleDealbreaker(form.dealbreakers, code, on))} />
-    ) : null
+  /**
+    The switch beside a preference: only while the flag is on and the
+    preference is set. A kept one (no pass, saved earlier) is drawn under
+    "Dealbreakers you kept" instead; a locked one is off.
+  */
+  const breaker = (code: DealbreakerCode) => {
+    if (!dealbreakers || !dealbreakerSetInForm(form, code)) return null
+    const state = dealbreakerSwitchState(code, locked, savedDealbreakers)
+    if (state === "kept") return null
+    return <DealbreakerSwitch code={code} checked={form.dealbreakers.includes(code)} disabled={state === "locked"} onChange={(on) => set("dealbreakers", toggleDealbreaker(form.dealbreakers, code, on))} />
+  }
+  const kept = dealbreakers && locked ? keptPassDealbreakers(savedDealbreakers, (code) => dealbreakerSetInForm(form, code)) : []
 
   return (
     <form
@@ -167,7 +222,7 @@ export function FiltersPanel({
         <fieldset className="pulse-filters__pass" disabled={locked || undefined} aria-describedby={locked ? "pulse-filters-upsell-title" : undefined}>
           <legend className="pulse-sr">Filters that come with a pass</legend>
           <Toggle id="pulse-filter-verified" label="Verified people only" help="Only people who passed the face check." checked={form.verifiedOnly} disabled={locked} onChange={(v) => set("verifiedOnly", v)} />
-          {breaker("verified", locked)}
+          {breaker("verified")}
           <div className="pulse-form__pair">
             <Field id="pulse-filter-min-height" label="Shortest" error={errorFor("min_height_cm")}>
               <select id="pulse-filter-min-height" className="pulse-input" value={form.minHeightCm ? String(form.minHeightCm) : ""} onChange={(e) => set("minHeightCm", Number(e.target.value) || 0)}>
@@ -190,9 +245,9 @@ export function FiltersPanel({
               </select>
             </Field>
           </div>
-          {breaker("height", locked)}
+          {breaker("height")}
           <Choices name="filter-languages" legend="Speaks any of" options={options.languages} value={form.languages} multiple onChange={(v) => set("languages", toggleCode(form.languages, v))} error={errorFor("languages")} />
-          {breaker("languages", locked)}
+          {breaker("languages")}
           {LIFESTYLE_FIELDS.map((field) => (
             <div key={field} className="pulse-filters__group">
               <Choices
@@ -204,10 +259,11 @@ export function FiltersPanel({
                 onChange={(v) => set(field, toggleCode(form[field], v))}
                 error={errorFor(field)}
               />
-              {breaker(field, locked)}
+              {breaker(field)}
             </div>
           ))}
         </fieldset>
+        <KeptDealbreakers codes={kept} selected={form.dealbreakers} onChange={(next) => set("dealbreakers", next)} />
       </Panel>
 
       {error ? <Notice tone="danger">{error}</Notice> : null}
@@ -230,6 +286,7 @@ export function FiltersPanel({
 */
 export function DealbreakersOnlyPanel({
   rows,
+  kept = [],
   selected,
   busy,
   error,
@@ -237,6 +294,8 @@ export function DealbreakersOnlyPanel({
   onSave,
 }: {
   rows: FreeDealbreakerRow[]
+  /** Pass dealbreakers saved earlier (their preferences aren't on this screen): they can only be switched off. */
+  kept?: readonly PassDealbreaker[]
   selected: string[]
   busy: boolean
   error: string
@@ -252,9 +311,9 @@ export function DealbreakersOnlyPanel({
       }}
     >
       <Panel title="Dealbreakers" sub="A dealbreaker works both ways: it shapes your deck and who sees you.">
-        {rows.length === 0 ? (
+        {rows.length === 0 && kept.length === 0 ? (
           <p className="pulse-text pulse-text--muted">Set your preferences first, then choose which ones are dealbreakers.</p>
-        ) : (
+        ) : rows.length > 0 ? (
           <ul className="pulse-plain">
             {rows.map((r) => (
               <li key={r.code} className="pulse-plain__block">
@@ -265,7 +324,8 @@ export function DealbreakersOnlyPanel({
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
+        <KeptDealbreakers codes={kept} selected={selected} onChange={onChange} />
         <div className="pulse-row">
           <LinkButton href={`${DATING_BASE}/onboarding/preferences`} variant="quiet">
             Change preferences
@@ -273,7 +333,7 @@ export function DealbreakersOnlyPanel({
         </div>
       </Panel>
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      {rows.length > 0 ? (
+      {rows.length > 0 || kept.length > 0 ? (
         <Button variant="primary" type="submit" icon={ShieldCheck} busy={busy}>
           Save dealbreakers
         </Button>

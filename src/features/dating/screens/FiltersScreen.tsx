@@ -13,7 +13,9 @@
     - dealbreakers (M12) exist while GET /preferences sends `dealbreakers`:
       a switch beside each set preference, the whole list PUT when touched.
       Locked, a pass dealbreaker saved earlier is sent back as it was (the
-      server keeps it); a new one can't be added (its switch is off).
+      server keeps it) unless it is switched off under "Dealbreakers you
+      kept" (removing never needs a pass); a new one can't be added (its
+      switch is off).
       Filters flag off but dealbreakers on: the free preferences alone, each
       with its switch. A 404 since the page loaded hides them again.
   Saving refreshes the deck (the preferences mutation invalidates it).
@@ -28,7 +30,19 @@ import { DealbreakersOnlyPanel, FiltersOff, FiltersPanel } from "../components/F
 import { ErrorState, Guard } from "../components/Guard"
 import { Loading, PageHead } from "../components/kit"
 import { usePreferences, useProfileOptions, usePutPreferences } from "../hooks/profile"
-import { dealbreakerRefusal, dealbreakersEnabled, dealbreakerSetInForm, dealbreakerSetInPreferences, DEALBREAKERS_OFF_COPY, dealbreakersToSend, freeDealbreakerRows, isPassDealbreaker, withDealbreakers, type DealbreakerCode } from "../model/dealbreakers"
+import {
+  dealbreakerRefusal,
+  dealbreakersEnabled,
+  dealbreakerSetInForm,
+  dealbreakerSetInPreferences,
+  DEALBREAKERS_OFF_COPY,
+  dealbreakersToSend,
+  freeDealbreakerRows,
+  isPassDealbreaker,
+  keptPassDealbreakers,
+  withDealbreakers,
+  type DealbreakerCode,
+} from "../model/dealbreakers"
 import { datingErrorCopy, isFiltersRequirePass, refusedField } from "../model/errors"
 import { clearPassFiltersBody, DATING_BASE, filtersBody, filtersEnabled, filtersForm, filtersProblem, hasPassFilters, withoutPassFilters, type AboutProblem, type FiltersForm, type Preferences } from "../model/profile"
 
@@ -47,6 +61,7 @@ function DealbreakersOnly({ prefs, onOff }: { prefs: Preferences; onOff: () => v
   return (
     <DealbreakersOnlyPanel
       rows={freeDealbreakerRows(prefs)}
+      kept={keptPassDealbreakers(saved, isSet)}
       selected={current}
       busy={save.isPending}
       error={error}
@@ -164,6 +179,7 @@ function FiltersBody() {
       fieldError={fieldError}
       dealbreakers={breakersOn}
       dealbreakerError={dealbreakerError}
+      savedDealbreakers={prefs.data.dealbreakers ?? []}
       onChange={edit}
       onSave={() => {
         const problem = filtersProblem(current, opts)

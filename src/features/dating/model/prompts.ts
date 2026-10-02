@@ -1,6 +1,7 @@
 /* Prompts: the catalogue, and the caller's answers. */
 
 import { PROMPT_ANSWER_MAX } from "./labels"
+import { toOwnClip, type OwnClip } from "./promptClips"
 import { arr, num, obj, str } from "./wire"
 
 export interface PromptQuestion {
@@ -10,7 +11,10 @@ export interface PromptQuestion {
 
 export interface PromptAnswer {
   promptId: number
+  /** "" for a clip-only answer (M15). */
   answer: string
+  /** The answer's voice or video clip (M15), with its review state; null when there is none. */
+  clip: OwnClip | null
 }
 
 export function toPromptCatalog(wire: unknown): PromptQuestion[] {
@@ -26,7 +30,7 @@ export function toPromptCatalog(wire: unknown): PromptQuestion[] {
 export function toPromptAnswer(wire: unknown): PromptAnswer | null {
   const w = obj(wire)
   const promptId = num(w.prompt_id)
-  return promptId > 0 ? { promptId, answer: str(w.answer) } : null
+  return promptId > 0 ? { promptId, answer: str(w.answer), clip: toOwnClip(w) } : null
 }
 
 export function toPromptAnswers(wire: unknown): PromptAnswer[] {

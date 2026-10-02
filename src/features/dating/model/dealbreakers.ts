@@ -140,6 +140,36 @@ export function withDealbreakers(
   return { ...body, dealbreakers: dealbreakersToSend(input.chosen, input.isSet, input.withPass, input.saved) }
 }
 
+/* ── switching a kept pass dealbreaker off without a pass ────────── */
+
+/**
+  How a dealbreaker switch behaves on the screen:
+    open   the free ones always, and every one with a pass;
+    locked a pass one, no pass, not saved: adding it needs a pass, so it is off;
+    kept   a pass one, no pass, saved earlier: it can be switched off
+           (removing never needs a pass) and back on before saving.
+*/
+export type DealbreakerSwitchState = "open" | "locked" | "kept"
+
+export function dealbreakerSwitchState(code: DealbreakerCode, locked: boolean, saved: readonly string[]): DealbreakerSwitchState {
+  if (!locked || !isPassDealbreaker(code)) return "open"
+  return saved.includes(code) ? "kept" : "locked"
+}
+
+/** The saved pass codes whose preference is set, in the server's order: the ones a viewer without a pass may switch off. */
+export function keptPassDealbreakers(saved: readonly string[], isSet: (code: DealbreakerCode) => boolean): PassDealbreaker[] {
+  return PASS_DEALBREAKERS.filter((c) => saved.includes(c) && isSet(c))
+}
+
+/** "verified people only" → "Verified people only". */
+export function dealbreakerTitle(code: DealbreakerCode): string {
+  const s = DEALBREAKER_SUBJECT[code]
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export const KEPT_DEALBREAKERS_TITLE = "Dealbreakers you kept"
+export const KEPT_DEALBREAKERS_HELP = "You chose these with a pass. You can switch them off; turning one back on after you save needs a pass."
+
 /* ── the free-only view (filters flag off) ───────────────────────── */
 
 export interface FreeDealbreakerRow {

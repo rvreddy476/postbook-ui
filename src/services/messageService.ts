@@ -713,6 +713,9 @@ export interface Conversation {
   title?: string | null;
   created_by?: string | null;
   is_request?: boolean;
+  /** "dating" for a Pulse match's chat, with its match_id; omitted for every other conversation. */
+  source_app?: string;
+  match_id?: string;
   members?: ConversationMember[];
   last_message?: Message | null;
   created_at: string;

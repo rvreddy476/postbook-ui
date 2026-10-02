@@ -9,10 +9,12 @@
   For any chat that is not a Pulse chat every answer is "as before": okToSend
   is never awaited, the text comes back untouched and nothing is drawn.
 
-  A chat is a Pulse chat only when one of the viewer's own matches names its
-  conversation (hooks/kindness useDatingMatchFor), and only DmChat opened
-  with a conversation id (/messenger?conversation=…, which is how every
-  "Open chat" on Pulse arrives) asks at all.
+  A chat is a Pulse chat when chat-service's conversation says so
+  (`source_app: "dating"` with its `match_id`), whichever way it was opened,
+  the generic inbox included: DmChat passes what it loaded as `conversation`.
+  Only when those fields are missing does the viewer's own match list decide,
+  and then only for a chat opened by id (/messenger?conversation=…, which is
+  how every "Open chat" on Pulse arrives); see hooks/kindness useDatingMatchFor.
 
   The check never stops a message: an error, a 429, a 404 or an answer
   slower than KIND_CHECK_WAIT_MS sends it as it is. A 404 from kind-check or
@@ -25,6 +27,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 
 import { kindCheck, sendBothered } from "../api/kindness"
 import { useDatingMatchFor } from "../hooks/kindness"
+import { toChatSource, type ChatSource } from "../model/matches"
 import {
   ASKING,
   botheredAfterError,
@@ -41,6 +44,9 @@ import {
 } from "../model/kindMessages"
 import { BotheredPrompt, KindBubbleText, KindNudge } from "./KindMessages"
 import { ReportDialog } from "./SafetyActions"
+
+/** For DmChat: what chat-service said about the conversation it loaded. */
+export { toChatSource, type ChatSource }
 
 /** Verdicts on received messages, kept for the session (message id + text). Nothing about the text goes anywhere else. */
 const verdicts = new Map<string, KindCheck>()
@@ -61,18 +67,22 @@ export interface KindChat {
 }
 
 export function useDatingKindChat({
-  conversationId,
+  conversationId: openedById,
+  conversation,
   myId,
   peerName,
   messages,
 }: {
-  /** Set only when the chat was opened by conversation id; undefined asks nothing. */
+  /** Set only when the chat was opened by conversation id: the match-list fallback asks only then. */
   conversationId: string | undefined
+  /** The loaded conversation's source_app / match_id (toChatSource); null until it has loaded. */
+  conversation?: ChatSource | null
   myId: string
   peerName: string
   messages: readonly ChatMessageLike[]
 }): KindChat {
-  const matchId = useDatingMatchFor(conversationId)
+  const matchId = useDatingMatchFor(openedById, conversation)
+  const conversationId = conversation?.conversationId || openedById
   const [off, setOff] = useState(false)
   const [limited, setLimited] = useState(false)
   const [nudgeOn, setNudgeOn] = useState<{ text: string; reasons: string[] } | null>(null)

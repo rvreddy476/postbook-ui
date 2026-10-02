@@ -172,11 +172,47 @@ export function chatHref(conversationId: string): string {
 export const matchHref = (matchId: string) => `/dating/matches/${encodeURIComponent(matchId)}`
 
 /**
-  The match whose chat is this conversation, or "". chat-service doesn't say
-  which conversations are Pulse chats, so the viewer's own matches decide
-  (M13: only a Pulse chat is kind-checked).
+  The match whose chat is this conversation, or "", from the viewer's own
+  matches. The fallback for a chat-service that doesn't yet say so itself
+  (see chatSourceMatch); M13: only a Pulse chat is kind-checked.
 */
 export function matchForConversation(matches: readonly Pick<Match, "id" | "conversationId">[], conversationId: string): string {
   if (!conversationId) return ""
   return matches.find((m) => m.conversationId === conversationId)?.id ?? ""
+}
+
+/*
+  What chat-service says about a conversation (GET /conversations/:id, and
+  the inbox list): a Pulse match's chat carries `source_app: "dating"` and
+  its `match_id`; every other conversation omits both.
+*/
+export interface ChatSource {
+  conversationId: string
+  /** "" when the server sent none. */
+  sourceApp: string
+  matchId: string
+}
+
+/** From a conversation response (the envelope or the bare conversation). */
+export function toChatSource(response: unknown, conversationId: string): ChatSource {
+  const r = obj(response)
+  const conv = r.data && typeof r.data === "object" ? obj(r.data) : r
+  return { conversationId: conversationId || str(conv.id), sourceApp: str(conv.source_app), matchId: str(conv.match_id) }
+}
+
+/** The match the server names for this chat, or "" when it names none. */
+export function chatSourceMatch(source: ChatSource | null | undefined): string {
+  return source && source.sourceApp === "dating" ? source.matchId : ""
+}
+
+/**
+  Whether the viewer's match list still has to decide. Only for a chat Pulse
+  opened by id (as before), only once the conversation has loaded, and only
+  when the server didn't already say: a chat marked as another app's is not
+  a Pulse chat, and a Pulse chat with its match id needs no lookup.
+*/
+export function needsMatchLookup(openedById: string | undefined, source: ChatSource | null | undefined): boolean {
+  if (!openedById || !source) return false
+  if (chatSourceMatch(source)) return false
+  return source.sourceApp === "" || source.sourceApp === "dating"
 }

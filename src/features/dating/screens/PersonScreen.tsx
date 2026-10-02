@@ -7,6 +7,7 @@ import { useState } from "react"
 import { BadgeCheck, ChevronLeft, ChevronRight, UserX } from "lucide-react"
 
 import { DatingPhoto } from "../components/DatingPhoto"
+import { PromptClipPlayer } from "../components/PromptClips"
 import { ErrorState, Guard } from "../components/Guard"
 import { LinkButton, Loading, PageHead, Panel, Pill, StatePanel, TravelPill } from "../components/kit"
 import { SafetyActions } from "../components/SafetyActions"
@@ -79,7 +80,12 @@ export function PersonDetails({ person, options = null }: { person: Person; opti
             {person.prompts.map((p) => (
               <div key={p.promptId}>
                 <dt>{p.question}</dt>
-                <dd>{p.answer}</dd>
+                {p.answer ? <dd>{p.answer}</dd> : null}
+                {p.clip ? (
+                  <dd>
+                    <PromptClipPlayer clip={p.clip} />
+                  </dd>
+                ) : null}
               </div>
             ))}
           </dl>

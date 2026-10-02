@@ -1,6 +1,7 @@
 /* The caller's photos and prompts. */
 
 import { toMyPhoto, toMyPhotos, type MyPhoto } from "../model/photos"
+import { toClipResult, type ClipResult } from "../model/promptClips"
 import { toPromptAnswer, toPromptAnswers, toPromptCatalog, type PromptAnswer, type PromptQuestion } from "../model/prompts"
 import { del, get, patch, post, put, seg } from "./client"
 
@@ -35,4 +36,14 @@ export async function upsertPrompt(promptId: number, answer: string): Promise<Pr
 
 export async function deletePrompt(promptId: number): Promise<void> {
   await del(`/prompts/${seg(promptId)}`)
+}
+
+/** PUT /prompts/:id/clip {media_id} (M15): attach an uploaded voice or video clip. */
+export async function putPromptClip(promptId: number, mediaId: string): Promise<ClipResult | null> {
+  return toClipResult(await put(`/prompts/${seg(promptId)}/clip`, { media_id: mediaId }))
+}
+
+/** DELETE /prompts/:id/clip (M15). A clip-only answer goes with it. */
+export async function deletePromptClip(promptId: number): Promise<void> {
+  await del(`/prompts/${seg(promptId)}/clip`)
 }

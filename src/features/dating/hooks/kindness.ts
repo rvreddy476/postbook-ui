@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchCommentFilter, fetchHideKnown, saveCommentFilter, saveHideKnown } from "../api/kindness"
 import type { HideKnown } from "../model/hideKnown"
 import type { CommentFilter } from "../model/kindMessages"
-import { matchForConversation } from "../model/matches"
+import { chatSourceMatch, matchForConversation, needsMatchLookup, type ChatSource } from "../model/matches"
 import { errorStatus } from "../model/wire"
 import { useMatches } from "./discovery"
 import { KEYS } from "./profile"
@@ -56,14 +56,21 @@ export function useSaveHideKnown() {
 /**
   The Pulse match a chat conversation belongs to, or "" when it is not one.
 
-  chat-service's conversation carries no source_app or match_id, so the
-  viewer's own match list (GET /matches, every status) decides: a
-  conversation is a Pulse chat only when one of their matches names it.
-  An empty id asks nothing, so ordinary chats cost no request; a failed
-  read (a 404 outside the pilot included) reads as "not a Pulse chat".
+  chat-service's conversation says so itself (`source_app: "dating"` and
+  `match_id`, `source` here): that decides, from any entry point, and costs
+  no request. The viewer's own match list (GET /matches, every status) is
+  only the fallback, for a chat Pulse opened by id whose conversation came
+  back without those fields: a conversation is then a Pulse chat when one of
+  their matches names it. `source` null means "not loaded yet" and asks
+  nothing; undefined (a caller that has no conversation) keeps the old
+  lookup. An empty id asks nothing, so ordinary chats cost no request; a
+  failed read (a 404 outside the pilot included) reads as "not a Pulse chat".
 */
-export function useDatingMatchFor(conversationId: string | undefined): string {
-  const matches = useMatches(Boolean(conversationId))
-  if (!conversationId || !matches.data) return ""
+export function useDatingMatchFor(conversationId: string | undefined, source?: ChatSource | null): string {
+  const fromServer = chatSourceMatch(source)
+  const lookup = source === undefined ? Boolean(conversationId) : needsMatchLookup(conversationId, source)
+  const matches = useMatches(lookup)
+  if (fromServer) return fromServer
+  if (!lookup || !conversationId || !matches.data) return ""
   return matchForConversation(matches.data, conversationId)
 }

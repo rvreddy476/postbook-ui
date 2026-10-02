@@ -10,6 +10,7 @@
 
 import { distanceLabel, intentLabel, languageLabel, lastActiveLabel } from "./labels"
 import { toBasics, type Basics } from "./options"
+import { toPromptClip, type PromptClip } from "./promptClips"
 import { arr, bool, num, obj, str } from "./wire"
 
 const PHOTO_PATH = /^\/v1\/dating\/photos\/[^/?#]+\/(full|blurred)$/
@@ -52,7 +53,10 @@ export interface PersonPhoto {
 export interface PersonPrompt {
   promptId: number
   question: string
+  /** May be "" when the answer is a clip (M15). */
   answer: string
+  /** A voice or video answer (M15); null when there is none. */
+  clip: PromptClip | null
 }
 
 export interface Person {
@@ -93,9 +97,9 @@ function toDetail(wire: unknown): Pick<Person, "bio" | "prompts" | "languages" |
     prompts: arr(d.prompts)
       .map((raw) => {
         const p = obj(raw)
-        return { promptId: num(p.prompt_id), question: str(p.question), answer: str(p.answer) }
+        return { promptId: num(p.prompt_id), question: str(p.question), answer: str(p.answer), clip: toPromptClip(p.clip) }
       })
-      .filter((p) => p.question && p.answer),
+      .filter((p) => p.question && (p.answer || p.clip)),
     languages: arr(d.languages).map(languageLabel).filter(Boolean),
     photos: arr(d.photos)
       .map((raw) => {

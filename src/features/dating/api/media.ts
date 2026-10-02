@@ -17,18 +17,23 @@
   blob URL instead. A locked liked-you card's image
   (`/v1/dating/liked-you/:sparkId/photo`, always server-blurred) is read the
   same way.
+
+  A prompt clip (M15) is uploaded the same way, as "audio" or "video", and
+  played the same way: its route (`/v1/dating/people/:id/prompts/:n/clip`)
+  answers 307 to a short-lived media URL, read with the token into a blob.
 */
 
 import api from "@/lib/api"
 
 import { viewablePhotoPath } from "../model/people"
+import { clipPath, type ClipKind } from "../model/promptClips"
 
 interface Init {
   media_id: string
   upload_url: string
 }
 
-async function init(fileType: "image" | "video", mime: string, size: number): Promise<Init> {
+async function init(fileType: "image" | ClipKind, mime: string, size: number): Promise<Init> {
   const res = await api.post("/v1/media/init", { file_type: fileType, media_subtype: "general", mime_type: mime, file_size_bytes: size })
   const data = res.data?.data as Init | undefined
   if (!data?.media_id || !data?.upload_url) throw new Error("upload_not_reserved")
@@ -55,7 +60,7 @@ function putBytes(url: string, body: Blob, mime: string, onProgress?: (fraction:
 export type MediaVerdict = "ready" | "refused" | "waiting"
 
 /** What a status row means. Pure. A clip has no moderation verdict to wait for. */
-export function mediaVerdict(status: { processing_status?: string; moderation_status?: string }, kind: "image" | "video"): MediaVerdict {
+export function mediaVerdict(status: { processing_status?: string; moderation_status?: string }, kind: "image" | ClipKind): MediaVerdict {
   const processing = status.processing_status || ""
   const moderation = status.moderation_status || ""
   if (processing === "failed" || processing === "rejected" || moderation === "rejected") return "refused"
@@ -64,7 +69,7 @@ export function mediaVerdict(status: { processing_status?: string; moderation_st
   return "ready"
 }
 
-async function waitUntilProcessed(mediaId: string, kind: "image" | "video", timeoutMs: number, signal?: AbortSignal): Promise<MediaVerdict> {
+async function waitUntilProcessed(mediaId: string, kind: "image" | ClipKind, timeoutMs: number, signal?: AbortSignal): Promise<MediaVerdict> {
   const deadline = Date.now() + timeoutMs
   for (;;) {
     if (signal?.aborted) throw new DOMException("cancelled", "AbortError")
@@ -107,6 +112,29 @@ export async function uploadSelfieClip(clip: Blob, mime: string, opts: UploadOpt
   const verdict = await waitUntilProcessed(media_id, "video", 20_000, opts.signal)
   if (verdict === "refused") throw new Error("clip_refused")
   return media_id
+}
+
+/**
+  A voice or video prompt answer (M15) → a media id. No upload_purpose, as
+  for photos. Like the selfie clip it does not insist on "ready": the attach
+  re-sends on CLIP_NOT_READY. Throws `clip_refused` when processing failed.
+*/
+export async function uploadPromptClip(clip: Blob, kind: ClipKind, mime: string, opts: UploadOptions = {}): Promise<string> {
+  const { media_id, upload_url } = await init(kind, mime, clip.size)
+  await putBytes(upload_url, clip, mime, opts.onProgress, opts.signal)
+  await api.post("/v1/media/confirm", { media_id })
+  opts.onProcessing?.()
+  const verdict = await waitUntilProcessed(media_id, kind, 30_000, opts.signal)
+  if (verdict === "refused") throw new Error("clip_refused")
+  return media_id
+}
+
+/** The clip behind a server-named prompt-clip route, as a blob. Refuses any other path. */
+export async function fetchClipBlob(serverPath: string, signal?: AbortSignal): Promise<Blob> {
+  const path = clipPath(serverPath)
+  if (!path) throw new Error("not_a_prompt_clip")
+  const res = await api.get(path, { responseType: "blob", signal })
+  return res.data as Blob
 }
 
 /** The image behind a server-named dating photo path, as a blob. Refuses any other path. */

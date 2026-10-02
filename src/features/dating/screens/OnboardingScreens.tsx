@@ -17,7 +17,9 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { uploadPhoto } from "../api/media"
 import { AboutMeEditor } from "../components/AboutMe"
 import { ErrorState, Guard } from "../components/Guard"
+import { ClipStatusLine, PromptClipControls } from "../components/PromptClips"
 import { Button, Choices, Field, LinkButton, Loading, Notice, PageHead, Panel, Pill, StatePanel } from "../components/kit"
+import { usePromptClipEditor } from "../hooks/promptClips"
 import { useCreatePhoto, useDeletePhoto, useDeletePrompt, useGate, useMyPhotos, useProfileOptions, usePromptCatalog, usePrompts, usePutPreferences, useSetPhotoVisibility, useSetPrimaryPhoto, useUpsertProfile, useUpsertPrompt } from "../hooks/profile"
 import { AGE_REQUIRED_COPY, datingErrorCopy, isAgeRefusal, refusedField } from "../model/errors"
 import { GENDER_OPTIONS, INTENT_OPTIONS, INTERESTED_IN_OPTIONS, PHOTO_VISIBILITY_OPTIONS, PREFERENCE_LIMITS, PROMPT_ANSWER_MAX } from "../model/labels"
@@ -39,6 +41,7 @@ import {
   type PreferencesInput,
   type Profile,
 } from "../model/profile"
+import type { ClipKind, ClipPhase } from "../model/promptClips"
 import { answerProblem, type PromptAnswer, type PromptQuestion } from "../model/prompts"
 
 const SETUP_STEPS = ["intent", "basics", "preferences", "photos", "selfie"] as const
@@ -426,18 +429,31 @@ export function PhotosScreen() {
 
 /* ── prompts ─────────────────────────────────────────────────────── */
 
+/** Voice and video answers (M15): what the editor needs from usePromptClipEditor. Absent: no clip controls. */
+export interface PromptEditorClips {
+  phase: ClipPhase
+  /** 404 MECHANIC_NOT_ENABLED: the controls go. */
+  off: boolean
+  removing: boolean
+  onSend: (promptId: number, clip: Blob, kind: ClipKind, mime: string) => void
+  onProblem: (message: string) => void
+  onRemove: (promptId: number) => void
+}
+
 export function PromptEditor({
   catalog,
   answers,
   busy,
   onSave,
   onDelete,
+  clips,
 }: {
   catalog: PromptQuestion[]
   answers: PromptAnswer[]
   busy: boolean
   onSave: (promptId: number, answer: string) => void
   onDelete: (promptId: number) => void
+  clips?: PromptEditorClips
 }) {
   const [promptId, setPromptId] = useState(0)
   const [answer, setAnswer] = useState("")
@@ -460,7 +476,12 @@ export function PromptEditor({
               .map((a) => (
                 <div key={a.promptId}>
                   <dt>{question(a.promptId)}</dt>
-                  <dd>{a.answer}</dd>
+                  {a.answer ? <dd>{a.answer}</dd> : null}
+                  {a.clip ? (
+                    <dd>
+                      <ClipStatusLine clip={a.clip} />
+                    </dd>
+                  ) : null}
                   <div className="pulse-row">
                     <Button variant="quiet" disabled={busy} onClick={() => setPromptId(a.promptId)}>
                       Edit
@@ -468,6 +489,12 @@ export function PromptEditor({
                     <Button variant="quiet" icon={Trash2} disabled={busy} onClick={() => onDelete(a.promptId)}>
                       Remove
                     </Button>
+                    {/* A clip-only answer goes whole with Remove; beside text, the clip can go on its own. */}
+                    {clips && !clips.off && a.clip && a.answer ? (
+                      <Button variant="quiet" icon={Trash2} disabled={busy || clips.removing} onClick={() => clips.onRemove(a.promptId)}>
+                        Remove clip
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -503,6 +530,7 @@ export function PromptEditor({
           Save answer
         </Button>
       </form>
+      {clips ? <PromptClipControls promptId={promptId} phase={clips.phase} off={clips.off} onSend={clips.onSend} onProblem={clips.onProblem} /> : null}
     </>
   )
 }
@@ -513,6 +541,7 @@ function PromptsManager() {
   const answers = usePrompts()
   const save = useUpsertPrompt()
   const remove = useDeletePrompt()
+  const clip = usePromptClipEditor()
 
   if (catalog.isPending || answers.isPending) return <Loading />
   if (catalog.isError) return <ErrorState error={catalog.error} onRetry={() => void catalog.refetch()} />
@@ -528,6 +557,17 @@ function PromptsManager() {
         busy={save.isPending || remove.isPending}
         onSave={(promptId, answer) => save.mutate({ promptId, answer }, { onSuccess: () => toast({ type: "success", title: "Answer saved" }), onError: fail })}
         onDelete={(promptId) => remove.mutate(promptId, { onError: fail })}
+        clips={{
+          phase: clip.phase,
+          off: clip.off,
+          removing: clip.removing,
+          onSend: (promptId, blob, kind, mime) =>
+            void clip.send(promptId, blob, kind, mime).then((r) => {
+              if (r) toast({ type: "success", title: r.clip.status === "approved" ? "Clip added" : "Clip added. It shows once it's been checked." })
+            }),
+          onProblem: clip.fail,
+          onRemove: clip.remove,
+        }}
       />
       <div className="pulse-row">
         <LinkButton href={ABOUT_HREF} icon={UserRound}>

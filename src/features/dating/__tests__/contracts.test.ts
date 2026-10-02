@@ -15,13 +15,14 @@ import { filtersBody, filtersEnabled, filtersForm, hasPassFilters, toPreferences
 import { basicsLabels, interestLabels, languageLabels, toProfileOptions } from "../model/options"
 import { languageLabel } from "../model/labels"
 import { toPromptAnswer, toPromptAnswers } from "../model/prompts"
+import { clipPath, clipRefusal, clipStatusView, toClipResult } from "../model/promptClips"
 import { deckEmptyKind, toDeck, toExplain, toPassResult, toRewindResult } from "../model/pulse"
 import { featureLabels, razorpayOptions, toCatalogue, toMyPremium, toPaymentReading, toPurchase } from "../model/premium"
 import { toBlockResult, toBlocks, toLocationShare, toLocationShares, toPanicResult, toReportResult, toTrustedContact, toTrustedContacts } from "../model/safety"
 import { toLikedYou } from "../model/likedYou"
 import { sparkLimitLine, toDeclineResult, toIncomingSparks, toSparkLimit, toSparkOutcome, toStash, toStashEntry, verdictFor } from "../model/sparks"
 import { toSelfieChallenge, toSelfieResult, toVerificationStatus, viewFromRefusal, viewFromResult, viewFromStatus, recordMillis } from "../model/verification"
-import { arr, errorFromEnvelope, num, obj, str } from "../model/wire"
+import { arr, errorFromEnvelope, obj } from "../model/wire"
 import { toClientConfig } from "../model/clientConfig"
 import { HIDE_KNOWN_UNAVAILABLE_COPY, hideKnownLine, hideKnownRefusal, toHideKnown } from "../model/hideKnown"
 import { botheredDone, commentFilterBody, commentFilterRefusal, kindCheckFailure, kindReasonLines, noteHiddenLine, receivedView, sendVerdict, toBothered, toCommentFilter, toKindCheck } from "../model/kindMessages"
@@ -193,7 +194,8 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   },
   photos_post_400_invalid_visibility: refusal("INVALID_VISIBILITY"),
   prompts_get_200: (f) => expect(toPromptAnswers(f.data)).toEqual([]),
-  prompts_put_200: (f) => expect(toPromptAnswer(f.data)).toEqual({ promptId: 1, answer: "Ask me about filter coffee." }),
+  // No clip_* fields: no clip (M15).
+  prompts_put_200: (f) => expect(toPromptAnswer(f.data)).toEqual({ promptId: 1, answer: "Ask me about filter coffee.", clip: null }),
   prompts_put_400_answer_required: refusal("PROMPT_ANSWER_REQUIRED"),
   prompts_put_400_answer_too_long: refusal("PROMPT_ANSWER_TOO_LONG"),
   prompts_put_400_unknown_prompt: refusal("UNKNOWN_PROMPT"),
@@ -678,35 +680,37 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
   }),
 
-  /*
-    Prompt clips: in flight on the backend (uncommitted there when these were
-    copied) with no web screen yet. Read through the wire helpers so a change
-    of shape still fails here; the refusals already have our words.
-  */
+  /* voice and video prompt answers (mechanic M15) */
   prompt_clip_put_200_approved: (f) => {
-    const w = obj(f.data)
-    expect([num(w.prompt_id), str(w.kind), num(w.duration_ms), str(w.status)]).toEqual([1, "video", 12000, "approved"])
+    const r = toClipResult(f.data)
+    expect(r).toEqual({ promptId: 1, clip: { kind: "video", durationMs: 12000, status: "approved", reason: "" } })
+    expect(clipStatusView(r!.clip)).toEqual({ tone: "success", label: "Live on your profile", body: "" })
   },
   prompt_clip_put_200_pending_review: (f) => {
-    const w = obj(f.data)
-    expect([num(w.prompt_id), str(w.kind), num(w.duration_ms), str(w.status)]).toEqual([2, "audio", 8000, "pending_review"])
+    const r = toClipResult(f.data)
+    expect(r).toEqual({ promptId: 2, clip: { kind: "audio", durationMs: 8000, status: "pending_review", reason: "" } })
+    expect(clipStatusView(r!.clip).label).toBe("Being checked")
   },
-  prompt_clip_put_404_media_not_found: refusal("CLIP_MEDIA_NOT_FOUND"),
-  prompt_clip_put_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
-    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  prompt_clip_put_404_media_not_found: refusal("CLIP_MEDIA_NOT_FOUND", (f) => {
+    expect(clipRefusal({ response: { status: 404, data: f } })).toBe("not_found")
   }),
-  prompt_clip_put_409_not_ready: refusal("CLIP_NOT_READY"),
+  prompt_clip_put_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(clipRefusal({ response: { status: 404, data: f } })).toBe("off")
+  }),
+  prompt_clip_put_409_not_ready: refusal("CLIP_NOT_READY", (f) => {
+    expect(clipRefusal({ response: { status: 409, data: f } })).toBe("not_ready")
+  }),
   prompt_clip_put_422_too_long: refusal("CLIP_TOO_LONG", (f) => {
-    expect(copyFor(errorFromEnvelope(f))).toBe("Keep your clip to 30 seconds.")
+    expect(clipRefusal({ response: { status: 422, data: f } })).toBe("too_long")
+    expect(copyFor(errorFromEnvelope(f))).toBe("A clip can be at most 30 seconds. Try a shorter one.")
   }),
   pulse_today_get_200_prompt_clip: (f) => {
     const deck = toDeck(f)
     expect(deck.cards).toHaveLength(1)
-    expect(deck.cards[0].person.firstName).toBe("Asha")
-    // The clip rides on the prompt; nothing on the web plays it yet.
-    const profile = obj(obj(arr(f.data)[0]).profile)
-    const prompt = obj(arr(obj(profile.detail).prompts)[0])
-    expect(obj(prompt.clip)).toEqual({ kind: "video", duration_ms: 10000, url: "/v1/dating/people/<owner>/prompts/4/clip" })
+    const p = person(obj(obj(arr(f.data)[0]).profile))
+    // A clip-only answer (empty text) is kept, with its clip as the server named it.
+    expect(p.prompts).toEqual([{ promptId: 4, question: "A skill I'm working on...", answer: "", clip: { kind: "video", durationMs: 10000, url: "/v1/dating/people/<owner>/prompts/4/clip" } }])
+    expect(clipPath(p.prompts[0].clip!.url)).toBe(p.prompts[0].clip!.url)
   },
 
   /* client config (mechanic M18): parsed and kept; the web can't block screen capture, so nothing is drawn */

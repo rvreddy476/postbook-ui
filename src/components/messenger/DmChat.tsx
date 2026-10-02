@@ -47,7 +47,7 @@ import { useNotifications } from '@/contexts/NotificationContext'
 import { initiateCall } from '@/services/callService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
-import { useDatingKindChat } from '@/features/dating/components/KindChat'
+import { toChatSource, useDatingKindChat, type ChatSource } from '@/features/dating/components/KindChat'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
@@ -218,7 +218,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   // See where this is set: the thread is awaiting the other side's accept.
   const [isRequestThread, setIsRequestThread] = useState(false)
   // Pulse kind messages (M13). Inert unless this is a Pulse match's chat.
-  const kindChat = useDatingKindChat({ conversationId: openConversationId, myId, peerName: userName, messages })
+  const [chatSource, setChatSource] = useState<ChatSource | null>(null)
+  const kindChat = useDatingKindChat({ conversationId: openConversationId, conversation: chatSource, myId, peerName: userName, messages })
 
   // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
@@ -272,6 +273,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   useEffect(() => {
     let cancelled = false
     setConversationId(null)
+    setChatSource(null)
     const init = async () => {
       try {
         setLoading(true)
@@ -313,6 +315,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         }
         if (!cancelled) {
           setConversationId(conversationId)
+          setChatSource(toChatSource(convRes, conversationId))
           onConversationReady?.(conversationId)
           // While this conversation is on screen, an arriving message is
           // already read — it must not add to the badge.

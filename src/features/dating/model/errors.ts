@@ -120,10 +120,10 @@ function commentFilterInvalid(e: DatingError): string {
   return "One of those words can't be used. Check the list and save again."
 }
 
-/* Prompt clips (in flight on the backend): the longest clip the server takes. */
+/* Prompt clips (M15): the longest clip the server takes. */
 function clipTooLong(e: DatingError): string {
   const seconds = Math.floor(num(e.details.max_ms) / 1000)
-  return seconds > 0 ? `Keep your clip to ${seconds} seconds.` : "That clip is too long. Try a shorter one."
+  return seconds > 0 ? `A clip can be at most ${seconds} seconds. Try a shorter one.` : "That clip is too long. Try a shorter one."
 }
 
 /** Codes whose words depend on the details the server sent. */
@@ -146,7 +146,9 @@ const COPY: Record<string, string> = {
   CANDIDATE_UNAVAILABLE: "This person isn't available any more.",
   CHAT_UNAVAILABLE: "Chat is busy right now. Try again in a moment.",
   CLIP_MEDIA_NOT_FOUND: "That clip couldn't be found. Record or upload it again.",
-  CLIP_NOT_READY: "Your clip is still processing. Try again in a moment.",
+  CLIP_MEDIA_UNAVAILABLE: "Voice and video answers are unavailable right now. Try again later.",
+  CLIP_NOT_READY: "Your clip is still processing. Try again shortly.",
+  CLIP_UNSUPPORTED: "That file can't be used. Record your voice or choose a video.",
   CLIENT_PRICE_REFUSED: "That purchase couldn't be started. Try again.",
   CONNECTION_CHECK_UNAVAILABLE: "We couldn't check that right now. Try again in a moment.",
   CONSENT_REQUIRED: "We need your consent before saving that.",
