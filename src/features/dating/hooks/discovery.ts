@@ -14,6 +14,7 @@ import {
   endTravel,
   extendMatch,
   fetchAllowances,
+  fetchDateCheckins,
   fetchDeck,
   fetchFirstMove,
   fetchIncomingSparks,
@@ -28,11 +29,13 @@ import {
   rewindLastPass,
   saveFirstMove,
   saveReadReceipts,
+  sendDateFeedback,
   sendOpeningAnswer,
   startTravel,
 } from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
 import type { Allowances } from "../model/allowances"
+import type { DateCheckin, DateFeedback, DateFeedbackBody } from "../model/dateCheckin"
 import { isMechanicOff, isReadReceiptsRequirePass, isTravelRequiresPass } from "../model/errors"
 import type { Picks } from "../model/picks"
 import type { ReadReceipts } from "../model/readReceipts"
@@ -299,6 +302,26 @@ export function useExtendMatch() {
       void qc.invalidateQueries({ queryKey: KEYS.match(id) })
       void qc.invalidateQueries({ queryKey: KEYS.matches })
     },
+  })
+}
+
+/* ── after-date check-ins (mechanic M14) ─────────────────────────── */
+
+/**
+  The check-ins waiting for an answer. A 404 MECHANIC_NOT_ENABLED (or any
+  failed read) leaves `data` undefined: no cards, and no "We met" entry on a
+  match page either.
+*/
+export function useDateCheckins(enabled = true) {
+  return useQuery<DateCheckin[]>({ queryKey: KEYS.dateCheckins, queryFn: fetchDateCheckins, retry, enabled, staleTime: 60_000 })
+}
+
+/** Answered or refused, the asks are read again (a 429 means the card on screen was stale). */
+export function useDateFeedback() {
+  const qc = useQueryClient()
+  return useMutation<DateFeedback, unknown, { matchId: string; body: DateFeedbackBody }>({
+    mutationFn: ({ matchId, body }) => sendDateFeedback(matchId, body),
+    onSettled: () => void qc.invalidateQueries({ queryKey: KEYS.dateCheckins }),
   })
 }
 

@@ -10,6 +10,8 @@ import { BadgeCheck, CalendarClock, Crown, Hourglass, Layers, MessagesSquare, Pl
 import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { DatingPhoto } from "../components/DatingPhoto"
+import { CheckinCards } from "../components/DateCheckin"
+import { FairTurnNotice } from "../components/FairTurn"
 import { FILTERS_HREF } from "../components/Filters"
 import { usePreferences, useProfileOptions } from "../hooks/profile"
 import { ErrorState } from "../components/Guard"
@@ -18,7 +20,9 @@ import { LikedYouGrid, PREMIUM_HREF } from "../components/LikedYouGrid"
 import { MatchCelebration } from "../components/MatchCelebration"
 import { SwipeDeck } from "../components/SwipeDeck"
 import { TRAVEL_HREF, TripBanner } from "../components/Travel"
-import { useAcceptSpark, useAllowances, useDeck, useDeclineSpark, useLikedYou, useMatch, useMatches, usePass, usePicks, useRewind, useSessionFlag, useSpark, useStash, useTravel } from "../hooks/discovery"
+import { useAcceptSpark, useAllowances, useDateCheckins, useDeck, useDeclineSpark, useLikedYou, useMatch, useMatches, usePass, usePicks, useRewind, useSessionFlag, useSpark, useStash, useTravel } from "../hooks/discovery"
+import { dealbreakersEnabled } from "../model/dealbreakers"
+import { currentFairTurn, FAIR_TURN_PAUSED_REASON, fairTurnFromRefusal, type FairTurn } from "../model/fairTurn"
 import { activeTrip, type TravelTrip } from "../model/travel"
 import { leftToday, moreArrive, NO_ALLOWANCES, rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toUsageLimit, type LastDeckAction, type UsageLimit } from "../model/allowances"
 import { datingErrorCopy } from "../model/errors"
@@ -129,12 +133,15 @@ function DeckSection() {
   const [rewindLimit, setRewindLimit] = useState<UsageLimit | null>(null)
   const [note, setNote] = useState("")
   const [celebrate, setCelebrate] = useState<{ matchId: string; person: Person } | null>(null)
+  // Fair turn (M11): a 409 FAIR_TURN_LIMIT, kept until an allowances read newer than it decides.
+  const [refusedTurn, setRefusedTurn] = useState<{ turn: FairTurn; at: number } | null>(null)
 
   // A mechanic is on only when the allowances read lists it; no read yet, or a failed one, means off.
   const a = allowances.data ?? NO_ALLOWANCES
   const superSparkEnabled = a.superSpark !== null && !superOff
   const rewindAvailable = a.rewind !== null && !rewindOff
   const canRewind = showRewind({ rewind: a.rewind, off: rewindOff, last })
+  const turn = currentFairTurn(a.fairTurn, allowances.dataUpdatedAt, refusedTurn)
 
   const restoredIds = new Set(restored.map((c) => c.candidateId))
   const cards = [...restored, ...(deck.data?.cards ?? []).filter((c) => !restoredIds.has(c.candidateId))].filter((c) => !gone.has(c.candidateId))
@@ -241,6 +248,10 @@ function DeckSection() {
         setLimit(toSparkLimit(e))
       } else if (verdict === "super_limit") {
         setSuperLimit(usageLimitOf(e))
+      } else if (verdict === "fair_turn") {
+        // The useSpark hook reads the allowances again; until that lands, the refusal decides.
+        const refused = fairTurnFromRefusal(e)
+        if (refused) setRefusedTurn({ turn: refused, at: Date.now() })
       } else if (verdict === "onboarding") {
         router.replace(DATING_BASE)
       } else {
@@ -259,6 +270,7 @@ function DeckSection() {
   const emptyKind = deckEmptyKind(deck.data, cards.length)
   return (
     <>
+      {turn ? <FairTurnNotice turn={turn} /> : null}
       {limit ? <OutOfSparks limit={limit} onClose={() => setLimit(null)} /> : null}
       {superLimit ? <OutOfSuperSparks limit={superLimit} onClose={() => setSuperLimit(null)} /> : null}
       {rewindLimit ? <OutOfRewinds limit={rewindLimit} onClose={() => setRewindLimit(null)} /> : null}
@@ -285,6 +297,7 @@ function DeckSection() {
             canRewind={canRewind}
             rewindNote={a.rewind ? leftToday(a.rewind) : ""}
             options={options.data ?? null}
+            sparkPausedReason={turn ? FAIR_TURN_PAUSED_REASON : ""}
           />
           <div className="pulse-deck__note">
             <Field id="pulse-spark-note" label="Add a note to your spark (optional)" help="No phone numbers, emails or links.">
@@ -448,7 +461,22 @@ export function MatchList({ matches, nowMs }: { matches: Match[]; nowMs?: number
   )
 }
 
+/** M14: "How did it go?" for every ask still waiting; nothing while the read is pending, failed or off (404). */
+function DateCheckinsTop() {
+  const checkins = useDateCheckins()
+  return checkins.data ? <CheckinCards items={checkins.data} /> : null
+}
+
 function MatchesSection() {
+  return (
+    <>
+      <DateCheckinsTop />
+      <MatchesBody />
+    </>
+  )
+}
+
+function MatchesBody() {
   const matches = useMatches()
   if (matches.isPending) return <Loading />
   if (matches.isError) return <ErrorState error={matches.error} onRetry={() => void matches.refetch()} />
@@ -526,5 +554,7 @@ function DeckHead() {
   // Picks are read only once the deck is in, so today's picks are chosen apart from it; the read also tells the tabs whether picks are on.
   const deck = useDeck()
   usePicks(deck.isSuccess)
-  return <DeckTitle showFilters={filtersEnabled(preferences.data)} showTravel={travel.isSuccess} trip={activeTrip(travel.data)} />
+  // Filters also hold the dealbreaker switches (M12), so either flag shows the way there.
+  const showFilters = filtersEnabled(preferences.data) || dealbreakersEnabled(preferences.data)
+  return <DeckTitle showFilters={showFilters} showTravel={travel.isSuccess} trip={activeTrip(travel.data)} />
 }

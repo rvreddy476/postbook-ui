@@ -1,6 +1,9 @@
 "use client"
 
-/* /dating/safety — the block list, reporting, trusted contacts. */
+/*
+  /dating/safety — the block list, reporting, past matches to report (M19),
+  trusted contacts. Scam alerts (M17) deep-link here.
+*/
 
 import { useState } from "react"
 import { Flag, Smartphone, Trash2, UserPlus } from "lucide-react"
@@ -9,10 +12,13 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Field, Loading, Notice, PageHead, Panel, Toggle } from "../components/kit"
+import { PastMatchList } from "../components/PastMatches"
 import { ReportDialog } from "../components/SafetyActions"
 import { useMatches } from "../hooks/discovery"
-import { useBlocks, useDeleteTrustedContact, usePutTrustedContact, useTrustedContacts, useUnblock } from "../hooks/safety"
-import { datingErrorCopy } from "../model/errors"
+import { useBlocks, useDeleteTrustedContact, usePastMatches, usePutTrustedContact, useTrustedContacts, useUnblock } from "../hooks/safety"
+import { datingErrorCopy, isMechanicOff } from "../model/errors"
+import { pastMatchesSub, pastMatchName, type PastMatch } from "../model/pastMatches"
+import { errorStatus } from "../model/wire"
 import { isOpen, type Match } from "../model/matches"
 import { nameLine } from "../model/people"
 import { DATING_BASE } from "../model/profile"
@@ -168,6 +174,24 @@ function ReportSomeone({ matches }: { matches: Match[] }) {
   )
 }
 
+/**
+  Report someone from a past match (M19). Hidden while the read is pending
+  and when it answers 404 (MECHANIC_NOT_ENABLED); the report goes to the
+  other person, by their user id.
+*/
+function PastMatchesSection() {
+  const past = usePastMatches()
+  const [target, setTarget] = useState<PastMatch | null>(null)
+  if (past.isPending) return null
+  if (past.isError && (isMechanicOff(past.error) || errorStatus(past.error) === 404)) return null
+  return (
+    <Panel title="Report someone from a past match" sub={past.data ? pastMatchesSub(past.data.windowDays) : undefined}>
+      {past.isError ? <ErrorState error={past.error} onRetry={() => void past.refetch()} /> : <PastMatchList items={past.data.items} onReport={setTarget} />}
+      {target ? <ReportDialog open userId={target.person.userId} name={pastMatchName(target)} onClose={() => setTarget(null)} /> : null}
+    </Panel>
+  )
+}
+
 function SafetyBody() {
   const matches = useMatches()
   const list = matches.data ?? []
@@ -182,6 +206,7 @@ function SafetyBody() {
       <Panel title="Report">
         <ReportSomeone matches={list} />
       </Panel>
+      <PastMatchesSection />
       <Panel title="Trusted contacts" sub="Up to 3 people who can be told if you need help.">
         <Trusted matches={list} />
       </Panel>

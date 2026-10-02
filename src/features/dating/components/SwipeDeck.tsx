@@ -42,25 +42,45 @@ export interface SwipeDeckProps {
   rewindNote?: string
   /** The profile options (M6): with them, the card shows interests and basics as chips. */
   options?: ProfileOptions | null
+  /**
+    Fair turn (M11): while new sparks are on hold, the reason. Spark and
+    Super Spark (buttons, drag right, arrow keys) are then off; pass, save
+    and undo still work. "" (the default) changes nothing.
+  */
+  sparkPausedReason?: string
 }
 
-/** What the card tells a screen reader; with both mechanics off it reads exactly as before they existed. */
-export function cardKeysLabel(superSparkEnabled: boolean, canRewind: boolean): string {
-  const keys = ["Arrow right to spark", "arrow left to pass"]
-  if (superSparkEnabled) keys.push("arrow up to send a Super Spark")
+/** What the card tells a screen reader; with every mechanic off it reads exactly as before they existed. */
+export function cardKeysLabel(superSparkEnabled: boolean, canRewind: boolean, sparksPaused = false): string {
+  const keys = sparksPaused ? ["Arrow left to pass"] : ["Arrow right to spark", "arrow left to pass"]
+  if (superSparkEnabled && !sparksPaused) keys.push("arrow up to send a Super Spark")
   if (canRewind) keys.push("Backspace to undo your last pass")
   return `${keys.join(", ")}, Enter to open the profile.`
 }
 
 /** The keyboard hint under the deck. */
-export function deckHint(superSparkEnabled: boolean, rewindAvailable: boolean): string {
-  let hint = "Drag the card, or use the arrow keys. Enter opens the full profile."
-  if (superSparkEnabled) hint += " Arrow up sends a Super Spark."
+export function deckHint(superSparkEnabled: boolean, rewindAvailable: boolean, sparksPaused = false): string {
+  let hint = sparksPaused
+    ? "Sparks are on hold for now. Drag left or press the left arrow to pass. Enter opens the full profile."
+    : "Drag the card, or use the arrow keys. Enter opens the full profile."
+  if (superSparkEnabled && !sparksPaused) hint += " Arrow up sends a Super Spark."
   if (rewindAvailable) hint += " Backspace or Z undoes your last pass."
   return hint
 }
 
-export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled = false, superSparkNote = "", rewindAvailable = false, canRewind = false, rewindNote = "", options = null }: SwipeDeckProps) {
+export function SwipeDeck({
+  cards,
+  pending = null,
+  onAction,
+  superSparkEnabled = false,
+  superSparkNote = "",
+  rewindAvailable = false,
+  canRewind = false,
+  rewindNote = "",
+  options = null,
+  sparkPausedReason = "",
+}: SwipeDeckProps) {
+  const paused = sparkPausedReason !== ""
   const [dx, setDx] = useState(0)
   const drag = useRef<{ startX: number; moved: number } | null>(null)
   const top = cards[0]
@@ -71,6 +91,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
   const act = (action: SwipeAction) => {
     if (busy) return
     if (action === "super_spark" && !superSparkEnabled) return
+    if ((action === "spark" || action === "super_spark") && paused) return
     if (action === "rewind" && !canRewind) return
     onAction(action, top)
   }
@@ -110,7 +131,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
 
   const person = top.person
   const leaning =
-    pending === "spark" || pending === "super_spark" ? "right" : pending === "pass" ? "left" : pending === "stash" ? "down" : dx > 24 ? "right" : dx < -24 ? "left" : ""
+    pending === "spark" || pending === "super_spark" ? "right" : pending === "pass" ? "left" : pending === "stash" ? "down" : dx > 24 && !paused ? "right" : dx < -24 ? "left" : ""
   const facts = metaLine(person)
   const chips = cardChips(person.basics, options)
 
@@ -127,7 +148,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
           role="group"
           tabIndex={0}
           aria-roledescription="profile card"
-          aria-label={`${nameLine(person)}.${travelMarker(person) ? ` ${travelMarker(person)}.` : ""} ${cardKeysLabel(superSparkEnabled, canRewind)}`}
+          aria-label={`${nameLine(person)}.${travelMarker(person) ? ` ${travelMarker(person)}.` : ""} ${cardKeysLabel(superSparkEnabled, canRewind, paused)}`}
           aria-busy={busy || undefined}
           data-lean={leaning || undefined}
           data-pending={pending || undefined}
@@ -200,18 +221,25 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
           type="button"
           className="pulse-act pulse-act--super"
           onClick={() => act("super_spark")}
-          disabled={!superSparkEnabled || busy}
-          aria-label={superSparkEnabled ? "Super Spark" : "Super Spark, not available yet"}
-          title={superSparkEnabled ? "Super Spark" : "Super Spark is coming soon"}
+          disabled={!superSparkEnabled || busy || paused}
+          aria-label={!superSparkEnabled ? "Super Spark, not available yet" : paused ? `Super Spark, ${sparkPausedReason.toLowerCase()}` : "Super Spark"}
+          title={!superSparkEnabled ? "Super Spark is coming soon" : paused ? sparkPausedReason : "Super Spark"}
         >
           <Star size={20} aria-hidden="true" />
         </button>
-        <button type="button" className="pulse-act pulse-act--spark" onClick={() => act("spark")} disabled={busy} aria-label="Spark">
+        <button
+          type="button"
+          className="pulse-act pulse-act--spark"
+          onClick={() => act("spark")}
+          disabled={busy || paused}
+          aria-label={paused ? `Spark, ${sparkPausedReason.toLowerCase()}` : "Spark"}
+          title={paused ? sparkPausedReason : undefined}
+        >
           <Sparkles size={22} aria-hidden="true" />
         </button>
       </div>
-      {superSparkEnabled && superSparkNote ? <p className="pulse-deck__meta">{superSparkNote}</p> : null}
-      <p className="pulse-deck__hint">{deckHint(superSparkEnabled, rewindAvailable)}</p>
+      {superSparkEnabled && superSparkNote && !paused ? <p className="pulse-deck__meta">{superSparkNote}</p> : null}
+      <p className="pulse-deck__hint">{deckHint(superSparkEnabled, rewindAvailable, paused)}</p>
     </div>
   )
 }

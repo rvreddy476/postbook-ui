@@ -34,7 +34,7 @@ describe("wire: Go zero values are empty", () => {
   test("an empty object maps to a profile with nothing in it, not undefined fields", () => {
     const p = toProfile({})
     expect(p).toEqual({ userId: "", firstName: "", intent: "", bio: "", gender: "", birthDate: "", city: "", hasPoint: false, paused: false, languages: [], trustTier: "", status: "", dobSource: "", basics: NO_BASICS })
-    expect(toPreferences(null)).toEqual({ minAge: 0, maxAge: 0, distanceKm: 0, interestedIn: "", intentFilter: [], distanceBucket: "", passFilters: null })
+    expect(toPreferences(null)).toEqual({ minAge: 0, maxAge: 0, distanceKm: 0, interestedIn: "", intentFilter: [], distanceBucket: "", passFilters: null, dealbreakers: null })
   })
 
   test("an error without a response is a network error with no code", () => {

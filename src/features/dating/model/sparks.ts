@@ -124,13 +124,14 @@ export function sparkLimitLine(limit: SparkLimit): string {
 
 /* ── what a refused deck action does to the card ─────────────────── */
 
-export type CardVerdict = "drop" | "keep" | "limit" | "super_limit" | "onboarding"
+export type CardVerdict = "drop" | "keep" | "limit" | "super_limit" | "fair_turn" | "onboarding"
 
 /**
   After the server refuses a spark, Super Spark, pass or stash:
     CANDIDATE_UNAVAILABLE     → the card goes (the person is gone for this viewer);
     SPARK_RATE_LIMITED        → the card stays and the out-of-sparks state shows;
     SUPER_SPARK_LIMIT_REACHED → the card stays and the out-of-Super-Sparks state shows;
+    FAIR_TURN_LIMIT           → the card stays and the replies-waiting state shows (M11);
     ONBOARDING_INCOMPLETE     → back through the gate;
     anything else             → the card rolls back where it was.
 */
@@ -138,6 +139,7 @@ export function verdictFor(error: DatingError): CardVerdict {
   if (error.code === "CANDIDATE_UNAVAILABLE") return "drop"
   if (error.code === "SPARK_RATE_LIMITED") return "limit"
   if (error.code === "SUPER_SPARK_LIMIT_REACHED") return "super_limit"
+  if (error.code === "FAIR_TURN_LIMIT") return "fair_turn"
   if (error.code === "ONBOARDING_INCOMPLETE") return "onboarding"
   return "keep"
 }

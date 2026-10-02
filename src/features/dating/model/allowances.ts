@@ -2,7 +2,7 @@
   Allowances (mechanic M10): GET /allowances, one read of every daily
   allowance the viewer has.
 
-    {data: {sparks: A, deck?: A, rewind?: A, super_spark?: A & {purchased_balance?}}}
+    {data: {sparks: A, deck?: A, rewind?: A, super_spark?: A & {purchased_balance?}, fair_turn?: {owed, limit, paused}}}
     A = {unlimited, daily_limit?, remaining_today?, resets_at?}
 
   A mechanic whose server flag is off is ABSENT, and that is how this client
@@ -15,6 +15,7 @@
   changes the deck.
 */
 
+import { toFairTurn, type FairTurn } from "./fairTurn"
 import { resetLine } from "./pulse"
 import { bool, num, obj, time, type DatingError } from "./wire"
 
@@ -39,6 +40,8 @@ export interface Allowances {
   deck: Allowance | null
   rewind: Allowance | null
   superSpark: SuperSparkAllowance | null
+  /** Mechanic M11: how many replies are owed, and whether new sparks are on hold. null: off, or not counted. */
+  fairTurn: FairTurn | null
 }
 
 /** Present means a JSON object sits there; absent, null or anything else is "off". */
@@ -62,11 +65,12 @@ export function toAllowances(wire: unknown): Allowances {
     deck: present(w.deck) ? toAllowance(w.deck) : null,
     rewind: present(w.rewind) ? toAllowance(w.rewind) : null,
     superSpark: present(w.super_spark) ? { ...toAllowance(w.super_spark), purchasedBalance: num(obj(w.super_spark).purchased_balance) } : null,
+    fairTurn: toFairTurn(w.fair_turn),
   }
 }
 
 /** Before the read lands, or when it fails: every optional mechanic is off. */
-export const NO_ALLOWANCES: Allowances = { sparks: { unlimited: false, dailyLimit: 0, remainingToday: 0, resetsAt: "" }, deck: null, rewind: null, superSpark: null }
+export const NO_ALLOWANCES: Allowances = { sparks: { unlimited: false, dailyLimit: 0, remainingToday: 0, resetsAt: "" }, deck: null, rewind: null, superSpark: null, fairTurn: null }
 
 /** "Unlimited today" / "3 left today" / "None left today". */
 export function leftToday(a: Allowance): string {

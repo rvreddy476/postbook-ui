@@ -12,26 +12,33 @@
   Calls after an exchange (M9): the server adds `can_call` while the mechanic
   is on. True draws Video call and Voice call (the app's call overlay takes
   over from there); false, one line saying when calls open; absent, nothing.
+
+  After-date check-in (M14): while GET /date-checkins answers, a "We met"
+  entry opens the sheet; ?checkin=1 (the notification's deep link) opens it
+  at once. A 404 hides both.
 */
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Clock, MessageCircle, Timer, UserX } from "lucide-react"
 
+import { Dialog } from "@/components/ui/dialog"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { initiateCall, subscribeToCallState } from "@/services/callService"
 import type { User } from "@/types"
 
+import { CheckinDone, CheckinEntry, CheckinForm } from "../components/DateCheckin"
 import { AnswerSent, ExtendLimitNotice, FirstMoveStatus, FREE_EXTEND_LABEL, NO_ANSWER, OpeningQuestionList, type AnswerDraft } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, LinkButton, Loading, Notice, PageHead, Panel, StatePanel } from "../components/kit"
 import { MatchCalls } from "../components/MatchExtras"
-import { SafetyActions } from "../components/SafetyActions"
-import { useAnswerOpening, useCloseMatch, useExtendMatch, useMatch } from "../hooks/discovery"
+import { ReportDialog, SafetyActions } from "../components/SafetyActions"
+import { useAnswerOpening, useCloseMatch, useDateCheckins, useDateFeedback, useExtendMatch, useMatch } from "../hooks/discovery"
 import { useMyPremium } from "../hooks/premium"
+import { checkinBody, checkinDone, checkinRefusal, chooseMet, EMPTY_CHECKIN, type CheckinDone as Done, type CheckinForm as CheckinAnswers } from "../model/dateCheckin"
 import { datingErrorCopy } from "../model/errors"
 import { answerRefusalRefetches, firstMoveState, openingAnswerCopy, openingAnswerProblem, type FirstMoveState, type OpeningAnswerResult } from "../model/firstMove"
-import { callView, chatHref, countdown, extendedLine, isOpen, toExtendLimit, type Countdown, type ExtendLimit, type Match } from "../model/matches"
+import { callView, chatHref, countdown, extendedLine, isOpen, matchHref, toExtendLimit, type Countdown, type ExtendLimit, type Match } from "../model/matches"
 import { personHref, type Person } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { errorStatus, toDatingError } from "../model/wire"
@@ -142,7 +149,104 @@ function useCallInProgress(): boolean {
   return busy
 }
 
-function MatchBody({ match }: { match: Match }) {
+/**
+  After-date check-in (M14): the sheet, opened by the deep link
+  (?checkin=1) or by "We met". Shown only while GET /date-checkins answers
+  (any failure, 404 MECHANIC_NOT_ENABLED included, hides it); a 404 on the
+  answer hides it for this page too. They didn't feel safe: support, and the
+  report flow with the other person as the target.
+*/
+function CheckinSheet({ match, name, open, onClose, onOff }: { match: Match; name: string; open: boolean; onClose: () => void; onOff: () => void }) {
+  const checkins = useDateCheckins()
+  const send = useDateFeedback()
+  const [form, setForm] = useState<CheckinAnswers>(EMPTY_CHECKIN)
+  const [error, setError] = useState("")
+  const [done, setDone] = useState<Done | null>(null)
+  const [reporting, setReporting] = useState(false)
+  // The match's person, or the ask's when the match no longer carries them.
+  const asked = checkins.data?.find((c) => c.matchId === match.id)
+  const targetId = match.person?.userId || asked?.person.userId || ""
+  const first = match.person?.firstName || asked?.person.firstName || ""
+  const shown = first || name
+
+  const close = () => {
+    setForm(EMPTY_CHECKIN)
+    setError("")
+    setDone(null)
+    onClose()
+  }
+
+  const submit = () => {
+    const body = checkinBody(form)
+    if (!body) {
+      setError("Choose whether you met.")
+      return
+    }
+    setError("")
+    send.mutate(
+      { matchId: match.id, body },
+      {
+        onSuccess: (result) => setDone(checkinDone(result)),
+        onError: (e) => {
+          const refusal = checkinRefusal(e)
+          if (refusal === "off") {
+            close()
+            onOff()
+          } else if (refusal === "limit") {
+            setDone({ kind: "thanks", line: datingErrorCopy(e) })
+          } else {
+            setError(datingErrorCopy(e))
+          }
+        },
+      },
+    )
+  }
+
+  return (
+    <>
+      <Dialog open={open && !reporting} onClose={close} title={first ? `How did it go with ${first}?` : "How did your date go?"}>
+        {done ? (
+          <CheckinDone
+            report={done.kind === "report"}
+            line={done.kind === "thanks" ? done.line : ""}
+            name={shown}
+            canReport={!!targetId}
+            onReport={() => setReporting(true)}
+            onClose={close}
+          />
+        ) : (
+          <CheckinForm
+            name={shown}
+            form={form}
+            error={error}
+            busy={send.isPending}
+            onMet={(met) => {
+              setForm((f) => chooseMet(f, met))
+              setError("")
+            }}
+            onAgain={(again) => setForm((f) => ({ ...f, again }))}
+            onSafe={(feltSafe) => setForm((f) => ({ ...f, feltSafe }))}
+            onSubmit={submit}
+            onCancel={close}
+          />
+        )}
+      </Dialog>
+      {targetId ? (
+        <ReportDialog
+          open={reporting}
+          userId={targetId}
+          name={shown}
+          onClose={() => {
+            setReporting(false)
+            close()
+          }}
+        />
+      ) : null}
+    </>
+  )
+}
+
+function MatchBody({ match, askCheckin = false }: { match: Match; askCheckin?: boolean }) {
   const router = useRouter()
   const toast = useGlobalToast()
   const close = useCloseMatch()
@@ -163,6 +267,16 @@ function MatchBody({ match }: { match: Match }) {
   const calls = callView(match.canCall, open && !!match.person && state.kind !== "expired" && left.kind !== "expired")
   const person = match.person
   const contact = useMemo(() => (person ? callContact(person) : null), [person])
+  // M14: on only while the server answers GET /date-checkins, and until an answer comes back 404.
+  const checkins = useDateCheckins()
+  const [checkinOff, setCheckinOff] = useState(false)
+  const [sheet, setSheet] = useState(askCheckin)
+  const checkinOn = checkins.isSuccess && !checkinOff
+  const closeSheet = () => {
+    setSheet(false)
+    // Drop ?checkin=1, so a reload doesn't ask again.
+    if (askCheckin) router.replace(matchHref(match.id))
+  }
 
   const onExtend = () =>
     extend.mutate(match.id, {
@@ -251,6 +365,12 @@ function MatchBody({ match }: { match: Match }) {
         </div>
       ) : null}
       {contact ? <MatchCalls view={calls} name={name} busy={calling} onCall={(kind) => initiateCall(contact, kind)} /> : null}
+      {checkinOn ? (
+        <>
+          <CheckinEntry onOpen={() => setSheet(true)} />
+          <CheckinSheet match={match} name={name} open={sheet} onClose={closeSheet} onOff={() => setCheckinOff(true)} />
+        </>
+      ) : null}
       <Panel title="Safety" sub="Reports are confidential.">
         <div className="pulse-row">
           {open ? (
@@ -287,7 +407,7 @@ function MatchBody({ match }: { match: Match }) {
   )
 }
 
-function MatchLoader({ id }: { id: string }) {
+function MatchLoader({ id, askCheckin }: { id: string; askCheckin: boolean }) {
   const match = useMatch(id)
   if (match.isPending) return <Loading />
   if (match.isError && errorStatus(match.error) !== 404) return <ErrorState error={match.error} onRetry={() => void match.refetch()} />
@@ -300,15 +420,16 @@ function MatchLoader({ id }: { id: string }) {
       </StatePanel>
     )
   }
-  return <MatchBody match={match.data} />
+  return <MatchBody match={match.data} askCheckin={askCheckin} />
 }
 
-export function MatchScreen({ id }: { id: string }) {
+/** `checkin`: opened from a check-in notification or card (?checkin=1), so the after-date sheet opens at once (M14). */
+export function MatchScreen({ id, checkin = false }: { id: string; checkin?: boolean }) {
   return (
     <Guard need="ready">
       <div className="pulse-page pulse-page--narrow">
         <PageHead title="Match" back={{ href: MATCHES, label: "Matches" }} />
-        <MatchLoader id={id} />
+        <MatchLoader id={id} askCheckin={checkin} />
       </div>
     </Guard>
   )

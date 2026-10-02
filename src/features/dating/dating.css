@@ -280,6 +280,30 @@ textarea.pulse-input { resize: vertical; }
 .pulse-match__photo { width: 200px; max-width: 60vw; aspect-ratio: 3 / 4; border: 1px solid var(--brand-divider); border-radius: 20px; }
 .pulse-match__actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; }
 
+/* ── fair turn (M11): replies waiting, new sparks on hold ── */
+.pulse-fairturn { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid rgb(var(--info) / .3); border-radius: 14px; background: rgb(var(--info) / .08); }
+.pulse-fairturn__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--info)); }
+.pulse-fairturn__text { min-width: 0; }
+.pulse-fairturn__title { margin: 0; font-size: 14px; font-weight: 700; }
+.pulse-fairturn__body { margin: 2px 0 0; color: rgb(var(--text-muted)); font-size: 13px; }
+
+/* ── dealbreakers (M12): a switch under its preference ── */
+.pulse-dealbreaker { padding: 8px 10px; border: 1px dashed var(--brand-divider); border-radius: 12px; }
+.pulse-filters__group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* ── after-date check-ins (M14) ── */
+.pulse-checkin { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; border: 1px solid rgb(var(--brand-accent) / .45); border-radius: 16px; background: rgb(var(--brand-tint)); }
+.pulse-checkin__icon { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-ink)); }
+.pulse-checkin__text { flex: 1 1 200px; min-width: 0; }
+.pulse-checkin__title { margin: 0; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.pulse-checkin__body { margin: 2px 0 0; color: rgb(var(--text-muted)); font-size: 12px; }
+.pulse-checkin__link { color: rgb(var(--brand-ink)); font-size: 13px; text-decoration: underline; }
+
+/* ── past matches (M19) ── */
+.pulse-plain__row > .pulse-past { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.pulse-past__name { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.pulse-past__meta { color: rgb(var(--text-muted)); font-size: 12px; }
+
 /* Four tabs and More fit a 375px screen: words only, a little closer together. */
 @media (max-width: 419px) {
   .pulse-nav { padding: 0 4px; }
@@ -295,6 +319,8 @@ textarea.pulse-input { resize: vertical; }
   .pulse-likes__upsell-text { flex: 1 1 260px; min-width: 0; }
   .pulse-upsell { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .pulse-upsell__text { flex: 1 1 240px; min-width: 0; }
+  .pulse-fairturn { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .pulse-fairturn__text { flex: 1 1 240px; }
 }
 
 @media (min-width: 860px) {

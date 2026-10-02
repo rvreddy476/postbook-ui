@@ -228,6 +228,11 @@ export interface Preferences {
   distanceBucket: string
   /** null while the filters flag is off: the screens keep their old shape. */
   passFilters: PassFilters | null
+  /**
+    Mechanic M12: the preferences marked as dealbreakers. null while that
+    flag is off (the member is absent, or not a list); [] when on and none set.
+  */
+  dealbreakers: string[] | null
 }
 
 function toPassFilters(wire: unknown): PassFilters | null {
@@ -256,6 +261,7 @@ export function toPreferences(wire: unknown): Preferences {
     intentFilter: strList(w.intent_filter),
     distanceBucket: str(w.distance_bucket),
     passFilters: toPassFilters(w.pass_filters),
+    dealbreakers: Array.isArray(w.dealbreakers) ? strList(w.dealbreakers) : null,
   }
 }
 
@@ -329,6 +335,8 @@ export interface FiltersForm {
   smoking: string[]
   exercise: string[]
   diet: string[]
+  /** Mechanic M12: the dealbreaker codes switched on; [] while the flag is off. See model/dealbreakers. */
+  dealbreakers: string[]
 }
 
 /** Only a fallback for the form when the server sent no bucket; the server maps a bucket to its radius. */
@@ -359,6 +367,7 @@ export function filtersForm(p: Preferences | null | undefined, options: ProfileO
     smoking: knownCodes(f?.smoking ?? [], options.smoking),
     exercise: knownCodes(f?.exercise ?? [], options.exercise),
     diet: knownCodes(f?.diet ?? [], options.diet),
+    dealbreakers: [...(p?.dealbreakers ?? [])],
   }
 }
 

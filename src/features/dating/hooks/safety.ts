@@ -4,8 +4,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { blockUser, deleteTrustedContact, downloadDataExport, fetchBlocks, fetchDataExports, fetchTrustedContacts, putTrustedContact, requestDataExport, sendReport, unblockUser } from "../api/safety"
+import { blockUser, deleteTrustedContact, downloadDataExport, fetchBlocks, fetchDataExports, fetchPastMatches, fetchTrustedContacts, putTrustedContact, requestDataExport, sendReport, unblockUser } from "../api/safety"
 import { exportFileName, hasPendingExport, type DataExport } from "../model/dataExport"
+import { markReported, type PastMatches } from "../model/pastMatches"
 import type { BlockedPerson, ReportInput, ReportResult, TrustedContacts } from "../model/safety"
 import { errorStatus } from "../model/wire"
 import { KEYS } from "./profile"
@@ -44,13 +45,25 @@ export function useUnblock() {
 }
 
 export function useReport() {
+  const qc = useQueryClient()
   const after = useAfterBlock()
   return useMutation<ReportResult, unknown, ReportInput>({
     mutationFn: sendReport,
-    onSuccess: (result) => {
+    onSuccess: (result, input) => {
       if (result.blocked) after()
+      // A past match (M19) reads "Reported" at once; the next read agrees.
+      qc.setQueryData<PastMatches>(KEYS.pastMatches, (data) => (data ? markReported(data, input.targetId) : data))
+      void qc.invalidateQueries({ queryKey: KEYS.pastMatches })
     },
   })
+}
+
+/**
+  Past matches to report (M19). A 404 MECHANIC_NOT_ENABLED leaves `data`
+  undefined and the section is hidden.
+*/
+export function usePastMatches() {
+  return useQuery<PastMatches>({ queryKey: KEYS.pastMatches, queryFn: fetchPastMatches, retry, staleTime: 60_000 })
 }
 
 export function useTrustedContacts() {

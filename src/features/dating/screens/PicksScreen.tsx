@@ -20,13 +20,15 @@ import { CalendarClock, Gem } from "lucide-react"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
+import { FairTurnNotice } from "../components/FairTurn"
 import { ErrorState, Guard } from "../components/Guard"
 import { LinkButton, Loading, PageHead, Panel, StatePanel } from "../components/kit"
 import { PICKS_SOURCE, PickOpen, PicksGrid, type PickAction } from "../components/PicksGrid"
 import { SafetyActions } from "../components/SafetyActions"
-import { usePass, usePicks, useSpark } from "../hooks/discovery"
+import { useAllowances, usePass, usePicks, useSpark } from "../hooks/discovery"
 import { KEYS, useProfileOptions } from "../hooks/profile"
 import { datingErrorCopy, isMechanicOff } from "../model/errors"
+import { currentFairTurn, fairTurnFromRefusal, type FairTurn } from "../model/fairTurn"
 import type { Person } from "../model/people"
 import { picksLeft, picksResetLine } from "../model/picks"
 import { DATING_BASE } from "../model/profile"
@@ -81,6 +83,14 @@ function PicksBody() {
   const [openId, setOpenId] = useState("")
   const [limit, setLimit] = useState<SparkLimit | null>(null)
   const [celebrate, setCelebrate] = useState<{ matchId: string; person: Person } | null>(null)
+  /*
+    Fair turn (M11): the note shows while new sparks are on hold, but Spark
+    stays usable here — a pick may be someone who sparked the viewer, and
+    sparking them back is never held. A refusal shows the note instead of an error.
+  */
+  const allowances = useAllowances()
+  const [refusedTurn, setRefusedTurn] = useState<{ turn: FairTurn; at: number } | null>(null)
+  const turn = currentFairTurn(allowances.data?.fairTurn ?? null, allowances.dataUpdatedAt, refusedTurn)
 
   // New picks at local midnight: ask again once `resets_at` has passed.
   const resetsAt = picks.data?.resetsAt ?? ""
@@ -144,6 +154,11 @@ function PicksBody() {
         toast({ type: "info", title: datingErrorCopy(error) })
       } else if (verdict === "limit") {
         setLimit(toSparkLimit(e))
+      } else if (verdict === "fair_turn") {
+        const refused = fairTurnFromRefusal(e)
+        if (refused) setRefusedTurn({ turn: refused, at: Date.now() })
+        // The note sits above the picks.
+        window.scrollTo?.({ top: 0 })
       } else if (verdict === "onboarding") {
         router.replace(DATING_BASE)
       } else {
@@ -160,6 +175,7 @@ function PicksBody() {
   return (
     <>
       {head}
+      {turn ? <FairTurnNotice turn={turn} /> : null}
       {limit ? <OutOfSparks limit={limit} onClose={() => setLimit(null)} /> : null}
       {open ? (
         <PickOpen

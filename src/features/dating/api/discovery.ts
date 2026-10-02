@@ -10,6 +10,7 @@ import { browserTimeZone, loadPicksWithZone, toPicks, type Picks } from "../mode
 import { passBody, sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type ActionSource, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
 import { toTravelState, travelBody, type TravelForm, type TravelState } from "../model/travel"
 import { readReceiptsBody, toReadReceipts, type ReadReceipts } from "../model/readReceipts"
+import { toDateCheckins, toDateFeedback, type DateCheckin, type DateFeedback, type DateFeedbackBody } from "../model/dateCheckin"
 import { del, get, getBody, post, put, seg } from "./client"
 
 /* ── read receipts (mechanic M9) ─────────────────────────────────── */
@@ -123,6 +124,18 @@ export async function closeMatch(id: string): Promise<{ closed: boolean }> {
 /** The free 24 hours for the person waiting on a first-move match, otherwise a pass holder's 7 days. */
 export async function extendMatch(id: string): Promise<ExtendResult> {
   return toExtendResult(await post(`/matches/${seg(id)}/extend`))
+}
+
+/* ── after-date check-ins (mechanic M14) ─────────────────────────── */
+
+/** GET /date-checkins — the asks still waiting for an answer. 404 MECHANIC_NOT_ENABLED while off. */
+export async function fetchDateCheckins(): Promise<DateCheckin[]> {
+  return toDateCheckins(await get("/date-checkins"))
+}
+
+/** POST /matches/:id/date-feedback — 201, with offer_report when they didn't feel safe. */
+export async function sendDateFeedback(matchId: string, body: DateFeedbackBody): Promise<DateFeedback> {
+  return toDateFeedback(await post(`/matches/${seg(matchId)}/date-feedback`, body))
 }
 
 /* ── first move (mechanic M5) ────────────────────────────────────── */

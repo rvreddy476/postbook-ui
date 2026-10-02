@@ -43,6 +43,8 @@ export const KEYS = {
   picks: ["dating", "picks"] as const,
   travel: ["dating", "travel"] as const,
   readReceipts: ["dating", "read-receipts"] as const,
+  dateCheckins: ["dating", "date-checkins"] as const,
+  pastMatches: ["dating", "past-matches"] as const,
   /** Not under `profile`, so refreshing the profile never refetches the lists. */
   profileOptions: ["dating", "options"] as const,
 }

@@ -4,7 +4,8 @@ import api from "@/lib/api"
 
 import { toDataExport, toDataExports, type DataExport } from "../model/dataExport"
 import { reportBody, toBlockResult, toBlocks, toReportResult, toTrustedContact, toTrustedContacts, type BlockedPerson, type ReportInput, type ReportResult, type TrustedContact, type TrustedContacts } from "../model/safety"
-import { BASE, del, get, post, put, seg } from "./client"
+import { toPastMatches, type PastMatches } from "../model/pastMatches"
+import { BASE, del, get, getBody, post, put, seg } from "./client"
 
 export async function blockUser(targetUserId: string): Promise<{ blocked: boolean }> {
   return toBlockResult(await post("/safety/block", { target_user_id: targetUserId }))
@@ -17,6 +18,11 @@ export async function fetchBlocks(): Promise<BlockedPerson[]> {
 /** Unblocking restores nothing the block severed. */
 export async function unblockUser(userId: string): Promise<void> {
   await del(`/blocks/${seg(userId)}`)
+}
+
+/** GET /past-matches (mechanic M19) — the whole body, since the window is in meta. 404 MECHANIC_NOT_ENABLED while off. */
+export async function fetchPastMatches(): Promise<PastMatches> {
+  return toPastMatches(await getBody("/past-matches"))
 }
 
 export async function sendReport(input: ReportInput): Promise<ReportResult> {

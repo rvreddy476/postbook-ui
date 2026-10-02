@@ -5,6 +5,8 @@
   is never shown.
 */
 
+import { DEALBREAKERS_PASS_COPY } from "./dealbreakers"
+import { fairTurnCopy } from "./fairTurn"
 import { num, str, toDatingError, type DatingError } from "./wire"
 
 export const GENERIC_COPY = "Something went wrong. Please try again."
@@ -110,6 +112,7 @@ export function isMechanicOff(error: unknown): boolean {
 
 /** Codes whose words depend on the details the server sent. */
 const DYNAMIC: Record<string, (e: DatingError) => string> = {
+  FAIR_TURN_LIMIT: fairTurnCopy,
   INVALID_HEIGHT: heightInvalid,
   INVALID_TRAVEL_DAYS: travelDaysInvalid,
   TOO_MANY_INTEREST: tooMany("interests"),
@@ -127,6 +130,8 @@ const COPY: Record<string, string> = {
   CLIENT_PRICE_REFUSED: "That purchase couldn't be started. Try again.",
   CONNECTION_CHECK_UNAVAILABLE: "We couldn't check that right now. Try again in a moment.",
   CONSENT_REQUIRED: "We need your consent before saving that.",
+  DATE_FEEDBACK_LIMIT: "You've already told us how this one went. Thank you.",
+  DEALBREAKERS_REQUIRE_PASS: DEALBREAKERS_PASS_COPY,
   EXPLAIN_RATE_LIMITED: "Try again later.",
   EXTEND_LIMIT_REACHED: "You've used your free extra time for now. Try again later.",
   FIRST_MOVE_NOT_PENDING: "This match isn't waiting for your answer any more.",
@@ -134,11 +139,14 @@ const COPY: Record<string, string> = {
   FACE_COMPARE_UNAVAILABLE: "Verification is unavailable right now. Try again in a few minutes.",
   FILTERS_REQUIRE_PASS: FILTERS_PASS_COPY,
   FORBIDDEN: "You can't do that right now.",
+  HIDE_KNOWN_UNAVAILABLE: "We couldn't check your connections right now. Try again shortly.",
   IDEMPOTENCY_KEY_REUSED: "That purchase changed. Start again.",
   IDENTITY_UNAVAILABLE: "We couldn't confirm your details right now. Try again in a moment.",
   INVALID_AGE_RANGE: "Choose an age range between 18 and 120, with the lower age first.",
   INVALID_CITY: "That city isn't on the list any more. Pick another.",
   INVALID_CONSENT_TYPE: "That choice isn't available any more.",
+  INVALID_DATE_FEEDBACK: "That answer didn't go through. Check your choices and send it again.",
+  INVALID_DEALBREAKER: "One of those dealbreakers isn't available any more. Check them and save again.",
   INVALID_DISTANCE_BUCKET: "That distance isn't available any more. Pick another.",
   INVALID_DISTANCE_KM: "Choose a distance between 1 and 500 km.",
   INVALID_GENDER: "That choice isn't available any more. Pick your gender and try again.",

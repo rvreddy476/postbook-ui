@@ -21,7 +21,11 @@ import { toBlockResult, toBlocks, toLocationShare, toLocationShares, toPanicResu
 import { toLikedYou } from "../model/likedYou"
 import { sparkLimitLine, toDeclineResult, toIncomingSparks, toSparkLimit, toSparkOutcome, toStash, toStashEntry, verdictFor } from "../model/sparks"
 import { toSelfieChallenge, toSelfieResult, toVerificationStatus, viewFromRefusal, viewFromResult, viewFromStatus, recordMillis } from "../model/verification"
-import { errorFromEnvelope } from "../model/wire"
+import { bool, errorFromEnvelope, num, obj } from "../model/wire"
+import { checkinBody, checkinDone, checkinRefusal, toDateCheckins, toDateFeedback } from "../model/dateCheckin"
+import { dealbreakerRefusal, dealbreakersEnabled, DEALBREAKERS_PASS_COPY } from "../model/dealbreakers"
+import { currentFairTurn, fairTurnFromRefusal, fairTurnHeadline } from "../model/fairTurn"
+import { endedLine, pastMatchesSub, pastMatchName, toPastMatches } from "../model/pastMatches"
 
 import { backendContractsDir, fixtureNames, readFixture, readFixtureText } from "./contractFixtures"
 
@@ -97,12 +101,14 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   preferences_get_200: (f) => {
     const p = toPreferences(f.data)
     // min_age / max_age are omitted when unset: 0, not NaN or undefined.
-    expect(p).toEqual({ minAge: 0, maxAge: 0, distanceKm: 25, interestedIn: "everyone", intentFilter: [], distanceBucket: "", passFilters: null })
+    expect(p).toEqual({ minAge: 0, maxAge: 0, distanceKm: 25, interestedIn: "everyone", intentFilter: [], distanceBucket: "", passFilters: null, dealbreakers: null })
     // No pass_filters member: the filters flag is off and the screens keep their old shape.
     expect(filtersEnabled(p)).toBe(false)
   },
   preferences_put_200: (f) => {
-    expect(toPreferences(f.data)).toEqual({ minAge: 25, maxAge: 35, distanceKm: 25, interestedIn: "everyone", intentFilter: ["casual"], distanceBucket: "", passFilters: null })
+    expect(toPreferences(f.data)).toEqual({ minAge: 25, maxAge: 35, distanceKm: 25, interestedIn: "everyone", intentFilter: ["casual"], distanceBucket: "", passFilters: null, dealbreakers: null })
+    // No dealbreakers member: that mechanic is off too.
+    expect(dealbreakersEnabled(toPreferences(f.data))).toBe(false)
   },
   /* profile basics and filters (mechanic M6) */
   profile_options_get_200: (f) => {
@@ -234,6 +240,46 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     expect(a.superSpark).toBeNull()
     expect(showRewind({ rewind: a.rewind, off: false, last: "pass" })).toBe(false)
   },
+
+  /* fair turn (mechanic M11) */
+  allowances_get_200_fair_turn: (f) => {
+    const a = toAllowances(f.data)
+    expect(a.fairTurn).toEqual({ owed: 6, limit: 6, paused: true })
+    expect(fairTurnHeadline(a.fairTurn!)).toBe("6 matches are waiting for your reply")
+    // The read alone decides when no refusal is newer than it.
+    expect(currentFairTurn(a.fairTurn, 10, null)).toEqual(a.fairTurn)
+    // The other allowances fixtures have no fair_turn: off.
+    expect(toAllowances(readFixture("allowances_get_200").data).fairTurn).toBeNull()
+  },
+  sparks_post_409_fair_turn_limit: refusal("FAIR_TURN_LIMIT", (f) => {
+    const e = errorFromEnvelope(f, 409)
+    expect(verdictFor(e)).toBe("fair_turn")
+    expect(fairTurnFromRefusal(e)).toEqual({ owed: 6, limit: 6, paused: true })
+    expect(copyFor(e)).toBe("6 matches are waiting for your reply. Reply to a few, then send new sparks.")
+  }),
+
+  /* dealbreakers (mechanic M12) */
+  preferences_get_200_dealbreakers: (f) => {
+    const p = toPreferences(f.data)
+    expect(dealbreakersEnabled(p)).toBe(true)
+    expect(p.dealbreakers).toEqual(["age", "intent"])
+    // Filters flag off in this fixture: dealbreakers stand alone.
+    expect(filtersEnabled(p)).toBe(false)
+  },
+  preferences_put_200_dealbreakers: (f) => expect(toPreferences(f.data)).toEqual(toPreferences(readFixture("preferences_get_200_dealbreakers").data)),
+  preferences_put_400_invalid_dealbreaker: refusal("INVALID_DEALBREAKER", (f) => {
+    const e = { response: { status: 400, data: f } }
+    expect(dealbreakerRefusal(e)).toBe("invalid")
+    expect(refusedField(e)).toBe("dealbreakers")
+    expect(errorFromEnvelope(f).details.allowed).toEqual(["age", "distance", "intent", "verified", "height", "languages", "drinking", "smoking", "exercise", "diet"])
+  }),
+  preferences_put_403_dealbreakers_require_pass: refusal("DEALBREAKERS_REQUIRE_PASS", (f) => {
+    expect(dealbreakerRefusal({ response: { status: 403, data: f } })).toBe("pass")
+    expect(copyFor(errorFromEnvelope(f))).toBe(DEALBREAKERS_PASS_COPY)
+  }),
+  preferences_put_404_dealbreakers_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(dealbreakerRefusal({ response: { status: 404, data: f } })).toBe("off")
+  }),
 
   /* people, the deck */
   person_get_200: (f) => {
@@ -590,6 +636,62 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   },
   shared_locations_get_200: (f) => expect(toLocationShares(f.data)[0].person?.firstName).toBe("Asha"),
 
+  /* after-date check-ins (mechanic M14) */
+  date_checkins_get_200: (f) => {
+    const items = toDateCheckins(f.data)
+    expect(items).toEqual([{ matchId: "<match>", meetId: "<meet>", person: { userId: "<other>", firstName: "Asha" }, askedAt: "" }])
+  },
+  date_feedback_post_201: (f) => {
+    const r = toDateFeedback(f.data)
+    expect(r).toEqual({ matchId: "<match>", met: "yes", again: "yes", feltSafe: true, createdAt: "", offerReport: false })
+    expect(checkinDone(r).kind).toBe("thanks")
+    // The body that produced it.
+    expect(checkinBody({ met: "yes", again: "yes", feltSafe: true })).toEqual({ met: "yes", again: "yes", felt_safe: true })
+  },
+  date_feedback_post_201_unsafe: (f) => {
+    const r = toDateFeedback(f.data)
+    expect(r.feltSafe).toBe(false)
+    expect(r.offerReport).toBe(true)
+    expect(checkinDone(r)).toEqual({ kind: "report" })
+  },
+  date_feedback_post_400_invalid: refusal("INVALID_DATE_FEEDBACK", (f) => {
+    expect(checkinRefusal({ response: { status: 400, data: f } })).toBe("invalid")
+  }),
+  date_feedback_post_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(checkinRefusal({ response: { status: 404, data: f } })).toBe("off")
+  }),
+
+  /* past matches (mechanic M19) */
+  past_matches_get_200: (f) => {
+    const past = toPastMatches(f)
+    expect(past.windowDays).toBe(30)
+    expect(past.items).toEqual([{ matchId: "<match>", person: { userId: "<other>", firstName: "Asha" }, matchedAt: "", endedAt: "", ended: "unmatched", reported: false }])
+    expect(pastMatchName(past.items[0])).toBe("Asha")
+    // A placeholder timestamp draws no date.
+    expect(endedLine(past.items[0])).toBe("Unmatched")
+    expect(pastMatchesSub(past.windowDays)).toBe("Matches that ended in the last 30 days.")
+  },
+  past_matches_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
+
+  /*
+    In-flight backend work with no web screen (yet): M16 hide-known and M18
+    client config (screen protection is Android only). Read through the wire
+    helpers so a change of shape still fails here.
+  */
+  client_config_get_200: (f) => expect(bool(obj(f.data).screen_protection)).toBe(true),
+  client_config_get_200_off: (f) => expect(bool(obj(f.data).screen_protection)).toBe(false),
+  hide_known_get_200: (f) => {
+    const w = obj(f.data)
+    expect([bool(w.enabled), num(w.hidden_count)]).toEqual([true, 2])
+  },
+  hide_known_put_200: (f) => expect(f.data).toEqual(readFixture("hide_known_get_200").data),
+  hide_known_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
+  hide_known_put_503_unavailable: refusal("HIDE_KNOWN_UNAVAILABLE"),
+
   /* data export */
   data_export_post_202: (f) => {
     const e = toDataExport(f.data)!
@@ -681,7 +783,7 @@ describe("dating contract fixtures", () => {
   const names = fixtureNames()
 
   test("the fixtures are on disk", () => {
-    expect(names.length).toBeGreaterThanOrEqual(126)
+    expect(names.length).toBeGreaterThanOrEqual(146)
   })
 
   test("every fixture has a parser, and every parser has a fixture", () => {
