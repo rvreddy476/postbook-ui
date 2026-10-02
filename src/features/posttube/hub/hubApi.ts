@@ -48,7 +48,7 @@ import type { CommentItem } from "@/types/profile";
     GET    /v1/analytics/content/:id?period
     GET    /v1/media/:mediaId/serve[/720p|/480p] (coverFrame.captureCoverFrame: the frame is drawn in the browser, then uploaded as an image)
     POST   /v1/media/init + PUT upload + POST /v1/media/confirm (lib/mediaUpload.uploadMedia)
-    GET    /v1/media/:id/download                (link only, when allow_download)
+    GET    /v1/media/:id/download                (the owner's original file; the server refuses anyone else)
 */
 
 interface ApiResponse<T> {
@@ -1312,7 +1312,7 @@ export async function setPrivateShares(postId: string, userIds: string[], ownerI
 
 /* ── Links ──────────────────────────────────────────────── */
 
-/** `GET /v1/media/:id/download` — a 307 to a signed attachment URL; only when `allow_download`. */
+/** `GET /v1/media/:id/download` — a 307 to a signed attachment URL. OWNER ONLY (the server answers 404 to anyone else): Creator Hub's "Download video". */
 export function downloadHref(mediaId: string): string {
   return mediaHref(`/v1/media/${mediaId}/download`);
 }

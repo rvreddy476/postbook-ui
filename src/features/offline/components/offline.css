@@ -1,0 +1,51 @@
+/* ---- Offline copies -----------------------------------------------------
+   The Offline page reuses the PostTube library list (library.css); this file
+   adds only what is new: the progress ring, the "Offline copy" marker, the
+   in-page player and the storage line. Tokens only, small type. */
+
+.offline-ring { display: block; flex: 0 0 auto; }
+.offline-ring__track { stroke: rgb(var(--brand-text) / .18); }
+.offline-ring__arc { stroke: rgb(var(--brand-accent)); transition: stroke-dashoffset 200ms linear; }
+.offline-ring.is-unknown { animation: offline-ring-spin 1s linear infinite; }
+@keyframes offline-ring-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .offline-ring.is-unknown { animation: none; }
+  .offline-ring__arc { transition: none; }
+}
+/* On the dark stage (the reels More card) the track reads against the stage colour. */
+.reel-more-menu .offline-ring__track { stroke: currentColor; opacity: .25; }
+
+.offline-badge { position: absolute; top: 10px; left: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1; background: rgb(var(--reel-stage) / .72); color: rgb(var(--reel-on-stage)); pointer-events: none; }
+.offline-badge svg { width: 12px; height: 12px; }
+
+.offline-page__note { margin: 0; font-size: 12px; line-height: 1.45; color: rgb(var(--brand-text) / .65); }
+.offline-page__usage { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border: 1px solid var(--brand-divider); border-radius: 14px; background: rgb(var(--brand-card)); }
+.offline-page__usage-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 0; font-size: 12px; font-weight: 500; color: rgb(var(--brand-text) / .75); }
+.offline-page__usage-bar { height: 4px; overflow: hidden; border-radius: 999px; background: rgb(var(--brand-secondary)); }
+.offline-page__usage-bar > span { display: block; height: 100%; border-radius: inherit; background: rgb(var(--brand-accent)); }
+.offline-page__section { margin: 8px 0 0; font-size: 13px; font-weight: 700; color: rgb(var(--brand-text)); }
+.offline-page__section small { margin-left: 6px; font-size: 11px; font-weight: 500; color: rgb(var(--brand-text) / .6); }
+
+.offline-row { grid-template-columns: 160px minmax(0, 1fr) auto; padding-left: 10px; }
+.offline-row .tube-library__row-actions { opacity: 1; }
+.offline-row__open { display: block; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.offline-row__thumb { cursor: pointer; border: 0; padding: 0; }
+.offline-row__thumb.is-reel img { object-fit: contain; }
+.offline-row__state { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: rgb(var(--brand-text) / .75); }
+.offline-row__state.is-problem { color: rgb(var(--danger)); }
+
+.offline-player { position: relative; overflow: hidden; border-radius: 16px; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage)); }
+.offline-player video { display: block; width: 100%; max-height: min(70vh, 640px); aspect-ratio: 16 / 9; background: rgb(var(--reel-stage)); }
+.offline-player.is-reel video { aspect-ratio: 9 / 16; max-height: min(78vh, 720px); width: auto; margin: 0 auto; }
+.offline-player__bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.offline-player__title { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.offline-player__close { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.offline-player__close:hover { background: rgb(var(--reel-on-stage) / .14); }
+.offline-player__close svg { width: 16px; height: 16px; }
+.offline-player__wait { display: flex; min-height: 180px; align-items: center; justify-content: center; font-size: 12px; color: rgb(var(--reel-on-stage) / .7); }
+
+@media (max-width: 560px) {
+  .offline-row { grid-template-columns: 112px minmax(0, 1fr) auto; gap: 8px; }
+  .offline-row .tube-library__thumb { width: 112px; height: 63px; }
+  .offline-badge { top: 6px; left: 6px; }
+}

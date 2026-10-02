@@ -33,7 +33,7 @@ function reelsHtml(isOwn: boolean) {
     <ReelMoreMenu
       open onClose={noop} reel={reel} isOwn={isOwn} prefs={DEFAULT_PREFS} onPrefsChange={noop}
       qualityHeights={[720, 1080]} hasCaptions audioTracks={TRACKS} currentAudioTrack="original" onAudioTrack={noop}
-      onManageAudio={isOwn ? noop : undefined} onKeep={noop} onCopyLink={noop} onDescription={noop} onShare={noop} onBlock={noop}
+      onManageAudio={isOwn ? noop : undefined} onOffline={noop} onCopyLink={noop} onDescription={noop} onShare={noop} onBlock={noop}
       onDelete={noop} onNotInterested={noop} onDontRecommend={noop} onReport={noop} onUseSound={noop} anchor="below"
     />,
   );
@@ -46,13 +46,13 @@ const playback: MorePlayback = {
 };
 const allActions = {
   block: noop, "copy-link": noop, delete: noop, description: noop, "dont-recommend": noop, edit: noop,
-  keep: noop, "manage-audio": noop, "not-interested": noop, report: noop, share: noop,
+  offline: noop, "manage-audio": noop, "not-interested": noop, report: noop, share: noop,
 };
 
 function watchHtml(isOwner: boolean) {
   const rows = watchMoreRows({
     channelName: "Bee", isOwner, hasDescription: true, shareHidden: false, downloadAllowed: true,
-    audioTrackCount: 2, hasCaptions: true, levels: [720, 1080], canKeep: true, canManageAudio: true,
+    audioTrackCount: 2, hasCaptions: true, levels: [720, 1080], canOffline: true, canManageAudio: true,
   });
   return renderToStaticMarkup(<WatchMoreMenu open onClose={noop} rows={rows} channelName="Bee" playback={playback} actions={allActions} />);
 }
@@ -72,7 +72,7 @@ describe("reels and long video draw the same More menu", () => {
     expect(reels).toEqual(labelsOf(watchHtml(false)));
     expect(reels).toEqual([
       "Audio track", "Block Bee", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share",
+      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
     ]);
   });
 
@@ -86,7 +86,7 @@ describe("reels and long video draw the same More menu", () => {
   test("each shared row is the same markup on both surfaces: icon, label, hint, value, danger", () => {
     const reels = drawnRows(reelsHtml(false));
     const watch = drawnRows(watchHtml(false));
-    const sharedKeys = ["audio", "block", "captions", "copy-link", "description", "dont-recommend", "keep", "not-interested", "speed", "quality", "report", "share"];
+    const sharedKeys = ["audio", "block", "captions", "copy-link", "description", "dont-recommend", "not-interested", "speed", "quality", "report", "offline", "share"];
     for (const key of sharedKeys) {
       expect(reels.get(key), key).toBeDefined();
       expect(reels.get(key), key).toBe(watch.get(key)!);
@@ -107,7 +107,7 @@ describe("reels and long video draw the same More menu", () => {
 
 describe("no dead rows", () => {
   const post = { channelName: "Bee", hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, renditionCount: 2, usableSound: true };
-  const rows = moreRows({ surface: "reels", post, viewer: { isOwner: true }, can: { keep: true, edit: true, delete: true, manageAudio: true } });
+  const rows = moreRows({ surface: "reels", post, viewer: { isOwner: true }, can: { offline: true, edit: true, delete: true, manageAudio: true } });
 
   test("an action row with no handler is not drawn", () => {
     const html = renderToStaticMarkup(<VideoMoreMenu open onClose={noop} rows={rows} channelName="Bee" playback={playback} actions={{ "copy-link": noop }} />);
@@ -124,7 +124,7 @@ describe("no dead rows", () => {
   });
 
   test("a pending action waits; the danger rows are Block, Delete and Report", () => {
-    const viewerRows = moreRows({ surface: "watch", post, viewer: { isOwner: false }, can: { keep: true, edit: true, delete: true, manageAudio: true } });
+    const viewerRows = moreRows({ surface: "watch", post, viewer: { isOwner: false }, can: { offline: true, edit: true, delete: true, manageAudio: true } });
     const html = renderToStaticMarkup(<VideoMoreMenu open onClose={noop} rows={viewerRows} channelName="Bee" playback={playback} actions={allActions} pending={{ report: true }} />);
     expect(html).toContain('disabled="" data-row="report"');
     const danger = [...drawnRows(html)].filter(([, markup]) => markup.includes("is-danger")).map(([key]) => key);
@@ -134,7 +134,7 @@ describe("no dead rows", () => {
   });
 
   test("the caption value names the language when the surface has named tracks", () => {
-    const viewerRows = moreRows({ surface: "watch", post, viewer: { isOwner: false }, can: { keep: true, edit: true, delete: true, manageAudio: true } });
+    const viewerRows = moreRows({ surface: "watch", post, viewer: { isOwner: false }, can: { offline: true, edit: true, delete: true, manageAudio: true } });
     const on = renderToStaticMarkup(
       <VideoMoreMenu open onClose={noop} rows={viewerRows} channelName="Bee" playback={{ ...playback, captions: { ...playback.captions, on: true } }} actions={allActions} />,
     );

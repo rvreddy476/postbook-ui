@@ -5,7 +5,7 @@ import type { ReelItem } from "@/features/reels/model";
 import { clampSpeed, speedChipLabel, type PlayerPrefs, type PrefsPatch, type Speed } from "@/features/reels/playback/playerPrefs";
 import { canUseSound } from "@/features/reels/sounds";
 import { moreRows, renditionCount, type MoreRow } from "@/features/video-shell/moreRows";
-import { speedValueLabel, VideoMoreMenu } from "@/features/video-shell/VideoMoreMenu";
+import { speedValueLabel, VideoMoreMenu, type VideoMoreMenuProps } from "@/features/video-shell/VideoMoreMenu";
 export { MENU_SPEEDS, speedChipLabel, speedValueLabel };
 
 /** One selectable audio track for the reel; the original is always first. */
@@ -33,8 +33,10 @@ interface ReelMoreMenuProps {
   onAudioTrack?: (id: string) => void;
   /** Own reel: opens the creator's audio-tracks dialog. */
   onManageAudio?: () => void;
-  /** A download link exists; absent = no Keep a copy row. */
-  onKeep?: () => void;
+  /** Save offline / stop / remove (features/offline); absent = no row (no private storage here, or signed out). */
+  onOffline?: () => void;
+  /** That row's state: saved, saving and how far. */
+  offline?: VideoMoreMenuProps["offline"];
   onCopyLink: () => void;
   onDescription: () => void;
   onShare: () => void;
@@ -68,7 +70,7 @@ export function reelChannelName(reel: Pick<ReelItem, "authorName" | "authorUsern
  */
 export function reelMoreRows(
   reel: ReelItem,
-  ctx: { isOwn: boolean; audioTrackCount: number; hasCaptions: boolean; qualityHeights: readonly number[]; canKeep: boolean; canManageAudio: boolean },
+  ctx: { isOwn: boolean; audioTrackCount: number; hasCaptions: boolean; qualityHeights: readonly number[]; canOffline: boolean; offlineSaved?: boolean; canManageAudio: boolean },
 ): MoreRow[] {
   return moreRows({
     surface: "reels",
@@ -77,13 +79,14 @@ export function reelMoreRows(
       hasDescription: Boolean(reel.caption) || reel.hashtags.length > 0,
       shareHidden: reel.shareHidden,
       downloadAllowed: reel.downloadAllowed,
+      offlineSaved: ctx.offlineSaved,
       audioTrackCount: ctx.audioTrackCount,
       hasCaptions: ctx.hasCaptions,
       renditionCount: renditionCount(ctx.qualityHeights),
       usableSound: canUseSound(reel, ctx.isOwn),
     },
     viewer: { isOwner: ctx.isOwn },
-    can: { keep: ctx.canKeep, edit: false, delete: true, manageAudio: ctx.canManageAudio },
+    can: { offline: ctx.canOffline, edit: false, delete: true, manageAudio: ctx.canManageAudio },
   });
 }
 
@@ -105,7 +108,8 @@ export function ReelMoreMenu({
   currentAudioTrack = ORIGINAL_AUDIO_ID,
   onAudioTrack,
   onManageAudio,
-  onKeep,
+  onOffline,
+  offline,
   onCopyLink,
   onDescription,
   onShare,
@@ -123,7 +127,8 @@ export function ReelMoreMenu({
     audioTrackCount: onAudioTrack ? audioTracks.length : 0,
     hasCaptions,
     qualityHeights,
-    canKeep: Boolean(onKeep),
+    canOffline: Boolean(onOffline),
+    offlineSaved: offline?.saved,
     canManageAudio: Boolean(onManageAudio),
   });
 
@@ -150,14 +155,15 @@ export function ReelMoreMenu({
         delete: onDelete,
         description: onDescription,
         "dont-recommend": onDontRecommend,
-        keep: onKeep,
         "manage-audio": onManageAudio,
         "not-interested": onNotInterested,
+        offline: onOffline,
         report: onReport,
         share: onShare,
         "use-sound": onUseSound,
       }}
       pending={{ "use-sound": useSoundPending }}
+      offline={offline}
     />
   );
 }

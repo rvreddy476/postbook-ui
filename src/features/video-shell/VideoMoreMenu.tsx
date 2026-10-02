@@ -3,12 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   AlignLeft,
+  ArrowDownToLine,
   AudioLines,
   Ban,
   Captions,
   ChevronsDown,
   CircleSlash,
-  Download,
   Flag,
   Gauge,
   Languages,
@@ -32,6 +32,8 @@ import {
 import { Popover } from "@/features/reels/components/Popover";
 import { MENU_SPEEDS } from "@/features/reels/menu";
 import { speedChipLabel } from "@/features/reels/playback/playerPrefs";
+import { OfflineProgressRing } from "@/features/offline/components/OfflineProgressRing";
+import "@/features/offline/components/offline.css";
 
 import type { MoreRow, MoreRowKey } from "./moreRows";
 
@@ -86,6 +88,12 @@ export interface VideoMoreMenuProps {
   /** Action rows that wait on a request in flight. */
   pending?: Partial<Record<MoreActionKey, boolean>>;
   /**
+   * The Save offline row's state (features/offline): while a save runs the
+   * row shows its progress ring and pressing it stops the save. The copy
+   * stays inside the app — this row never downloads a file.
+   */
+  offline?: { saved: boolean; saving: boolean; progress: number | null; hint: string };
+  /**
    * "below": the card hangs under its trigger. "beside": it opens to the
    * left of the trigger, growing upward. A bottom sheet on phones either way.
    */
@@ -107,9 +115,9 @@ const ACTION_ICONS: Record<MoreActionKey, ReactNode> = {
   description: <AlignLeft />,
   "dont-recommend": <UserX />,
   edit: <Pencil />,
-  keep: <Download />,
   "manage-audio": <Languages />,
   "not-interested": <CircleSlash />,
+  offline: <ArrowDownToLine />,
   report: <Flag />,
   share: <Share2 />,
   "use-sound": <Music2 />,
@@ -117,7 +125,7 @@ const ACTION_ICONS: Record<MoreActionKey, ReactNode> = {
 
 const DANGER: ReadonlySet<MoreRowKey> = new Set<MoreRowKey>(["block", "delete", "report"]);
 
-export function VideoMoreMenu({ open, onClose, rows, channelName, playback, actions, pending, anchor = "below", className = "" }: VideoMoreMenuProps) {
+export function VideoMoreMenu({ open, onClose, rows, channelName, playback, actions, pending, offline, anchor = "below", className = "" }: VideoMoreMenuProps) {
   const [pane, setPane] = useState<Pane>("root");
   // Reopening always lands on the root pane, however the menu was closed.
   useEffect(() => {
@@ -143,8 +151,11 @@ export function VideoMoreMenu({ open, onClose, rows, channelName, playback, acti
   const hints: Partial<Record<MoreRowKey, string>> = {
     "dont-recommend": channelName,
     edit: "Title, description, topic, visibility",
-    keep: "Download the video",
     "manage-audio": "Upload or generate a dub",
+    offline: offline?.hint ?? "Watch without a connection, here in the app",
+  };
+  const icons: Partial<Record<MoreActionKey, ReactNode>> = {
+    offline: offline?.saving ? <OfflineProgressRing progress={offline.progress} /> : offline?.saved ? <Trash2 /> : <ArrowDownToLine />,
   };
 
   const render = (row: MoreRow): ReactNode => {
@@ -165,7 +176,7 @@ export function VideoMoreMenu({ open, onClose, rows, channelName, playback, acti
         return (
           <Row
             key={row.key}
-            icon={ACTION_ICONS[row.key]}
+            icon={icons[row.key] ?? ACTION_ICONS[row.key]}
             label={row.label}
             hint={hints[row.key]}
             danger={DANGER.has(row.key)}

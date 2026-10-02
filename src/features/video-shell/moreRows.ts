@@ -19,7 +19,11 @@
   Context rows — the only allowed differences:
     Auto scroll     reels only (a property of the reels stage)
     Use this sound  a reel that has a usable sound
-    Keep a copy     the post allows download, or you own it
+    Save offline / Remove offline copy
+                    the post allows it, or you own it (a stored copy can
+                    always be removed) — and this browser
+                    has private storage to keep it in. It is never a file
+                    download: the copy lives inside the app (features/offline)
     Audio tracks / Delete / Edit
                     your own content, where that screen exists
 
@@ -38,9 +42,9 @@ export type MoreRowKey =
   | "description"
   | "dont-recommend"
   | "edit"
-  | "keep"
   | "manage-audio"
   | "not-interested"
+  | "offline"
   | "quality"
   | "report"
   | "share"
@@ -54,8 +58,10 @@ export interface MorePost {
   hasDescription: boolean;
   /** The creator turned sharing off. */
   shareHidden: boolean;
-  /** The creator allows downloads. */
+  /** The creator allows viewers to save the video offline (`allow_download`). */
   downloadAllowed: boolean;
+  /** A copy is stored in the app on this device: the row removes it instead. */
+  offlineSaved?: boolean;
   /** The original counts as one. */
   audioTrackCount: number;
   hasCaptions: boolean;
@@ -72,8 +78,8 @@ export interface MoreViewer {
 
 /** What this surface can actually do: a context row with no screen or call behind it is left out. */
 export interface MoreCapabilities {
-  /** A download link exists for this video. */
-  keep: boolean;
+  /** A copy can be saved here: private storage works in this browser, the viewer is signed in and the video has a media id. */
+  offline: boolean;
   /** An edit screen exists for this kind of video. */
   edit: boolean;
   delete: boolean;
@@ -124,7 +130,7 @@ export function moreRows({ surface, post, viewer, can }: MoreRowsInput): MoreRow
 
   if (surface === "reels") context("auto-scroll", "Auto scroll");
   if (surface === "reels" && post.usableSound) context("use-sound", "Use this sound");
-  if (can.keep && (post.downloadAllowed || own)) context("keep", "Keep a copy");
+  if (can.offline && (post.downloadAllowed || own || post.offlineSaved)) context("offline", post.offlineSaved ? "Remove offline copy" : "Save offline");
   if (own && can.manageAudio) context("manage-audio", "Audio tracks");
   if (own && can.delete) context("delete", "Delete");
   if (own && can.edit) context("edit", "Edit");

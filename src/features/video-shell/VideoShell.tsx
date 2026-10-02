@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode }
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { HeaderBar } from "@/features/reels/components/HeaderBar";
+import { OfflineSync } from "@/features/offline/components/OfflineSync";
 import { ExploreLauncher } from "./ExploreLauncher";
 import { VideoSidebar } from "./VideoSidebar";
 import { VideoTopCluster } from "./VideoTopCluster";
@@ -129,6 +130,8 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
 
   return (
     <VideoShellContext.Provider value={context}>
+      {/* Offline copies: checked on start and whenever the network returns; draws nothing. */}
+      <OfflineSync />
       <div
         className="video-shell"
         data-app={app}

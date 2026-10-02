@@ -42,7 +42,7 @@ import { VisibilityIcon, useAnchoredMenu, useDismiss } from "./Pills";
 /*
   The Library table's action surfaces, presentational (no queries), so the
   tests render them with renderToStaticMarkup:
-    RowHoverActions  Edit · Insights · Conversations · View · ⋯ (Copy link, Keep a copy, Delete forever)
+    RowHoverActions  Edit · Insights · Conversations · View · ⋯ (Copy link, Download video, Delete forever)
     BulkBar          "N selected (Select all M)" · Edit ▾ · Add to collection ▾ · More actions ▾
     FilterMenu       Filter ▾ → one field at a time, Apply
     FilterChips      one chip per active filter, ✕ clears it
@@ -108,8 +108,9 @@ export interface RowHoverActionsProps {
 /**
   The icons under a row's title: hidden until the row is hovered or
   anything in it has focus (hub.css), always shown on touch widths. The
-  owner can always keep a copy of their own file, so Keep a copy only
-  needs a video asset.
+  owner can always get their own file back, so Download video only
+  needs a video asset. This is the one real file download in the app: the
+  route answers only the owner (viewers save offline inside the app).
 */
 export function RowHoverActions({ row, onEdit, onCopyLink, onDelete, defaultMenuOpen = false }: RowHoverActionsProps) {
   const [open, setOpen] = useState(defaultMenuOpen);
@@ -140,9 +141,9 @@ export function RowHoverActions({ row, onEdit, onCopyLink, onDelete, defaultMenu
               <Link2 /> Copy link
             </button>
             {row.media_id ? (
-              // GET /v1/media/:id/download — a 307 to the signed file; the owner is always allowed.
+              // The owner-only attachment route: a 307 to the signed original file.
               <a role="menuitem" className="hub-menu-item" href={downloadHref(row.media_id)} target="_blank" rel="noopener noreferrer" onClick={close}>
-                <Download /> Keep a copy
+                <Download /> Download video
               </a>
             ) : null}
             <div className="hub-menu-sep" role="separator" />
@@ -248,7 +249,7 @@ export function BulkBar({
           {(close) => (
             <div role="menu">
               <button type="button" role="menuitem" className="hub-menu-item" disabled={downloadable === 0} onClick={() => { close(); onDownload(); }}>
-                <Download /> Keep a copy{downloadable > 0 && downloadable < count ? ` (${downloadable})` : ""}
+                <Download /> Download video{downloadable > 0 && downloadable < count ? ` (${downloadable})` : ""}
               </button>
               <div className="hub-menu-sep" role="separator" />
               <button type="button" role="menuitem" className="hub-menu-item is-danger" onClick={() => { close(); onDeleteForever(); }}>

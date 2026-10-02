@@ -37,7 +37,7 @@ function reel(extra: Partial<ReelItem> = {}): ReelItem {
 }
 
 /* A plain reel as the stage sees it: one audio track, no captions, one rendition, a download link and the audio dialog available. */
-const PLAIN = { isOwn: false, audioTrackCount: 1, hasCaptions: false, qualityHeights: [] as number[], canKeep: true, canManageAudio: true };
+const PLAIN = { isOwn: false, audioTrackCount: 1, hasCaptions: false, qualityHeights: [] as number[], canOffline: true, canManageAudio: true };
 const keys = (r: ReelItem, ctx: Partial<typeof PLAIN> = {}) => reelMoreRows(r, { ...PLAIN, ...ctx }).map((row) => row.key);
 const labels = (r: ReelItem, ctx: Partial<typeof PLAIN> = {}) => reelMoreRows(r, { ...PLAIN, ...ctx }).map((row) => row.label);
 
@@ -48,10 +48,10 @@ describe("reelMoreRows: a reel on the shared More model", () => {
     ]);
   });
 
-  test("a reel with everything: every shared row, Keep a copy when downloads are allowed", () => {
+  test("a reel with everything: every shared row, Save offline when the creator allows it", () => {
     expect(labels(reel({ caption: "hi", downloadAllowed: true }), { audioTrackCount: 3, hasCaptions: true, qualityHeights: [360, 720, 1080] })).toEqual([
       "Audio track", "Auto scroll", "Block A", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share", "Use this sound",
+      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share", "Use this sound",
     ]);
   });
 
@@ -84,18 +84,18 @@ describe("reelMoreRows: a reel on the shared More model", () => {
     expect(keys(reel({ caption: "c" }))).toContain("description");
   });
 
-  test("own reel: Audio tracks and Delete, Keep a copy, no feedback rows, and no Edit (a reel has no edit screen)", () => {
+  test("own reel: Audio tracks and Delete, Save offline, no feedback rows, and no Edit (a reel has no edit screen)", () => {
     expect(labels(reel({ caption: "mine" }), { isOwn: true })).toEqual([
-      "Audio tracks", "Auto scroll", "Copy link", "Delete", "Description", "Keep a copy", "Playback speed", "Share", "Use this sound",
+      "Audio tracks", "Auto scroll", "Copy link", "Delete", "Description", "Playback speed", "Save offline", "Share", "Use this sound",
     ]);
     expect(keys(reel(), { isOwn: true })).not.toContain("edit");
   });
 
-  test("sharing off: no Share; downloads off: no Keep a copy for a viewer", () => {
+  test("sharing off: no Share; offline copies off: no Save offline for a viewer; no private storage: no row for anyone", () => {
     expect(keys(reel({ shareHidden: true }))).not.toContain("share");
-    expect(keys(reel({ downloadAllowed: false }))).not.toContain("keep");
-    expect(keys(reel({ downloadAllowed: true }))).toContain("keep");
-    expect(keys(reel({ downloadAllowed: true }), { canKeep: false })).not.toContain("keep");
+    expect(keys(reel({ downloadAllowed: false }))).not.toContain("offline");
+    expect(keys(reel({ downloadAllowed: true }))).toContain("offline");
+    expect(keys(reel({ downloadAllowed: true }), { canOffline: false })).not.toContain("offline");
   });
 
   test("the cut rows never appear, whatever the reel carries", () => {

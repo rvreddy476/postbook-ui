@@ -40,7 +40,7 @@ describe("videoNav (tube)", () => {
     expect(isNavItemCurrent(following, "/posttube", "")).toBe(false);
   });
 
-  test("the You section reads Your channel, History, Watch later, Liked videos, Collections, Your videos, Scheduled, Creator Hub", () => {
+  test("the You section reads Your channel, History, Watch later, Liked videos, Collections, Offline, Your videos, Scheduled, Creator Hub", () => {
     const you = videoNav("tube").find((s) => s.key === "you")!;
     expect(you.title).toBe("You");
     expect(you.items.map((i) => i.href)).toEqual([
@@ -49,12 +49,13 @@ describe("videoNav (tube)", () => {
       "/posttube/queue",
       "/posttube/loved",
       "/posttube/playlists",
+      "/posttube/offline",
       "/posttube/uploads",
       "/posttube/scheduled",
       "/posttube/hub",
     ]);
     expect(you.items.map((i) => i.label)).toEqual([
-      "Your channel", "History", "Watch later", "Liked videos", "Collections", "Your videos", "Scheduled", "Creator Hub",
+      "Your channel", "History", "Watch later", "Liked videos", "Collections", "Offline", "Your videos", "Scheduled", "Creator Hub",
     ]);
   });
 
@@ -131,7 +132,7 @@ describe("videoNav (tube)", () => {
 });
 
 describe("videoNav (reels, header chrome)", () => {
-  test("reads For You … Profile, then Home / PostTube / Liked reels, then the footer", () => {
+  test("reads For You … Profile, then Home / PostTube / Liked reels / Offline, then the footer", () => {
     const sections = videoNav("reels");
     expect(sections.map((s) => s.key)).toEqual(["top", "apps", "footer"]);
     const top = sections[0];
@@ -139,7 +140,7 @@ describe("videoNav (reels, header chrome)", () => {
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
       "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile",
     ]);
-    expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"]]);
+    expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"]]);
     expect(sections[2].items).toEqual([...VIDEO_NAV_FOOTER]);
   });
 
@@ -180,7 +181,7 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(hrefs).not.toContain("/posttube");
     expect(hrefs).not.toContain("/reels/liked");
     const apps = REELS_MORE_PANEL.find((s) => s.key === "apps")!;
-    expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "explore"]);
+    expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]);
   });
 
   test("the footer reads About · Help / Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
@@ -256,7 +257,7 @@ describe("REELS_MORE_PANEL", () => {
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
     expect(rows.settings).toEqual([["General", "/settings"], ["Dark mode", "theme"]]);
     expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["LIVE tools", "/live"]]);
-    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Explore", "explore"]]);
+    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"], ["Explore", "explore"]]);
     expect(rows.other).toEqual([["Help Center", "/help"], ["Log out", "logout"]]);
   });
 

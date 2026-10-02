@@ -1,16 +1,17 @@
 "use client";
 
 import { moreRows, renditionCount, type MoreRow } from "@/features/video-shell/moreRows";
-import { VideoMoreMenu, type MoreActionKey, type MorePlayback } from "@/features/video-shell/VideoMoreMenu";
+import { VideoMoreMenu, type MoreActionKey, type MorePlayback, type VideoMoreMenuProps } from "@/features/video-shell/VideoMoreMenu";
 
 /*
   The ⋯ menu in the action row: the shared video More menu (VideoMoreMenu)
   with this video's rows from the shared model (video-shell/moreRows.ts) —
   the same rows, words and rules as the reels stage. A viewer sees Audio
   track, Block, Captions, Copy link, Description, Don't recommend this
-  channel, Keep a copy (only when downloads are allowed), Not interested,
-  Playback speed, Quality, Report, Share; the owner loses the four feedback
-  rows and gains Audio tracks, Delete, Edit and Keep a copy. The choice rows
+  channel, Not interested, Playback speed, Quality, Report, Save offline
+  (only when the creator allows it; Remove offline copy once saved), Share;
+  the owner loses the four feedback rows and gains Audio tracks, Delete,
+  Edit and Save offline. The choice rows
   drive the same state as the player's own settings menu. The card hangs
   under the button; a bottom sheet on phones (the Popover does both).
 */
@@ -27,8 +28,10 @@ export interface WatchMoreInput {
   hasCaptions: boolean;
   /** The manifest's rung heights, as the player reports them. */
   levels: readonly number[];
-  /** A download link exists for this video. */
-  canKeep: boolean;
+  /** A copy can be saved in the app here (storage works, signed in, the media id is known). */
+  canOffline: boolean;
+  /** A copy is stored on this device. */
+  offlineSaved?: boolean;
   /** The audio-tracks dialog can open (the media id is known). */
   canManageAudio: boolean;
 }
@@ -42,13 +45,14 @@ export function watchMoreRows(v: WatchMoreInput): MoreRow[] {
       hasDescription: v.hasDescription,
       shareHidden: v.shareHidden,
       downloadAllowed: v.downloadAllowed,
+      offlineSaved: v.offlineSaved,
       audioTrackCount: v.audioTrackCount,
       hasCaptions: v.hasCaptions,
       renditionCount: renditionCount(v.levels),
       usableSound: false,
     },
     viewer: { isOwner: v.isOwner },
-    can: { keep: v.canKeep, edit: true, delete: true, manageAudio: v.canManageAudio },
+    can: { offline: v.canOffline, edit: true, delete: true, manageAudio: v.canManageAudio },
   });
 }
 
@@ -60,8 +64,10 @@ export interface WatchMoreMenuProps {
   /** The player's state: the same prefs, caption language and audio choice its settings menu drives. */
   playback: MorePlayback;
   actions: Partial<Record<MoreActionKey, () => void>>;
+  /** The Save offline row's state. */
+  offline?: VideoMoreMenuProps["offline"];
 }
 
-export function WatchMoreMenu({ open, onClose, rows, channelName, playback, actions }: WatchMoreMenuProps) {
-  return <VideoMoreMenu open={open} onClose={onClose} anchor="below" className="tube-more-menu" rows={rows} channelName={channelName} playback={playback} actions={actions} />;
+export function WatchMoreMenu({ open, onClose, rows, channelName, playback, actions, offline }: WatchMoreMenuProps) {
+  return <VideoMoreMenu open={open} onClose={onClose} anchor="below" className="tube-more-menu" rows={rows} channelName={channelName} playback={playback} actions={actions} offline={offline} />;
 }

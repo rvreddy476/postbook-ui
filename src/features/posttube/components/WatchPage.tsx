@@ -26,6 +26,7 @@ import { mediaHref } from "@/features/reels/model";
 import { clampSpeed } from "@/features/reels/playback/playerPrefs";
 import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
 import { isHistoryPaused, useLovedIds, useQueue } from "@/features/posttube/library";
+import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 
 import { type CaptionTrack, type TubePlayerHandle } from "./TubePlayer";
 import { SubscribeButton } from "./SubscribeButton";
@@ -56,7 +57,7 @@ import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { ageGateFromError, downloadHref, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { ageGateFromError, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
@@ -202,6 +203,10 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const activeAudioTrack = pickAudioTrack(audioTracks, watchPrefs.audioLanguage);
 
   const isOwner = !!user && !!video && user.id === video.author_id;
+  /* The offline copy (features/offline): the More row's state, and the stored copy the player prefers. Never a file download. */
+  const notifyOffline = useCallback((notice: OfflineNotice) => void toast(notice), [toast]);
+  const offlineRow = useOfflineRow({ postId: videoId, surface: "video", hasMedia: !!mediaAssetId, signedIn: !!user, notify: notifyOffline });
+  const offlineSource = useOfflineSource(videoId);
   const gateCreator = detail?.tierRequiredId && !isOwner ? video?.author_id : null;
   const entitlement = useEntitlement(gateCreator, detail?.tierRequiredId ?? null);
   const gated = !!gateCreator && (!user || (entitlement.data ? !entitlement.data.allowed : false));
@@ -595,11 +600,13 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const topic = detail.topicSlug
     ? { slug: detail.topicSlug, label: categories.data?.find((c) => c.slug === detail.topicSlug)?.label ?? detail.topicSlug }
     : null;
-  const keepHref = mediaAssetId && (detail.allowDownload || isOwner) ? downloadHref(mediaAssetId) : null;
   const queued = queue.queued(video.id, detail.viewerQueued);
   const ambient = ambientAllowed({ pref: watchPrefs.ambient, reducedMotion, theater, fullscreen: false });
   const audioOptions = audioTrackOptions(audioTracks);
-  const sourceOverride = activeAudioTrack?.playback_url ? mediaHref(activeAudioTrack.playback_url) : null;
+  /* A chosen dub wins (the stored copy carries the original audio); otherwise the stored copy plays instead of the stream. */
+  const playingOffline = !activeAudioTrack?.playback_url && !!offlineSource && !gated;
+  const sourceOverride = activeAudioTrack?.playback_url ? mediaHref(activeAudioTrack.playback_url) : playingOffline ? offlineSource.videoUrl : null;
+  const playerCaptions = playingOffline && offlineSource.captions.length > 0 ? offlineSource.captions : captions;
 
   const countdownActive = ended && autoplay.status === "counting" && !!nextTarget;
   const countdownTotal = nextTarget?.kind === "series" ? AUTOPLAY_COUNTDOWN_SECONDS : UP_NEXT_COUNTDOWN_SECONDS;
@@ -700,7 +707,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     audioTrackCount: gated ? 0 : audioOptions.length,
     hasCaptions: !gated && captions.length > 0,
     levels: gated ? [] : levels,
-    canKeep: !!mediaAssetId,
+    canOffline: offlineRow.available && !gated,
+    offlineSaved: offlineRow.saved,
     canManageAudio: !!mediaAssetId,
   });
   const moreMenu = (
@@ -737,9 +745,9 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
         description: () => setRevealAbout((n) => n + 1),
         "dont-recommend": () => void dontRecommend(),
         edit: () => router.push(`/posttube/hub/library?edit=${encodeURIComponent(video.id)}`),
-        keep: keepHref ? () => window.open(keepHref, "_blank", "noopener") : undefined,
         "manage-audio": mediaAssetId ? () => setAudioDialogOpen(true) : undefined,
         "not-interested": () => void notInterested(),
+        offline: offlineRow.run,
         report: () => {
           if (!requireUser()) return;
           setReportOpen(true);
@@ -748,6 +756,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
         },
         share: () => setShareOpen(true),
       }}
+      offline={offlineRow}
     />
   );
 
@@ -771,6 +780,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     <div className="tube-watch" data-theater={theater ? "" : undefined}>
       <div className="tube-watch__grid">
         <div className="tube-watch__player">
+          {playingOffline ? <OfflineBadge /> : null}
           {gated ? (
             <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
           ) : (
@@ -781,7 +791,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
               hlsUrl={hlsUrl}
               fileUrl={fileUrl}
               poster={video.thumbnail_url || undefined}
-              captions={captions}
+              captions={playerCaptions}
               startPositionMs={startPositionMs}
               startReady={startReady}
               autoPlay={!dataSaver}

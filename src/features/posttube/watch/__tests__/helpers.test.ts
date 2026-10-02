@@ -236,23 +236,23 @@ describe("the rail's More rows: the shared video model, ascending", () => {
   /* A bare video: one audio track, no captions, one rendition, no description, sharing off, downloads off. */
   const bare: WatchMoreInput = {
     channelName: "Ravi", isOwner: false, hasDescription: false, shareHidden: true, downloadAllowed: false,
-    audioTrackCount: 1, hasCaptions: false, levels: [720], canKeep: true, canManageAudio: true,
+    audioTrackCount: 1, hasCaptions: false, levels: [720], canOffline: true, canManageAudio: true,
   };
   const labels = (extra: Partial<WatchMoreInput> = {}) => watchMoreRows({ ...bare, ...extra }).map((r) => r.label);
 
   test("a bare video: viewer and owner", () => {
     expect(labels()).toEqual(["Block Ravi", "Copy link", "Don't recommend this channel", "Not interested", "Playback speed", "Report"]);
-    expect(labels({ isOwner: true })).toEqual(["Audio tracks", "Copy link", "Delete", "Edit", "Keep a copy", "Playback speed"]);
+    expect(labels({ isOwner: true })).toEqual(["Audio tracks", "Copy link", "Delete", "Edit", "Playback speed", "Save offline"]);
   });
 
-  test("a full video: every shared row, and Keep a copy when downloads are allowed", () => {
+  test("a full video: every shared row, and Save offline when the creator allows it", () => {
     const full = { hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720, 1080] };
     expect(labels(full)).toEqual([
       "Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share",
+      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
     ]);
     expect(labels({ ...full, isOwner: true })).toEqual([
-      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Keep a copy", "Playback speed", "Quality", "Share",
+      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Playback speed", "Quality", "Save offline", "Share",
     ]);
   });
 
@@ -260,7 +260,7 @@ describe("the rail's More rows: the shared video model, ascending", () => {
     const full = labels({ hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720] });
     expect(full).not.toContain("Auto scroll");
     expect(full).not.toContain("Use this sound");
-    const noMedia = labels({ isOwner: true, canKeep: false, canManageAudio: false });
+    const noMedia = labels({ isOwner: true, canOffline: false, canManageAudio: false });
     expect(noMedia).toEqual(["Copy link", "Delete", "Edit", "Playback speed"]);
   });
 });

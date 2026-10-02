@@ -28,7 +28,7 @@ import { upNextChipQuery, type UpNextChip } from "./upNext";
     PUT|DELETE  /v1/comments/:id/pin           creator pin (one per post)
     GET    /v1/posts/:id/comments?sort=top|newest  (hooks/usePostComments with `sort`)
     GET    /v1/feed/videos/:postId/related?chip=topic:<slug>|fresh|seen
-    GET    /v1/media/:mediaId/download         307 → signed attachment; 403 DOWNLOAD_NOT_ALLOWED
+    (offline copies: features/offline/wire.ts — a viewer never gets a file; the attachment route is the owner's, in Creator Hub)
     GET    /v1/media/:mediaId/serve/storyboard_vtt|storyboard_jpg   (404 = none)
     GET    /v1/media/:mediaId/audio-tracks     (features/reels/hooks/useAudioTracks)
     GET    /v1/playlists/:id, /v1/playlists/:id/items  (features/posttube/library)
@@ -250,13 +250,6 @@ export async function getUpNext(
   } catch {
     return { items: [] };
   }
-}
-
-/* ── Keep (download) ────────────────────────────────────── */
-
-/** The 307 route; opened in a new tab so the redirect lands on the signed attachment. */
-export function downloadHref(mediaId: string): string {
-  return mediaHref(`/v1/media/${encodeURIComponent(mediaId)}/download`);
 }
 
 /* ── Storyboard ─────────────────────────────────────────── */

@@ -33,7 +33,7 @@ import { LibraryTable } from "./LibraryTable";
 import { PillGroup } from "./Pills";
 
 /**
-  Keep a copy for several videos: one hidden frame per file. The download
+  Download video for several videos (owner only): one hidden frame per file. The download
   route answers a 307 to a signed attachment, so each frame saves its file
   without opening a tab (browsers block all but the first scripted
   window.open).

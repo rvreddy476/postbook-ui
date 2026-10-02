@@ -20,7 +20,7 @@ const TRACKS = [{ id: 'original', label: 'Original' }, { id: 't1', label: 'Hindi
 const base = {
   open: true, onClose: noop, reel: { ...other, downloadAllowed: true, reasonText: 'Popular' }, isOwn: false,
   prefs: DEFAULT_PREFS, onPrefsChange: noop, qualityHeights: [720, 1080], hasCaptions: true,
-  audioTracks: TRACKS, currentAudioTrack: 'original', onAudioTrack: noop, onKeep: noop,
+  audioTracks: TRACKS, currentAudioTrack: 'original', onAudioTrack: noop, onOffline: noop,
   onCopyLink: noop, onDescription: noop, onShare: noop, onBlock: noop, onDelete: noop,
   onNotInterested: noop, onDontRecommend: noop, onReport: noop, onUseSound: noop,
 };
@@ -32,9 +32,9 @@ test("ascending alphabetical, always: the shared rows (the same as long video) p
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
   expect(drawnLabels(html)).toEqual([
     'Audio track', 'Auto scroll', 'Block Bee', 'Captions', 'Copy link', 'Description', "Don't recommend this channel",
-    'Keep a copy', 'Not interested', 'Playback speed', 'Quality', 'Report', 'Share', 'Use this sound',
+    'Not interested', 'Playback speed', 'Quality', 'Report', 'Save offline', 'Share', 'Use this sound',
   ]);
-  const marks = ['audio', 'auto-scroll', 'block', 'captions', 'copy-link', 'description', 'dont-recommend', 'keep', 'not-interested', 'speed', 'quality', 'report', 'share', 'use-sound'].map((k) => `data-row="${k}"`);
+  const marks = ['audio', 'auto-scroll', 'block', 'captions', 'copy-link', 'description', 'dont-recommend', 'not-interested', 'speed', 'quality', 'report', 'offline', 'share', 'use-sound'].map((k) => `data-row="${k}"`);
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
@@ -63,10 +63,10 @@ test('a row appears only when it can work: one audio track, no captions, one ren
   expect(noShare).not.toContain('data-row="share"');
   expect(noShare).toContain('data-row="copy-link"');
   const noDownload = renderToStaticMarkup(<ReelMoreMenu {...base} reel={{ ...base.reel, downloadAllowed: false }} />);
-  expect(noDownload).not.toContain('data-row="keep"');
-  // No download link at all: the row is left out rather than drawn dead.
-  const noLink = renderToStaticMarkup(<ReelMoreMenu {...base} onKeep={undefined} />);
-  expect(noLink).not.toContain('data-row="keep"');
+  expect(noDownload).not.toContain('data-row="offline"');
+  // No private storage in this browser (or signed out): the row is left out rather than drawn dead.
+  const noLink = renderToStaticMarkup(<ReelMoreMenu {...base} onOffline={undefined} />);
+  expect(noLink).not.toContain('data-row="offline"');
 });
 
 test('the speed value reads Normal at 1× and the chip labels are 0.25 · 1.0 · 1.25 · 1.5 · 2.0', () => {
@@ -92,7 +92,7 @@ test('quality, captions and audio show their current value; Auto scroll is a swi
 test('own reel: Audio tracks and Delete, no Edit, no feedback rows; the playback rows stay; Theater is not a row', () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn onManageAudio={noop} currentAudioTrack="t1" />);
   expect(drawnLabels(html)).toEqual([
-    'Audio track', 'Audio tracks', 'Auto scroll', 'Captions', 'Copy link', 'Delete', 'Description', 'Keep a copy', 'Playback speed', 'Quality', 'Share', 'Use this sound',
+    'Audio track', 'Audio tracks', 'Auto scroll', 'Captions', 'Copy link', 'Delete', 'Description', 'Playback speed', 'Quality', 'Save offline', 'Share', 'Use this sound',
   ]);
   expect((html.match(/data-row="audio"/g) ?? []).length).toBe(1);
   expect((html.match(/data-row="manage-audio"/g) ?? []).length).toBe(1);

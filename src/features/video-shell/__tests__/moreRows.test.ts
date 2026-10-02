@@ -13,7 +13,7 @@ const FULL: MorePost = {
   renditionCount: 3,
   usableSound: true,
 };
-const ALL: MoreCapabilities = { keep: true, edit: true, delete: true, manageAudio: true };
+const ALL: MoreCapabilities = { offline: true, edit: true, delete: true, manageAudio: true };
 
 function input(surface: MoreSurface, post: Partial<MorePost> = {}, isOwner = false, can: Partial<MoreCapabilities> = {}): MoreRowsInput {
   return { surface, post: { ...FULL, ...post }, viewer: { isOwner }, can: { ...ALL, ...can } };
@@ -73,14 +73,14 @@ describe("order", () => {
   test("the full reels list and the full watch list, top to bottom", () => {
     expect(labels(input("reels"))).toEqual([
       "Audio track", "Auto scroll", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share", "Use this sound",
+      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share", "Use this sound",
     ]);
     expect(labels(input("watch"))).toEqual([
       "Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Keep a copy", "Not interested", "Playback speed", "Quality", "Report", "Share",
+      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
     ]);
     expect(labels(input("watch", {}, true))).toEqual([
-      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Keep a copy", "Playback speed", "Quality", "Share",
+      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Playback speed", "Quality", "Save offline", "Share",
     ]);
   });
 });
@@ -137,7 +137,7 @@ describe("visibility rules, the same on both surfaces", () => {
   test("Copy link and Playback speed are always there", () => {
     for (const surface of SURFACES) {
       for (const isOwner of [false, true]) {
-        const bare = keys(input(surface, { audioTrackCount: 1, hasCaptions: false, renditionCount: 1, shareHidden: true, hasDescription: false, downloadAllowed: false, usableSound: false }, isOwner, { keep: false, edit: false, delete: false, manageAudio: false }));
+        const bare = keys(input(surface, { audioTrackCount: 1, hasCaptions: false, renditionCount: 1, shareHidden: true, hasDescription: false, downloadAllowed: false, usableSound: false }, isOwner, { offline: false, edit: false, delete: false, manageAudio: false }));
         expect(bare).toContain("copy-link");
         expect(bare).toContain("speed");
       }
@@ -166,12 +166,12 @@ describe("context rows, only where allowed", () => {
     expect(keys(input("watch", { usableSound: true }))).not.toContain("use-sound");
   });
 
-  test("Keep a copy: the post allows download, or you own it — and only where a download link exists", () => {
+  test("Save offline: the post allows it, or you own it — and only where the browser has private storage", () => {
     for (const surface of SURFACES) {
-      expect(keys(input(surface, { downloadAllowed: true }))).toContain("keep");
-      expect(keys(input(surface, { downloadAllowed: false }))).not.toContain("keep");
-      expect(keys(input(surface, { downloadAllowed: false }, true))).toContain("keep");
-      expect(keys(input(surface, { downloadAllowed: true }, true, { keep: false }))).not.toContain("keep");
+      expect(keys(input(surface, { downloadAllowed: true }))).toContain("offline");
+      expect(keys(input(surface, { downloadAllowed: false }))).not.toContain("offline");
+      expect(keys(input(surface, { downloadAllowed: false }, true))).toContain("offline");
+      expect(keys(input(surface, { downloadAllowed: true }, true, { offline: false }))).not.toContain("offline");
     }
   });
 
@@ -187,7 +187,7 @@ describe("context rows, only where allowed", () => {
   });
 
   test("every context row is one of the allowed six; nothing else differs", () => {
-    const allowed = new Set(["auto-scroll", "use-sound", "keep", "delete", "edit", "manage-audio"]);
+    const allowed = new Set(["auto-scroll", "use-sound", "offline", "delete", "edit", "manage-audio"]);
     for (const surface of SURFACES) {
       for (const isOwner of [false, true]) {
         for (const key of contextKeys(input(surface, {}, isOwner))) expect(allowed.has(key)).toBe(true);

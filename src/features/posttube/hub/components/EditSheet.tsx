@@ -331,7 +331,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
 
         <div className="hub-card hub-card-pad" style={{ paddingTop: 2, paddingBottom: 2 }}>
           <SwitchRow label="Conversations" hint="Viewers can comment." checked={!form.no_comments} onChange={(v) => set("no_comments", !v)} />
-          <SwitchRow label="Keep (download)" hint="Viewers can save the original file." checked={form.allow_download} onChange={(v) => set("allow_download", v)} />
+          <SwitchRow label="Save offline" hint="Viewers can save this video to watch offline inside the app. They never get a file." checked={form.allow_download} onChange={(v) => set("allow_download", v)} />
           <SwitchRow label="Made for kids" hint="Turns off personalised features for this video." checked={form.made_for_kids} onChange={(v) => set("made_for_kids", v)} />
         </div>
 

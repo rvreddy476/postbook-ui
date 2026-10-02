@@ -30,7 +30,7 @@ import { apiErrorCode } from "@/features/reels/data/audioTracksApi";
 import { audioTrackOptions, languageForChoice, ORIGINAL_TRACK_ID, pickAudioTrack } from "@/features/reels/playback/audioTracks";
 import { fetchReel, fetchSubtitles } from "@/features/reels/data/reelFeedApi";
 import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack";
-import { downloadHref } from "@/features/posttube/watch/watchApi";
+import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 import { feedFromSearch } from "@/features/reels/feed";
 import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
 import {
@@ -170,6 +170,10 @@ export function ReelsScreen() {
   const showComments = theater || (commentsOpen && Boolean(active) && !active.commentsDisabled);
   useReelLive(active?.id, showComments);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
+  /* The offline copy (features/offline): the More row's state, and the stored copy the stage prefers. Never a file download. */
+  const notifyOffline = useCallback((notice: OfflineNotice) => void toast(notice), [toast]);
+  const offlineRow = useOfflineRow({ postId: active?.id, surface: "reel", hasMedia: Boolean(active?.media.mediaId), signedIn: Boolean(viewerId), notify: notifyOffline });
+  const offlineSource = useOfflineSource(active?.id);
 
   // Switching feeds starts from the top of the new one.
   useEffect(() => {
@@ -600,7 +604,8 @@ export function ReelsScreen() {
       currentAudioTrack={currentAudioTrack}
       onAudioTrack={onAudioTrack}
       onManageAudio={isOwn ? () => setAudioOpen(true) : undefined}
-      onKeep={active.media.mediaId ? () => window.open(downloadHref(active.media.mediaId), "_blank", "noopener") : undefined}
+      onOffline={offlineRow.available ? offlineRow.run : undefined}
+      offline={offlineRow}
       onCopyLink={() => void onCopyLink()}
       onDescription={() => setDescriptionOpen(true)}
       onShare={onShare}
@@ -747,8 +752,9 @@ export function ReelsScreen() {
                             setMeasuredAspect((m) => (m[id] === ar ? m : { ...m, [id]: ar }));
                           }}
                           chromeless={theater}
-                          sourceOverride={activeAudioTrack?.playback_url ?? null}
+                          sourceOverride={activeAudioTrack?.playback_url ?? offlineSource?.videoUrl ?? null}
                         />
+                        {offlineSource && !activeAudioTrack?.playback_url ? <OfflineBadge /> : null}
                         {theater ? null : (
                           <ReelOverlay
                             reel={active}

@@ -611,6 +611,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         playsInline
         preload={active ? "auto" : "metadata"}
         crossOrigin="use-credentials"
+        controlsList="nodownload"
+        onContextMenu={(e) => e.preventDefault()}
         poster={undefined}
         className="absolute inset-0 h-full w-full object-contain"
       >

@@ -1,4 +1,5 @@
 import {
+  ArrowDownToLine,
   Bell,
   CalendarClock,
   CircleUserRound,
@@ -38,7 +39,7 @@ import {
 
   PostTube's menu uses the RUTUBE words (founder, 28 Sep): Watch (home),
   Reels, Subscriptions, Live, Trending, Topics; then You: Your channel, History,
-  Watch later, Liked videos, Collections, Your videos, Scheduled, Creator Hub. A route a
+  Watch later, Liked videos, Collections, Offline, Your videos, Scheduled, Creator Hub. A route a
   later wave delivers is listed already but flagged `comingSoon`, so the
   sidebar draws it disabled with a small "soon" tag until the page exists —
   the shape is settled once and only the flag changes. The way back to the
@@ -111,6 +112,8 @@ export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "queue", label: "Watch later", icon: ListPlus, href: "/posttube/queue" },
   { key: "loved", label: "Liked videos", icon: Heart, href: "/posttube/loved" },
   { key: "collections", label: "Collections", icon: ListVideo, href: "/posttube/playlists" },
+  // The videos and reels saved in the app on this device (features/offline).
+  { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
   { key: "uploads", label: "Your videos", icon: Video, href: "/posttube/uploads" },
   { key: "scheduled", label: "Scheduled", icon: CalendarClock, href: "/posttube/scheduled" },
   { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
@@ -141,6 +144,7 @@ export const REELS_NAV_APPS: readonly VideoNavItem[] = [
   { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
   { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
   { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
+  { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
 ];
 
 /** The last entry of the sidebar-chrome reels menu: opens the More panel. */
@@ -257,6 +261,7 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
       { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
       { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
       { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
+      { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
       { key: "explore", label: "Explore", icon: Compass, action: "explore" },
     ],
   },

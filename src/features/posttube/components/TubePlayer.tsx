@@ -771,6 +771,8 @@ export function TubePlayer({
           autoPlay={autoPlay && tapped}
           preload={tapped ? "auto" : "none"}
           crossOrigin="use-credentials"
+          controlsList="nodownload"
+          onContextMenu={(e) => e.preventDefault()}
           onClick={togglePlay}
           onDoubleClick={toggleFullscreen}
         >

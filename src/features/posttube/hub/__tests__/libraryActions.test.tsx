@@ -122,15 +122,15 @@ describe("bulk bar", () => {
     expect(renderToStaticMarkup(<BulkBar {...bulkBase} collections={null} defaultOpen="collection" />)).toContain("Loading collections");
   });
 
-  test("More actions ▾: Keep a copy, then a divider, then Delete forever last", () => {
+  test("More actions ▾: Download video, then a divider, then Delete forever last", () => {
     const html = renderToStaticMarkup(<BulkBar {...bulkBase} defaultOpen="more" />);
-    const keep = html.indexOf("Keep a copy");
+    const keep = html.indexOf("Download video");
     const sep = html.indexOf('role="separator"');
     const del = html.indexOf("Delete forever");
     expect(keep).toBeGreaterThan(-1);
     expect(sep).toBeGreaterThan(keep);
     expect(del).toBeGreaterThan(sep);
-    expect(renderToStaticMarkup(<BulkBar {...bulkBase} downloadable={0} defaultOpen="more" />)).toMatch(/disabled=""[^>]*>.*Keep a copy/);
+    expect(renderToStaticMarkup(<BulkBar {...bulkBase} downloadable={0} defaultOpen="more" />)).toMatch(/disabled=""[^>]*>.*Download video/);
   });
 
   test("per-row failures are listed with the video's title", () => {
@@ -155,14 +155,14 @@ describe("row hover actions", () => {
     expect(html).not.toContain('tabindex="-1"');
   });
 
-  test("⋯ menu: Copy link, Keep a copy, divider, Delete forever", () => {
+  test("⋯ menu: Copy link, Download video, divider, Delete forever", () => {
     const html = renderToStaticMarkup(<RowHoverActions row={row()} onEdit={noop} onCopyLink={noop} onDelete={noop} defaultMenuOpen />);
-    const at = order(html, ["Copy link", "Keep a copy", 'role="separator"', "Delete forever"]);
+    const at = order(html, ["Copy link", "Download video", 'role="separator"', "Delete forever"]);
     for (const p of at) expect(p).toBeGreaterThan(-1);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
     expect(html).toContain("/v1/media/m1/download");
     const noFile = renderToStaticMarkup(<RowHoverActions row={row({ media_id: null })} onEdit={noop} onCopyLink={noop} onDelete={noop} defaultMenuOpen />);
-    expect(noFile).not.toContain("Keep a copy");
+    expect(noFile).not.toContain("Download video");
   });
 
   test("hub.css shows them on hover and on focus, and always on touch widths", () => {

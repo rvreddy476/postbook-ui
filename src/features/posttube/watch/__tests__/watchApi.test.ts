@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { rowToVideo } from "../../model";
-import { downloadHref, normalizeWatchDetail, storyboardJpgUrl, storyboardVttUrl, viewerSubtitleTracks, type WatchPostRow } from "../watchApi";
+import * as watchApi from "../watchApi";
+import { normalizeWatchDetail, storyboardJpgUrl, storyboardVttUrl, viewerSubtitleTracks, type WatchPostRow } from "../watchApi";
 
 const base: WatchPostRow = {
   id: "v1",
@@ -86,8 +87,8 @@ describe("normalizeWatchDetail: the post detail with the W1 keys", () => {
 });
 
 describe("media routes", () => {
-  test("Keep opens the 307 route; the storyboard is the served variants", () => {
-    expect(downloadHref("m1")).toContain("/v1/media/m1/download");
+  test("no download route for a viewer (offline copies stay in the app); the storyboard is the served variants", () => {
+    expect("downloadHref" in watchApi).toBe(false);
     expect(storyboardVttUrl("m1")).toContain("/v1/media/m1/serve/storyboard_vtt");
     expect(storyboardJpgUrl("m1")).toContain("/v1/media/m1/serve/storyboard_jpg");
   });
