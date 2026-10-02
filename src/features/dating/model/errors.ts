@@ -5,7 +5,7 @@
   is never shown.
 */
 
-import { num, toDatingError, type DatingError } from "./wire"
+import { num, str, toDatingError, type DatingError } from "./wire"
 
 export const GENERIC_COPY = "Something went wrong. Please try again."
 export const NETWORK_COPY = "Check your connection and try again."
@@ -55,8 +55,38 @@ function answerInvalid(e: DatingError): string {
   return max > 0 ? `Write an answer of up to ${max} characters.` : "Write a shorter answer."
 }
 
+/* Profile basics and filters (M6): the limits the server sends in details. */
+function tooMany(noun: string) {
+  return (e: DatingError) => {
+    const max = num(e.details.max)
+    return max > 0 ? `You can pick up to ${max} ${noun}.` : `That's too many ${noun}. Remove one and save.`
+  }
+}
+
+function heightInvalid(e: DatingError): string {
+  const min = num(e.details.min)
+  const max = num(e.details.max)
+  if (str(e.details.field) === "min_height_cm" && min > 0 && max > 0) return `Choose heights between ${min} and ${max} cm, the shorter one first.`
+  return min > 0 && max > 0 ? `Choose a height between ${min} and ${max} cm.` : "That height doesn't look right. Pick another."
+}
+
+export const FILTERS_PASS_COPY = "Height, languages, lifestyle and verified-only filters are part of a pass."
+
+/** The filters that come with a pass were refused because the caller holds none. */
+export function isFiltersRequirePass(error: unknown): boolean {
+  return toDatingError(error).code === "FILTERS_REQUIRE_PASS"
+}
+
+/** The form field a 400 refusal names (`details.field`), or "". */
+export function refusedField(error: unknown): string {
+  return str(toDatingError(error).details.field)
+}
+
 /** Codes whose words depend on the details the server sent. */
 const DYNAMIC: Record<string, (e: DatingError) => string> = {
+  INVALID_HEIGHT: heightInvalid,
+  TOO_MANY_INTEREST: tooMany("interests"),
+  TOO_MANY_LANGUAGE: tooMany("languages"),
   LOCATION_CHANGE_RATE_LIMITED: locationLimited,
   OPENING_ANSWER_INVALID: answerInvalid,
   OPENING_QUESTION_INVALID: questionInvalid,
@@ -75,16 +105,21 @@ const COPY: Record<string, string> = {
   FIRST_MOVE_NOT_PENDING: "This match isn't waiting for your answer any more.",
   FIRST_MOVE_PENDING: "Your match starts this chat. Answer one of their questions from the match page, or wait for their hello.",
   FACE_COMPARE_UNAVAILABLE: "Verification is unavailable right now. Try again in a few minutes.",
+  FILTERS_REQUIRE_PASS: FILTERS_PASS_COPY,
   FORBIDDEN: "You can't do that right now.",
   IDEMPOTENCY_KEY_REUSED: "That purchase changed. Start again.",
   IDENTITY_UNAVAILABLE: "We couldn't confirm your details right now. Try again in a moment.",
   INVALID_AGE_RANGE: "Choose an age range between 18 and 120, with the lower age first.",
   INVALID_CONSENT_TYPE: "That choice isn't available any more.",
+  INVALID_DISTANCE_BUCKET: "That distance isn't available any more. Pick another.",
   INVALID_DISTANCE_KM: "Choose a distance between 1 and 500 km.",
   INVALID_GENDER: "That choice isn't available any more. Pick your gender and try again.",
   INVALID_INTENT: "That choice isn't available any more. Pick what you're looking for and try again.",
   INVALID_INTENT_FILTER: "That choice isn't available any more. Pick again and save.",
+  INVALID_INTEREST: "One of those interests isn't on the list any more. Pick again and save.",
   INVALID_INTERESTED_IN_GENDER: "That choice isn't available any more. Pick who you want to see and try again.",
+  INVALID_LANGUAGE: "One of those languages isn't on the list any more. Pick again and save.",
+  INVALID_LIFESTYLE: "That choice isn't available any more. Pick again and save.",
   INVALID_LOCATION: "That location didn't look right. Type your city instead.",
   INVALID_PRODUCT: "That pass isn't sold any more. Reload and pick again.",
   INVALID_REPORT_EVIDENCE: "That report couldn't be sent. Check the details and try again.",

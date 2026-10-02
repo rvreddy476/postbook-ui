@@ -179,6 +179,23 @@ textarea.pulse-input { resize: vertical; }
 .pulse-fm-question > .pulse-field { flex: 1; }
 .pulse-fm-question > .pulse-btn { flex: none; margin-top: 24px; }
 
+/* ── profile basics and filters (M6) ── */
+.pulse-choice.is-disabled, .pulse-choices:disabled .pulse-choice { opacity: .5; cursor: not-allowed; }
+.pulse-choice.is-disabled input, .pulse-choices:disabled .pulse-choice input { cursor: not-allowed; }
+.pulse-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pulse-card__chips { gap: 4px; margin-top: 6px; }
+.pulse-deckhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pulse-deckhead > .pulse-head { min-width: 0; }
+.pulse-deckhead__filters { flex: none; }
+.pulse-form > .pulse-panel { width: 100%; }
+.pulse-filters__pass { display: flex; flex-direction: column; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.pulse-filters__pass:disabled { opacity: .7; }
+.pulse-filters__pass:disabled .pulse-input, .pulse-filters__pass:disabled .pulse-switch { cursor: not-allowed; }
+.pulse-upsell { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid rgb(var(--brand-accent) / .45); border-radius: 14px; background: rgb(var(--brand-tint)); }
+.pulse-upsell__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-ink)); }
+.pulse-upsell__title { margin: 0; font-size: 14px; font-weight: 700; }
+.pulse-upsell__body { margin: 2px 0 0; color: rgb(var(--text-muted)); font-size: 13px; }
+
 /* ── liked you: a grid, two across at 375px ── */
 .pulse-likes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .pulse-like { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -255,6 +272,8 @@ textarea.pulse-input { resize: vertical; }
   .pulse-likes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pulse-likes__upsell { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .pulse-likes__upsell-text { flex: 1 1 260px; min-width: 0; }
+  .pulse-upsell { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .pulse-upsell__text { flex: 1 1 240px; min-width: 0; }
 }
 
 @media (min-width: 860px) {

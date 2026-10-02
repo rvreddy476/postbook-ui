@@ -15,6 +15,7 @@ import { sparkBody, toSparkLimit, toSparkOutcome, verdictFor } from "../model/sp
 import { attemptsLine, clipExtension, notReadyDelay, pickRecorderMime, recordMillis, selfieBody, uploadMime, viewFromRefusal, viewFromResult, viewFromStatus } from "../model/verification"
 import { bool, num, str, strList, time, toDatingError } from "../model/wire"
 import { mediaVerdict } from "../api/media"
+import { NO_BASICS } from "../model/options"
 
 const axiosError = (status: number, code: string, details?: Record<string, unknown>) => ({ response: { status, data: { error: { code, message: "developer words", details } } } })
 const isSorted = (labels: string[]) => labels.every((l, i) => i === 0 || labels[i - 1].localeCompare(l) <= 0)
@@ -32,8 +33,8 @@ describe("wire: Go zero values are empty", () => {
 
   test("an empty object maps to a profile with nothing in it, not undefined fields", () => {
     const p = toProfile({})
-    expect(p).toEqual({ userId: "", firstName: "", intent: "", bio: "", gender: "", birthDate: "", city: "", hasPoint: false, paused: false, languages: [], trustTier: "", status: "", dobSource: "" })
-    expect(toPreferences(null)).toEqual({ minAge: 0, maxAge: 0, distanceKm: 0, interestedIn: "", intentFilter: [] })
+    expect(p).toEqual({ userId: "", firstName: "", intent: "", bio: "", gender: "", birthDate: "", city: "", hasPoint: false, paused: false, languages: [], trustTier: "", status: "", dobSource: "", basics: NO_BASICS })
+    expect(toPreferences(null)).toEqual({ minAge: 0, maxAge: 0, distanceKm: 0, interestedIn: "", intentFilter: [], distanceBucket: "", passFilters: null })
   })
 
   test("an error without a response is a network error with no code", () => {
@@ -75,7 +76,7 @@ describe("labels", () => {
 })
 
 describe("the onboarding gate", () => {
-  const base: Profile = { userId: "u", firstName: "Asha", intent: "casual", bio: "", gender: "woman", birthDate: "1996-01-01T00:00:00Z", city: "Hyderabad", hasPoint: false, paused: false, languages: [], trustTier: "phone", status: "draft", dobSource: "identity" }
+  const base: Profile = { userId: "u", firstName: "Asha", intent: "casual", bio: "", gender: "woman", birthDate: "1996-01-01T00:00:00Z", city: "Hyderabad", hasPoint: false, paused: false, languages: [], trustTier: "phone", status: "draft", dobSource: "identity", basics: NO_BASICS }
   const prefs = toPreferences({ interested_in_gender: "everyone", distance_km: 25 })
 
   test("no profile starts at intent", () => {

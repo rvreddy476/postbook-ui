@@ -110,6 +110,10 @@ export function Choices({
   value,
   onChange,
   multiple = false,
+  disabled = false,
+  isDisabled,
+  help,
+  error,
 }: {
   name: string
   legend: string
@@ -117,19 +121,34 @@ export function Choices({
   value: string | string[]
   onChange: (value: string) => void
   multiple?: boolean
+  /** The whole group. */
+  disabled?: boolean
+  /** One choice, e.g. an unpicked one once a limit is reached. */
+  isDisabled?: (value: string) => boolean
+  help?: ReactNode
+  error?: string
 }) {
   const selected = (v: string) => (Array.isArray(value) ? value.includes(v) : value === v)
   return (
-    <fieldset className="pulse-choices">
+    <fieldset className="pulse-choices" disabled={disabled || undefined}>
       <legend className="pulse-field__label">{legend}</legend>
+      {help ? <p className="pulse-field__help">{help}</p> : null}
       <div className="pulse-choices__row">
-        {options.map((o) => (
-          <label key={o.value} className={cx("pulse-choice", selected(o.value) && "is-selected")}>
-            <input type={multiple ? "checkbox" : "radio"} name={name} value={o.value} checked={selected(o.value)} onChange={() => onChange(o.value)} />
-            <span>{o.label}</span>
-          </label>
-        ))}
+        {options.map((o) => {
+          const off = isDisabled?.(o.value) ?? false
+          return (
+            <label key={o.value} className={cx("pulse-choice", selected(o.value) && "is-selected", off && "is-disabled")}>
+              <input type={multiple ? "checkbox" : "radio"} name={name} value={o.value} checked={selected(o.value)} disabled={off || undefined} onChange={() => onChange(o.value)} />
+              <span>{o.label}</span>
+            </label>
+          )
+        })}
       </div>
+      {error ? (
+        <p className="pulse-field__error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </fieldset>
   )
 }

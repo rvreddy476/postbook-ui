@@ -1,6 +1,7 @@
 /* Consents, the caller's profile, privacy and preferences. */
 
 import { toConsents, type Consents, type ConsentType } from "../model/consents"
+import { toProfileOptions, type ProfileOptions } from "../model/options"
 import { toPreferences, toPrivacy, toProfile, type Preferences, type Privacy, type Profile } from "../model/profile"
 import { errorStatus } from "../model/wire"
 import { del, get, patch, post, put, seg } from "./client"
@@ -50,4 +51,9 @@ export async function fetchPreferences(): Promise<Preferences> {
 
 export async function putPreferences(body: Record<string, unknown>): Promise<Preferences> {
   return toPreferences(await put("/preferences", body))
+}
+
+/** GET /profile/options — mechanic M6: the interest, language and lifestyle lists with their labels. */
+export async function fetchProfileOptions(): Promise<ProfileOptions> {
+  return toProfileOptions(await get("/profile/options"))
 }

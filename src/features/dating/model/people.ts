@@ -9,6 +9,7 @@
 */
 
 import { distanceLabel, intentLabel, languageLabel, lastActiveLabel } from "./labels"
+import { toBasics, type Basics } from "./options"
 import { arr, bool, num, obj, str } from "./wire"
 
 const PHOTO_PATH = /^\/v1\/dating\/photos\/[^/?#]+\/(full|blurred)$/
@@ -68,17 +69,24 @@ export interface Person {
   lastActiveLabel: string
   bio: string
   prompts: PersonPrompt[]
+  /** Capitalised words, for screens without the options list. */
   languages: string[]
+  /** The raw codes, for labels from the options list (M6). */
+  languageCodes: string[]
   photos: PersonPhoto[]
+  /** Interests, height and the lifestyle basics (M6), as codes; empty when not given. */
+  basics: Basics
 }
 
 function verifiedTier(tier: string): boolean {
   return tier === "selfie" || tier === "aadhaar"
 }
 
-function toDetail(wire: unknown): Pick<Person, "bio" | "prompts" | "languages" | "photos"> {
+function toDetail(wire: unknown): Pick<Person, "bio" | "prompts" | "languages" | "languageCodes" | "photos" | "basics"> {
   const d = obj(wire)
   return {
+    basics: toBasics(d),
+    languageCodes: arr(d.languages).map(str).filter(Boolean),
     bio: str(d.bio),
     prompts: arr(d.prompts)
       .map((raw) => {

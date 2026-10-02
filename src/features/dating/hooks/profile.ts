@@ -9,9 +9,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { createPhoto, deletePhoto, deletePrompt, fetchMyPhotos, fetchPromptCatalog, fetchPrompts, updatePhoto, upsertPrompt } from "../api/photos"
-import { deleteProfile, fetchConsents, fetchPreferences, fetchPrivacy, fetchProfile, patchPrivacy, putPreferences, setConsent, setPaused, upsertProfile } from "../api/profile"
+import { deleteProfile, fetchConsents, fetchPreferences, fetchPrivacy, fetchProfile, fetchProfileOptions, patchPrivacy, putPreferences, setConsent, setPaused, upsertProfile } from "../api/profile"
 import { fetchVerificationStatus } from "../api/verification"
 import type { Consents, ConsentType } from "../model/consents"
+import type { ProfileOptions } from "../model/options"
 import { stepFor, type OnboardingStep, type Preferences, type Privacy, type Profile } from "../model/profile"
 import { errorStatus } from "../model/wire"
 
@@ -39,6 +40,8 @@ export const KEYS = {
   catalogue: ["dating", "premium", "catalogue"] as const,
   premiumMe: ["dating", "premium", "me"] as const,
   firstMove: ["dating", "first-move"] as const,
+  /** Not under `profile`, so refreshing the profile never refetches the lists. */
+  profileOptions: ["dating", "options"] as const,
 }
 
 /** A 4xx will not change by asking again; anything else gets two more tries. */
@@ -72,6 +75,15 @@ export function useProfile(enabled = true) {
 
 export function usePreferences(enabled = true) {
   return useQuery<Preferences>({ queryKey: KEYS.preferences, queryFn: fetchPreferences, retry, enabled })
+}
+
+/**
+  GET /profile/options (M6). The lists change only with a server release, so
+  one read serves every screen for the session: the editor, the filters, the
+  deck card and the person page.
+*/
+export function useProfileOptions(enabled = true) {
+  return useQuery<ProfileOptions>({ queryKey: KEYS.profileOptions, queryFn: fetchProfileOptions, retry, enabled, staleTime: 60 * 60_000, gcTime: 2 * 60 * 60_000, refetchOnWindowFocus: false })
 }
 
 export function useUpsertProfile() {

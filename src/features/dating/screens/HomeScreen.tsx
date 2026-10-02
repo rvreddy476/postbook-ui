@@ -5,11 +5,13 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
-import { BadgeCheck, CalendarClock, Crown, Hourglass, Layers, MessagesSquare, Sparkles, Star, Undo2, Users } from "lucide-react"
+import { BadgeCheck, CalendarClock, Crown, Hourglass, Layers, MessagesSquare, SlidersHorizontal, Sparkles, Star, Undo2, Users } from "lucide-react"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { DatingPhoto } from "../components/DatingPhoto"
+import { FILTERS_HREF } from "../components/Filters"
+import { usePreferences, useProfileOptions } from "../hooks/profile"
 import { ErrorState } from "../components/Guard"
 import { Button, Field, LinkButton, Loading, PageHead, StatePanel } from "../components/kit"
 import { LikedYouGrid, PREMIUM_HREF } from "../components/LikedYouGrid"
@@ -24,7 +26,7 @@ import { firstMoveListLine, firstMoveState } from "../model/firstMove"
 import { countdown, isOpen, matchHref, type Match } from "../model/matches"
 import { metaLine, nameLine, personHref, type Person } from "../model/people"
 import { SUPER_SPARK_PACKS_ANCHOR } from "../model/premium"
-import { DATING_BASE } from "../model/profile"
+import { DATING_BASE, filtersEnabled } from "../model/profile"
 import { deckEmptyKind, resetLine, type Deck, type DeckCard, type DeckEmptyKind, type SwipeAction } from "../model/pulse"
 import { noteProblem, sparkLimitLine, toSparkLimit, verdictFor, type SparkLimit } from "../model/sparks"
 import { toDatingError } from "../model/wire"
@@ -107,6 +109,8 @@ function DeckSection() {
   const toast = useGlobalToast()
   const deck = useDeck()
   const allowances = useAllowances()
+  // Labels for the card's interests and basics (M6); no read yet, or a failed one, just leaves them off.
+  const options = useProfileOptions()
   const spark = useSpark()
   const pass = usePass()
   const stash = useStash()
@@ -278,6 +282,7 @@ function DeckSection() {
             rewindAvailable={rewindAvailable}
             canRewind={canRewind}
             rewindNote={a.rewind ? leftToday(a.rewind) : ""}
+            options={options.data ?? null}
           />
           <div className="pulse-deck__note">
             <Field id="pulse-spark-note" label="Add a note to your spark (optional)" help="No phone numbers, emails or links.">
@@ -474,8 +479,29 @@ export function HomeScreen({ section }: { section: HomeSection }) {
   const head = TITLES[section]
   return (
     <div className="pulse-page pulse-page--narrow">
-      <PageHead title={head.title} sub={head.sub} />
+      {section === "deck" ? <DeckHead /> : <PageHead title={head.title} sub={head.sub} />}
       {section === "deck" ? <DeckSection /> : <MatchesSection />}
     </div>
   )
+}
+
+/** The deck's header, with the way to Filters (M6) while the server's filters flag is on. */
+export function DeckTitle({ showFilters }: { showFilters: boolean }) {
+  const head = TITLES.deck
+  return (
+    <div className="pulse-deckhead">
+      <PageHead title={head.title} sub={head.sub} />
+      {showFilters ? (
+        <LinkButton href={FILTERS_HREF} icon={SlidersHorizontal} className="pulse-deckhead__filters">
+          Filters
+        </LinkButton>
+      ) : null}
+    </div>
+  )
+}
+
+function DeckHead() {
+  // Already read by the gate, so this is the cached copy.
+  const preferences = usePreferences()
+  return <DeckTitle showFilters={filtersEnabled(preferences.data)} />
 }

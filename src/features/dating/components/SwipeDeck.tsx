@@ -16,9 +16,11 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 import { BadgeCheck, Bookmark, Sparkles, Star, Undo2, X } from "lucide-react"
 
+import { cardChips, type ProfileOptions } from "../model/options"
 import { metaLine, nameLine } from "../model/people"
 import { actionForDrag, actionForKey, type DeckCard, type SwipeAction } from "../model/pulse"
 import { DatingPhoto } from "./DatingPhoto"
+import { Pill } from "./kit"
 
 const TAP_SLOP_PX = 6
 
@@ -38,6 +40,8 @@ export interface SwipeDeckProps {
   canRewind?: boolean
   /** "1 left today", for the Undo control's title. */
   rewindNote?: string
+  /** The profile options (M6): with them, the card shows interests and basics as chips. */
+  options?: ProfileOptions | null
 }
 
 /** What the card tells a screen reader; with both mechanics off it reads exactly as before they existed. */
@@ -56,7 +60,7 @@ export function deckHint(superSparkEnabled: boolean, rewindAvailable: boolean): 
   return hint
 }
 
-export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled = false, superSparkNote = "", rewindAvailable = false, canRewind = false, rewindNote = "" }: SwipeDeckProps) {
+export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled = false, superSparkNote = "", rewindAvailable = false, canRewind = false, rewindNote = "", options = null }: SwipeDeckProps) {
   const [dx, setDx] = useState(0)
   const drag = useRef<{ startX: number; moved: number } | null>(null)
   const top = cards[0]
@@ -108,6 +112,7 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
   const leaning =
     pending === "spark" || pending === "super_spark" ? "right" : pending === "pass" ? "left" : pending === "stash" ? "down" : dx > 24 ? "right" : dx < -24 ? "left" : ""
   const facts = metaLine(person)
+  const chips = cardChips(person.basics, options)
 
   return (
     <div className="pulse-deck">
@@ -152,6 +157,20 @@ export function SwipeDeck({ cards, pending = null, onAction, superSparkEnabled =
             </p>
             {facts.length ? <p className="pulse-card__meta">{facts.join(" · ")}</p> : null}
             {top.reasons.length ? <p className="pulse-card__meta">{top.reasons.join(" · ")}</p> : null}
+            {chips.chips.length ? (
+              <ul className="pulse-chips pulse-card__chips" aria-label="Interests and basics">
+                {chips.chips.map((c) => (
+                  <li key={c}>
+                    <Pill>{c}</Pill>
+                  </li>
+                ))}
+                {chips.more > 0 ? (
+                  <li>
+                    <Pill>+{chips.more} more</Pill>
+                  </li>
+                ) : null}
+              </ul>
+            ) : null}
           </div>
         </div>
       </div>

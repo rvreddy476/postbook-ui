@@ -32,7 +32,7 @@ export function hidesNav(pathname: string): boolean {
 }
 
 function isCurrent(pathname: string, href: string): boolean {
-  if (href === DATING_BASE) return pathname === DATING_BASE || pathname.startsWith(`${DATING_BASE}/people`)
+  if (href === DATING_BASE) return pathname === DATING_BASE || pathname.startsWith(`${DATING_BASE}/people`) || pathname.startsWith(`${DATING_BASE}/filters`)
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 

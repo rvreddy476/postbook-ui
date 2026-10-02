@@ -3,12 +3,14 @@ import { describe, expect, test } from "bun:test"
 import { rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toAllowances, toUsageLimit } from "../model/allowances"
 import { isGranted, toConsents } from "../model/consents"
 import { exportView, hasPendingExport, toDataExport, toDataExports } from "../model/dataExport"
-import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, isAgeRefusal, isPremiumUnavailable, PASSES_UNAVAILABLE_COPY } from "../model/errors"
+import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, FILTERS_PASS_COPY, isAgeRefusal, isFiltersRequirePass, isPremiumUnavailable, PASSES_UNAVAILABLE_COPY, refusedField } from "../model/errors"
 import { answerRefusalRefetches, firstMoveListLine, firstMoveState, isFirstMoveOff, questionsChanged, toFirstMoveSettings, toOpeningAnswerResult } from "../model/firstMove"
 import { chatHref, countdown, extendedLine, extendLimitLine, isOpen, toCloseResult, toExtendLimit, toExtendResult, toMatch, toMatches } from "../model/matches"
 import { photoPath, toPerson } from "../model/people"
 import { moderationView, toMyPhoto, toMyPhotos } from "../model/photos"
-import { toPreferences, toPrivacy, toProfile, stepFor } from "../model/profile"
+import { filtersBody, filtersEnabled, filtersForm, hasPassFilters, toPreferences, toPrivacy, toProfile, stepFor, visiblePrivacyToggles } from "../model/profile"
+import { basicsLabels, interestLabels, languageLabels, toProfileOptions } from "../model/options"
+import { languageLabel } from "../model/labels"
 import { toPromptAnswer, toPromptAnswers } from "../model/prompts"
 import { deckEmptyKind, toDeck, toExplain, toPassResult, toRewindResult } from "../model/pulse"
 import { razorpayOptions, toCatalogue, toMyPremium, toPaymentReading, toPurchase } from "../model/premium"
@@ -92,11 +94,77 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   preferences_get_200: (f) => {
     const p = toPreferences(f.data)
     // min_age / max_age are omitted when unset: 0, not NaN or undefined.
-    expect(p).toEqual({ minAge: 0, maxAge: 0, distanceKm: 25, interestedIn: "everyone", intentFilter: [] })
+    expect(p).toEqual({ minAge: 0, maxAge: 0, distanceKm: 25, interestedIn: "everyone", intentFilter: [], distanceBucket: "", passFilters: null })
+    // No pass_filters member: the filters flag is off and the screens keep their old shape.
+    expect(filtersEnabled(p)).toBe(false)
   },
   preferences_put_200: (f) => {
-    expect(toPreferences(f.data)).toEqual({ minAge: 25, maxAge: 35, distanceKm: 25, interestedIn: "everyone", intentFilter: ["casual"] })
+    expect(toPreferences(f.data)).toEqual({ minAge: 25, maxAge: 35, distanceKm: 25, interestedIn: "everyone", intentFilter: ["casual"], distanceBucket: "", passFilters: null })
   },
+  /* profile basics and filters (mechanic M6) */
+  profile_options_get_200: (f) => {
+    const o = toProfileOptions(f.data)
+    expect(o.interests).toHaveLength(40)
+    expect(o.interests[0]).toEqual({ value: "art", label: "Art" })
+    expect(o.maxInterests).toBe(10)
+    expect(o.languages.find((l) => l.value === "te")?.label).toBe("Telugu")
+    expect(o.maxLanguages).toBe(8)
+    expect([o.heightMin, o.heightMax]).toEqual([120, 230])
+    // Scales keep the server's order; lists are alphabetical by label.
+    expect(o.drinking.map((x) => x.value)).toEqual(["never", "rarely", "socially", "regularly"])
+    expect(o.distanceBuckets.map((x) => x.label)).toEqual(["Under 5 km", "Within 10 km", "Within 25 km", "Any distance"])
+    expect(o.diet.map((x) => x.label)).toEqual(["Eggetarian", "Jain", "Non-vegetarian", "Other", "Vegan", "Vegetarian"])
+  },
+  preferences_get_200_filters: (f) => {
+    const p = toPreferences(f.data)
+    expect(filtersEnabled(p)).toBe(true)
+    expect(p.distanceBucket).toBe("km_5_10")
+    expect(p.passFilters).toEqual({
+      active: true,
+      verifiedOnly: true,
+      minHeightCm: 160,
+      maxHeightCm: 190,
+      languages: ["en", "te"],
+      drinking: ["never", "socially"],
+      smoking: ["never"],
+      exercise: [],
+      diet: ["vegetarian"],
+    })
+    expect(hasPassFilters(p.passFilters)).toBe(true)
+    // With the flag on, the free "verified only" privacy toggle moves to Filters.
+    expect(visiblePrivacyToggles(p).map((t) => t.key)).not.toContain("verifiedOnlyFilter")
+    const form = filtersForm(p, toProfileOptions(readFixture("profile_options_get_200").data))
+    expect(form.distanceBucket).toBe("km_5_10")
+    expect(filtersBody(form, true).pass_filters).toEqual({ verified_only: true, min_height_cm: 160, max_height_cm: 190, languages: ["en", "te"], drinking: ["never", "socially"], smoking: ["never"], exercise: [], diet: ["vegetarian"] })
+  },
+  preferences_put_200_filters: (f) => expect(toPreferences(f.data)).toEqual(toPreferences(readFixture("preferences_get_200_filters").data)),
+  preferences_put_403_filters_require_pass: refusal("FILTERS_REQUIRE_PASS", (f) => {
+    expect(isFiltersRequirePass({ response: { status: 403, data: f } })).toBe(true)
+    expect(copyFor(errorFromEnvelope(f))).toBe(FILTERS_PASS_COPY)
+  }),
+  preferences_put_400_invalid_distance_bucket: refusal("INVALID_DISTANCE_BUCKET"),
+  privacy_patch_403_filters_require_pass: refusal("FILTERS_REQUIRE_PASS", (f) => {
+    expect(isFiltersRequirePass({ response: { status: 403, data: f } })).toBe(true)
+  }),
+  profile_upsert_400_invalid_interest: refusal("INVALID_INTEREST", (f) => {
+    expect(refusedField({ response: { status: 400, data: f } })).toBe("interests")
+  }),
+  profile_upsert_400_invalid_height: refusal("INVALID_HEIGHT", (f) => {
+    expect(refusedField({ response: { status: 400, data: f } })).toBe("height_cm")
+    expect(copyFor(errorFromEnvelope(f))).toBe("Choose a height between 120 and 230 cm.")
+  }),
+  person_get_200_basics: (f) => {
+    const p = person(f.data)
+    expect(p.basics).toEqual({ interests: ["books", "cricket", "yoga"], heightCm: 172, drinking: "socially", smoking: "never", exercise: "often", diet: "vegetarian" })
+    expect(p.languageCodes).toEqual(["en", "te"])
+    const o = toProfileOptions(readFixture("profile_options_get_200").data)
+    expect(interestLabels(p.basics, o)).toEqual(["Books", "Cricket", "Yoga"])
+    expect(basicsLabels(p.basics, o)).toEqual(["172 cm", "Drinking: Socially", "Smoking: Never", "Exercise: Often", "Vegetarian"])
+    expect(languageLabels(p.languageCodes, o, languageLabel)).toEqual(["English", "Telugu"])
+    // Distance is the bucket label; the server's "< 5 km" is never used.
+    expect(p.distanceLabel).toBe("Under 5 km away")
+  },
+
   preferences_put_400_invalid_age_range: refusal("INVALID_AGE_RANGE"),
   preferences_put_400_invalid_distance_km: refusal("INVALID_DISTANCE_KM"),
   preferences_put_400_invalid_gender: refusal("INVALID_INTERESTED_IN_GENDER"),

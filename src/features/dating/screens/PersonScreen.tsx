@@ -1,6 +1,6 @@
 "use client"
 
-/* /dating/people/[userId] — the full profile: gallery, bio, prompts, languages, distance bucket, verified marker, report and block. */
+/* /dating/people/[userId] — the full profile: gallery, bio, prompts, interests, basics, languages, distance bucket, verified marker, report and block. */
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -11,6 +11,9 @@ import { ErrorState, Guard } from "../components/Guard"
 import { LinkButton, Loading, PageHead, Panel, Pill, StatePanel } from "../components/kit"
 import { SafetyActions } from "../components/SafetyActions"
 import { usePerson } from "../hooks/discovery"
+import { useProfileOptions } from "../hooks/profile"
+import { languageLabel } from "../model/labels"
+import { basicsLabels, interestLabels, languageLabels, type ProfileOptions } from "../model/options"
 import { nameLine, type Person } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { errorStatus } from "../model/wire"
@@ -40,9 +43,13 @@ export function Gallery({ person }: { person: Person }) {
   )
 }
 
-/** Everything about the person except the actions; what the tests render. */
-export function PersonDetails({ person }: { person: Person }) {
+/** Everything about the person except the actions; what the tests render. Without `options`, interests and basics aren't drawn. */
+export function PersonDetails({ person, options = null }: { person: Person; options?: ProfileOptions | null }) {
   const facts = [person.distanceLabel, person.city, person.intentLabel, person.lastActiveLabel].filter(Boolean)
+  const interests = interestLabels(person.basics, options)
+  const basics = basicsLabels(person.basics, options)
+  // With the options list the codes get their labels; without it, the old capitalised words.
+  const languages = options ? languageLabels(person.languageCodes, options, languageLabel) : [...person.languages].sort()
   return (
     <>
       <div className="pulse-person__head">
@@ -77,22 +84,42 @@ export function PersonDetails({ person }: { person: Person }) {
           </dl>
         </Panel>
       ) : null}
-      {person.languages.length ? (
+      {interests.length ? (
+        <Panel title="Interests">
+          <ChipList labels={interests} />
+        </Panel>
+      ) : null}
+      {basics.length ? (
+        <Panel title="Basics">
+          <ChipList labels={basics} />
+        </Panel>
+      ) : null}
+      {languages.length ? (
         <Panel title="Languages">
-          <div className="pulse-row">
-            {[...person.languages].sort().map((l) => (
-              <Pill key={l}>{l}</Pill>
-            ))}
-          </div>
+          <ChipList labels={languages} />
         </Panel>
       ) : null}
     </>
   )
 }
 
+function ChipList({ labels }: { labels: string[] }) {
+  return (
+    <ul className="pulse-chips">
+      {labels.map((l) => (
+        <li key={l}>
+          <Pill>{l}</Pill>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function PersonBody({ userId }: { userId: string }) {
   const router = useRouter()
   const person = usePerson(userId)
+  // Labels for interests and basics; a failed read just leaves them out.
+  const options = useProfileOptions()
   if (person.isPending) return <Loading />
   if (person.isError && errorStatus(person.error) !== 404) return <ErrorState error={person.error} onRetry={() => void person.refetch()} />
   if (person.isError || !person.data) {
@@ -108,7 +135,7 @@ function PersonBody({ userId }: { userId: string }) {
   return (
     <>
       <Gallery person={p} />
-      <PersonDetails person={p} />
+      <PersonDetails person={p} options={options.data ?? null} />
       <Panel title="Safety" sub="Reports are confidential.">
         <SafetyActions userId={p.userId} name={p.firstName || "this person"} onGone={() => router.replace(DATING_BASE)} />
       </Panel>

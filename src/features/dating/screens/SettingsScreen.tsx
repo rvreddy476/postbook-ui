@@ -12,29 +12,48 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { FIRST_MOVE_TITLE, FirstMoveEditor } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, Loading, PageHead, Panel, Pill, Toggle } from "../components/kit"
-import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
+import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePreferences, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
 import { useFirstMove, useSaveFirstMove } from "../hooks/discovery"
 import { useDataExports, useDownloadDataExport, useRequestDataExport } from "../hooks/safety"
 import { CONSENT_COPY, isGranted, type Consents, type ConsentType } from "../model/consents"
 import { exportView, hasPendingExport, type DataExport } from "../model/dataExport"
 import { datingErrorCopy } from "../model/errors"
 import { isFirstMoveOff, questionsProblem } from "../model/firstMove"
-import { DATING_BASE, PRIVACY_TOGGLES, STATUS, privacyPatch, type Privacy, type PrivacyKey } from "../model/profile"
+import { DATING_BASE, PRIVACY_TOGGLES, STATUS, filtersEnabled, privacyPatch, visiblePrivacyToggles, type Privacy, type PrivacyKey } from "../model/profile"
+import { FILTERS_HREF } from "../components/Filters"
+import { ABOUT_HREF } from "./OnboardingScreens"
 
-/** Alphabetical. */
-const EDIT_LINKS = [
+const EDIT_LINKS: readonly { label: string; href: string }[] = [
+  { label: "About me", href: ABOUT_HREF },
   { label: "Basics", href: `${DATING_BASE}/onboarding/basics` },
   { label: "Looking for", href: `${DATING_BASE}/onboarding/intent` },
   { label: "Photos", href: `${DATING_BASE}/onboarding/photos` },
   { label: "Preferences", href: `${DATING_BASE}/onboarding/preferences` },
   { label: "Prompts", href: `${DATING_BASE}/onboarding/prompts` },
   { label: "Selfie check", href: `${DATING_BASE}/verify` },
-] as const
+]
 
-export function PrivacyToggles({ privacy, busy, onChange }: { privacy: Privacy; busy: boolean; onChange: (key: PrivacyKey, value: boolean) => void }) {
+/** Alphabetical; Filters only while the server's filters flag is on. */
+export function editLinks(withFilters: boolean): { label: string; href: string }[] {
+  const links = withFilters ? [...EDIT_LINKS, { label: "Filters", href: FILTERS_HREF }] : [...EDIT_LINKS]
+  return links.sort((a, b) => a.label.localeCompare(b.label))
+}
+
+export function PrivacyToggles({
+  privacy,
+  busy,
+  onChange,
+  toggles = PRIVACY_TOGGLES,
+}: {
+  privacy: Privacy
+  busy: boolean
+  onChange: (key: PrivacyKey, value: boolean) => void
+  /** Which toggles to draw; with the filters flag on, "verified only" moves to Filters. */
+  toggles?: typeof PRIVACY_TOGGLES
+}) {
   return (
     <div className="pulse-stack">
-      {PRIVACY_TOGGLES.map((t) => (
+      {toggles.map((t) => (
         <Toggle key={t.key} id={`pulse-privacy-${t.key}`} label={t.label} help={t.help} checked={privacy[t.key]} disabled={busy} onChange={(v) => onChange(t.key, v)} />
       ))}
     </div>
@@ -159,6 +178,7 @@ function SettingsBody() {
   const gate = useGate()
   const privacy = usePrivacy()
   const patch = usePatchPrivacy()
+  const preferences = usePreferences(gate.kind === "open" && gate.profile !== null)
   const consents = useConsents()
   const setConsent = useSetConsent()
   const pause = useSetPaused()
@@ -183,7 +203,7 @@ function SettingsBody() {
     <>
       <Panel title="Your profile">
         <ul className="pulse-links">
-          {EDIT_LINKS.map((l) => (
+          {editLinks(filtersEnabled(preferences.data)).map((l) => (
             <li key={l.href}>
               <Link href={l.href}>{l.label}</Link>
             </li>
@@ -192,7 +212,14 @@ function SettingsBody() {
       </Panel>
 
       <Panel title="Privacy">
-        {privacy.isPending ? <Loading /> : privacy.isError ? <ErrorState error={privacy.error} onRetry={() => void privacy.refetch()} /> : <PrivacyToggles privacy={privacy.data} busy={patch.isPending} onChange={(key, value) => patch.mutate(privacyPatch(key, value), { onError: fail })} />}
+        {privacy.isPending || preferences.isPending ? (
+          <Loading />
+        ) : privacy.isError ? (
+          <ErrorState error={privacy.error} onRetry={() => void privacy.refetch()} />
+        ) : (
+          // A failed preferences read keeps the old set of toggles (the flag reads as off).
+          <PrivacyToggles privacy={privacy.data} busy={patch.isPending} toggles={visiblePrivacyToggles(preferences.data, privacy.data)} onChange={(key, value) => patch.mutate(privacyPatch(key, value), { onError: fail })} />
+        )}
       </Panel>
 
       <FirstMoveSection />

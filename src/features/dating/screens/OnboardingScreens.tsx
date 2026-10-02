@@ -10,18 +10,35 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { ShieldAlert, Star, Trash2, Upload } from "lucide-react"
+import { ShieldAlert, Star, Trash2, Upload, UserRound } from "lucide-react"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { uploadPhoto } from "../api/media"
+import { AboutMeEditor } from "../components/AboutMe"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Choices, Field, LinkButton, Loading, Notice, PageHead, Panel, Pill, StatePanel } from "../components/kit"
-import { useCreatePhoto, useDeletePhoto, useDeletePrompt, useGate, useMyPhotos, usePromptCatalog, usePrompts, usePutPreferences, useSetPhotoVisibility, useSetPrimaryPhoto, useUpsertProfile, useUpsertPrompt } from "../hooks/profile"
-import { AGE_REQUIRED_COPY, datingErrorCopy, isAgeRefusal } from "../model/errors"
+import { useCreatePhoto, useDeletePhoto, useDeletePrompt, useGate, useMyPhotos, useProfileOptions, usePromptCatalog, usePrompts, usePutPreferences, useSetPhotoVisibility, useSetPrimaryPhoto, useUpsertProfile, useUpsertPrompt } from "../hooks/profile"
+import { AGE_REQUIRED_COPY, datingErrorCopy, isAgeRefusal, refusedField } from "../model/errors"
 import { GENDER_OPTIONS, INTENT_OPTIONS, INTERESTED_IN_OPTIONS, PHOTO_VISIBILITY_OPTIONS, PREFERENCE_LIMITS, PROMPT_ANSWER_MAX } from "../model/labels"
 import { MAX_PHOTOS, PHOTO_ACCEPT, moderationView, ownPhotoSrc, photoFileProblem, type MyPhoto } from "../model/photos"
-import { DATING_BASE, STATUS, identityIncomplete, preferencesBody, preferencesForm, preferencesProblem, profileBody, type PreferencesInput, type Profile } from "../model/profile"
+import {
+  DATING_BASE,
+  STATUS,
+  aboutBody,
+  aboutForm,
+  aboutProblem,
+  droppedLanguages,
+  identityIncomplete,
+  preferencesBody,
+  preferencesForm,
+  preferencesProblem,
+  profileBody,
+  type AboutForm,
+  type AboutProblem,
+  type PreferencesInput,
+  type Profile,
+} from "../model/profile"
 import { answerProblem, type PromptAnswer, type PromptQuestion } from "../model/prompts"
 
 const SETUP_STEPS = ["intent", "basics", "preferences", "photos", "selfie"] as const
@@ -513,6 +530,9 @@ function PromptsManager() {
         onDelete={(promptId) => remove.mutate(promptId, { onError: fail })}
       />
       <div className="pulse-row">
+        <LinkButton href={ABOUT_HREF} icon={UserRound}>
+          Next: about me
+        </LinkButton>
         <LinkButton href={DATING_BASE} variant="quiet">
           Done
         </LinkButton>
@@ -525,6 +545,111 @@ export function PromptsScreen() {
   return (
     <Shell>
       <PromptsManager />
+    </Shell>
+  )
+}
+
+/* ── about me (mechanic M6) ──────────────────────────────────────── */
+
+export const ABOUT_HREF = `${DATING_BASE}/onboarding/about`
+
+/**
+  Optional, after the prompts, and from Settings. It never holds up setup:
+  the server's status doesn't depend on any of it.
+*/
+function AboutMeView() {
+  const gate = useGate()
+  const router = useRouter()
+  const toast = useGlobalToast()
+  const options = useProfileOptions()
+  const save = useUpsertProfile()
+  const profile = gate.kind === "open" ? gate.profile : null
+  /** null: nothing edited, so the saved values are shown. */
+  const [form, setForm] = useState<AboutForm | null>(null)
+  const [error, setError] = useState("")
+  const [fieldError, setFieldError] = useState<AboutProblem | null>(null)
+  const editing = isEditing(profile)
+  const next = editing ? `${DATING_BASE}/settings` : DATING_BASE
+
+  const head = (
+    <PageHead
+      title="About me"
+      sub="Optional. Interests and a few basics give people something in common to start from."
+      back={editing ? { href: `${DATING_BASE}/settings`, label: "Settings" } : { href: DATING_BASE, label: "Pulse" }}
+    />
+  )
+  if (!profile) {
+    return (
+      <>
+        {head}
+        <Notice tone="info">
+          Start your profile first, then add these. <Link href={`${DATING_BASE}/onboarding/intent`}>Start now</Link>
+        </Notice>
+      </>
+    )
+  }
+  if (options.isPending || options.isError) {
+    return (
+      <>
+        {head}
+        {options.isPending ? <Loading /> : <ErrorState error={options.error} onRetry={() => void options.refetch()} />}
+      </>
+    )
+  }
+
+  const opts = options.data
+  const current = form ?? aboutForm(profile, opts)
+  return (
+    <>
+      {head}
+      <AboutMeEditor
+        options={opts}
+        form={current}
+        heightSaved={profile.basics.heightCm > 0}
+        dropped={droppedLanguages(profile, opts)}
+        busy={save.isPending}
+        error={error}
+        fieldError={fieldError}
+        submitLabel={editing ? "Save" : "Save and continue"}
+        onChange={(f) => {
+          setForm(f)
+          setError("")
+          setFieldError(null)
+        }}
+        onSave={() => {
+          const problem = aboutProblem(current, opts)
+          if (problem) return setFieldError(problem)
+          setFieldError(null)
+          setError("")
+          save.mutate(aboutBody(current), {
+            onSuccess: () => {
+              setForm(null)
+              toast({ type: "success", title: "About me saved" })
+              router.push(next)
+            },
+            onError: (err) => {
+              const field = refusedField(err)
+              if (field) setFieldError({ field, message: datingErrorCopy(err) })
+              else setError(datingErrorCopy(err))
+            },
+          })
+        }}
+      />
+      {editing ? null : (
+        <div className="pulse-row">
+          <LinkButton href={DATING_BASE} variant="quiet">
+            Skip for now
+          </LinkButton>
+        </div>
+      )}
+    </>
+  )
+}
+
+export function AboutMeScreen() {
+  return (
+    <Shell>
+      <AboutMeView />
     </Shell>
   )
 }
