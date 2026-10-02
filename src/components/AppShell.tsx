@@ -47,7 +47,7 @@ function routeForTab(tab: NavItem, currentUser: User | null): string | null {
     case 'Shop':
       return '/shop';
     case 'PostMatch':
-      return '/postmatch';
+      return '/dating';
     default:
       return null;
   }

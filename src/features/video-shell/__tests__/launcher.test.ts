@@ -18,7 +18,7 @@ describe("APP_LAUNCHER", () => {
     for (const [key, href] of [
       ["home", "/"], ["reels", "/reels"], ["tube", "/posttube"], ["groups", "/groups"],
       ["communities", "/communities"], ["connections", "/connections"], ["messenger", "/messenger"],
-      ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/shop"], ["match", "/postmatch"],
+      ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/shop"], ["match", "/dating"],
       ["trending", "/trending"], ["memories", "/memories"], ["saved", "/saved"], ["notifications", "/notifications"],
     ] as const) {
       expect(byKey.get(key)?.href).toBe(href);

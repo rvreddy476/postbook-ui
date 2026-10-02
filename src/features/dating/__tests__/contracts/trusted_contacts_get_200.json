@@ -1,0 +1,25 @@
+{
+  "data": {
+    "items": [
+      {
+        "contact_id": "<contact>",
+        "share_location_on_panic": true,
+        "created_at": "<timestamp>",
+        "updated_at": "<timestamp>",
+        "person": {
+          "user_id": "<contact>",
+          "first_name": "Asha",
+          "age": 30,
+          "primary_photo_id": "<uuid>",
+          "primary_photo_url": "/v1/dating/photos/<uuid>/full",
+          "photo_state": "full",
+          "verified": false,
+          "trust_tier": "phone",
+          "city": "Hyderabad",
+          "intent": "casual"
+        }
+      }
+    ],
+    "max": 3
+  }
+}

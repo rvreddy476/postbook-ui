@@ -1,0 +1,128 @@
+"use client"
+
+/* /dating/people/[userId] — the full profile: gallery, bio, prompts, languages, distance bucket, verified marker, report and block. */
+
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { BadgeCheck, ChevronLeft, ChevronRight, UserX } from "lucide-react"
+
+import { DatingPhoto } from "../components/DatingPhoto"
+import { ErrorState, Guard } from "../components/Guard"
+import { LinkButton, Loading, PageHead, Panel, Pill, StatePanel } from "../components/kit"
+import { SafetyActions } from "../components/SafetyActions"
+import { usePerson } from "../hooks/discovery"
+import { nameLine, type Person } from "../model/people"
+import { DATING_BASE } from "../model/profile"
+import { errorStatus } from "../model/wire"
+
+export function Gallery({ person }: { person: Person }) {
+  const [index, setIndex] = useState(0)
+  const photos = person.photos
+  if (photos.length === 0) return <DatingPhoto path="" alt="No photo" className="pulse-gallery__photo" />
+  const i = Math.min(index, photos.length - 1)
+  return (
+    <div className="pulse-gallery" role="group" aria-roledescription="photo gallery" aria-label={`Photos of ${person.firstName || "this person"}`}>
+      <DatingPhoto path={photos[i].url} alt={`Photo ${i + 1} of ${photos.length}`} className="pulse-gallery__photo" />
+      {photos.length > 1 ? (
+        <div className="pulse-gallery__nav">
+          <button type="button" className="pulse-act pulse-act--small" onClick={() => setIndex(Math.max(i - 1, 0))} disabled={i === 0} aria-label="Previous photo">
+            <ChevronLeft size={18} aria-hidden="true" />
+          </button>
+          <span className="pulse-gallery__count" aria-live="polite">
+            {i + 1} / {photos.length}
+          </span>
+          <button type="button" className="pulse-act pulse-act--small" onClick={() => setIndex(Math.min(i + 1, photos.length - 1))} disabled={i === photos.length - 1} aria-label="Next photo">
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/** Everything about the person except the actions; what the tests render. */
+export function PersonDetails({ person }: { person: Person }) {
+  const facts = [person.distanceLabel, person.city, person.intentLabel, person.lastActiveLabel].filter(Boolean)
+  return (
+    <>
+      <div className="pulse-person__head">
+        <h1 className="pulse-head__title">{nameLine(person)}</h1>
+        {person.verified ? (
+          <Pill tone="success">
+            <BadgeCheck size={12} aria-hidden="true" /> Verified
+          </Pill>
+        ) : null}
+      </div>
+      {facts.length ? (
+        <ul className="pulse-facts">
+          {facts.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      ) : null}
+      {person.bio ? (
+        <Panel title="About">
+          <p className="pulse-text">{person.bio}</p>
+        </Panel>
+      ) : null}
+      {person.prompts.length ? (
+        <Panel title="In their words">
+          <dl className="pulse-prompts">
+            {person.prompts.map((p) => (
+              <div key={p.promptId}>
+                <dt>{p.question}</dt>
+                <dd>{p.answer}</dd>
+              </div>
+            ))}
+          </dl>
+        </Panel>
+      ) : null}
+      {person.languages.length ? (
+        <Panel title="Languages">
+          <div className="pulse-row">
+            {[...person.languages].sort().map((l) => (
+              <Pill key={l}>{l}</Pill>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
+    </>
+  )
+}
+
+function PersonBody({ userId }: { userId: string }) {
+  const router = useRouter()
+  const person = usePerson(userId)
+  if (person.isPending) return <Loading />
+  if (person.isError && errorStatus(person.error) !== 404) return <ErrorState error={person.error} onRetry={() => void person.refetch()} />
+  if (person.isError || !person.data) {
+    return (
+      <StatePanel icon={UserX} title="This person isn't available" body="They may have left Pulse, or they're no longer in your deck.">
+        <LinkButton href={DATING_BASE} variant="primary">
+          Back to the deck
+        </LinkButton>
+      </StatePanel>
+    )
+  }
+  const p = person.data
+  return (
+    <>
+      <Gallery person={p} />
+      <PersonDetails person={p} />
+      <Panel title="Safety" sub="Reports are confidential.">
+        <SafetyActions userId={p.userId} name={p.firstName || "this person"} onGone={() => router.replace(DATING_BASE)} />
+      </Panel>
+    </>
+  )
+}
+
+export function PersonScreen({ userId }: { userId: string }) {
+  return (
+    <Guard need="ready">
+      <div className="pulse-page pulse-page--narrow">
+        <PageHead title="Profile" back={{ href: DATING_BASE, label: "Deck" }} />
+        <PersonBody userId={userId} />
+      </div>
+    </Guard>
+  )
+}

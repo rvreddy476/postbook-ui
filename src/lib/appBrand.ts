@@ -75,7 +75,7 @@ export const APP_BRANDS: readonly AppBrand[] = [
   { key: "ask", name: "Ask", href: "/qa", icon: HelpCircle, searchPlaceholder: "Search questions...", prefixes: ["/qa"] },
   { key: "pages", name: "Pages", href: "/pages", icon: Briefcase, searchPlaceholder: "Search pages...", prefixes: ["/pages"] },
   { key: "shop", name: "MStore", href: "/shop", icon: ShoppingBag, searchPlaceholder: "Search products and sellers...", prefixes: ["/shop", "/commerce"] },
-  { key: "match", name: "PostMatch", href: "/postmatch", icon: Heart, searchPlaceholder: "Search...", prefixes: ["/postmatch"] },
+  { key: "match", name: "Pulse", href: "/dating", icon: Heart, searchPlaceholder: "Search...", prefixes: ["/dating", "/postmatch"] },
   { key: "admin", name: "Admin", href: "/admin", icon: Shield, searchPlaceholder: "Search users, reports...", prefixes: ["/admin"] },
   HOME,
 ];
@@ -156,7 +156,7 @@ export const APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "ask", name: "Ask", description: "Questions and answers", href: "/qa", icon: HelpCircle },
   { key: "pages", name: "Pages", description: "Brands, creators and businesses", href: "/pages", icon: Briefcase },
   { key: "shop", name: "MStore", description: "Shop products from sellers", href: "/shop", icon: ShoppingBag },
-  { key: "match", name: "PostMatch", description: "Meet people near you", href: "/postmatch", icon: Heart },
+  { key: "match", name: "Pulse", description: "Meet people near you", href: "/dating", icon: Heart },
   { key: "trending", name: "Trending", description: "What is popular right now", href: "/trending", icon: Flame },
   { key: "memories", name: "Memories", description: "On this day, years ago", href: "/memories", icon: BookOpen },
   { key: "saved", name: "Saved", description: "Everything you bookmarked", href: "/saved", icon: Bookmark },

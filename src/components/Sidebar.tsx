@@ -90,7 +90,7 @@ const moreItems: Item[] = [
   { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-current' },
   { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-current' },
   { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/shop', color: 'text-current' },
-  { id: 'PostMatch', label: 'PostMatch', icon: Heart, href: '/postmatch', color: 'text-current' },
+  { id: 'PostMatch', label: 'Pulse', icon: Heart, href: '/dating', color: 'text-current' },
   { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-current' },
   { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-current' },
 ];
