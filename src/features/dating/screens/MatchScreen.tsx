@@ -8,24 +8,31 @@
   the server adds `first_move`. The person who starts gets the chat; the
   person waiting does NOT (chat-service refuses their first message), so they
   see the opening questions to answer and, once a day, free extra time.
+
+  Calls after an exchange (M9): the server adds `can_call` while the mechanic
+  is on. True draws Video call and Voice call (the app's call overlay takes
+  over from there); false, one line saying when calls open; absent, nothing.
 */
 
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Clock, MessageCircle, Timer, UserX } from "lucide-react"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
+import { initiateCall, subscribeToCallState } from "@/services/callService"
+import type { User } from "@/types"
 
 import { AnswerSent, ExtendLimitNotice, FirstMoveStatus, FREE_EXTEND_LABEL, NO_ANSWER, OpeningQuestionList, type AnswerDraft } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, LinkButton, Loading, Notice, PageHead, Panel, StatePanel } from "../components/kit"
+import { MatchCalls } from "../components/MatchExtras"
 import { SafetyActions } from "../components/SafetyActions"
 import { useAnswerOpening, useCloseMatch, useExtendMatch, useMatch } from "../hooks/discovery"
 import { useMyPremium } from "../hooks/premium"
 import { datingErrorCopy } from "../model/errors"
 import { answerRefusalRefetches, firstMoveState, openingAnswerCopy, openingAnswerProblem, type FirstMoveState, type OpeningAnswerResult } from "../model/firstMove"
-import { chatHref, countdown, extendedLine, isOpen, toExtendLimit, type Countdown, type ExtendLimit, type Match } from "../model/matches"
-import { personHref } from "../model/people"
+import { callView, chatHref, countdown, extendedLine, isOpen, toExtendLimit, type Countdown, type ExtendLimit, type Match } from "../model/matches"
+import { personHref, type Person } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { errorStatus, toDatingError } from "../model/wire"
 import { PersonRow } from "./HomeScreen"
@@ -119,6 +126,22 @@ export function WaitingPanel({
   )
 }
 
+/**
+  Who the call overlay rings and shows: the match's own id and first name.
+  No avatar: a dating photo route needs the bearer token, which the overlay's
+  plain image can't send, so it draws its initial instead.
+*/
+export function callContact(person: Pick<Person, "userId" | "firstName">): User {
+  return { id: person.userId, name: person.firstName || "Your match", avatar: "" }
+}
+
+/** True while any call is ringing or on, so a second one isn't started from here. */
+function useCallInProgress(): boolean {
+  const [busy, setBusy] = useState(false)
+  useEffect(() => subscribeToCallState((info) => setBusy(info !== null)), [])
+  return busy
+}
+
 function MatchBody({ match }: { match: Match }) {
   const router = useRouter()
   const toast = useGlobalToast()
@@ -136,6 +159,10 @@ function MatchBody({ match }: { match: Match }) {
   const name = match.person?.firstName || "your match"
   const open = isOpen(match)
   const controls = matchControls({ open, state, left, hasExtendFeature: me.data?.features.includes("match_extend") ?? false, answered: sent !== null })
+  const calling = useCallInProgress()
+  const calls = callView(match.canCall, open && !!match.person && state.kind !== "expired" && left.kind !== "expired")
+  const person = match.person
+  const contact = useMemo(() => (person ? callContact(person) : null), [person])
 
   const onExtend = () =>
     extend.mutate(match.id, {
@@ -223,6 +250,7 @@ function MatchBody({ match }: { match: Match }) {
           ) : null}
         </div>
       ) : null}
+      {contact ? <MatchCalls view={calls} name={name} busy={calling} onCall={(kind) => initiateCall(contact, kind)} /> : null}
       <Panel title="Safety" sub="Reports are confidential.">
         <div className="pulse-row">
           {open ? (

@@ -1,6 +1,6 @@
 "use client"
 
-/* /dating/settings — privacy, first move, pausing, consents, the data export, deleting the profile. */
+/* /dating/settings — privacy, first move, read receipts, pausing, consents, the data export, deleting the profile. */
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,13 +12,15 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { FIRST_MOVE_TITLE, FirstMoveEditor } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
 import { Button, Confirm, Loading, PageHead, Panel, Pill, Toggle } from "../components/kit"
+import { ReadReceiptsSetting } from "../components/MatchExtras"
 import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePreferences, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
-import { useFirstMove, useSaveFirstMove, useTravel } from "../hooks/discovery"
+import { useFirstMove, useReadReceipts, useSaveFirstMove, useSaveReadReceipts, useTravel } from "../hooks/discovery"
 import { useDataExports, useDownloadDataExport, useRequestDataExport } from "../hooks/safety"
 import { CONSENT_COPY, isGranted, type Consents, type ConsentType } from "../model/consents"
 import { exportView, hasPendingExport, type DataExport } from "../model/dataExport"
-import { datingErrorCopy } from "../model/errors"
+import { datingErrorCopy, isMechanicOff, isReadReceiptsRequirePass } from "../model/errors"
 import { isFirstMoveOff, questionsProblem } from "../model/firstMove"
+import { READ_RECEIPTS_TITLE, readReceiptsView } from "../model/readReceipts"
 import { DATING_BASE, PRIVACY_TOGGLES, STATUS, filtersEnabled, privacyPatch, visiblePrivacyToggles, type Privacy, type PrivacyKey } from "../model/profile"
 import { FILTERS_HREF } from "../components/Filters"
 import { TRAVEL_HREF } from "../components/Travel"
@@ -175,6 +177,52 @@ function FirstMoveSection() {
   )
 }
 
+/**
+  Read receipts (M9). Hidden while the read is in flight and when the server
+  says the mechanic is off (404 MECHANIC_NOT_ENABLED). Whether it can turn on
+  is the server's `available`, or a 403 since the page loaded.
+*/
+function ReadReceiptsSection() {
+  const toast = useGlobalToast()
+  const receipts = useReadReceipts()
+  const save = useSaveReadReceipts()
+  // When a 403 came: locked until a read newer than that says otherwise.
+  const [refusedAt, setRefusedAt] = useState(0)
+
+  if (receipts.isPending) return null
+  if (receipts.isError) {
+    if (isMechanicOff(receipts.error)) return null
+    return (
+      <Panel title={READ_RECEIPTS_TITLE}>
+        <ErrorState error={receipts.error} onRetry={() => void receipts.refetch()} />
+      </Panel>
+    )
+  }
+
+  const view = readReceiptsView(receipts.data, refusedAt > 0 && receipts.dataUpdatedAt <= refusedAt)
+  return (
+    <Panel title={READ_RECEIPTS_TITLE}>
+      <ReadReceiptsSetting
+        view={view}
+        busy={save.isPending}
+        onChange={(on) =>
+          save.mutate(on, {
+            onSuccess: (state) => {
+              setRefusedAt(0)
+              toast({ type: "success", title: state.enabled ? "Read receipts are on" : "Read receipts are off" })
+            },
+            onError: (e) => {
+              if (isReadReceiptsRequirePass(e)) setRefusedAt(Date.now())
+              // Switched off since the page loaded: the hook reads again and the section goes.
+              toast({ type: "error", title: datingErrorCopy(e) })
+            },
+          })
+        }
+      />
+    </Panel>
+  )
+}
+
 function SettingsBody() {
   const router = useRouter()
   const toast = useGlobalToast()
@@ -228,6 +276,8 @@ function SettingsBody() {
       </Panel>
 
       <FirstMoveSection />
+
+      <ReadReceiptsSection />
 
       <Panel title={paused ? "Your profile is paused": "Pause your profile"} sub="While paused, nobody sees you in their deck. Your matches stay.">
         <Button

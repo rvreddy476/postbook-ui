@@ -3,11 +3,12 @@ import { describe, expect, test } from "bun:test"
 import { rewindLimitLine, rewindRefusal, showRewind, superSparkLimitLine, superSparkNote, toAllowances, toUsageLimit } from "../model/allowances"
 import { isGranted, toConsents } from "../model/consents"
 import { exportView, hasPendingExport, toDataExport, toDataExports } from "../model/dataExport"
-import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, FILTERS_PASS_COPY, isAgeRefusal, isFiltersRequirePass, isMechanicOff, isPremiumUnavailable, isTravelRequiresPass, PASSES_UNAVAILABLE_COPY, refusedField, TRAVEL_PASS_COPY } from "../model/errors"
+import { KNOWN_ERROR_CODES, GENERIC_COPY, copyFor, FILTERS_PASS_COPY, isAgeRefusal, isFiltersRequirePass, isMechanicOff, isPremiumUnavailable, isReadReceiptsRequirePass, isTravelRequiresPass, PASSES_UNAVAILABLE_COPY, READ_RECEIPTS_PASS_COPY, refusedField, TRAVEL_PASS_COPY } from "../model/errors"
+import { readReceiptsView, toReadReceipts } from "../model/readReceipts"
 import { picksResetLine, toPicks } from "../model/picks"
 import { activeTrip, toTravelState, travelView, tripBanner } from "../model/travel"
 import { answerRefusalRefetches, firstMoveListLine, firstMoveState, isFirstMoveOff, questionsChanged, toFirstMoveSettings, toOpeningAnswerResult } from "../model/firstMove"
-import { chatHref, countdown, extendedLine, extendLimitLine, isOpen, toCloseResult, toExtendLimit, toExtendResult, toMatch, toMatches } from "../model/matches"
+import { callView, chatHref, countdown, extendedLine, extendLimitLine, isOpen, toCloseResult, toExtendLimit, toExtendResult, toMatch, toMatches } from "../model/matches"
 import { metaLine, photoPath, toPerson, travelMarker } from "../model/people"
 import { moderationView, toMyPhoto, toMyPhotos } from "../model/photos"
 import { filtersBody, filtersEnabled, filtersForm, hasPassFilters, toPreferences, toPrivacy, toProfile, stepFor, visiblePrivacyToggles } from "../model/profile"
@@ -15,7 +16,7 @@ import { basicsLabels, interestLabels, languageLabels, toProfileOptions } from "
 import { languageLabel } from "../model/labels"
 import { toPromptAnswer, toPromptAnswers } from "../model/prompts"
 import { deckEmptyKind, toDeck, toExplain, toPassResult, toRewindResult } from "../model/pulse"
-import { razorpayOptions, toCatalogue, toMyPremium, toPaymentReading, toPurchase } from "../model/premium"
+import { featureLabels, razorpayOptions, toCatalogue, toMyPremium, toPaymentReading, toPurchase } from "../model/premium"
 import { toBlockResult, toBlocks, toLocationShare, toLocationShares, toPanicResult, toReportResult, toTrustedContact, toTrustedContacts } from "../model/safety"
 import { toLikedYou } from "../model/likedYou"
 import { sparkLimitLine, toDeclineResult, toIncomingSparks, toSparkLimit, toSparkOutcome, toStash, toStashEntry, verdictFor } from "../model/sparks"
@@ -469,7 +470,37 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
     // No first_move member: a normal match.
     expect(m.firstMove).toBeNull()
     expect(firstMoveState(m)).toEqual({ kind: "none" })
+    // No can_call member: the call mechanic is off, so no call controls.
+    expect(m.canCall).toBeNull()
+    expect(callView(m.canCall, isOpen(m))).toBe("none")
   },
+  /* in-match extras (mechanic M9) */
+  match_get_200_can_call: (f) => {
+    const m = toMatch(f.data)!
+    expect(m.canCall).toBe(true)
+    expect(isOpen(m)).toBe(true)
+    expect(callView(m.canCall, isOpen(m))).toBe("open")
+    // The same match closed: no calls, whatever the server says.
+    expect(callView(m.canCall, false)).toBe("none")
+    person((f.data as { person: unknown }).person)
+  },
+  read_receipts_get_200: (f) => {
+    const r = toReadReceipts(f.data)
+    expect(r).toEqual({ enabled: false, active: false, available: false })
+    expect(readReceiptsView(r)).toBe("locked")
+  },
+  read_receipts_put_200: (f) => {
+    const r = toReadReceipts(f.data)
+    expect(r).toEqual({ enabled: true, active: true, available: true })
+    expect(readReceiptsView(r)).toBe("on")
+  },
+  read_receipts_put_403_requires_pass: refusal("READ_RECEIPTS_REQUIRE_PASS", (f) => {
+    expect(isReadReceiptsRequirePass({ response: { status: 403, data: f } })).toBe(true)
+    expect(copyFor(errorFromEnvelope(f))).toBe(READ_RECEIPTS_PASS_COPY)
+  }),
+  read_receipts_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
+  }),
   match_close_post_200: (f) => expect(toCloseResult(f.data).closed).toBe(true),
 
   /* first move (mechanic M5) */
@@ -582,6 +613,28 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
       ["super_spark_15", 15, 24900],
     ])
     expect(products.filter((p) => p.kind !== "super_spark").every((p) => p.quantity === 0)).toBe(true)
+    // A pass lists the mechanics that are on; each has our words.
+    expect(featureLabels(products[0].features)).toEqual(["Extra time on a match", "More people in your deck each day", "More Super Sparks each day", "One Boost every day"])
+  },
+  premium_catalogue_get_200_all_mechanics: (f) => {
+    const products = toCatalogue(f.data)
+    expect(products.map((p) => p.id)).toEqual(["pass_30d", "pass_90d", "pass_365d", "boost", "super_spark_5", "super_spark_15"])
+    const passes = products.filter((p) => p.kind === "pass")
+    expect(passes.every((p) => p.features.length === 9)).toBe(true)
+    // Every code has a label, alphabetical.
+    const labels = featureLabels(passes[0].features)
+    expect(labels).toHaveLength(9)
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)))
+    expect(labels).toContain("See when your messages are read")
+    expect(labels.join(" ")).not.toMatch(/subscri|renew/i)
+    expect(featureLabels(products[3].features)).toEqual([])
+  },
+  premium_me_get_200_all_mechanics: (f) => {
+    const me = toMyPremium(f.data)
+    expect(me.hasPass).toBe(true)
+    expect(me.boostBalance).toBe(0)
+    expect(me.features).toHaveLength(9)
+    expect(featureLabels(me.features)).toEqual(featureLabels(toCatalogue(readFixture("premium_catalogue_get_200_all_mechanics").data)[0].features))
   },
   premium_purchase_post_201: (f) => {
     const purchase = toPurchase(f.data)
@@ -628,7 +681,7 @@ describe("dating contract fixtures", () => {
   const names = fixtureNames()
 
   test("the fixtures are on disk", () => {
-    expect(names.length).toBeGreaterThanOrEqual(93)
+    expect(names.length).toBeGreaterThanOrEqual(126)
   })
 
   test("every fixture has a parser, and every parser has a fixture", () => {

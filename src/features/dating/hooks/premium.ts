@@ -106,6 +106,8 @@ export function useCheckout() {
         void qc.invalidateQueries({ queryKey: KEYS.allowances })
         // A pass shows who sparked you (M4): the grid and the incoming list are read again.
         void qc.invalidateQueries({ queryKey: KEYS.sparks })
+        // A pass makes read receipts available (M9).
+        void qc.invalidateQueries({ queryKey: KEYS.readReceipts })
       } else if (s.phase === "failed" || s.phase === "stopped") {
         key.current.reset()
         setState({ kind: "failed", productId: "", productName: poll.productName, reason: "" })

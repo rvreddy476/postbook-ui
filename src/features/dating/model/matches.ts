@@ -15,6 +15,12 @@ export interface Match {
   person: Person | null
   /** Mechanic M5, while the match waits for its first message under the rule; null for a normal match. */
   firstMove: FirstMoveView | null
+  /**
+    Mechanic M9, on the single match view only: whether the two may call now
+    (both have sent a message). null when the server sent none, which means
+    the mechanic is off and the page stays as it was.
+  */
+  canCall: boolean | null
 }
 
 export function toMatch(wire: unknown): Match | null {
@@ -30,8 +36,29 @@ export function toMatch(wire: unknown): Match | null {
     expiresAt: time(w.expires_at),
     person: toPerson(w.person),
     firstMove: toFirstMoveView(w.first_move),
+    // A pointer on the server, so `false` is sent; only absent or null mean "no answer".
+    canCall: typeof w.can_call === "boolean" ? w.can_call : null,
   }
 }
+
+/* ── calls after an exchange (mechanic M9) ───────────────────────── */
+
+/**
+    none:   no call controls (the server sent no `can_call`, or the match is
+            closed or out of time);
+    locked: one line saying calls open once you've both written;
+    open:   Video call and Voice call.
+  `can_call` is the same answer that grants the call, so the buttons and the
+  grant agree; the client never works it out from messages.
+*/
+export type CallView = "none" | "locked" | "open"
+
+export function callView(canCall: boolean | null, live: boolean): CallView {
+  if (!live || canCall === null) return "none"
+  return canCall ? "open" : "locked"
+}
+
+export const CALLS_LOCKED_COPY = "Voice and video calls open once you've both sent a message."
 
 export function toMatches(wire: unknown): Match[] {
   return arr(wire)

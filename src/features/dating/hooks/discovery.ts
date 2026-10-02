@@ -22,17 +22,20 @@ import {
   fetchMatches,
   fetchPerson,
   fetchPicks,
+  fetchReadReceipts,
   fetchTravel,
   passCandidate,
   rewindLastPass,
   saveFirstMove,
+  saveReadReceipts,
   sendOpeningAnswer,
   startTravel,
 } from "../api/discovery"
 import { fetchPhotoBlob } from "../api/media"
 import type { Allowances } from "../model/allowances"
-import { isMechanicOff, isTravelRequiresPass } from "../model/errors"
+import { isMechanicOff, isReadReceiptsRequirePass, isTravelRequiresPass } from "../model/errors"
 import type { Picks } from "../model/picks"
+import type { ReadReceipts } from "../model/readReceipts"
 import type { ActionSource } from "../model/sparks"
 import type { TravelForm, TravelState } from "../model/travel"
 import type { FirstMoveSettings, OpeningAnswerResult } from "../model/firstMove"
@@ -151,6 +154,25 @@ export function useEndTravel() {
   return useMutation<TravelState, unknown, void>({
     mutationFn: () => endTravel(),
     onSuccess: (state) => afterTrip(qc, state),
+  })
+}
+
+/* ── read receipts (mechanic M9) ─────────────────────────────────── */
+
+/** The viewer's choice and whether a pass lets it apply. A 404 MECHANIC_NOT_ENABLED means the setting is hidden. */
+export function useReadReceipts(enabled = true) {
+  return useQuery<ReadReceipts>({ queryKey: KEYS.readReceipts, queryFn: fetchReadReceipts, retry, enabled, staleTime: 60_000 })
+}
+
+export function useSaveReadReceipts() {
+  const qc = useQueryClient()
+  return useMutation<ReadReceipts, unknown, boolean>({
+    mutationFn: saveReadReceipts,
+    onSuccess: (state) => qc.setQueryData(KEYS.readReceipts, state),
+    // A 403 means `available` on screen was stale (a pass ran out): read it again.
+    onError: (error) => {
+      if (isReadReceiptsRequirePass(error) || isMechanicOff(error)) void qc.invalidateQueries({ queryKey: KEYS.readReceipts })
+    },
   })
 }
 

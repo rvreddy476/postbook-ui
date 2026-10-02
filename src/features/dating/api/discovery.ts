@@ -9,7 +9,20 @@ import { toDeck, toPassResult, toRewindResult, type Deck, type PassResult, type 
 import { browserTimeZone, loadPicksWithZone, toPicks, type Picks } from "../model/picks"
 import { passBody, sparkBody, toDeclineResult, toIncomingSparks, toSparkOutcome, toStash, toStashEntry, type ActionSource, type DeclineResult, type IncomingSpark, type SparkOutcome, type StashEntry } from "../model/sparks"
 import { toTravelState, travelBody, type TravelForm, type TravelState } from "../model/travel"
+import { readReceiptsBody, toReadReceipts, type ReadReceipts } from "../model/readReceipts"
 import { del, get, getBody, post, put, seg } from "./client"
+
+/* ── read receipts (mechanic M9) ─────────────────────────────────── */
+
+/** GET /read-receipts — 404 MECHANIC_NOT_ENABLED while off. */
+export async function fetchReadReceipts(): Promise<ReadReceipts> {
+  return toReadReceipts(await get("/read-receipts"))
+}
+
+/** PUT /read-receipts {enabled} — on without a pass is 403 READ_RECEIPTS_REQUIRE_PASS; off always works. */
+export async function saveReadReceipts(enabled: boolean): Promise<ReadReceipts> {
+  return toReadReceipts(await put("/read-receipts", readReceiptsBody(enabled)))
+}
 
 /** GET /pulse/today — `{data: [cards], meta}`; the mapper takes the whole body. */
 export async function fetchDeck(): Promise<Deck> {
@@ -90,7 +103,7 @@ export async function removeStash(candidateId: string): Promise<void> {
   await del(`/stash/${seg(candidateId)}`)
 }
 
-/** GET /people/:userId — a current match, an incoming spark or someone in the deck; 404 otherwise. */
+/** GET /people/:userId — a current match, an incoming spark, someone in the deck or one of today's picks; 404 otherwise. */
 export async function fetchPerson(userId: string): Promise<Person | null> {
   return toPerson(await get(`/people/${seg(userId)}`))
 }

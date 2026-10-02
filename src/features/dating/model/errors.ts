@@ -96,6 +96,13 @@ export function isTravelRequiresPass(error: unknown): boolean {
   return toDatingError(error).code === "TRAVEL_REQUIRES_PASS"
 }
 
+export const READ_RECEIPTS_PASS_COPY = "Read receipts come with a pass."
+
+/** Read receipts (M9) were refused because the caller holds no pass. Turning them off is never refused. */
+export function isReadReceiptsRequirePass(error: unknown): boolean {
+  return toDatingError(error).code === "READ_RECEIPTS_REQUIRE_PASS"
+}
+
 /** A mechanic whose server flag is off (404 MECHANIC_NOT_ENABLED). */
 export function isMechanicOff(error: unknown): boolean {
   return toDatingError(error).code === "MECHANIC_NOT_ENABLED"
@@ -173,6 +180,7 @@ const COPY: Record<string, string> = {
   PROMPT_ANSWER_TOO_LONG: "Keep your answer to 280 characters.",
   PURCHASE_INTENT_CONFLICT: "That purchase changed. Start again.",
   PURCHASE_NOT_FOUND: "We couldn't find that purchase.",
+  READ_RECEIPTS_REQUIRE_PASS: READ_RECEIPTS_PASS_COPY,
   REPORT_RATE_LIMITED: "You've sent a lot of reports today. Our team is reviewing them.",
   REPORT_TARGET_MISMATCH: "That report couldn't be sent.",
   REWIND_LIMIT_REACHED: "You've used your undo for now. Try again later.",

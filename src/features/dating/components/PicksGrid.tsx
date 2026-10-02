@@ -6,20 +6,21 @@
   render it.
 
   Every spark and pass made here is sent with `source: "picks"` (PICKS_SOURCE)
-  by the screen, so it spends no deck card. A pick is not in the deck, so
-  GET /people/:id refuses it; opening one draws the card the picks read
-  already carried instead of leaving the page.
+  by the screen, so it spends no deck card. Opening one draws the card the
+  picks read already carried, with Spark and Pass beside it. GET /people/:id
+  also allows one of today's picks, so the opened pick links to the person
+  page too (a page to come back to; it has no actions of its own).
 */
 
 import type { ReactNode } from "react"
-import { BadgeCheck, ChevronLeft, Sparkles, X } from "lucide-react"
+import { BadgeCheck, ChevronLeft, Sparkles, UserRound, X } from "lucide-react"
 
-import { nameLine } from "../model/people"
+import { nameLine, personHref } from "../model/people"
 import { pickTileLabel } from "../model/picks"
 import type { DeckCard } from "../model/pulse"
 import type { ActionSource } from "../model/sparks"
 import { DatingPhoto } from "./DatingPhoto"
-import { Button, TravelPill } from "./kit"
+import { Button, LinkButton, TravelPill } from "./kit"
 
 /** Where every action on this page comes from. */
 export const PICKS_SOURCE: ActionSource = "picks"
@@ -87,10 +88,15 @@ export function PicksGrid({ cards, onOpen, ...actions }: PickActionsProps & { ca
 export function PickOpen({ card, details, safety, onBack, ...actions }: PickActionsProps & { card: DeckCard; details: ReactNode; safety?: ReactNode; onBack: () => void }) {
   return (
     <div className="pulse-stack">
-      <div>
+      <div className="pulse-row">
         <Button variant="quiet" icon={ChevronLeft} onClick={onBack}>
           Back to picks
         </Button>
+        {card.person.userId ? (
+          <LinkButton href={personHref(card.person.userId)} variant="quiet" icon={UserRound}>
+            Full profile
+          </LinkButton>
+        ) : null}
       </div>
       {details}
       <PickActions card={card} {...actions} />

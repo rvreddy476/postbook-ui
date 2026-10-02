@@ -16,6 +16,22 @@ import { PASSES_UNAVAILABLE_COPY, isPremiumUnavailable } from "../model/errors"
 import { boostLine, featureLabels, formatAmount, passLine, productBlurb, productTitle, sellsSuperSparks, SUPER_SPARK_PACKS_ANCHOR, superSparkBalanceLine, type MyPremium, type Product } from "../model/premium"
 import { DATING_BASE } from "../model/profile"
 
+/** What an active pass unlocks right now, from `/premium/me`'s entitlements; nothing without a pass. */
+export function PassIncludes({ me }: { me: Pick<MyPremium, "hasPass" | "features"> }) {
+  const labels = me.hasPass ? featureLabels(me.features) : []
+  if (labels.length === 0) return null
+  return (
+    <div>
+      <p className="pulse-field__help">Your pass includes</p>
+      <ul className="pulse-product__features" aria-label="Your pass includes">
+        {labels.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /** `superSparks`: draw the Super Spark balance (packs are on sale, or some are left from one). */
 export function Holding({ me, superSparks = false }: { me: MyPremium; superSparks?: boolean }) {
   return (
@@ -39,6 +55,7 @@ export function Holding({ me, superSparks = false }: { me: MyPremium; superSpark
           </li>
         ) : null}
       </ul>
+      <PassIncludes me={me} />
     </Panel>
   )
 }

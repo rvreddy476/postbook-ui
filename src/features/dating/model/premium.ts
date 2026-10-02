@@ -49,17 +49,26 @@ export function toCatalogue(wire: unknown): Product[] {
     .filter((p) => p.id && p.amountMinor > 0)
 }
 
+/**
+  What a pass unlocks, in our words. The server lists a mechanic's feature
+  only while that mechanic is on (catalogue `features`, `/premium/me`
+  entitlements), so nothing here decides what is on sale.
+*/
 const FEATURE_LABELS: Record<string, string> = {
+  advanced_filters: "Height, language and lifestyle filters",
   daily_boost: "One Boost every day",
   match_extend: "Extra time on a match",
+  more_daily_cards: "More people in your deck each day",
+  more_super_sparks: "More Super Sparks each day",
+  read_receipts: "See when your messages are read",
+  see_who_sparked: "See who sparked you",
+  travel_mode: "Browse another city before you go",
+  unlimited_rewinds: "Undo a pass as often as you like",
 }
 
-/** Alphabetical; an unknown feature code is not drawn. */
+/** Alphabetical, each once; an unknown feature code is not drawn. */
 export function featureLabels(features: string[]): string[] {
-  return features
-    .map((f) => FEATURE_LABELS[f] || "")
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b))
+  return [...new Set(features.map((f) => FEATURE_LABELS[f] || "").filter(Boolean))].sort((a, b) => a.localeCompare(b))
 }
 
 export function productTitle(p: Pick<Product, "kind" | "durationDays" | "name"> & { quantity?: number }): string {
