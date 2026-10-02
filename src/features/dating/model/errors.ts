@@ -7,6 +7,7 @@
 
 import { DEALBREAKERS_PASS_COPY } from "./dealbreakers"
 import { fairTurnCopy } from "./fairTurn"
+import { HIDE_KNOWN_UNAVAILABLE_COPY } from "./hideKnown"
 import { num, str, toDatingError, type DatingError } from "./wire"
 
 export const GENERIC_COPY = "Something went wrong. Please try again."
@@ -110,9 +111,26 @@ export function isMechanicOff(error: unknown): boolean {
   return toDatingError(error).code === "MECHANIC_NOT_ENABLED"
 }
 
+/* Kind messages (M13): the comment filter's limits the server sends in details. */
+function commentFilterInvalid(e: DatingError): string {
+  const words = num(e.details.max_words)
+  const min = num(e.details.min_len)
+  const max = num(e.details.max_len)
+  if (words > 0 && min > 0 && max > 0) return `Keep to ${words} words, each ${min} to ${max} characters, with no repeats.`
+  return "One of those words can't be used. Check the list and save again."
+}
+
+/* Prompt clips (in flight on the backend): the longest clip the server takes. */
+function clipTooLong(e: DatingError): string {
+  const seconds = Math.floor(num(e.details.max_ms) / 1000)
+  return seconds > 0 ? `Keep your clip to ${seconds} seconds.` : "That clip is too long. Try a shorter one."
+}
+
 /** Codes whose words depend on the details the server sent. */
 const DYNAMIC: Record<string, (e: DatingError) => string> = {
+  CLIP_TOO_LONG: clipTooLong,
   FAIR_TURN_LIMIT: fairTurnCopy,
+  INVALID_COMMENT_FILTER: commentFilterInvalid,
   INVALID_HEIGHT: heightInvalid,
   INVALID_TRAVEL_DAYS: travelDaysInvalid,
   TOO_MANY_INTEREST: tooMany("interests"),
@@ -127,6 +145,8 @@ const COPY: Record<string, string> = {
   AGE_REQUIRED: AGE_REQUIRED_COPY,
   CANDIDATE_UNAVAILABLE: "This person isn't available any more.",
   CHAT_UNAVAILABLE: "Chat is busy right now. Try again in a moment.",
+  CLIP_MEDIA_NOT_FOUND: "That clip couldn't be found. Record or upload it again.",
+  CLIP_NOT_READY: "Your clip is still processing. Try again in a moment.",
   CLIENT_PRICE_REFUSED: "That purchase couldn't be started. Try again.",
   CONNECTION_CHECK_UNAVAILABLE: "We couldn't check that right now. Try again in a moment.",
   CONSENT_REQUIRED: "We need your consent before saving that.",
@@ -139,7 +159,7 @@ const COPY: Record<string, string> = {
   FACE_COMPARE_UNAVAILABLE: "Verification is unavailable right now. Try again in a few minutes.",
   FILTERS_REQUIRE_PASS: FILTERS_PASS_COPY,
   FORBIDDEN: "You can't do that right now.",
-  HIDE_KNOWN_UNAVAILABLE: "We couldn't check your connections right now. Try again shortly.",
+  HIDE_KNOWN_UNAVAILABLE: HIDE_KNOWN_UNAVAILABLE_COPY,
   IDEMPOTENCY_KEY_REUSED: "That purchase changed. Start again.",
   IDENTITY_UNAVAILABLE: "We couldn't confirm your details right now. Try again in a moment.",
   INVALID_AGE_RANGE: "Choose an age range between 18 and 120, with the lower age first.",
@@ -153,6 +173,7 @@ const COPY: Record<string, string> = {
   INVALID_INTENT: "That choice isn't available any more. Pick what you're looking for and try again.",
   INVALID_INTENT_FILTER: "That choice isn't available any more. Pick again and save.",
   INVALID_INTEREST: "One of those interests isn't on the list any more. Pick again and save.",
+  INVALID_KIND_CHECK: "That message couldn't be checked, so it went as it is.",
   INVALID_INTERESTED_IN_GENDER: "That choice isn't available any more. Pick who you want to see and try again.",
   INVALID_LANGUAGE: "One of those languages isn't on the list any more. Pick again and save.",
   INVALID_LIFESTYLE: "That choice isn't available any more. Pick again and save.",
@@ -198,6 +219,7 @@ const COPY: Record<string, string> = {
   SELFIE_REVIEW_PENDING: "Your selfie is being reviewed.",
   SHARE_RECIPIENT_NOT_ALLOWED: "You can share your location only with a match or a trusted contact.",
   SPARK_NOTE_REFUSED: "Notes can't include phone numbers, emails or links.",
+  KIND_CHECK_RATE_LIMITED: "Messages go out without a kindness check for a little while.",
   LIKED_YOU_LOCKED: "See who sparked you with a pass, or find them in your deck.",
   SPARK_RATE_LIMITED: "You're out of sparks for now. Try again later.",
   SUPER_SPARK_LIMIT_REACHED: "You're out of Super Sparks for now. Get a pack, or try again later.",

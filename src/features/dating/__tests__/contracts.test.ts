@@ -21,7 +21,10 @@ import { toBlockResult, toBlocks, toLocationShare, toLocationShares, toPanicResu
 import { toLikedYou } from "../model/likedYou"
 import { sparkLimitLine, toDeclineResult, toIncomingSparks, toSparkLimit, toSparkOutcome, toStash, toStashEntry, verdictFor } from "../model/sparks"
 import { toSelfieChallenge, toSelfieResult, toVerificationStatus, viewFromRefusal, viewFromResult, viewFromStatus, recordMillis } from "../model/verification"
-import { bool, errorFromEnvelope, num, obj } from "../model/wire"
+import { arr, errorFromEnvelope, num, obj, str } from "../model/wire"
+import { toClientConfig } from "../model/clientConfig"
+import { HIDE_KNOWN_UNAVAILABLE_COPY, hideKnownLine, hideKnownRefusal, toHideKnown } from "../model/hideKnown"
+import { botheredDone, commentFilterBody, commentFilterRefusal, kindCheckFailure, kindReasonLines, noteHiddenLine, receivedView, sendVerdict, toBothered, toCommentFilter, toKindCheck } from "../model/kindMessages"
 import { checkinBody, checkinDone, checkinRefusal, toDateCheckins, toDateFeedback } from "../model/dateCheckin"
 import { dealbreakerRefusal, dealbreakersEnabled, DEALBREAKERS_PASS_COPY } from "../model/dealbreakers"
 import { currentFairTurn, fairTurnFromRefusal, fairTurnHeadline } from "../model/fairTurn"
@@ -676,21 +679,104 @@ const PARSERS: Record<string, (f: Fixture) => void> = {
   }),
 
   /*
-    In-flight backend work with no web screen (yet): M16 hide-known and M18
-    client config (screen protection is Android only). Read through the wire
-    helpers so a change of shape still fails here.
+    Prompt clips: in flight on the backend (uncommitted there when these were
+    copied) with no web screen yet. Read through the wire helpers so a change
+    of shape still fails here; the refusals already have our words.
   */
-  client_config_get_200: (f) => expect(bool(obj(f.data).screen_protection)).toBe(true),
-  client_config_get_200_off: (f) => expect(bool(obj(f.data).screen_protection)).toBe(false),
-  hide_known_get_200: (f) => {
+  prompt_clip_put_200_approved: (f) => {
     const w = obj(f.data)
-    expect([bool(w.enabled), num(w.hidden_count)]).toEqual([true, 2])
+    expect([num(w.prompt_id), str(w.kind), num(w.duration_ms), str(w.status)]).toEqual([1, "video", 12000, "approved"])
   },
-  hide_known_put_200: (f) => expect(f.data).toEqual(readFixture("hide_known_get_200").data),
-  hide_known_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+  prompt_clip_put_200_pending_review: (f) => {
+    const w = obj(f.data)
+    expect([num(w.prompt_id), str(w.kind), num(w.duration_ms), str(w.status)]).toEqual([2, "audio", 8000, "pending_review"])
+  },
+  prompt_clip_put_404_media_not_found: refusal("CLIP_MEDIA_NOT_FOUND"),
+  prompt_clip_put_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
     expect(isMechanicOff({ response: { status: 404, data: f } })).toBe(true)
   }),
-  hide_known_put_503_unavailable: refusal("HIDE_KNOWN_UNAVAILABLE"),
+  prompt_clip_put_409_not_ready: refusal("CLIP_NOT_READY"),
+  prompt_clip_put_422_too_long: refusal("CLIP_TOO_LONG", (f) => {
+    expect(copyFor(errorFromEnvelope(f))).toBe("Keep your clip to 30 seconds.")
+  }),
+  pulse_today_get_200_prompt_clip: (f) => {
+    const deck = toDeck(f)
+    expect(deck.cards).toHaveLength(1)
+    expect(deck.cards[0].person.firstName).toBe("Asha")
+    // The clip rides on the prompt; nothing on the web plays it yet.
+    const profile = obj(obj(arr(f.data)[0]).profile)
+    const prompt = obj(arr(obj(profile.detail).prompts)[0])
+    expect(obj(prompt.clip)).toEqual({ kind: "video", duration_ms: 10000, url: "/v1/dating/people/<owner>/prompts/4/clip" })
+  },
+
+  /* client config (mechanic M18): parsed and kept; the web can't block screen capture, so nothing is drawn */
+  client_config_get_200: (f) => expect(toClientConfig(f.data)).toEqual({ screenProtection: true }),
+  client_config_get_200_off: (f) => expect(toClientConfig(f.data)).toEqual({ screenProtection: false }),
+
+  /* hide from people I know (mechanic M16) */
+  hide_known_get_200: (f) => {
+    const h = toHideKnown(f.data)
+    // The placeholder timestamp does not parse: no date.
+    expect(h).toEqual({ enabled: true, hiddenCount: 2, refreshedAt: "" })
+    expect(hideKnownLine(h)).toBe("Hidden from 2 connections")
+  },
+  hide_known_put_200: (f) => expect(toHideKnown(f.data)).toEqual(toHideKnown(readFixture("hide_known_get_200").data)),
+  hide_known_get_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(hideKnownRefusal({ response: { status: 404, data: f } })).toBe("off")
+  }),
+  hide_known_put_503_unavailable: refusal("HIDE_KNOWN_UNAVAILABLE", (f) => {
+    expect(hideKnownRefusal({ response: { status: 503, data: f } })).toBe("unavailable")
+    expect(copyFor(errorFromEnvelope(f))).toBe(HIDE_KNOWN_UNAVAILABLE_COPY)
+  }),
+
+  /* kind messages (mechanic M13) */
+  kind_check_post_200_kind: (f) => {
+    const k = toKindCheck(f.data)
+    expect(k).toEqual({ kind: true, reasons: [] })
+    expect(sendVerdict(k)).toBe("send")
+    expect(receivedView(k, false, false)).toBe("plain")
+  },
+  kind_check_post_200_unkind: (f) => {
+    const k = toKindCheck(f.data)
+    expect(k).toEqual({ kind: false, reasons: ["insult"] })
+    expect(sendVerdict(k)).toBe("nudge")
+    expect(kindReasonLines(k.reasons)).toEqual(["It may read as an insult."])
+    expect(receivedView(k, false, false)).toBe("blurred")
+  },
+  kind_check_post_400_invalid: refusal("INVALID_KIND_CHECK", (f) => {
+    // A refused check sends the message as it is.
+    expect(kindCheckFailure({ response: { status: 400, data: f } })).toBe("other")
+    expect(sendVerdict(null)).toBe("send")
+  }),
+  kind_check_post_404_not_enabled: refusal("MECHANIC_NOT_ENABLED", (f) => {
+    expect(kindCheckFailure({ response: { status: 404, data: f } })).toBe("off")
+  }),
+  bothered_post_201: (f) => {
+    const b = toBothered(f.data)
+    expect(b).toEqual({ matchId: "<match>", bothered: true, offerReport: true })
+    expect(botheredDone(b)).toEqual({ kind: "thanks", offerReport: true })
+  },
+  comment_filter_get_200: (f) => expect(toCommentFilter(f.data)).toEqual({ filterUnkind: true, words: ["ex", "cricket"] }),
+  comment_filter_put_200: (f) => {
+    const c = toCommentFilter(f.data)
+    expect(c).toEqual(toCommentFilter(readFixture("comment_filter_get_200").data))
+    expect(commentFilterBody(c)).toEqual({ filter_unkind: true, words: ["ex", "cricket"] })
+  },
+  comment_filter_put_400_invalid: refusal("INVALID_COMMENT_FILTER", (f) => {
+    expect(commentFilterRefusal({ response: { status: 400, data: f } })).toBe("invalid")
+    expect(copyFor(errorFromEnvelope(f))).toBe("Keep to 50 words, each 2 to 30 characters, with no repeats.")
+  }),
+  sparks_incoming_get_200_note_hidden: (f) => {
+    const sparks = toIncomingSparks(f.data)
+    expect(sparks).toHaveLength(1)
+    // The note is still sent, and kept: tucked away, never dropped.
+    expect(sparks[0].note).toBe("you look stupid")
+    expect(sparks[0].noteHidden).toBe("unkind")
+    expect(noteHiddenLine(sparks[0].noteHidden)).toBe("It may be unkind.")
+    expect(sparks[0].person?.firstName).toBe("Asha")
+    // The other incoming fixtures carry no note_hidden.
+    expect(toIncomingSparks(readFixture("sparks_incoming_get_200").data)[0].noteHidden).toBe("")
+  },
 
   /* data export */
   data_export_post_202: (f) => {
@@ -783,7 +869,7 @@ describe("dating contract fixtures", () => {
   const names = fixtureNames()
 
   test("the fixtures are on disk", () => {
-    expect(names.length).toBeGreaterThanOrEqual(146)
+    expect(names.length).toBeGreaterThanOrEqual(162)
   })
 
   test("every fixture has a parser, and every parser has a fixture", () => {

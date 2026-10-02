@@ -13,6 +13,7 @@ import { DatingPhoto } from "../components/DatingPhoto"
 import { CheckinCards } from "../components/DateCheckin"
 import { FairTurnNotice } from "../components/FairTurn"
 import { FILTERS_HREF } from "../components/Filters"
+import { SparkNote } from "../components/KindMessages"
 import { usePreferences, useProfileOptions } from "../hooks/profile"
 import { ErrorState } from "../components/Guard"
 import { Button, Field, LinkButton, Loading, PageHead, StatePanel, TravelPill } from "../components/kit"
@@ -29,6 +30,7 @@ import { datingErrorCopy } from "../model/errors"
 import { SPARK_NOTE_MAX } from "../model/labels"
 import { isLikedYouLocked, likedYouHeadline, type LikedYouCard } from "../model/likedYou"
 import { firstMoveListLine, firstMoveState } from "../model/firstMove"
+import type { NoteHidden } from "../model/kindMessages"
 import { countdown, isOpen, matchHref, type Match } from "../model/matches"
 import { metaLine, nameLine, personHref, type Person } from "../model/people"
 import { SUPER_SPARK_PACKS_ANCHOR } from "../model/premium"
@@ -317,6 +319,7 @@ export function PersonRow({
   person,
   href,
   note,
+  noteHidden = "",
   meta,
   marker,
   highlight = false,
@@ -325,6 +328,8 @@ export function PersonRow({
   person: Person | null
   href?: string
   note?: string
+  /** M13: the comment filter tucked the note away; it opens with a tap, outside the row's link. */
+  noteHidden?: NoteHidden
   meta?: string
   /** Drawn under the name, e.g. the Super Spark marker. */
   marker?: ReactNode
@@ -350,10 +355,11 @@ export function PersonRow({
         {person ? <TravelPill person={person} /> : null}
         {facts.length ? <p className="pulse-rowcard__meta">{facts.join(" · ")}</p> : null}
         {meta ? <p className="pulse-rowcard__meta">{meta}</p> : null}
-        {note ? <p className="pulse-rowcard__note">“{note}”</p> : null}
+        {note && !noteHidden ? <p className="pulse-rowcard__note">“{note}”</p> : null}
       </div>
     </>
   )
+  const hiddenNote = note && noteHidden ? <SparkNote note={note} hidden={noteHidden} className="pulse-rowcard__note" /> : null
   return (
     <li className={highlight ? "pulse-rowcard pulse-rowcard--super" : "pulse-rowcard"}>
       {href ? (
@@ -363,6 +369,7 @@ export function PersonRow({
       ) : (
         <div className="pulse-rowcard__main">{body}</div>
       )}
+      {hiddenNote}
       {children ? <div className="pulse-rowcard__actions">{children}</div> : null}
     </li>
   )

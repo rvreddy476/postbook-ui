@@ -7,7 +7,10 @@
   on; absent means the feature is hidden (Preferences.dealbreakers === null).
   PUT replaces the whole list. Age, distance and intent are free; the pass
   filters (verified only, height, languages, the lifestyle basics) need a
-  pass — 403 DEALBREAKERS_REQUIRE_PASS without one, 400 INVALID_DEALBREAKER
+  pass to ADD — 403 DEALBREAKERS_REQUIRE_PASS without one. A pass code saved
+  earlier may be kept without a pass (it counts again with the next one), so
+  a save made without a pass sends the saved pass codes back rather than
+  dropping them, and never adds a new one. 400 INVALID_DEALBREAKER
   for an unknown or repeated code, 404 MECHANIC_NOT_ENABLED once the flag is
   off. The server decides all of it; this file only decides what to draw and
   what to send.
@@ -106,13 +109,14 @@ export function toggleDealbreaker(list: readonly string[], code: DealbreakerCode
 
 /**
   The whole list to PUT: known codes only, once each, in the server's order,
-  only for preferences that are set (a dealbreaker on nothing means nothing),
-  and without the pass codes when the viewer holds no pass (the server would
-  refuse the lot).
+  only for preferences that are set (a dealbreaker on nothing means nothing).
+  Without a pass, a pass code goes only when it was already saved (`saved`):
+  keeping one is accepted, adding one would refuse the lot.
 */
-export function dealbreakersToSend(list: readonly string[], isSet: (code: DealbreakerCode) => boolean, withPass: boolean): string[] {
+export function dealbreakersToSend(list: readonly string[], isSet: (code: DealbreakerCode) => boolean, withPass: boolean, saved: readonly string[] = []): string[] {
   const set = new Set(list)
-  return DEALBREAKER_ORDER.filter((c) => set.has(c) && isSet(c) && (withPass || !isPassDealbreaker(c)))
+  const kept = new Set(saved)
+  return DEALBREAKER_ORDER.filter((c) => set.has(c) && isSet(c) && (withPass || !isPassDealbreaker(c) || kept.has(c)))
 }
 
 export function sameDealbreakers(a: readonly string[], b: readonly string[]): boolean {
@@ -124,16 +128,16 @@ export function sameDealbreakers(a: readonly string[], b: readonly string[]): bo
 /**
   Adds `dealbreakers` to a PUT /preferences body, and only when the switches
   were touched: the member is never sent while the flag is off (that is a
-  404), and an untouched list is left as the server holds it (so pass codes
-  saved earlier survive a save made without a pass). When sent, it is the
-  whole list, cleaned by dealbreakersToSend.
+  404), and an untouched list is left as the server holds it. When sent, it
+  is the whole list, cleaned by dealbreakersToSend: without a pass the saved
+  pass codes go back as they were, and no new one is added.
 */
 export function withDealbreakers(
   body: Record<string, unknown>,
   input: { enabled: boolean; saved: readonly string[]; chosen: readonly string[]; isSet: (code: DealbreakerCode) => boolean; withPass: boolean },
 ): Record<string, unknown> {
   if (!input.enabled || sameDealbreakers(input.saved, input.chosen)) return body
-  return { ...body, dealbreakers: dealbreakersToSend(input.chosen, input.isSet, input.withPass) }
+  return { ...body, dealbreakers: dealbreakersToSend(input.chosen, input.isSet, input.withPass, input.saved) }
 }
 
 /* ── the free-only view (filters flag off) ───────────────────────── */

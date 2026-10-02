@@ -16,6 +16,7 @@ import { LIKED_YOU_CTA, lockedTileLabel, moreThanShown, unlockedTileLabel, type 
 import { nameLine } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import { DatingPhoto } from "./DatingPhoto"
+import { SparkNote } from "./KindMessages"
 import { Button, LinkButton, TravelPill } from "./kit"
 
 export const PREMIUM_HREF = `${DATING_BASE}/premium`
@@ -102,7 +103,7 @@ export function UnlockedTile({
           {person?.verified ? <BadgeCheck size={14} className="pulse-like__verified" /> : null}
         </span>
       </button>
-      {card.note ? <p className="pulse-like__note">“{card.note}”</p> : null}
+      <SparkNote note={card.note} hidden={card.noteHidden} className="pulse-like__note" />
       <div className="pulse-like__actions">
         <Button variant="primary" icon={Sparkles} busy={busy && accepting} disabled={busy || !person} onClick={() => onAccept(card)} aria-label={`Spark back to ${first}`}>
           Spark back

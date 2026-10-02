@@ -168,10 +168,23 @@ describe("dealbreakers: which switches, and what is sent", () => {
     expect(toggleDealbreaker(["age", "age", "bogus"], "intent", true)).toEqual(["age", "intent"])
   })
 
-  test("the list sent: set preferences only, pass codes only with a pass", () => {
+  test("the list sent: set preferences only; without a pass, only the pass codes already saved", () => {
     const isSet = (c: DealbreakerCode) => dealbreakerSetInForm(form, c)
     expect(dealbreakersToSend(["diet", "age", "exercise"], isSet, true)).toEqual(["age", "diet"])
     expect(dealbreakersToSend(["diet", "age"], isSet, false)).toEqual(["age"])
+    expect(dealbreakersToSend(["diet", "age"], isSet, false, ["diet"])).toEqual(["age", "diet"])
+    expect(dealbreakersToSend(["diet", "age", "height"], isSet, false, ["diet"])).toEqual(["age", "diet"])
+    // A saved pass code on a preference that is no longer set means nothing, and goes.
+    expect(dealbreakersToSend(["exercise"], isSet, false, ["exercise"])).toEqual([])
+  })
+
+  test("filters off: the free-only save sends the saved pass codes back untouched", () => {
+    // DealbreakersOnly can't see the pass preferences, so a saved pass code counts as set.
+    const prefs = toPreferences({ min_age: 25, max_age: 35, distance_km: 25, dealbreakers: ["age", "diet"] })
+    const saved = prefs.dealbreakers!
+    const isSet = (c: DealbreakerCode) => (isPassDealbreaker(c) ? saved.includes(c) : dealbreakerSetInPreferences(prefs, c))
+    expect(dealbreakersToSend(toggleDealbreaker(saved, "distance", true), isSet, false, saved)).toEqual(["age", "distance", "diet"])
+    expect(dealbreakersToSend(toggleDealbreaker(saved, "age", false), isSet, false, saved)).toEqual(["diet"])
   })
 
   test("the body: no member while off or untouched, the whole list when touched", () => {
@@ -182,8 +195,12 @@ describe("dealbreakers: which switches, and what is sent", () => {
     expect(withDealbreakers(body, { enabled: true, saved: ["age", "diet"], chosen: ["age", "diet", "intent"], isSet, withPass: true }).dealbreakers).toEqual(["age", "intent", "diet"])
     // Switched everything off: [] is sent, which clears them.
     expect(withDealbreakers(body, { enabled: true, saved: ["age"], chosen: [], isSet, withPass: true }).dealbreakers).toEqual([])
-    // Without a pass, a touched list leaves the pass codes out rather than be refused.
-    expect(withDealbreakers(body, { enabled: true, saved: ["diet"], chosen: ["age", "diet"], isSet, withPass: false }).dealbreakers).toEqual(["age"])
+    // Without a pass, a touched list keeps the pass codes saved earlier (the server accepts keeping one)…
+    expect(withDealbreakers(body, { enabled: true, saved: ["diet"], chosen: ["age", "diet"], isSet, withPass: false }).dealbreakers).toEqual(["age", "diet"])
+    // …and never adds a new one (that alone would be 403 DEALBREAKERS_REQUIRE_PASS).
+    expect(withDealbreakers(body, { enabled: true, saved: ["diet"], chosen: ["age", "diet", "height"], isSet, withPass: false }).dealbreakers).toEqual(["age", "diet"])
+    // A saved pass code switched off still goes (removing one never needs a pass).
+    expect(withDealbreakers(body, { enabled: true, saved: ["age", "diet"], chosen: ["age"], isSet, withPass: false }).dealbreakers).toEqual(["age"])
     expect(sameDealbreakers(["a", "b"], ["b", "a", "a"])).toBe(true)
   })
 

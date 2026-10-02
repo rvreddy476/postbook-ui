@@ -7,6 +7,7 @@
   was a Super Spark. Unlocked: each card carries the person.
 */
 
+import { toNoteHidden, type NoteHidden } from "./kindMessages"
 import { likedYouPhotoPath, nameLine, photoPath, toPerson, travelMarker, type Person } from "./people"
 import { arr, bool, num, obj, str, time, toDatingError } from "./wire"
 
@@ -19,6 +20,8 @@ export interface LikedYouCard {
   /** Present only when unlocked. */
   person: Person | null
   note: string
+  /** M13: the viewer's comment filter tucks the note away ("" when it doesn't). */
+  noteHidden: NoteHidden
 }
 
 export interface LikedYou {
@@ -36,6 +39,7 @@ export function toLikedYou(wire: unknown): LikedYou {
   const cards = arr(w.items)
     .map((raw) => {
       const i = obj(raw)
+      const note = unlocked ? str(i.note) : ""
       return {
         sparkId: str(i.spark_id),
         isSuper: bool(i.super),
@@ -44,7 +48,8 @@ export function toLikedYou(wire: unknown): LikedYou {
         photoUrl: unlocked ? photoPath(i.photo_url) : likedYouPhotoPath(i.photo_url),
         // Never trust a locked card to carry a person, even if one appears.
         person: unlocked ? toPerson(i.person) : null,
-        note: unlocked ? str(i.note) : "",
+        note,
+        noteHidden: note ? toNoteHidden(i.note_hidden) : "",
       }
     })
     .filter((c) => c.sparkId)
@@ -94,6 +99,6 @@ export function lockLikedYou(data: LikedYou): LikedYou {
   return {
     total: data.total,
     unlocked: false,
-    cards: data.cards.map((c) => ({ sparkId: c.sparkId, isSuper: c.isSuper, createdAt: c.createdAt, photoUrl: likedYouPhotoPath(c.photoUrl), person: null, note: "" })),
+    cards: data.cards.map((c) => ({ sparkId: c.sparkId, isSuper: c.isSuper, createdAt: c.createdAt, photoUrl: likedYouPhotoPath(c.photoUrl), person: null, note: "", noteHidden: "" })),
   }
 }

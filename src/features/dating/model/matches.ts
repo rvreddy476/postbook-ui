@@ -170,3 +170,13 @@ export function chatHref(conversationId: string): string {
 }
 
 export const matchHref = (matchId: string) => `/dating/matches/${encodeURIComponent(matchId)}`
+
+/**
+  The match whose chat is this conversation, or "". chat-service doesn't say
+  which conversations are Pulse chats, so the viewer's own matches decide
+  (M13: only a Pulse chat is kind-checked).
+*/
+export function matchForConversation(matches: readonly Pick<Match, "id" | "conversationId">[], conversationId: string): string {
+  if (!conversationId) return ""
+  return matches.find((m) => m.conversationId === conversationId)?.id ?? ""
+}

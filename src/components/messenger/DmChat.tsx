@@ -47,6 +47,7 @@ import { useNotifications } from '@/contexts/NotificationContext'
 import { initiateCall } from '@/services/callService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
+import { useDatingKindChat } from '@/features/dating/components/KindChat'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
@@ -216,6 +217,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   const [attachError, setAttachError] = useState<string | null>(null)
   // See where this is set: the thread is awaiting the other side's accept.
   const [isRequestThread, setIsRequestThread] = useState(false)
+  // Pulse kind messages (M13). Inert unless this is a Pulse match's chat.
+  const kindChat = useDatingKindChat({ conversationId: openConversationId, myId, peerName: userName, messages })
 
   // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
@@ -544,9 +547,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     setTyping()
   }, [setTyping])
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async (opts?: { kindChecked?: boolean }) => {
     const text = input.trim()
     if (!text || !convIdRef.current) return
+    if (kindChat.active && !opts?.kindChecked && !(await kindChat.okToSend(text))) return
     const optimisticId = `opt-${Date.now()}`
     const optimistic: DisplayMessage = {
       id: optimisticId, senderId: myId, text,
@@ -576,7 +580,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         })
       }
     } catch (err) { console.error('[DmChat] send failed:', err) }
-  }, [input, myId, replyingTo, isRequestThread, messages.length, toast])
+  }, [input, myId, replyingTo, isRequestThread, messages.length, toast, kindChat.active, kindChat.okToSend])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1071,8 +1075,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                       className={`font-semibold underline underline-offset-2 ${isMe ? 'text-white/90 hover:text-white' : 'text-brand-text/60 hover:text-brand-text/60'}`}>
                       Attachment
                     </a>
-                  ) : msg.text}
+                  ) : kindChat.bubbleText(msg, msg.text)}
                 </div>
+                {kindChat.afterBubble(msg)}
 
                 {/* Edited indicator */}
                 {msg.isEdited && !msg.isDeleted && (
@@ -1255,6 +1260,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         </div>
       )}
 
+      {kindChat.nudge(input, { onEdit: () => inputRef.current?.focus(), onSendAnyway: () => void handleSend({ kindChecked: true }) })}
+      {kindChat.dialogs}
+
       {/* Edit bar */}
       {editingMsgId ? (
         <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4">
@@ -1333,7 +1341,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                 4.32:1 on white, which clears the 3.00:1 bar for an icon. It
                 only takes colour once there is something to send. */}
             <button
-              onClick={handleSend}
+              onClick={() => void handleSend()}
               disabled={!hasText}
               aria-label="Send message"
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${hasText

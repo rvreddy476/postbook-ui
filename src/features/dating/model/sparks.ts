@@ -3,6 +3,7 @@
   and the stash (save for later).
 */
 
+import { toNoteHidden, type NoteHidden } from "./kindMessages"
 import { SPARK_NOTE_MAX } from "./labels"
 import { toPerson, type Person } from "./people"
 import { arr, bool, num, obj, str, time, type DatingError } from "./wire"
@@ -73,6 +74,8 @@ export interface IncomingSpark {
   person: Person | null
   /** A Super Spark: the server already lists these first. */
   isSuper: boolean
+  /** M13: the viewer's comment filter tucks the note away ("" when it doesn't). The note is still sent. */
+  noteHidden: NoteHidden
 }
 
 export function toIncomingSparks(wire: unknown): IncomingSpark[] {
@@ -86,6 +89,7 @@ export function toIncomingSparks(wire: unknown): IncomingSpark[] {
         createdAt: time(w.created_at),
         person: toPerson(w.person),
         isSuper: bool(w.super),
+        noteHidden: str(w.note) ? toNoteHidden(w.note_hidden) : "",
       }
     })
     .filter((s) => s.id)

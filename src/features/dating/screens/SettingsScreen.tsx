@@ -1,6 +1,10 @@
 "use client"
 
-/* /dating/settings — privacy, first move, read receipts, pausing, consents, the data export, deleting the profile. */
+/*
+  /dating/settings — privacy, people you know (M16), the comment filter (M13),
+  first move, read receipts, pausing, consents, the data export, deleting the
+  profile.
+*/
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,6 +15,10 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { FIRST_MOVE_TITLE, FirstMoveEditor } from "../components/FirstMove"
 import { ErrorState, Guard } from "../components/Guard"
+import { CommentFilterForm, HideKnownSetting } from "../components/KindMessages"
+import { useCommentFilter, useHideKnown, useSaveCommentFilter, useSaveHideKnown } from "../hooks/kindness"
+import { HIDE_KNOWN_TITLE, hideKnownRefusal } from "../model/hideKnown"
+import { addWord, COMMENT_FILTER_SUB, COMMENT_FILTER_TITLE, commentFilterRefusal, removeWord, sameWords, type CommentFilter } from "../model/kindMessages"
 import { Button, Confirm, Loading, PageHead, Panel, Pill, Toggle } from "../components/kit"
 import { ReadReceiptsSetting } from "../components/MatchExtras"
 import { useConsents, useDeleteProfile, useGate, usePatchPrivacy, usePreferences, usePrivacy, useSetConsent, useSetPaused } from "../hooks/profile"
@@ -223,6 +231,128 @@ function ReadReceiptsSection() {
   )
 }
 
+/**
+  Hide from people I know (M16). Hidden while the read is in flight and when
+  the server says the mechanic is off (404). Turning it on can fail with 503
+  HIDE_KNOWN_UNAVAILABLE: the switch stays off and says to try again.
+*/
+function HideKnownSection() {
+  const toast = useGlobalToast()
+  const hide = useHideKnown()
+  const save = useSaveHideKnown()
+  const [error, setError] = useState("")
+
+  if (hide.isPending) return null
+  if (hide.isError) {
+    if (hideKnownRefusal(hide.error) === "off") return null
+    return (
+      <Panel title={HIDE_KNOWN_TITLE}>
+        <ErrorState error={hide.error} onRetry={() => void hide.refetch()} />
+      </Panel>
+    )
+  }
+
+  return (
+    <Panel title={HIDE_KNOWN_TITLE}>
+      <HideKnownSetting
+        state={hide.data}
+        busy={save.isPending}
+        error={error}
+        onChange={(on) => {
+          setError("")
+          save.mutate(on, {
+            onSuccess: (state) => toast({ type: "success", title: state.enabled ? "You're hidden from people you know" : "People you know can see you again" }),
+            onError: (e) => {
+              // Switched off since the page loaded: read again, and the section goes.
+              if (hideKnownRefusal(e) === "off") void hide.refetch()
+              else setError(datingErrorCopy(e))
+            },
+          })
+        }}
+      />
+    </Panel>
+  )
+}
+
+/**
+  The comment filter (M13). Hidden while the read is in flight and when the
+  server says the mechanic is off (404). The switch saves at once with the
+  saved words; the words save with their own button. 400
+  INVALID_COMMENT_FILTER is an inline error.
+*/
+function CommentFilterSection() {
+  const toast = useGlobalToast()
+  const filter = useCommentFilter()
+  const save = useSaveCommentFilter()
+  /** null: nothing edited, so the saved words are shown. */
+  const [words, setWords] = useState<string[] | null>(null)
+  const [draft, setDraft] = useState("")
+  const [error, setError] = useState("")
+  const [saving, setSaving] = useState<"" | "toggle" | "words">("")
+
+  if (filter.isPending) return null
+  if (filter.isError) {
+    if (commentFilterRefusal(filter.error) === "off") return null
+    return (
+      <Panel title={COMMENT_FILTER_TITLE}>
+        <ErrorState error={filter.error} onRetry={() => void filter.refetch()} />
+      </Panel>
+    )
+  }
+
+  const saved = filter.data
+  const current = words ?? saved.words
+  const put = (next: CommentFilter, what: "toggle" | "words", done: string) => {
+    setSaving(what)
+    setError("")
+    save.mutate(next, {
+      onSuccess: () => {
+        if (what === "words") setWords(null)
+        toast({ type: "success", title: done })
+      },
+      onError: (e) => {
+        if (commentFilterRefusal(e) === "off") void filter.refetch()
+        else setError(datingErrorCopy(e))
+      },
+      onSettled: () => setSaving(""),
+    })
+  }
+
+  return (
+    <Panel title={COMMENT_FILTER_TITLE} sub={COMMENT_FILTER_SUB}>
+      <CommentFilterForm
+        filterUnkind={saved.filterUnkind}
+        words={current}
+        draft={draft}
+        error={error}
+        toggleBusy={saving === "toggle"}
+        saveBusy={saving === "words"}
+        dirty={!sameWords(current, saved.words)}
+        onToggle={(on) => put({ filterUnkind: on, words: saved.words }, "toggle", on ? "Unkind comments are hidden" : "Unkind comments are shown")}
+        onDraft={(value) => {
+          setDraft(value)
+          setError("")
+        }}
+        onAdd={() => {
+          const next = addWord(current, draft)
+          if (next.problem) {
+            setError(next.problem)
+            return
+          }
+          setWords(next.words)
+          setDraft("")
+          setError("")
+        }}
+        onRemove={(word) => {
+          setWords(removeWord(current, word))
+          setError("")
+        }}
+        onSave={() => put({ filterUnkind: saved.filterUnkind, words: current }, "words", "Hidden words saved")}
+      />
+    </Panel>
+  )
+}
+
 function SettingsBody() {
   const router = useRouter()
   const toast = useGlobalToast()
@@ -274,6 +404,10 @@ function SettingsBody() {
           <PrivacyToggles privacy={privacy.data} busy={patch.isPending} toggles={visiblePrivacyToggles(preferences.data, privacy.data)} onChange={(key, value) => patch.mutate(privacyPatch(key, value), { onError: fail })} />
         )}
       </Panel>
+
+      <HideKnownSection />
+
+      <CommentFilterSection />
 
       <FirstMoveSection />
 

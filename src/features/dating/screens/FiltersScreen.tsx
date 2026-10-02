@@ -12,6 +12,8 @@
       section is off under an upsell, and saved pass filters can be cleared;
     - dealbreakers (M12) exist while GET /preferences sends `dealbreakers`:
       a switch beside each set preference, the whole list PUT when touched.
+      Locked, a pass dealbreaker saved earlier is sent back as it was (the
+      server keeps it); a new one can't be added (its switch is off).
       Filters flag off but dealbreakers on: the free preferences alone, each
       with its switch. A 404 since the page loaded hides them again.
   Saving refreshes the deck (the preferences mutation invalidates it).
@@ -36,8 +38,11 @@ function DealbreakersOnly({ prefs, onOff }: { prefs: Preferences; onOff: () => v
   const save = usePutPreferences()
   const [chosen, setChosen] = useState<string[] | null>(null)
   const [error, setError] = useState("")
-  const current = chosen ?? prefs.dealbreakers ?? []
-  const isSet = (code: DealbreakerCode) => !isPassDealbreaker(code) && dealbreakerSetInPreferences(prefs, code)
+  const saved = prefs.dealbreakers ?? []
+  const current = chosen ?? saved
+  // The pass preferences aren't on this screen (the filters flag is off): a pass
+  // code saved earlier goes back as it is, since the server holds what it is on.
+  const isSet = (code: DealbreakerCode) => (isPassDealbreaker(code) ? saved.includes(code) : dealbreakerSetInPreferences(prefs, code))
 
   return (
     <DealbreakersOnlyPanel
@@ -51,7 +56,7 @@ function DealbreakersOnly({ prefs, onOff }: { prefs: Preferences; onOff: () => v
       }}
       onSave={() =>
         save.mutate(
-          { dealbreakers: dealbreakersToSend(current, isSet, false) },
+          { dealbreakers: dealbreakersToSend(current, isSet, false, saved) },
           {
             onSuccess: () => {
               setChosen(null)
