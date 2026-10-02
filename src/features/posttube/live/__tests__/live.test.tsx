@@ -4,10 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { formatLocalDateTime, parseStream, rowStatusView, watchState, type StreamRow } from "@/features/live/discovery";
+import { EMPTY_STREAM_FORM, formatLocalDateTime, parseStream, rowStatusView, watchState, type StreamRow } from "@/features/live/discovery";
 import { visibleTabs } from "../../channel/channelModel";
 import { HUB_NAV } from "../../hub/hubNav";
-import { HubLiveTable, StreamFormView, publishRecordingHref, topicsFor } from "../../hub/components/HubLivePage";
+import { HubLiveTable, ScheduleGateView, StreamFormView, publishRecordingHref, topicsFor } from "../../hub/components/HubLivePage";
 import { ChannelLiveView, LiveRing } from "../ChannelLive";
 import { LiveChip, LiveStreamCard } from "../LiveCards";
 import { LiveWatchView } from "../LiveWatchPage";
@@ -320,6 +320,42 @@ describe("Creator Hub → Live", () => {
     expect(html).toContain("Replace cover");
     expect(html).toContain('role="alert"');
     expect(html).toContain(">Gaming<"); // the saved topic stays selectable even before the list loads
+  });
+});
+
+describe("going live from the hub, and a full stream", () => {
+  const formProps = { values: { ...EMPTY_STREAM_FORM }, onChange: () => {}, check: null, categories: [], editing: false, busy: false, error: null, coverPreview: null, onPickCover: () => {}, onSubmit: () => {}, onCancel: () => {} };
+
+  test("Schedule a stream: the account check, the closed-pilot notice, or the nearly-ready panel replaces the form", () => {
+    const gate = (g: "loading" | "pilot" | "nearly") => renderToStaticMarkup(<ScheduleGateView gate={g} panel={<div data-panel />} onClose={() => {}} />);
+    expect(gate("loading")).toContain("Checking your account…");
+    expect(gate("loading")).not.toContain("data-panel");
+    expect(gate("pilot")).toContain("Going live is in a closed pilot right now.");
+    expect(gate("pilot")).not.toContain("data-panel");
+    expect(gate("nearly")).toContain("data-panel");
+    expect(gate("nearly")).not.toContain("closed pilot");
+    for (const g of ["loading", "pilot", "nearly"] as const) {
+      expect(gate(g)).toContain(">Close<");
+      expect(gate(g)).not.toContain("<form");
+    }
+  });
+
+  test("the schedule form carries the viewer-cap note only while a cap applies", () => {
+    const capped = renderToStaticMarkup(<StreamFormView {...formProps} note="Your first streams are limited to 200 viewers." />);
+    expect(capped).toContain("data-viewer-cap");
+    expect(capped).toContain("Your first streams are limited to 200 viewers.");
+    expect(renderToStaticMarkup(<StreamFormView {...formProps} note="" />)).not.toContain("data-viewer-cap");
+    expect(renderToStaticMarkup(<StreamFormView {...formProps} />)).not.toContain("data-viewer-cap");
+  });
+
+  test("a full stream offers Try again; any other refusal does not", () => {
+    const r = row("a");
+    const base = { row: r, state: watchState(r, NOW), view: rowStatusView(r), creator: r.creator, topic: "", isHost: false, signedIn: true, chat: null };
+    const full = renderToStaticMarkup(<LiveWatchView {...base} watchError="This stream is full right now. Try again in a little while." onRetryWatch={() => {}} />);
+    expect(full).toContain("This stream is full right now. Try again in a little while.");
+    expect(full).toContain(">Try again<");
+    const refused = renderToStaticMarkup(<LiveWatchView {...base} watchError="Only the creator's followers can watch this stream." />);
+    expect(refused).not.toContain(">Try again<");
   });
 });
 

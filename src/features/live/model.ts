@@ -149,6 +149,23 @@ export function parseModeratorList(body: unknown): string[] {
   return Array.isArray(ids) ? ids.map(str).filter(Boolean) : []
 }
 
+/** What the author was in this stream when the message was sent. */
+export type LiveChatAuthorRole = "host" | "moderator" | "viewer"
+
+/**
+ * The author card on every chat row (contract 2 Oct 2026). Only `user_id`
+ * and `role` are guaranteed: a failed lookup leaves name, handle and avatar
+ * out, and they read as "" here (features/live/author.ts).
+ */
+export interface LiveChatAuthor {
+  user_id: string
+  name: string
+  handle: string
+  avatar_url: string
+  badges: string[]
+  role: LiveChatAuthorRole
+}
+
 export interface LiveChatMessage {
   id: string
   stream_id: string
@@ -156,6 +173,8 @@ export interface LiveChatMessage {
   text: string
   is_pinned?: boolean
   created_at: string
+  /** Absent or null on a row from before the contract. */
+  author?: LiveChatAuthor | null
 }
 
 /** Moderator list cap from the contract (PUT /streams/:id/moderators). */

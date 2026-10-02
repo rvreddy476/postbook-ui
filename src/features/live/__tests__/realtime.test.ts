@@ -47,7 +47,10 @@ describe("parseLiveFrame (live-service-v2 room events)", () => {
   })
   it("chat.message is exactly the GET /chat row", () => {
     const row = { id: "m1", stream_id: S, user_id: "u1", text: "hi", is_pinned: false, created_at: "2026-10-01T10:00:00Z" }
-    expect(parseLiveFrame(roomEvent("chat.message", row))).toEqual({ kind: "chat", stream_id: S, message: row })
+    // A frame from before the author contract carries no card: author is null and the name falls back.
+    expect(parseLiveFrame(roomEvent("chat.message", row))).toEqual({ kind: "chat", stream_id: S, message: { ...row, author: null } })
+    const author = { user_id: "u1", name: "Asha", handle: "asha", avatar_url: "", badges: [], role: "host" }
+    expect(parseLiveFrame(roomEvent("chat.message", { ...row, author }))).toEqual({ kind: "chat", stream_id: S, message: { ...row, author } })
     expect(parseLiveFrame(roomEvent("chat.message", { ...row, id: "" }))).toBeNull()
   })
   it("the retired v1 names are not read", () => {

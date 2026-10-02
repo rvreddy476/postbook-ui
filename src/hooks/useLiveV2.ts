@@ -26,7 +26,18 @@ import type {
 } from "@/features/live/model"
 import { parseBanList, parseModeratorList, parseStreamList } from "@/features/live/model"
 import { chatReducer, initialChatState, type ChatState, type ChatAction } from "@/features/live/chat"
-import { viewerTokenRetry } from "@/features/live/errors"
+import { isPilotRefusal, viewerTokenRetry } from "@/features/live/errors"
+import { parseChatList, parseChatMessage } from "@/features/live/author"
+import {
+  ELIGIBILITY_PATH,
+  gateRequirements,
+  goLiveGate,
+  parseEligibility,
+  requirementsFromError,
+  type GoLiveGate,
+  type LiveEligibility,
+  type LiveRequirement,
+} from "@/features/live/eligibility"
 import {
   applyStreamFrame,
   chatPollInterval,
@@ -70,7 +81,8 @@ import {
 // live-service-v2 (LiveKit) is the only live stack. Routes (handler.go,
 // moderation_routes.go, 1 Oct 2026):
 //   GET    /v1/livestream/streams                      live now (data[], meta.next_cursor)
-//   POST   /v1/livestream/streams                      create   (403 LIVE_NOT_ENABLED | LIVE_BANNED)
+//   GET    /v1/livestream/eligibility                  who may go live (mode, eligible, requirements, viewer_cap)
+//   POST   /v1/livestream/streams                      create   (403 LIVE_NOT_ENABLED | LIVE_NOT_ELIGIBLE | LIVE_BANNED, 503 AUTHORITY_UNAVAILABLE)
 //   GET    /v1/livestream/streams/:id                  detail
 //   POST   /v1/livestream/streams/:id/start            data.stream.status "starting" + publisher token
 //   POST   /v1/livestream/streams/:id/end              data = the stream row
@@ -120,6 +132,7 @@ export const liveV2Keys = {
   chat: (id: string) => [...liveV2Keys.all, "chat", id] as const,
   bans: (id: string) => [...liveV2Keys.all, "bans", id] as const,
   moderators: (id: string) => [...liveV2Keys.all, "moderators", id] as const,
+  eligibility: () => [...liveV2Keys.all, "eligibility"] as const,
 }
 
 // ── List currently-live streams (infinite scroll) ─────────────────────
@@ -255,8 +268,8 @@ export function useLiveRoom(streamId: string, limit = 50): LiveRoom {
     queryKey: liveV2Keys.chat(streamId),
     queryFn: async () => {
       const res = await api.get(`/v1/livestream/streams/${streamId}/chat`, { params: { limit } })
-      const items = unwrap<LiveChatMessage[]>(res.data, [])
-      return Array.isArray(items) ? items : []
+      // Every row carries its author card (name, handle, avatar, badges, role).
+      return parseChatList(res.data)
     },
     enabled: !!streamId,
     staleTime: 0,
@@ -321,9 +334,82 @@ export function useSendLiveChat(streamId: string) {
   return useMutation<LiveChatMessage, AxiosError, { text: string }>({
     mutationFn: async ({ text }) => {
       const res = await api.post(`/v1/livestream/streams/${streamId}/chat`, { text })
-      return unwrap<LiveChatMessage>(res.data, {} as LiveChatMessage)
+      // The answer is the stored row, author card included; a body with no id reads as "nothing to show yet".
+      return parseChatMessage(unwrap<unknown>(res.data, null)) ?? ({} as LiveChatMessage)
     },
   })
+}
+
+// ── Who may go live ───────────────────────────────────────────────────
+//
+// GET /v1/livestream/eligibility (features/live/eligibility.ts). Asked before
+// a go-live form is shown. A failed or unreadable answer is an error here and
+// the caller falls back to the form: the server decides again on submit.
+
+export function useLiveEligibility(enabled = true) {
+  return useQuery<LiveEligibility>({
+    queryKey: liveV2Keys.eligibility(),
+    queryFn: async () => {
+      const parsed = parseEligibility((await api.get(ELIGIBILITY_PATH)).data)
+      if (!parsed) throw new Error("eligibility: unreadable answer")
+      return parsed
+    },
+    enabled,
+    retry: false,
+    // The server caches a user's answer for 60 s; coming back from "Create a post" asks again.
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+export interface GoLiveGateState {
+  /** loading · form · pilot (PilotNotice) · nearly (NearlyReady). */
+  gate: GoLiveGate
+  /** The rows for the "nearly ready" panel. */
+  requirements: LiveRequirement[]
+  /** The new-streamer viewer cap while it applies. */
+  viewerCap: number | null
+  rechecking: boolean
+  /** Give it the error of a create / start: true when it was a pilot or eligibility refusal (now on screen). */
+  refuse: (err: unknown) => boolean
+  /** "Check again". */
+  recheck: () => void
+}
+
+/**
+ * What a go-live form shows before and after it is submitted. `enabled`
+ * false skips the question (editing a stream that already exists).
+ */
+export function useGoLiveGate(enabled = true): GoLiveGateState {
+  const query = useLiveEligibility(enabled)
+  const [pilotRefused, setPilotRefused] = React.useState(false)
+  const [refused, setRefused] = React.useState<LiveRequirement[] | null>(null)
+  const { refetch } = query
+
+  const refuse = React.useCallback((err: unknown) => {
+    if (isPilotRefusal(err)) {
+      setPilotRefused(true)
+      return true
+    }
+    const rows = requirementsFromError(err)
+    if (!rows) return false
+    setRefused(rows)
+    return true
+  }, [])
+
+  const recheck = React.useCallback(() => {
+    setRefused(null)
+    void refetch()
+  }, [refetch])
+
+  return {
+    gate: goLiveGate({ loading: enabled && query.isLoading, eligibility: enabled ? query.data : null, pilotRefused, refused }),
+    requirements: gateRequirements(refused, enabled ? query.data : null),
+    viewerCap: enabled ? query.data?.viewer_cap ?? null : null,
+    rechecking: query.isFetching,
+    refuse,
+    recheck,
+  }
 }
 
 // ── Moderation (host, stream moderators) ──────────────────────────────

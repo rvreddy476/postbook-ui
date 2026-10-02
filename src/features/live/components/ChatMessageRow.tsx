@@ -5,17 +5,22 @@ import { MoreHorizontal } from "lucide-react"
 
 import type { LiveChatMessage } from "../model"
 import type { MessageAction, MessageActionKey } from "../chat"
+import { FoundingBadge } from "./FoundingBadge"
 
 /**
  * One chat line. The "more" button exists only when the reader has at
  * least one action on this message (messageActions decides; viewers see
  * Report only, never host tools).
+ *
+ * `name`, `avatarUrl`, `roleTag` and `badges` come from the row's author
+ * card (features/live/author.ts): the name is never a piece of a user id.
  */
 export function ChatMessageRow({
   message,
   name,
   avatarUrl,
   roleTag,
+  badges,
   actions,
   onAction,
 }: {
@@ -23,6 +28,8 @@ export function ChatMessageRow({
   name: string
   avatarUrl?: string | null
   roleTag?: string
+  /** The author's badge keys; "founding_creator" draws the Founding creator mark. */
+  badges?: readonly string[] | null
   actions: MessageAction[]
   onAction: (key: MessageActionKey, message: LiveChatMessage) => void
 }) {
@@ -57,6 +64,7 @@ export function ChatMessageRow({
       <div className="live-chat__text">
         <div className="live-chat__byline"><span className="live-chat__name">{name}</span>
           {roleTag && <span className="live-chat__role">{roleTag}</span>}
+          <FoundingBadge badges={badges} compact />
           {time ? <time dateTime={message.created_at} className="live-chat__time">{time}</time> : null}
         </div>
         <p className="live-chat__message">{message.text}</p>

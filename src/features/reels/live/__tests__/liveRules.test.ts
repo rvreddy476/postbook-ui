@@ -7,7 +7,7 @@ import { DEFAULT_PREFS, parsePrefs } from "@/features/reels/playback/playerPrefs
 import { liveMoreItems } from "../liveMenu";
 import { liveRingLabel, reelLiveHref } from "../liveRing";
 import { liveMuted, toggleLiveSound } from "../liveSound";
-import { OVERLAY_CHAT_COUNT, overlayMessages, overlayName } from "../overlayChat";
+import { OVERLAY_CHAT_COUNT, overlayMessages, overlayName, overlayTag } from "../overlayChat";
 
 const msg = (n: number, extra: Partial<LiveChatMessage> = {}): LiveChatMessage => ({
   id: `m${n}`,
@@ -52,11 +52,18 @@ describe("overlay chat window", () => {
   });
 
   it("names fall through empty values and never show an id", () => {
-    expect(overlayName({ display_name: "Asha", username: "asha" })).toBe("Asha");
-    expect(overlayName({ display_name: "", first_name: "Asha" })).toBe("Asha");
-    expect(overlayName({ display_name: "", first_name: "", username: "asha" })).toBe("@asha");
-    expect(overlayName({})).toBe("Someone");
-    expect(overlayName(undefined)).toBe("Someone");
+    const author = (name: string, handle: string, role: "host" | "moderator" | "viewer" = "viewer") => ({ author: { user_id: "7f3a9c1e-0000-4000-8000-000000000001", name, handle, avatar_url: "", badges: [], role } });
+    expect(overlayName(author("Asha", "asha"))).toBe("Asha");
+    expect(overlayName(author("", "asha"))).toBe("@asha");
+    expect(overlayName(author("", ""))).toBe("Viewer");
+    expect(overlayName({})).toBe("Viewer");
+    expect(overlayName({ author: null })).toBe("Viewer");
+    expect(overlayName(undefined)).toBe("Viewer");
+    expect(overlayName(author("", ""))).not.toContain("7f3a");
+    expect(overlayTag(author("Asha", "asha", "host"))).toBe("Host");
+    expect(overlayTag(author("Kiran", "kiran", "moderator"))).toBe("Mod");
+    expect(overlayTag(author("Ben", "ben"))).toBeUndefined();
+    expect(overlayTag({})).toBeUndefined();
   });
 });
 

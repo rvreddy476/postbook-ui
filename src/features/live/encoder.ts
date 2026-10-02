@@ -1,6 +1,6 @@
 import type { CreateStreamInput, LiveStream } from "./model"
 import { errorCode, errorStatus, str } from "./model"
-import { PILOT_REFUSAL_COPY, isPilotRefusal } from "./errors"
+import { ACCOUNT_CHECK_FAILED_COPY, NOT_ELIGIBLE_COPY, PILOT_REFUSAL_COPY, isPilotRefusal } from "./errors"
 import { liveStatusView, normalizeStatus, type LiveStatusView } from "./status"
 
 // Going live from streaming software (OBS, a hardware encoder, a camera)
@@ -228,6 +228,10 @@ export function ingressErrorCopy(err: unknown): string {
       return "This stream uses this device's camera, so it has no stream key."
     case "LIVE_BANNED":
       return "You can't go live right now."
+    case "LIVE_NOT_ELIGIBLE":
+      return NOT_ELIGIBLE_COPY
+    case "AUTHORITY_UNAVAILABLE":
+      return ACCOUNT_CHECK_FAILED_COPY
     case "FORBIDDEN":
       return "Only the host can see the stream key."
     case "NOT_FOUND":

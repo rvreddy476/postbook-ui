@@ -19,6 +19,8 @@ import { getCurrentUserId } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { goLiveErrorCopy, isPilotRefusal, watchErrorCopy } from "@/features/live/errors"
+import { requirementsFromError, type LiveRequirement } from "@/features/live/eligibility"
+import { NearlyReady } from "@/features/live/components/NearlyReady"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
 import { StudioForSource } from "@/features/live/components/EncoderStudio"
 import { FoundingBadge, FoundingEarnedNote } from "@/features/live/components/FoundingBadge"
@@ -43,7 +45,7 @@ export default function BroadcastPage() {
   return <StudioForSource key={streamId} streamId={streamId} device={<Studio key={streamId} streamId={streamId} />} />
 }
 
-type PublishPhase = "idle" | "starting" | "publishing" | "error" | "pilot" | "stopped"
+type PublishPhase = "idle" | "starting" | "publishing" | "error" | "pilot" | "nearly" | "stopped"
 
 function Studio({ streamId }: { streamId: string }) {
   const { data: stream, error: streamError } = useLiveStream(streamId, 5000)
@@ -60,6 +62,8 @@ function Studio({ streamId }: { streamId: string }) {
   const [phase, setPhase] = useState<PublishPhase>("idle")
   const [localReconnecting, setLocalReconnecting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // 403 LIVE_NOT_ELIGIBLE from POST /start: the rows still to do.
+  const [notEligible, setNotEligible] = useState<LiveRequirement[]>([])
   const [confirmEnd, setConfirmEnd] = useState(false)
 
   const view = liveStatusView(stream ?? { status: "starting" }, "host")
@@ -96,6 +100,12 @@ function Studio({ streamId }: { streamId: string }) {
       teardown()
       if (isPilotRefusal(err)) {
         setPhase("pilot")
+        return
+      }
+      const rows = requirementsFromError(err)
+      if (rows) {
+        setNotEligible(rows)
+        setPhase("nearly")
         return
       }
       setErrorMessage(err && typeof err === "object" && "response" in err ? goLiveErrorCopy(err) : "We couldn't reach your camera or the live server. Check permissions and try again.")
@@ -166,6 +176,16 @@ function Studio({ streamId }: { streamId: string }) {
     return (
       <div className="live-page">
         <div className="live-form"><PilotNotice /></div>
+      </div>
+    )
+  }
+
+  if (phase === "nearly") {
+    return (
+      <div className="live-page">
+        <div className="live-form">
+          <NearlyReady requirements={notEligible} onRecheck={() => void runStart(streamId)} rechecking={startStream.isPending} />
+        </div>
       </div>
     )
   }

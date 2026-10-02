@@ -22,7 +22,7 @@ import {
   type StreamRow,
   type WatchState,
 } from "@/features/live/discovery";
-import { isStreamNotLive, watchErrorCopy } from "@/features/live/errors";
+import { isStreamFull, isStreamNotLive, watchErrorCopy } from "@/features/live/errors";
 import { currentViewerCount, viewerCountLabel, type LiveStatusView } from "@/features/live/status";
 import { Countdown } from "@/features/live/components/Countdown";
 import { FoundingBadge } from "@/features/live/components/FoundingBadge";
@@ -124,6 +124,7 @@ function LiveWatch({ streamId }: { streamId: string }) {
       isHost={role === "host"}
       signedIn={!!meId}
       watchError={watchError}
+      onRetryWatch={isStreamFull(tokenQuery.error) ? () => void tokenQuery.refetch() : undefined}
       stage={
         <LivePlayer streamId={row.id} creatorId={row.creator_user_id} connect={state.player} waiting={view.kind === "reconnecting" ? "Waiting for the host to reconnect…" : undefined}>
           <StageHearts streamId={row.id} heartCount={row.heart_count} status={row.status} signedIn={!!meId} banned={banned} />
@@ -153,6 +154,8 @@ export interface LiveWatchViewProps {
   signedIn: boolean;
   /** A final refusal to watch (banned, followers only, signed out); replaces the player. */
   watchError?: string | null;
+  /** Set when the refusal may pass on its own (403 STREAM_FULL): draws "Try again". */
+  onRetryWatch?: () => void;
   /** The player (it joins a room, so the page supplies it). */
   stage?: ReactNode;
   hearts?: ReactNode;
@@ -165,7 +168,7 @@ export interface LiveWatchViewProps {
 }
 
 /** The pure page: what is drawn for each state of the row. */
-export function LiveWatchView({ row, state, view, creator, topic, isHost, watchError, stage, hearts, subscribe, reminder, supporters, chat, report, onReport }: LiveWatchViewProps) {
+export function LiveWatchView({ row, state, view, creator, topic, isHost, watchError, onRetryWatch, stage, hearts, subscribe, reminder, supporters, chat, report, onReport }: LiveWatchViewProps) {
   const name = creatorName(creator);
   const channel = creatorHref(creator);
   const viewers = currentViewerCount(row, null);
@@ -190,7 +193,10 @@ export function LiveWatchView({ row, state, view, creator, topic, isHost, watchE
       <div className={chat ? "live-layout" : undefined}>
         <div className="tube-live-watch__main">
           {watchError ? (
-            <LiveStatusPanel view={{ ...view, title: watchError, body: "" }} />
+            <LiveStatusPanel
+              view={{ ...view, title: watchError, body: "" }}
+              action={onRetryWatch ? <button type="button" className="tube-live-btn" onClick={onRetryWatch}>Try again</button> : undefined}
+            />
           ) : state.kind === "live" ? (
             <>
               <ReconnectingNotice view={view} />

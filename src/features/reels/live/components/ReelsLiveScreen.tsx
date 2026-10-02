@@ -25,7 +25,7 @@ import {
 } from "@/hooks/useLiveV2";
 import { canSendChat, chatRole, streamTools } from "@/features/live/chat";
 import { liveWatchHref, rowStatusView, type CreatorCard, type StreamRow } from "@/features/live/discovery";
-import { chatSendErrorCopy, isChatBan, isStreamNotLive, watchErrorCopy } from "@/features/live/errors";
+import { chatSendErrorCopy, isChatBan, isStreamFull, isStreamNotLive, watchErrorCopy } from "@/features/live/errors";
 import { errorCode } from "@/features/live/model";
 import { LiveChat } from "@/features/live/components/LiveChat";
 import { HeartCount, StageHearts } from "@/features/live/components/LiveHearts";
@@ -58,7 +58,7 @@ import {
 } from "../liveStage";
 import { liveMoreItems, type LiveMoreKey } from "../liveMenu";
 import { liveMuted, toggleLiveSound } from "../liveSound";
-import { overlayMessages, overlayName } from "../overlayChat";
+import { overlayMessages } from "../overlayChat";
 import { LiveCreatorsList, LiveEmpty, LiveHeader, LiveStatusCard, LiveTabs, LiveWaitingCard, OverlayChat } from "./LiveStageViews";
 
 import "@/features/live/live.css";
@@ -377,13 +377,12 @@ function LiveSlide({ listRow, meId, tab, pageVisible, muted, onToggleSound, desk
     if (tokenNotLive) void refetch();
   }, [tokenNotLive, refetch]);
 
-  /* names: the chat authors on the overlay, and the host when the card came with an id alone */
+  /* names: chat rows carry their own author card; only the host is looked up, when the card came with an id alone */
   const overlay = overlayMessages(room.chat);
   const needsProfile = !row.creator.name && !row.creator.handle;
   const profileIds = useMemo(
-    () => Array.from(new Set([...overlay.map((m) => m.user_id), ...(needsProfile && row.creator_user_id ? [row.creator_user_id] : [])])),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [overlay.map((m) => m.user_id).join(","), needsProfile, row.creator_user_id],
+    () => (needsProfile && row.creator_user_id ? [row.creator_user_id] : []),
+    [needsProfile, row.creator_user_id],
   );
   const profiles = useBatchProfiles(profileIds);
   const profileOf = (id: string) => (profiles.data instanceof Map ? (profiles.data.get(id) as ProfileLite | undefined) : undefined);
@@ -495,7 +494,14 @@ function LiveSlide({ listRow, meId, tab, pageVisible, muted, onToggleSound, desk
                   kind="refused"
                   title={watchError}
                   cover={cover}
-                  action={!meId ? <Link href={signIn} className="reel-state-action">Sign in</Link> : undefined}
+                  action={
+                    !meId ? (
+                      <Link href={signIn} className="reel-state-action">Sign in</Link>
+                    ) : isStreamFull(tokenQuery.error) ? (
+                      // 403 STREAM_FULL (a new streamer's viewer cap): a seat may free up.
+                      <button type="button" className="reel-state-action" onClick={() => void tokenQuery.refetch()}>Try again</button>
+                    ) : undefined
+                  }
                 />
               ) : state.player ? (
                 <LivePlayer
@@ -537,7 +543,6 @@ function LiveSlide({ listRow, meId, tab, pageVisible, muted, onToggleSound, desk
                   {showOverlayChat ? (
                     <OverlayChat
                       messages={overlay}
-                      nameOf={(id) => overlayName(profileOf(id))}
                       note={chatNote}
                       signInHref={role === "guest" ? signIn : undefined}
                       draft={draft}

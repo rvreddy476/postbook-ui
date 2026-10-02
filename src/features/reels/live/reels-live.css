@@ -72,6 +72,7 @@
 .reel-live-chat__list { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; max-height: 132px; margin: 0; padding: 0 88px 0 0; overflow: hidden; list-style: none; -webkit-mask-image: linear-gradient(to top, rgb(var(--reel-stage)) 55%, transparent); mask-image: linear-gradient(to top, rgb(var(--reel-stage)) 55%, transparent); }
 .reel-live-chat__row { width: fit-content; max-width: 100%; padding: 3px 8px; border-radius: 10px; background: rgb(var(--reel-stage) / .4); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; animation: reel-live-msg 180ms ease-out backwards; }
 .reel-live-chat__name { margin-right: 6px; font-weight: 700; color: rgb(var(--reel-on-stage) / .75); }
+.reel-live-chat__role { margin-right: 6px; padding: 0 5px; border-radius: 5px; background: rgb(var(--reel-on-stage) / .22); font-size: 10px; font-weight: 600; }
 @keyframes reel-live-msg { from { opacity: 0; transform: translateY(6px); } }
 .reel-live-chat__form { display: flex; gap: 6px; pointer-events: auto; }
 .reel-live-chat__input { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid rgb(var(--reel-on-stage) / .25); border-radius: 999px; background: rgb(var(--reel-stage) / .55); color: rgb(var(--reel-on-stage)); font-size: 13px; }

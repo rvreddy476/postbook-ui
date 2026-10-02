@@ -1,4 +1,5 @@
 import type { ChatState } from "@/features/live/chat";
+import { chatAuthorName } from "@/features/live/author";
 import type { LiveChatMessage } from "@/features/live/model";
 
 /*
@@ -20,12 +21,16 @@ export function overlayMessages(chat: Pick<ChatState, "messages" | "removed">, n
     .slice(-n);
 }
 
-type ProfileLike = { display_name?: string; first_name?: string; username?: string } | null | undefined;
+/**
+ * The name on an overlay row, from the row's own author card (live-service-v2
+ * sends it on every chat row): the name, else @handle, else "Viewer". Never an id.
+ */
+export function overlayName(message: Pick<LiveChatMessage, "author"> | null | undefined): string {
+  return chatAuthorName(message?.author);
+}
 
-/** The name on an overlay row: display name, first name, @username, else "Someone". Never an id. */
-export function overlayName(profile: ProfileLike): string {
-  if (profile?.display_name) return profile.display_name;
-  if (profile?.first_name) return profile.first_name;
-  if (profile?.username) return `@${profile.username}`;
-  return "Someone";
+/** "Host" or "Mod" beside the name, from author.role; nothing for a viewer or a row with no author card. */
+export function overlayTag(message: Pick<LiveChatMessage, "author"> | null | undefined): string | undefined {
+  const role = message?.author?.role;
+  return role === "host" ? "Host" : role === "moderator" ? "Mod" : undefined;
 }

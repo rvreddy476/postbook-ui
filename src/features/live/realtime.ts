@@ -1,6 +1,7 @@
 import type { LiveChatMessage, LiveEndedReason, LiveStream, LiveStreamStatus } from "./model"
 import { num, str } from "./model"
 import { parseHeartsFrame } from "./hearts"
+import { parseChatAuthor } from "./author"
 
 // Real-time side of a live stream.
 //
@@ -88,6 +89,8 @@ export function parseLiveFrame(raw: unknown): LiveFrame | null {
           text: str(field("text")),
           is_pinned: field("is_pinned") === true,
           created_at: str(field("created_at")),
+          // `author` sits at the top level and again under "payload", like every field.
+          author: parseChatAuthor(field("author"), userId),
         },
       }
     }

@@ -19,7 +19,7 @@ import { getCurrentUserId } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { chatRole, streamTools } from "@/features/live/chat"
 import { isHostIdentity } from "@/features/live/encoder"
-import { isStreamNotLive, watchErrorCopy } from "@/features/live/errors"
+import { isStreamFull, isStreamNotLive, watchErrorCopy } from "@/features/live/errors"
 import { currentViewerCount, liveStatusView, viewerCountLabel } from "@/features/live/status"
 import { FoundingBadge } from "@/features/live/components/FoundingBadge"
 import { LiveChat } from "@/features/live/components/LiveChat"
@@ -163,7 +163,17 @@ function LiveViewer({ streamId }: { streamId: string }) {
         <div className="live-layout">
           <div className="flex flex-col gap-3">
             {watchError ? (
-              <LiveStatusPanel view={{ ...view, title: watchError, body: "" }} />
+              <LiveStatusPanel
+                view={{ ...view, title: watchError, body: "" }}
+                action={
+                  // 403 STREAM_FULL (a new streamer's viewer cap): a seat may free up, so offer another try.
+                  isStreamFull(tokenQuery.error) ? (
+                    <button type="button" className="live-btn live-btn--ghost" disabled={tokenQuery.isFetching} onClick={() => tokenQuery.refetch()}>
+                      Try again
+                    </button>
+                  ) : undefined
+                }
+              />
             ) : view.connectPlayer ? (
               <>
                 <ReconnectingNotice view={view} />

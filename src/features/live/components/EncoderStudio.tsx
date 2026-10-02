@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { goLiveErrorCopy, isPilotRefusal } from "../errors"
 import { encoderHostView, encoderPanel, ingressErrorCopy, studioFor } from "../encoder"
+import { requirementsFromError, type LiveRequirement } from "../eligibility"
 import { currentViewerCount, viewerCountLabel } from "../status"
 import { EncoderPreview } from "./EncoderPreview"
 import { EncoderSetup } from "./EncoderSetup"
@@ -18,6 +19,7 @@ import { LiveChat } from "./LiveChat"
 import { HeartCount, StageHearts } from "./LiveHearts"
 import { LivePageHeading } from "./LivePageHeading"
 import { LiveStatusPanel, ReconnectingNotice } from "./LiveStatus"
+import { NearlyReady } from "./NearlyReady"
 import { PilotNotice } from "./PilotNotice"
 import "../live.css"
 import "../encoder.css"
@@ -56,6 +58,8 @@ function EncoderStudio({ streamId }: { streamId: string }) {
   useEffect(() => setMeId(getCurrentUserId()), [])
   const [startError, setStartError] = useState<string | null>(null)
   const [pilot, setPilot] = useState(false)
+  // 403 LIVE_NOT_ELIGIBLE from POST /start: the rows still to do.
+  const [notEligible, setNotEligible] = useState<LiveRequirement[] | null>(null)
   const [confirmEnd, setConfirmEnd] = useState(false)
 
   const view = encoderHostView(stream ?? { status: "scheduled" })
@@ -63,6 +67,8 @@ function EncoderStudio({ streamId }: { streamId: string }) {
   const isHost = !!stream && !!meId && stream.creator_user_id === meId
   const ingress = useStreamIngress(streamId, isHost && panel.showKey && !pilot)
   const ingressPilot = isPilotRefusal(ingress.error)
+  // The same refusal from POST /ingress (the stream key is not issued either).
+  const ingressNotEligible = requirementsFromError(ingress.error)
 
   if (!stream) return null
 
@@ -87,6 +93,25 @@ function EncoderStudio({ streamId }: { streamId: string }) {
     )
   }
 
+  const nearly = notEligible ?? ingressNotEligible
+  if (nearly) {
+    return (
+      <div className="live-page">
+        <div className="live-form">
+          <NearlyReady
+            requirements={nearly}
+            rechecking={ingress.loading}
+            onRecheck={() => {
+              // Back to the studio: the key is asked for again, and Start asks the server again.
+              setNotEligible(null)
+              if (ingressNotEligible) ingress.retry()
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
   async function handleStart() {
     setStartError(null)
     try {
@@ -94,6 +119,11 @@ function EncoderStudio({ streamId }: { streamId: string }) {
     } catch (err) {
       if (isPilotRefusal(err)) {
         setPilot(true)
+        return
+      }
+      const rows = requirementsFromError(err)
+      if (rows) {
+        setNotEligible(rows)
         return
       }
       setStartError(goLiveErrorCopy(err))

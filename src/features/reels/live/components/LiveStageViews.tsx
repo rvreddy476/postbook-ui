@@ -22,7 +22,7 @@ import { viewerCountLabel, type LiveStatusView } from "@/features/live/status";
 import { formatCount } from "@/features/reels/model";
 import { LIVE_TABS, SIDE_CREATORS_MAX, type LiveEmptyCopy, type LiveStageState, type LiveTab } from "../liveStage";
 import { liveRingLabel } from "../liveRing";
-import { OVERLAY_CHAT_MAX_CHARS } from "../overlayChat";
+import { OVERLAY_CHAT_MAX_CHARS, overlayName, overlayTag } from "../overlayChat";
 
 /*
   The drawn pieces of the Reels Live stage, as plain props → markup, so the
@@ -107,7 +107,8 @@ export function LiveHeader({ row, state, view, creator, follow, hearts, supporte
 
 export interface OverlayChatProps {
   messages: readonly LiveChatMessage[];
-  nameOf: (userId: string) => string;
+  /** The author's name for a row; defaults to the row's author card (name, @handle, "Viewer"). */
+  nameOf?: (userId: string, message: LiveChatMessage) => string;
   /** Why the composer is not shown; "" shows it. */
   note: string;
   /** Where "Sign in to chat" leads; set only for a signed-out reader. */
@@ -120,7 +121,7 @@ export interface OverlayChatProps {
 }
 
 /** The last few messages fading up, and the composer under them. */
-export function OverlayChat({ messages, nameOf, note, signInHref, draft, onDraft, onSend, sending = false, error }: OverlayChatProps) {
+export function OverlayChat({ messages, nameOf = (_id, m) => overlayName(m), note, signInHref, draft, onDraft, onSend, sending = false, error }: OverlayChatProps) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSend();
@@ -130,7 +131,8 @@ export function OverlayChat({ messages, nameOf, note, signInHref, draft, onDraft
       <ol className="reel-live-chat__list" role="log" aria-label="Live messages" aria-live="polite" aria-relevant="additions">
         {messages.map((m) => (
           <li key={m.id} className="reel-live-chat__row">
-            <span className="reel-live-chat__name">{nameOf(m.user_id)}</span>
+            <span className="reel-live-chat__name">{nameOf(m.user_id, m)}</span>
+            {overlayTag(m) ? <span className="reel-live-chat__role">{overlayTag(m)}</span> : null}
             <span className="reel-live-chat__text">{m.text}</span>
           </li>
         ))}

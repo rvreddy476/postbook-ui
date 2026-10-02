@@ -28,9 +28,25 @@ export function goLiveErrorCopy(err: unknown): string {
     case "INVALID_REQUEST":
     case "VALIDATION_ERROR":
       return "Check the details and try again."
+    // Open mode. The pages show the "nearly ready" panel for LIVE_NOT_ELIGIBLE
+    // (features/live/eligibility.ts); this sentence is for a place with no panel.
+    case "LIVE_NOT_ELIGIBLE":
+      return NOT_ELIGIBLE_COPY
+    case "AUTHORITY_UNAVAILABLE":
+      return ACCOUNT_CHECK_FAILED_COPY
   }
   if (errorStatus(err) === 401) return "Sign in to go live."
   return "We couldn't start your stream. Try again."
+}
+
+export const NOT_ELIGIBLE_COPY = "You're nearly ready to go live. A few things are still needed."
+/** 503 AUTHORITY_UNAVAILABLE on create / start / ingress: a requirement could not be checked. Retryable. */
+export const ACCOUNT_CHECK_FAILED_COPY = "We couldn't check your account just now. Try again."
+export const STREAM_FULL_COPY = "This stream is full right now. Try again in a little while."
+
+/** GET /viewer-token answers 403 STREAM_FULL when a new streamer's viewer cap is reached. */
+export function isStreamFull(err: unknown): boolean {
+  return errorCode(err) === "STREAM_FULL"
 }
 
 /** POST /streams/:id/chat. */
@@ -74,6 +90,7 @@ export function watchErrorCopy(err: unknown): string | null {
   if (code === "BANNED_FROM_STREAM") return "You've been removed from this stream."
   if (code === "NOT_FOLLOWER") return "Only the creator's followers can watch this stream."
   if (code === "PAID_REQUIRED") return "Paid streams aren't available yet."
+  if (code === "STREAM_FULL") return STREAM_FULL_COPY
   switch (errorStatus(err)) {
     case 401:
       return "Sign in to watch this stream."

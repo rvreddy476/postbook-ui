@@ -1,12 +1,11 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { ArrowDown, MessageCircle, Send } from "lucide-react"
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useGlobalToast } from "@/contexts/ToastContext"
-import { useBatchProfiles } from "@/hooks/useProfile"
 import {
   liveV2Keys,
   useBanUser,
@@ -21,14 +20,13 @@ import { errorCode, type LiveChatMessage } from "../model"
 import type { LiveStatusView } from "../status"
 import { canSendChat, chatRole, messageActions, nextModerators, streamTools, type MessageActionKey } from "../chat"
 import { chatSendErrorCopy, isChatBan, moderationErrorCopy } from "../errors"
+import { chatAuthorAvatar, chatAuthorName, chatRoleTag, collectAuthors, nameFromAuthors } from "../author"
 import { ChatMessageRow } from "./ChatMessageRow"
 import { ModerationPanel } from "./ModerationPanel"
 import { ReportSheet } from "./ReportSheet"
 import { TopSupporters } from "./TopSupporters"
 
 const MAX_SEND_CHARS = 500
-
-type ProfileLite = { display_name?: string; first_name?: string; username?: string; avatar_url?: string; avatar_media_id?: string }
 
 export function LiveChat({
   streamId,
@@ -69,19 +67,15 @@ export function LiveChat({
   const nearBottom = useRef(true)
   const [unseen, setUnseen] = useState(false)
 
-  const userIds = useMemo(
-    () => Array.from(new Set([...chat.messages.map((m) => m.user_id), ...chat.banned, ...chat.moderators])),
-    [chat.messages, chat.banned, chat.moderators],
-  )
-  const { data: profiles } = useBatchProfiles(userIds)
-  const nameOf = (id: string) => {
-    const p = (profiles instanceof Map ? profiles.get(id) : undefined) as ProfileLite | undefined
-    return p?.display_name || p?.first_name || p?.username || "Someone"
-  }
-  const avatarOf = (id: string) => {
-    const p = (profiles instanceof Map ? profiles.get(id) : undefined) as ProfileLite | undefined
-    return p?.avatar_url || (p?.avatar_media_id ? `/v1/media/${encodeURIComponent(p.avatar_media_id)}/serve` : null)
-  }
+  // Names come from the author card on each chat row (live-service-v2
+  // hydrates it), never from a user id. The authors seen so far are kept, so
+  // someone whose messages were removed still has a name in the ban dialog
+  // and the moderation panel; anyone who never wrote here is "Viewer".
+  const [authors, setAuthors] = useState(() => collectAuthors(new Map(), chat.messages))
+  useEffect(() => {
+    setAuthors((seen) => collectAuthors(seen, chat.messages))
+  }, [chat.messages])
+  const nameOf = (id: string) => nameFromAuthors(authors, id)
 
   useEffect(() => {
     const el = scrollerRef.current
@@ -178,8 +172,6 @@ export function LiveChat({
     }
   }
 
-  const roleTag = (id: string) => (id === hostId ? "Host" : chat.moderators.includes(id) ? "Moderator" : undefined)
-
   return (
     <div className="live-chat-column">
       <div className="live-chat">
@@ -202,9 +194,10 @@ export function LiveChat({
               <ChatMessageRow
                 key={m.id}
                 message={m}
-                name={nameOf(m.user_id)}
-                avatarUrl={avatarOf(m.user_id)}
-                roleTag={roleTag(m.user_id)}
+                name={chatAuthorName(m.author)}
+                avatarUrl={chatAuthorAvatar(m.author)}
+                roleTag={chatRoleTag(m, hostId, chat.moderators)}
+                badges={m.author?.badges}
                 actions={messageActions({
                   role, meId, hostId, authorId: m.user_id, moderators: chat.moderators, banned: chat.banned,
                 })}

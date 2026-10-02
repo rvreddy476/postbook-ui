@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
-import { liveV2Keys, useCreateStream, useUpdateStream, useUserStreams } from "@/hooks/useLiveV2";
+import { liveV2Keys, useCreateStream, useGoLiveGate, useUpdateStream, useUserStreams } from "@/hooks/useLiveV2";
 import { uploadMedia } from "@/lib/mediaUpload";
 import { useAuthUser } from "@/store/auth";
 import {
@@ -33,6 +33,8 @@ import {
 } from "@/features/live/discovery";
 import type { LiveSource } from "@/features/live/encoder";
 import { PILOT_REFUSAL_COPY, PILOT_REFUSAL_DETAIL, isPilotRefusal } from "@/features/live/errors";
+import { viewerCapNote } from "@/features/live/eligibility";
+import { NearlyReady } from "@/features/live/components/NearlyReady";
 import type { LiveOrientation } from "@/features/live/model";
 import { mediaServeUrl } from "../../model";
 import { useHubCategories } from "../hooks/useHub";
@@ -83,6 +85,8 @@ export interface StreamFormViewProps {
   editing: boolean;
   busy: boolean;
   error: string | null;
+  /** A quiet line under the heading (the new-streamer viewer cap); "" or absent shows nothing. */
+  note?: string;
   coverPreview: string | null;
   onPickCover: (file: File | null) => void;
   onSubmit: () => void;
@@ -90,7 +94,7 @@ export interface StreamFormViewProps {
 }
 
 /** The schedule form, fields only (state and requests live in StreamForm). */
-export function StreamFormView({ values, onChange, check, categories, editing, busy, error, coverPreview, onPickCover, onSubmit, onCancel }: StreamFormViewProps) {
+export function StreamFormView({ values, onChange, check, categories, editing, busy, error, note, coverPreview, onPickCover, onSubmit, onCancel }: StreamFormViewProps) {
   const topics = topicsFor(categories, values.orientation);
   return (
     <form
@@ -104,6 +108,7 @@ export function StreamFormView({ values, onChange, check, categories, editing, b
       <div className="hub-section-head">
         <span className="hub-section-title">{editing ? "Edit stream" : "Schedule a stream"}</span>
       </div>
+      {note ? <p className="hub-hint" data-viewer-cap style={{ marginBottom: 10 }}>{note}</p> : null}
       <div className="hub-grid hub-grid-2">
         <div className="hub-field">
           <label className="hub-label" htmlFor="hub-live-title">
@@ -205,6 +210,29 @@ export function StreamFormView({ values, onChange, check, categories, editing, b
   );
 }
 
+/** What "Schedule a stream" shows instead of the form: the account check, the closed-pilot notice, or the "nearly ready" panel. */
+export function ScheduleGateView({ gate, panel, onClose }: { gate: "loading" | "pilot" | "nearly"; panel: React.ReactNode; onClose: () => void }) {
+  return (
+    <section className="hub-card hub-card-pad" aria-label="Schedule a stream" data-gate={gate}>
+      <div className="hub-section-head">
+        <span className="hub-section-title">Schedule a stream</span>
+      </div>
+      {gate === "loading" ? (
+        <p className="hub-hint" role="status">Checking your account…</p>
+      ) : gate === "pilot" ? (
+        <p className="hub-hint" role="status">{PILOT_REFUSAL_COPY} {PILOT_REFUSAL_DETAIL}</p>
+      ) : (
+        panel
+      )}
+      <div className="hub-row hub-row-wrap" style={{ justifyContent: "flex-end", marginTop: 12 }}>
+        <button type="button" className="hub-btn" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /** Create (POST) or edit (PATCH, only what changed) a scheduled stream. */
 function StreamForm({ row, onDone }: { row: StreamRow | null; onDone: () => void }) {
   const toast = useGlobalToast();
@@ -218,6 +246,8 @@ function StreamForm({ row, onDone }: { row: StreamRow | null; onDone: () => void
   const [coverPreview, setCoverPreview] = useState<string | null>(() => (row?.cover_media_id ? mediaServeUrl(row.cover_media_id) : null));
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A new stream asks who may go live first (GET /eligibility); editing one that exists does not.
+  const live = useGoLiveGate(!row);
 
   const pickCover = (file: File | null) => {
     if (!file) return;
@@ -250,9 +280,21 @@ function StreamForm({ row, onDone }: { row: StreamRow | null; onDone: () => void
       onDone();
     } catch (err) {
       setUploading(false);
+      // Creating: 403 LIVE_NOT_ENABLED → the pilot notice, 403 LIVE_NOT_ELIGIBLE → the "nearly ready" panel.
+      if (!row && live.refuse(err)) return;
       setError(isPilotRefusal(err) ? `${PILOT_REFUSAL_COPY} ${PILOT_REFUSAL_DETAIL}` : scheduleErrorCopy(err));
     }
   };
+
+  if (!row && live.gate !== "form") {
+    return (
+      <ScheduleGateView
+        gate={live.gate}
+        panel={<NearlyReady requirements={live.requirements} onRecheck={live.recheck} rechecking={live.rechecking} viewerCap={live.viewerCap} />}
+        onClose={onDone}
+      />
+    );
+  }
 
   return (
     <StreamFormView
@@ -263,6 +305,7 @@ function StreamForm({ row, onDone }: { row: StreamRow | null; onDone: () => void
       editing={!!row}
       busy={uploading || createStream.isPending || updateStream.isPending}
       error={error}
+      note={row ? "" : viewerCapNote(live.viewerCap)}
       coverPreview={coverPreview}
       onPickCover={pickCover}
       onSubmit={() => void submit()}

@@ -115,6 +115,27 @@ describe("OverlayChat", () => {
   });
 });
 
+describe("OverlayChat names come from the author card on each row", () => {
+  const card = (user_id: string, name: string, handle: string, role: "host" | "moderator" | "viewer") => ({ user_id, name, handle, avatar_url: "", badges: [], role });
+  const messages = [
+    { id: "m1", stream_id: "s1", user_id: "9c1e7f3a-0000-4000-8000-000000000001", text: "welcome", created_at: "2026-10-02T10:00:00Z", author: card("9c1e7f3a-0000-4000-8000-000000000001", "Asha Rao", "asha", "host") },
+    { id: "m2", stream_id: "s1", user_id: "9c1e7f3a-0000-4000-8000-000000000002", text: "requests?", created_at: "2026-10-02T10:00:01Z", author: card("9c1e7f3a-0000-4000-8000-000000000002", "", "kiran", "moderator") },
+    { id: "m3", stream_id: "s1", user_id: "9c1e7f3a-0000-4000-8000-000000000003", text: "hi", created_at: "2026-10-02T10:00:02Z", author: card("9c1e7f3a-0000-4000-8000-000000000003", "", "", "viewer") },
+    { id: "m4", stream_id: "s1", user_id: "9c1e7f3a-0000-4000-8000-000000000004", text: "old row", created_at: "2026-10-02T10:00:03Z" },
+  ];
+
+  it("name, else @handle, else Viewer; Host and Mod marked; never a piece of the id", () => {
+    const html = renderToStaticMarkup(<OverlayChat messages={messages} note="" draft="" onDraft={() => {}} onSend={() => {}} />);
+    expect(html).toContain('class="reel-live-chat__name">Asha Rao<');
+    expect(html).toContain('class="reel-live-chat__name">@kiran<');
+    expect(html.match(/class="reel-live-chat__name">Viewer</g)).toHaveLength(2);
+    expect(html).toContain('class="reel-live-chat__role">Host<');
+    expect(html).toContain('class="reel-live-chat__role">Mod<');
+    expect(html.match(/reel-live-chat__role/g)).toHaveLength(2);
+    expect(html).not.toContain("9c1e");
+  });
+});
+
 describe("waiting, ended and refused cards", () => {
   it("scheduled: the cover, the title and Notify me for a viewer", () => {
     const r = row({ status: "scheduled", scheduled_at: "2026-10-03T10:00:00Z", reminder_count: 3 });

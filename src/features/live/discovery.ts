@@ -1,6 +1,7 @@
 import type { CreateStreamInput, LiveEndedReason, LiveOrientation, LiveStreamStatus, LiveVisibility } from "./model"
 import { errorCode, errorStatus, num, str } from "./model"
 import { createStreamBody, streamSource, type LiveSource } from "./encoder"
+import { ACCOUNT_CHECK_FAILED_COPY, NOT_ELIGIBLE_COPY } from "./errors"
 import { liveStatusView, normalizeStatus, type LiveAudience, type LiveStatusKind, type LiveStatusView } from "./status"
 
 // Live discovery, scheduling and reminders (live surfaces contract, 2 Oct
@@ -707,6 +708,10 @@ export function scheduleErrorCopy(err: unknown): string {
       return "This stream no longer exists."
     case "LIVE_BANNED":
       return "You can't go live right now."
+    case "LIVE_NOT_ELIGIBLE":
+      return NOT_ELIGIBLE_COPY
+    case "AUTHORITY_UNAVAILABLE":
+      return ACCOUNT_CHECK_FAILED_COPY
   }
   if (errorStatus(err) === 401) return "Sign in to schedule a stream."
   return "We couldn't save your stream. Try again."

@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Globe, ImagePlus, Radio, RectangleHorizontal, RectangleVertical, Users, X } from "lucide-react"
 
-import { useCreateStream, type LiveVisibility } from "@/hooks/useLiveV2"
+import { useCreateStream, useGoLiveGate, type LiveVisibility } from "@/hooks/useLiveV2"
 import { uploadMedia } from "@/lib/mediaUpload"
-import { goLiveErrorCopy, isPilotRefusal } from "@/features/live/errors"
+import { goLiveErrorCopy } from "@/features/live/errors"
+import { viewerCapNote } from "@/features/live/eligibility"
+import { NearlyReady } from "@/features/live/components/NearlyReady"
 import { PilotNotice } from "@/features/live/components/PilotNotice"
 import { SourcePicker } from "@/features/live/components/SourcePicker"
 import type { LiveSource } from "@/features/live/encoder"
@@ -16,9 +18,14 @@ import { useTopics } from "@/features/posttube/discovery/hooks/useDiscovery"
 import "@/features/live/live.css"
 
 // Go live form (live-service-v2).
+//   0. GET /v1/livestream/eligibility first: eligible → the form; pilot_only →
+//      the closed-pilot notice; otherwise the "nearly ready" panel. If the
+//      question fails the form is shown anyway: the server decides on submit.
 //   1. (optional) cover image via the standard media upload.
 //   2. POST /v1/livestream/streams — 403 LIVE_NOT_ENABLED outside the pilot,
-//      403 LIVE_BANNED for a platform live ban.
+//      403 LIVE_NOT_ELIGIBLE (open mode, details.requirements → the same
+//      panel), 403 LIVE_BANNED for a platform live ban, 503
+//      AUTHORITY_UNAVAILABLE when the account could not be checked (retry).
 //   3. /live/{id}/broadcast mints the publisher token and opens the room
 //      (this device), or shows the server URL and stream key (streaming software).
 // Topic (post-service's categories), orientation and an optional start time
@@ -57,7 +64,8 @@ export default function NewLiveStreamPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pilotRefused, setPilotRefused] = useState(false)
+  const live = useGoLiveGate()
+  const capNote = viewerCapNote(live.viewerCap)
 
   const onPickCover = (file: File | null) => {
     if (coverPreview) URL.revokeObjectURL(coverPreview)
@@ -94,10 +102,8 @@ export default function NewLiveStreamPage() {
       router.push(check.scheduled_at ? "/posttube/hub/live" : `/live/${stream.id}/broadcast`)
     } catch (err: unknown) {
       setUploading(false)
-      if (isPilotRefusal(err)) {
-        setPilotRefused(true)
-        return
-      }
+      // LIVE_NOT_ENABLED → the pilot notice; LIVE_NOT_ELIGIBLE → the "nearly ready" panel.
+      if (live.refuse(err)) return
       setError(errorCode(err) === "INVALID_CATEGORY" ? scheduleErrorCopy(err) : goLiveErrorCopy(err))
     }
   }
@@ -113,10 +119,15 @@ export default function NewLiveStreamPage() {
           </div>
         </div>
 
-        {pilotRefused ? (
+        {live.gate === "loading" ? (
+          <p className="live-form__note" role="status">Checking your account…</p>
+        ) : live.gate === "pilot" ? (
           <PilotNotice />
+        ) : live.gate === "nearly" ? (
+          <NearlyReady requirements={live.requirements} onRecheck={live.recheck} rechecking={live.rechecking} viewerCap={live.viewerCap} />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
+            {capNote && <p className="live-form__note" data-testid="live-viewer-cap">{capNote}</p>}
             <div>
               <label className="live-label" htmlFor="live-title">Title</label>
               <input
