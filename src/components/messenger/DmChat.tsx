@@ -9,6 +9,7 @@ const EmojiPicker = lazy(() => import('@emoji-mart/react'))
 import { Avatar, getInitials } from './shared'
 import {
   getOrCreateDirectConversation,
+  getConversation,
   fetchMessages,
   sendMessage,
   subscribeToMessages,
@@ -70,6 +71,12 @@ interface DmChatProps {
   onToggleDetails?: () => void
   /** Reports the resolved conversation id so the details panel can read it. */
   onConversationReady?: (id: string) => void
+  /**
+   * Open this existing conversation instead of finding the direct thread
+   * with userId. Used for a dating match, whose chat is a separate
+   * conversation; get-or-create would open (or create) the wrong one.
+   */
+  conversationId?: string
 }
 
 interface DisplayMessage {
@@ -142,7 +149,7 @@ function toDisplay(msg: BackendMessage): DisplayMessage {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack, detailsOpen, onToggleDetails, onConversationReady }: DmChatProps) {
+export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack, detailsOpen, onToggleDetails, onConversationReady, conversationId: openConversationId }: DmChatProps) {
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
 
@@ -266,7 +273,9 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       try {
         setLoading(true)
         setError(false)
-        const convRes = await getOrCreateDirectConversation(userId)
+        const convRes = openConversationId
+          ? await getConversation(openConversationId)
+          : await getOrCreateDirectConversation(userId)
         const conversationId: string =
           convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
         if (!conversationId) throw new Error('No conversation id returned')
@@ -337,7 +346,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       if (convIdRef.current) unmarkConversationAsViewed(convIdRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, myId])
+  }, [userId, myId, openConversationId])
 
   // Real-time subscriptions
   useEffect(() => {

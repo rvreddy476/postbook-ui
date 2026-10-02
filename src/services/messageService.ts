@@ -552,6 +552,15 @@ export const getOrCreateDirectConversation = async (otherUserId: string) => {
   });
 };
 
+/**
+ * One existing conversation by id (GET /conversations/:id), for threads that
+ * are not found by person — a dating match's chat is its own conversation,
+ * created by dating-service, and must never be swapped for a direct one.
+ */
+export const getConversation = async (conversationId: string) => {
+  return chatClient.request(`/conversations/${encodeURIComponent(conversationId)}`);
+};
+
 export const createGroupConversation = async (name: string, memberIds: string[]) => {
   return chatClient.request('/conversations/group', {
     method: 'POST',

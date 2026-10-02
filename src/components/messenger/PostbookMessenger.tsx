@@ -15,6 +15,7 @@ import { getSession } from '@/services/authService'
 import api from '@/lib/api'
 import {
   fetchConversations,
+  getConversation,
   subscribeToPresenceUpdates,
   acceptMessageRequest,
   declineMessageRequest,
@@ -81,6 +82,12 @@ export default function PostbookMessenger() {
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<User | null>(null)
+  /**
+   * A conversation opened by id from the address (?conversation=<id>), and
+   * the person it is with. The DM with that person opens this conversation
+   * rather than their direct thread; picking anyone from the list clears it.
+   */
+  const [urlConversation, setUrlConversation] = useState<{ peerId: string; conversationId: string } | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null)
   // Thread details: open by default on wide screens. The conversation id is
@@ -343,6 +350,7 @@ export default function PostbookMessenger() {
   }, [requestConversations, search, requestPeer, requestProfiles])
 
   const handleFriendClick = useCallback((friend: User) => {
+    setUrlConversation(null)
     setActiveDm(friend)
     setActiveGroupId(null)
     setActiveChannelId(null)
@@ -395,6 +403,45 @@ export default function PostbookMessenger() {
     setActiveChannelId(wanted)
     setActiveDm(null)
     setActiveGroupId(null)
+  }, [])
+
+  /**
+   * Open one existing conversation named in the address:
+   * /messenger?conversation=<id>. This is how a dating match opens its chat —
+   * the match's conversation is its own, so it is fetched by id and never
+   * resolved through the person (that would open their direct thread). The
+   * server answers only a member, so a stranger's id opens nothing.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const wanted = new URLSearchParams(window.location.search).get('conversation')
+    if (!wanted) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await getConversation(wanted)
+        const conv = (res?.data ?? res ?? {}) as {
+          id?: string
+          members?: Array<{ user_id?: string; display_name?: string; avatar_media_id?: string }>
+        }
+        const me = currentUser?.id
+        const peer = (conv.members ?? []).find((m) => m.user_id && m.user_id !== me)
+        if (cancelled || !conv.id || !peer?.user_id) return
+        setUrlConversation({ peerId: peer.user_id, conversationId: conv.id })
+        setActiveDm({
+          id: peer.user_id,
+          name: peer.display_name || 'Conversation',
+          avatar: peer.avatar_media_id ? `/v1/media/${peer.avatar_media_id}/serve` : '',
+          isOnline: false,
+        })
+        setActiveGroupId(null)
+        setActiveChannelId(null)
+      } catch {
+        // Not a member, or the id is gone: leave the list usable.
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const openedFromUrlRef = useRef<string | null>(null)
@@ -925,6 +972,7 @@ export default function PostbookMessenger() {
             detailsOpen={showDetails}
             onToggleDetails={() => setShowDetails((v) => !v)}
             onConversationReady={setActiveConversationId}
+            conversationId={urlConversation?.peerId === activeDm.id ? urlConversation.conversationId : undefined}
           />
         ) : activeGroupId && selectedGroup ? (
           <GroupPanel
