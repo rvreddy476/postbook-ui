@@ -1,5 +1,6 @@
-import FigoHomePage from "@/features/figo/FigoHomePage"
+import { redirect } from "next/navigation"
 
+// Food ordering lives in Feast; the old mini-app entry point sends people there.
 export default function Page() {
-  return <FigoHomePage />
+  redirect("/feast")
 }
