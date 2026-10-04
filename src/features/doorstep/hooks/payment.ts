@@ -12,9 +12,15 @@
   Nothing here marks anything paid. The Razorpay handler's success only
   moves the screen to "Confirming payment"; the poll's reading decides.
 
-  The dev stub: Doorstep has no client settle route, so a stub intent is
-  settled by the payments test webhook on dev; the panel says so and keeps
-  polling for the server's verdict.
+  The dev stub (NEXT_PUBLIC_ENABLE_STUB_PAYMENTS=true AND a "stub" session):
+  the poll starts, then POST /bookings/:id/payment/stub-confirm asks the
+  server to settle through payments-service's stub gateway. Its answer is
+  never read as a verdict (model/payment.ts runStubLeg); the booking is paid
+  when the poll says so. An extras bill has no stub-confirm route and waits
+  for the payments test webhook.
+
+  `settle` has exactly one caller: the poll's reading of GET /payment
+  (__tests__/rules.test.ts guards that).
 */
 
 import { useQueryClient } from "@tanstack/react-query"
@@ -22,9 +28,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { openRazorpayCheckout } from "@/lib/razorpay"
 
-import { getBookingPayments, toDoorstepError } from "../api/client"
+import { getBookingPayments, stubConfirmBookingPayment, toDoorstepError } from "../api/client"
 import { clearAttempt, readAttempt } from "../model/bookingAttempt"
-import { isSettled, nextPaymentPollDelay, paymentRoute, readPayment, type PaymentReading, type PaymentRef } from "../model/payment"
+import { isSettled, nextPaymentPollDelay, paymentRoute, readPayment, runStubLeg, type PaymentReading, type PaymentRef, type StubRefusal } from "../model/payment"
 import type { PaymentIntent } from "../model/wire"
 import { DOORSTEP, keys } from "./queries"
 
@@ -32,7 +38,8 @@ export type PaymentPhase =
   | { kind: "idle" }
   | { kind: "opening" }
   | { kind: "dialog" }
-  | { kind: "stub" }
+  /** Dev stub: `asked` once stub-confirm was sent; `refusal` its no. Still only the poll decides. */
+  | { kind: "stub"; asked: boolean; refusal: StubRefusal | null }
   | { kind: "confirming" }
   | { kind: "settled"; reading: Exclude<PaymentReading, "confirming"> }
   | { kind: "timeout" }
@@ -163,8 +170,11 @@ export function usePayment(target: PayTarget, onSettled?: (reading: Exclude<Paym
         return
       }
       if (route.kind === "stub") {
-        setPhase({ kind: "stub" })
+        // The poll starts first so the verdict is read whatever the confirm says.
+        setPhase({ kind: "stub", asked: false, refusal: null })
         poll(true)
+        const leg = await runStubLeg(targetRef.current, stubConfirmBookingPayment, toDoorstepError)
+        setPhase((p) => (p.kind === "stub" ? { kind: "stub", asked: leg.asked, refusal: leg.refusal } : p))
         return
       }
       setPhase({ kind: "dialog" })

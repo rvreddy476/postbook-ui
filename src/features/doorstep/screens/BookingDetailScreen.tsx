@@ -25,9 +25,9 @@ import { PayPanel } from "../components/PayPanel"
 import { LIVE_POLL_MS, SLOW_POLL_MS, useLiveBooking } from "../hooks/live"
 import { keys, useBooking } from "../hooks/queries"
 import { addressLine } from "../model/address"
-import { canAskRework, canRate, chatMayOpen, isLive, newerFix, otpToShow, safetyOpen, timeline, type ProFix } from "../model/booking"
+import { canAskRework, canRate, chatMayOpen, customerPhotos, isLive, newerFix, otpToShow, safetyOpen, timeline, type ProFix } from "../model/booking"
 import { formatPaise } from "../model/money"
-import { formatSlot, formatTime, holdExpired } from "../model/slots"
+import { formatSlot, formatTime, formatWhen, holdExpired } from "../model/slots"
 import type { Booking } from "../model/wire"
 
 function OtpCard({ booking }: { booking: Booking }) {
@@ -85,13 +85,21 @@ function ProCard({ booking, fix }: { booking: Booking; fix: ProFix | null }) {
   )
 }
 
+/** The server's status_history, oldest first, then what is still ahead (model/booking.ts timeline). */
 function Timeline({ booking }: { booking: Booking }) {
   return (
     <ol className="ds-steps" aria-label="Progress">
-      {timeline(booking.status, booking.paidPaise > 0).map((s) => (
-        <li key={s.label} className={`ds-step is-${s.state}`} aria-current={s.state === "current" ? "step" : undefined}>
+      {timeline(booking).map((s, i) => (
+        <li key={`${i}-${s.status}`} className={`ds-step is-${s.state}`} aria-current={s.state === "current" ? "step" : undefined}>
           <span className="ds-step__dot" aria-hidden="true" />
-          <span>{s.label}</span>
+          <span>
+            {s.label}
+            {s.at ? (
+              <span className="ds-meta" style={{ display: "block", fontWeight: 400 }}>
+                {formatWhen(s.at)}
+              </span>
+            ) : null}
+          </span>
         </li>
       ))}
     </ol>
@@ -99,8 +107,7 @@ function Timeline({ booking }: { booking: Booking }) {
 }
 
 function Photos({ booking }: { booking: Booking }) {
-  const after = booking.photos.filter((p) => p.phase === "after")
-  const before = booking.photos.filter((p) => p.phase === "before")
+  const { before, after } = customerPhotos(booking.photos)
   if (!after.length && !before.length) return null
   return (
     <section className="ds-card" aria-label="Photos">

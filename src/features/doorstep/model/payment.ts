@@ -4,6 +4,7 @@
     booking: POST /bookings (or POST /bookings/:id/payment/intent to reopen)
     extras:  POST /extras-bills/:id/payment/intent   (also how outstanding is paid)
     then Razorpay (src/lib/razorpay.ts) from the intent's `checkout` ONLY, or the dev stub
+         (POST /bookings/:id/payment/stub-confirm, its answer ignored)
     then GET /bookings/:id/payment until the server says succeeded | failed.
 
   "Paid" comes from that GET alone: the row for THIS reference
@@ -67,7 +68,8 @@ export function nextPaymentPollDelay(elapsedMs: number): number | null {
 
 /* ── how to open it ───────────────────────────────────────────────── */
 
-export const STUB_ORDER_PREFIX = "order_stub_"
+/** payments-service's stub gateway names itself in the session (paymentsclient.ClientSession.provider). */
+export const STUB_PROVIDER = "stub"
 export const MERCHANT_FALLBACK = "Doorstep"
 
 export interface RazorpayOpen {
@@ -103,7 +105,50 @@ export function paymentRoute(intent: PaymentIntent, input: { description: string
     if (input.prefill && (input.prefill.name || input.prefill.email)) options.prefill = { ...input.prefill }
     return { kind: "razorpay", options }
   }
-  const isStub = s ? s.provider === "stub" || (!s.provider && s.orderId.startsWith(STUB_ORDER_PREFIX)) : false
-  if (isStub && input.stubAllowed) return { kind: "stub" }
+  if (s && s.provider === STUB_PROVIDER && input.stubAllowed) return { kind: "stub" }
   return { kind: "unavailable", message: "Online payment isn't available right now." }
+}
+
+/* ── the dev stub leg ─────────────────────────────────────────────── */
+
+export interface StubRefusal {
+  status: number
+  code: string
+  message: string
+}
+
+/**
+  What the stub leg hands back. Always "poll": the stub never yields a
+  verdict. `refusal` is the server's no (404 DOORSTEP_NOT_FOUND off a dev
+  stack, 409 DOORSTEP_STUB_UNAVAILABLE when payments has a real provider),
+  `asked` whether the settle request was sent at all.
+*/
+export interface StubLeg {
+  next: "poll"
+  asked: boolean
+  refusal: StubRefusal | null
+}
+
+/**
+  The dev stub leg (NEXT_PUBLIC_ENABLE_STUB_PAYMENTS=true and a stub
+  session only — paymentRoute decides that). For a booking it asks
+  doorstep-service to settle through payments-service's stub gateway
+  (POST /bookings/:id/payment/stub-confirm); the signed payment.succeeded
+  that follows confirms the booking server-side. The confirm's answer is
+  deliberately NOT read: "paid" is still only GET /bookings/:id/payment, so
+  the caller keeps polling either way. An extras bill has no stub-confirm
+  route: nothing is sent, the poll waits for the payments test webhook.
+*/
+export async function runStubLeg(
+  ref: PaymentRef & { bookingId: string },
+  confirm: (bookingId: string) => Promise<unknown>,
+  toRefusal: (error: unknown) => StubRefusal,
+): Promise<StubLeg> {
+  if (ref.referenceType !== "doorstep_booking") return { next: "poll", asked: false, refusal: null }
+  try {
+    await confirm(ref.bookingId)
+    return { next: "poll", asked: true, refusal: null }
+  } catch (error) {
+    return { next: "poll", asked: true, refusal: toRefusal(error) }
+  }
 }

@@ -238,6 +238,15 @@ export function getBookingPayments(bookingId: string): Promise<BookingPayments> 
   return call(() => api.get(`${BASE}/bookings/${id(bookingId)}/payment`), decodeBookingPayments)
 }
 
+/**
+  Development only: asks the server to settle the booking through
+  payments-service's stub gateway. Resolves to nothing on purpose — the
+  answer is never a verdict; poll getBookingPayments for that.
+*/
+export function stubConfirmBookingPayment(bookingId: string): Promise<void> {
+  return send(() => api.post(`${BASE}/bookings/${id(bookingId)}/payment/stub-confirm`))
+}
+
 export function openExtrasPaymentIntent(billId: string): Promise<PaymentIntent> {
   return call(() => api.post(`${BASE}/extras-bills/${id(billId)}/payment/intent`), decodePaymentIntent)
 }

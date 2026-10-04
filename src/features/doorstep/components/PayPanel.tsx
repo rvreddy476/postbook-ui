@@ -78,7 +78,24 @@ export function PayPanel({
       {phase.kind === "stub" ? (
         <div className="ds-stack">
           <Busy label={PAYMENT_LINES.confirming} />
-          <p className="ds-note">Development payments are on. Settle this stub payment with the payments test webhook; this page waits for the server&apos;s verdict.</p>
+          {phase.refusal ? (
+            <p className="ds-alert" role="alert">
+              {phase.refusal.code === "DOORSTEP_STUB_UNAVAILABLE"
+                ? "This stack takes real payments, so the development stub can't settle it."
+                : phase.refusal.code === "DOORSTEP_NOT_FOUND"
+                  ? "Development payments aren't available on this deployment."
+                  : refusalLine({ ...phase.refusal, fromServer: true })}{" "}
+              This page still waits for the server&apos;s verdict.
+            </p>
+          ) : (
+            <p className="ds-note">
+              {phase.asked
+                ? "Development payments are on: the stub settlement was requested. This page waits for the server's verdict."
+                : target.referenceType === "doorstep_booking"
+                  ? "Development payments are on: requesting the stub settlement…"
+                  : "Development payments are on. Settle this stub payment with the payments test webhook; this page waits for the server's verdict."}
+            </p>
+          )}
         </div>
       ) : null}
 

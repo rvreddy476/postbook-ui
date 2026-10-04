@@ -5,19 +5,20 @@
   paise amount, lenient mode (production) only refuses what would break a
   screen.
 
-  Golden fixtures exist for the catalogue, category, service, serviceability
-  and quote routes. Everything else is decoded from the OpenAPI schema and
-  listed as PENDING in __tests__/contracts.test.ts until doorstep-service
-  lands its fixture.
+  Golden fixtures exist for the catalogue, category, service, serviceability,
+  quote, address, slot, booking, payment, cancel and reschedule routes (A1 +
+  A3). The visit, extras, rating, rework, safety, chat and realtime routes
+  are decoded from the OpenAPI schema and listed as PENDING in
+  __tests__/contracts.test.ts until doorstep-service lands their fixtures.
 
-  CONTRACT GAPS (accepted when present, never required; reported to the lead):
-    Booking.end_otp            — the end OTP the customer reads out at completion
-    Booking.photos             — before/after photos the customer may see
-    Extra.evidence_media_id    — the photo the professional attached to an extra
+  A3 closed the old contract gaps: Booking.end_otp, Booking.photos,
+  Booking.status_history and Extra.evidence_media_id are schema keys now,
+  so strict mode requires them.
 */
 
 import {
   arr,
+  at,
   boolOr,
   intOr,
   obj,
@@ -32,6 +33,7 @@ import {
   reqPaise,
   reqStr,
   strArr,
+  WireError,
   type Ctx,
 } from "./decode"
 
@@ -506,20 +508,41 @@ export function decodeSlotDays(raw: unknown, ctx: Ctx): SlotDays {
 export const PAYMENT_STATUSES = ["created", "pending", "succeeded", "failed", "refunded", "partially_refunded"] as const
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number]
 
-/** payments-service's client_session, relayed unchanged as `checkout`. Only the fields the web reads. */
+/**
+  payments-service's client session (paymentsclient.ClientSession), relayed
+  unchanged as `checkout`: provider ("razorpay", or "stub" on a dev stack),
+  order_id, key_id (publishable) and, when payments has one,
+  merchant_display_name. Never a secret.
+*/
 export interface CheckoutSession {
   provider: string
   orderId: string
   keyId: string
+  /** "" when payments attached none. */
   merchantDisplayName: string
 }
 
-/** `checkout` is additionalProperties: never strict about its keys, only about what is read. */
-function decodeCheckout(raw: unknown): CheckoutSession | null {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null
+const CHECKOUT_REQUIRED = ["provider", "order_id", "key_id"] as const
+
+/**
+  `checkout` is `additionalProperties: {type: string}` and `{}` when payments
+  attached no session (→ null). Strict refuses a non-string value and a
+  non-empty session missing provider, order_id or key_id; a key it does not
+  read is tolerated (payments may add one).
+*/
+function decodeCheckout(raw: unknown, ctx: Ctx): CheckoutSession | null {
+  if (raw === undefined || raw === null) return null
+  if (typeof raw !== "object" || Array.isArray(raw)) {
+    if (ctx.strict) throw new WireError(ctx.path, "expected an object")
+    return null
+  }
   const o = raw as Record<string, unknown>
-  const s = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "")
   if (!Object.keys(o).length) return null
+  if (ctx.strict) {
+    for (const [k, v] of Object.entries(o)) if (typeof v !== "string") throw new WireError(at(ctx, k).path, "expected a string")
+    for (const k of CHECKOUT_REQUIRED) if (!(k in o)) throw new WireError(at(ctx, k).path, "missing field")
+  }
+  const s = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "")
   return { provider: s("provider"), orderId: s("order_id"), keyId: s("key_id"), merchantDisplayName: s("merchant_display_name") }
 }
 
@@ -540,7 +563,7 @@ export function decodePaymentIntent(raw: unknown, ctx: Ctx): PaymentIntent {
     referenceId: reqStr(o, "reference_id", ctx),
     amountPaise: reqPaise(o, "amount_paise", ctx),
     status: oneOf(o, "status", ctx, PAYMENT_STATUSES),
-    checkout: decodeCheckout(o.checkout),
+    checkout: decodeCheckout(o.checkout, at(ctx, "checkout")),
   }
 }
 
@@ -603,6 +626,26 @@ export function decodePhoto(raw: unknown, ctx: Ctx): Photo {
   }
 }
 
+/** One step of the customer's timeline (StatusStep); actor and reason are admin-only. */
+export interface StatusStep {
+  fromStatus: BookingStatus | null
+  toStatus: BookingStatus
+  createdAt: string
+}
+
+export function decodeStatusStep(raw: unknown, ctx: Ctx): StatusStep {
+  const o = obj(raw, ctx, ["from_status", "to_status", "created_at"])
+  const from = optStr(o, "from_status", ctx)
+  if (from !== null && ctx.strict && !(BOOKING_STATUSES as readonly string[]).includes(from)) {
+    throw new WireError(at(ctx, "from_status").path, `unexpected value ${JSON.stringify(from)}`)
+  }
+  return {
+    fromStatus: from as BookingStatus | null,
+    toStatus: oneOf(o, "to_status", ctx, BOOKING_STATUSES),
+    createdAt: reqStr(o, "created_at", ctx),
+  }
+}
+
 export interface Booking {
   id: string
   status: BookingStatus
@@ -629,10 +672,12 @@ export interface Booking {
   professional: BookingProfessional | null
   parentBookingId: string | null
   startOtp: string | null
-  /** CONTRACT GAP: not in the Booking schema yet. */
+  /** Null until the visit lane sets it; shown only while in_progress (model/booking.ts otpToShow). */
   endOtp: string | null
-  /** CONTRACT GAP: not in the Booking schema yet. */
+  /** Before/after visit photos; [] until the visit lane uploads them. */
   photos: Photo[]
+  /** The timeline, oldest first. */
+  statusHistory: StatusStep[]
   canCancel: boolean
   canReschedule: boolean
   createdAt: string
@@ -665,18 +710,17 @@ const BOOKING_KEYS = [
   "professional",
   "parent_booking_id",
   "start_otp",
+  "end_otp",
+  "photos",
+  "status_history",
   "can_cancel",
   "can_reschedule",
   "created_at",
   "updated_at",
 ] as const
 
-/** Keys the web reads that the contract does not carry yet (see the header). */
-export const BOOKING_GAP_KEYS = ["end_otp", "photos"] as const
-export const EXTRA_GAP_KEYS = ["evidence_media_id"] as const
-
 export function decodeBooking(raw: unknown, ctx: Ctx): Booking {
-  const o = obj(raw, ctx, BOOKING_KEYS, BOOKING_GAP_KEYS)
+  const o = obj(raw, ctx, BOOKING_KEYS)
   return {
     id: reqStr(o, "id", ctx),
     status: oneOf(o, "status", ctx, BOOKING_STATUSES),
@@ -713,6 +757,7 @@ export function decodeBooking(raw: unknown, ctx: Ctx): Booking {
     startOtp: optStr(o, "start_otp", ctx),
     endOtp: optStr(o, "end_otp", ctx),
     photos: arr(o, "photos", ctx, decodePhoto),
+    statusHistory: arr(o, "status_history", ctx, decodeStatusStep),
     canCancel: boolOr(o, "can_cancel", ctx),
     canReschedule: boolOr(o, "can_reschedule", ctx),
     createdAt: reqStr(o, "created_at", ctx),
@@ -794,12 +839,12 @@ export interface Extra {
   totalPaise: number
   status: ExtraStatus
   createdAt: string
-  /** CONTRACT GAP: not in the Extra schema yet. */
+  /** The photo the professional attached to the extra, or null. */
   evidenceMediaId: string | null
 }
 
 export function decodeExtra(raw: unknown, ctx: Ctx): Extra {
-  const o = obj(raw, ctx, ["id", "booking_id", "kind", "rate_card_id", "addon_id", "name", "quantity", "unit_price_paise", "total_paise", "status", "created_at"], EXTRA_GAP_KEYS)
+  const o = obj(raw, ctx, ["id", "booking_id", "kind", "rate_card_id", "addon_id", "name", "quantity", "unit_price_paise", "total_paise", "status", "evidence_media_id", "created_at"])
   return {
     id: reqStr(o, "id", ctx),
     bookingId: reqStr(o, "booking_id", ctx),

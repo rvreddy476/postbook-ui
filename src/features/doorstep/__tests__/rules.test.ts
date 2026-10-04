@@ -2,11 +2,11 @@ import { describe, expect, it } from "bun:test"
 
 import { parseFrame } from "../hooks/live"
 import { formBody, parsePin, resolveChosen, validateForm, EMPTY_FORM } from "../model/address"
-import { canDecideExtra, extrasTotals, newerFix, otpToShow, timeline } from "../model/booking"
+import { canDecideExtra, customerPhotos, extrasTotals, newerFix, otpToShow, timeline } from "../model/booking"
 import { ATTEMPT_STORAGE_KEY, attemptFor, attemptSignature, bookWithSavedKey, readAttempt, type AttemptStore } from "../model/bookingAttempt"
-import { STRICT } from "../model/decode"
+import { LENIENT, STRICT } from "../model/decode"
 import { addPaise, formatPaise, formatRateBps, percentOff, timesPaise } from "../model/money"
-import { nextPaymentPollDelay, paymentRoute, readPayment } from "../model/payment"
+import { nextPaymentPollDelay, paymentRoute, readPayment, runStubLeg } from "../model/payment"
 import { isNotOpen, refusalLine } from "../model/refusals"
 import {
   effectiveFemalePref,
@@ -21,8 +21,8 @@ import {
   toggleAddon,
 } from "../model/selection"
 import { dateStrip, firstOpenDate, formatCountdown, holdExpired, holdRemainingMs, openSlots, slotStillOpen } from "../model/slots"
-import { decodeBooking, decodeBookingPayments, decodeExtra, decodePaymentIntent, decodeServicePage, decodeSlotDays, type Booking, type BookingStatus, type GenderRule } from "../model/wire"
-import { fixtureData } from "./fixtures"
+import { decodeAddressList, decodeBooking, decodeBookingPayments, decodeExtra, decodePaymentIntent, decodeServicePage, decodeSlotDays, type Booking, type BookingStatus, type GenderRule } from "../model/wire"
+import { fixtureData, fixtureError } from "./fixtures"
 import * as S from "./samples"
 
 class MemoryStore implements AttemptStore {
@@ -39,7 +39,11 @@ class MemoryStore implements AttemptStore {
 }
 
 const service = () => decodeServicePage(fixtureData("service_get_200"), STRICT).service
-const booking = (over: Record<string, unknown> = {}): Booking => decodeBooking({ ...S.booking, ...over }, STRICT)
+/** booking_get_200 (confirmed, paid) with some keys changed. */
+const booking = (over: Record<string, unknown> = {}): Booking => decodeBooking({ ...(fixtureData("booking_get_200") as object), ...over }, STRICT)
+/** The golden payment intent (razorpay session), raw. */
+const intentRaw = () => fixtureData("booking_payment_intent_post_200") as Record<string, unknown>
+const step = (from: string | null, to: string) => ({ from_status: from, to_status: to, created_at: "2026-10-04T06:30:00Z" })
 
 /* ── money ────────────────────────────────────────────────────────── */
 
@@ -210,7 +214,7 @@ describe("paid comes only from the payment status", () => {
   const pay = (statuses: string[], refunds: { status: string }[] = []) =>
     decodeBookingPayments(
       {
-        payments: statuses.map((status, i) => ({ ...S.paymentIntent, payment_id: `p${i}`, status })),
+        payments: statuses.map((status, i) => ({ ...intentRaw(), payment_id: `p${i}`, status })),
         refunds: refunds.map((r, i) => ({ id: `r${i}`, payment_id: "p0", cause: "customer_cancel", amount_paise: 100, status: r.status, created_at: "2026-10-04T07:00:00Z" })),
       },
       STRICT,
@@ -237,7 +241,7 @@ describe("paid comes only from the payment status", () => {
   })
 
   it("an intent's own status never reaches the reading (only GET /payment does)", () => {
-    const intent = decodePaymentIntent({ ...S.paymentIntent, status: "succeeded" }, STRICT)
+    const intent = decodePaymentIntent({ ...intentRaw(), status: "succeeded" }, STRICT)
     expect(readPayment({ payments: [], refunds: [] }, { referenceType: intent.referenceType, referenceId: intent.referenceId })).toBe("confirming")
   })
 
@@ -248,17 +252,79 @@ describe("paid comes only from the payment status", () => {
   })
 
   it("Razorpay opens only from a complete server session; the stub only when allowed", () => {
-    const rzp = decodePaymentIntent(S.paymentIntent, STRICT)
+    const rzp = decodePaymentIntent(intentRaw(), STRICT)
     const r = paymentRoute(rzp, { description: "x", stubAllowed: false })
     expect(r.kind).toBe("razorpay")
-    if (r.kind === "razorpay") expect([r.options.key, r.options.order_id, r.options.amount]).toEqual(["rzp_test_Sample01", "order_Doorstep01", 179900])
-    const noKey = decodePaymentIntent({ ...S.paymentIntent, checkout: { provider: "razorpay", order_id: "o", key_id: "" } }, STRICT)
+    if (r.kind === "razorpay") expect([r.options.key, r.options.order_id, r.options.amount, r.options.name]).toEqual(["rzp_test_fixture", "order_FixtureDoorstep01", 224800, "Doorstep"])
+    const noKey = decodePaymentIntent({ ...intentRaw(), checkout: { provider: "razorpay", order_id: "o", key_id: "" } }, STRICT)
     expect(paymentRoute(noKey, { description: "x", stubAllowed: true }).kind).toBe("unavailable")
-    const stub = decodePaymentIntent({ ...S.paymentIntent, checkout: { provider: "stub", order_id: "order_stub_1", key_id: "" } }, STRICT)
+    const stub = decodePaymentIntent({ ...intentRaw(), checkout: { provider: "stub", order_id: "order_stub_1", key_id: "" } }, STRICT)
     expect(paymentRoute(stub, { description: "x", stubAllowed: true }).kind).toBe("stub")
     expect(paymentRoute(stub, { description: "x", stubAllowed: false }).kind).toBe("unavailable")
-    const none = decodePaymentIntent({ ...S.paymentIntent, checkout: {} }, STRICT)
+    const none = decodePaymentIntent({ ...intentRaw(), checkout: {} }, STRICT)
     expect(paymentRoute(none, { description: "x", stubAllowed: true }).kind).toBe("unavailable")
+    // A stub-looking order id is not a stub session: only provider "stub" is.
+    const guessed = decodePaymentIntent({ ...intentRaw(), checkout: { provider: "", order_id: "order_stub_1", key_id: "" } }, LENIENT)
+    expect(paymentRoute(guessed, { description: "x", stubAllowed: true }).kind).toBe("unavailable")
+    // The real razorpay session never takes the stub path, even with the stub allowed.
+    expect(paymentRoute(rzp, { description: "x", stubAllowed: true }).kind).toBe("razorpay")
+  })
+
+  it("the paid source fixtures read pending → confirming, succeeded → paid, refund → refund_pending", () => {
+    const read = (name: string) => readPayment(decodeBookingPayments(fixtureData(name), STRICT), ref)
+    expect(read("booking_payment_get_200_pending")).toBe("confirming")
+    expect(read("booking_payment_get_200")).toBe("paid")
+    expect(read("booking_payment_get_200_refund")).toBe("refund_pending")
+  })
+})
+
+/* ── the dev stub can never mark paid ─────────────────────────────── */
+
+describe("the dev stub leg", () => {
+  const bookingRef = { referenceType: "doorstep_booking" as const, referenceId: S.BOOKING_ID, bookingId: S.BOOKING_ID }
+  const toRefusal = (e: unknown) => e as { status: number; code: string; message: string }
+
+  it("asks stub-confirm for the booking, then only ever hands back to the poll (even when the answer says succeeded)", async () => {
+    const asked: string[] = []
+    const succeeded = fixtureData("booking_payment_get_200")
+    const leg = await runStubLeg(bookingRef, async (id) => {
+      asked.push(id)
+      return succeeded
+    }, toRefusal)
+    expect(asked).toEqual([S.BOOKING_ID])
+    expect(leg).toEqual({ next: "poll", asked: true, refusal: null })
+  })
+
+  it("a refusal (not a dev stack, or a real provider) is shown, and still the poll decides", async () => {
+    const refused = { ...fixtureError("booking_payment_stub_confirm_404"), status: 404 }
+    const leg = await runStubLeg(bookingRef, async () => {
+      throw refused
+    }, (e) => {
+      const r = e as typeof refused
+      return { status: r.status, code: r.code, message: r.message }
+    })
+    expect(leg.next).toBe("poll")
+    expect(leg.refusal?.code).toBe("DOORSTEP_NOT_FOUND")
+  })
+
+  it("an extras bill has no stub-confirm route: nothing is sent", async () => {
+    let called = false
+    const leg = await runStubLeg({ referenceType: "doorstep_extras", referenceId: S.BILL_ID, bookingId: S.BOOKING_ID }, async () => {
+      called = true
+    }, toRefusal)
+    expect(called).toBe(false)
+    expect(leg).toEqual({ next: "poll", asked: false, refusal: null })
+  })
+
+  it("the hook settles only from the poll's GET /payment reading (one settle call site)", async () => {
+    const src = await Bun.file(new URL("../hooks/payment.ts", import.meta.url)).text()
+    const calls = src.match(/\bsettle\(/g) ?? []
+    expect(calls).toHaveLength(1)
+    expect(src).toMatch(/const reading = readPayment\(await getBookingPayments\(t\.bookingId\), t\)[\s\S]*settle\(reading as /)
+    // Nothing but the poll reads a payment verdict, and no phase is set to settled by hand.
+    expect(src.match(/readPayment\(/g) ?? []).toHaveLength(1)
+    expect(src).not.toMatch(/kind: "settled"[^}]*reading: "paid"/)
+    expect(src.match(/kind: "settled"/g) ?? []).toHaveLength(2) // the type, and settle() itself
   })
 })
 
@@ -307,20 +373,20 @@ describe("extras", () => {
 /* ── slots and the hold ───────────────────────────────────────────── */
 
 describe("slots and the hold", () => {
-  const days = decodeSlotDays(S.slotDays, STRICT)
+  // slots_get_200: Sunday 4 Oct has no hours; Monday on, the 03:30-10:00 UTC starts are open.
+  const days = decodeSlotDays(fixtureData("slots_get_200"), STRICT)
 
   it("taken slots are never drawn", () => {
-    expect(openSlots(days.days[0]).map((s) => s.start)).toEqual(["2026-10-04T09:30:00Z"])
-    expect(dateStrip(days)).toEqual([
-      { date: "2026-10-04", open: 1 },
-      { date: "2026-10-05", open: 1 },
-      { date: "2026-10-06", open: 0 },
-    ])
-    expect(firstOpenDate(days)).toBe("2026-10-04")
+    expect(openSlots(days.days[0])).toEqual([])
+    expect(openSlots(days.days[1]).map((s) => s.start).slice(0, 2)).toEqual(["2026-10-05T03:30:00Z", "2026-10-05T04:00:00Z"])
+    expect(openSlots(days.days[1])).toHaveLength(14)
+    expect(dateStrip(days)).toEqual(["04", "05", "06", "07", "08", "09", "10"].map((d) => ({ date: `2026-10-${d}`, open: d === "04" ? 0 : 14 })))
+    expect(firstOpenDate(days)).toBe("2026-10-05")
   })
 
   it("a picked slot that became taken is no longer open", () => {
-    expect(slotStillOpen(days, "2026-10-04T09:30:00Z")).toBe(true)
+    expect(slotStillOpen(days, "2026-10-05T08:30:00Z")).toBe(true)
+    expect(slotStillOpen(days, "2026-10-05T10:30:00Z")).toBe(false)
     expect(slotStillOpen(days, "2026-10-04T08:30:00Z")).toBe(false)
     expect(slotStillOpen(days, null)).toBe(false)
   })
@@ -344,19 +410,70 @@ describe("slots and the hold", () => {
 /* ── timeline and live ────────────────────────────────────────────── */
 
 describe("timeline and live frames", () => {
-  it("marks every step up to the current one", () => {
-    expect(timeline("en_route").map((s) => s.state)).toEqual(["done", "done", "done", "current", "todo", "todo", "todo"])
-    expect(timeline("completed").every((s) => s.state === "done")).toBe(true)
+  const states = (b: Booking) => timeline(b).map((s) => [s.label, s.state])
+
+  it("draws the server's history, the last step current, then what is ahead", () => {
+    expect(states(decodeBooking(fixtureData("booking_get_200"), STRICT))).toEqual([
+      ["Booked", "done"],
+      ["Payment confirmed", "current"],
+      ["Professional assigned", "todo"],
+      ["On the way", "todo"],
+      ["Arrived", "todo"],
+      ["Job started", "todo"],
+      ["Completed", "todo"],
+    ])
+    expect(states(decodeBooking(fixtureData("booking_get_200_pending_payment"), STRICT)).slice(0, 2)).toEqual([
+      ["Booked", "current"],
+      ["Payment confirmed", "todo"],
+    ])
+    expect(timeline(decodeBooking(fixtureData("booking_get_200"), STRICT))[0].at).toBe("2026-10-04T06:30:00Z")
   })
 
-  it("ends an off-path booking with its own end", () => {
-    expect(timeline("cancelled").map((s) => [s.label, s.state])).toEqual([
+  it("ends an off-path booking with its own end, exactly as recorded", () => {
+    expect(states(decodeBooking(fixtureData("booking_cancel_post_200"), STRICT))).toEqual([
       ["Booked", "done"],
       ["Payment confirmed", "done"],
       ["Cancelled", "stopped"],
     ])
-    expect(timeline("expired").map((s) => s.label)).toEqual(["Booked", "Expired"])
-    expect(timeline("cancelled", false).map((s) => s.label)).toEqual(["Booked", "Cancelled"])
+    const expired = booking({ status: "expired", paid_paise: 0, status_history: [step(null, "pending_payment"), step("pending_payment", "expired")] })
+    expect(states(expired)).toEqual([
+      ["Booked", "done"],
+      ["Expired", "stopped"],
+    ])
+  })
+
+  it("never draws a step the server did not record, whatever the status implies", () => {
+    // en_route with only the first two steps recorded: assigned is NOT drawn as reached.
+    const b = booking({ status: "en_route", status_history: [step(null, "pending_payment"), step("pending_payment", "confirmed")] })
+    expect(states(b)).toEqual([
+      ["Booked", "done"],
+      ["Payment confirmed", "done"],
+      ["On the way", "current"],
+      ["Arrived", "todo"],
+      ["Job started", "todo"],
+      ["Completed", "todo"],
+    ])
+    expect(timeline(b)[2].at).toBeNull()
+  })
+
+  it("a completed booking is all done; extras due sits before Completed", () => {
+    const all = ["pending_payment", "confirmed", "assigned", "en_route", "arrived", "in_progress", "completed"]
+    const chain = (to: string[]) => to.map((t, i) => step(i ? to[i - 1] : null, t))
+    const done = booking({ status: "completed", status_history: chain(all) })
+    expect(timeline(done).every((s) => s.state === "done")).toBe(true)
+    const due = booking({ status: "awaiting_extras_payment", status_history: chain([...all.slice(0, 6), "awaiting_extras_payment"]) })
+    expect(states(due).slice(-2)).toEqual([
+      ["Extras payment due", "current"],
+      ["Completed", "todo"],
+    ])
+  })
+
+  it("customers see before and after photos only", () => {
+    const photo = (phase: string, n: number) => ({ id: `p${n}`, booking_id: S.BOOKING_ID, phase, media_id: `m${n}`, created_at: "2026-10-04T09:00:00Z" })
+    const b = booking({ photos: [photo("before", 1), photo("kit_seal", 2), photo("after", 3), photo("extra_evidence", 4), photo("before", 5)] })
+    const p = customerPhotos(b.photos)
+    expect(p.before.map((x) => x.mediaId)).toEqual(["m1", "m5"])
+    expect(p.after.map((x) => x.mediaId)).toEqual(["m3"])
   })
 
   it("a pro_location frame is a fix; anything else is a change", () => {
@@ -391,9 +508,8 @@ describe("addresses", () => {
   })
 
   it("the chosen address falls back to the default, then the first", () => {
-    const a = { ...S.address, id: "a", is_default: false }
-    const b = { ...S.address, id: "b", is_default: true }
-    const list = [a, b].map((x) => ({ ...x, isDefault: x.is_default })) as never[]
+    const [home] = decodeAddressList(fixtureData("addresses_get_200"), STRICT)
+    const list = [{ ...home, id: "a", isDefault: false }, { ...home, id: "b", isDefault: true }]
     expect((resolveChosen(list, "a") as { id: string }).id).toBe("a")
     expect((resolveChosen(list, "gone") as { id: string }).id).toBe("b")
     expect(resolveChosen([], null)).toBeNull()

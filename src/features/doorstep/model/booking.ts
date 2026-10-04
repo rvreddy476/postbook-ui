@@ -16,7 +16,7 @@
 */
 
 import { addPaise } from "./money"
-import type { Booking, BookingStatus, Extra } from "./wire"
+import type { Booking, BookingStatus, Extra, Photo } from "./wire"
 
 /* ── status ───────────────────────────────────────────────────────── */
 
@@ -59,7 +59,7 @@ export function statusTone(status: BookingStatus): Tone {
   return "neutral"
 }
 
-/** The happy path, in order; the timeline marks every step up to the current one. */
+/** The happy path, in order: what is still ahead of a live booking. */
 export const TIMELINE: readonly { status: BookingStatus; label: string }[] = [
   { status: "pending_payment", label: "Booked" },
   { status: "confirmed", label: "Payment confirmed" },
@@ -70,29 +70,50 @@ export const TIMELINE: readonly { status: BookingStatus; label: string }[] = [
   { status: "completed", label: "Completed" },
 ]
 
+/** A step's words: the happy path's, else the status label (Cancelled, Extras payment due…). */
+function stepLabel(status: BookingStatus): string {
+  if (status === "awaiting_extras_payment") return "Extras payment due"
+  return TIMELINE.find((s) => s.status === status)?.label ?? statusLabel(status)
+}
+
 export interface TimelineStep {
+  status: BookingStatus
   label: string
   state: "done" | "current" | "todo" | "stopped"
+  /** When the server recorded it; null for a step still ahead. */
+  at: string | null
 }
 
 /**
-  The timeline for a status. `awaiting_extras_payment` sits on "Job started";
-  a booking that ended off the happy path keeps what was reached and closes
-  with its own end (Cancelled, Expired…).
+  The timeline from the server's status_history (oldest first): every
+  recorded step is done, the last one is the current step (done when the
+  booking completed, "stopped" when it ended off the happy path), and a live
+  booking shows what is still ahead on the happy path. Nothing is inferred
+  from the status alone: a step the server did not record is not drawn as
+  reached. Should the history lag the status (a poll racing a transition),
+  the booking's status is appended as the current step, time unknown.
 */
-export function timeline(status: BookingStatus, paid = true): TimelineStep[] {
-  const happy = TIMELINE.map((s) => s.status)
-  const pos = status === "awaiting_extras_payment" ? happy.indexOf("in_progress") : happy.indexOf(status)
-  if (pos >= 0) {
-    return TIMELINE.map((s, i) => ({
-      label: i === pos && status === "awaiting_extras_payment" ? "Extras payment due" : s.label,
-      state: i < pos || (i === pos && status === "completed") ? "done" : i === pos ? "current" : "todo",
-    }))
+export function timeline(b: Pick<Booking, "status" | "statusHistory">): TimelineStep[] {
+  const reached: { status: BookingStatus; at: string | null }[] = []
+  for (const s of b.statusHistory) {
+    if (reached.length && reached[reached.length - 1].status === s.toStatus) continue
+    reached.push({ status: s.toStatus, at: s.createdAt })
   }
-  // Off the path: "Booked" always happened; payment only when something was paid.
-  const steps: TimelineStep[] = [{ label: "Booked", state: "done" }]
-  if (status !== "expired" && paid) steps.push({ label: "Payment confirmed", state: "done" })
-  steps.push({ label: statusLabel(status), state: "stopped" })
+  if (!reached.length || reached[reached.length - 1].status !== b.status) reached.push({ status: b.status, at: null })
+
+  const last = reached.length - 1
+  const ended = isTerminal(b.status)
+  const steps: TimelineStep[] = reached.map((s, i) => ({
+    status: s.status,
+    label: stepLabel(s.status),
+    state: i < last ? "done" : b.status === "completed" ? "done" : ended ? "stopped" : "current",
+    at: s.at,
+  }))
+  if (ended) return steps
+
+  const happy = TIMELINE.map((s) => s.status)
+  const pos = happy.indexOf(b.status === "awaiting_extras_payment" ? "in_progress" : b.status)
+  for (const s of TIMELINE.slice(pos + 1)) steps.push({ status: s.status, label: s.label, state: "todo", at: null })
   return steps
 }
 
@@ -119,6 +140,13 @@ export function otpToShow(b: Pick<Booking, "status" | "startOtp" | "endOtp">): O
     return code ? { kind: "end", code } : null
   }
   return null
+}
+
+/* ── photos ───────────────────────────────────────────────────────── */
+
+/** The visit photos a customer sees: before and after only (kit seals and extra evidence are not theirs to browse here). */
+export function customerPhotos(photos: readonly Photo[]): { before: Photo[]; after: Photo[] } {
+  return { before: photos.filter((p) => p.phase === "before"), after: photos.filter((p) => p.phase === "after") }
 }
 
 /* ── extras ───────────────────────────────────────────────────────── */
