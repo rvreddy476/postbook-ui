@@ -33,6 +33,7 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
   expired: "Expired",
   customer_no_show: "Missed visit",
   pro_no_show: "Professional didn't arrive",
+  pro_unavailable: "Pick another professional",
 }
 
 export function statusLabel(status: string): string {
@@ -54,7 +55,7 @@ export type Tone = "neutral" | "good" | "warn" | "bad"
 
 export function statusTone(status: BookingStatus): Tone {
   if (status === "completed") return "good"
-  if (status === "pending_payment" || status === "awaiting_extras_payment") return "warn"
+  if (status === "pending_payment" || status === "awaiting_extras_payment" || status === "pro_unavailable") return "warn"
   if (status === "cancelled" || status === "expired" || status === "pro_no_show" || status === "customer_no_show") return "bad"
   return "neutral"
 }
@@ -73,6 +74,7 @@ export const TIMELINE: readonly { status: BookingStatus; label: string }[] = [
 /** A step's words: the happy path's, else the status label (Cancelled, Extras payment due…). */
 function stepLabel(status: BookingStatus): string {
   if (status === "awaiting_extras_payment") return "Extras payment due"
+  if (status === "pro_unavailable") return "Professional unavailable"
   return TIMELINE.find((s) => s.status === status)?.label ?? statusLabel(status)
 }
 
@@ -112,7 +114,10 @@ export function timeline(b: Pick<Booking, "status" | "statusHistory">): Timeline
   if (ended) return steps
 
   const happy = TIMELINE.map((s) => s.status)
-  const pos = happy.indexOf(b.status === "awaiting_extras_payment" ? "in_progress" : b.status)
+  // Extras due sits after the job started; a booking waiting for a new
+  // professional is paid and goes back to "assigned" once someone accepts.
+  const along = b.status === "awaiting_extras_payment" ? "in_progress" : b.status === "pro_unavailable" ? "confirmed" : b.status
+  const pos = happy.indexOf(along)
   for (const s of TIMELINE.slice(pos + 1)) steps.push({ status: s.status, label: s.label, state: "todo", at: null })
   return steps
 }
@@ -120,7 +125,7 @@ export function timeline(b: Pick<Booking, "status" | "statusHistory">): Timeline
 /* ── OTPs ─────────────────────────────────────────────────────────── */
 
 export const START_OTP_STATUSES: ReadonlySet<BookingStatus> = new Set(["assigned", "en_route", "arrived"])
-export const END_OTP_STATUSES: ReadonlySet<BookingStatus> = new Set(["in_progress"])
+export const END_OTP_STATUSES: ReadonlySet<BookingStatus> = new Set(["in_progress", "awaiting_extras_payment"])
 
 export type OtpShown = { kind: "start" | "end"; code: string } | null
 
@@ -207,6 +212,8 @@ const CANCEL_RULES: Record<string, string> = {
   lt_3h: "Less than 3 hours before the visit.",
   lt_1h_or_en_route: "Less than an hour before the visit, or the professional is on the way.",
   arrived: "The professional has arrived.",
+  pro_late_free: "Free: the professional is late.",
+  pro_unavailable_free: "Free: your professional can't make it, so everything you paid is refunded.",
 }
 
 export function cancelRuleText(rule: string): string {

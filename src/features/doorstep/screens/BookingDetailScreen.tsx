@@ -20,8 +20,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { openBookingPaymentIntent } from "../api/client"
 import { CancelSheet, ExtrasPanel, RatingPanel, RescheduleSheet, ReworkPanel, SafetyPanel } from "../components/BookingPanels"
 import { HoldCountdown, useNow } from "../components/HoldCountdown"
-import { ErrorState, MediaImg, QuoteBill, Skel, StatusTag } from "../components/parts"
+import { ErrorState, MediaImg, VisitImg, QuoteBill, Skel, StatusTag } from "../components/parts"
 import { PayPanel } from "../components/PayPanel"
+import { SupportPanel } from "../components/SupportPanel"
 import { LIVE_POLL_MS, SLOW_POLL_MS, useLiveBooking } from "../hooks/live"
 import { keys, useBooking } from "../hooks/queries"
 import { addressLine } from "../model/address"
@@ -116,7 +117,7 @@ function Photos({ booking }: { booking: Booking }) {
           <h2 className="ds-h2">Before</h2>
           <div className="ds-photos">
             {before.map((p) => (
-              <MediaImg key={p.id} mediaId={p.mediaId} alt="Before the job" />
+              <VisitImg key={p.id} bookingId={booking.id} mediaId={p.mediaId} alt="Before the job" />
             ))}
           </div>
         </>
@@ -126,7 +127,7 @@ function Photos({ booking }: { booking: Booking }) {
           <h2 className="ds-h2">After</h2>
           <div className="ds-photos">
             {after.map((p) => (
-              <MediaImg key={p.id} mediaId={p.mediaId} alt="After the job" />
+              <VisitImg key={p.id} bookingId={booking.id} mediaId={p.mediaId} alt="After the job" />
             ))}
           </div>
         </>
@@ -269,6 +270,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
           {canRate(b.status) && b.professional ? <RatingPanel booking={b} /> : null}
           {canAskRework(b.status, b.parentBookingId) ? <ReworkPanel booking={b} /> : null}
           {safetyOpen(b.status) ? <SafetyPanel booking={b} /> : null}
+          <SupportPanel bookingId={b.id} />
         </div>
 
         <div className="ds-stack ds-sticky">

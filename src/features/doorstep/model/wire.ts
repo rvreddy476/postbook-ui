@@ -6,14 +6,25 @@
   screen.
 
   Golden fixtures exist for the catalogue, category, service, serviceability,
-  quote, address, slot, booking, payment, cancel and reschedule routes (A1 +
-  A3). The visit, extras, rating, rework, safety, chat and realtime routes
-  are decoded from the OpenAPI schema and listed as PENDING in
-  __tests__/contracts.test.ts until doorstep-service lands their fixtures.
+  quote, address, slot, booking, payment, cancel, reschedule and realtime
+  routes (A1 + A3 + A4) and the B1 professional routes (the professionals
+  lists, the change of professional). The visit, extras, rating, rework,
+  safety and chat routes are decoded from the OpenAPI schema and listed as
+  PENDING in __tests__/contracts.test.ts until doorstep-service lands their
+  fixtures.
 
   A3 closed the old contract gaps: Booking.end_otp, Booking.photos,
   Booking.status_history and Extra.evidence_media_id are schema keys now,
   so strict mode requires them.
+
+  B1 (4 Oct 2026): every bookable price is a professional's own. The
+  catalogue carries only the city's SUGGESTED price (never charged) and the
+  lowest approved professional price (`from_price_paise`, null while nobody
+  prices it); an option has a unit (per_job / per_hour / per_month). The
+  quote carries the picked professional (`pro_id`), a booking may be ASAP,
+  and a booking whose professional is gone is `pro_unavailable` with a
+  `choice_deadline`, an `unavailable_cause` and possibly a `pending_change`
+  (a dearer professional waiting for the difference to be paid).
 */
 
 import {
@@ -26,6 +37,7 @@ import {
   optInt,
   optNum,
   optObj,
+  optPaise,
   optStr,
   reqBool,
   reqNum,
@@ -39,7 +51,20 @@ import {
 
 /* ── enums ────────────────────────────────────────────────────────── */
 
-export const FAMILIES = ["HOME_CLEANING", "PEST_CONTROL", "APPLIANCE_REPAIR", "INSTALLATION_REPAIR", "PAINTING", "BEAUTY_SALON"] as const
+export const FAMILIES = [
+  "HOME_CLEANING",
+  "PEST_CONTROL",
+  "APPLIANCE_REPAIR",
+  "INSTALLATION_REPAIR",
+  "PAINTING",
+  "BEAUTY_SALON",
+  "CAR_CARE",
+  "HOME_STAFFING",
+  "RELOCATION",
+  "PHOTOGRAPHY",
+  "FITNESS_WELLNESS",
+  "CONSTRUCTION",
+] as const
 export type Family = (typeof FAMILIES)[number]
 
 export const GENDER_RULES = ["any", "female_pros_only", "male_pros_only"] as const
@@ -61,8 +86,28 @@ export const BOOKING_STATUSES = [
   "expired",
   "customer_no_show",
   "pro_no_show",
+  "pro_unavailable",
 ] as const
 export type BookingStatus = (typeof BOOKING_STATUSES)[number]
+
+/** B1: what one unit of an option is (quantity counts units: hours, months). */
+export const UNITS = ["per_job", "per_hour", "per_month"] as const
+export type Unit = (typeof UNITS)[number]
+
+/** B1: why a booking's professional is gone (pro_unavailable only). */
+export const UNAVAILABLE_CAUSES = ["declined", "offer_expired", "pro_cancel", "not_on_duty", "pro_no_show", "ops_redispatch", "no_professional"] as const
+export type UnavailableCause = (typeof UNAVAILABLE_CAUSES)[number]
+
+/** B1: a professional's distance from the address, as a band only (never an exact distance). */
+export const DISTANCE_BANDS = ["under_2_km", "2_to_5_km", "5_to_10_km", "over_10_km"] as const
+export type DistanceBand = (typeof DISTANCE_BANDS)[number]
+
+/** A nullable enum: null, or one of `values` (strict refuses anything else). */
+function optOneOf<T extends string>(o: Record<string, unknown>, key: string, ctx: Ctx, values: readonly T[]): T | null {
+  const v = optStr(o, key, ctx)
+  if (v !== null && ctx.strict && !(values as readonly string[]).includes(v)) throw new WireError(at(ctx, key).path, `unexpected value ${JSON.stringify(v)}`)
+  return v as T | null
+}
 
 /* ── catalogue ────────────────────────────────────────────────────── */
 
@@ -86,7 +131,8 @@ export interface CategorySummary {
   imageUrl: string | null
   sortOrder: number
   serviceCount: number
-  startingPricePaise: number
+  /** B1: the lowest bookable professional price in the category; null while nobody offers one. */
+  startingPricePaise: number | null
 }
 
 export function decodeCategorySummary(raw: unknown, ctx: Ctx): CategorySummary {
@@ -101,7 +147,7 @@ export function decodeCategorySummary(raw: unknown, ctx: Ctx): CategorySummary {
     imageUrl: optStr(o, "image_url", ctx),
     sortOrder: intOr(o, "sort_order", ctx),
     serviceCount: intOr(o, "service_count", ctx),
-    startingPricePaise: reqPaise(o, "starting_price_paise", ctx),
+    startingPricePaise: optPaise(o, "starting_price_paise", ctx),
   }
 }
 
@@ -123,12 +169,14 @@ export interface ServiceSummary {
   description: string
   durationMinutes: number
   imageUrl: string | null
-  startingPricePaise: number
-  startingMrpPaise: number | null
+  /** B1: the lowest bookable professional price of its options; null while nobody prices it. */
+  startingPricePaise: number | null
+  /** B1: the city's suggested price (informational, never charged). */
+  suggestedPricePaise: number | null
 }
 
 export function decodeServiceSummary(raw: unknown, ctx: Ctx): ServiceSummary {
-  const o = obj(raw, ctx, ["id", "category_id", "slug", "name", "description", "duration_minutes", "image_url", "starting_price_paise", "starting_mrp_paise"])
+  const o = obj(raw, ctx, ["id", "category_id", "slug", "name", "description", "duration_minutes", "image_url", "starting_price_paise", "suggested_price_paise"])
   return {
     id: reqStr(o, "id", ctx),
     categoryId: reqStr(o, "category_id", ctx),
@@ -137,8 +185,8 @@ export function decodeServiceSummary(raw: unknown, ctx: Ctx): ServiceSummary {
     description: reqStr(o, "description", ctx),
     durationMinutes: intOr(o, "duration_minutes", ctx),
     imageUrl: optStr(o, "image_url", ctx),
-    startingPricePaise: reqPaise(o, "starting_price_paise", ctx),
-    startingMrpPaise: optInt(o, "starting_mrp_paise", ctx),
+    startingPricePaise: optPaise(o, "starting_price_paise", ctx),
+    suggestedPricePaise: optPaise(o, "suggested_price_paise", ctx),
   }
 }
 
@@ -163,22 +211,28 @@ export interface ServiceOption {
   description: string
   durationMinutes: number
   maxQuantity: number
+  unit: Unit
   isDefault: boolean
-  pricePaise: number
+  /** The city's suggested price per unit: informational, never charged. */
+  suggestedPricePaise: number | null
   mrpPaise: number | null
+  /** The lowest bookable professional price per unit now; null while nobody prices it. */
+  fromPricePaise: number | null
 }
 
 export function decodeServiceOption(raw: unknown, ctx: Ctx): ServiceOption {
-  const o = obj(raw, ctx, ["id", "name", "description", "duration_minutes", "max_quantity", "is_default", "price_paise", "mrp_paise"])
+  const o = obj(raw, ctx, ["id", "name", "description", "duration_minutes", "max_quantity", "unit", "is_default", "suggested_price_paise", "mrp_paise", "from_price_paise"])
   return {
     id: reqStr(o, "id", ctx),
     name: reqStr(o, "name", ctx),
     description: reqStr(o, "description", ctx),
     durationMinutes: intOr(o, "duration_minutes", ctx),
     maxQuantity: Math.max(1, intOr(o, "max_quantity", ctx, 1)),
+    unit: oneOf(o, "unit", ctx, UNITS),
     isDefault: boolOr(o, "is_default", ctx),
-    pricePaise: reqPaise(o, "price_paise", ctx),
-    mrpPaise: optInt(o, "mrp_paise", ctx),
+    suggestedPricePaise: optPaise(o, "suggested_price_paise", ctx),
+    mrpPaise: optPaise(o, "mrp_paise", ctx),
+    fromPricePaise: optPaise(o, "from_price_paise", ctx),
   }
 }
 
@@ -187,17 +241,19 @@ export interface Addon {
   name: string
   description: string
   extraDurationMinutes: number
-  pricePaise: number
+  suggestedPricePaise: number | null
+  fromPricePaise: number | null
 }
 
 export function decodeAddon(raw: unknown, ctx: Ctx): Addon {
-  const o = obj(raw, ctx, ["id", "name", "description", "extra_duration_minutes", "price_paise"])
+  const o = obj(raw, ctx, ["id", "name", "description", "extra_duration_minutes", "suggested_price_paise", "from_price_paise"])
   return {
     id: reqStr(o, "id", ctx),
     name: reqStr(o, "name", ctx),
     description: reqStr(o, "description", ctx),
     extraDurationMinutes: intOr(o, "extra_duration_minutes", ctx),
-    pricePaise: reqPaise(o, "price_paise", ctx),
+    suggestedPricePaise: optPaise(o, "suggested_price_paise", ctx),
+    fromPricePaise: optPaise(o, "from_price_paise", ctx),
   }
 }
 
@@ -337,6 +393,7 @@ export interface QuoteLine {
   refId: string
   priceId: string
   name: string
+  unit: Unit
   quantity: number
   unitPricePaise: number
   lineTotalPaise: number
@@ -348,12 +405,13 @@ export interface QuoteLine {
 }
 
 export function decodeQuoteLine(raw: unknown, ctx: Ctx): QuoteLine {
-  const o = obj(raw, ctx, ["kind", "ref_id", "price_id", "name", "quantity", "unit_price_paise", "line_total_paise", "taxable_paise", "tax_paise", "tax_rate_bps", "gst_category", "sac"])
+  const o = obj(raw, ctx, ["kind", "ref_id", "price_id", "name", "unit", "quantity", "unit_price_paise", "line_total_paise", "taxable_paise", "tax_paise", "tax_rate_bps", "gst_category", "sac"])
   return {
     kind: oneOf(o, "kind", ctx, ["option", "addon"] as const),
     refId: reqStr(o, "ref_id", ctx),
     priceId: reqStr(o, "price_id", ctx),
     name: reqStr(o, "name", ctx),
+    unit: oneOf(o, "unit", ctx, UNITS),
     quantity: intOr(o, "quantity", ctx, 1),
     unitPricePaise: reqPaise(o, "unit_price_paise", ctx),
     lineTotalPaise: reqPaise(o, "line_total_paise", ctx),
@@ -371,6 +429,8 @@ export interface Quote {
   serviceId: string
   optionId: string
   quantity: number
+  /** B1: the professional the customer picked; the quote is priced with their approved prices. */
+  proId: string
   cityCode: string
   zoneId: string
   lines: QuoteLine[]
@@ -392,6 +452,7 @@ export function decodeQuote(raw: unknown, ctx: Ctx): Quote {
     "service_id",
     "option_id",
     "quantity",
+    "pro_id",
     "city_code",
     "zone_id",
     "lines",
@@ -411,6 +472,7 @@ export function decodeQuote(raw: unknown, ctx: Ctx): Quote {
     serviceId: reqStr(o, "service_id", ctx),
     optionId: reqStr(o, "option_id", ctx),
     quantity: intOr(o, "quantity", ctx, 1),
+    proId: reqStr(o, "pro_id", ctx),
     cityCode: reqStr(o, "city_code", ctx),
     zoneId: reqStr(o, "zone_id", ctx),
     lines: arr(o, "lines", ctx, decodeQuoteLine),
@@ -540,7 +602,11 @@ function decodeCheckout(raw: unknown, ctx: Ctx): CheckoutSession | null {
   if (!Object.keys(o).length) return null
   if (ctx.strict) {
     for (const [k, v] of Object.entries(o)) if (typeof v !== "string") throw new WireError(at(ctx, k).path, "expected a string")
-    for (const k of CHECKOUT_REQUIRED) if (!(k in o)) throw new WireError(at(ctx, k).path, "missing field")
+    for (const k of CHECKOUT_REQUIRED) {
+      // Only the development stub has no publishable provider key.
+      if (k === "key_id" && o.provider === "stub") continue
+      if (!(k in o)) throw new WireError(at(ctx, k).path, "missing field")
+    }
   }
   const s = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "")
   return { provider: s("provider"), orderId: s("order_id"), keyId: s("key_id"), merchantDisplayName: s("merchant_display_name") }
@@ -680,6 +746,14 @@ export interface Booking {
   statusHistory: StatusStep[]
   canCancel: boolean
   canReschedule: boolean
+  /** B1: a same-day, as-soon-as-possible booking. */
+  asap: boolean
+  /** B1: while pro_unavailable, pick another professional (or cancel) by then, else a full refund. */
+  choiceDeadline: string | null
+  /** B1: why the professional is gone (pro_unavailable only). */
+  unavailableCause: UnavailableCause | null
+  /** B1: a change of professional waiting for its difference to be paid, else null. */
+  pendingChange: ProChange | null
   createdAt: string
   updatedAt: string
 }
@@ -715,6 +789,10 @@ const BOOKING_KEYS = [
   "status_history",
   "can_cancel",
   "can_reschedule",
+  "asap",
+  "choice_deadline",
+  "unavailable_cause",
+  "pending_change",
   "created_at",
   "updated_at",
 ] as const
@@ -760,6 +838,10 @@ export function decodeBooking(raw: unknown, ctx: Ctx): Booking {
     statusHistory: arr(o, "status_history", ctx, decodeStatusStep),
     canCancel: boolOr(o, "can_cancel", ctx),
     canReschedule: boolOr(o, "can_reschedule", ctx),
+    asap: reqBool(o, "asap", ctx),
+    choiceDeadline: optStr(o, "choice_deadline", ctx),
+    unavailableCause: optOneOf(o, "unavailable_cause", ctx, UNAVAILABLE_CAUSES),
+    pendingChange: optObj(o, "pending_change", ctx, decodeProChange),
     createdAt: reqStr(o, "created_at", ctx),
     updatedAt: reqStr(o, "updated_at", ctx),
   }
@@ -1039,6 +1121,17 @@ export interface MessagePage {
   open: boolean
 }
 
+export interface Ticket {
+  id: string; bookingId: string | null; category: string; subject: string; body: string; status: string; createdAt: string; updatedAt: string
+}
+export function decodeTicket(raw: unknown, ctx: Ctx): Ticket {
+  const o = obj(raw, ctx, ["id", "booking_id", "category", "subject", "body", "status", "created_at", "updated_at"])
+  return { id: reqStr(o,"id",ctx), bookingId: optStr(o,"booking_id",ctx), category: reqStr(o,"category",ctx), subject: reqStr(o,"subject",ctx), body: reqStr(o,"body",ctx), status: reqStr(o,"status",ctx), createdAt: reqStr(o,"created_at",ctx), updatedAt: reqStr(o,"updated_at",ctx) }
+}
+export function decodeTicketList(raw: unknown, ctx: Ctx): Ticket[] {
+  const o = obj(raw,ctx,["items"]); return arr(o,"items",ctx,decodeTicket)
+}
+
 export function decodeMessagePage(raw: unknown, ctx: Ctx): MessagePage {
   const o = obj(raw, ctx, ["items", "next_cursor", "open"])
   return { items: arr(o, "items", ctx, decodeMessage), nextCursor: optStr(o, "next_cursor", ctx), open: reqBool(o, "open", ctx) }
@@ -1055,4 +1148,191 @@ export interface RealtimeToken {
 export function decodeRealtimeToken(raw: unknown, ctx: Ctx): RealtimeToken {
   const o = obj(raw, ctx, ["token", "topics", "expires_at"])
   return { token: reqStr(o, "token", ctx), topics: strArr(o, "topics", ctx), expiresAt: reqStr(o, "expires_at", ctx) }
+}
+
+/* ── B1: the professionals a customer may pick ────────────────────── */
+
+/** One priced line of a professional's card (the tax split is on the card's total). */
+export interface PriceLine {
+  kind: "option" | "addon"
+  refId: string
+  name: string
+  unit: Unit
+  quantity: number
+  unitPricePaise: number
+  lineTotalPaise: number
+}
+
+export function decodePriceLine(raw: unknown, ctx: Ctx): PriceLine {
+  const o = obj(raw, ctx, ["kind", "ref_id", "name", "unit", "quantity", "unit_price_paise", "line_total_paise"])
+  return {
+    kind: oneOf(o, "kind", ctx, ["option", "addon"] as const),
+    refId: reqStr(o, "ref_id", ctx),
+    name: reqStr(o, "name", ctx),
+    unit: oneOf(o, "unit", ctx, UNITS),
+    quantity: intOr(o, "quantity", ctx, 1),
+    unitPricePaise: reqPaise(o, "unit_price_paise", ctx),
+    lineTotalPaise: reqPaise(o, "line_total_paise", ctx),
+  }
+}
+
+export interface CardPrice {
+  /** GST-inclusive: what the customer pays this professional for the selection. */
+  totalPaise: number
+  taxablePaise: number
+  taxPaise: number
+  lines: PriceLine[]
+}
+
+export interface NextSlot {
+  start: string
+  end: string
+}
+
+/**
+  A professional the customer may pick (ProfessionalCard). Never an exact
+  distance, location or phone: this type has no field for one, and strict
+  mode refuses any key the contract does not list.
+*/
+export interface ProfessionalCard {
+  proId: string
+  firstName: string
+  photoMediaId: string | null
+  ratingAvg: number | null
+  ratingCount: number
+  jobsCompleted: number
+  distanceBand: DistanceBand
+  price: CardPrice
+  /** scheduled: free starts (up to 3, or 6 on a chosen date); [] for asap. */
+  nextSlots: NextSlot[]
+  /** asap only. */
+  etaMinutes: number | null
+  sameDay: boolean
+  /** GET /bookings/{id}/professionals only: price minus the booking's total (negative: refunded; positive: charged). */
+  differencePaise: number | null
+}
+
+export function decodeProfessionalCard(raw: unknown, ctx: Ctx): ProfessionalCard {
+  const o = obj(raw, ctx, ["pro_id", "first_name", "photo_media_id", "rating_avg", "rating_count", "jobs_completed", "distance_band", "price", "next_slots", "eta_minutes", "same_day", "difference_paise"])
+  return {
+    proId: reqStr(o, "pro_id", ctx),
+    firstName: reqStr(o, "first_name", ctx),
+    photoMediaId: optStr(o, "photo_media_id", ctx),
+    ratingAvg: optNum(o, "rating_avg", ctx),
+    ratingCount: intOr(o, "rating_count", ctx),
+    jobsCompleted: intOr(o, "jobs_completed", ctx),
+    distanceBand: oneOf(o, "distance_band", ctx, DISTANCE_BANDS),
+    price: reqObj(o, "price", ctx, (r, c) => {
+      const p = obj(r, c, ["total_paise", "taxable_paise", "tax_paise", "lines"])
+      return {
+        totalPaise: reqPaise(p, "total_paise", c),
+        taxablePaise: reqPaise(p, "taxable_paise", c),
+        taxPaise: reqPaise(p, "tax_paise", c),
+        lines: arr(p, "lines", c, decodePriceLine),
+      }
+    }),
+    nextSlots: arr(o, "next_slots", ctx, (r, c) => {
+      const n = obj(r, c, ["start", "end"])
+      return { start: reqStr(n, "start", c), end: reqStr(n, "end", c) }
+    }),
+    etaMinutes: optInt(o, "eta_minutes", ctx),
+    sameDay: reqBool(o, "same_day", ctx),
+    differencePaise: optPaise(o, "difference_paise", ctx),
+  }
+}
+
+export type ListMode = "scheduled" | "asap"
+export const PRO_SORTS = ["price", "rating", "soonest"] as const
+export type ProSort = (typeof PRO_SORTS)[number]
+
+export interface ProfessionalList {
+  serviceId: string
+  optionId: string
+  quantity: number
+  addonIds: string[]
+  bookingId: string | null
+  mode: ListMode
+  date: string | null
+  sort: ProSort
+  timezone: string
+  items: ProfessionalCard[]
+  noProfessional: boolean
+  noProfessionalReason: "none_available_now" | null
+  /** asap with nobody: the next free starts for the same selection and address. */
+  scheduledAlternatives: ProfessionalCard[]
+}
+
+export function decodeProfessionalList(raw: unknown, ctx: Ctx): ProfessionalList {
+  const o = obj(raw, ctx, ["service_id", "option_id", "quantity", "addon_ids", "booking_id", "mode", "date", "sort", "timezone", "items", "no_professional", "no_professional_reason", "scheduled_alternatives"])
+  return {
+    serviceId: reqStr(o, "service_id", ctx),
+    optionId: reqStr(o, "option_id", ctx),
+    quantity: intOr(o, "quantity", ctx, 1),
+    addonIds: strArr(o, "addon_ids", ctx),
+    bookingId: optStr(o, "booking_id", ctx),
+    mode: oneOf(o, "mode", ctx, ["scheduled", "asap"] as const),
+    date: optStr(o, "date", ctx),
+    sort: oneOf(o, "sort", ctx, PRO_SORTS),
+    timezone: optStr(o, "timezone", ctx) || "Asia/Kolkata",
+    items: arr(o, "items", ctx, decodeProfessionalCard),
+    noProfessional: reqBool(o, "no_professional", ctx),
+    noProfessionalReason: optOneOf(o, "no_professional_reason", ctx, ["none_available_now"] as const),
+    scheduledAlternatives: arr(o, "scheduled_alternatives", ctx, decodeProfessionalCard),
+  }
+}
+
+/* ── B1: a change of professional ─────────────────────────────────── */
+
+export const CHANGE_STATUSES = ["pending_payment", "applied", "abandoned"] as const
+export type ChangeStatus = (typeof CHANGE_STATUSES)[number]
+
+export interface ProChange {
+  id: string
+  status: ChangeStatus
+  proId: string
+  proFirstName: string
+  asap: boolean
+  slotStart: string
+  slotEnd: string
+  previousTotalPaise: number
+  newTotalPaise: number
+  /** new − previous. */
+  differencePaise: number
+  /** Refunded at once when the new professional is cheaper. */
+  refundPaise: number
+  /** pending_payment only. */
+  holdExpiresAt: string | null
+  /** pending_payment only: reference doorstep_extras (the pro_change bill), paid only by the signed event. */
+  paymentIntent: PaymentIntent | null
+  createdAt: string
+}
+
+export function decodeProChange(raw: unknown, ctx: Ctx): ProChange {
+  const o = obj(raw, ctx, ["id", "status", "pro_id", "pro_first_name", "asap", "slot_start", "slot_end", "previous_total_paise", "new_total_paise", "difference_paise", "refund_paise", "hold_expires_at", "payment_intent", "created_at"])
+  return {
+    id: reqStr(o, "id", ctx),
+    status: oneOf(o, "status", ctx, CHANGE_STATUSES),
+    proId: reqStr(o, "pro_id", ctx),
+    proFirstName: reqStr(o, "pro_first_name", ctx),
+    asap: reqBool(o, "asap", ctx),
+    slotStart: reqStr(o, "slot_start", ctx),
+    slotEnd: reqStr(o, "slot_end", ctx),
+    previousTotalPaise: reqPaise(o, "previous_total_paise", ctx),
+    newTotalPaise: reqPaise(o, "new_total_paise", ctx),
+    differencePaise: reqPaise(o, "difference_paise", ctx),
+    refundPaise: reqPaise(o, "refund_paise", ctx),
+    holdExpiresAt: optStr(o, "hold_expires_at", ctx),
+    paymentIntent: optObj(o, "payment_intent", ctx, decodePaymentIntent),
+    createdAt: reqStr(o, "created_at", ctx),
+  }
+}
+
+export interface ProChangeResult {
+  booking: Booking
+  change: ProChange
+}
+
+export function decodeProChangeResult(raw: unknown, ctx: Ctx): ProChangeResult {
+  const o = obj(raw, ctx, ["booking", "change"])
+  return { booking: reqObj(o, "booking", ctx, decodeBooking), change: reqObj(o, "change", ctx, decodeProChange) }
 }

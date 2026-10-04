@@ -24,6 +24,24 @@ export interface AttemptStore {
 }
 
 export const ATTEMPT_STORAGE_KEY = "doorstep.booking.attempt"
+/** B1: the change-of-professional decision keeps its key apart from the booking's. */
+export const CHANGE_STORAGE_KEY = "doorstep.change.attempt"
+
+/**
+  The same store, with the attempt saved under CHANGE_STORAGE_KEY: POST
+  /bookings/{id}/change-professional needs an Idempotency-Key too, under the
+  same rules (saved first, kept on a lost answer, cleared on a refusal), and
+  must never pick up or clear the booking's own attempt.
+*/
+export function changeStore(store: AttemptStore | null): AttemptStore | null {
+  if (!store) return null
+  const k = (key: string) => (key === ATTEMPT_STORAGE_KEY ? CHANGE_STORAGE_KEY : key)
+  return {
+    getItem: (key) => store.getItem(k(key)),
+    setItem: (key, value) => store.setItem(k(key), value),
+    removeItem: (key) => store.removeItem(k(key)),
+  }
+}
 
 export interface BookingAttempt {
   key: string
@@ -36,6 +54,7 @@ export interface BookingAttempt {
 export interface SignatureInput {
   quoteId: string
   addressId: string
+  /** The slot's start, or "asap" (B1). */
   slotStart: string
   requireFemalePro: boolean
 }

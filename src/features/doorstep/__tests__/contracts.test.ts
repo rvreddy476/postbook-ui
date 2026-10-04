@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test"
 
 import { LENIENT, STRICT, WireError, type Ctx } from "../model/decode"
 import {
+  decodeTicket,
+  decodeTicketList,
   decodeAddress,
   decodeAddressList,
   decodeBooking,
@@ -29,6 +31,8 @@ import {
   decodeShareToken,
   decodeSlotDays,
   decodeTrustedContact,
+  decodeProfessionalList,
+  decodeProChangeResult,
 } from "../model/wire"
 import { backendFixtureNames, backendText, fixtureData, fixtureError, localFixtureNames, localText } from "./fixtures"
 import * as S from "./samples"
@@ -41,6 +45,26 @@ const bookingRaw = (): Record<string, unknown> => ({ ...(fixtureData("booking_ge
 /* ── golden fixtures wired today ──────────────────────────────────── */
 
 const SUCCESS: Record<string, Decoder> = {
+  ticket_get_200: decodeTicket,
+  ticket_post_201: decodeTicket,
+  tickets_get_200: decodeTicketList,
+  trusted_contact_get_200_empty: decodeTrustedContact,
+  extra_approve_post_200: decodeExtra,
+  extra_decline_post_200: decodeExtra,
+  extras_bill_get_200: decodeExtrasBill,
+  extras_get_200: decodeExtraList,
+  extras_payment_intent_post_200: decodePaymentIntent,
+  message_post_201: decodeMessage,
+  messages_get_200: decodeMessagePage,
+  outstanding_get_200: decodeOutstanding,
+  quote_get_200: decodeQuote,
+  rating_post_201: decodeRating,
+  rework_get_200: decodeReworkList,
+  rework_post_201: decodeReworkRequest,
+  share_post_201: decodeShareToken,
+  sos_post_201: decodeIncident,
+  trusted_contact_get_200: decodeTrustedContact,
+  trusted_contact_put_200: decodeTrustedContact,
   address_post_201: decodeAddress,
   addresses_get_200: decodeAddressList,
   booking_cancel_post_200: decodeBooking,
@@ -62,6 +86,18 @@ const SUCCESS: Record<string, Decoder> = {
   serviceability_in_200: decodeServiceability,
   serviceability_out_200: decodeServiceability,
   slots_get_200: decodeSlotDays,
+  realtime_token_post_200: decodeRealtimeToken,
+  booking_get_200_pending_change: decodeBooking,
+  booking_get_200_pro_unavailable: decodeBooking,
+  booking_post_201_asap: decodeBookingCreated,
+  booking_professionals_get_200: decodeProfessionalList,
+  booking_professionals_get_200_asap: decodeProfessionalList,
+  service_professionals_get_200: decodeProfessionalList,
+  service_professionals_get_200_asap: decodeProfessionalList,
+  service_professionals_get_200_asap_none: decodeProfessionalList,
+  booking_change_professional_post_200_charge: decodeProChangeResult,
+  booking_change_professional_post_200_refund: decodeProChangeResult,
+  cancel_preview_get_200_pro_unavailable: decodeCancelPreview,
 }
 
 const ERRORS: Record<string, string> = {
@@ -82,6 +118,13 @@ const ERRORS: Record<string, string> = {
   quote_post_422_outside_area: "DOORSTEP_OUTSIDE_SERVICE_AREA",
   quote_post_422_quantity: "DOORSTEP_QUANTITY_INVALID",
   slots_get_409_outstanding: "DOORSTEP_OUTSTANDING_DUE",
+  realtime_token_post_404: "DOORSTEP_BOOKING_NOT_FOUND",
+  booking_professionals_get_409: "DOORSTEP_INVALID_TRANSITION",
+  booking_change_professional_409_window: "DOORSTEP_CHOICE_WINDOW_CLOSED",
+  booking_change_professional_422_excluded: "DOORSTEP_SLOT_UNAVAILABLE",
+  service_professionals_get_400_address: "DOORSTEP_INVALID_REQUEST",
+  quote_post_400_pro_required: "DOORSTEP_INVALID_REQUEST",
+  quote_post_422_price_unavailable: "DOORSTEP_PRICE_UNAVAILABLE",
 }
 
 /*
@@ -93,24 +136,7 @@ const ERRORS: Record<string, string> = {
   appeared" test fails until it is copied into ./contracts and moved into
   SUCCESS above.
 */
-const PENDING: Record<string, { route: string; decode: Decoder; sample: unknown }> = {
-  extra_approve_post_200: { route: "POST /bookings/{id}/extras/{extraId}/approve", decode: decodeExtra, sample: { ...S.extra, status: "approved" } },
-  extra_decline_post_200: { route: "POST /bookings/{id}/extras/{extraId}/decline", decode: decodeExtra, sample: { ...S.extra, status: "declined" } },
-  extras_bill_get_200: { route: "GET /bookings/{id}/extras-bill", decode: decodeExtrasBill, sample: S.extrasBill },
-  extras_get_200: { route: "GET /bookings/{id}/extras", decode: decodeExtraList, sample: S.extraList },
-  extras_payment_intent_post_200: { route: "POST /extras-bills/{id}/payment/intent", decode: decodePaymentIntent, sample: S.extrasPaymentIntent },
-  message_post_201: { route: "POST /bookings/{id}/messages", decode: decodeMessage, sample: S.message },
-  messages_get_200: { route: "GET /bookings/{id}/messages", decode: decodeMessagePage, sample: S.messagePage },
-  outstanding_get_200: { route: "GET /me/outstanding", decode: decodeOutstanding, sample: S.outstanding },
-  quote_get_200: { route: "GET /quotes/{id}", decode: decodeQuote, sample: null },
-  rating_post_201: { route: "POST /bookings/{id}/rating", decode: decodeRating, sample: S.rating },
-  realtime_token_post_200: { route: "POST /realtime/token", decode: decodeRealtimeToken, sample: S.realtimeToken },
-  rework_get_200: { route: "GET /bookings/{id}/rework", decode: decodeReworkList, sample: S.reworkList },
-  rework_post_201: { route: "POST /bookings/{id}/rework", decode: decodeReworkRequest, sample: S.rework },
-  share_post_201: { route: "POST /bookings/{id}/share", decode: decodeShareToken, sample: S.shareToken },
-  sos_post_201: { route: "POST /bookings/{id}/sos", decode: decodeIncident, sample: S.incident },
-  trusted_contact_get_200: { route: "GET /trusted-contact", decode: decodeTrustedContact, sample: S.trustedContact },
-}
+const PENDING: Record<string, { route: string; decode: Decoder; sample: unknown }> = {}
 
 /** Backend fixtures that belong to other lanes (admin console, the pro app, the public share view). */
 const OTHER_LANES = /^(admin_|pro_|webhook_|share_get_)/
@@ -248,7 +274,7 @@ describe("decoded values", () => {
       [1, 1, true],
       [0, 2, false],
     ])
-    expect(s.options.find((o) => o.isDefault)?.pricePaise).toBe(129900)
+    expect(s.options.find((o) => o.isDefault)?.suggestedPricePaise).toBe(129900)
   })
 
   it("the quote's lines add up to its totals (as the server sent them)", () => {

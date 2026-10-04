@@ -80,7 +80,7 @@ export function SlotPicker({ query, enabled, value, onChange }: { query: SlotQue
       ) : (
         <p className="ds-note">This day is fully booked. Pick another day.</p>
       )}
-      <p className="ds-note">Times are in Hyderabad time. A slot is held for 10 minutes while you pay.</p>
+      <p className="ds-note">Times are in Hyderabad time. Availability is confirmed when you submit.</p>
     </div>
   )
 }

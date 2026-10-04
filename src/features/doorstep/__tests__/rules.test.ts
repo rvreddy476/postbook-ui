@@ -14,7 +14,6 @@ import {
   genderRuleNote,
   initialSelection,
   previewDurationMinutes,
-  previewTotalPaise,
   quoteBody,
   selectionProblems,
   setQuantity,
@@ -100,17 +99,17 @@ describe("the service sheet", () => {
     expect(selectionProblems(s, sel)).toEqual([])
   })
 
-  it("the preview matches the server's salon quote for the same picks", () => {
+  it("selection preserves the picks and chosen professional without guessing a price", () => {
     const s = service()
     const [mask, extras] = s.addonGroups
     let sel = initialSelection(s)
     sel = toggleAddon(mask, sel, "2d492586-bb1a-5131-94ff-5a08fdc929ea") // charcoal
     sel = toggleAddon(extras, sel, "da1d8a3b-2a87-535c-8619-3003cd0f65df") // head massage
     const quote = fixtureData("quote_post_201_salon") as { total_paise: number; duration_minutes: number }
-    expect(previewTotalPaise(s, sel)).toBe(quote.total_paise)
     expect(previewDurationMinutes(s, sel)).toBe(quote.duration_minutes)
-    expect(quoteBody(s, sel, { lat: 17.44, lng: 78.35 })).toEqual({
+    expect(quoteBody(s, sel, { lat: 17.44, lng: 78.35 }, "b1000000-0000-4000-8000-000000000001")).toEqual({
       service_id: s.id,
+      pro_id: "b1000000-0000-4000-8000-000000000001",
       option_id: "3418c19d-9e25-5e7d-89a9-57d66209a97f",
       quantity: 1,
       addons: [{ addon_id: "2d492586-bb1a-5131-94ff-5a08fdc929ea" }, { addon_id: "da1d8a3b-2a87-535c-8619-3003cd0f65df" }],
@@ -340,7 +339,7 @@ describe("OTP visibility", () => {
 
   it("the end code shows only while the job is in progress", () => {
     const shown = all.filter((status) => otpToShow(booking({ status, start_otp: "4821", end_otp: "7310" }))?.kind === "end")
-    expect(shown).toEqual(["in_progress"])
+    expect(shown).toEqual(["in_progress", "awaiting_extras_payment"])
   })
 
   it("a code the server sent outside its window, or a blank one, is not shown", () => {
@@ -378,9 +377,9 @@ describe("slots and the hold", () => {
 
   it("taken slots are never drawn", () => {
     expect(openSlots(days.days[0])).toEqual([])
-    expect(openSlots(days.days[1]).map((s) => s.start).slice(0, 2)).toEqual(["2026-10-05T03:30:00Z", "2026-10-05T04:00:00Z"])
-    expect(openSlots(days.days[1])).toHaveLength(14)
-    expect(dateStrip(days)).toEqual(["04", "05", "06", "07", "08", "09", "10"].map((d) => ({ date: `2026-10-${d}`, open: d === "04" ? 0 : 14 })))
+    expect(openSlots(days.days[1]).map((s) => s.start).slice(0, 2)).toEqual(["2026-10-05T08:00:00Z", "2026-10-05T08:30:00Z"])
+    expect(openSlots(days.days[1])).toHaveLength(5)
+    expect(dateStrip(days)).toEqual(["04", "05", "06", "07", "08", "09", "10"].map((d) => ({ date: `2026-10-${d}`, open: d === "04" ? 0 : d === "05" ? 5 : 14 })))
     expect(firstOpenDate(days)).toBe("2026-10-05")
   })
 

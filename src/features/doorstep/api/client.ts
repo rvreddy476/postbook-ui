@@ -14,8 +14,12 @@ import api from "@/lib/api"
 
 import type { AddressBody } from "../model/address"
 import { envelopeData, envelopeError, LENIENT, type Ctx, type Obj } from "../model/decode"
+import type { ChangeBody } from "../model/proChange"
+import { bookingProfessionalsSearch, professionalsSearch, type BookingBody, type BookingProQuery, type ProListQuery } from "../model/professionals"
 import type { QuoteBody } from "../model/selection"
 import {
+  decodeTicket,
+  decodeTicketList,
   decodeAddress,
   decodeAddressList,
   decodeBooking,
@@ -33,6 +37,8 @@ import {
   decodeMessagePage,
   decodeOutstanding,
   decodePaymentIntent,
+  decodeProChangeResult,
+  decodeProfessionalList,
   decodeQuote,
   decodeRating,
   decodeRealtimeToken,
@@ -58,6 +64,8 @@ import {
   type MessagePage,
   type Outstanding,
   type PaymentIntent,
+  type ProChangeResult,
+  type ProfessionalList,
   type Quote,
   type Rating,
   type RealtimeToken,
@@ -145,6 +153,23 @@ export function checkServiceability(lat: number, lng: number): Promise<Serviceab
   return call(() => api.post(`${BASE}/serviceability`, { lat, lng }), decodeServiceability)
 }
 
+/* B1: the professionals a customer may pick */
+
+/** GET /services/{id}/professionals (addon_id repeated: built by hand, never axios's `addon_id[]`). */
+export function listServiceProfessionals(q: ProListQuery): Promise<ProfessionalList> {
+  return call(() => api.get(`${BASE}/services/${id(q.serviceId)}/professionals?${professionalsSearch(q).toString()}`), decodeProfessionalList)
+}
+
+/** GET /bookings/{id}/professionals: alternatives for a pro_unavailable booking, each with difference_paise. */
+export function listBookingProfessionals(bookingId: string, q: BookingProQuery): Promise<ProfessionalList> {
+  return call(() => api.get(`${BASE}/bookings/${id(bookingId)}/professionals?${bookingProfessionalsSearch(q).toString()}`), decodeProfessionalList)
+}
+
+/** POST /bookings/{id}/change-professional. The key is the caller's, saved BEFORE this call. */
+export function changeProfessional(bookingId: string, body: ChangeBody, idempotencyKey: string): Promise<ProChangeResult> {
+  return call(() => api.post(`${BASE}/bookings/${id(bookingId)}/change-professional`, body, { headers: { "Idempotency-Key": idempotencyKey } }), decodeProChangeResult)
+}
+
 /* quotes */
 
 export function createQuote(body: QuoteBody): Promise<Quote> {
@@ -193,15 +218,7 @@ export function listSlots(q: SlotQuery): Promise<SlotDays> {
 
 /* bookings */
 
-export interface BookingBody {
-  quote_id: string
-  address_id: string
-  slot_start: string
-  require_female_pro: boolean
-  notes?: string
-}
-
-/** POST /bookings. The key is the caller's, saved BEFORE this call (bookingAttempt.ts). */
+/** POST /bookings (body: model/professionals.ts bookingBody — slot_start or asap). The key is the caller's, saved BEFORE this call (bookingAttempt.ts). */
 export function createBooking(body: BookingBody, idempotencyKey: string): Promise<BookingCreated> {
   return call(() => api.post(`${BASE}/bookings`, body, { headers: { "Idempotency-Key": idempotencyKey } }), decodeBookingCreated)
 }
@@ -322,8 +339,8 @@ export function putTrustedContact(body: { name: string; phone: string }): Promis
 
 /* chat */
 
-export function listMessages(bookingId: string): Promise<MessagePage> {
-  return call(() => api.get(`${BASE}/bookings/${id(bookingId)}/messages`), decodeMessagePage)
+export function listMessages(bookingId: string, cursor?: string | null): Promise<MessagePage> {
+  return call(() => api.get(`${BASE}/bookings/${id(bookingId)}/messages`, { params: { cursor: cursor || undefined } }), decodeMessagePage)
 }
 
 export function sendMessage(bookingId: string, body: string): Promise<Message> {
@@ -335,6 +352,11 @@ export function markMessageRead(bookingId: string, messageId: string): Promise<v
 }
 
 /* realtime */
+
+export function listTickets() { return call(() => api.get(`${BASE}/tickets`), decodeTicketList) }
+export function openTicket(body: { booking_id: string; category: string; subject: string; body: string }) {
+  return call(() => api.post(`${BASE}/tickets`, body), decodeTicket)
+}
 
 export function issueBookingRealtimeToken(bookingId: string): Promise<RealtimeToken> {
   return call(() => api.post(`${BASE}/realtime/token`, { booking_id: bookingId }), decodeRealtimeToken)

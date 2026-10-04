@@ -5,26 +5,34 @@
 import {
   AirVent,
   Bug,
+  Camera,
+  Car,
   CircleAlert,
+  Dumbbell,
   Flower2,
   Hammer,
+  HardHat,
   House,
   Loader2,
   PaintRoller,
   PlugZap,
   Scissors,
   SprayCan,
+  Truck,
+  UsersRound,
   WashingMachine,
   Wrench,
   X,
   type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useRef, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import api from "@/lib/api"
 
 import { toDoorstepError } from "../api/client"
 import { statusLabel, statusTone } from "../model/booking"
 import { formatPaise, formatRateBps, percentOff } from "../model/money"
+import { fromPriceLabel, unitWord } from "../model/professionals"
 import { isNotOpen, refusalLine } from "../model/refusals"
 import type { BookingStatus, Family, Outstanding, QuoteLine } from "../model/wire"
 
@@ -97,6 +105,12 @@ const FAMILY_ICONS: Record<Family, LucideIcon> = {
   INSTALLATION_REPAIR: Wrench,
   PAINTING: PaintRoller,
   PEST_CONTROL: Bug,
+  CAR_CARE: Car,
+  HOME_STAFFING: UsersRound,
+  RELOCATION: Truck,
+  PHOTOGRAPHY: Camera,
+  FITNESS_WELLNESS: Dumbbell,
+  CONSTRUCTION: HardHat,
 }
 
 export function categoryIcon(slug: string, family: Family): LucideIcon {
@@ -121,6 +135,28 @@ export function PriceTag({ price, mrp, from }: { price: number; mrp: number | nu
   )
 }
 
+/**
+  B1: "From ₹699 per hour" — the lowest approved professional price — or a
+  plain "No professional yet" while nobody prices it. Never the city's
+  suggested price (it is never charged).
+*/
+export function FromPrice({ paise, unit, mrp = null }: { paise: number | null; unit?: string; mrp?: number | null }) {
+  const label = fromPriceLabel(paise, unit)
+  if (label === null || paise === null) return <span className="ds-meta">No professional yet</span>
+  const off = percentOff(paise, mrp)
+  return (
+    <span>
+      <span className="ds-price">{label}</span>
+      {off !== null && mrp !== null ? (
+        <>
+          <span className="ds-strike">{formatPaise(mrp)}</span>
+          <span className="ds-off">{off}% off</span>
+        </>
+      ) : null}
+    </span>
+  )
+}
+
 /** The quote's lines and totals exactly as the server priced them. Nothing is added up here. */
 export function QuoteBill({ lines, totalPaise, taxablePaise, taxPaise, note, provisional }: { lines: QuoteLine[]; totalPaise: number; taxablePaise: number; taxPaise: number; note?: string; provisional?: boolean }) {
   const rates = [...new Set(lines.map((l) => l.taxRateBps))]
@@ -130,8 +166,9 @@ export function QuoteBill({ lines, totalPaise, taxablePaise, taxPaise, note, pro
         {lines.map((l) => (
           <div className="ds-bill__row" key={`${l.kind}-${l.refId}`}>
             <dt>
-              {l.quantity > 1 ? `${l.quantity} × ` : ""}
+              {l.quantity > 1 || l.unit !== "per_job" ? `${l.quantity} × ` : ""}
               {l.name}
+              {l.unit !== "per_job" && unitWord(l.unit) ? ` (${formatPaise(l.unitPricePaise)} ${unitWord(l.unit)})` : ""}
             </dt>
             <dd>{formatPaise(l.lineTotalPaise)}</dd>
           </div>
@@ -187,6 +224,21 @@ export function DuesBanner({ outstanding }: { outstanding: Outstanding | undefin
 /** media-service's serve route, through the API base ("" = same-origin proxy). */
 export function mediaServeUrl(mediaId: string): string {
   return `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${encodeURIComponent(mediaId)}/serve`
+}
+
+/** Private visit images require the same authenticated request as the booking. */
+export function VisitImg({ bookingId, mediaId, alt, className }: { bookingId: string; mediaId: string; alt: string; className?: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    let objectUrl: string | null = null
+    setUrl(null)
+    void api.get(`/v1/doorstep/bookings/${encodeURIComponent(bookingId)}/photos/${encodeURIComponent(mediaId)}`, { responseType: "blob", signal: controller.signal })
+      .then(({ data }) => { if (!controller.signal.aborted) { objectUrl = URL.createObjectURL(data); setUrl(objectUrl) } })
+      .catch(() => { /* An inaccessible image stays a placeholder, never falls back to public media. */ })
+    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [bookingId, mediaId])
+  return url ? <img src={url} alt={alt} className={className} /> : <span className={className} role="img" aria-label={`${alt} — unavailable`} />
 }
 
 export function MediaImg({ mediaId, alt, className }: { mediaId: string; alt: string; className?: string }) {

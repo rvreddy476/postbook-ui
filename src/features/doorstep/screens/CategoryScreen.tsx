@@ -5,7 +5,7 @@
 import { ArrowLeft, Clock, Search } from "lucide-react"
 import Link from "next/link"
 
-import { categoryIcon, DuesBanner, ErrorState, PriceTag, Skel, StateBlock } from "../components/parts"
+import { categoryIcon, DuesBanner, ErrorState, FromPrice, Skel, StateBlock } from "../components/parts"
 import { useCategory, useOutstanding } from "../hooks/queries"
 import { formatDuration, genderRuleNote } from "../model/selection"
 
@@ -63,7 +63,7 @@ export function CategoryScreen({ slug }: { slug: string }) {
                     <p className="ds-svc__name">{s.name}</p>
                     <p className="ds-svc__desc">{s.description}</p>
                     <div className="ds-row ds-wrap" style={{ marginTop: 4 }}>
-                      <PriceTag price={s.startingPricePaise} mrp={s.startingMrpPaise} from />
+                      <FromPrice paise={s.startingPricePaise} />
                       {s.durationMinutes ? (
                         <span className="ds-meta ds-row" style={{ gap: 4 }}>
                           <Clock size={12} aria-hidden="true" />

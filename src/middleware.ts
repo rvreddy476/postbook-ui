@@ -76,6 +76,7 @@ const PUBLIC_PREFIXES = [
     "/auth/",
     // Share links that must resolve for someone who is not signed in.
     "/memories/slambooks/share/",
+    "/doorstep/share/",
     // Public profile surfaces: username, business page, channel.
     "/u/",
     "/page/",

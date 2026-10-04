@@ -10,7 +10,7 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 
 import { AddressBar } from "../components/AddressBar"
-import { categoryIcon, DuesBanner, ErrorState, PriceTag, Skel, StateBlock } from "../components/parts"
+import { categoryIcon, DuesBanner, ErrorState, FromPrice, Skel, StateBlock } from "../components/parts"
 import { useCatalogue, useOutstanding } from "../hooks/queries"
 import type { CategorySummary } from "../model/wire"
 
@@ -32,7 +32,7 @@ export function HomeScreen() {
       <div className="ds-head">
         <div>
           <h1 className="ds-title">Home services</h1>
-          <p className="ds-sub">Fixed prices, booked into a slot, done by verified professionals.</p>
+          <p className="ds-sub">Pick a verified professional by price, rating and time, or get someone today.</p>
         </div>
         <span className="ds-city">
           <MapPinned size={14} aria-hidden="true" />
@@ -73,7 +73,7 @@ export function HomeScreen() {
                   <p className="ds-cat__name">{c.name}</p>
                   <p className="ds-cat__desc">{c.description}</p>
                   <span className="ds-meta">
-                    <PriceTag price={c.startingPricePaise} mrp={null} from />
+                    <FromPrice paise={c.startingPricePaise} />
                   </span>
                 </Link>
               </li>

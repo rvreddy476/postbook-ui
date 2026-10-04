@@ -5,8 +5,14 @@
   The add-on rules mirror the server's (POST /quotes): in each group the
   count must be at least max(min_select, is_required ? 1 : 0) and at most
   max_select (0 = no upper bound beyond the group size); no add-on twice.
-  The preview total here is only a preview — the quote the server returns
-  is what the customer pays.
+
+  B1: there is no price to add up here. Every professional sets their own;
+  the sheet shows each item's "from" price (the lowest approved one, or
+  nothing while nobody prices it), the professionals list shows each
+  professional's price for exactly this selection, and the quote for the
+  picked professional is what the customer pays. The selection travels in
+  the URL (selectionParams / selectionFromParams) so the professionals
+  step, the ASAP-to-scheduled fallback and "change" all keep the choices.
 
   Gender: women's salon is women professionals only and men's salon is men
   professionals only (the category's gender_rule). Any customer may ask for
@@ -14,7 +20,6 @@
   category it is already true, in a men-only one it cannot be met.
 */
 
-import { addPaise, timesPaise } from "./money"
 import type { AddonGroup, GenderRule, ServiceDetail, ServiceOption } from "./wire"
 
 export interface Selection {
@@ -119,16 +124,6 @@ export function chosenAddonIds(service: ServiceDetail, sel: Selection): string[]
   return [...seen]
 }
 
-/** Preview of the price (GST-inclusive): option × quantity + each add-on once. */
-export function previewTotalPaise(service: ServiceDetail, sel: Selection): number | null {
-  const opt = chosenOption(service, sel)
-  if (!opt) return null
-  const parts = [timesPaise(opt.pricePaise, sel.quantity)]
-  const ids = new Set(chosenAddonIds(service, sel))
-  for (const g of service.addonGroups) for (const a of g.addons) if (ids.has(a.id)) parts.push(a.pricePaise)
-  return addPaise(...parts)
-}
-
 /** Preview of the duration in minutes: option × quantity + add-on extra time. */
 export function previewDurationMinutes(service: ServiceDetail, sel: Selection): number {
   const opt = chosenOption(service, sel)
@@ -170,6 +165,8 @@ export function genderRuleNote(rule: GenderRule): string | null {
 
 export interface QuoteBody {
   service_id: string
+  /** B1: the professional the customer picked from the professionals list. */
+  pro_id: string
   option_id: string
   quantity: number
   addons: { addon_id: string }[]
@@ -177,15 +174,53 @@ export interface QuoteBody {
   lng: number
 }
 
-export function quoteBody(service: ServiceDetail, sel: Selection, at: { lat: number; lng: number }): QuoteBody | null {
+/** The quote for the picked professional; null while the sheet has a problem or nobody is picked. */
+export function quoteBody(service: ServiceDetail, sel: Selection, at: { lat: number; lng: number }, proId: string): QuoteBody | null {
   const opt = chosenOption(service, sel)
-  if (!opt || selectionProblems(service, sel).length) return null
+  if (!opt || !proId || selectionProblems(service, sel).length) return null
   return {
     service_id: service.id,
+    pro_id: proId,
     option_id: opt.id,
     quantity: sel.quantity,
     addons: chosenAddonIds(service, sel).map((addon_id) => ({ addon_id })),
     lat: at.lat,
     lng: at.lng,
   }
+}
+
+/* ── the selection in the URL ─────────────────────────────────────── */
+
+/**
+  The choices as query params: option, qty, one `addon` per add-on, and
+  female=1 (only where the toggle is offered). The professionals step reads
+  them back; so does the service sheet when the customer goes back to change
+  something, so nothing already chosen is lost.
+*/
+export function selectionParams(service: ServiceDetail, sel: Selection): URLSearchParams {
+  const p = new URLSearchParams()
+  if (sel.optionId) p.set("option", sel.optionId)
+  p.set("qty", String(sel.quantity))
+  for (const id of chosenAddonIds(service, sel)) p.append("addon", id)
+  if (effectiveFemalePref(service.category.genderRule, sel.requireFemalePro)) p.set("female", "1")
+  return p
+}
+
+/**
+  The selection the params describe, checked against the service: an
+  unknown option falls back to the default, the quantity is clamped, an
+  add-on of another service is dropped, and a group keeps at most its
+  maximum. Nothing in the URL can smuggle in a choice the sheet would refuse.
+*/
+export function selectionFromParams(service: ServiceDetail, params: Pick<URLSearchParams, "get" | "getAll">): Selection {
+  let sel = initialSelection(service)
+  const optionId = params.get("option")
+  if (optionId) sel = selectOption(service, sel, optionId)
+  const qty = Number(params.get("qty"))
+  if (Number.isFinite(qty) && qty >= 1) sel = setQuantity(service, sel, qty)
+  for (const id of params.getAll("addon")) {
+    const g = service.addonGroups.find((x) => x.addons.some((a) => a.id === id))
+    if (g && !(sel.addons[g.id] ?? []).includes(id)) sel = toggleAddon(g, sel, id)
+  }
+  return { ...sel, requireFemalePro: params.get("female") === "1" && femaleToggleVisible(service.category.genderRule) }
 }

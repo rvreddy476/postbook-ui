@@ -26,7 +26,8 @@ export function ChatScreen({ bookingId }: { bookingId: string }) {
   const qc = useQueryClient()
   const booking = useBooking(bookingId)
   const may = Boolean(booking.data && chatMayOpen(booking.data.status))
-  const messages = useMessages(bookingId, may, CHAT_POLL_MS)
+  const [pages, setPages] = useState(1)
+  const messages = useMessages(bookingId, may, CHAT_POLL_MS, pages)
   const [draft, setDraft] = useState("")
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -106,6 +107,7 @@ export function ChatScreen({ bookingId }: { bookingId: string }) {
               <p className="ds-note">No messages yet. Say hello, or share directions.</p>
             )}
           </div>
+          {messages.data?.nextCursor ? <button type="button" className="ds-btn ds-btn--outline ds-btn--sm" disabled={messages.isFetching} onClick={() => setPages(n => n + 1)}>Load more messages</button> : null}
           {open ? (
             <form
               className="ds-compose"

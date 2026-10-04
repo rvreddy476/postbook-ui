@@ -17,7 +17,7 @@ import { formatPaise } from "../model/money"
 import { refusalLine } from "../model/refusals"
 import { formatWhen } from "../model/slots"
 import type { Booking, ShareToken } from "../model/wire"
-import { Busy, MediaImg, Sheet } from "./parts"
+import { Busy, VisitImg, Sheet } from "./parts"
 import { PayPanel } from "./PayPanel"
 import { SlotPicker } from "./SlotPicker"
 
@@ -62,7 +62,7 @@ export function ExtrasPanel({ booking, refetchInterval }: { booking: Booking; re
       <div>
         {list.map((e) => (
           <div key={e.id} className="ds-extra">
-            {e.evidenceMediaId ? <MediaImg mediaId={e.evidenceMediaId} alt={`Photo for ${e.name}`} className="ds-extra__img" /> : null}
+            {e.evidenceMediaId ? <VisitImg bookingId={booking.id} mediaId={e.evidenceMediaId} alt={`Photo for ${e.name}`} className="ds-extra__img" /> : null}
             <div className="ds-grow">
               <strong>{e.name}</strong>
               <span className="ds-meta" style={{ display: "block" }}>
@@ -250,7 +250,7 @@ export function SafetyPanel({ booking }: { booking: Booking }) {
     setSending(true)
     const go = (pos?: GeolocationPosition) =>
       raiseSOS(booking.id, { ...(pos ? { lat: pos.coords.latitude, lng: pos.coords.longitude } : {}), ...(note.trim() ? { note: note.trim() } : {}) })
-        .then(() => setSent("Our safety team has been alerted and will call you. If you are in danger, call 112."))
+        .then(() => setSent("Your safety alert has been recorded. If you are in danger, call 112 now; do not wait for a response."))
         .catch((e) => setSent(errLine(e)))
         .finally(() => {
           setSending(false)
@@ -366,7 +366,7 @@ export function SafetyPanel({ booking }: { booking: Booking }) {
             </>
           }
         >
-          <p style={{ margin: 0 }}>Our safety team is alerted at once with this booking and, if you allow it, your location. If you are in danger, call 112 first.</p>
+          <p style={{ margin: 0 }}>Send a safety alert with this booking and, if you allow it, your location. If you are in danger, call 112 first.</p>
           <label className="ds-field">
             What&apos;s happening? (optional)
             <textarea className="ds-input" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} />
@@ -455,13 +455,14 @@ export function ReworkPanel({ booking }: { booking: Booking }) {
   const list = useRework(booking.id, true)
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
+  const [slot, setSlot] = useState<string | null>(null)
   const [state, setState] = useState<{ kind: "idle" | "sending" } | { kind: "error"; message: string }>({ kind: "idle" })
   const existing = list.data ?? []
 
   const submit = async () => {
     setState({ kind: "sending" })
     try {
-      await requestRework(booking.id, { reason: reason.trim() })
+      await requestRework(booking.id, { reason: reason.trim(), ...(slot ? { slot_start: slot } : {}) })
       setOpen(false)
       setState({ kind: "idle" })
       void qc.invalidateQueries({ queryKey: keys.rework(booking.id) })
@@ -476,7 +477,7 @@ export function ReworkPanel({ booking }: { booking: Booking }) {
         <h2 id="ds-rework" className="ds-h2 ds-grow">
           Not happy with the work?
         </h2>
-        {!existing.length && !open ? (
+        {!existing.some((r) => r.childBookingId) && !open ? (
           <button type="button" className="ds-btn ds-btn--outline ds-btn--sm" onClick={() => setOpen(true)}>
             <RotateCcw size={14} aria-hidden="true" /> Ask for a redo
           </button>
@@ -485,6 +486,7 @@ export function ReworkPanel({ booking }: { booking: Booking }) {
       {existing.map((r) => (
         <p key={r.id} className="ds-info">
           Redo {REWORK_LABEL[r.status] ?? r.status} · {formatWhen(r.createdAt)}
+          {r.childBookingId ? <a href={`/doorstep/bookings/${r.childBookingId}`}> Open rework booking</a> : null}
         </p>
       ))}
       {!existing.length && !open ? <p className="ds-note">A redo is free within the service&apos;s window after the visit.</p> : null}
@@ -494,8 +496,10 @@ export function ReworkPanel({ booking }: { booking: Booking }) {
             What needs redoing?
             <textarea className="ds-input" value={reason} maxLength={1000} onChange={(e) => setReason(e.target.value)} />
           </label>
+          <SlotPicker query={{ bookingId: booking.id }} enabled={open} value={slot} onChange={setSlot} />
+          <p className="ds-note">Choose a time for a free visit with the same professional.</p>
           <div className="ds-row">
-            <button type="button" className="ds-btn ds-btn--primary ds-btn--sm" disabled={!reason.trim() || state.kind === "sending"} onClick={() => void submit()}>
+            <button type="button" className="ds-btn ds-btn--primary ds-btn--sm" disabled={!reason.trim() || !slot || state.kind === "sending"} onClick={() => void submit()}>
               {state.kind === "sending" ? "Sending…" : "Ask for a redo"}
             </button>
             <button type="button" className="ds-btn ds-btn--ghost ds-btn--sm" onClick={() => setOpen(false)}>

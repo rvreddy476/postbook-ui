@@ -23,10 +23,12 @@ import {
   getService,
   getTrustedContact,
   listAddresses,
+  listBookingProfessionals,
   listBookings,
   listExtras,
   listMessages,
   listRework,
+  listServiceProfessionals,
   listSlots,
   previewCancel,
   rescheduleBooking,
@@ -35,7 +37,11 @@ import {
   type SlotQuery,
 } from "../api/client"
 import { fullBody, readChosenId, resolveChosen, writeChosenId, type AddressBody } from "../model/address"
-import type { Address, Booking } from "../model/wire"
+import { professionalsSearch, bookingProfessionalsSearch, type BookingProQuery, type ProListQuery } from "../model/professionals"
+import type { Address, Booking, ProfessionalList } from "../model/wire"
+
+/** The professionals lists refresh every 30 s (free times and on-duty professionals move). */
+export const PROS_REFRESH_MS = 30_000
 
 export const DOORSTEP = ["doorstep", "customer"] as const
 
@@ -56,6 +62,9 @@ export const keys = {
   messages: (id: string) => [...DOORSTEP, "messages", id] as const,
   trustedContact: [...DOORSTEP, "trusted-contact"] as const,
   cancelPreview: (id: string) => [...DOORSTEP, "cancel-preview", id] as const,
+  allPros: [...DOORSTEP, "pros"] as const,
+  pros: (q: ProListQuery) => [...DOORSTEP, "pros", "service", q.serviceId, professionalsSearch(q).toString()] as const,
+  bookingPros: (id: string, q: BookingProQuery) => [...DOORSTEP, "pros", "booking", id, bookingProfessionalsSearch(q).toString()] as const,
 }
 
 function localStore(): Storage | null {
@@ -133,6 +142,28 @@ export function useSlots(q: SlotQuery, enabled: boolean, refetchInterval: number
   return useQuery({ queryKey: keys.slots(q), queryFn: () => listSlots(q), enabled, refetchInterval, retry: 1 })
 }
 
+/* B1: professionals */
+
+export function useServiceProfessionals(q: ProListQuery, enabled: boolean) {
+  return useQuery<ProfessionalList, DoorstepApiError>({
+    queryKey: keys.pros(q),
+    queryFn: () => listServiceProfessionals(q),
+    enabled: enabled && Boolean(q.serviceId && q.optionId && q.addressId),
+    refetchInterval: PROS_REFRESH_MS,
+    retry: 1,
+  })
+}
+
+export function useBookingProfessionals(bookingId: string, q: BookingProQuery, enabled: boolean) {
+  return useQuery<ProfessionalList, DoorstepApiError>({
+    queryKey: keys.bookingPros(bookingId, q),
+    queryFn: () => listBookingProfessionals(bookingId, q),
+    enabled: enabled && Boolean(bookingId),
+    refetchInterval: PROS_REFRESH_MS,
+    retry: false,
+  })
+}
+
 /* bookings */
 
 export function useBookings(status: "upcoming" | "past" | "all") {
@@ -198,8 +229,15 @@ export function useRework(bookingId: string, enabled: boolean) {
   return useQuery({ queryKey: keys.rework(bookingId), queryFn: () => listRework(bookingId), enabled: enabled && Boolean(bookingId), retry: false })
 }
 
-export function useMessages(bookingId: string, enabled: boolean, refetchInterval: number | false) {
-  return useQuery({ queryKey: keys.messages(bookingId), queryFn: () => listMessages(bookingId), enabled: enabled && Boolean(bookingId), refetchInterval, retry: 1 })
+export function useMessages(bookingId: string, enabled: boolean, refetchInterval: number | false, pages = 1) {
+  return useQuery({ queryKey: [...keys.messages(bookingId), pages], queryFn: async () => {
+    let result = await listMessages(bookingId)
+    for (let page = 1; page < pages && result.nextCursor; page++) {
+      const next = await listMessages(bookingId, result.nextCursor)
+      result = { ...next, items: [...result.items, ...next.items] }
+    }
+    return result
+  }, enabled: enabled && Boolean(bookingId), refetchInterval, retry: 1 })
 }
 
 export function useTrustedContact(enabled: boolean) {
